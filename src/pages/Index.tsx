@@ -1,13 +1,30 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { UploadZone } from "@/components/UploadZone";
+import { ResultsView } from "@/components/ResultsView";
 
 const Index = () => {
+  const [results, setResults] = useState<{ topics: any[]; pdfName: string } | null>(null);
+
+  const handleUploadComplete = (data: { topics: any[]; pdfName: string }) => {
+    setResults(data);
+  };
+
+  const handleReset = () => {
+    setResults(null);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <>
+      {!results ? (
+        <UploadZone onUploadComplete={handleUploadComplete} />
+      ) : (
+        <ResultsView
+          topics={results.topics}
+          pdfName={results.pdfName}
+          onReset={handleReset}
+        />
+      )}
+    </>
   );
 };
 
