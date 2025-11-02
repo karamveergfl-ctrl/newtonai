@@ -3,7 +3,7 @@ import { Upload, FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface UploadZoneProps {
-  onUploadComplete: (data: { topics: any[]; pdfName: string }) => void;
+  onUploadComplete: (data: { pdfUrl: string; pdfName: string }) => void;
 }
 
 export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
@@ -27,50 +27,23 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
     setFileName(file.name);
 
     try {
-      // Convert file to base64
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          resolve(base64.split(',')[1]);
-        };
-        reader.readAsDataURL(file);
+      // Create object URL for PDF viewer
+      const pdfUrl = URL.createObjectURL(file);
+      
+      onUploadComplete({ 
+        pdfUrl,
+        pdfName: file.name 
       });
-
-      const base64Content = await base64Promise;
-
-      // Call the edge function
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            pdfContent: base64Content,
-            fileName: file.name,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to process PDF");
-      }
-
-      const data = await response.json();
-      onUploadComplete({ topics: data.topics, pdfName: file.name });
       
       toast({
-        title: "Success!",
-        description: `Extracted ${data.topics.length} topics from your PDF`,
+        title: "PDF Loaded!",
+        description: "Select any text to find related videos",
       });
     } catch (error) {
-      console.error("Error processing PDF:", error);
+      console.error("Error loading PDF:", error);
       toast({
         title: "Error",
-        description: "Failed to process PDF. Please try again.",
+        description: "Failed to load PDF. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -160,7 +133,7 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
                   Processing {fileName}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Extracting topics and finding videos...
+                  Loading your PDF...
                 </p>
               </div>
             </div>
@@ -176,7 +149,7 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
                   {isDragging ? "Drop your PDF here" : "Drop PDF or click to upload"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  We'll extract topics and find educational videos for you
+                  Select any text to instantly find related videos
                 </p>
               </div>
             </div>

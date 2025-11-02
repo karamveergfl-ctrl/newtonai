@@ -104,6 +104,15 @@ All colors MUST be HSL.
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* React PDF text layer styles */
+  .react-pdf__Page__textContent {
+    user-select: text !important;
+  }
+  
+  .react-pdf__Page__annotations {
+    user-select: none;
+  }
 }
 
 @layer base {
