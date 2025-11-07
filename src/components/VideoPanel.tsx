@@ -13,9 +13,10 @@ interface Video {
 interface VideoPanelProps {
   videos: Video[];
   searchQuery: string;
+  onVideoClick: (videoId: string) => void;
 }
 
-export const VideoPanel = ({ videos, searchQuery }: VideoPanelProps) => {
+export const VideoPanel = ({ videos, searchQuery, onVideoClick }: VideoPanelProps) => {
   if (videos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center">
@@ -40,7 +41,11 @@ export const VideoPanel = ({ videos, searchQuery }: VideoPanelProps) => {
       </div>
       <div className="space-y-4 pb-6">
         {videos.map((video) => (
-          <VideoCard key={video.videoId} video={video} />
+          <VideoCard 
+            key={video.videoId} 
+            video={video}
+            onVideoClick={onVideoClick}
+          />
         ))}
       </div>
     </div>

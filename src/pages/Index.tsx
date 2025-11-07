@@ -2,6 +2,7 @@ import { useState } from "react";
 import { UploadZone } from "@/components/UploadZone";
 import { PDFReader } from "@/components/PDFReader";
 import { VideoPanel } from "@/components/VideoPanel";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchBox } from "@/components/SearchBox";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -20,12 +21,14 @@ const Index = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleUploadComplete = (data: { pdfUrl: string; pdfName: string }) => {
     setPdfData(data);
     setVideos([]);
     setSearchQuery("");
+    setSelectedVideoId(null);
   };
 
   const handleSearch = async (query: string) => {
@@ -78,6 +81,15 @@ const Index = () => {
     setPdfData(null);
     setVideos([]);
     setSearchQuery("");
+    setSelectedVideoId(null);
+  };
+
+  const handleVideoClick = (videoId: string) => {
+    setSelectedVideoId(videoId);
+  };
+
+  const handleClosePlayer = () => {
+    setSelectedVideoId(null);
   };
 
   if (!pdfData) {
@@ -115,6 +127,9 @@ const Index = () => {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
           <div className="flex flex-col p-6 overflow-hidden animate-fade-in">
             <SearchBox onSearch={handleSearch} isSearching={isSearching} />
+            {selectedVideoId && (
+              <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
+            )}
             <div className="flex-1 overflow-auto">
               <PDFReader 
                 pdfUrl={pdfData.pdfUrl} 
@@ -125,7 +140,11 @@ const Index = () => {
           
           <div className="border-l bg-card/30 backdrop-blur-sm overflow-auto animate-fade-in" style={{ animationDelay: "100ms" }}>
             <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-sm p-6 pb-4">
-              <VideoPanel videos={videos} searchQuery={searchQuery} />
+              <VideoPanel 
+                videos={videos} 
+                searchQuery={searchQuery}
+                onVideoClick={handleVideoClick}
+              />
             </div>
           </div>
         </div>
