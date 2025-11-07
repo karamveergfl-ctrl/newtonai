@@ -22,6 +22,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
 
   const handleUploadComplete = (data: { pdfUrl: string; pdfName: string }) => {
@@ -124,7 +125,7 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+        <div className={`flex-1 grid overflow-hidden ${isFullscreen ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
           <div className="flex flex-col p-6 overflow-hidden animate-fade-in">
             <SearchBox onSearch={handleSearch} isSearching={isSearching} />
             {selectedVideoId && (
@@ -134,19 +135,23 @@ const Index = () => {
               <PDFReader 
                 pdfUrl={pdfData.pdfUrl} 
                 onTextSelect={handleTextSelect}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
               />
             </div>
           </div>
           
-          <div className="border-l bg-card/30 backdrop-blur-sm overflow-auto animate-fade-in" style={{ animationDelay: "100ms" }}>
-            <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-sm p-6 pb-4">
-              <VideoPanel 
-                videos={videos} 
-                searchQuery={searchQuery}
-                onVideoClick={handleVideoClick}
-              />
+          {!isFullscreen && (
+            <div className="border-l bg-card/30 backdrop-blur-sm overflow-auto animate-fade-in" style={{ animationDelay: "100ms" }}>
+              <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-sm p-6 pb-4">
+                <VideoPanel 
+                  videos={videos} 
+                  searchQuery={searchQuery}
+                  onVideoClick={handleVideoClick}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

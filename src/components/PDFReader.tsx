@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Maximize, Minimize } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -12,9 +12,11 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 interface PDFReaderProps {
   pdfUrl: string;
   onTextSelect: (selectedText: string) => void;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
 }
 
-export const PDFReader = ({ pdfUrl, onTextSelect }: PDFReaderProps) => {
+export const PDFReader = ({ pdfUrl, onTextSelect, isFullscreen, onToggleFullscreen }: PDFReaderProps) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [isSearching, setIsSearching] = useState(false);
@@ -58,9 +60,29 @@ export const PDFReader = ({ pdfUrl, onTextSelect }: PDFReaderProps) => {
             <ChevronLeft className="w-4 h-4" />
           </Button>
           
-          <span className="text-sm text-muted-foreground">
-            Page {pageNumber} of {numPages}
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground">
+              Page {pageNumber} of {numPages}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleFullscreen}
+              className="gap-2"
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize className="w-4 h-4" />
+                  <span className="hidden sm:inline">Exit Fullscreen</span>
+                </>
+              ) : (
+                <>
+                  <Maximize className="w-4 h-4" />
+                  <span className="hidden sm:inline">Fullscreen</span>
+                </>
+              )}
+            </Button>
+          </div>
           
           <Button
             variant="outline"
