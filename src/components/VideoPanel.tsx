@@ -18,35 +18,31 @@ interface VideoPanelProps {
 export const VideoPanel = ({ videos, searchQuery }: VideoPanelProps) => {
   if (videos.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-card to-card/80 backdrop-blur-sm border-border/50">
-        <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-          <Sparkles className="w-16 h-16 text-primary/30 mb-4" />
-          <h3 className="text-xl font-semibold mb-2 text-foreground">
-            Select Text to Discover Videos
-          </h3>
-          <p className="text-muted-foreground max-w-md">
-            Highlight any topic or concept in your PDF, and we'll instantly find the best educational animation videos to help you understand it better.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center p-12 text-center">
+        <Sparkles className="w-16 h-16 text-primary/30 mb-4" />
+        <h3 className="text-xl font-semibold mb-2 text-foreground">
+          Search or Select Text
+        </h3>
+        <p className="text-muted-foreground max-w-md">
+          Use the search box to find topics, or highlight any text in the PDF. We'll instantly find the best educational animation videos to help you understand it better.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card className="bg-gradient-to-br from-card to-card/80 backdrop-blur-sm border-border/50">
-      <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
-        <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+    <div>
+      <div className="mb-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
           Videos about: {searchQuery}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 gap-4">
-          {videos.map((video) => (
-            <VideoCard key={video.videoId} video={video} />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+        </h2>
+      </div>
+      <div className="space-y-4 pb-6">
+        {videos.map((video) => (
+          <VideoCard key={video.videoId} video={video} />
+        ))}
+      </div>
+    </div>
   );
 };
