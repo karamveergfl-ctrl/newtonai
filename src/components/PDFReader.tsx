@@ -17,29 +17,45 @@ interface PDFReaderProps {
 export const PDFReader = ({ pdfUrl, onTextSelect }: PDFReaderProps) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const [isSearching, setIsSearching] = useState(false);
+  const [selectedText, setSelectedText] = useState<string>("");
+  const [showSearchPrompt, setShowSearchPrompt] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     const handleTextSelection = () => {
       const selection = window.getSelection();
-      const selectedText = selection?.toString().trim();
+      const text = selection?.toString().trim();
       
-      if (selectedText && selectedText.length > 10) {
-        setIsSearching(true);
-        onTextSelect(selectedText);
-        setTimeout(() => setIsSearching(false), 1000);
-        
-        toast({
-          title: "Finding videos...",
-          description: `Searching for: "${selectedText.slice(0, 50)}..."`,
-        });
+      if (text && text.length >= 5) {
+        setSelectedText(text);
+        setShowSearchPrompt(true);
+      } else if (!text) {
+        setShowSearchPrompt(false);
+        setSelectedText("");
       }
     };
 
     document.addEventListener("mouseup", handleTextSelection);
     return () => document.removeEventListener("mouseup", handleTextSelection);
-  }, [onTextSelect, toast]);
+  }, []);
+
+  const handleSearchClick = () => {
+    if (selectedText) {
+      onTextSelect(selectedText);
+      setShowSearchPrompt(false);
+      
+      toast({
+        title: "Finding videos...",
+        description: `Searching for: "${selectedText.slice(0, 50)}..."`,
+      });
+    }
+  };
+
+  const handleDismiss = () => {
+    setShowSearchPrompt(false);
+    setSelectedText("");
+    window.getSelection()?.removeAllRanges();
+  };
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -94,15 +110,36 @@ export const PDFReader = ({ pdfUrl, onTextSelect }: PDFReaderProps) => {
         </div>
       </Card>
 
-      {isSearching && (
-        <div className="flex items-center justify-center gap-2 text-primary animate-pulse">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span className="text-sm">Analyzing selection...</span>
-        </div>
+      {showSearchPrompt && (
+        <Card className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 p-4 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-md">
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground mb-1">Selected text:</p>
+                <p className="text-sm font-medium line-clamp-2">{selectedText}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDismiss}
+                className="h-6 w-6"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+            <Button 
+              onClick={handleSearchClick}
+              className="w-full"
+              size="sm"
+            >
+              Find Videos About This
+            </Button>
+          </div>
+        </Card>
       )}
 
       <div className="text-center text-sm text-muted-foreground">
-        💡 Select any text in the PDF to find related animation videos
+        💡 Select any text in the PDF (minimum 5 characters) to find related videos
       </div>
     </div>
   );
