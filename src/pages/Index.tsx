@@ -1,12 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { UploadZone } from "@/components/UploadZone";
 import { PDFReader } from "@/components/PDFReader";
 import { VideoPanel } from "@/components/VideoPanel";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchBox } from "@/components/SearchBox";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { Session } from "@supabase/supabase-js";
 
 interface Video {
   id: string;
@@ -17,13 +21,42 @@ interface Video {
 }
 
 const Index = () => {
+  const [session, setSession] = useState<Session | null>(null);
   const [pdfData, setPdfData] = useState<{ pdfUrl: string; pdfName: string } | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showVideosPanel, setShowVideosPanel] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        if (!session) {
+          navigate("/auth");
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   const handleUploadComplete = (data: { pdfUrl: string; pdfName: string }) => {
     setPdfData(data);
@@ -54,6 +87,7 @@ const Index = () => {
       const data = await response.json();
       setVideos(data.videos);
       setSearchQuery(data.topic);
+      setShowVideosPanel(true);
       
       toast({
         title: "Videos Found!",
@@ -83,6 +117,12 @@ const Index = () => {
     setVideos([]);
     setSearchQuery("");
     setSelectedVideoId(null);
+    setShowVideosPanel(false);
+  };
+
+  const handleCloseVideosPanel = () => {
+    setShowVideosPanel(false);
+    setSelectedVideoId(null);
   };
 
   const handleVideoClick = (videoId: string) => {
@@ -92,6 +132,10 @@ const Index = () => {
   const handleClosePlayer = () => {
     setSelectedVideoId(null);
   };
+
+  if (!session) {
+    return null; // Auth redirect will happen in useEffect
+  }
 
   if (!pdfData) {
     return <UploadZone onUploadComplete={handleUploadComplete} />;
@@ -116,18 +160,29 @@ const Index = () => {
                 {pdfData.pdfName}
               </h1>
             </div>
-            {isSearching && (
-              <div className="flex items-center gap-2 text-primary">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-sm">Finding videos...</span>
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              {isSearching && (
+                <div className="flex items-center gap-2 text-primary">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="text-sm">Finding videos...</span>
+                </div>
+              )}
+              <Button
+                onClick={handleSignOut}
+                variant="ghost"
+                size="sm"
+                className="gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className={`flex-1 flex overflow-hidden ${isFullscreen ? '' : 'divide-x'}`}>
+        <div className={`flex-1 flex overflow-hidden ${showVideosPanel ? 'divide-x' : ''}`}>
           {/* Left Side - PDF Viewer */}
-          <div className={`flex flex-col p-6 overflow-hidden animate-fade-in ${isFullscreen ? 'flex-1' : 'w-1/2'}`}>
+          <div className={`flex flex-col p-6 overflow-hidden animate-fade-in ${showVideosPanel ? 'w-1/2' : 'flex-1'}`}>
             <SearchBox onSearch={handleSearch} isSearching={isSearching} />
             {selectedVideoId && (
               <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
@@ -136,20 +191,19 @@ const Index = () => {
               <PDFReader 
                 pdfUrl={pdfData.pdfUrl} 
                 onTextSelect={handleTextSelect}
-                isFullscreen={isFullscreen}
-                onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
               />
             </div>
           </div>
           
           {/* Right Side - Video Panel */}
-          {!isFullscreen && (
-            <div className="w-1/2 bg-card/30 backdrop-blur-sm overflow-auto animate-fade-in" style={{ animationDelay: "100ms" }}>
+          {showVideosPanel && (
+            <div className="w-1/2 bg-card/30 backdrop-blur-sm overflow-auto animate-fade-in relative" style={{ animationDelay: "100ms" }}>
               <div className="p-6">
                 <VideoPanel 
                   videos={videos} 
                   searchQuery={searchQuery}
                   onVideoClick={handleVideoClick}
+                  onClose={handleCloseVideosPanel}
                 />
               </div>
             </div>
