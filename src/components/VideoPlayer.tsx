@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
@@ -9,17 +9,17 @@ interface VideoPlayerProps {
 
 export const VideoPlayer = ({ videoId, onClose }: VideoPlayerProps) => {
   return (
-    <Card className="mb-4 overflow-hidden shadow-xl animate-fade-in">
-      <div className="relative">
-        <Button
-          onClick={onClose}
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 z-10 bg-background/80 hover:bg-background"
-        >
-          <X className="w-4 h-4" />
-        </Button>
-        <div className="aspect-video bg-black">
+    <Dialog open={!!videoId} onOpenChange={onClose}>
+      <DialogContent className="max-w-[100vw] w-screen h-screen p-0 border-0 bg-black">
+        <div className="relative w-full h-full">
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 z-50 bg-background/80 hover:bg-background"
+          >
+            <X className="w-4 h-4" />
+          </Button>
           <iframe
             width="100%"
             height="100%"
@@ -31,7 +31,7 @@ export const VideoPlayer = ({ videoId, onClose }: VideoPlayerProps) => {
             className="w-full h-full"
           />
         </div>
-      </div>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -184,9 +184,6 @@ const Index = () => {
           {/* Left Side - PDF Viewer */}
           <div className={`flex flex-col p-6 overflow-hidden animate-fade-in ${showVideosPanel ? 'w-1/2' : 'flex-1'}`}>
             <SearchBox onSearch={handleSearch} isSearching={isSearching} />
-            {selectedVideoId && (
-              <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
-            )}
             <div className="flex-1 overflow-auto">
               <PDFReader 
                 pdfUrl={pdfData.pdfUrl} 
@@ -194,6 +191,11 @@ const Index = () => {
               />
             </div>
           </div>
+          
+          {/* Fullscreen Video Player */}
+          {selectedVideoId && (
+            <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
+          )}
           
           {/* Right Side - Video Panel */}
           {showVideosPanel && (
