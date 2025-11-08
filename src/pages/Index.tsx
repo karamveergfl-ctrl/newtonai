@@ -125,8 +125,9 @@ const Index = () => {
           </div>
         </div>
 
-        <div className={`flex-1 grid overflow-hidden ${isFullscreen ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
-          <div className="flex flex-col p-6 overflow-hidden animate-fade-in">
+        <div className={`flex-1 flex overflow-hidden ${isFullscreen ? '' : 'divide-x'}`}>
+          {/* Left Side - PDF Viewer */}
+          <div className={`flex flex-col p-6 overflow-hidden animate-fade-in ${isFullscreen ? 'flex-1' : 'w-1/2'}`}>
             <SearchBox onSearch={handleSearch} isSearching={isSearching} />
             {selectedVideoId && (
               <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
@@ -141,9 +142,10 @@ const Index = () => {
             </div>
           </div>
           
+          {/* Right Side - Video Panel */}
           {!isFullscreen && (
-            <div className="border-l bg-card/30 backdrop-blur-sm overflow-auto animate-fade-in" style={{ animationDelay: "100ms" }}>
-              <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-sm p-6 pb-4">
+            <div className="w-1/2 bg-card/30 backdrop-blur-sm overflow-auto animate-fade-in" style={{ animationDelay: "100ms" }}>
+              <div className="p-6">
                 <VideoPanel 
                   videos={videos} 
                   searchQuery={searchQuery}
