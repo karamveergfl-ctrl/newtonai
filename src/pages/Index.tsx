@@ -23,7 +23,8 @@ interface Video {
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [pdfData, setPdfData] = useState<{ pdfUrl: string; pdfName: string } | null>(null);
-  const [videos, setVideos] = useState<Video[]>([]);
+  const [animationVideos, setAnimationVideos] = useState<Video[]>([]);
+  const [explanationVideos, setExplanationVideos] = useState<Video[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
@@ -60,7 +61,8 @@ const Index = () => {
 
   const handleUploadComplete = (data: { pdfUrl: string; pdfName: string }) => {
     setPdfData(data);
-    setVideos([]);
+    setAnimationVideos([]);
+    setExplanationVideos([]);
     setSearchQuery("");
     setSelectedVideoId(null);
   };
@@ -85,13 +87,14 @@ const Index = () => {
       }
 
       const data = await response.json();
-      setVideos(data.videos);
+      setAnimationVideos(data.animationVideos);
+      setExplanationVideos(data.explanationVideos);
       setSearchQuery(data.topic);
       setShowVideosPanel(true);
       
       toast({
         title: "Videos Found!",
-        description: `Found ${data.videos.length} videos about "${data.topic}"`,
+        description: `Found ${data.animationVideos.length} animation and ${data.explanationVideos.length} explanation videos about "${data.topic}"`,
       });
     } catch (error) {
       console.error("Error analyzing text:", error);
@@ -114,7 +117,8 @@ const Index = () => {
       URL.revokeObjectURL(pdfData.pdfUrl);
     }
     setPdfData(null);
-    setVideos([]);
+    setAnimationVideos([]);
+    setExplanationVideos([]);
     setSearchQuery("");
     setSelectedVideoId(null);
     setShowVideosPanel(false);
@@ -138,7 +142,46 @@ const Index = () => {
   }
 
   if (!pdfData) {
-    return <UploadZone onUploadComplete={handleUploadComplete} />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="p-4 border-b bg-card/50 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              SmartReader Pro
+            </h1>
+            <Button
+              onClick={handleSignOut}
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <SearchBox onSearch={handleSearch} isSearching={isSearching} />
+          {showVideosPanel && (
+            <div className="mt-8 animate-fade-in">
+              <VideoPanel 
+                animationVideos={animationVideos}
+                explanationVideos={explanationVideos}
+                searchQuery={searchQuery}
+                onVideoClick={handleVideoClick}
+                onClose={handleCloseVideosPanel}
+              />
+            </div>
+          )}
+          <div className="mt-8">
+            <UploadZone onUploadComplete={handleUploadComplete} />
+          </div>
+        </div>
+        {selectedVideoId && (
+          <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
+        )}
+      </div>
+    );
   }
 
   return (
@@ -202,7 +245,8 @@ const Index = () => {
             <div className="w-1/2 bg-card/30 backdrop-blur-sm overflow-auto animate-fade-in relative" style={{ animationDelay: "100ms" }}>
               <div className="p-6">
                 <VideoPanel 
-                  videos={videos} 
+                  animationVideos={animationVideos}
+                  explanationVideos={explanationVideos}
                   searchQuery={searchQuery}
                   onVideoClick={handleVideoClick}
                   onClose={handleCloseVideosPanel}

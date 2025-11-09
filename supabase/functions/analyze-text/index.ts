@@ -57,20 +57,21 @@ serve(async (req) => {
       throw new Error("YOUTUBE_API_KEY not configured");
     }
 
-    const searchQuery = `${topic} educational animation`;
-    const response = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high`
+    // Search for animation videos
+    const animationQuery = `${topic} educational animation`;
+    const animationResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(animationQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high`
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("YouTube API error:", response.status, errorText);
-      throw new Error(`YouTube API error: ${response.status}`);
+    if (!animationResponse.ok) {
+      const errorText = await animationResponse.text();
+      console.error("YouTube API error (animation):", animationResponse.status, errorText);
+      throw new Error(`YouTube API error: ${animationResponse.status}`);
     }
 
-    const data = await response.json();
+    const animationData = await animationResponse.json();
     
-    const videos = (data.items || []).map((item: any) => ({
+    const animationVideos = (animationData.items || []).map((item: any) => ({
       id: item.id.videoId,
       videoId: item.id.videoId,
       title: item.snippet.title,
@@ -78,10 +79,37 @@ serve(async (req) => {
       channelTitle: item.snippet.channelTitle,
     }));
 
-    console.log("Found videos:", videos.length);
+    // Search for explanation/theory videos
+    const explanationQuery = `${topic} complete theory explanation tutorial`;
+    const explanationResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(explanationQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high`
+    );
+
+    if (!explanationResponse.ok) {
+      const errorText = await explanationResponse.text();
+      console.error("YouTube API error (explanation):", explanationResponse.status, errorText);
+      throw new Error(`YouTube API error: ${explanationResponse.status}`);
+    }
+
+    const explanationData = await explanationResponse.json();
+    
+    const explanationVideos = (explanationData.items || []).map((item: any) => ({
+      id: item.id.videoId,
+      videoId: item.id.videoId,
+      title: item.snippet.title,
+      thumbnail: item.snippet.thumbnails.medium.url,
+      channelTitle: item.snippet.channelTitle,
+    }));
+
+    console.log("Found animation videos:", animationVideos.length);
+    console.log("Found explanation videos:", explanationVideos.length);
 
     return new Response(
-      JSON.stringify({ topic, videos }),
+      JSON.stringify({ 
+        topic, 
+        animationVideos,
+        explanationVideos
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
