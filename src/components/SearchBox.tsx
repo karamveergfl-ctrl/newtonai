@@ -75,37 +75,40 @@ export const SearchBox = ({ onSearch, isSearching }: SearchBoxProps) => {
   };
 
   return (
-    <div className="flex gap-2 mb-4">
-      <Input
-        type="text"
-        placeholder="Search for a topic (text or voice)..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-        className="flex-1"
-        disabled={isSearching || isListening}
-      />
-      <Button
-        onClick={handleSearch}
-        disabled={isSearching || isListening}
-        size="icon"
-        variant="secondary"
-      >
-        {isSearching ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Search className="w-4 h-4" />
-        )}
-      </Button>
-      <Button
-        onClick={handleVoiceSearch}
-        disabled={isSearching || isListening}
-        size="icon"
-        variant="secondary"
-        className={isListening ? "bg-primary animate-pulse" : ""}
-      >
-        <Mic className="w-4 h-4" />
-      </Button>
+    <div className="group/search relative">
+      <div className="flex gap-2 mb-2 transition-opacity duration-300 bg-background/60 backdrop-blur-sm p-2 rounded-lg hover:bg-background/90">
+        <Input
+          type="text"
+          placeholder="Search for a topic..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          className="flex-1 border-0 bg-transparent focus-visible:ring-1"
+          disabled={isSearching || isListening}
+        />
+        <Button
+          onClick={handleSearch}
+          disabled={isSearching || isListening}
+          size="icon"
+          variant="ghost"
+          className="shrink-0"
+        >
+          {isSearching ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Search className="w-4 h-4" />
+          )}
+        </Button>
+        <Button
+          onClick={handleVoiceSearch}
+          disabled={isSearching || isListening}
+          size="icon"
+          variant="ghost"
+          className={`shrink-0 ${isListening ? "bg-primary/20 animate-pulse" : ""}`}
+        >
+          <Mic className="w-4 h-4" />
+        </Button>
+      </div>
     </div>
   );
 };

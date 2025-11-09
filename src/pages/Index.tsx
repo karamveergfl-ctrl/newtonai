@@ -187,47 +187,49 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="h-screen flex flex-col">
-        <div className="p-4 border-b bg-card/50 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        {/* Compact Header */}
+        <div className="p-2 md:p-3 border-b bg-card/50 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <Button
                 onClick={handleReset}
                 variant="ghost"
                 size="sm"
-                className="gap-2"
+                className="gap-1 h-8 shrink-0"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Upload Another
+                <span className="hidden sm:inline text-xs">New PDF</span>
               </Button>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent truncate">
                 {pdfData.pdfName}
               </h1>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 shrink-0">
               {isSearching && (
-                <div className="flex items-center gap-2 text-primary">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span className="text-sm">Finding videos...</span>
+                <div className="hidden md:flex items-center gap-2 text-primary">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-xs">Searching...</span>
                 </div>
               )}
               <Button
                 onClick={handleSignOut}
                 variant="ghost"
                 size="sm"
-                className="gap-2"
+                className="gap-1 h-8"
               >
-                <LogOut className="w-4 h-4" />
-                Sign Out
+                <LogOut className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="hidden sm:inline text-xs">Sign Out</span>
               </Button>
             </div>
           </div>
         </div>
 
-        <div className={`flex-1 flex overflow-hidden ${showVideosPanel ? 'divide-x' : ''}`}>
-          {/* Left Side - PDF Viewer */}
-          <div className={`flex flex-col p-6 overflow-hidden animate-fade-in ${showVideosPanel ? 'w-1/2' : 'flex-1'}`}>
+        {/* Main Content - Responsive Layout */}
+        <div className={`flex-1 flex flex-col md:flex-row overflow-hidden ${showVideosPanel ? 'md:divide-x' : ''}`}>
+          {/* PDF Viewer - Full width on mobile, half on desktop when panel open */}
+          <div className={`flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in ${showVideosPanel ? 'md:w-1/2' : 'flex-1'} ${showVideosPanel ? 'h-1/2 md:h-full' : 'h-full'}`}>
             <SearchBox onSearch={handleSearch} isSearching={isSearching} />
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-hidden">
               <PDFReader 
                 pdfUrl={pdfData.pdfUrl} 
                 onTextSelect={handleTextSelect}
@@ -240,18 +242,16 @@ const Index = () => {
             <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
           )}
           
-          {/* Right Side - Video Panel */}
+          {/* Video Panel - Bottom half on mobile, right side on desktop */}
           {showVideosPanel && (
-            <div className="w-1/2 bg-card/30 backdrop-blur-sm overflow-auto animate-fade-in relative" style={{ animationDelay: "100ms" }}>
-              <div className="p-6">
-                <VideoPanel 
-                  animationVideos={animationVideos}
-                  explanationVideos={explanationVideos}
-                  searchQuery={searchQuery}
-                  onVideoClick={handleVideoClick}
-                  onClose={handleCloseVideosPanel}
-                />
-              </div>
+            <div className={`bg-card/30 backdrop-blur-sm overflow-hidden animate-fade-in ${showVideosPanel ? 'h-1/2 md:h-full md:w-1/2' : ''}`}>
+              <VideoPanel 
+                animationVideos={animationVideos}
+                explanationVideos={explanationVideos}
+                searchQuery={searchQuery}
+                onVideoClick={handleVideoClick}
+                onClose={handleCloseVideosPanel}
+              />
             </div>
           )}
         </div>

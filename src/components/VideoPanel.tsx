@@ -24,56 +24,64 @@ export const VideoPanel = ({ animationVideos, explanationVideos, searchQuery, on
   const [activeTab, setActiveTab] = useState("animation");
 
   return (
-    <div className="relative">
-      {/* Sticky Header with Close Button */}
-      <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b pb-4 mb-4">
-        <div className="flex items-center justify-between mb-4">
+    <div className="relative h-full flex flex-col">
+      {/* Sticky Header - Always visible on top left */}
+      <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b pb-3 mb-3 px-2 md:px-4">
+        <div className="flex items-center justify-between mb-3">
           <Button
             onClick={onClose}
             variant="ghost"
             size="sm"
-            className="gap-2"
+            className="gap-1 h-8"
           >
             <X className="w-4 h-4" />
-            Close
+            <span className="hidden sm:inline">Close</span>
           </Button>
         </div>
-        <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-primary" />
-          Videos about: {searchQuery}
+        <h2 className="text-base md:text-lg font-bold text-foreground flex items-center gap-2 mb-3">
+          <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0" />
+          <span className="line-clamp-1">{searchQuery}</span>
         </h2>
         
         {/* Tabs for switching video types */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="animation">
-              Animation Videos ({animationVideos.length})
+          <TabsList className="grid w-full grid-cols-2 h-9">
+            <TabsTrigger value="animation" className="text-xs md:text-sm">
+              Animation ({animationVideos.length})
             </TabsTrigger>
-            <TabsTrigger value="explanation">
-              Explanation Videos ({explanationVideos.length})
+            <TabsTrigger value="explanation" className="text-xs md:text-sm">
+              Theory ({explanationVideos.length})
             </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
-      {/* Video Content */}
-      <div className="space-y-4 pb-6">
+      {/* Video Content - Scrollable */}
+      <div className="flex-1 overflow-auto px-2 md:px-4 space-y-3 pb-4">
         {activeTab === "animation" ? (
-          animationVideos.map((video) => (
-            <VideoCard 
-              key={video.videoId} 
-              video={video}
-              onVideoClick={onVideoClick}
-            />
-          ))
+          animationVideos.length > 0 ? (
+            animationVideos.map((video) => (
+              <VideoCard 
+                key={video.videoId} 
+                video={video}
+                onVideoClick={onVideoClick}
+              />
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">No animation videos found</p>
+          )
         ) : (
-          explanationVideos.map((video) => (
-            <VideoCard 
-              key={video.videoId} 
-              video={video}
-              onVideoClick={onVideoClick}
-            />
-          ))
+          explanationVideos.length > 0 ? (
+            explanationVideos.map((video) => (
+              <VideoCard 
+                key={video.videoId} 
+                video={video}
+                onVideoClick={onVideoClick}
+              />
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">No explanation videos found</p>
+          )
         )}
       </div>
     </div>

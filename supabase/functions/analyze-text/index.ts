@@ -57,10 +57,10 @@ serve(async (req) => {
       throw new Error("YOUTUBE_API_KEY not configured");
     }
 
-    // Search for animation videos
-    const animationQuery = `${topic} educational animation`;
+    // Search for animation videos - More specific query
+    const animationQuery = `${topic} animated explanation visual learning`;
     const animationResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(animationQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(animationQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&relevanceLanguage=en&safeSearch=strict&order=relevance`
     );
 
     if (!animationResponse.ok) {
@@ -71,18 +71,26 @@ serve(async (req) => {
 
     const animationData = await animationResponse.json();
     
-    const animationVideos = (animationData.items || []).map((item: any) => ({
-      id: item.id.videoId,
-      videoId: item.id.videoId,
-      title: item.snippet.title,
-      thumbnail: item.snippet.thumbnails.medium.url,
-      channelTitle: item.snippet.channelTitle,
-    }));
+    // Filter out unrelated videos by checking title relevance
+    const animationVideos = (animationData.items || [])
+      .filter((item: any) => {
+        const title = item.snippet.title.toLowerCase();
+        const topicWords = topic.toLowerCase().split(' ');
+        // Ensure at least one topic word appears in the title
+        return topicWords.some((word: string) => word.length > 3 && title.includes(word));
+      })
+      .map((item: any) => ({
+        id: item.id.videoId,
+        videoId: item.id.videoId,
+        title: item.snippet.title,
+        thumbnail: item.snippet.thumbnails.medium.url,
+        channelTitle: item.snippet.channelTitle,
+      }));
 
-    // Search for explanation/theory videos
-    const explanationQuery = `${topic} complete theory explanation tutorial`;
+    // Search for explanation/theory videos - Focus on lectures and in-depth content
+    const explanationQuery = `${topic} lecture professor theory explained tutorial course`;
     const explanationResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(explanationQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(explanationQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&videoDuration=medium&relevanceLanguage=en&safeSearch=strict&order=relevance`
     );
 
     if (!explanationResponse.ok) {
@@ -93,13 +101,21 @@ serve(async (req) => {
 
     const explanationData = await explanationResponse.json();
     
-    const explanationVideos = (explanationData.items || []).map((item: any) => ({
-      id: item.id.videoId,
-      videoId: item.id.videoId,
-      title: item.snippet.title,
-      thumbnail: item.snippet.thumbnails.medium.url,
-      channelTitle: item.snippet.channelTitle,
-    }));
+    // Filter for relevant explanation videos
+    const explanationVideos = (explanationData.items || [])
+      .filter((item: any) => {
+        const title = item.snippet.title.toLowerCase();
+        const topicWords = topic.toLowerCase().split(' ');
+        // Ensure at least one topic word appears in the title
+        return topicWords.some((word: string) => word.length > 3 && title.includes(word));
+      })
+      .map((item: any) => ({
+        id: item.id.videoId,
+        videoId: item.id.videoId,
+        title: item.snippet.title,
+        thumbnail: item.snippet.thumbnails.medium.url,
+        channelTitle: item.snippet.channelTitle,
+      }));
 
     console.log("Found animation videos:", animationVideos.length);
     console.log("Found explanation videos:", explanationVideos.length);
