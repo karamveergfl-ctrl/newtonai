@@ -63,9 +63,11 @@ serve(async (req) => {
       throw new Error("No text to analyze");
     }
 
-    // Detect if this is a question
-    const isQuestion = /[?]|solve|calculate|find|determine|prove|explain why|what is|how to/i.test(textToAnalyze);
+    // Detect if this is a question or numerical problem
+    const isQuestion = /\?|how|what|why|when|where|calculate|find|solve|determine|derive|prove|compute|evaluate|show that|given|velocity field|fluid|equation/i.test(textToAnalyze);
+    const isNumerical = /\d+.*[+\-*/=]|\bfind\b|\bcalculate\b|\bsolve\b|\bcompute\b|\bevaluate\b|\bderive\b|\bvelocity field\b|\bgiven.*=|magnitude|direction/i.test(textToAnalyze);
     console.log("Is question:", isQuestion);
+    console.log("Is numerical:", isNumerical);
 
     // Use AI to extract the main topic from selected text
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -116,7 +118,23 @@ serve(async (req) => {
           messages: [
             {
               role: "system",
-              content: "You are an expert tutor. Provide detailed, step-by-step solutions with clear explanations. Use markdown formatting with proper headings (##), bullet points, and numbered lists. For math, use clear notation."
+              content: `You are an expert tutor specializing in providing clear, well-formatted solutions. Format your response exactly like ChatGPT using:
+
+## Step-by-Step Solution
+
+**Given:** List what's provided clearly
+**Find:** What needs to be determined
+
+### Step 1: [Descriptive Title]
+Explain the approach and show calculations with proper formatting.
+
+### Step 2: [Descriptive Title]
+Continue with detailed work, showing all intermediate steps.
+
+**Final Answer:** 
+Highlight the result clearly with units if applicable.
+
+Use ** for bold, \` for inline math/variables, ### for section headers, and proper line breaks. Be thorough, pedagogical, and mathematically precise.`
             },
             {
               role: "user",
@@ -167,41 +185,49 @@ serve(async (req) => {
       throw new Error("YOUTUBE_API_KEY not configured");
     }
 
-    // Search for animation videos - More specific query
-    const animationQuery = `${topic} animated explanation visual learning`;
-    const animationResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(animationQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&relevanceLanguage=en&safeSearch=strict&order=relevance`
-    );
+    // Search for animation videos (skip if numerical)
+    let animationVideos: any[] = [];
+    if (!isNumerical) {
+      const animationQuery = `${topic} animated explanation visual learning`;
+      const animationResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(animationQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&relevanceLanguage=en&safeSearch=strict&order=relevance`
+      );
 
-    if (!animationResponse.ok) {
-      const errorText = await animationResponse.text();
-      console.error("YouTube API error (animation):", animationResponse.status, errorText);
-      throw new Error(`YouTube API error: ${animationResponse.status}`);
+      if (!animationResponse.ok) {
+        const errorText = await animationResponse.text();
+        console.error("YouTube API error (animation):", animationResponse.status, errorText);
+        throw new Error(`YouTube API error: ${animationResponse.status}`);
+      }
+
+      const animationData = await animationResponse.json();
+      
+      // Filter out unrelated videos by checking title relevance
+      animationVideos = (animationData.items || [])
+        .filter((item: any) => {
+          const title = item.snippet.title.toLowerCase();
+          const topicWords = topic.toLowerCase().split(' ');
+          // Ensure at least one topic word appears in the title
+          return topicWords.some((word: string) => word.length > 3 && title.includes(word));
+        })
+        .map((item: any) => ({
+          id: item.id.videoId,
+          videoId: item.id.videoId,
+          title: item.snippet.title,
+          thumbnail: item.snippet.thumbnails.medium.url,
+          channelTitle: item.snippet.channelTitle,
+        }));
+      
+      console.log("Found animation videos:", animationVideos.length);
+    } else {
+      console.log("Skipping animation videos for numerical problem");
     }
 
-    const animationData = await animationResponse.json();
-    
-    // Filter out unrelated videos by checking title relevance
-    const animationVideos = (animationData.items || [])
-      .filter((item: any) => {
-        const title = item.snippet.title.toLowerCase();
-        const topicWords = topic.toLowerCase().split(' ');
-        // Ensure at least one topic word appears in the title
-        return topicWords.some((word: string) => word.length > 3 && title.includes(word));
-      })
-      .map((item: any) => ({
-        id: item.id.videoId,
-        videoId: item.id.videoId,
-        title: item.snippet.title,
-        thumbnail: item.snippet.thumbnails.medium.url,
-        channelTitle: item.snippet.channelTitle,
-      }));
-
-    // Search for explanation/theory videos - Focus on lectures and in-depth content
-    let explanationQuery = `${topic} lecture professor theory explained tutorial course`;
-    if (isQuestion) {
-      explanationQuery = `${topic} answer solution step by step explained tutorial how to solve`;
-    }
+    // Search for explanation/theory videos - Focus on problem-solving for numericals
+    let explanationQuery = isNumerical
+      ? `${topic} solved example problem solution step by step calculation numerical`
+      : isQuestion 
+        ? `${topic} answer solution explanation tutorial step by step how to solve`
+        : `${topic} lecture professor theory explained tutorial course`;
     
     const explanationResponse = await fetch(
       `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(explanationQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&videoDuration=medium&relevanceLanguage=en&safeSearch=strict&order=relevance`
@@ -231,7 +257,6 @@ serve(async (req) => {
         channelTitle: item.snippet.channelTitle,
       }));
 
-    console.log("Found animation videos:", animationVideos.length);
     console.log("Found explanation videos:", explanationVideos.length);
 
     return new Response(

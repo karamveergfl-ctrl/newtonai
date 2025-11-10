@@ -10,6 +10,7 @@ import { SolutionPanel } from "@/components/SolutionPanel";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 
@@ -163,15 +164,18 @@ const Index = () => {
             <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               SmartReader Pro
             </h1>
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button
+                onClick={handleSignOut}
+                variant="ghost"
+                size="sm"
+                className="gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
         <div className="max-w-4xl mx-auto px-6 py-8">
@@ -225,6 +229,7 @@ const Index = () => {
                   <span className="text-xs">Searching...</span>
                 </div>
               )}
+              <ThemeToggle />
               <Button
                 onClick={handleSignOut}
                 variant="ghost"
@@ -250,11 +255,15 @@ const Index = () => {
                 onImageCapture={handleImageCapture}
               />
               {solutionData && (
-                <SolutionPanel
-                  content={solutionData.content}
-                  isQuestion={solutionData.isQuestion}
-                  onClose={() => setSolutionData(null)}
-                />
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="pointer-events-auto">
+                    <SolutionPanel
+                      content={solutionData.content}
+                      isQuestion={solutionData.isQuestion}
+                      onClose={() => setSolutionData(null)}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
