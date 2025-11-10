@@ -12,17 +12,23 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 interface PDFReaderProps {
   pdfUrl: string;
   onTextSelect: (selectedText: string) => void;
+  onImageCapture: (imageData: string) => void;
 }
 
-export const PDFReader = ({ pdfUrl, onTextSelect }: PDFReaderProps) => {
+export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture }: PDFReaderProps) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [selectedText, setSelectedText] = useState<string>("");
   const [showSearchPrompt, setShowSearchPrompt] = useState(false);
+  const [isScreenshotMode, setIsScreenshotMode] = useState(false);
+  const [screenshotStart, setScreenshotStart] = useState<{ x: number; y: number } | null>(null);
+  const [screenshotEnd, setScreenshotEnd] = useState<{ x: number; y: number } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const handleTextSelection = () => {
+      if (isScreenshotMode) return; // Don't handle text selection in screenshot mode
+      
       const selection = window.getSelection();
       const text = selection?.toString().trim();
       
@@ -37,7 +43,82 @@ export const PDFReader = ({ pdfUrl, onTextSelect }: PDFReaderProps) => {
 
     document.addEventListener("mouseup", handleTextSelection);
     return () => document.removeEventListener("mouseup", handleTextSelection);
-  }, []);
+  }, [isScreenshotMode]);
+
+  useEffect(() => {
+    const handleDoubleClick = () => {
+      setIsScreenshotMode(true);
+      setScreenshotStart(null);
+      setScreenshotEnd(null);
+      toast({
+        title: "Screenshot Mode",
+        description: "Click and drag to capture an area",
+      });
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (!isScreenshotMode) return;
+      const rect = (e.target as HTMLElement).closest('.pdf-container')?.getBoundingClientRect();
+      if (rect) {
+        setScreenshotStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isScreenshotMode || !screenshotStart) return;
+      const rect = (e.target as HTMLElement).closest('.pdf-container')?.getBoundingClientRect();
+      if (rect) {
+        setScreenshotEnd({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      }
+    };
+
+    const handleMouseUp = async (e: MouseEvent) => {
+      if (!isScreenshotMode || !screenshotStart || !screenshotEnd) return;
+      
+      const pdfCanvas = document.querySelector('.react-pdf__Page__canvas') as HTMLCanvasElement;
+      if (!pdfCanvas) return;
+
+      // Create a new canvas for the cropped area
+      const cropCanvas = document.createElement('canvas');
+      const ctx = cropCanvas.getContext('2d');
+      if (!ctx) return;
+
+      const x = Math.min(screenshotStart.x, screenshotEnd.x);
+      const y = Math.min(screenshotStart.y, screenshotEnd.y);
+      const width = Math.abs(screenshotEnd.x - screenshotStart.x);
+      const height = Math.abs(screenshotEnd.y - screenshotStart.y);
+
+      cropCanvas.width = width;
+      cropCanvas.height = height;
+      
+      ctx.drawImage(pdfCanvas, x, y, width, height, 0, 0, width, height);
+      
+      const imageData = cropCanvas.toDataURL('image/png');
+      
+      setIsScreenshotMode(false);
+      setScreenshotStart(null);
+      setScreenshotEnd(null);
+      
+      onImageCapture(imageData);
+      
+      toast({
+        title: "Processing...",
+        description: "Analyzing captured area",
+      });
+    };
+
+    document.addEventListener("dblclick", handleDoubleClick);
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("dblclick", handleDoubleClick);
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isScreenshotMode, screenshotStart, screenshotEnd, onImageCapture, toast]);
 
   const handleSearchClick = () => {
     if (selectedText) {
@@ -95,7 +176,18 @@ export const PDFReader = ({ pdfUrl, onTextSelect }: PDFReaderProps) => {
       </div>
 
       {/* PDF Display - Optimized for space */}
-      <div className="flex-1 flex justify-center overflow-auto bg-muted/10 scrollbar-thin">
+      <div className="flex-1 flex justify-center overflow-auto bg-muted/10 scrollbar-thin pdf-container relative">
+        {isScreenshotMode && screenshotStart && screenshotEnd && (
+          <div
+            className="absolute border-2 border-primary bg-primary/20 pointer-events-none z-50"
+            style={{
+              left: Math.min(screenshotStart.x, screenshotEnd.x),
+              top: Math.min(screenshotStart.y, screenshotEnd.y),
+              width: Math.abs(screenshotEnd.x - screenshotStart.x),
+              height: Math.abs(screenshotEnd.y - screenshotStart.y),
+            }}
+          />
+        )}
         <Document
           file={pdfUrl}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -145,7 +237,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect }: PDFReaderProps) => {
       )}
 
       <div className="text-center text-xs text-muted-foreground mt-2 px-2">
-        💡 Select text (5+ chars) to find videos
+        💡 Select text (5+ chars) or double-click to screenshot area
       </div>
     </div>
   );

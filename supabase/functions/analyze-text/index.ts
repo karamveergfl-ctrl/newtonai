@@ -11,13 +11,61 @@ serve(async (req) => {
   }
 
   try {
-    const { selectedText } = await req.json();
-    console.log("Analyzing selected text:", selectedText);
+    const { selectedText, imageData } = await req.json();
+    console.log("Analyzing request - Text:", selectedText, "Image:", imageData ? "present" : "none");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY not configured");
     }
+
+    let textToAnalyze = selectedText;
+    
+    // If image data is provided, use vision AI to extract text
+    if (imageData) {
+      console.log("Processing image with vision AI...");
+      const visionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "Extract all text, formulas, and describe any diagrams or figures from this image. If it contains mathematical equations or scientific notation, preserve them exactly."
+                },
+                {
+                  type: "image_url",
+                  image_url: { url: imageData }
+                }
+              ]
+            }
+          ],
+        }),
+      });
+
+      if (visionResponse.ok) {
+        const visionData = await visionResponse.json();
+        textToAnalyze = visionData.choices[0].message.content;
+        console.log("Extracted text from image:", textToAnalyze);
+      } else {
+        console.error("Vision AI error:", await visionResponse.text());
+      }
+    }
+    
+    if (!textToAnalyze) {
+      throw new Error("No text to analyze");
+    }
+
+    // Detect if this is a question
+    const isQuestion = /[?]|solve|calculate|find|determine|prove|explain why|what is|how to/i.test(textToAnalyze);
+    console.log("Is question:", isQuestion);
 
     // Use AI to extract the main topic from selected text
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -35,7 +83,7 @@ serve(async (req) => {
           },
           {
             role: "user",
-            content: `Extract the main topic from this text: "${selectedText}"`
+            content: `Extract the main topic from this text: "${textToAnalyze}"`
           }
         ],
       }),
@@ -50,6 +98,68 @@ serve(async (req) => {
     const aiData = await aiResponse.json();
     const topic = aiData.choices[0].message.content.trim();
     console.log("Extracted topic:", topic);
+
+    // Generate solution or description
+    let solution = null;
+    let description = null;
+    
+    if (isQuestion) {
+      console.log("Generating solution for question...");
+      const solutionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert tutor. Provide detailed, step-by-step solutions with clear explanations. Use markdown formatting with proper headings (##), bullet points, and numbered lists. For math, use clear notation."
+            },
+            {
+              role: "user",
+              content: `Provide a comprehensive solution to this question:\n\n${textToAnalyze}`
+            }
+          ],
+        }),
+      });
+
+      if (solutionResponse.ok) {
+        const solutionData = await solutionResponse.json();
+        solution = solutionData.choices[0].message.content;
+        console.log("Generated solution");
+      }
+    } else {
+      console.log("Generating topic description...");
+      const descResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: "You are an educational assistant. Provide brief, clear descriptions of topics in 2-3 sentences. Be concise and informative."
+            },
+            {
+              role: "user",
+              content: `Provide a brief description of: ${textToAnalyze}`
+            }
+          ],
+        }),
+      });
+
+      if (descResponse.ok) {
+        const descData = await descResponse.json();
+        description = descData.choices[0].message.content;
+        console.log("Generated description");
+      }
+    }
 
     // Search YouTube for the topic
     const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
@@ -88,7 +198,11 @@ serve(async (req) => {
       }));
 
     // Search for explanation/theory videos - Focus on lectures and in-depth content
-    const explanationQuery = `${topic} lecture professor theory explained tutorial course`;
+    let explanationQuery = `${topic} lecture professor theory explained tutorial course`;
+    if (isQuestion) {
+      explanationQuery = `${topic} answer solution step by step explained tutorial how to solve`;
+    }
+    
     const explanationResponse = await fetch(
       `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(explanationQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&videoDuration=medium&relevanceLanguage=en&safeSearch=strict&order=relevance`
     );
@@ -124,7 +238,10 @@ serve(async (req) => {
       JSON.stringify({ 
         topic, 
         animationVideos,
-        explanationVideos
+        explanationVideos,
+        solution,
+        description,
+        isQuestion
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

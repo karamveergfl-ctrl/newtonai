@@ -6,6 +6,7 @@ import { PDFReader } from "@/components/PDFReader";
 import { VideoPanel } from "@/components/VideoPanel";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchBox } from "@/components/SearchBox";
+import { SolutionPanel } from "@/components/SolutionPanel";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +30,7 @@ const Index = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [showVideosPanel, setShowVideosPanel] = useState(false);
+  const [solutionData, setSolutionData] = useState<{ content: string; isQuestion: boolean } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -67,7 +69,7 @@ const Index = () => {
     setSelectedVideoId(null);
   };
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = async (query: string, imageData?: string) => {
     setIsSearching(true);
     try {
       const response = await fetch(
@@ -78,7 +80,7 @@ const Index = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ selectedText: query }),
+          body: JSON.stringify({ selectedText: query, imageData }),
         }
       );
 
@@ -91,6 +93,13 @@ const Index = () => {
       setExplanationVideos(data.explanationVideos);
       setSearchQuery(data.topic);
       setShowVideosPanel(true);
+      
+      // Set solution or description
+      if (data.solution) {
+        setSolutionData({ content: data.solution, isQuestion: true });
+      } else if (data.description) {
+        setSolutionData({ content: data.description, isQuestion: false });
+      }
       
       toast({
         title: "Videos Found!",
@@ -112,6 +121,10 @@ const Index = () => {
     handleSearch(selectedText);
   };
 
+  const handleImageCapture = (imageData: string) => {
+    handleSearch("", imageData);
+  };
+
   const handleReset = () => {
     if (pdfData?.pdfUrl) {
       URL.revokeObjectURL(pdfData.pdfUrl);
@@ -122,6 +135,7 @@ const Index = () => {
     setSearchQuery("");
     setSelectedVideoId(null);
     setShowVideosPanel(false);
+    setSolutionData(null);
   };
 
   const handleCloseVideosPanel = () => {
@@ -229,11 +243,19 @@ const Index = () => {
           {/* PDF Viewer - Full width on mobile, half on desktop when panel open */}
           <div className={`flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in ${showVideosPanel ? 'md:w-1/2' : 'flex-1'} ${showVideosPanel ? 'h-1/2 md:h-full' : 'h-full'}`}>
             <SearchBox onSearch={handleSearch} isSearching={isSearching} />
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden relative">
               <PDFReader 
                 pdfUrl={pdfData.pdfUrl} 
                 onTextSelect={handleTextSelect}
+                onImageCapture={handleImageCapture}
               />
+              {solutionData && (
+                <SolutionPanel
+                  content={solutionData.content}
+                  isQuestion={solutionData.isQuestion}
+                  onClose={() => setSolutionData(null)}
+                />
+              )}
             </div>
           </div>
           
