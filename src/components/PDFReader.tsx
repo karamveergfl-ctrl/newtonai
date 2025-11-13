@@ -13,9 +13,10 @@ interface PDFReaderProps {
   pdfUrl: string;
   onTextSelect: (selectedText: string) => void;
   onImageCapture: (imageData: string) => void;
+  onPdfTextExtracted?: (text: string) => void;
 }
 
-export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture }: PDFReaderProps) => {
+export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtracted }: PDFReaderProps) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [selectedText, setSelectedText] = useState<string>("");
@@ -119,6 +120,34 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture }: PDFReaderPro
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isScreenshotMode, screenshotStart, screenshotEnd, onImageCapture, toast]);
+
+  // Extract text from PDF for chat feature
+  useEffect(() => {
+    if (!pdfUrl || !onPdfTextExtracted) return;
+
+    const extractText = async () => {
+      try {
+        const loadingTask = pdfjs.getDocument(pdfUrl);
+        const pdf = await loadingTask.promise;
+        let fullText = "";
+        
+        // Extract text from first 50 pages (to avoid too much data)
+        const maxPages = Math.min(pdf.numPages, 50);
+        for (let i = 1; i <= maxPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item: any) => item.str).join(" ");
+          fullText += pageText + "\n\n";
+        }
+        
+        onPdfTextExtracted(fullText);
+      } catch (error) {
+        console.error("Error extracting PDF text:", error);
+      }
+    };
+
+    extractText();
+  }, [pdfUrl, onPdfTextExtracted]);
 
   const handleSearchClick = () => {
     if (selectedText) {

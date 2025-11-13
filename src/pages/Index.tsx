@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UploadZone } from "@/components/UploadZone";
@@ -7,11 +7,12 @@ import { VideoPanel } from "@/components/VideoPanel";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchBox } from "@/components/SearchBox";
 import { SolutionPanel } from "@/components/SolutionPanel";
+import { StudyTracker } from "@/components/StudyTracker";
+import { PDFChat } from "@/components/PDFChat";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 
 interface Video {
@@ -32,6 +33,8 @@ const Index = () => {
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [showVideosPanel, setShowVideosPanel] = useState(false);
   const [solutionData, setSolutionData] = useState<{ content: string; isQuestion: boolean } | null>(null);
+  const [pdfText, setPdfText] = useState("");
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -62,12 +65,27 @@ const Index = () => {
     navigate("/auth");
   };
 
-  const handleUploadComplete = (data: { pdfUrl: string; pdfName: string }) => {
+  const handleUploadComplete = async (data: { pdfUrl: string; pdfName: string }) => {
     setPdfData(data);
     setAnimationVideos([]);
     setExplanationVideos([]);
     setSearchQuery("");
     setSelectedVideoId(null);
+    
+    // Track study session
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: session } = await supabase
+          .from("study_sessions")
+          .insert({ user_id: user.id, pdf_name: data.pdfName })
+          .select()
+          .single();
+        setCurrentSessionId(session?.id || null);
+      }
+    } catch (error) {
+      console.error("Error tracking session:", error);
+    }
   };
 
   const handleSearch = async (query: string, imageData?: string) => {
@@ -94,6 +112,20 @@ const Index = () => {
       setExplanationVideos(data.explanationVideos);
       setSearchQuery(data.topic);
       setShowVideosPanel(true);
+      
+      // Track search
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from("search_history").insert({
+            user_id: user.id,
+            search_query: data.topic,
+            is_question: data.isQuestion || false,
+          });
+        }
+      } catch (error) {
+        console.error("Error tracking search:", error);
+      }
       
       // Set solution or description
       if (data.solution) {
@@ -191,7 +223,8 @@ const Index = () => {
               />
             </div>
           )}
-          <div className="mt-8">
+          <div className="mt-8 space-y-6">
+            <StudyTracker />
             <UploadZone onUploadComplete={handleUploadComplete} />
           </div>
         </div>
@@ -248,24 +281,15 @@ const Index = () => {
           {/* PDF Viewer - Full width on mobile, half on desktop when panel open */}
           <div className={`flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in ${showVideosPanel ? 'md:w-1/2' : 'flex-1'} ${showVideosPanel ? 'h-1/2 md:h-full' : 'h-full'}`}>
             <SearchBox onSearch={handleSearch} isSearching={isSearching} />
-            <div className="flex-1 overflow-hidden relative">
+            <div className="flex-1 overflow-hidden">
               <PDFReader 
                 pdfUrl={pdfData.pdfUrl} 
                 onTextSelect={handleTextSelect}
                 onImageCapture={handleImageCapture}
+                onPdfTextExtracted={setPdfText}
               />
-              {solutionData && (
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="pointer-events-auto">
-                    <SolutionPanel
-                      content={solutionData.content}
-                      isQuestion={solutionData.isQuestion}
-                      onClose={() => setSolutionData(null)}
-                    />
-                  </div>
-                </div>
-              )}
             </div>
+            <PDFChat pdfText={pdfText} pdfName={pdfData.pdfName} />
           </div>
           
           {/* Fullscreen Video Player */}
@@ -273,16 +297,29 @@ const Index = () => {
             <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
           )}
           
-          {/* Video Panel - Bottom half on mobile, right side on desktop */}
-          {showVideosPanel && (
-            <div className={`bg-card/30 backdrop-blur-sm overflow-hidden animate-fade-in ${showVideosPanel ? 'h-1/2 md:h-full md:w-1/2' : ''}`}>
-              <VideoPanel 
-                animationVideos={animationVideos}
-                explanationVideos={explanationVideos}
-                searchQuery={searchQuery}
-                onVideoClick={handleVideoClick}
-                onClose={handleCloseVideosPanel}
-              />
+          {/* Solution/Video Panels Side by Side */}
+          {(showVideosPanel || solutionData) && (
+            <div className={`flex flex-col md:flex-row overflow-hidden animate-fade-in h-1/2 md:h-full md:w-1/2`}>
+              {solutionData && (
+                <div className={`${showVideosPanel ? 'md:w-1/2 h-1/2 md:h-full' : 'w-full h-full'}`}>
+                  <SolutionPanel
+                    content={solutionData.content}
+                    isQuestion={solutionData.isQuestion}
+                    onClose={() => setSolutionData(null)}
+                  />
+                </div>
+              )}
+              {showVideosPanel && (
+                <div className={`bg-card/30 backdrop-blur-sm ${solutionData ? 'md:w-1/2 h-1/2 md:h-full' : 'w-full h-full'}`}>
+                  <VideoPanel 
+                    animationVideos={animationVideos}
+                    explanationVideos={explanationVideos}
+                    searchQuery={searchQuery}
+                    onVideoClick={handleVideoClick}
+                    onClose={handleCloseVideosPanel}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
