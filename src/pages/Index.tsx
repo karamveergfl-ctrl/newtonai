@@ -277,31 +277,28 @@ const Index = () => {
         </div>
 
         {/* Main Content - Responsive Layout */}
-        <div className={`flex-1 flex flex-col md:flex-row overflow-hidden ${showVideosPanel ? 'md:divide-x' : ''}`}>
-          {/* PDF Viewer - Full width on mobile, half on desktop when panel open */}
-          <div className={`flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in ${showVideosPanel ? 'md:w-1/2' : 'flex-1'} ${showVideosPanel ? 'h-1/2 md:h-full' : 'h-full'}`}>
-            <SearchBox onSearch={handleSearch} isSearching={isSearching} />
-            <div className="flex-1 overflow-hidden">
-              <PDFReader 
-                pdfUrl={pdfData.pdfUrl} 
-                onTextSelect={handleTextSelect}
-                onImageCapture={handleImageCapture}
-                onPdfTextExtracted={setPdfText}
-              />
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          {/* Conditional rendering: Show PDF or Search Results */}
+          {!showVideosPanel && !solutionData ? (
+            // PDF View with Search and Chat
+            <div className="flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in flex-1">
+              <SearchBox onSearch={handleSearch} isSearching={isSearching} />
+              <div className="flex-1 overflow-hidden">
+                <PDFReader 
+                  pdfUrl={pdfData.pdfUrl} 
+                  onTextSelect={handleTextSelect}
+                  onImageCapture={handleImageCapture}
+                  onPdfTextExtracted={setPdfText}
+                />
+              </div>
+              <PDFChat pdfText={pdfText} pdfName={pdfData.pdfName} />
             </div>
-            <PDFChat pdfText={pdfText} pdfName={pdfData.pdfName} />
-          </div>
-          
-          {/* Fullscreen Video Player */}
-          {selectedVideoId && (
-            <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
-          )}
-          
-          {/* Solution/Video Panels Side by Side */}
-          {(showVideosPanel || solutionData) && (
-            <div className={`flex flex-col md:flex-row overflow-hidden animate-fade-in h-1/2 md:h-full md:w-1/2`}>
+          ) : (
+            // Search Results View: Videos and Solution side by side, no PDF
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden animate-fade-in">
+              {/* Solution Panel - Takes half screen */}
               {solutionData && (
-                <div className={`${showVideosPanel ? 'md:w-1/2 h-1/2 md:h-full' : 'w-full h-full'}`}>
+                <div className="h-1/2 md:h-full md:w-1/2">
                   <SolutionPanel
                     content={solutionData.content}
                     isQuestion={solutionData.isQuestion}
@@ -309,8 +306,10 @@ const Index = () => {
                   />
                 </div>
               )}
+              
+              {/* Video Panel - Takes half screen */}
               {showVideosPanel && (
-                <div className={`bg-card/30 backdrop-blur-sm ${solutionData ? 'md:w-1/2 h-1/2 md:h-full' : 'w-full h-full'}`}>
+                <div className={`bg-card/30 backdrop-blur-sm h-1/2 md:h-full ${solutionData ? 'md:w-1/2' : 'md:w-full'}`}>
                   <VideoPanel 
                     animationVideos={animationVideos}
                     explanationVideos={explanationVideos}
@@ -321,6 +320,11 @@ const Index = () => {
                 </div>
               )}
             </div>
+          )}
+          
+          {/* Fullscreen Video Player */}
+          {selectedVideoId && (
+            <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
           )}
         </div>
       </div>
