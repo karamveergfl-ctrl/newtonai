@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -33,28 +32,28 @@ export const SolutionPanel = ({ content, isQuestion, onClose }: SolutionPanelPro
   };
 
   return (
-    <Card className="absolute top-2 left-2 right-2 z-40 bg-card/98 backdrop-blur-md shadow-2xl border-primary/30 animate-fade-in max-h-[calc(100vh-180px)]">
-      <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-border/50 px-3 py-2 flex items-center justify-between">
-        <h3 className="font-semibold text-base">
+    <div className="h-full flex flex-col bg-card border-l animate-fade-in">
+      <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between z-10">
+        <h3 className="font-semibold text-lg">
           {isQuestion ? "📝 Detailed Solution" : "💡 Topic Overview"}
         </h3>
         <Button
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="h-7 w-7 shrink-0"
+          className="h-8 w-8 shrink-0"
         >
           <X className="w-4 h-4" />
         </Button>
       </div>
-      <ScrollArea className="h-full max-h-[calc(100vh-220px)]">
-        <div className="p-4">
+      <ScrollArea className="flex-1">
+        <div className="p-6">
           <div 
             className="prose prose-sm dark:prose-invert max-w-none"
             dangerouslySetInnerHTML={{ __html: formatContent(content) }} 
           />
         </div>
       </ScrollArea>
-    </Card>
+    </div>
   );
 };
