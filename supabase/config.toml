@@ -8,3 +8,15 @@ verify_jwt = false
 
 [functions.analyze-text]
 verify_jwt = false
+
+[functions.chat-with-pdf]
+verify_jwt = false
+
+[functions.text-to-speech]
+verify_jwt = false
+
+[functions.transcribe-audio]
+verify_jwt = false
+
+[functions.ocr-handwriting]
+verify_jwt = false
