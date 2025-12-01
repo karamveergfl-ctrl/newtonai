@@ -6,6 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
 interface OCRSplitViewProps {
   file: File;
   onClose: () => void;
@@ -43,51 +46,72 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
 
   const loadDocument = async () => {
     try {
+      console.log("Loading document:", file.name, "Type:", file.type);
       const fileType = file.type;
       
       if (fileType === "application/pdf") {
+        console.log("Loading as PDF...");
         await loadPDF();
       } else if (fileType.startsWith("image/")) {
+        console.log("Loading as image...");
+        await loadImage();
+      } else {
+        console.log("Unknown file type, trying as image...");
         await loadImage();
       }
+      
+      console.log("Document loaded successfully");
     } catch (error) {
       console.error("Error loading document:", error);
       toast({
         title: "Error",
-        description: "Failed to load document",
+        description: error instanceof Error ? error.message : "Failed to load document",
         variant: "destructive",
       });
     }
   };
 
   const loadPDF = async () => {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const numPages = pdf.numPages;
+    try {
+      console.log("Reading PDF file...");
+      const arrayBuffer = await file.arrayBuffer();
+      console.log("PDF size:", arrayBuffer.byteLength, "bytes");
+      
+      console.log("Initializing PDF.js...");
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      const numPages = pdf.numPages;
+      console.log("PDF loaded, pages:", numPages);
 
-    // Extract all page images
-    const pages: string[] = [];
-    for (let i = 1; i <= numPages; i++) {
-      const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 1.5 });
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d")!;
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
+      // Extract all page images
+      const pages: string[] = [];
+      for (let i = 1; i <= numPages; i++) {
+        console.log(`Rendering page ${i}/${numPages}...`);
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d")!;
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
 
-      await page.render({ canvasContext: context, viewport }).promise;
-      pages.push(canvas.toDataURL());
+        await page.render({ canvasContext: context, viewport }).promise;
+        pages.push(canvas.toDataURL());
+      }
+
+      console.log("All pages rendered successfully");
+      setOriginalPages(pages);
+      setProcessedPages(pages.map((_, i) => ({
+        pageNumber: i,
+        text: "",
+        status: "pending"
+      })));
+
+      // Initialize empty PDF
+      await initializeConvertedPdf();
+    } catch (error) {
+      console.error("Error in loadPDF:", error);
+      throw new Error(`Failed to load PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    setOriginalPages(pages);
-    setProcessedPages(pages.map((_, i) => ({
-      pageNumber: i,
-      text: "",
-      status: "pending"
-    })));
-
-    // Initialize empty PDF
-    await initializeConvertedPdf();
   };
 
   const loadImage = async () => {
