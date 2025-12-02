@@ -5,6 +5,10 @@ import { X, Download, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 // Configure PDF.js worker from node_modules
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -201,43 +205,109 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
       // A4 dimensions: 595 x 842 points
       const page = pdfDoc.addPage([595, 842]);
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       
       // Margins
       const margin = 50;
       const maxWidth = 595 - (2 * margin);
-      const fontSize = 12;
-      const lineHeight = fontSize * 1.5;
-      
-      // Word wrap
-      const words = text.split(/\s+/);
-      const lines: string[] = [];
-      let currentLine = "";
-      
-      for (const word of words) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const width = font.widthOfTextAtSize(testLine, fontSize);
-        
-        if (width > maxWidth && currentLine) {
-          lines.push(currentLine);
-          currentLine = word;
-        } else {
-          currentLine = testLine;
-        }
-      }
-      if (currentLine) lines.push(currentLine);
-      
-      // Draw text
       let y = 842 - margin;
+      
+      // Parse markdown-like formatting
+      const lines = text.split('\n');
+      
       for (const line of lines) {
-        if (y < margin) break; // Don't overflow page
-        page.drawText(line, {
-          x: margin,
-          y,
-          size: fontSize,
-          font,
-          color: rgb(0, 0, 0),
-        });
-        y -= lineHeight;
+        if (y < margin + 20) break; // Don't overflow page
+        
+        let currentFont = font;
+        let fontSize = 12;
+        let lineHeight = fontSize * 1.5;
+        
+        // Detect headings
+        if (line.startsWith('# ')) {
+          currentFont = boldFont;
+          fontSize = 18;
+          lineHeight = fontSize * 1.5;
+          const content = line.substring(2);
+          page.drawText(content, {
+            x: margin,
+            y,
+            size: fontSize,
+            font: currentFont,
+            color: rgb(0, 0, 0),
+          });
+          y -= lineHeight * 1.5;
+          continue;
+        } else if (line.startsWith('## ')) {
+          currentFont = boldFont;
+          fontSize = 16;
+          lineHeight = fontSize * 1.5;
+          const content = line.substring(3);
+          page.drawText(content, {
+            x: margin,
+            y,
+            size: fontSize,
+            font: currentFont,
+            color: rgb(0, 0, 0),
+          });
+          y -= lineHeight * 1.5;
+          continue;
+        } else if (line.startsWith('### ')) {
+          currentFont = boldFont;
+          fontSize = 14;
+          lineHeight = fontSize * 1.5;
+          const content = line.substring(4);
+          page.drawText(content, {
+            x: margin,
+            y,
+            size: fontSize,
+            font: currentFont,
+            color: rgb(0, 0, 0),
+          });
+          y -= lineHeight * 1.3;
+          continue;
+        }
+        
+        // Handle empty lines
+        if (!line.trim()) {
+          y -= lineHeight * 0.5;
+          continue;
+        }
+        
+        // Word wrap for regular text
+        const words = line.split(/\s+/);
+        let currentLine = "";
+        
+        for (const word of words) {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const width = font.widthOfTextAtSize(testLine, fontSize);
+          
+          if (width > maxWidth && currentLine) {
+            page.drawText(currentLine, {
+              x: margin,
+              y,
+              size: fontSize,
+              font,
+              color: rgb(0, 0, 0),
+            });
+            y -= lineHeight;
+            currentLine = word;
+            
+            if (y < margin) break;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        
+        if (currentLine && y >= margin) {
+          page.drawText(currentLine, {
+            x: margin,
+            y,
+            size: fontSize,
+            font,
+            color: rgb(0, 0, 0),
+          });
+          y -= lineHeight;
+        }
       }
       
       const updatedPdfBytes = await pdfDoc.save();
@@ -351,9 +421,29 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
               )}
 
               {currentProcessedPage?.status === "completed" && (
-                <Card className="max-w-[595px] mx-auto aspect-[1/1.414] p-12 bg-white text-black shadow-lg">
-                  <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {currentProcessedPage.text}
+                <Card className="max-w-[595px] mx-auto aspect-[1/1.414] p-12 bg-white text-black shadow-lg overflow-auto">
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkMath]}
+                      rehypePlugins={[rehypeKatex]}
+                      components={{
+                        h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4 text-black" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 text-black" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-lg font-semibold mb-2 text-black" {...props} />,
+                        p: ({node, ...props}) => <p className="mb-3 text-black leading-relaxed" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-disc ml-6 mb-3 text-black" {...props} />,
+                        ol: ({node, ...props}) => <ol className="list-decimal ml-6 mb-3 text-black" {...props} />,
+                        li: ({node, ...props}) => <li className="mb-1 text-black" {...props} />,
+                        strong: ({node, ...props}) => <strong className="font-bold text-black" {...props} />,
+                        em: ({node, ...props}) => <em className="italic text-black" {...props} />,
+                        code: ({node, ...props}) => <code className="bg-gray-100 px-1 rounded text-black" {...props} />,
+                        table: ({node, ...props}) => <table className="border-collapse border border-gray-300 my-3 text-black" {...props} />,
+                        th: ({node, ...props}) => <th className="border border-gray-300 px-2 py-1 bg-gray-50 text-black" {...props} />,
+                        td: ({node, ...props}) => <td className="border border-gray-300 px-2 py-1 text-black" {...props} />,
+                      }}
+                    >
+                      {currentProcessedPage.text}
+                    </ReactMarkdown>
                   </div>
                 </Card>
               )}

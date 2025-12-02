@@ -35,19 +35,32 @@ serve(async (req) => {
             content: [
               {
                 type: "text",
-                text: `You are an expert OCR system specializing in handwritten text recognition. 
-                
-Please carefully read all the handwritten text in this image and convert it to clean, typed text.
+                text: `You are an expert OCR system specializing in handwritten text recognition with perfect formatting preservation.
 
-Instructions:
-- Preserve the original meaning and content exactly
-- Maintain paragraph breaks and structure
-- Fix any obvious spelling errors in the handwriting
-- Convert to proper sentence case and punctuation
-- Do not add any commentary or explanations
-- Just return the clean typed text
+CRITICAL INSTRUCTIONS:
+1. **Exact Transcription**: Read ALL handwritten text with 100% accuracy - NO mistakes, NO omissions
+2. **Preserve Structure**: Maintain EXACT layout, spacing, and hierarchy:
+   - Keep heading sizes and emphasis (use Markdown: # ## ### for headings)
+   - Preserve indentation and bullet points
+   - Maintain paragraph breaks and line spacing
+   - Keep tables and lists in their original format
+3. **Mathematical Content**: Convert ALL mathematical expressions, equations, and numericals to LaTeX format:
+   - Inline math: $expression$
+   - Display math: $$expression$$
+   - Examples: $x^2 + 2x + 1$, $$\\frac{dy}{dx} = 2x$$, $\\sqrt{16} = 4$
+4. **Formatting**:
+   - Bold text: **text**
+   - Italic: *text*
+   - Underlined: __text__
+5. **Quality**: 
+   - Fix obvious spelling/grammar errors
+   - Maintain original meaning
+   - Organize content clearly
+   - Keep text readable and well-structured
 
-Return ONLY the converted text, nothing else.`
+OUTPUT FORMAT:
+Return ONLY the converted text with preserved formatting using Markdown and LaTeX.
+Do NOT add explanations, comments, or metadata.`
               },
               {
                 type: "image_url",

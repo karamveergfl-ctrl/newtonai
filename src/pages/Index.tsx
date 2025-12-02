@@ -188,17 +188,38 @@ const Index = () => {
   };
 
   const handleOCRUpload = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*,application/pdf";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        setOcrFile(file);
-        setShowOCRView(true);
-      }
-    };
-    input.click();
+    // If PDF is already loaded, use that PDF for OCR
+    if (pdfData) {
+      // Convert PDF URL to File object
+      fetch(pdfData.pdfUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], pdfData.pdfName, { type: 'application/pdf' });
+          setOcrFile(file);
+          setShowOCRView(true);
+        })
+        .catch(error => {
+          console.error("Error loading PDF for OCR:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load PDF for OCR processing",
+            variant: "destructive",
+          });
+        });
+    } else {
+      // No PDF loaded, show file picker
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,application/pdf";
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          setOcrFile(file);
+          setShowOCRView(true);
+        }
+      };
+      input.click();
+    }
   };
 
   const handleCloseOCR = () => {
