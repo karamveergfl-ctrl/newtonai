@@ -195,6 +195,8 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
       });
 
       const pdf = new jsPDF('p', 'mm', 'a4');
+      const a4Width = 210; // mm
+      const a4Height = 297; // mm
       let isFirstPage = true;
 
       for (let i = 0; i < processedPages.length; i++) {
@@ -204,24 +206,43 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
         const element = pageRefs.current[i];
         if (!element) continue;
 
-        // Capture the rendered content as canvas
+        // Capture the rendered content as canvas with high quality
         const canvas = await html2canvas(element, {
-          scale: 2,
+          scale: 3, // Higher scale for better quality
           useCORS: true,
           logging: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          windowWidth: element.scrollWidth,
+          windowHeight: element.scrollHeight,
         });
 
-        const imgData = canvas.toDataURL('image/png');
-        const imgWidth = 210; // A4 width in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        
+        // Calculate dimensions to fit A4 while maintaining aspect ratio
+        const canvasAspect = canvas.width / canvas.height;
+        const a4Aspect = a4Width / a4Height;
+        
+        let imgWidth = a4Width;
+        let imgHeight = a4Height;
+        
+        if (canvasAspect > a4Aspect) {
+          // Canvas is wider - fit to width
+          imgHeight = a4Width / canvasAspect;
+        } else {
+          // Canvas is taller - fit to height
+          imgWidth = a4Height * canvasAspect;
+        }
 
         if (!isFirstPage) {
           pdf.addPage();
         }
         isFirstPage = false;
 
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        // Center the image on the page
+        const xOffset = (a4Width - imgWidth) / 2;
+        const yOffset = 0;
+        
+        pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
       }
 
       pdf.save(`converted_${file.name.replace(/\.[^/.]+$/, "")}_A4.pdf`);
