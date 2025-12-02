@@ -43,23 +43,30 @@ CRITICAL INSTRUCTIONS:
    - Keep heading sizes and emphasis (use Markdown: # ## ### for headings)
    - Preserve indentation and bullet points
    - Maintain paragraph breaks and line spacing
-   - Keep tables and lists in their original format
-3. **Mathematical Content**: Convert ALL mathematical expressions, equations, and numericals to LaTeX format:
+3. **Tables**: If you see ANY tabular data or grid-like content:
+   - Convert to proper Markdown table format
+   - Use | for columns and --- for header separator
+   - Example:
+     | Header 1 | Header 2 | Header 3 |
+     |----------|----------|----------|
+     | Data 1   | Data 2   | Data 3   |
+4. **Mathematical Content**: Convert ALL mathematical expressions, equations, and numericals to LaTeX format:
    - Inline math: $expression$
    - Display math: $$expression$$
    - Examples: $x^2 + 2x + 1$, $$\\frac{dy}{dx} = 2x$$, $\\sqrt{16} = 4$
-4. **Formatting**:
+5. **Formatting**:
    - Bold text: **text**
    - Italic: *text*
    - Underlined: __text__
-5. **Quality**: 
+   - Lists: Use - or 1. 2. 3. for ordered lists
+6. **Quality**: 
    - Fix obvious spelling/grammar errors
    - Maintain original meaning
    - Organize content clearly
    - Keep text readable and well-structured
 
 OUTPUT FORMAT:
-Return ONLY the converted text with preserved formatting using Markdown and LaTeX.
+Return ONLY the converted text with preserved formatting using Markdown, tables, and LaTeX.
 Do NOT add explanations, comments, or metadata.`
               },
               {
