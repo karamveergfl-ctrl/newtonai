@@ -9,6 +9,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 // Configure PDF.js worker from node_modules
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -32,12 +34,12 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
   const [originalPages, setOriginalPages] = useState<string[]>([]);
   const [processedPages, setProcessedPages] = useState<ProcessedPage[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
-  const [convertedPdfBytes, setConvertedPdfBytes] = useState<Uint8Array | null>(null);
   const [showLeft, setShowLeft] = useState(true);
   const [showRight, setShowRight] = useState(true);
   const { toast } = useToast();
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
+  const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     loadDocument();
@@ -107,14 +109,13 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
 
       console.log("All pages rendered successfully");
       setOriginalPages(pages);
-      setProcessedPages(pages.map((_, i) => ({
+      const initialPages = pages.map((_, i) => ({
         pageNumber: i,
         text: "",
-        status: "pending"
-      })));
-
-      // Initialize empty PDF
-      await initializeConvertedPdf();
+        status: "pending" as const
+      }));
+      setProcessedPages(initialPages);
+      pageRefs.current = new Array(pages.length).fill(null);
     } catch (error) {
       console.error("Error in loadPDF:", error);
       throw new Error(`Failed to load PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -129,14 +130,7 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
       text: "",
       status: "pending"
     }]);
-
-    await initializeConvertedPdf();
-  };
-
-  const initializeConvertedPdf = async () => {
-    const pdfDoc = await PDFDocument.create();
-    const pdfBytes = await pdfDoc.save();
-    setConvertedPdfBytes(pdfBytes);
+    pageRefs.current = [null];
   };
 
   const processPage = async (pageIndex: number) => {
@@ -175,9 +169,6 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
         i === pageIndex ? { ...p, text, status: "completed" as const } : p
       ));
 
-      // Add to converted PDF
-      await addPageToConvertedPdf(text);
-
       toast({
         title: "Page Rewritten",
         description: `Page ${pageIndex + 1} converted successfully`,
@@ -196,144 +187,59 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
     }
   };
 
-  const addPageToConvertedPdf = async (text: string) => {
-    if (!convertedPdfBytes) return;
-
+  const downloadConvertedPdf = async () => {
     try {
-      const pdfDoc = await PDFDocument.load(convertedPdfBytes);
-      
-      // A4 dimensions: 595 x 842 points
-      const page = pdfDoc.addPage([595, 842]);
-      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-      
-      // Margins
-      const margin = 50;
-      const maxWidth = 595 - (2 * margin);
-      let y = 842 - margin;
-      
-      // Parse markdown-like formatting
-      const lines = text.split('\n');
-      
-      for (const line of lines) {
-        if (y < margin + 20) break; // Don't overflow page
-        
-        let currentFont = font;
-        let fontSize = 12;
-        let lineHeight = fontSize * 1.5;
-        
-        // Detect headings
-        if (line.startsWith('# ')) {
-          currentFont = boldFont;
-          fontSize = 18;
-          lineHeight = fontSize * 1.5;
-          const content = line.substring(2);
-          page.drawText(content, {
-            x: margin,
-            y,
-            size: fontSize,
-            font: currentFont,
-            color: rgb(0, 0, 0),
-          });
-          y -= lineHeight * 1.5;
-          continue;
-        } else if (line.startsWith('## ')) {
-          currentFont = boldFont;
-          fontSize = 16;
-          lineHeight = fontSize * 1.5;
-          const content = line.substring(3);
-          page.drawText(content, {
-            x: margin,
-            y,
-            size: fontSize,
-            font: currentFont,
-            color: rgb(0, 0, 0),
-          });
-          y -= lineHeight * 1.5;
-          continue;
-        } else if (line.startsWith('### ')) {
-          currentFont = boldFont;
-          fontSize = 14;
-          lineHeight = fontSize * 1.5;
-          const content = line.substring(4);
-          page.drawText(content, {
-            x: margin,
-            y,
-            size: fontSize,
-            font: currentFont,
-            color: rgb(0, 0, 0),
-          });
-          y -= lineHeight * 1.3;
-          continue;
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we create your PDF...",
+      });
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      let isFirstPage = true;
+
+      for (let i = 0; i < processedPages.length; i++) {
+        const page = processedPages[i];
+        if (page.status !== "completed" || !pageRefs.current[i]) continue;
+
+        const element = pageRefs.current[i];
+        if (!element) continue;
+
+        // Capture the rendered content as canvas
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        if (!isFirstPage) {
+          pdf.addPage();
         }
-        
-        // Handle empty lines
-        if (!line.trim()) {
-          y -= lineHeight * 0.5;
-          continue;
-        }
-        
-        // Word wrap for regular text
-        const words = line.split(/\s+/);
-        let currentLine = "";
-        
-        for (const word of words) {
-          const testLine = currentLine ? `${currentLine} ${word}` : word;
-          const width = font.widthOfTextAtSize(testLine, fontSize);
-          
-          if (width > maxWidth && currentLine) {
-            page.drawText(currentLine, {
-              x: margin,
-              y,
-              size: fontSize,
-              font,
-              color: rgb(0, 0, 0),
-            });
-            y -= lineHeight;
-            currentLine = word;
-            
-            if (y < margin) break;
-          } else {
-            currentLine = testLine;
-          }
-        }
-        
-        if (currentLine && y >= margin) {
-          page.drawText(currentLine, {
-            x: margin,
-            y,
-            size: fontSize,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          y -= lineHeight;
-        }
+        isFirstPage = false;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       }
-      
-      const updatedPdfBytes = await pdfDoc.save();
-      setConvertedPdfBytes(updatedPdfBytes);
+
+      pdf.save(`converted_${file.name.replace(/\.[^/.]+$/, "")}_A4.pdf`);
+
+      toast({
+        title: "Downloaded",
+        description: "Converted A4 PDF downloaded successfully",
+      });
     } catch (error) {
-      console.error("Error adding page to PDF:", error);
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive",
+      });
     }
   };
 
-  const downloadConvertedPdf = () => {
-    if (!convertedPdfBytes) return;
-
-    // Convert Uint8Array to regular array for Blob
-    const blob = new Blob([new Uint8Array(convertedPdfBytes)], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `converted_${file.name.replace(/\.[^/.]+$/, "")}_A4.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Downloaded",
-      description: "Converted A4 PDF downloaded successfully",
-    });
-  };
 
   const handleTextSelection = (panel: "left" | "right") => {
     const selection = window.getSelection();
@@ -421,7 +327,10 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
               )}
 
               {currentProcessedPage?.status === "completed" && (
-                <Card className="max-w-[595px] mx-auto aspect-[1/1.414] p-12 bg-white text-black shadow-lg overflow-auto">
+                <Card 
+                  ref={(el) => { pageRefs.current[currentPage] = el; }}
+                  className="max-w-[595px] mx-auto aspect-[1/1.414] p-12 bg-white text-black shadow-lg overflow-auto"
+                >
                   <div className="prose prose-sm max-w-none">
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
