@@ -94,13 +94,19 @@ const Index = () => {
   const handleSearch = async (query: string, imageData?: string) => {
     setIsSearching(true);
     try {
+      // Get user's access token for authenticated API call
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-text`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${authSession.access_token}`,
           },
           body: JSON.stringify({ selectedText: query, imageData }),
         }
