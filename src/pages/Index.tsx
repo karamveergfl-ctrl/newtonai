@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UploadZone } from "@/components/UploadZone";
 import { PDFReader } from "@/components/PDFReader";
+import { ImageViewer } from "@/components/ImageViewer";
 import { VideoPanel } from "@/components/VideoPanel";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchBox } from "@/components/SearchBox";
@@ -26,7 +27,13 @@ interface Video {
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
-  const [pdfData, setPdfData] = useState<{ pdfUrl: string; pdfName: string } | null>(null);
+  const [fileData, setFileData] = useState<{ 
+    url: string; 
+    name: string; 
+    isPdf: boolean;
+    isHandwritten?: boolean;
+    ocrText?: string;
+  } | null>(null);
   const [animationVideos, setAnimationVideos] = useState<Video[]>([]);
   const [explanationVideos, setExplanationVideos] = useState<Video[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,8 +75,16 @@ const Index = () => {
     navigate("/auth");
   };
 
-  const handleUploadComplete = async (data: { pdfUrl: string; pdfName: string }) => {
-    setPdfData(data);
+  const handleUploadComplete = async (data: { pdfUrl: string; pdfName: string; isHandwritten?: boolean; ocrText?: string }) => {
+    const isPdf = data.pdfName.toLowerCase().endsWith('.pdf');
+    
+    setFileData({
+      url: data.pdfUrl,
+      name: data.pdfName,
+      isPdf,
+      isHandwritten: data.isHandwritten,
+      ocrText: data.ocrText
+    });
     setAnimationVideos([]);
     setExplanationVideos([]);
     setSearchQuery("");
@@ -168,16 +183,17 @@ const Index = () => {
   };
 
   const handleReset = () => {
-    if (pdfData?.pdfUrl) {
-      URL.revokeObjectURL(pdfData.pdfUrl);
+    if (fileData?.url) {
+      URL.revokeObjectURL(fileData.url);
     }
-    setPdfData(null);
+    setFileData(null);
     setAnimationVideos([]);
     setExplanationVideos([]);
     setSearchQuery("");
     setSelectedVideoId(null);
     setShowVideosPanel(false);
     setSolutionData(null);
+    setPdfText("");
   };
 
   const handleCloseVideosPanel = () => {
@@ -194,26 +210,27 @@ const Index = () => {
   };
 
   const handleOCRUpload = () => {
-    // If PDF is already loaded, use that PDF for OCR
-    if (pdfData) {
-      // Convert PDF URL to File object
-      fetch(pdfData.pdfUrl)
+    // If file is already loaded, use that for OCR
+    if (fileData) {
+      // Convert file URL to File object
+      fetch(fileData.url)
         .then(res => res.blob())
         .then(blob => {
-          const file = new File([blob], pdfData.pdfName, { type: 'application/pdf' });
+          const mimeType = fileData.isPdf ? 'application/pdf' : 'image/png';
+          const file = new File([blob], fileData.name, { type: mimeType });
           setOcrFile(file);
           setShowOCRView(true);
         })
         .catch(error => {
-          console.error("Error loading PDF for OCR:", error);
+          console.error("Error loading file for OCR:", error);
           toast({
             title: "Error",
-            description: "Failed to load PDF for OCR processing",
+            description: "Failed to load file for OCR processing",
             variant: "destructive",
           });
         });
     } else {
-      // No PDF loaded, show file picker
+      // No file loaded, show file picker
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*,application/pdf";
@@ -237,7 +254,7 @@ const Index = () => {
     return null; // Auth redirect will happen in useEffect
   }
 
-  if (!pdfData) {
+  if (!fileData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
         <div className="p-4 border-b bg-card/50 backdrop-blur-sm">
@@ -314,10 +331,10 @@ const Index = () => {
                 className="gap-1 h-8 shrink-0"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline text-xs">New PDF</span>
+                <span className="hidden sm:inline text-xs">New File</span>
               </Button>
               <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent truncate">
-                {pdfData.pdfName}
+                {fileData.name}
               </h1>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -352,20 +369,30 @@ const Index = () => {
 
         {/* Main Content - Responsive Layout */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-          {/* Conditional rendering: Show PDF or Search Results */}
+          {/* Conditional rendering: Show PDF/Image or Search Results */}
           {!showVideosPanel && !solutionData ? (
-            // PDF View with Search and Chat
+            // File View with Search and Chat
             <div className="flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in flex-1">
               <SearchBox onSearch={handleSearch} isSearching={isSearching} />
               <div className="flex-1 overflow-hidden">
-                <PDFReader 
-                  pdfUrl={pdfData.pdfUrl} 
-                  onTextSelect={handleTextSelect}
-                  onImageCapture={handleImageCapture}
-                  onPdfTextExtracted={setPdfText}
-                />
+                {fileData.isPdf ? (
+                  <PDFReader 
+                    pdfUrl={fileData.url} 
+                    onTextSelect={handleTextSelect}
+                    onImageCapture={handleImageCapture}
+                    onPdfTextExtracted={setPdfText}
+                  />
+                ) : (
+                  <ImageViewer
+                    imageUrl={fileData.url}
+                    imageName={fileData.name}
+                    ocrText={fileData.ocrText}
+                    onTextSelect={handleTextSelect}
+                    onImageCapture={handleImageCapture}
+                  />
+                )}
               </div>
-              <PDFChat pdfText={pdfText} pdfName={pdfData.pdfName} />
+              {fileData.isPdf && <PDFChat pdfText={pdfText} pdfName={fileData.name} />}
             </div>
           ) : (
             // Search Results View: Videos and Solution side by side, no PDF
