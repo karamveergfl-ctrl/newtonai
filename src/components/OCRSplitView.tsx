@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X, Download, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import ReactMarkdown from 'react-markdown';
@@ -145,14 +146,20 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
     try {
       const imageData = originalPages[pageIndex];
       
-      // Call OCR edge function
+      // Get user's access token for authenticated API call
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+      
+      // Call OCR edge function with user's JWT token
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-handwriting`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${authSession.access_token}`,
           },
           body: JSON.stringify({ imageData }),
         }
