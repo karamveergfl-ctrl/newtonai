@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Download, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Download, Loader2, ChevronLeft, ChevronRight, FileText, FileType, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -12,6 +11,12 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Configure PDF.js worker from node_modules
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -37,6 +42,8 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
   const [currentPage, setCurrentPage] = useState(0);
   const [showLeft, setShowLeft] = useState(true);
   const [showRight, setShowRight] = useState(true);
+  const [selectedText, setSelectedText] = useState("");
+  const [showSearchPrompt, setShowSearchPrompt] = useState(false);
   const { toast } = useToast();
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
@@ -194,16 +201,17 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
     }
   };
 
-  const downloadConvertedPdf = async () => {
+  const downloadAsPDF = async () => {
     try {
       toast({
         title: "Generating PDF",
-        description: "Please wait while we create your PDF...",
+        description: "Please wait while we create your A4 PDF...",
       });
 
       const pdf = new jsPDF('p', 'mm', 'a4');
       const a4Width = 210; // mm
       const a4Height = 297; // mm
+      const margin = 10; // mm margin
       let isFirstPage = true;
 
       for (let i = 0; i < processedPages.length; i++) {
@@ -215,7 +223,7 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
 
         // Capture the rendered content as canvas with high quality
         const canvas = await html2canvas(element, {
-          scale: 3, // Higher scale for better quality
+          scale: 4, // Very high scale for crisp text
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
@@ -225,19 +233,19 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
 
         const imgData = canvas.toDataURL('image/png', 1.0);
         
-        // Calculate dimensions to fit A4 while maintaining aspect ratio
+        // Calculate dimensions to fit A4 with margins
+        const availableWidth = a4Width - (margin * 2);
+        const availableHeight = a4Height - (margin * 2);
         const canvasAspect = canvas.width / canvas.height;
-        const a4Aspect = a4Width / a4Height;
+        const a4Aspect = availableWidth / availableHeight;
         
-        let imgWidth = a4Width;
-        let imgHeight = a4Height;
+        let imgWidth = availableWidth;
+        let imgHeight = availableHeight;
         
         if (canvasAspect > a4Aspect) {
-          // Canvas is wider - fit to width
-          imgHeight = a4Width / canvasAspect;
+          imgHeight = availableWidth / canvasAspect;
         } else {
-          // Canvas is taller - fit to height
-          imgWidth = a4Height * canvasAspect;
+          imgWidth = availableHeight * canvasAspect;
         }
 
         if (!isFirstPage) {
@@ -245,18 +253,18 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
         }
         isFirstPage = false;
 
-        // Center the image on the page
+        // Center the image on the page with margins
         const xOffset = (a4Width - imgWidth) / 2;
-        const yOffset = 0;
+        const yOffset = margin;
         
         pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
       }
 
-      pdf.save(`converted_${file.name.replace(/\.[^/.]+$/, "")}_A4.pdf`);
+      pdf.save(`rewritten_${file.name.replace(/\.[^/.]+$/, "")}_A4.pdf`);
 
       toast({
         title: "Downloaded",
-        description: "Converted A4 PDF downloaded successfully",
+        description: "A4 PDF downloaded successfully",
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -268,17 +276,74 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
     }
   };
 
+  const downloadAsTXT = () => {
+    try {
+      // Combine all completed pages text
+      const allText = processedPages
+        .filter(p => p.status === "completed")
+        .map((p, i) => `--- Page ${i + 1} ---\n\n${p.text}`)
+        .join('\n\n');
 
-  const handleTextSelection = (panel: "left" | "right") => {
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
-    
-    if (selectedText && onTextSelect) {
-      onTextSelect(selectedText);
+      if (!allText.trim()) {
+        toast({
+          title: "No Content",
+          description: "No rewritten pages available to download",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const blob = new Blob([allText], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `rewritten_${file.name.replace(/\.[^/.]+$/, "")}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Downloaded",
+        description: "Text file downloaded successfully",
+      });
+    } catch (error) {
+      console.error("Error generating TXT:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate text file",
+        variant: "destructive",
+      });
     }
   };
 
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    const text = selection?.toString().trim();
+    
+    if (text && text.length >= 3) {
+      setSelectedText(text);
+      setShowSearchPrompt(true);
+    }
+  };
+
+  const handleSearch = () => {
+    if (selectedText && onTextSelect) {
+      onTextSelect(selectedText);
+      setShowSearchPrompt(false);
+      setSelectedText("");
+      window.getSelection()?.removeAllRanges();
+    }
+  };
+
+  const handleDismissSearch = () => {
+    setShowSearchPrompt(false);
+    setSelectedText("");
+    window.getSelection()?.removeAllRanges();
+  };
+
   const currentProcessedPage = processedPages[currentPage];
+  const hasCompletedPages = processedPages.some(p => p.status === "completed");
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
@@ -318,10 +383,25 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
             </div>
           )}
           
-          <Button onClick={downloadConvertedPdf} variant="default" size="sm">
-            <Download className="w-4 h-4 mr-1" />
-            Download Converted PDF (A4)
-          </Button>
+          {/* Download dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default" size="sm" disabled={!hasCompletedPages}>
+                <Download className="w-4 h-4 mr-1" />
+                Download
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={downloadAsPDF}>
+                <FileText className="w-4 h-4 mr-2" />
+                Download as PDF (A4)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={downloadAsTXT}>
+                <FileType className="w-4 h-4 mr-2" />
+                Download as TXT
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -343,7 +423,7 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
             <div
               ref={leftPanelRef}
               className="flex-1 overflow-auto p-8"
-              onMouseUp={() => handleTextSelection("left")}
+              onMouseUp={handleTextSelection}
             >
               {currentProcessedPage?.status === "processing" && (
                 <div className="flex items-center justify-center h-full">
@@ -359,7 +439,7 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
                   ref={(el) => { pageRefs.current[currentPage] = el; }}
                   className="max-w-[595px] mx-auto aspect-[1/1.414] p-12 bg-white text-black shadow-lg overflow-auto"
                 >
-                  <div className="prose prose-sm max-w-none">
+                  <div className="prose prose-sm max-w-none select-text cursor-text">
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
                       rehypePlugins={[rehypeKatex]}
@@ -373,9 +453,9 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
                         li: ({node, ...props}) => <li className="mb-1 text-black" {...props} />,
                         strong: ({node, ...props}) => <strong className="font-bold text-black" {...props} />,
                         em: ({node, ...props}) => <em className="italic text-black" {...props} />,
-                        code: ({node, ...props}) => <code className="bg-gray-100 px-1 rounded text-black" {...props} />,
-                        table: ({node, ...props}) => <table className="border-collapse border border-gray-300 my-3 text-black" {...props} />,
-                        th: ({node, ...props}) => <th className="border border-gray-300 px-2 py-1 bg-gray-50 text-black" {...props} />,
+                        code: ({node, ...props}) => <code className="bg-gray-100 px-1 rounded text-black font-mono text-sm" {...props} />,
+                        table: ({node, ...props}) => <table className="border-collapse border border-gray-300 my-3 text-black w-full" {...props} />,
+                        th: ({node, ...props}) => <th className="border border-gray-300 px-2 py-1 bg-gray-50 text-black font-semibold" {...props} />,
                         td: ({node, ...props}) => <td className="border border-gray-300 px-2 py-1 text-black" {...props} />,
                       }}
                     >
@@ -420,7 +500,6 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
             <div
               ref={rightPanelRef}
               className="flex-1 overflow-auto p-4"
-              onMouseUp={() => handleTextSelection("right")}
             >
               <img
                 src={originalPages[currentPage]}
@@ -447,6 +526,41 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
             </Button>
           </div>
         )}
+      </div>
+
+      {/* Search prompt for selected text */}
+      {showSearchPrompt && (
+        <Card className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-sm w-11/12 md:max-w-md">
+          <div className="space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground mb-1">Selected text:</p>
+                <p className="text-sm font-medium line-clamp-2 break-words">{selectedText}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDismissSearch}
+                className="h-6 w-6 shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <Button 
+              onClick={handleSearch}
+              className="w-full gap-2"
+              size="sm"
+            >
+              <Search className="w-4 h-4" />
+              Find Videos
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* Instructions */}
+      <div className="text-center text-xs text-muted-foreground py-2 px-2 border-t">
+        💡 Select text from the rewritten document to search for videos
       </div>
     </div>
   );
