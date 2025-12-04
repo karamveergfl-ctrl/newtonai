@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Download, Loader2, ChevronLeft, ChevronRight, FileText, FileType, Search, Camera } from "lucide-react";
+import { X, Download, Loader2, ChevronLeft, ChevronRight, FileText, FileType, Search, Camera, Play, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import * as pdfjsLib from "pdfjs-dist";
@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Configure PDF.js worker from node_modules
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -36,6 +37,23 @@ interface ProcessedPage {
   status: "pending" | "processing" | "completed" | "error";
 }
 
+interface VideoResult {
+  id: string;
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  channelTitle: string;
+}
+
+interface AnalysisResult {
+  topic: string;
+  animationVideos: VideoResult[];
+  explanationVideos: VideoResult[];
+  solution: string | null;
+  description: string | null;
+  isQuestion: boolean;
+}
+
 export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps) => {
   const [originalPages, setOriginalPages] = useState<string[]>([]);
   const [processedPages, setProcessedPages] = useState<ProcessedPage[]>([]);
@@ -48,6 +66,9 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
   const [screenshotMode, setScreenshotMode] = useState(false);
   const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<{ x: number; y: number } | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const { toast } = useToast();
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
@@ -262,8 +283,13 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
       return;
     }
 
+    setScreenshotMode(false);
+    setSelectionStart(null);
+    setSelectionEnd(null);
+    setIsAnalyzing(true);
+
     try {
-      toast({ title: "Capturing...", description: "Processing screenshot" });
+      toast({ title: "Analyzing...", description: "Extracting text and finding solutions" });
 
       const canvas = await html2canvas(rightPanelRef.current, {
         scale: 2,
@@ -279,38 +305,39 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
 
       const imageData = canvas.toDataURL('image/png');
       
-      // Send to OCR for text extraction
+      // Send to analyze-text for full analysis (OCR + topic extraction + videos + solution)
       const { data: { session: authSession } } = await supabase.auth.getSession();
       if (authSession?.access_token) {
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-handwriting`,
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-text`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${authSession.access_token}`,
             },
-            body: JSON.stringify({ imageData, detectOnly: true }),
+            body: JSON.stringify({ imageData }),
           }
         );
 
         if (response.ok) {
-          const { text } = await response.json();
-          if (text && onTextSelect) {
-            onTextSelect(text);
-            toast({ title: "Text Extracted", description: "Searching for videos..." });
-          }
+          const result = await response.json();
+          setAnalysisResult(result);
+          toast({ 
+            title: "Analysis Complete", 
+            description: `Found ${result.animationVideos.length + result.explanationVideos.length} videos` 
+          });
+        } else {
+          throw new Error("Analysis failed");
         }
       }
     } catch (error) {
-      console.error("Screenshot error:", error);
-      toast({ title: "Error", description: "Failed to capture screenshot", variant: "destructive" });
+      console.error("Screenshot analysis error:", error);
+      toast({ title: "Error", description: "Failed to analyze screenshot", variant: "destructive" });
     }
 
-    setScreenshotMode(false);
-    setSelectionStart(null);
-    setSelectionEnd(null);
-  }, [screenshotMode, selectionStart, selectionEnd, onTextSelect, toast]);
+    setIsAnalyzing(false);
+  }, [screenshotMode, selectionStart, selectionEnd, toast]);
 
   const downloadAsPDF = async () => {
     try {
@@ -673,7 +700,159 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
             </Button>
           </div>
         )}
+
+        {/* Analysis Results Panel */}
+        {(analysisResult || isAnalyzing) && (
+          <div className="w-[400px] border-l flex flex-col bg-card">
+            <div className="border-b p-3 flex items-center justify-between bg-card/50">
+              <h3 className="font-semibold text-sm">
+                {isAnalyzing ? "Analyzing..." : `🎯 ${analysisResult?.topic || "Results"}`}
+              </h3>
+              <Button
+                onClick={() => { setAnalysisResult(null); setPlayingVideoId(null); }}
+                variant="ghost"
+                size="sm"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {isAnalyzing ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-muted-foreground">Finding best solutions...</p>
+                </div>
+              </div>
+            ) : analysisResult && (
+              <ScrollArea className="flex-1">
+                <div className="p-4 space-y-4">
+                  {/* Solution/Description with LaTeX */}
+                  {(analysisResult.solution || analysisResult.description) && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold flex items-center gap-2">
+                        📝 {analysisResult.isQuestion ? "Step-by-Step Solution" : "Overview"}
+                      </h4>
+                      <Card className="p-4 bg-muted/30">
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkMath]}
+                            rehypePlugins={[rehypeKatex]}
+                            components={{
+                              h2: ({node, ...props}) => <h2 className="text-base font-bold mt-3 mb-2 text-foreground" {...props} />,
+                              h3: ({node, ...props}) => <h3 className="text-sm font-semibold mt-2 mb-1 text-foreground" {...props} />,
+                              p: ({node, ...props}) => <p className="mb-2 text-sm text-foreground leading-relaxed" {...props} />,
+                              strong: ({node, ...props}) => <strong className="font-semibold text-primary" {...props} />,
+                              code: ({node, ...props}) => <code className="bg-background px-1 rounded text-sm" {...props} />,
+                              ul: ({node, ...props}) => <ul className="list-disc ml-4 mb-2 text-sm" {...props} />,
+                              ol: ({node, ...props}) => <ol className="list-decimal ml-4 mb-2 text-sm" {...props} />,
+                              li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                            }}
+                          >
+                            {analysisResult.solution || analysisResult.description || ""}
+                          </ReactMarkdown>
+                        </div>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Animation Videos */}
+                  {analysisResult.animationVideos.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold flex items-center gap-2">
+                        🎬 Animated Explanations ({analysisResult.animationVideos.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {analysisResult.animationVideos.slice(0, 5).map((video) => (
+                          <Card 
+                            key={video.id} 
+                            className="p-2 cursor-pointer hover:bg-accent/50 transition-colors"
+                            onClick={() => setPlayingVideoId(video.videoId)}
+                          >
+                            <div className="flex gap-2">
+                              <div className="relative w-24 h-16 shrink-0">
+                                <img 
+                                  src={video.thumbnail} 
+                                  alt={video.title}
+                                  className="w-full h-full object-cover rounded"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded">
+                                  <Play className="w-6 h-6 text-white fill-white" />
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium line-clamp-2">{video.title}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{video.channelTitle}</p>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Explanation Videos */}
+                  {analysisResult.explanationVideos.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold flex items-center gap-2">
+                        📚 {analysisResult.isQuestion ? "Solved Examples" : "Lectures"} ({analysisResult.explanationVideos.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {analysisResult.explanationVideos.slice(0, 5).map((video) => (
+                          <Card 
+                            key={video.id} 
+                            className="p-2 cursor-pointer hover:bg-accent/50 transition-colors"
+                            onClick={() => setPlayingVideoId(video.videoId)}
+                          >
+                            <div className="flex gap-2">
+                              <div className="relative w-24 h-16 shrink-0">
+                                <img 
+                                  src={video.thumbnail} 
+                                  alt={video.title}
+                                  className="w-full h-full object-cover rounded"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded">
+                                  <Play className="w-6 h-6 text-white fill-white" />
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium line-clamp-2">{video.title}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{video.channelTitle}</p>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Video Player Modal */}
+      {playingVideoId && (
+        <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center">
+          <div className="relative w-full h-full max-w-5xl max-h-[80vh] m-4">
+            <Button
+              onClick={() => setPlayingVideoId(null)}
+              variant="ghost"
+              className="absolute -top-12 right-0 text-white hover:text-white/80"
+            >
+              <X className="w-6 h-6 mr-2" />
+              Close Video
+            </Button>
+            <iframe
+              src={`https://www.youtube.com/embed/${playingVideoId}?autoplay=1`}
+              className="w-full h-full rounded-lg"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
 
       {/* Search prompt for selected text */}
       {showSearchPrompt && (
@@ -707,7 +886,7 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
 
       {/* Instructions */}
       <div className="text-center text-xs text-muted-foreground py-2 px-2 border-t">
-        💡 Select text from the rewritten document to search for videos
+        📷 Use Screenshot to capture & analyze any area • 💡 Select text to search for videos
       </div>
     </div>
   );
