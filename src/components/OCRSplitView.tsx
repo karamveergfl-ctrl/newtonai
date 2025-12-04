@@ -131,8 +131,16 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
   };
 
   const loadImage = async () => {
-    const imageUrl = URL.createObjectURL(file);
-    setOriginalPages([imageUrl]);
+    // Convert image to base64 data URL (not blob URL) for AI gateway compatibility
+    const reader = new FileReader();
+    const base64Promise = new Promise<string>((resolve, reject) => {
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Failed to read image file"));
+    });
+    reader.readAsDataURL(file);
+    
+    const imageDataUrl = await base64Promise;
+    setOriginalPages([imageDataUrl]);
     setProcessedPages([{
       pageNumber: 0,
       text: "",
