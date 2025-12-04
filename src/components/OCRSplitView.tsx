@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Download, Loader2, ChevronLeft, ChevronRight, FileText, FileType, Search } from "lucide-react";
+import { X, Download, Loader2, ChevronLeft, ChevronRight, FileText, FileType, Search, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import * as pdfjsLib from "pdfjs-dist";
@@ -44,6 +44,10 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
   const [showRight, setShowRight] = useState(true);
   const [selectedText, setSelectedText] = useState("");
   const [showSearchPrompt, setShowSearchPrompt] = useState(false);
+  const [firstPageProcessed, setFirstPageProcessed] = useState(false);
+  const [screenshotMode, setScreenshotMode] = useState(false);
+  const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null);
+  const [selectionEnd, setSelectionEnd] = useState<{ x: number; y: number } | null>(null);
   const { toast } = useToast();
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
@@ -53,13 +57,26 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
     loadDocument();
   }, [file]);
 
+  // Process first page immediately after loading
   useEffect(() => {
-    // Lazy OCR: process current page + 3 ahead
-    const pagesToProcess = [currentPage, currentPage + 1, currentPage + 2, currentPage + 3]
-      .filter(p => p < processedPages.length && processedPages[p].status === "pending");
+    if (originalPages.length > 0 && processedPages.length > 0 && !firstPageProcessed) {
+      processPage(0, true); // true = priority/fast
+      setFirstPageProcessed(true);
+    }
+  }, [originalPages, processedPages.length, firstPageProcessed]);
+
+  // Lazy OCR: process pages ahead when user navigates (skip first page as it's already processed)
+  useEffect(() => {
+    if (!firstPageProcessed) return;
     
-    pagesToProcess.forEach(pageNum => processPage(pageNum));
-  }, [currentPage, processedPages.length]);
+    const pagesToProcess = [currentPage, currentPage + 1, currentPage + 2]
+      .filter(p => p > 0 && p < processedPages.length && processedPages[p].status === "pending");
+    
+    // Stagger processing to avoid overwhelming the API
+    pagesToProcess.forEach((pageNum, index) => {
+      setTimeout(() => processPage(pageNum, false), index * 500);
+    });
+  }, [currentPage, processedPages.length, firstPageProcessed]);
 
   const loadDocument = async () => {
     try {
@@ -149,7 +166,7 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
     pageRefs.current = [null];
   };
 
-  const processPage = async (pageIndex: number) => {
+  const processPage = async (pageIndex: number, isPriority: boolean = false) => {
     if (pageIndex >= processedPages.length || pageIndex < 0) return;
     if (processedPages[pageIndex].status !== "pending") return;
 
@@ -191,10 +208,12 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
         i === pageIndex ? { ...p, text, status: "completed" as const } : p
       ));
 
-      toast({
-        title: "Page Rewritten",
-        description: `Page ${pageIndex + 1} converted successfully`,
-      });
+      if (isPriority) {
+        toast({
+          title: "First Page Ready",
+          description: "Page 1 converted - other pages loading in background",
+        });
+      }
     } catch (error) {
       console.error("Error processing page:", error);
       setProcessedPages(prev => prev.map((p, i) => 
@@ -208,6 +227,90 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
       });
     }
   };
+
+  // Screenshot functionality
+  const handleScreenshotMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!screenshotMode || !rightPanelRef.current) return;
+    const rect = rightPanelRef.current.getBoundingClientRect();
+    setSelectionStart({
+      x: e.clientX - rect.left + rightPanelRef.current.scrollLeft,
+      y: e.clientY - rect.top + rightPanelRef.current.scrollTop
+    });
+    setSelectionEnd(null);
+  }, [screenshotMode]);
+
+  const handleScreenshotMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!screenshotMode || !selectionStart || !rightPanelRef.current) return;
+    const rect = rightPanelRef.current.getBoundingClientRect();
+    setSelectionEnd({
+      x: e.clientX - rect.left + rightPanelRef.current.scrollLeft,
+      y: e.clientY - rect.top + rightPanelRef.current.scrollTop
+    });
+  }, [screenshotMode, selectionStart]);
+
+  const handleScreenshotMouseUp = useCallback(async () => {
+    if (!screenshotMode || !selectionStart || !selectionEnd || !rightPanelRef.current) return;
+
+    const x = Math.min(selectionStart.x, selectionEnd.x);
+    const y = Math.min(selectionStart.y, selectionEnd.y);
+    const width = Math.abs(selectionEnd.x - selectionStart.x);
+    const height = Math.abs(selectionEnd.y - selectionStart.y);
+
+    if (width < 20 || height < 20) {
+      setSelectionStart(null);
+      setSelectionEnd(null);
+      return;
+    }
+
+    try {
+      toast({ title: "Capturing...", description: "Processing screenshot" });
+
+      const canvas = await html2canvas(rightPanelRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        scrollX: -rightPanelRef.current.scrollLeft,
+        scrollY: -rightPanelRef.current.scrollTop,
+      });
+
+      const imageData = canvas.toDataURL('image/png');
+      
+      // Send to OCR for text extraction
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (authSession?.access_token) {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-handwriting`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authSession.access_token}`,
+            },
+            body: JSON.stringify({ imageData, detectOnly: true }),
+          }
+        );
+
+        if (response.ok) {
+          const { text } = await response.json();
+          if (text && onTextSelect) {
+            onTextSelect(text);
+            toast({ title: "Text Extracted", description: "Searching for videos..." });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Screenshot error:", error);
+      toast({ title: "Error", description: "Failed to capture screenshot", variant: "destructive" });
+    }
+
+    setScreenshotMode(false);
+    setSelectionStart(null);
+    setSelectionEnd(null);
+  }, [screenshotMode, selectionStart, selectionEnd, onTextSelect, toast]);
 
   const downloadAsPDF = async () => {
     try {
@@ -366,6 +469,16 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Screenshot button */}
+          <Button
+            onClick={() => setScreenshotMode(!screenshotMode)}
+            variant={screenshotMode ? "default" : "outline"}
+            size="sm"
+          >
+            <Camera className="w-4 h-4 mr-1" />
+            {screenshotMode ? "Cancel" : "Screenshot"}
+          </Button>
+
           {/* Page navigation */}
           {originalPages.length > 1 && (
             <div className="flex items-center gap-2">
@@ -507,13 +620,39 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
             </div>
             <div
               ref={rightPanelRef}
-              className="flex-1 overflow-auto p-4"
+              className={`flex-1 overflow-auto p-4 relative ${screenshotMode ? 'cursor-crosshair' : ''}`}
+              onMouseDown={handleScreenshotMouseDown}
+              onMouseMove={handleScreenshotMouseMove}
+              onMouseUp={handleScreenshotMouseUp}
             >
               <img
                 src={originalPages[currentPage]}
                 alt={`Page ${currentPage + 1}`}
                 className="max-w-full mx-auto shadow-lg"
+                draggable={false}
               />
+              
+              {/* Selection rectangle */}
+              {screenshotMode && selectionStart && selectionEnd && (
+                <div
+                  className="absolute border-2 border-primary bg-primary/20 pointer-events-none"
+                  style={{
+                    left: Math.min(selectionStart.x, selectionEnd.x),
+                    top: Math.min(selectionStart.y, selectionEnd.y),
+                    width: Math.abs(selectionEnd.x - selectionStart.x),
+                    height: Math.abs(selectionEnd.y - selectionStart.y),
+                  }}
+                />
+              )}
+              
+              {/* Screenshot mode overlay hint */}
+              {screenshotMode && !selectionStart && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/50 pointer-events-none">
+                  <p className="text-sm font-medium bg-card px-4 py-2 rounded-lg shadow-lg">
+                    Drag to select area for OCR search
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
