@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.ocr-handwriting]
 verify_jwt = true
+
+[functions.generate-flashcards]
+verify_jwt = true

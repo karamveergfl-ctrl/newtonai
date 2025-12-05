@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { VideoCard } from "./VideoCard";
 import { Button } from "@/components/ui/button";
-import { Sparkles, X } from "lucide-react";
+import { Sparkles, X, BookOpen, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Video {
@@ -18,10 +18,30 @@ interface VideoPanelProps {
   searchQuery: string;
   onVideoClick: (videoId: string) => void;
   onClose: () => void;
+  onGenerateFlashcards?: (videoTitle: string) => void;
+  isGeneratingFlashcards?: boolean;
 }
 
-export const VideoPanel = ({ animationVideos, explanationVideos, searchQuery, onVideoClick, onClose }: VideoPanelProps) => {
+export const VideoPanel = ({ 
+  animationVideos, 
+  explanationVideos, 
+  searchQuery, 
+  onVideoClick, 
+  onClose,
+  onGenerateFlashcards,
+  isGeneratingFlashcards
+}: VideoPanelProps) => {
   const [activeTab, setActiveTab] = useState("animation");
+
+  const handleGenerateAllFlashcards = () => {
+    if (onGenerateFlashcards) {
+      const allTitles = [...animationVideos, ...explanationVideos]
+        .slice(0, 5)
+        .map(v => v.title)
+        .join(", ");
+      onGenerateFlashcards(allTitles);
+    }
+  };
 
   return (
     <div className="relative h-full flex flex-col">
@@ -37,6 +57,23 @@ export const VideoPanel = ({ animationVideos, explanationVideos, searchQuery, on
             <X className="w-4 h-4" />
             <span className="hidden sm:inline">Close</span>
           </Button>
+          {onGenerateFlashcards && (
+            <Button
+              onClick={handleGenerateAllFlashcards}
+              variant="default"
+              size="sm"
+              className="gap-1 h-8 bg-gradient-to-r from-primary to-secondary"
+              disabled={isGeneratingFlashcards}
+            >
+              {isGeneratingFlashcards ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <BookOpen className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">Generate All Flashcards</span>
+              <span className="sm:hidden">Flashcards</span>
+            </Button>
+          )}
         </div>
         <h2 className="text-base md:text-lg font-bold text-foreground flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0" />
@@ -65,6 +102,8 @@ export const VideoPanel = ({ animationVideos, explanationVideos, searchQuery, on
                 key={video.videoId} 
                 video={video}
                 onVideoClick={onVideoClick}
+                onGenerateFlashcards={onGenerateFlashcards}
+                isGeneratingFlashcards={isGeneratingFlashcards}
               />
             ))
           ) : (
@@ -77,6 +116,8 @@ export const VideoPanel = ({ animationVideos, explanationVideos, searchQuery, on
                 key={video.videoId} 
                 video={video}
                 onVideoClick={onVideoClick}
+                onGenerateFlashcards={onGenerateFlashcards}
+                isGeneratingFlashcards={isGeneratingFlashcards}
               />
             ))
           ) : (
