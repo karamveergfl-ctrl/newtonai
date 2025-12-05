@@ -1,7 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, BookOpen, Loader2 } from "lucide-react";
+import { Play, BookOpen, Brain, Loader2 } from "lucide-react";
 import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface VideoCardProps {
   video: {
@@ -13,23 +19,25 @@ interface VideoCardProps {
   };
   onVideoClick: (videoId: string) => void;
   onGenerateFlashcards?: (videoTitle: string) => void;
-  isGeneratingFlashcards?: boolean;
+  onGenerateQuiz?: (videoTitle: string) => void;
+  isGenerating?: boolean;
 }
 
 export const VideoCard = ({ 
   video, 
   onVideoClick, 
   onGenerateFlashcards,
-  isGeneratingFlashcards 
+  onGenerateQuiz,
+  isGenerating 
 }: VideoCardProps) => {
-  const [showFlashcardBtn, setShowFlashcardBtn] = useState(false);
+  const [showStudyBtn, setShowStudyBtn] = useState(false);
 
   return (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group relative"
-      onMouseEnter={() => setShowFlashcardBtn(true)}
-      onMouseLeave={() => setShowFlashcardBtn(false)}
-      onTouchStart={() => setShowFlashcardBtn(true)}
+      onMouseEnter={() => setShowStudyBtn(true)}
+      onMouseLeave={() => setShowStudyBtn(false)}
+      onTouchStart={() => setShowStudyBtn(true)}
     >
       <div 
         className="relative aspect-video overflow-hidden bg-black"
@@ -52,26 +60,41 @@ export const VideoCard = ({
         </h3>
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground truncate flex-1">{video.channelTitle}</p>
-          {onGenerateFlashcards && (
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onGenerateFlashcards(video.title);
-              }}
-              variant="ghost"
-              size="sm"
-              className={`gap-1 h-7 text-xs shrink-0 transition-opacity ${
-                showFlashcardBtn ? 'opacity-100' : 'opacity-0 sm:opacity-100'
-              }`}
-              disabled={isGeneratingFlashcards}
-            >
-              {isGeneratingFlashcards ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <BookOpen className="w-3 h-3" />
-              )}
-              <span className="hidden sm:inline">Flashcards</span>
-            </Button>
+          {(onGenerateFlashcards || onGenerateQuiz) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  onClick={(e) => e.stopPropagation()}
+                  variant="ghost"
+                  size="sm"
+                  className={`gap-1 h-7 text-xs shrink-0 transition-opacity ${
+                    showStudyBtn ? 'opacity-100' : 'opacity-0 sm:opacity-100'
+                  }`}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Brain className="w-3 h-3" />
+                  )}
+                  <span className="hidden sm:inline">Study</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                {onGenerateFlashcards && (
+                  <DropdownMenuItem onClick={() => onGenerateFlashcards(video.title)} className="gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Flashcards
+                  </DropdownMenuItem>
+                )}
+                {onGenerateQuiz && (
+                  <DropdownMenuItem onClick={() => onGenerateQuiz(video.title)} className="gap-2">
+                    <Brain className="w-4 h-4" />
+                    Quiz
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>
