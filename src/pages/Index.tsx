@@ -12,8 +12,11 @@ import { StudyTracker } from "@/components/StudyTracker";
 import { PDFChat } from "@/components/PDFChat";
 import { OCRSplitView } from "@/components/OCRSplitView";
 import { FlashcardDeck } from "@/components/FlashcardDeck";
+import { QuizMode } from "@/components/QuizMode";
+import { StudyModeSelector } from "@/components/StudyModeSelector";
+import { GamificationBadge } from "@/components/GamificationBadge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, LogOut, FileText, BookOpen } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Session } from "@supabase/supabase-js";
@@ -49,6 +52,13 @@ const Index = () => {
   const [flashcards, setFlashcards] = useState<{ id: string; front: string; back: string }[]>([]);
   const [flashcardTitle, setFlashcardTitle] = useState("");
   const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<{ id: string; question: string; options: string[]; correctIndex: number; explanation: string }[]>([]);
+  const [quizTitle, setQuizTitle] = useState("");
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [totalXP, setTotalXP] = useState(() => {
+    const saved = localStorage.getItem('smartreader_xp');
+    return saved ? parseInt(saved, 10) : 0;
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -363,6 +373,126 @@ const Index = () => {
     setFlashcardTitle("");
   };
 
+  const handleGenerateQuiz = async (videoTitle: string) => {
+    setIsGeneratingQuiz(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ 
+            type: "video",
+            title: videoTitle 
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate quiz");
+      }
+
+      const data = await response.json();
+      setQuizQuestions(data.questions);
+      setQuizTitle(data.title);
+      
+      toast({
+        title: "Quiz Ready! 🧠",
+        description: `Generated ${data.questions.length} questions for testing`,
+      });
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate quiz",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  };
+
+  const handleGenerateQuizFromContent = async () => {
+    if (!pdfText && !fileData?.ocrText) {
+      toast({
+        title: "No content",
+        description: "Please upload a document first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingQuiz(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const content = pdfText || fileData?.ocrText || "";
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ 
+            type: fileData?.isPdf ? "pdf" : "image",
+            content: content.slice(0, 8000),
+            title: fileData?.name
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate quiz");
+      }
+
+      const data = await response.json();
+      setQuizQuestions(data.questions);
+      setQuizTitle(fileData?.name || "Document Quiz");
+      
+      toast({
+        title: "Quiz Ready! 🧠",
+        description: `Generated ${data.questions.length} questions for testing`,
+      });
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate quiz",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  };
+
+  const handleCloseQuiz = () => {
+    setQuizQuestions([]);
+    setQuizTitle("");
+  };
+
+  const handleQuizComplete = (score: number, total: number, xpEarned: number) => {
+    const newXP = totalXP + xpEarned;
+    setTotalXP(newXP);
+    localStorage.setItem('smartreader_xp', newXP.toString());
+    toast({
+      title: `+${xpEarned} XP Earned! 🎮`,
+      description: `Total XP: ${newXP}`,
+    });
+  };
+
   if (!session) {
     return null; // Auth redirect will happen in useEffect
   }
@@ -376,6 +506,7 @@ const Index = () => {
               SmartReader Pro
             </h1>
             <div className="flex items-center gap-2">
+              <GamificationBadge />
               <Button
                 onClick={handleOCRUpload}
                 variant="default"
@@ -409,7 +540,8 @@ const Index = () => {
                 onVideoClick={handleVideoClick}
                 onClose={handleCloseVideosPanel}
                 onGenerateFlashcards={handleGenerateFlashcards}
-                isGeneratingFlashcards={isGeneratingFlashcards}
+                onGenerateQuiz={handleGenerateQuiz}
+                isGenerating={isGeneratingFlashcards || isGeneratingQuiz}
               />
             </div>
           )}
@@ -459,6 +591,7 @@ const Index = () => {
                   <span className="text-xs">Searching...</span>
                 </div>
               )}
+              <GamificationBadge />
               <Button
                 onClick={handleOCRUpload}
                 variant="default"
@@ -468,20 +601,12 @@ const Index = () => {
                 <FileText className="w-3 h-3 md:w-4 md:h-4" />
                 <span className="hidden sm:inline text-xs">Rewrite (A4)</span>
               </Button>
-              <Button
-                onClick={handleGenerateFlashcardsFromContent}
-                variant="outline"
-                size="sm"
-                className="gap-1 h-8"
-                disabled={isGeneratingFlashcards || (!pdfText && !fileData?.ocrText)}
-              >
-                {isGeneratingFlashcards ? (
-                  <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
-                ) : (
-                  <BookOpen className="w-3 h-3 md:w-4 md:h-4" />
-                )}
-                <span className="hidden sm:inline text-xs">Flashcards</span>
-              </Button>
+              <StudyModeSelector
+                onGenerateFlashcards={handleGenerateFlashcardsFromContent}
+                onGenerateQuiz={handleGenerateQuizFromContent}
+                isGenerating={isGeneratingFlashcards || isGeneratingQuiz}
+                disabled={!pdfText && !fileData?.ocrText}
+              />
               <ThemeToggle />
               <Button
                 onClick={handleSignOut}
@@ -547,7 +672,8 @@ const Index = () => {
                     onVideoClick={handleVideoClick}
                     onClose={handleCloseVideosPanel}
                     onGenerateFlashcards={handleGenerateFlashcards}
-                    isGeneratingFlashcards={isGeneratingFlashcards}
+                    onGenerateQuiz={handleGenerateQuiz}
+                    isGenerating={isGeneratingFlashcards || isGeneratingQuiz}
                   />
                 </div>
               )}
@@ -574,6 +700,16 @@ const Index = () => {
               flashcards={flashcards}
               title={flashcardTitle}
               onClose={handleCloseFlashcards}
+            />
+          )}
+          
+          {/* Quiz Mode */}
+          {quizQuestions.length > 0 && (
+            <QuizMode
+              questions={quizQuestions}
+              title={quizTitle}
+              onClose={handleCloseQuiz}
+              onComplete={handleQuizComplete}
             />
           )}
         </div>
