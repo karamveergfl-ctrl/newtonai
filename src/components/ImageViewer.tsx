@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { X, Search, Eye, EyeOff, ZoomIn, ZoomOut, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileSearchPrompt } from "@/components/MobileSearchPrompt";
 
 interface ImageViewerProps {
   imageUrl: string;
@@ -22,14 +24,19 @@ export const ImageViewer = ({
   const [showOverlay, setShowOverlay] = useState(!!ocrText);
   const [selectedText, setSelectedText] = useState("");
   const [showSearchPrompt, setShowSearchPrompt] = useState(false);
+  const [showMobilePrompt, setShowMobilePrompt] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [isScreenshotMode, setIsScreenshotMode] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isLongPressing, setIsLongPressing] = useState(false);
   const [screenshotStart, setScreenshotStart] = useState<{ x: number; y: number } | null>(null);
   const [screenshotEnd, setScreenshotEnd] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleTextSelection = () => {
@@ -40,13 +47,67 @@ export const ImageViewer = ({
       
       if (text && text.length >= 5) {
         setSelectedText(text);
-        setShowSearchPrompt(true);
+        if (!isMobile) {
+          setShowSearchPrompt(true);
+        }
       }
     };
 
     document.addEventListener("mouseup", handleTextSelection);
-    return () => document.removeEventListener("mouseup", handleTextSelection);
-  }, [isScreenshotMode, isCapturing]);
+    document.addEventListener("touchend", handleTextSelection);
+    return () => {
+      document.removeEventListener("mouseup", handleTextSelection);
+      document.removeEventListener("touchend", handleTextSelection);
+    };
+  }, [isScreenshotMode, isCapturing, isMobile]);
+
+  // Mobile long-press handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isScreenshotMode) return;
+    
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    
+    longPressTimerRef.current = setTimeout(() => {
+      setIsLongPressing(true);
+      const selection = window.getSelection();
+      const text = selection?.toString().trim();
+      
+      if (text && text.length >= 3) {
+        setSelectedText(text);
+        setShowMobilePrompt(true);
+        if ('vibrate' in navigator) {
+          navigator.vibrate(50);
+        }
+      }
+      setIsLongPressing(false);
+    }, 600);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || isScreenshotMode) return;
+    
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchStartRef.current.x);
+    const dy = Math.abs(touch.clientY - touchStartRef.current.y);
+    
+    if (dx > 10 || dy > 10) {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+      setIsLongPressing(false);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    touchStartRef.current = null;
+    setIsLongPressing(false);
+  };
 
   const handleSearch = () => {
     if (selectedText) {
@@ -55,6 +116,14 @@ export const ImageViewer = ({
       setSelectedText("");
       window.getSelection()?.removeAllRanges();
     }
+  };
+
+  const handleMobileSearch = (text: string) => {
+    onTextSelect(text);
+    toast({
+      title: "Finding videos...",
+      description: `Searching for: "${text.slice(0, 50)}..."`,
+    });
   };
 
   const handleDismiss = () => {
@@ -68,7 +137,7 @@ export const ImageViewer = ({
     setShowOverlay(false);
     toast({
       title: "Screenshot Mode Active",
-      description: "Click and drag to select an area",
+      description: isMobile ? "Tap and drag to select an area" : "Click and drag to select an area",
     });
   };
 
@@ -112,9 +181,42 @@ export const ImageViewer = ({
     });
   };
 
-  const handleMouseUp = async (e: React.MouseEvent) => {
-    if (!isScreenshotMode || !isCapturing || !screenshotStart || !screenshotEnd) return;
-    e.preventDefault();
+  // Touch handlers for screenshot mode
+  const handleScreenshotTouchStart = (e: React.TouchEvent) => {
+    if (!isScreenshotMode) return;
+    
+    const touch = e.touches[0];
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    setIsCapturing(true);
+    setScreenshotStart({ 
+      x: touch.clientX - rect.left + container.scrollLeft, 
+      y: touch.clientY - rect.top + container.scrollTop 
+    });
+    setScreenshotEnd({ 
+      x: touch.clientX - rect.left + container.scrollLeft, 
+      y: touch.clientY - rect.top + container.scrollTop 
+    });
+  };
+
+  const handleScreenshotTouchMove = (e: React.TouchEvent) => {
+    if (!isScreenshotMode || !isCapturing) return;
+    
+    const touch = e.touches[0];
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    setScreenshotEnd({ 
+      x: touch.clientX - rect.left + container.scrollLeft, 
+      y: touch.clientY - rect.top + container.scrollTop 
+    });
+  };
+
+  const captureScreenshot = async () => {
+    if (!screenshotStart || !screenshotEnd) return;
     
     const width = Math.abs(screenshotEnd.x - screenshotStart.x);
     const height = Math.abs(screenshotEnd.y - screenshotStart.y);
@@ -143,17 +245,14 @@ export const ImageViewer = ({
     const containerRect = container.getBoundingClientRect();
     const imageRect = image.getBoundingClientRect();
     
-    // Calculate offset of image within container
     const imageOffsetX = imageRect.left - containerRect.left + container.scrollLeft;
     const imageOffsetY = imageRect.top - containerRect.top + container.scrollTop;
     
-    // Adjust for zoom
     const x = (Math.min(screenshotStart.x, screenshotEnd.x) - imageOffsetX) / zoom;
     const y = (Math.min(screenshotStart.y, screenshotEnd.y) - imageOffsetY) / zoom;
     const cropWidth = width / zoom;
     const cropHeight = height / zoom;
     
-    // Scale to actual image dimensions
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
     
@@ -189,6 +288,17 @@ export const ImageViewer = ({
     });
   };
 
+  const handleMouseUp = async (e: React.MouseEvent) => {
+    if (!isScreenshotMode || !isCapturing || !screenshotStart || !screenshotEnd) return;
+    e.preventDefault();
+    await captureScreenshot();
+  };
+
+  const handleScreenshotTouchEnd = async () => {
+    if (!isScreenshotMode || !isCapturing || !screenshotStart || !screenshotEnd) return;
+    await captureScreenshot();
+  };
+
   const getSelectionStyle = () => {
     if (!screenshotStart || !screenshotEnd || !containerRef.current) return {};
     
@@ -204,44 +314,71 @@ export const ImageViewer = ({
 
   const textLines = ocrText?.split('\n').filter(line => line.trim()) || [];
 
+  // Pinch-to-zoom handling
+  const lastTouchDistanceRef = useRef<number | null>(null);
+
+  const handlePinchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
+    }
+  };
+
+  const handlePinchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && lastTouchDistanceRef.current !== null) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      const scale = distance / lastTouchDistanceRef.current;
+      setZoom(z => Math.min(3, Math.max(0.5, z * scale)));
+      lastTouchDistanceRef.current = distance;
+    }
+  };
+
+  const handlePinchEnd = () => {
+    lastTouchDistanceRef.current = null;
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Controls */}
       <Card className="p-2 border-0 shadow-sm bg-background/80 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}
-              className="h-8"
+              className="h-10 w-10 md:h-8 md:w-8"
             >
-              <ZoomOut className="w-4 h-4" />
+              <ZoomOut className="w-5 h-5 md:w-4 md:h-4" />
             </Button>
-            <span className="text-xs text-muted-foreground min-w-[50px] text-center">
+            <span className="text-xs text-muted-foreground min-w-[40px] text-center">
               {Math.round(zoom * 100)}%
             </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setZoom(z => Math.min(3, z + 0.25))}
-              className="h-8"
+              className="h-10 w-10 md:h-8 md:w-8"
             >
-              <ZoomIn className="w-4 h-4" />
+              <ZoomIn className="w-5 h-5 md:w-4 md:h-4" />
             </Button>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             {ocrText && (
               <Button
                 variant={showOverlay ? "default" : "outline"}
                 size="sm"
                 onClick={() => setShowOverlay(!showOverlay)}
-                className="h-8 gap-1 text-xs"
+                className="h-9 md:h-8 gap-1 text-xs px-2 md:px-3"
                 disabled={isScreenshotMode}
               >
-                {showOverlay ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                {showOverlay ? "Hide Text" : "Show Text"}
+                {showOverlay ? <EyeOff className="w-4 h-4 md:w-3 md:h-3" /> : <Eye className="w-4 h-4 md:w-3 md:h-3" />}
+                <span className="hidden sm:inline">{showOverlay ? "Hide" : "Show"}</span>
               </Button>
             )}
             
@@ -250,19 +387,19 @@ export const ImageViewer = ({
                 variant="outline"
                 size="sm"
                 onClick={activateScreenshotMode}
-                className="h-8 gap-1 text-xs"
+                className="h-9 md:h-8 gap-1 text-xs px-2 md:px-3"
               >
-                <Camera className="w-3 h-3" />
-                Screenshot
+                <Camera className="w-4 h-4 md:w-3 md:h-3" />
+                <span className="hidden sm:inline">Screenshot</span>
               </Button>
             ) : (
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={cancelScreenshotMode}
-                className="h-8 gap-1 text-xs"
+                className="h-9 md:h-8 gap-1 text-xs px-2 md:px-3"
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4 md:w-3 md:h-3" />
                 Cancel
               </Button>
             )}
@@ -275,10 +412,34 @@ export const ImageViewer = ({
         ref={containerRef}
         className={`flex-1 overflow-auto bg-muted/10 p-4 relative ${
           isScreenshotMode ? 'cursor-crosshair select-none' : ''
-        }`}
+        } ${isLongPressing ? 'bg-primary/5' : ''}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onTouchStart={(e) => {
+          if (isScreenshotMode) {
+            handleScreenshotTouchStart(e);
+          } else {
+            handleTouchStart(e);
+            handlePinchStart(e);
+          }
+        }}
+        onTouchMove={(e) => {
+          if (isScreenshotMode) {
+            handleScreenshotTouchMove(e);
+          } else {
+            handleTouchMove(e);
+            handlePinchMove(e);
+          }
+        }}
+        onTouchEnd={() => {
+          if (isScreenshotMode) {
+            handleScreenshotTouchEnd();
+          } else {
+            handleTouchEnd();
+            handlePinchEnd();
+          }
+        }}
       >
         {/* Screenshot mode overlay */}
         {isScreenshotMode && (
@@ -291,6 +452,13 @@ export const ImageViewer = ({
             className="absolute border-2 border-primary bg-primary/20 z-20 pointer-events-none"
             style={getSelectionStyle()}
           />
+        )}
+
+        {/* Long press indicator */}
+        {isLongPressing && (
+          <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          </div>
         )}
         
         <div 
@@ -332,13 +500,13 @@ export const ImageViewer = ({
 
       {/* Screenshot mode instructions */}
       {isScreenshotMode && !isCapturing && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg animate-pulse">
-          Click and drag to select area
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg animate-pulse text-sm">
+          {isMobile ? "Tap and drag to select" : "Click and drag to select area"}
         </div>
       )}
 
-      {/* Search prompt */}
-      {showSearchPrompt && !isScreenshotMode && (
+      {/* Desktop search prompt */}
+      {!isMobile && showSearchPrompt && !isScreenshotMode && (
         <Card className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-sm w-11/12 md:max-w-md">
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-2">
@@ -367,11 +535,25 @@ export const ImageViewer = ({
         </Card>
       )}
 
+      {/* Mobile search prompt (bottom drawer) */}
+      <MobileSearchPrompt
+        open={showMobilePrompt}
+        onOpenChange={setShowMobilePrompt}
+        selectedText={selectedText}
+        onSearch={handleMobileSearch}
+      />
+
       {/* Instructions */}
       <div className="text-center text-xs text-muted-foreground py-2 px-2">
-        {ocrText 
-          ? "💡 Select extracted text to search • Toggle overlay to see original • Use Screenshot for specific areas"
-          : "💡 Use Screenshot button to capture areas for search"}
+        {isMobile ? (
+          ocrText 
+            ? "💡 Select text & long-press to search • Pinch to zoom"
+            : "💡 Use Screenshot to capture areas • Pinch to zoom"
+        ) : (
+          ocrText 
+            ? "💡 Select extracted text to search • Toggle overlay to see original • Use Screenshot for specific areas"
+            : "💡 Use Screenshot button to capture areas for search"
+        )}
       </div>
     </div>
   );
