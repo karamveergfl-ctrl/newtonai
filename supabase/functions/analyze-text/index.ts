@@ -11,8 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { imageData } = await req.json();
-    console.log("Analyzing screenshot with Gemini 2.5 Pro");
+    const { imageData, stream } = await req.json();
+    console.log("Analyzing screenshot with Gemini 2.5 Pro, streaming:", stream);
 
     if (!imageData) {
       throw new Error("No image provided");
@@ -23,23 +23,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    // Analyze screenshot directly with Gemini 2.5 Pro - single call for solution and topic
-    console.log("Sending image to Gemini 2.5 Pro for analysis...");
-    const analysisResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Solve this numerical problem by carefully analyzing the diagram, figure, and text given in the image.
+    const systemPrompt = `Solve this numerical problem by carefully analyzing the diagram, figure, and text given in the image.
 
 INSTRUCTIONS:
 1. First line of your response MUST be: "TOPIC: [specific topic name for YouTube search, e.g., "projectile motion problem", "RC circuit analysis", "beam bending calculation"]"
@@ -93,12 +77,73 @@ IMPORTANT FORMATTING RULES:
 - Use \\frac{a}{b} for fractions, \\sqrt{x} for roots
 - Use \\text{} for units inside math: $F = 10 \\, \\text{N}$
 - Use \\boxed{} for final answers
-- Be extremely thorough - analyze every detail in the diagram`
-              },
-              {
-                type: "image_url",
-                image_url: { url: imageData }
-              }
+- Be extremely thorough - analyze every detail in the diagram`;
+
+    // Streaming response
+    if (stream) {
+      console.log("Sending streaming request to Gemini...");
+      const analysisResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          stream: true,
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: systemPrompt },
+                { type: "image_url", image_url: { url: imageData } }
+              ]
+            }
+          ],
+        }),
+      });
+
+      if (!analysisResponse.ok) {
+        const errorText = await analysisResponse.text();
+        console.error("Gemini API error:", analysisResponse.status, errorText);
+        
+        if (analysisResponse.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "AI credits exhausted. Please add credits in Settings → Workspace → Usage." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (analysisResponse.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        throw new Error(`Gemini API error: ${analysisResponse.status}`);
+      }
+
+      // Stream the response directly back to the client
+      return new Response(analysisResponse.body, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
+    }
+
+    // Non-streaming response (for video search after streaming completes)
+    console.log("Sending image to Gemini 2.5 Pro for analysis...");
+    const analysisResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: systemPrompt },
+              { type: "image_url", image_url: { url: imageData } }
             ]
           }
         ],

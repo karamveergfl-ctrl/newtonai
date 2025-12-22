@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { X, Image as ImageIcon } from "lucide-react";
+import { X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
@@ -11,15 +11,24 @@ interface SolutionPanelProps {
   isQuestion: boolean;
   onClose: () => void;
   capturedImage?: string;
+  isStreaming?: boolean;
 }
 
-export const SolutionPanel = ({ content, isQuestion, onClose, capturedImage }: SolutionPanelProps) => {
+export const SolutionPanel = ({ content, isQuestion, onClose, capturedImage, isStreaming }: SolutionPanelProps) => {
   return (
     <div className="h-full flex flex-col bg-card border-l animate-fade-in">
       <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between z-10">
-        <h3 className="font-semibold text-lg">
-          {isQuestion ? "📝 Detailed Solution" : "💡 Topic Overview"}
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-lg">
+            {isQuestion ? "📝 Detailed Solution" : "💡 Topic Overview"}
+          </h3>
+          {isStreaming && (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Solving...</span>
+            </div>
+          )}
+        </div>
         <Button
           variant="ghost"
           size="icon"
@@ -64,7 +73,6 @@ export const SolutionPanel = ({ content, isQuestion, onClose, capturedImage }: S
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}
               components={{
-                // Custom styling for math blocks
                 p: ({ children, ...props }) => (
                   <p className="mb-3" {...props}>{children}</p>
                 ),
@@ -84,6 +92,9 @@ export const SolutionPanel = ({ content, isQuestion, onClose, capturedImage }: S
             >
               {content}
             </ReactMarkdown>
+            {isStreaming && (
+              <span className="inline-block w-2 h-5 bg-primary animate-pulse ml-0.5" />
+            )}
           </div>
         </div>
       </ScrollArea>
