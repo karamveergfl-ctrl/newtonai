@@ -388,66 +388,11 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Navigation bar with screenshot button */}
-      <div className="group/nav">
-        <Card className="p-2 border-0 shadow-sm bg-background/80 backdrop-blur-sm md:opacity-0 md:group-hover/nav:opacity-100 transition-opacity duration-300">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
-              disabled={pageNumber <= 1}
-              className="h-10 w-10 md:h-8 md:w-8"
-            >
-              <ChevronLeft className="w-5 h-5 md:w-4 md:h-4" />
-            </Button>
-            
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground px-2">
-                {pageNumber} / {numPages}
-              </span>
-              
-              {!isScreenshotMode ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={activateScreenshotMode}
-                  className="h-9 md:h-7 gap-1 text-xs px-3"
-                >
-                  <Camera className="w-4 h-4 md:w-3 md:h-3" />
-                  <span className="hidden sm:inline">Screenshot</span>
-                </Button>
-              ) : (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={cancelScreenshotMode}
-                  className="h-9 md:h-7 gap-1 text-xs px-3"
-                >
-                  <X className="w-4 h-4 md:w-3 md:h-3" />
-                  Cancel
-                </Button>
-              )}
-            </div>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setPageNumber(prev => Math.min(numPages, prev + 1))}
-              disabled={pageNumber >= numPages}
-              className="h-10 w-10 md:h-8 md:w-8"
-            >
-              <ChevronRight className="w-5 h-5 md:w-4 md:h-4" />
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* PDF Display */}
+    <div className="h-full flex flex-col relative bg-muted/20">
+      {/* PDF Display - Now the main background */}
       <div 
         ref={containerRef}
-        className={`flex-1 flex justify-center overflow-auto bg-muted/10 scrollbar-thin pdf-container relative ${
+        className={`flex-1 flex justify-center overflow-auto scrollbar-thin pdf-container relative ${
           isScreenshotMode ? 'cursor-crosshair select-none' : ''
         } ${isLongPressing ? 'bg-primary/5' : ''}`}
         onMouseDown={handleMouseDown}
@@ -503,16 +448,71 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
         </div>
       </div>
 
+      {/* Floating Navigation bar */}
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-40 group/nav">
+        <Card className="p-2 border-0 shadow-lg bg-background/90 backdrop-blur-md md:opacity-70 md:hover:opacity-100 transition-opacity duration-300">
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
+              disabled={pageNumber <= 1}
+              className="h-10 w-10 md:h-8 md:w-8"
+            >
+              <ChevronLeft className="w-5 h-5 md:w-4 md:h-4" />
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground px-2">
+                {pageNumber} / {numPages}
+              </span>
+              
+              {!isScreenshotMode ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={activateScreenshotMode}
+                  className="h-9 md:h-7 gap-1 text-xs px-3"
+                >
+                  <Camera className="w-4 h-4 md:w-3 md:h-3" />
+                  <span className="hidden sm:inline">Screenshot</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={cancelScreenshotMode}
+                  className="h-9 md:h-7 gap-1 text-xs px-3"
+                >
+                  <X className="w-4 h-4 md:w-3 md:h-3" />
+                  Cancel
+                </Button>
+              )}
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPageNumber(prev => Math.min(numPages, prev + 1))}
+              disabled={pageNumber >= numPages}
+              className="h-10 w-10 md:h-8 md:w-8"
+            >
+              <ChevronRight className="w-5 h-5 md:w-4 md:h-4" />
+            </Button>
+          </div>
+        </Card>
+      </div>
+
       {/* Screenshot mode instructions */}
       {isScreenshotMode && !isCapturing && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg animate-pulse text-sm">
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg animate-pulse text-sm">
           {isMobile ? "Tap and drag to select" : "Click and drag to select area"}
         </div>
       )}
 
       {/* Desktop search prompt */}
       {!isMobile && showSearchPrompt && !isScreenshotMode && (
-        <Card className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-sm w-11/12 md:max-w-md">
+        <Card className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50 p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-sm w-11/12 md:max-w-md">
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
@@ -546,14 +546,6 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
         selectedText={selectedText}
         onSearch={handleMobileSearch}
       />
-
-      <div className="text-center text-xs text-muted-foreground mt-2 px-2">
-        {isMobile ? (
-          "💡 Select text & long-press to search • Swipe to navigate"
-        ) : (
-          "💡 Select text or use Screenshot button to capture area"
-        )}
-      </div>
     </div>
   );
 };
