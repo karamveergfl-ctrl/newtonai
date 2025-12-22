@@ -12,28 +12,44 @@ serve(async (req) => {
   }
 
   try {
-    const { content, type, videoTitle } = await req.json();
+    const { content, type, videoTitle, settings } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log(`Generating flashcards for ${type}: ${videoTitle || 'content'}`);
+    // Extract settings with defaults
+    const count = settings?.count || 10;
+    const difficulty = settings?.difficulty || "medium";
+
+    console.log(`Generating ${count} ${difficulty} flashcards for ${type}: ${videoTitle || 'content'}`);
+
+    const difficultyGuide = {
+      easy: "Focus on basic definitions and simple facts. Cards should be straightforward to memorize.",
+      medium: "Include key concepts and their relationships. Require understanding, not just memorization.",
+      hard: "Focus on complex concepts, edge cases, and deeper analysis. Cards should challenge deep understanding."
+    };
 
     let systemPrompt = `You are an expert educator that creates effective flashcards for studying. 
 Generate flashcards that help students memorize and understand key concepts.
 Each flashcard should have a clear question on the front and a concise answer on the back.
-Use simple language and make the content memorable.`;
+Use LaTeX formatting for mathematical expressions: $formula$ for inline.
+
+Difficulty level: ${difficulty.toUpperCase()}
+${difficultyGuide[difficulty as keyof typeof difficultyGuide]}`;
 
     let userPrompt = '';
     
     if (type === 'video') {
-      userPrompt = `Based on this educational video title: "${videoTitle}"
+      userPrompt = `Based on this educational video: "${videoTitle}"
       
-Generate 5-8 flashcards about the likely content of this video. Each flashcard should:
+Content/Transcript:
+${content?.slice(0, 6000) || ''}
+
+Generate exactly ${count} flashcards at ${difficulty} difficulty. Each flashcard should:
 - Have a clear, focused question
-- Have a concise but complete answer
+- Have a concise but complete answer (use LaTeX for math: $formula$)
 - Cover key concepts, definitions, formulas, or facts
 
 Return ONLY a JSON array with this exact format:
@@ -44,9 +60,9 @@ Return ONLY a JSON array with this exact format:
     } else if (type === 'pdf' || type === 'image') {
       userPrompt = `Based on this content:
       
-${content}
+${content?.slice(0, 6000) || ''}
 
-Generate 8-12 flashcards covering the main concepts. Each flashcard should:
+Generate exactly ${count} flashcards at ${difficulty} difficulty covering the main concepts. Each flashcard should:
 - Have a clear, focused question
 - Have a concise but complete answer (use LaTeX for math: $formula$)
 - Cover key concepts, definitions, formulas, or facts
@@ -95,13 +111,19 @@ Return ONLY a JSON array with this exact format:
     const data = await response.json();
     const responseText = data.choices?.[0]?.message?.content || '';
     
-    console.log("AI Response:", responseText);
+    console.log("AI Response:", responseText.slice(0, 500));
 
     // Extract JSON from response
     let flashcards = [];
     try {
-      // Try to parse the entire response as JSON
-      flashcards = JSON.parse(responseText);
+      // Remove markdown code blocks if present
+      let jsonStr = responseText;
+      if (jsonStr.includes('```json')) {
+        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      } else if (jsonStr.includes('```')) {
+        jsonStr = jsonStr.replace(/```\n?/g, '');
+      }
+      flashcards = JSON.parse(jsonStr.trim());
     } catch {
       // Try to extract JSON array from the response
       const jsonMatch = responseText.match(/\[[\s\S]*\]/);
@@ -126,7 +148,8 @@ Return ONLY a JSON array with this exact format:
     return new Response(JSON.stringify({ 
       flashcards: flashcardsWithIds,
       source: type,
-      title: videoTitle || 'Content Flashcards'
+      title: videoTitle || 'Content Flashcards',
+      difficulty
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

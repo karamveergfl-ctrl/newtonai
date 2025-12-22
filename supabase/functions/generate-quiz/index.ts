@@ -12,29 +12,43 @@ serve(async (req) => {
   }
 
   try {
-    const { content, type, title } = await req.json();
+    const { content, type, title, settings } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log(`Generating quiz for ${type}: ${title || 'content'}`);
+    // Extract settings with defaults
+    const count = settings?.count || 8;
+    const difficulty = settings?.difficulty || "medium";
+    
+    console.log(`Generating ${count} ${difficulty} quiz questions for ${type}: ${title || 'content'}`);
+
+    const difficultyGuide = {
+      easy: "Focus on basic definitions, simple facts, and straightforward concepts. Questions should be answerable by someone with basic familiarity.",
+      medium: "Include a mix of factual recall and application questions. Require understanding of relationships between concepts.",
+      hard: "Focus on analysis, synthesis, and edge cases. Include tricky questions that require deep understanding and critical thinking."
+    };
 
     const systemPrompt = `You are an expert educator that creates engaging multiple choice quizzes.
 Generate quiz questions that test understanding of key concepts.
 Each question should have 4 options with exactly one correct answer.
-Make questions challenging but fair, testing real comprehension.`;
+Use LaTeX formatting for mathematical expressions: $formula$ for inline, $$formula$$ for display.
 
-    const userPrompt = `Based on this ${type === 'video' ? 'educational video title' : 'content'}:
+Difficulty level: ${difficulty.toUpperCase()}
+${difficultyGuide[difficulty as keyof typeof difficultyGuide]}`;
 
-${type === 'video' ? `"${title}"` : content}
+    const userPrompt = `Based on this ${type === 'video' ? 'educational video transcript' : 'content'}:
 
-Generate 5-8 multiple choice quiz questions. Each question should:
+${type === 'video' ? `"${title}"\n\n${content?.slice(0, 6000) || ''}` : content?.slice(0, 6000) || ''}
+
+Generate exactly ${count} multiple choice quiz questions at ${difficulty} difficulty. Each question should:
 - Test understanding of a key concept
 - Have 4 answer options (A, B, C, D)
 - Have exactly one correct answer
 - Include a brief explanation for why the correct answer is right
+- Use LaTeX for any math: $x^2$ or $$\\int f(x)dx$$
 
 Return ONLY a JSON array with this exact format:
 [
@@ -83,11 +97,18 @@ Return ONLY a JSON array with this exact format:
     const data = await response.json();
     const responseText = data.choices?.[0]?.message?.content || '';
     
-    console.log("AI Response:", responseText);
+    console.log("AI Response:", responseText.slice(0, 500));
 
     let questions = [];
     try {
-      questions = JSON.parse(responseText);
+      // Remove markdown code blocks if present
+      let jsonStr = responseText;
+      if (jsonStr.includes('```json')) {
+        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      } else if (jsonStr.includes('```')) {
+        jsonStr = jsonStr.replace(/```\n?/g, '');
+      }
+      questions = JSON.parse(jsonStr.trim());
     } catch {
       const jsonMatch = responseText.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
@@ -112,7 +133,8 @@ Return ONLY a JSON array with this exact format:
     return new Response(JSON.stringify({ 
       questions: questionsWithIds,
       source: type,
-      title: title || 'Content Quiz'
+      title: title || 'Content Quiz',
+      difficulty
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

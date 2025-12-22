@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { content, selectedText } = await req.json();
+    const { content, selectedText, structure = "horizontal" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -25,39 +25,37 @@ serve(async (req) => {
       throw new Error("No content provided");
     }
 
-    console.log(`Generating mind map for ${textToMap.length} characters`);
+    console.log(`Generating mind map for ${textToMap.length} characters with structure: ${structure}`);
 
-    const systemPrompt = `You are an expert at creating visual mind maps using ASCII/text art.
-Create mind maps that:
-- Have a clear central topic
-- Branch out to main concepts
-- Use consistent visual hierarchy
-- Are easy to read and understand
-- Use simple ASCII characters for connections`;
+    const systemPrompt = `You are an expert at creating structured mind maps. You MUST return valid JSON only.
+Return a JSON object representing a mind map with this exact structure:
+{
+  "id": "root",
+  "text": "Main Topic",
+  "children": [
+    {
+      "id": "branch1",
+      "text": "Branch 1",
+      "children": [
+        { "id": "leaf1", "text": "Detail 1" },
+        { "id": "leaf2", "text": "Detail 2" }
+      ]
+    }
+  ]
+}
 
-    const userPrompt = `Create a text-based mind map for the following content:
+Rules:
+- Keep text concise (2-5 words per node)
+- Create 3-6 main branches from the root
+- Each branch can have 2-4 sub-items
+- Use unique IDs for each node
+- Return ONLY valid JSON, no markdown, no explanation`;
 
-${textToMap.slice(0, 8000)}
+    const userPrompt = `Create a mind map JSON for this content:
 
-Format the mind map using this structure:
-- Central topic in the middle
-- Use ├──, │, └──, ─── for branches
-- Main branches for key concepts
-- Sub-branches for details
-- Keep it organized and visually clear
+${textToMap.slice(0, 6000)}
 
-Example format:
-                    ┌── Sub-concept 1
-        ┌── Main 1 ─┤
-        │           └── Sub-concept 2
-        │
-TOPIC ──┼── Main 2 ─── Detail
-        │
-        │           ┌── Sub-concept A
-        └── Main 3 ─┤
-                    └── Sub-concept B
-
-Generate the mind map now:`;
+Return ONLY the JSON object, nothing else.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -94,11 +92,46 @@ Generate the mind map now:`;
     }
 
     const data = await response.json();
-    const mindMap = data.choices?.[0]?.message?.content || '';
+    let rawContent = data.choices?.[0]?.message?.content || '';
     
-    console.log("Mind map generated successfully");
+    console.log("Raw AI response:", rawContent.slice(0, 500));
 
-    return new Response(JSON.stringify({ mindMap }), {
+    // Parse JSON from response
+    let mindMapData;
+    try {
+      // Remove markdown code blocks if present
+      let jsonStr = rawContent;
+      if (jsonStr.includes('```json')) {
+        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      } else if (jsonStr.includes('```')) {
+        jsonStr = jsonStr.replace(/```\n?/g, '');
+      }
+      jsonStr = jsonStr.trim();
+      
+      mindMapData = JSON.parse(jsonStr);
+      console.log("Successfully parsed mind map JSON");
+    } catch (parseError) {
+      console.error("Failed to parse JSON, returning text format:", parseError);
+      // Fallback: create a simple structure from the text
+      mindMapData = {
+        id: "root",
+        text: "Main Topic",
+        children: rawContent.split('\n')
+          .filter((line: string) => line.trim())
+          .slice(0, 5)
+          .map((line: string, i: number) => ({
+            id: `branch${i}`,
+            text: line.replace(/^[-*•]\s*/, '').slice(0, 50),
+            children: []
+          }))
+      };
+    }
+
+    return new Response(JSON.stringify({ 
+      mindMap: rawContent,
+      mindMapData,
+      structure 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 

@@ -17,6 +17,8 @@ import { QuizMode } from "@/components/QuizMode";
 import { StudyModeSelector } from "@/components/StudyModeSelector";
 import { StudyToolsBar } from "@/components/StudyToolsBar";
 import { FullScreenStudyTool } from "@/components/FullScreenStudyTool";
+import { VisualMindMap } from "@/components/VisualMindMap";
+import { GenerationSettings } from "@/components/GenerationSettingsDialog";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -77,6 +79,9 @@ const Index = () => {
   const [activeGenerating, setActiveGenerating] = useState<"quiz" | "flashcards" | "summary" | "mindmap" | null>(null);
   const [showFullScreenMindMap, setShowFullScreenMindMap] = useState(false);
   const [fullScreenMindMapTitle, setFullScreenMindMapTitle] = useState("");
+  const [mindMapData, setMindMapData] = useState<any>(null);
+  const [videoMindMapData, setVideoMindMapData] = useState<any>(null);
+  const [pdfPageCount, setPdfPageCount] = useState(10);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -435,7 +440,7 @@ const Index = () => {
     }
   };
 
-  const handleGenerateFlashcardsFromContent = async () => {
+  const handleGenerateFlashcardsFromContent = async (settings?: GenerationSettings) => {
     if (!pdfText && !fileData?.ocrText) {
       toast({
         title: "No content",
@@ -463,7 +468,8 @@ const Index = () => {
           },
           body: JSON.stringify({ 
             type: fileData?.isPdf ? "pdf" : "image",
-            content: content.slice(0, 8000) // Limit content size
+            content: content.slice(0, 8000),
+            settings
           }),
         }
       );
@@ -640,7 +646,7 @@ const Index = () => {
     }
   };
 
-  const handleGenerateQuizFromContent = async () => {
+  const handleGenerateQuizFromContent = async (settings?: GenerationSettings) => {
     if (!pdfText && !fileData?.ocrText) {
       toast({
         title: "No content",
@@ -669,7 +675,8 @@ const Index = () => {
           body: JSON.stringify({ 
             type: fileData?.isPdf ? "pdf" : "image",
             content: content.slice(0, 8000),
-            title: fileData?.name
+            title: fileData?.name,
+            settings
           }),
         }
       );
@@ -1163,6 +1170,9 @@ const Index = () => {
 
       const data = await response.json();
       setMindMap(data.mindMap);
+      if (data.mindMapData) {
+        setMindMapData(data.mindMapData);
+      }
       
       toast({
         title: "Mind Map Ready! 🧠",
@@ -1370,6 +1380,7 @@ const Index = () => {
           isGeneratingSummary={isGeneratingSummary}
           isGeneratingMindMap={isGeneratingMindMap}
           disabled={!pdfText && !fileData?.ocrText}
+          totalPages={pdfPageCount}
         />
 
         {/* Main Content - Responsive Layout */}
@@ -1496,14 +1507,22 @@ const Index = () => {
             />
           )}
 
-          {/* Mind Map Full Screen */}
+          {/* Mind Map Full Screen - Visual or Text */}
           {mindMap && (
-            <FullScreenStudyTool
-              type="mindmap"
-              title={fileData?.name || "Document Mind Map"}
-              content={mindMap}
-              onClose={() => setMindMap("")}
-            />
+            mindMapData ? (
+              <VisualMindMap
+                data={mindMapData}
+                title={fileData?.name || "Document Mind Map"}
+                onClose={() => { setMindMap(""); setMindMapData(null); }}
+              />
+            ) : (
+              <FullScreenStudyTool
+                type="mindmap"
+                title={fileData?.name || "Document Mind Map"}
+                content={mindMap}
+                onClose={() => setMindMap("")}
+              />
+            )
           )}
 
           {/* Video Summary Half-Screen */}

@@ -6,6 +6,11 @@ import { X, Download, Loader2, Brain, BookOpen, FileText, Network } from "lucide
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+import { cn } from "@/lib/utils";
 
 interface FullScreenStudyToolProps {
   type: "quiz" | "flashcards" | "mindmap" | "summary";
@@ -25,8 +30,6 @@ export const FullScreenStudyTool = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  const isSummary = type === "summary";
 
   const getIcon = () => {
     switch (type) {
@@ -134,53 +137,21 @@ export const FullScreenStudyTool = ({
     }
   };
 
-  // Summary: half screen on right
-  if (isSummary) {
-    return (
-      <div className="fixed inset-y-0 right-0 w-1/2 z-50 bg-background border-l shadow-2xl flex flex-col animate-slide-in-right">
-        {/* Header */}
-        <div className="p-4 border-b bg-card/50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {getIcon()}
-            <h2 className="font-bold text-lg">{getTypeLabel()}</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={downloadAsPDF}
-              variant="outline"
-              size="sm"
-              disabled={isDownloading}
-              className="gap-2"
-            >
-              {isDownloading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-              Download PDF
-            </Button>
-            <Button onClick={onClose} variant="ghost" size="icon">
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+  // Format content for LaTeX - ensure math is wrapped properly
+  const formatContent = (text: string) => {
+    // Already has LaTeX markers, return as is
+    if (text.includes('$') || text.includes('\\(') || text.includes('\\[')) {
+      return text;
+    }
+    return text;
+  };
 
-        {/* Content */}
-        <ScrollArea className="flex-1">
-          <div ref={contentRef} className="p-6 bg-white text-black">
-            <h3 className="text-xl font-bold mb-4">{title}</h3>
-            <div className="prose prose-sm max-w-none whitespace-pre-wrap leading-relaxed">
-              {content}
-            </div>
-          </div>
-        </ScrollArea>
-      </div>
-    );
-  }
-
-  // Full screen for Quiz, Flashcards, Mind Map
+  // All types now render full screen
   return (
-    <div className={`fixed inset-0 z-50 bg-background flex flex-col ${showVideoSlide ? 'pr-80' : ''}`}>
+    <div className={cn(
+      "fixed inset-0 z-50 bg-background flex flex-col",
+      showVideoSlide && "pr-80"
+    )}>
       {/* Header */}
       <div className="p-4 border-b bg-card/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -214,10 +185,60 @@ export const FullScreenStudyTool = ({
         <div ref={contentRef} className="p-8 bg-white text-black min-h-full">
           <Card className="max-w-4xl mx-auto p-8 shadow-lg">
             <h3 className="text-2xl font-bold mb-6 text-center">{title}</h3>
-            <div 
-              className="prose prose-lg max-w-none whitespace-pre-wrap font-mono leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
+            <div className="prose prose-lg max-w-none leading-relaxed">
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+                components={{
+                  // Custom styling for math blocks
+                  p: ({ children }) => (
+                    <p className="mb-4 text-base leading-relaxed">{children}</p>
+                  ),
+                  h1: ({ children }) => (
+                    <h1 className="text-2xl font-bold mt-6 mb-4">{children}</h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="text-xl font-semibold mt-5 mb-3">{children}</h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-lg font-medium mt-4 mb-2">{children}</h3>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="text-base">{children}</li>
+                  ),
+                  code: ({ children, className }) => {
+                    const isInline = !className;
+                    return isInline ? (
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+                        {children}
+                      </code>
+                    ) : (
+                      <code className="block bg-muted p-4 rounded-lg text-sm font-mono overflow-x-auto">
+                        {children}
+                      </code>
+                    );
+                  },
+                  pre: ({ children }) => (
+                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto mb-4">
+                      {children}
+                    </pre>
+                  ),
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-4 border-primary pl-4 italic my-4">
+                      {children}
+                    </blockquote>
+                  ),
+                }}
+              >
+                {formatContent(content)}
+              </ReactMarkdown>
+            </div>
           </Card>
         </div>
       </ScrollArea>
