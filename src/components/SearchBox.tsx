@@ -78,7 +78,7 @@ export const SearchBox = ({ onSearch, isSearching }: SearchBoxProps) => {
 
   return (
     <div className="group/search relative">
-      <div className={`flex gap-2 mb-2 transition-opacity duration-300 bg-background/60 backdrop-blur-sm p-2 rounded-lg hover:bg-background/90 ${
+      <div className={`flex gap-2 mb-2 transition-opacity duration-300 bg-primary/10 backdrop-blur-sm p-2 rounded-lg hover:bg-primary/20 border border-primary/20 ${
         isMobile ? 'flex-col sm:flex-row' : ''
       }`}>
         <Input
