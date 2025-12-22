@@ -44,29 +44,56 @@ serve(async (req) => {
 INSTRUCTIONS:
 1. First line of your response MUST be: "TOPIC: [specific topic name for YouTube search, e.g., "projectile motion problem", "RC circuit analysis", "beam bending calculation"]"
 
-2. Then provide the COMPLETE STEP-BY-STEP SOLUTION:
+2. Then provide your response in this EXACT format:
 
-## Step-by-Step Solution
+## 📊 Figure Analysis
 
-**Given:** Extract ALL values, conditions, and data from the image (include diagram details)
-**Find:** What exactly needs to be calculated/determined
+Describe the diagram/figure in detail:
+- What physical setup is shown (e.g., inclined plane, circuit, beam, projectile path)
+- Label and identify all objects, forces, angles, dimensions visible
+- Explain what each symbol/arrow/line represents
+- Note any initial conditions or constraints shown
 
-### Step 1: [Understanding the Problem]
-Analyze the diagram/figure carefully. Identify all forces, angles, dimensions, or relevant quantities shown.
+## 📝 Step-by-Step Solution
 
-### Step 2: [Setting Up Equations]
-Write the relevant formulas and equations. Show how diagram values relate to variables.
+**Given:** Extract ALL values using LaTeX notation:
+- $v_0 = 20 \\, \\text{m/s}$ (initial velocity)
+- $\\theta = 30°$ (angle of projection)
+- List every value from the image
 
-### Step 3: [Calculations]
-Show complete mathematical working with all intermediate steps. Don't skip any calculation.
+**Find:** What exactly needs to be calculated
+
+### Step 1: Understanding & Setup
+Explain the physics/math concept. Write the relevant formulas:
+$$F = ma$$
+$$v = u + at$$
+
+### Step 2: Substituting Values
+Show substitution with LaTeX:
+$$v_x = v_0 \\cos\\theta = 20 \\times \\cos(30°)$$
+$$v_x = 20 \\times 0.866 = 17.32 \\, \\text{m/s}$$
+
+### Step 3: Calculations
+Continue with detailed mathematical working. Show ALL intermediate steps:
+$$s = ut + \\frac{1}{2}at^2$$
 
 ### Step 4: [Additional Steps as needed]
 Continue solving until you reach the answer.
 
-**Final Answer:**
+---
+
+**✅ Final Answer:**
+$$\\boxed{x = 35.3 \\, \\text{m}}$$
+
 State the result clearly with proper units and significant figures.
 
-Be extremely thorough - analyze every detail in the diagram. Show ALL mathematical steps. Format using **bold**, \`inline code\` for variables, and ### headers.`
+IMPORTANT FORMATTING RULES:
+- Use $...$ for inline math (e.g., $v = 20 \\, \\text{m/s}$)
+- Use $$...$$ for display equations on their own line
+- Use \\frac{a}{b} for fractions, \\sqrt{x} for roots
+- Use \\text{} for units inside math: $F = 10 \\, \\text{N}$
+- Use \\boxed{} for final answers
+- Be extremely thorough - analyze every detail in the diagram`
               },
               {
                 type: "image_url",

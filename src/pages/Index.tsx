@@ -44,7 +44,7 @@ const Index = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [showVideosPanel, setShowVideosPanel] = useState(false);
-  const [solutionData, setSolutionData] = useState<{ content: string; isQuestion: boolean } | null>(null);
+  const [solutionData, setSolutionData] = useState<{ content: string; isQuestion: boolean; capturedImage?: string } | null>(null);
   const [pdfText, setPdfText] = useState("");
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showOCRView, setShowOCRView] = useState(false);
@@ -165,11 +165,11 @@ const Index = () => {
         console.error("Error tracking search:", error);
       }
       
-      // Set solution or description
+      // Set solution or description with captured image
       if (data.solution) {
-        setSolutionData({ content: data.solution, isQuestion: true });
+        setSolutionData({ content: data.solution, isQuestion: true, capturedImage: imageData });
       } else if (data.description) {
-        setSolutionData({ content: data.description, isQuestion: false });
+        setSolutionData({ content: data.description, isQuestion: false, capturedImage: imageData });
       }
       
       toast({
@@ -658,6 +658,7 @@ const Index = () => {
                     content={solutionData.content}
                     isQuestion={solutionData.isQuestion}
                     onClose={() => setSolutionData(null)}
+                    capturedImage={solutionData.capturedImage}
                   />
                 </div>
               )}
