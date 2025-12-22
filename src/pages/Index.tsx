@@ -1402,19 +1402,25 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Study Tools Bar - Top Row */}
-        <StudyToolsBar
-          onGenerateQuiz={handleGenerateQuizFromContent}
-          onGenerateFlashcards={handleGenerateFlashcardsFromContent}
-          onGenerateSummary={handleGenerateSummary}
-          onGenerateMindMap={handleGenerateMindMap}
-          isGeneratingQuiz={isGeneratingQuiz}
-          isGeneratingFlashcards={isGeneratingFlashcards}
-          isGeneratingSummary={isGeneratingSummary}
-          isGeneratingMindMap={isGeneratingMindMap}
-          disabled={!pdfText && !fileData?.ocrText}
-          totalPages={pdfPageCount}
-        />
+        {/* Search and Study Tools Bar - Top Row */}
+        <div className="flex items-center gap-2 p-2 bg-card/50 border-b">
+          <SearchBox onSearch={handleSearch} isSearching={isSearching} />
+          <div className="h-6 w-px bg-border mx-1" />
+          <span className="text-xs font-medium text-muted-foreground">Study Tools:</span>
+          <StudyToolsBar
+            onGenerateQuiz={handleGenerateQuizFromContent}
+            onGenerateFlashcards={handleGenerateFlashcardsFromContent}
+            onGenerateSummary={handleGenerateSummary}
+            onGenerateMindMap={handleGenerateMindMap}
+            isGeneratingQuiz={isGeneratingQuiz}
+            isGeneratingFlashcards={isGeneratingFlashcards}
+            isGeneratingSummary={isGeneratingSummary}
+            isGeneratingMindMap={isGeneratingMindMap}
+            disabled={!pdfText && !fileData?.ocrText}
+            totalPages={pdfPageCount}
+            className="border-0 p-0 bg-transparent"
+          />
+        </div>
 
         {/* Main Content - Responsive Layout */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
@@ -1422,7 +1428,6 @@ const Index = () => {
           {!showVideosPanel && !solutionData ? (
             // File View with Search and Chat
             <div className="flex-1 flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in">
-              <SearchBox onSearch={handleSearch} isSearching={isSearching} />
               <div className="flex-1 overflow-hidden">
                 {fileData.isPdf ? (
                   <PDFReader 

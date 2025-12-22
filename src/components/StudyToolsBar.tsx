@@ -61,7 +61,7 @@ export const StudyToolsBar = ({
   return (
     <>
       <div className={cn("flex items-center gap-2 p-2 bg-card/50 border-b", className)}>
-        <span className="text-xs font-medium text-muted-foreground mr-2">Study Tools:</span>
+        {!className?.includes('border-0') && <span className="text-xs font-medium text-muted-foreground mr-2">Study Tools:</span>}
         
         <Button
           onClick={handleQuizClick}
