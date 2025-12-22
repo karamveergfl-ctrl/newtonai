@@ -108,11 +108,47 @@ Return ONLY a JSON array with this exact format:
       } else if (jsonStr.includes('```')) {
         jsonStr = jsonStr.replace(/```\n?/g, '');
       }
-      questions = JSON.parse(jsonStr.trim());
-    } catch {
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        questions = JSON.parse(jsonMatch[0]);
+      jsonStr = jsonStr.trim();
+      
+      // Fix common escape sequence issues from AI responses
+      // Handle unescaped backslashes in LaTeX (but not already escaped ones)
+      jsonStr = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+      
+      try {
+        questions = JSON.parse(jsonStr);
+      } catch (parseError) {
+        console.log("First parse attempt failed, trying regex extraction");
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          let extracted = jsonMatch[0];
+          extracted = extracted.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+          questions = JSON.parse(extracted);
+        }
+      }
+    } catch (e) {
+      console.error("JSON parsing error:", e);
+      // Last resort: try to manually extract questions
+      const questionMatches = responseText.matchAll(/"question"\s*:\s*"([^"]+)"/g);
+      const optionMatches = responseText.matchAll(/"options"\s*:\s*\[([^\]]+)\]/g);
+      const correctMatches = responseText.matchAll(/"correctIndex"\s*:\s*(\d+)/g);
+      const explanationMatches = responseText.matchAll(/"explanation"\s*:\s*"([^"]+)"/g);
+      
+      const questionsArr = [...questionMatches];
+      const optionsArr = [...optionMatches];
+      const correctArr = [...correctMatches];
+      const explanationArr = [...explanationMatches];
+      
+      if (questionsArr.length > 0) {
+        for (let i = 0; i < questionsArr.length; i++) {
+          const optionsStr = optionsArr[i]?.[1] || '';
+          const options = optionsStr.match(/"([^"]+)"/g)?.map((s: string) => s.replace(/"/g, '')) || ['A', 'B', 'C', 'D'];
+          questions.push({
+            question: questionsArr[i][1],
+            options: options,
+            correctIndex: parseInt(correctArr[i]?.[1] || '0'),
+            explanation: explanationArr[i]?.[1] || 'See the content for more details.'
+          });
+        }
       }
     }
 
