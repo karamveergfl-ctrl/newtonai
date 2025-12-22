@@ -32,3 +32,6 @@ verify_jwt = true
 
 [functions.find-similar]
 verify_jwt = true
+
+[functions.detailed-solution]
+verify_jwt = true

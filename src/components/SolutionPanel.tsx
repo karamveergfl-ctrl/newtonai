@@ -17,6 +17,8 @@ interface SolutionPanelProps {
   isAnswering?: boolean;
   onFindSimilar?: () => void;
   isFindingSimilar?: boolean;
+  onGetDetailedSolution?: () => void;
+  isGettingDetailed?: boolean;
 }
 
 export const SolutionPanel = ({ 
@@ -28,7 +30,9 @@ export const SolutionPanel = ({
   onFollowUpQuestion,
   isAnswering,
   onFindSimilar,
-  isFindingSimilar
+  isFindingSimilar,
+  onGetDetailedSolution,
+  isGettingDetailed
 }: SolutionPanelProps) => {
   return (
     <div className="h-full flex flex-col bg-card border-l animate-fade-in">
@@ -112,26 +116,50 @@ export const SolutionPanel = ({
             )}
           </div>
 
-          {/* Find Similar Questions Button */}
-          {!isStreaming && content && onFindSimilar && (
-            <Button
-              onClick={onFindSimilar}
-              variant="outline"
-              className="w-full"
-              disabled={isFindingSimilar}
-            >
-              {isFindingSimilar ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Finding similar problems...
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4 mr-2" />
-                  Find Similar Questions to Practice
-                </>
+          {/* Action Buttons */}
+          {!isStreaming && content && (
+            <div className="flex flex-col gap-2">
+              {/* Detailed Solution Button */}
+              {onGetDetailedSolution && (
+                <Button
+                  onClick={onGetDetailedSolution}
+                  variant="default"
+                  className="w-full"
+                  disabled={isGettingDetailed}
+                >
+                  {isGettingDetailed ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Getting detailed solution...
+                    </>
+                  ) : (
+                    "📖 Show Detailed Solution"
+                  )}
+                </Button>
               )}
-            </Button>
+              
+              {/* Find Similar Questions Button */}
+              {onFindSimilar && (
+                <Button
+                  onClick={onFindSimilar}
+                  variant="outline"
+                  className="w-full"
+                  disabled={isFindingSimilar}
+                >
+                  {isFindingSimilar ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Finding similar problems...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-4 h-4 mr-2" />
+                      Find Similar Questions to Practice
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </ScrollArea>
