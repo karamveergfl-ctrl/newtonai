@@ -50,13 +50,28 @@ serve(async (req) => {
         }),
       });
 
-      if (visionResponse.ok) {
-        const visionData = await visionResponse.json();
-        textToAnalyze = visionData.choices[0].message.content;
-        console.log("Extracted text from image:", textToAnalyze);
-      } else {
-        console.error("Vision AI error:", await visionResponse.text());
+      if (!visionResponse.ok) {
+        const errorText = await visionResponse.text();
+        console.error("Vision AI error:", visionResponse.status, errorText);
+        
+        if (visionResponse.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "AI credits exhausted. Please add credits in Settings → Workspace → Usage." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (visionResponse.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        throw new Error(`Vision AI error: ${visionResponse.status}`);
       }
+      
+      const visionData = await visionResponse.json();
+      textToAnalyze = visionData.choices[0].message.content;
+      console.log("Extracted text from image:", textToAnalyze);
     }
     
     if (!textToAnalyze) {
