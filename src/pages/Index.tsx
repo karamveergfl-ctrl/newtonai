@@ -686,6 +686,7 @@ const Index = () => {
           body: JSON.stringify({
             topic: searchQuery,
             problemType: solutionData?.isQuestion ? "numerical" : "concept",
+            currentSolution: solutionData?.content?.slice(0, 2000),
           }),
         }
       );
@@ -696,14 +697,24 @@ const Index = () => {
 
       const data = await response.json();
       
+      // Append similar problems to the solution panel
+      if (data.similarProblems) {
+        setSolutionData(prev => prev ? {
+          ...prev,
+          content: prev.content + "\n\n---\n\n# 📝 Practice These Similar Problems\n\n" + data.similarProblems
+        } : null);
+      }
+      
       // Replace current videos with similar problem videos
-      setExplanationVideos(data.videos || []);
-      setAnimationVideos([]);
-      setShowVideosPanel(true);
+      if (data.videos?.length > 0) {
+        setExplanationVideos(data.videos);
+        setAnimationVideos([]);
+        setShowVideosPanel(true);
+      }
       
       toast({
         title: "Similar Questions Found! 📚",
-        description: `Found ${data.videos?.length || 0} similar problems to practice`,
+        description: `Generated 3 practice problems + ${data.videos?.length || 0} video solutions`,
       });
     } catch (error) {
       console.error("Error finding similar:", error);
