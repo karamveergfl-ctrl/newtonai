@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,9 +6,6 @@ import { ChevronLeft, ChevronRight, Loader2, Camera, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSearchPrompt } from "@/components/MobileSearchPrompt";
-import { ScreenshotCapture } from "@/components/ScreenshotCapture";
-import { SolutionPanel } from "@/components/SolutionPanel";
-import { supabase } from "@/integrations/supabase/client";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -27,16 +24,11 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
   const [selectedText, setSelectedText] = useState<string>("");
   const [showSearchPrompt, setShowSearchPrompt] = useState(false);
   const [isScreenshotMode, setIsScreenshotMode] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [screenshotStart, setScreenshotStart] = useState<{ x: number; y: number } | null>(null);
+  const [screenshotEnd, setScreenshotEnd] = useState<{ x: number; y: number } | null>(null);
   const [showMobilePrompt, setShowMobilePrompt] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
-  
-  // Solution panel state
-  const [showSolution, setShowSolution] = useState(false);
-  const [solutionContent, setSolutionContent] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [searchTopic, setSearchTopic] = useState<string>("");
-  
   const containerRef = useRef<HTMLDivElement>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -46,14 +38,16 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
   // Handle text selection
   useEffect(() => {
     const handleTextSelection = () => {
-      if (isScreenshotMode) return;
+      if (isScreenshotMode || isCapturing) return;
       
       const selection = window.getSelection();
       const text = selection?.toString().trim();
       
       if (text && text.length >= 5) {
         setSelectedText(text);
-        if (!isMobile) {
+        if (isMobile) {
+          // On mobile, wait for long-press to trigger
+        } else {
           setShowSearchPrompt(true);
         }
       } else if (!text) {
@@ -70,7 +64,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
       document.removeEventListener("mouseup", handleTextSelection);
       document.removeEventListener("touchend", handleTextSelection);
     };
-  }, [isScreenshotMode, isMobile]);
+  }, [isScreenshotMode, isCapturing, isMobile]);
 
   // Extract text from PDF for chat feature
   useEffect(() => {
@@ -114,6 +108,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
       if (text && text.length >= 3) {
         setSelectedText(text);
         setShowMobilePrompt(true);
+        // Haptic feedback
         if ('vibrate' in navigator) {
           navigator.vibrate(50);
         }
@@ -129,6 +124,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
     const dx = Math.abs(touch.clientX - touchStartRef.current.x);
     const dy = Math.abs(touch.clientY - touchStartRef.current.y);
     
+    // Cancel long press if moved too much
     if (dx > 10 || dy > 10) {
       if (longPressTimerRef.current) {
         clearTimeout(longPressTimerRef.current);
@@ -149,62 +145,176 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
 
   const activateScreenshotMode = () => {
     setIsScreenshotMode(true);
+    setIsCapturing(false);
+    setScreenshotStart(null);
+    setScreenshotEnd(null);
+    toast({
+      title: "Screenshot Mode Active",
+      description: isMobile ? "Tap and drag to select an area" : "Click and drag to select an area to capture",
+    });
   };
 
   const cancelScreenshotMode = () => {
     setIsScreenshotMode(false);
+    setIsCapturing(false);
+    setScreenshotStart(null);
+    setScreenshotEnd(null);
   };
 
-  // Get canvas for screenshot capture
-  const getCanvas = useCallback(() => {
-    return document.querySelector('.react-pdf__Page__canvas') as HTMLCanvasElement | null;
-  }, []);
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!isScreenshotMode) return;
+    e.preventDefault();
+    
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    const scrollTop = container.scrollTop;
+    const scrollLeft = container.scrollLeft;
+    
+    setIsCapturing(true);
+    setScreenshotStart({ 
+      x: e.clientX - rect.left + scrollLeft, 
+      y: e.clientY - rect.top + scrollTop 
+    });
+    setScreenshotEnd({ 
+      x: e.clientX - rect.left + scrollLeft, 
+      y: e.clientY - rect.top + scrollTop 
+    });
+  };
 
-  // Handle screenshot capture - send directly to AI for analysis
-  const handleScreenshotCapture = async (imageData: string) => {
-    setIsScreenshotMode(false);
-    setCapturedImage(imageData);
-    setShowSolution(true);
-    setIsAnalyzing(true);
-    setSolutionContent("");
-    setSearchTopic("");
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isScreenshotMode || !isCapturing || !screenshotStart) return;
+    e.preventDefault();
+    
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    const scrollTop = container.scrollTop;
+    const scrollLeft = container.scrollLeft;
+    
+    setScreenshotEnd({ 
+      x: e.clientX - rect.left + scrollLeft, 
+      y: e.clientY - rect.top + scrollTop 
+    });
+  };
 
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-screenshot', {
-        body: { imageData }
-      });
+  // Touch handlers for screenshot mode
+  const handleScreenshotTouchStart = (e: React.TouchEvent) => {
+    if (!isScreenshotMode) return;
+    
+    const touch = e.touches[0];
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    setIsCapturing(true);
+    setScreenshotStart({ 
+      x: touch.clientX - rect.left + container.scrollLeft, 
+      y: touch.clientY - rect.top + container.scrollTop 
+    });
+    setScreenshotEnd({ 
+      x: touch.clientX - rect.left + container.scrollLeft, 
+      y: touch.clientY - rect.top + container.scrollTop 
+    });
+  };
 
-      if (error) {
-        console.error("Error analyzing screenshot:", error);
-        toast({
-          title: "Analysis failed",
-          description: error.message || "Could not analyze the captured area",
-          variant: "destructive",
-        });
-        setSolutionContent("Failed to analyze the image. Please try again.");
-      } else if (data?.solution) {
-        setSolutionContent(data.solution);
-        if (data.searchTopic) {
-          setSearchTopic(data.searchTopic);
-        }
-        toast({
-          title: "Analysis complete!",
-          description: "Solution is ready",
-        });
-      } else {
-        setSolutionContent("No solution could be generated. Please try capturing a clearer area.");
-      }
-    } catch (err) {
-      console.error("Screenshot analysis error:", err);
+  const handleScreenshotTouchMove = (e: React.TouchEvent) => {
+    if (!isScreenshotMode || !isCapturing) return;
+    
+    const touch = e.touches[0];
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    setScreenshotEnd({ 
+      x: touch.clientX - rect.left + container.scrollLeft, 
+      y: touch.clientY - rect.top + container.scrollTop 
+    });
+  };
+
+  const handleScreenshotTouchEnd = async () => {
+    if (!isScreenshotMode || !isCapturing || !screenshotStart || !screenshotEnd) return;
+    await captureScreenshot();
+  };
+
+  const captureScreenshot = async () => {
+    if (!screenshotStart || !screenshotEnd) return;
+    
+    const width = Math.abs(screenshotEnd.x - screenshotStart.x);
+    const height = Math.abs(screenshotEnd.y - screenshotStart.y);
+    
+    // Minimum area check
+    if (width < 20 || height < 20) {
+      setIsCapturing(false);
+      setScreenshotStart(null);
+      setScreenshotEnd(null);
       toast({
-        title: "Error",
-        description: "Failed to analyze screenshot",
+        title: "Area too small",
+        description: "Please select a larger area",
         variant: "destructive",
       });
-      setSolutionContent("An error occurred. Please try again.");
-    } finally {
-      setIsAnalyzing(false);
+      return;
     }
+    
+    const pdfCanvas = document.querySelector('.react-pdf__Page__canvas') as HTMLCanvasElement;
+    if (!pdfCanvas) {
+      cancelScreenshotMode();
+      return;
+    }
+
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const containerRect = container.getBoundingClientRect();
+    const canvasRect = pdfCanvas.getBoundingClientRect();
+    
+    const canvasOffsetX = canvasRect.left - containerRect.left + container.scrollLeft;
+    const canvasOffsetY = canvasRect.top - containerRect.top + container.scrollTop;
+    
+    const x = Math.min(screenshotStart.x, screenshotEnd.x) - canvasOffsetX;
+    const y = Math.min(screenshotStart.y, screenshotEnd.y) - canvasOffsetY;
+    
+    const scaleX = pdfCanvas.width / canvasRect.width;
+    const scaleY = pdfCanvas.height / canvasRect.height;
+    
+    const cropCanvas = document.createElement('canvas');
+    const ctx = cropCanvas.getContext('2d');
+    if (!ctx) {
+      cancelScreenshotMode();
+      return;
+    }
+
+    const scaledX = Math.max(0, x * scaleX);
+    const scaledY = Math.max(0, y * scaleY);
+    const scaledWidth = Math.min(width * scaleX, pdfCanvas.width - scaledX);
+    const scaledHeight = Math.min(height * scaleY, pdfCanvas.height - scaledY);
+
+    cropCanvas.width = scaledWidth;
+    cropCanvas.height = scaledHeight;
+    
+    ctx.drawImage(
+      pdfCanvas, 
+      scaledX, scaledY, scaledWidth, scaledHeight, 
+      0, 0, scaledWidth, scaledHeight
+    );
+    
+    const imageData = cropCanvas.toDataURL('image/png');
+    
+    cancelScreenshotMode();
+    onImageCapture(imageData);
+    
+    toast({
+      title: "Processing...",
+      description: "Analyzing captured area with OCR",
+    });
+  };
+
+  const handleMouseUp = async (e: React.MouseEvent) => {
+    if (!isScreenshotMode || !isCapturing || !screenshotStart || !screenshotEnd) return;
+    e.preventDefault();
+    await captureScreenshot();
   };
 
   const handleSearchClick = () => {
@@ -237,6 +347,21 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
     setNumPages(numPages);
   };
 
+  const getSelectionStyle = () => {
+    if (!screenshotStart || !screenshotEnd || !containerRef.current) return {};
+    
+    const container = containerRef.current;
+    const scrollTop = container.scrollTop;
+    const scrollLeft = container.scrollLeft;
+    
+    return {
+      left: Math.min(screenshotStart.x, screenshotEnd.x) - scrollLeft,
+      top: Math.min(screenshotStart.y, screenshotEnd.y) - scrollTop,
+      width: Math.abs(screenshotEnd.x - screenshotStart.x),
+      height: Math.abs(screenshotEnd.y - screenshotStart.y),
+    };
+  };
+
   // Swipe navigation for mobile
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   
@@ -251,6 +376,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartX - touchEndX;
     
+    // Swipe threshold of 50px
     if (Math.abs(diff) > 50) {
       if (diff > 0 && pageNumber < numPages) {
         setPageNumber(prev => prev + 1);
@@ -261,29 +387,8 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
     setTouchStartX(null);
   };
 
-  const closeSolutionPanel = () => {
-    setShowSolution(false);
-    setSolutionContent("");
-    setCapturedImage(null);
-    setSearchTopic("");
-  };
-
   return (
-    <div className="h-full flex flex-col relative">
-      {/* Solution Panel Overlay - appears on top */}
-      {showSolution && (
-        <div className="absolute inset-0 z-40 bg-background/95 backdrop-blur-sm animate-fade-in overflow-hidden">
-          <SolutionPanel
-            content={solutionContent}
-            isQuestion={true}
-            onClose={closeSolutionPanel}
-            isLoading={isAnalyzing}
-            screenshotImage={capturedImage || undefined}
-            searchTopic={searchTopic}
-          />
-        </div>
-      )}
-
+    <div className="h-full flex flex-col">
       {/* Navigation bar with screenshot button */}
       <div className="group/nav">
         <Card className="p-2 border-0 shadow-sm bg-background/80 backdrop-blur-sm md:opacity-0 md:group-hover/nav:opacity-100 transition-opacity duration-300">
@@ -311,7 +416,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
                   className="h-9 md:h-7 gap-1 text-xs px-3"
                 >
                   <Camera className="w-4 h-4 md:w-3 md:h-3" />
-                  <span className="hidden sm:inline">Capture & Solve</span>
+                  <span className="hidden sm:inline">Screenshot</span>
                 </Button>
               ) : (
                 <Button
@@ -343,20 +448,27 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
       <div 
         ref={containerRef}
         className={`flex-1 flex justify-center overflow-auto bg-muted/10 scrollbar-thin pdf-container relative ${
-          isLongPressing ? 'bg-primary/5' : ''
-        }`}
-        onTouchStart={!isScreenshotMode ? handleTouchStart : undefined}
-        onTouchMove={!isScreenshotMode ? handleTouchMove : undefined}
-        onTouchEnd={!isScreenshotMode ? handleTouchEnd : undefined}
+          isScreenshotMode ? 'cursor-crosshair select-none' : ''
+        } ${isLongPressing ? 'bg-primary/5' : ''}`}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onTouchStart={isScreenshotMode ? handleScreenshotTouchStart : handleTouchStart}
+        onTouchMove={isScreenshotMode ? handleScreenshotTouchMove : handleTouchMove}
+        onTouchEnd={isScreenshotMode ? handleScreenshotTouchEnd : handleTouchEnd}
       >
-        {/* Screenshot capture overlay */}
-        <ScreenshotCapture
-          targetRef={containerRef}
-          isActive={isScreenshotMode}
-          onCapture={handleScreenshotCapture}
-          onCancel={cancelScreenshotMode}
-          getCanvas={getCanvas}
-        />
+        {/* Screenshot mode overlay */}
+        {isScreenshotMode && (
+          <div className="absolute inset-0 bg-primary/5 z-10 pointer-events-none" />
+        )}
+        
+        {/* Selection rectangle */}
+        {isScreenshotMode && isCapturing && screenshotStart && screenshotEnd && (
+          <div
+            className="absolute border-2 border-primary bg-primary/20 z-20 pointer-events-none"
+            style={getSelectionStyle()}
+          />
+        )}
 
         {/* Long press indicator */}
         {isLongPressing && (
@@ -390,6 +502,13 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
           </Document>
         </div>
       </div>
+
+      {/* Screenshot mode instructions */}
+      {isScreenshotMode && !isCapturing && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg animate-pulse text-sm">
+          {isMobile ? "Tap and drag to select" : "Click and drag to select area"}
+        </div>
+      )}
 
       {/* Desktop search prompt */}
       {!isMobile && showSearchPrompt && !isScreenshotMode && (
@@ -430,9 +549,9 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
 
       <div className="text-center text-xs text-muted-foreground mt-2 px-2">
         {isMobile ? (
-          "💡 Capture area to solve • Select text & long-press to search"
+          "💡 Select text & long-press to search • Swipe to navigate"
         ) : (
-          "💡 Click 'Capture & Solve' to analyze any area with AI"
+          "💡 Select text or use Screenshot button to capture area"
         )}
       </div>
     </div>

@@ -1,31 +1,28 @@
-project_id = "tdvsxaxmwmhpvsdpvbvc"
-
-[functions.chat-with-pdf]
-verify_jwt = false
-
-[functions.generate-flashcards]
-verify_jwt = false
-
-[functions.generate-quiz]
-verify_jwt = false
-
-[functions.ocr-handwriting]
-verify_jwt = false
+project_id = "zhbhkqyapsirmcjfonnb"
 
 [functions.process-pdf]
-verify_jwt = false
+verify_jwt = true
 
 [functions.search-youtube]
-verify_jwt = false
-
-[functions.text-to-speech]
-verify_jwt = false
-
-[functions.transcribe-audio]
-verify_jwt = false
+verify_jwt = true
 
 [functions.analyze-text]
-verify_jwt = false
+verify_jwt = true
 
-[functions.analyze-screenshot]
-verify_jwt = false
+[functions.chat-with-pdf]
+verify_jwt = true
+
+[functions.text-to-speech]
+verify_jwt = true
+
+[functions.transcribe-audio]
+verify_jwt = true
+
+[functions.ocr-handwriting]
+verify_jwt = true
+
+[functions.generate-flashcards]
+verify_jwt = true
+
+[functions.generate-quiz]
+verify_jwt = true
