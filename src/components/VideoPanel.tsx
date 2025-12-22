@@ -27,6 +27,7 @@ interface VideoPanelProps {
   onGenerateFlashcards?: (videoTitle: string) => void;
   onGenerateQuiz?: (videoTitle: string) => void;
   isGenerating?: boolean;
+  defaultTab?: "animation" | "explanation";
 }
 
 export const VideoPanel = ({ 
@@ -37,9 +38,10 @@ export const VideoPanel = ({
   onClose,
   onGenerateFlashcards,
   onGenerateQuiz,
-  isGenerating
+  isGenerating,
+  defaultTab = "animation"
 }: VideoPanelProps) => {
-  const [activeTab, setActiveTab] = useState("animation");
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   const handleGenerateAll = (type: 'flashcards' | 'quiz') => {
     const allTitles = [...animationVideos, ...explanationVideos]
@@ -109,7 +111,7 @@ export const VideoPanel = ({
           <span className="line-clamp-1">{searchQuery}</span>
         </h2>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "animation" | "explanation")} className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-9">
             <TabsTrigger value="animation" className="text-xs md:text-sm">
               Animation ({animationVideos.length})
