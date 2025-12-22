@@ -1406,7 +1406,7 @@ const Index = () => {
         {/* Study Tools Bar - Compact Row */}
         <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-card/80 to-card/40 border-b backdrop-blur-sm w-fit rounded-b-lg shadow-sm">
           <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 rounded-full">
-            <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Tools</span>
+            <span className="text-sm font-bold text-primary uppercase tracking-wide">Tools</span>
           </div>
           <StudyToolsBar
             onGenerateQuiz={handleGenerateQuizFromContent}
