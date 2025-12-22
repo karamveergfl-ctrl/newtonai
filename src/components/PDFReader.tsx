@@ -442,7 +442,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
               renderTextLayer={true}
               renderAnnotationLayer={true}
               className="max-w-full mx-auto"
-              width={typeof window !== 'undefined' ? Math.min(window.innerWidth * 0.9, 800) : 800}
+              width={typeof window !== 'undefined' ? Math.min(window.innerWidth, 1200) : 1200}
             />
           </Document>
         </div>
