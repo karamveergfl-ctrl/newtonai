@@ -1404,7 +1404,7 @@ const Index = () => {
         </div>
 
         {/* Search and Study Tools Bar - Top Row */}
-        <div className="flex items-center gap-2 p-2 bg-card/50 border-b">
+        <div className="flex items-center gap-1 p-1.5 bg-card/50 border-b">
           <SearchBox onSearch={handleSearch} isSearching={isSearching} />
           <div className="h-6 w-px bg-border mx-1" />
           <span className="text-xs font-medium text-muted-foreground">Study Tools:</span>
