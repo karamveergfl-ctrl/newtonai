@@ -1,8 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { X, Copy, Check, Loader2 } from "lucide-react";
+import { X, Copy, Check, Loader2, Video, ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+interface VideoResult {
+  id: string;
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  channelTitle: string;
+}
 
 interface SolutionPanelProps {
   content: string;
@@ -10,6 +19,7 @@ interface SolutionPanelProps {
   onClose: () => void;
   isLoading?: boolean;
   screenshotImage?: string;
+  searchTopic?: string;
 }
 
 export const SolutionPanel = ({ 
@@ -17,10 +27,42 @@ export const SolutionPanel = ({
   isQuestion = true, 
   onClose,
   isLoading = false,
-  screenshotImage
+  screenshotImage,
+  searchTopic
 }: SolutionPanelProps) => {
   const [copied, setCopied] = useState(false);
+  const [videos, setVideos] = useState<VideoResult[]>([]);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const { toast } = useToast();
+
+  // Search for related videos when searchTopic changes
+  useEffect(() => {
+    if (searchTopic && !isLoading) {
+      searchVideos(searchTopic);
+    }
+  }, [searchTopic, isLoading]);
+
+  const searchVideos = async (topic: string) => {
+    setIsLoadingVideos(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-youtube', {
+        body: { query: topic }
+      });
+
+      if (error) {
+        console.error("Error searching videos:", error);
+        return;
+      }
+
+      if (data?.videos) {
+        setVideos(data.videos.slice(0, 3)); // Show top 3 videos
+      }
+    } catch (err) {
+      console.error("Failed to search videos:", err);
+    } finally {
+      setIsLoadingVideos(false);
+    }
+  };
 
   const handleCopy = async () => {
     try {
@@ -37,6 +79,10 @@ export const SolutionPanel = ({
         variant: "destructive",
       });
     }
+  };
+
+  const openVideo = (videoId: string) => {
+    window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
   };
 
   // Format markdown-style content to HTML
@@ -146,6 +192,60 @@ export const SolutionPanel = ({
               className="prose prose-sm dark:prose-invert max-w-none text-foreground"
               dangerouslySetInnerHTML={{ __html: formatContent(content) }} 
             />
+          )}
+
+          {/* Related Videos Section */}
+          {!isLoading && content && (
+            <div className="mt-6 pt-6 border-t border-border">
+              <div className="flex items-center gap-2 mb-4">
+                <Video className="w-5 h-5 text-primary" />
+                <h4 className="font-semibold">Related Video Solutions</h4>
+              </div>
+
+              {isLoadingVideos ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-sm text-muted-foreground">Finding videos...</span>
+                </div>
+              ) : videos.length > 0 ? (
+                <div className="space-y-3">
+                  {videos.map((video) => (
+                    <div
+                      key={video.id}
+                      onClick={() => openVideo(video.videoId)}
+                      className="flex gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+                    >
+                      <div className="relative w-24 h-16 flex-shrink-0 rounded overflow-hidden bg-muted">
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ExternalLink className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
+                          {video.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1 truncate">
+                          {video.channelTitle}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : searchTopic ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No related videos found
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Videos will appear here after analysis
+                </p>
+              )}
+            </div>
           )}
 
           {/* Empty state */}

@@ -37,6 +37,7 @@ export const ImageViewer = ({
   const [solutionContent, setSolutionContent] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [searchTopic, setSearchTopic] = useState<string>("");
   
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -184,6 +185,7 @@ export const ImageViewer = ({
     setShowSolution(true);
     setIsAnalyzing(true);
     setSolutionContent("");
+    setSearchTopic("");
 
     try {
       const { data, error } = await supabase.functions.invoke('analyze-screenshot', {
@@ -200,6 +202,9 @@ export const ImageViewer = ({
         setSolutionContent("Failed to analyze the image. Please try again.");
       } else if (data?.solution) {
         setSolutionContent(data.solution);
+        if (data.searchTopic) {
+          setSearchTopic(data.searchTopic);
+        }
         toast({
           title: "Analysis complete!",
           description: "Solution is ready",
@@ -253,6 +258,7 @@ export const ImageViewer = ({
     setShowSolution(false);
     setSolutionContent("");
     setCapturedImage(null);
+    setSearchTopic("");
   };
 
   return (
@@ -458,6 +464,7 @@ export const ImageViewer = ({
             onClose={closeSolutionPanel}
             isLoading={isAnalyzing}
             screenshotImage={capturedImage || undefined}
+            searchTopic={searchTopic}
           />
         </div>
       )}

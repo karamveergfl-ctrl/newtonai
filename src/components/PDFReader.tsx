@@ -35,6 +35,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
   const [solutionContent, setSolutionContent] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [searchTopic, setSearchTopic] = useState<string>("");
   
   const containerRef = useRef<HTMLDivElement>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -166,6 +167,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
     setShowSolution(true);
     setIsAnalyzing(true);
     setSolutionContent("");
+    setSearchTopic("");
 
     try {
       const { data, error } = await supabase.functions.invoke('analyze-screenshot', {
@@ -182,6 +184,9 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
         setSolutionContent("Failed to analyze the image. Please try again.");
       } else if (data?.solution) {
         setSolutionContent(data.solution);
+        if (data.searchTopic) {
+          setSearchTopic(data.searchTopic);
+        }
         toast({
           title: "Analysis complete!",
           description: "Solution is ready",
@@ -260,6 +265,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
     setShowSolution(false);
     setSolutionContent("");
     setCapturedImage(null);
+    setSearchTopic("");
   };
 
   return (
@@ -428,6 +434,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
             onClose={closeSolutionPanel}
             isLoading={isAnalyzing}
             screenshotImage={capturedImage || undefined}
+            searchTopic={searchTopic}
           />
         </div>
       )}

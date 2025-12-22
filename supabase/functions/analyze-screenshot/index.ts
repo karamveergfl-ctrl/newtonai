@@ -63,7 +63,15 @@ serve(async (req) => {
    - Provide relevant context
 
 Format your response with clear headings and structure. Use mathematical notation where appropriate.
-Be thorough, accurate, and educational in your response.`
+Be thorough, accurate, and educational in your response.
+
+IMPORTANT: At the very end of your response, add a line in this exact format:
+[SEARCH_TOPIC]: <short search query for finding related educational videos, max 5 words>
+
+For example:
+[SEARCH_TOPIC]: quadratic equation solving methods
+[SEARCH_TOPIC]: Newton's laws of motion
+[SEARCH_TOPIC]: integration by parts calculus`
           },
           {
             role: "user",
@@ -76,7 +84,7 @@ Be thorough, accurate, and educational in your response.`
               },
               {
                 type: "text",
-                text: "Please analyze this image carefully. If it contains any problems, questions, or exercises, solve them step-by-step with complete accuracy. If it's informational content, explain it thoroughly."
+                text: "Please analyze this image carefully. If it contains any problems, questions, or exercises, solve them step-by-step with complete accuracy. If it's informational content, explain it thoroughly. Remember to include the [SEARCH_TOPIC] at the end."
               }
             ]
           }
@@ -109,7 +117,7 @@ Be thorough, accurate, and educational in your response.`
     }
 
     const data = await response.json();
-    const solution = data.choices?.[0]?.message?.content;
+    let solution = data.choices?.[0]?.message?.content;
 
     if (!solution) {
       console.error("No solution in response:", data);
@@ -119,11 +127,21 @@ Be thorough, accurate, and educational in your response.`
       );
     }
 
-    console.log("Successfully analyzed screenshot");
+    // Extract search topic from the response
+    let searchTopic = "";
+    const searchTopicMatch = solution.match(/\[SEARCH_TOPIC\]:\s*(.+?)(?:\n|$)/i);
+    if (searchTopicMatch) {
+      searchTopic = searchTopicMatch[1].trim();
+      // Remove the search topic line from the solution
+      solution = solution.replace(/\[SEARCH_TOPIC\]:\s*.+?(?:\n|$)/gi, "").trim();
+    }
+
+    console.log("Successfully analyzed screenshot, search topic:", searchTopic);
 
     return new Response(
       JSON.stringify({ 
         solution,
+        searchTopic,
         success: true 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
