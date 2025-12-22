@@ -16,6 +16,7 @@ import { QuizMode } from "@/components/QuizMode";
 import { StudyModeSelector } from "@/components/StudyModeSelector";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { Button } from "@/components/ui/button";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ArrowLeft, Loader2, LogOut, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -59,6 +60,8 @@ const Index = () => {
     const saved = localStorage.getItem('smartreader_xp');
     return saved ? parseInt(saved, 10) : 0;
   });
+  const [isAnsweringFollowUp, setIsAnsweringFollowUp] = useState(false);
+  const [isFindingSimilar, setIsFindingSimilar] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -567,6 +570,153 @@ const Index = () => {
     });
   };
 
+  const handleFollowUpQuestion = async (question: string) => {
+    if (!solutionData) return;
+    
+    setIsAnsweringFollowUp(true);
+    
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/solution-chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({
+            imageData: solutionData.capturedImage,
+            currentSolution: solutionData.content,
+            question,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to get answer");
+      }
+
+      // Parse streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let answer = "";
+      let textBuffer = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          textBuffer += decoder.decode(value, { stream: true });
+          
+          let newlineIndex: number;
+          while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+            let line = textBuffer.slice(0, newlineIndex);
+            textBuffer = textBuffer.slice(newlineIndex + 1);
+
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (line.startsWith(":") || line.trim() === "") continue;
+            if (!line.startsWith("data: ")) continue;
+
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") break;
+
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) {
+                answer += content;
+                setSolutionData(prev => prev ? {
+                  ...prev,
+                  content: prev.content + "\n\n---\n\n**Follow-up:** " + question + "\n\n" + answer
+                } : null);
+              }
+            } catch {
+              textBuffer = line + "\n" + textBuffer;
+              break;
+            }
+          }
+        }
+      }
+
+      // Final update with complete answer
+      setSolutionData(prev => prev ? {
+        ...prev,
+        content: prev.content.includes("**Follow-up:**") 
+          ? prev.content 
+          : prev.content + "\n\n---\n\n**Follow-up:** " + question + "\n\n" + answer
+      } : null);
+
+    } catch (error) {
+      console.error("Error with follow-up:", error);
+      toast({
+        title: "Error",
+        description: "Failed to answer follow-up question",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnsweringFollowUp(false);
+    }
+  };
+
+  const handleFindSimilar = async () => {
+    if (!searchQuery) return;
+    
+    setIsFindingSimilar(true);
+    
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/find-similar`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({
+            topic: searchQuery,
+            problemType: solutionData?.isQuestion ? "numerical" : "concept",
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to find similar questions");
+      }
+
+      const data = await response.json();
+      
+      // Replace current videos with similar problem videos
+      setExplanationVideos(data.videos || []);
+      setAnimationVideos([]);
+      setShowVideosPanel(true);
+      
+      toast({
+        title: "Similar Questions Found! 📚",
+        description: `Found ${data.videos?.length || 0} similar problems to practice`,
+      });
+    } catch (error) {
+      console.error("Error finding similar:", error);
+      toast({
+        title: "Error",
+        description: "Failed to find similar questions",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFindingSimilar(false);
+    }
+  };
+
   if (!session) {
     return null; // Auth redirect will happen in useEffect
   }
@@ -723,38 +873,50 @@ const Index = () => {
               {fileData.isPdf && <PDFChat pdfText={pdfText} pdfName={fileData.name} />}
             </div>
           ) : (
-            // Search Results View: Videos and Solution side by side, no PDF
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden animate-fade-in">
-              {/* Solution Panel - Takes half screen */}
+            // Search Results View: Resizable panels for Solution and Videos
+            <ResizablePanelGroup 
+              direction="horizontal" 
+              className="flex-1 animate-fade-in"
+            >
+              {/* Solution Panel */}
               {solutionData && (
-                <div className="h-1/2 md:h-full md:w-1/2">
-                  <SolutionPanel
-                    content={solutionData.content}
-                    isQuestion={solutionData.isQuestion}
-                    onClose={() => setSolutionData(null)}
-                    capturedImage={solutionData.capturedImage}
-                    isStreaming={solutionData.isStreaming}
-                  />
-                </div>
+                <>
+                  <ResizablePanel defaultSize={50} minSize={20}>
+                    <SolutionPanel
+                      content={solutionData.content}
+                      isQuestion={solutionData.isQuestion}
+                      onClose={() => setSolutionData(null)}
+                      capturedImage={solutionData.capturedImage}
+                      isStreaming={solutionData.isStreaming}
+                      onFollowUpQuestion={handleFollowUpQuestion}
+                      isAnswering={isAnsweringFollowUp}
+                      onFindSimilar={handleFindSimilar}
+                      isFindingSimilar={isFindingSimilar}
+                    />
+                  </ResizablePanel>
+                  {showVideosPanel && <ResizableHandle withHandle />}
+                </>
               )}
               
-              {/* Video Panel - Takes half screen */}
+              {/* Video Panel */}
               {showVideosPanel && (
-                <div className={`bg-card/30 backdrop-blur-sm h-1/2 md:h-full ${solutionData ? 'md:w-1/2' : 'md:w-full'}`}>
-                  <VideoPanel 
-                    animationVideos={animationVideos}
-                    explanationVideos={explanationVideos}
-                    searchQuery={searchQuery}
-                    onVideoClick={handleVideoClick}
-                    onClose={handleCloseVideosPanel}
-                    onGenerateFlashcards={handleGenerateFlashcards}
-                    onGenerateQuiz={handleGenerateQuiz}
-                    isGenerating={isGeneratingFlashcards || isGeneratingQuiz}
-                    defaultTab="explanation"
-                  />
-                </div>
+                <ResizablePanel defaultSize={solutionData ? 50 : 100} minSize={20}>
+                  <div className="h-full bg-card/30 backdrop-blur-sm">
+                    <VideoPanel 
+                      animationVideos={animationVideos}
+                      explanationVideos={explanationVideos}
+                      searchQuery={searchQuery}
+                      onVideoClick={handleVideoClick}
+                      onClose={handleCloseVideosPanel}
+                      onGenerateFlashcards={handleGenerateFlashcards}
+                      onGenerateQuiz={handleGenerateQuiz}
+                      isGenerating={isGeneratingFlashcards || isGeneratingQuiz}
+                      defaultTab="explanation"
+                    />
+                  </div>
+                </ResizablePanel>
               )}
-            </div>
+            </ResizablePanelGroup>
           )}
           
           {/* Fullscreen Video Player */}

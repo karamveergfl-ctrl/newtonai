@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { X, Image as ImageIcon, Loader2 } from "lucide-react";
+import { X, Image as ImageIcon, Loader2, Search } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
+import { SolutionChatInput } from "./SolutionChatInput";
 
 interface SolutionPanelProps {
   content: string;
@@ -12,9 +13,23 @@ interface SolutionPanelProps {
   onClose: () => void;
   capturedImage?: string;
   isStreaming?: boolean;
+  onFollowUpQuestion?: (question: string) => void;
+  isAnswering?: boolean;
+  onFindSimilar?: () => void;
+  isFindingSimilar?: boolean;
 }
 
-export const SolutionPanel = ({ content, isQuestion, onClose, capturedImage, isStreaming }: SolutionPanelProps) => {
+export const SolutionPanel = ({ 
+  content, 
+  isQuestion, 
+  onClose, 
+  capturedImage, 
+  isStreaming,
+  onFollowUpQuestion,
+  isAnswering,
+  onFindSimilar,
+  isFindingSimilar
+}: SolutionPanelProps) => {
   return (
     <div className="h-full flex flex-col bg-card border-l animate-fade-in">
       <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between z-10">
@@ -22,10 +37,10 @@ export const SolutionPanel = ({ content, isQuestion, onClose, capturedImage, isS
           <h3 className="font-semibold text-lg">
             {isQuestion ? "📝 Detailed Solution" : "💡 Topic Overview"}
           </h3>
-          {isStreaming && (
+          {(isStreaming || isAnswering) && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>Solving...</span>
+              <span>{isAnswering ? "Answering..." : "Solving..."}</span>
             </div>
           )}
         </div>
@@ -96,8 +111,39 @@ export const SolutionPanel = ({ content, isQuestion, onClose, capturedImage, isS
               <span className="inline-block w-2 h-5 bg-primary animate-pulse ml-0.5" />
             )}
           </div>
+
+          {/* Find Similar Questions Button */}
+          {!isStreaming && content && onFindSimilar && (
+            <Button
+              onClick={onFindSimilar}
+              variant="outline"
+              className="w-full"
+              disabled={isFindingSimilar}
+            >
+              {isFindingSimilar ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Finding similar problems...
+                </>
+              ) : (
+                <>
+                  <Search className="w-4 h-4 mr-2" />
+                  Find Similar Questions to Practice
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </ScrollArea>
+      
+      {/* Chat Input for Follow-up Questions */}
+      {onFollowUpQuestion && !isStreaming && (
+        <SolutionChatInput
+          onSendMessage={onFollowUpQuestion}
+          isLoading={isAnswering}
+          placeholder="Ask a follow-up question..."
+        />
+      )}
     </div>
   );
 };
