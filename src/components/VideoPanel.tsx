@@ -120,40 +120,41 @@ export const VideoPanel = ({
 
       {/* Video Content */}
       <div className="flex-1 overflow-auto px-2 md:px-4 pb-4">
+        <p className="text-xs text-muted-foreground mb-3">
+          {activeTab === "animation" 
+            ? "High-quality animated explanations with visual learning" 
+            : "In-depth theoretical explanations and lectures"}
+        </p>
+        
         {viewMode === "single" ? (
-          // Single Video View
-          <div className="flex flex-col items-center gap-4">
+          // Single Video Slider View - like image cards
+          <div className="relative">
             {currentVideos.length > 0 && currentVideo ? (
-              <>
-                {/* Navigation Controls */}
-                <div className="flex items-center justify-between w-full max-w-2xl">
+              <div className="space-y-4">
+                {/* Current Video Card */}
+                <div className="relative">
+                  {/* Navigation Arrows overlaid */}
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
                     onClick={goToPrevious}
                     disabled={currentVideos.length <= 1}
-                    className="gap-2"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-background/80 backdrop-blur-sm shadow-md hover:bg-background rounded-full -ml-2"
                   >
-                    <ChevronLeft className="w-4 h-4" />
-                    Previous
+                    <ChevronLeft className="w-5 h-5" />
                   </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {currentIndex + 1} of {currentVideos.length}
-                  </span>
+                  
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
                     onClick={goToNext}
                     disabled={currentVideos.length <= 1}
-                    className="gap-2"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-background/80 backdrop-blur-sm shadow-md hover:bg-background rounded-full -mr-2"
                   >
-                    Next
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-5 h-5" />
                   </Button>
-                </div>
 
-                {/* Large Video Card */}
-                <div className="w-full max-w-2xl">
+                  {/* Video Card */}
                   <VideoCardWithTools 
                     video={currentVideo}
                     onVideoClick={onVideoClick}
@@ -163,34 +164,30 @@ export const VideoPanel = ({
                     onGenerateMindMap={onGenerateMindMap}
                     isGenerating={isGenerating}
                     activeGenerating={activeGenerating}
-                    isLargeView={true}
+                    isLargeView={false}
                   />
                 </div>
 
-                {/* Thumbnail Navigator */}
-                <div className="flex gap-2 overflow-x-auto pb-2 w-full max-w-2xl">
-                  {currentVideos.map((video, index) => (
+                {/* Dots indicator */}
+                <div className="flex justify-center gap-1.5">
+                  {currentVideos.map((_, index) => (
                     <button
-                      key={video.videoId}
+                      key={index}
                       onClick={() => setCurrentIndex(index)}
-                      className={`relative flex-shrink-0 w-24 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                      className={`w-2 h-2 rounded-full transition-all ${
                         index === currentIndex 
-                          ? 'border-primary ring-2 ring-primary/20' 
-                          : 'border-transparent hover:border-muted-foreground/50'
+                          ? 'bg-primary w-4' 
+                          : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
                       }`}
-                    >
-                      <img 
-                        src={video.thumbnail} 
-                        alt={video.title}
-                        className="w-full h-full object-cover"
-                      />
-                      {index === currentIndex && (
-                        <div className="absolute inset-0 bg-primary/20" />
-                      )}
-                    </button>
+                    />
                   ))}
                 </div>
-              </>
+                
+                {/* Counter */}
+                <p className="text-center text-xs text-muted-foreground">
+                  {currentIndex + 1} of {currentVideos.length}
+                </p>
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-8">
                 No {activeTab === "animation" ? "animation" : "explanation"} videos found
@@ -198,8 +195,8 @@ export const VideoPanel = ({
             )}
           </div>
         ) : (
-          // Grid View
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          // Grid/List View - show all as cards
+          <div className="space-y-3">
             {currentVideos.length > 0 ? (
               currentVideos.map((video) => (
                 <VideoCardWithTools 
@@ -215,7 +212,7 @@ export const VideoPanel = ({
                 />
               ))
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-8 col-span-full">
+              <p className="text-sm text-muted-foreground text-center py-8">
                 No {activeTab === "animation" ? "animation" : "explanation"} videos found
               </p>
             )}
