@@ -11,8 +11,12 @@ import {
   Trophy,
   Sparkles,
   Check,
-  RotateCw
+  RotateCw,
+  Download,
+  Loader2
 } from "lucide-react";
+import jsPDF from "jspdf";
+import { useToast } from "@/hooks/use-toast";
 
 interface FlashcardData {
   id: string;
@@ -32,8 +36,55 @@ export const FlashcardDeck = ({ flashcards, title, onClose }: FlashcardDeckProps
   const [completedCards, setCompletedCards] = useState<Set<string>>(new Set());
   const [showCongrats, setShowCongrats] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
 
   const progress = (completedCards.size / cards.length) * 100;
+
+  const downloadAsPDF = async () => {
+    setIsDownloading(true);
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      let yOffset = 20;
+
+      pdf.setFontSize(18);
+      pdf.text(title, pageWidth / 2, yOffset, { align: 'center' });
+      yOffset += 15;
+
+      pdf.setFontSize(12);
+      flashcards.forEach((card, idx) => {
+        if (yOffset > 250) {
+          pdf.addPage();
+          yOffset = 20;
+        }
+        
+        pdf.setFont(undefined, 'bold');
+        pdf.text(`Card ${idx + 1}`, 15, yOffset);
+        yOffset += 8;
+
+        pdf.setFont(undefined, 'normal');
+        pdf.setFontSize(11);
+        const frontLines = pdf.splitTextToSize(`Q: ${card.front}`, pageWidth - 30);
+        pdf.text(frontLines, 15, yOffset);
+        yOffset += frontLines.length * 5 + 5;
+
+        const backLines = pdf.splitTextToSize(`A: ${card.back}`, pageWidth - 30);
+        pdf.text(backLines, 15, yOffset);
+        yOffset += backLines.length * 5 + 10;
+
+        pdf.setFontSize(12);
+      });
+
+      pdf.save(`Flashcards_${title.slice(0, 30)}.pdf`);
+      toast({ title: "Downloaded", description: "Flashcards PDF downloaded successfully" });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({ title: "Error", description: "Failed to generate PDF", variant: "destructive" });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
@@ -130,6 +181,15 @@ export const FlashcardDeck = ({ flashcards, title, onClose }: FlashcardDeckProps
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              onClick={downloadAsPDF} 
+              variant="outline" 
+              size="icon" 
+              disabled={isDownloading}
+              title="Download PDF"
+            >
+              {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            </Button>
             <Button onClick={handleShuffle} variant="ghost" size="icon" title="Shuffle">
               <Shuffle className="w-4 h-4" />
             </Button>
