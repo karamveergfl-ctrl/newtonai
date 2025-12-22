@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -8,12 +8,17 @@ import {
   Trophy,
   Sparkles,
   ArrowRight,
-  RotateCcw
+  RotateCcw,
+  Download,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { useToast } from "@/hooks/use-toast";
 
 interface Question {
   id: string;
@@ -37,10 +42,75 @@ export const QuizMode = ({ questions, title, onClose, onComplete }: QuizModeProp
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(new Array(questions.length).fill(null));
   const [isComplete, setIsComplete] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const currentQuestion = questions[currentIndex];
   const progress = ((currentIndex + 1) / questions.length) * 100;
   const isCorrect = selectedAnswer === currentQuestion.correctIndex;
+
+  const downloadAsPDF = async () => {
+    setIsDownloading(true);
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      let yOffset = 20;
+
+      pdf.setFontSize(18);
+      pdf.text(title, pageWidth / 2, yOffset, { align: 'center' });
+      yOffset += 15;
+
+      pdf.setFontSize(12);
+      questions.forEach((q, idx) => {
+        if (yOffset > 260) {
+          pdf.addPage();
+          yOffset = 20;
+        }
+        
+        pdf.setFont(undefined, 'bold');
+        const questionLines = pdf.splitTextToSize(`Q${idx + 1}: ${q.question}`, pageWidth - 30);
+        pdf.text(questionLines, 15, yOffset);
+        yOffset += questionLines.length * 6 + 5;
+
+        pdf.setFont(undefined, 'normal');
+        q.options.forEach((opt, oi) => {
+          if (yOffset > 270) {
+            pdf.addPage();
+            yOffset = 20;
+          }
+          const prefix = oi === q.correctIndex ? '✓ ' : '  ';
+          const optLines = pdf.splitTextToSize(`${prefix}${String.fromCharCode(65 + oi)}. ${opt}`, pageWidth - 40);
+          pdf.text(optLines, 20, yOffset);
+          yOffset += optLines.length * 5 + 2;
+        });
+
+        if (q.explanation) {
+          if (yOffset > 260) {
+            pdf.addPage();
+            yOffset = 20;
+          }
+          pdf.setFontSize(10);
+          pdf.setTextColor(100);
+          const expLines = pdf.splitTextToSize(`Explanation: ${q.explanation}`, pageWidth - 35);
+          pdf.text(expLines, 20, yOffset);
+          pdf.setTextColor(0);
+          pdf.setFontSize(12);
+          yOffset += expLines.length * 4 + 10;
+        }
+
+        yOffset += 5;
+      });
+
+      pdf.save(`Quiz_${title.slice(0, 30)}.pdf`);
+      toast({ title: "Downloaded", description: "Quiz PDF downloaded successfully" });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({ title: "Error", description: "Failed to generate PDF", variant: "destructive" });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleSelectAnswer = (index: number) => {
     if (showResult) return;
@@ -148,6 +218,15 @@ export const QuizMode = ({ questions, title, onClose, onComplete }: QuizModeProp
               <p className="text-sm font-medium">Score</p>
               <p className="text-lg font-bold text-primary">{score}/{questions.length}</p>
             </div>
+            <Button 
+              onClick={downloadAsPDF} 
+              variant="outline" 
+              size="icon" 
+              disabled={isDownloading}
+              title="Download PDF"
+            >
+              {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            </Button>
             <Button onClick={onClose} variant="ghost" size="icon">
               <X className="w-4 h-4" />
             </Button>
