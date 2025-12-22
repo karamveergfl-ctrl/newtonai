@@ -35,35 +35,38 @@ serve(async (req) => {
         model: "google/gemini-2.5-pro",
         messages: [
           {
-            role: "system",
-            content: `You are an expert tutor. Analyze the image and provide:
-1. First line: The main topic in 2-4 words (for video search)
-2. Then provide a comprehensive solution formatted like ChatGPT:
-
-## Step-by-Step Solution
-
-**Given:** List what's provided clearly
-**Find:** What needs to be determined
-
-### Step 1: [Descriptive Title]
-Explain the approach and show calculations with proper formatting.
-
-### Step 2: [Descriptive Title]
-Continue with detailed work, showing all intermediate steps.
-
-**Final Answer:** 
-Highlight the result clearly with units if applicable.
-
-Use ** for bold, \` for inline math/variables, ### for section headers. Be thorough and mathematically precise.
-
-IMPORTANT: Start your response with "TOPIC: [topic name]" on the first line, then provide the solution.`
-          },
-          {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Analyze this problem and provide a complete solution."
+                text: `Solve this numerical problem by carefully analyzing the diagram, figure, and text given in the image.
+
+INSTRUCTIONS:
+1. First line of your response MUST be: "TOPIC: [specific topic name for YouTube search, e.g., "projectile motion problem", "RC circuit analysis", "beam bending calculation"]"
+
+2. Then provide the COMPLETE STEP-BY-STEP SOLUTION:
+
+## Step-by-Step Solution
+
+**Given:** Extract ALL values, conditions, and data from the image (include diagram details)
+**Find:** What exactly needs to be calculated/determined
+
+### Step 1: [Understanding the Problem]
+Analyze the diagram/figure carefully. Identify all forces, angles, dimensions, or relevant quantities shown.
+
+### Step 2: [Setting Up Equations]
+Write the relevant formulas and equations. Show how diagram values relate to variables.
+
+### Step 3: [Calculations]
+Show complete mathematical working with all intermediate steps. Don't skip any calculation.
+
+### Step 4: [Additional Steps as needed]
+Continue solving until you reach the answer.
+
+**Final Answer:**
+State the result clearly with proper units and significant figures.
+
+Be extremely thorough - analyze every detail in the diagram. Show ALL mathematical steps. Format using **bold**, \`inline code\` for variables, and ### headers.`
               },
               {
                 type: "image_url",
@@ -116,12 +119,12 @@ IMPORTANT: Start your response with "TOPIC: [topic name]" on the first line, the
       throw new Error("YOUTUBE_API_KEY not configured");
     }
 
-    // Search for solved examples and explanations
-    const searchQuery = `${topic} solved example problem solution step by step`;
-    console.log("Searching YouTube for:", searchQuery);
+    // Search for exact video solutions matching the problem type
+    const searchQuery = `${topic} solved numerical problem step by step solution`;
+    console.log("Searching YouTube for exact video solution:", searchQuery);
     
     const youtubeResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&relevanceLanguage=en&safeSearch=strict&order=relevance`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&relevanceLanguage=en&safeSearch=strict&order=relevance`
     );
 
     if (!youtubeResponse.ok) {
