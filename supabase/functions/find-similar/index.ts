@@ -21,54 +21,44 @@ serve(async (req) => {
 
     console.log("Finding similar questions for topic:", topic);
 
-    // Generate similar practice problems using AI
+    // Generate ONE similar practice problem with ASCII line diagram
     const problemsPrompt = `Based on this topic: "${topic}"
 
-Generate 3 similar practice problems that a student can solve. For each problem:
-1. Create a clear problem statement with specific numerical values
-2. If the problem involves a diagram/figure, describe it in detail using ASCII art or describe what should be drawn
-3. Include all necessary given information
+Generate exactly 1 similar practice problem. Include:
 
-Format your response EXACTLY like this:
+1. A clear problem statement with specific numbers
+2. A simple ASCII LINE DIAGRAM using only these characters: | - / \\ + o * < > ^ v
+3. Given values and what to find
 
-## Similar Problem 1
-**Problem:** [Clear problem statement with numbers]
-
-**Figure Description:**
-\`\`\`
-[ASCII diagram or description of what to draw]
-\`\`\`
-
-**Given:**
-- [List given values]
+Format EXACTLY like this:
 
 ---
 
-## Similar Problem 2
-**Problem:** [Clear problem statement with numbers]
+## 🎯 Practice Problem
 
-**Figure Description:**
+**Problem:** A ball is thrown at 25 m/s at 45° angle. Find max height.
+
+**Diagram:**
 \`\`\`
-[ASCII diagram or description]
+        *  max height
+       / \\
+      /   \\
+     /     \\
+    o-------+-----> x
+   45°
 \`\`\`
 
-**Given:**
-- [List given values]
+**Given:** $v_0 = 25\\,\\text{m/s}$, $\\theta = 45°$, $g = 10\\,\\text{m/s}^2$
+
+**Find:** Maximum height $H$
 
 ---
 
-## Similar Problem 3
-**Problem:** [Clear problem statement with numbers]
-
-**Figure Description:**
-\`\`\`
-[ASCII diagram or description]
-\`\`\`
-
-**Given:**
-- [List given values]
-
-Make the problems progressively harder. Use LaTeX for math: $formula$ for inline, $$formula$$ for block.`;
+RULES:
+- Use ONLY ASCII characters for diagram: | - / \\ + o * < > ^ v [ ] ( )
+- Keep diagram simple (5-8 lines max)
+- Make problem solvable with the given information
+- Use LaTeX: $inline$ and $$display$$`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

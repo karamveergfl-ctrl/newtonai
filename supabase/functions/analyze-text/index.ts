@@ -23,61 +23,33 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    const systemPrompt = `Solve this numerical problem by carefully analyzing the diagram, figure, and text given in the image.
+    const systemPrompt = `Solve this numerical problem by analyzing the diagram and text in the image.
 
 INSTRUCTIONS:
-1. First line of your response MUST be: "TOPIC: [specific topic name for YouTube search, e.g., "projectile motion problem", "RC circuit analysis", "beam bending calculation"]"
+1. First line MUST be: "TOPIC: [specific topic for YouTube, e.g., "projectile motion", "RC circuit"]"
 
-2. Then provide your response in this EXACT format:
+2. Provide a SHORT, CONCISE solution:
 
-## 📊 Figure Analysis
+## 📊 Figure
+Brief 1-2 line description of what's shown.
 
-Describe the diagram/figure in detail:
-- What physical setup is shown (e.g., inclined plane, circuit, beam, projectile path)
-- Label and identify all objects, forces, angles, dimensions visible
-- Explain what each symbol/arrow/line represents
-- Note any initial conditions or constraints shown
+## 📝 Quick Solution
 
-## 📝 Step-by-Step Solution
+**Given:** $v = 20\\,\\text{m/s}$, $\\theta = 30°$ (list key values only)
 
-**Given:** Extract ALL values using LaTeX notation:
-- $v_0 = 20 \\, \\text{m/s}$ (initial velocity)
-- $\\theta = 30°$ (angle of projection)
-- List every value from the image
+**Find:** What to calculate
 
-**Find:** What exactly needs to be calculated
+**Solution:**
+Key formula: $$v = u + at$$
+Substitute: $$v = 20 \\cos 30° = 17.3\\,\\text{m/s}$$
 
-### Step 1: Understanding & Setup
-Explain the physics/math concept. Write the relevant formulas:
-$$F = ma$$
-$$v = u + at$$
+**✅ Answer:** $$\\boxed{x = 35.3\\,\\text{m}}$$
 
-### Step 2: Substituting Values
-Show substitution with LaTeX:
-$$v_x = v_0 \\cos\\theta = 20 \\times \\cos(30°)$$
-$$v_x = 20 \\times 0.866 = 17.32 \\, \\text{m/s}$$
-
-### Step 3: Calculations
-Continue with detailed mathematical working. Show ALL intermediate steps:
-$$s = ut + \\frac{1}{2}at^2$$
-
-### Step 4: [Additional Steps as needed]
-Continue solving until you reach the answer.
-
----
-
-**✅ Final Answer:**
-$$\\boxed{x = 35.3 \\, \\text{m}}$$
-
-State the result clearly with proper units and significant figures.
-
-IMPORTANT FORMATTING RULES:
-- Use $...$ for inline math (e.g., $v = 20 \\, \\text{m/s}$)
-- Use $$...$$ for display equations on their own line
-- Use \\frac{a}{b} for fractions, \\sqrt{x} for roots
-- Use \\text{} for units inside math: $F = 10 \\, \\text{N}$
-- Use \\boxed{} for final answers
-- Be extremely thorough - analyze every detail in the diagram`;
+RULES:
+- Keep solution SHORT (max 10 lines of math)
+- Only show essential steps, skip obvious algebra
+- Use $...$ for inline, $$...$$ for display math
+- Use \\boxed{} for final answer`;
 
     // Streaming response
     if (stream) {

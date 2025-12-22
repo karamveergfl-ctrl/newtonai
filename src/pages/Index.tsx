@@ -62,6 +62,7 @@ const Index = () => {
   });
   const [isAnsweringFollowUp, setIsAnsweringFollowUp] = useState(false);
   const [isFindingSimilar, setIsFindingSimilar] = useState(false);
+  const [isGettingDetailed, setIsGettingDetailed] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -713,8 +714,8 @@ const Index = () => {
       }
       
       toast({
-        title: "Similar Questions Found! 📚",
-        description: `Generated 3 practice problems + ${data.videos?.length || 0} video solutions`,
+        title: "Practice Problem Found! 📚",
+        description: `Generated 1 practice problem + ${data.videos?.length || 0} video solutions`,
       });
     } catch (error) {
       console.error("Error finding similar:", error);
@@ -725,6 +726,106 @@ const Index = () => {
       });
     } finally {
       setIsFindingSimilar(false);
+    }
+  };
+
+  const handleGetDetailedSolution = async () => {
+    if (!solutionData) return;
+    
+    setIsGettingDetailed(true);
+    
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/detailed-solution`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({
+            imageData: solutionData.capturedImage,
+            currentSolution: solutionData.content,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to get detailed solution");
+      }
+
+      // Parse streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let detailed = "";
+      let textBuffer = "";
+
+      // Clear current solution and start fresh with detailed
+      setSolutionData(prev => prev ? {
+        ...prev,
+        content: "",
+        isStreaming: true
+      } : null);
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          textBuffer += decoder.decode(value, { stream: true });
+          
+          let newlineIndex: number;
+          while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+            let line = textBuffer.slice(0, newlineIndex);
+            textBuffer = textBuffer.slice(newlineIndex + 1);
+
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (line.startsWith(":") || line.trim() === "") continue;
+            if (!line.startsWith("data: ")) continue;
+
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") break;
+
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) {
+                detailed += content;
+                setSolutionData(prev => prev ? {
+                  ...prev,
+                  content: detailed,
+                  isStreaming: true
+                } : null);
+              }
+            } catch {
+              textBuffer = line + "\n" + textBuffer;
+              break;
+            }
+          }
+        }
+      }
+
+      // Final update
+      setSolutionData(prev => prev ? {
+        ...prev,
+        content: detailed,
+        isStreaming: false
+      } : null);
+
+    } catch (error) {
+      console.error("Error getting detailed solution:", error);
+      toast({
+        title: "Error",
+        description: "Failed to get detailed solution",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGettingDetailed(false);
     }
   };
 
@@ -903,6 +1004,8 @@ const Index = () => {
                       isAnswering={isAnsweringFollowUp}
                       onFindSimilar={handleFindSimilar}
                       isFindingSimilar={isFindingSimilar}
+                      onGetDetailedSolution={handleGetDetailedSolution}
+                      isGettingDetailed={isGettingDetailed}
                     />
                   </ResizablePanel>
                   {showVideosPanel && <ResizableHandle withHandle />}
