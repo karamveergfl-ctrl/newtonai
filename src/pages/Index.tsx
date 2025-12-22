@@ -82,6 +82,7 @@ const Index = () => {
   const [mindMapData, setMindMapData] = useState<any>(null);
   const [videoMindMapData, setVideoMindMapData] = useState<any>(null);
   const [pdfPageCount, setPdfPageCount] = useState(10);
+  const [triggerScreenshot, setTriggerScreenshot] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -1412,6 +1413,7 @@ const Index = () => {
             onGenerateFlashcards={handleGenerateFlashcardsFromContent}
             onGenerateSummary={handleGenerateSummary}
             onGenerateMindMap={handleGenerateMindMap}
+            onScreenshot={() => setTriggerScreenshot(true)}
             isGeneratingQuiz={isGeneratingQuiz}
             isGeneratingFlashcards={isGeneratingFlashcards}
             isGeneratingSummary={isGeneratingSummary}
@@ -1435,6 +1437,8 @@ const Index = () => {
                     onTextSelect={handleTextSelect}
                     onImageCapture={handleImageCapture}
                     onPdfTextExtracted={setPdfText}
+                    triggerScreenshot={triggerScreenshot}
+                    onScreenshotTriggered={() => setTriggerScreenshot(false)}
                   />
                 ) : (
                   <ImageViewer

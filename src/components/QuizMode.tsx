@@ -238,30 +238,41 @@ export const QuizMode = ({ questions, title, onClose, onComplete }: QuizModeProp
       </div>
 
       {/* Question */}
-      <div className="flex-1 overflow-auto p-4">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div className="bg-card rounded-xl p-6 border shadow-lg">
-            <p className="text-lg md:text-xl font-medium leading-relaxed">
+      <div className="flex-1 overflow-auto p-4 bg-muted/30">
+        <div className="max-w-3xl mx-auto space-y-6">
+          {/* Question Card */}
+          <div className="bg-card rounded-lg p-6 border shadow-sm">
+            <p className="text-lg md:text-xl font-semibold leading-relaxed">
+              <span className="text-muted-foreground mr-2">Q{currentIndex + 1}.</span>
               <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                 {currentQuestion.question}
               </ReactMarkdown>
             </p>
           </div>
 
+          {/* Options */}
           <div className="space-y-3">
             {currentQuestion.options.map((option, index) => {
               const isSelected = selectedAnswer === index;
               const isCorrectOption = index === currentQuestion.correctIndex;
+              const letter = String.fromCharCode(65 + index);
               
-              let optionStyle = "bg-card hover:bg-muted/50 border-border";
-              if (showResult) {
-                if (isCorrectOption) {
-                  optionStyle = "bg-green-500/20 border-green-500 text-green-700 dark:text-green-300";
-                } else if (isSelected && !isCorrectOption) {
-                  optionStyle = "bg-red-500/20 border-red-500 text-red-700 dark:text-red-300";
-                }
-              } else if (isSelected) {
-                optionStyle = "bg-primary/20 border-primary";
+              let optionBg = "bg-card hover:bg-muted/50";
+              let badgeBg = "bg-muted text-muted-foreground";
+              let borderStyle = "border-transparent";
+              
+              if (showResult && isCorrectOption) {
+                optionBg = "bg-green-100 dark:bg-green-900/30";
+                badgeBg = "bg-green-600 text-white";
+                borderStyle = "border-green-500";
+              } else if (showResult && isSelected && !isCorrectOption) {
+                optionBg = "bg-red-50 dark:bg-red-900/20";
+                badgeBg = "bg-muted text-muted-foreground";
+                borderStyle = "border-red-300";
+              } else if (isSelected && !showResult) {
+                optionBg = "bg-primary/10";
+                badgeBg = "bg-primary text-primary-foreground";
+                borderStyle = "border-primary";
               }
 
               return (
@@ -270,48 +281,35 @@ export const QuizMode = ({ questions, title, onClose, onComplete }: QuizModeProp
                   onClick={() => handleSelectAnswer(index)}
                   disabled={showResult}
                   className={cn(
-                    "w-full p-4 rounded-xl border-2 text-left transition-all",
-                    "flex items-center gap-3",
-                    optionStyle,
-                    !showResult && "cursor-pointer"
+                    "w-full p-4 rounded-lg border-2 text-left transition-all",
+                    "flex items-start gap-4",
+                    optionBg,
+                    borderStyle,
+                    !showResult && "cursor-pointer hover:shadow-md"
                   )}
                 >
                   <span className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                    "border-2",
-                    isSelected && !showResult ? "bg-primary text-primary-foreground border-primary" : "border-current"
+                    "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0",
+                    badgeBg
                   )}>
-                    {String.fromCharCode(65 + index)}
+                    {letter}
                   </span>
-                  <span className="flex-1">
+                  <span className="flex-1 pt-1">
                     <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                       {option}
                     </ReactMarkdown>
                   </span>
-                  {showResult && isCorrectOption && (
-                    <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0" />
-                  )}
-                  {showResult && isSelected && !isCorrectOption && (
-                    <XCircle className="w-6 h-6 text-red-500 shrink-0" />
-                  )}
                 </button>
               );
             })}
           </div>
 
-          {/* Explanation */}
+          {/* Correct Answer & Explanation - Always shown after submit */}
           {showResult && (
-            <div className={cn(
-              "rounded-xl p-4 border-2 animate-fade-in",
-              isCorrect ? "bg-green-500/10 border-green-500/30" : "bg-orange-500/10 border-orange-500/30"
-            )}>
-              <p className={cn(
-                "font-semibold mb-2",
-                isCorrect ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"
-              )}>
-                {isCorrect ? "✓ Correct!" : "✗ Incorrect"}
-              </p>
-              <p className="text-sm text-muted-foreground">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800 animate-fade-in">
+              <p className="text-sm text-muted-foreground italic">
+                <span className="font-medium text-foreground">✓ Correct Answer: {String.fromCharCode(65 + currentQuestion.correctIndex)}</span>
+                {" — "}
                 {currentQuestion.explanation}
               </p>
             </div>
