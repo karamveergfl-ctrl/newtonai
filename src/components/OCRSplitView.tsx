@@ -587,28 +587,26 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
                   ref={(el) => { pageRefs.current[currentPage] = el; }}
                   className="max-w-[595px] mx-auto aspect-[1/1.414] p-12 bg-white text-black shadow-lg overflow-auto"
                 >
-                  <div className="prose prose-sm max-w-none select-text cursor-text">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[rehypeKatex]}
-                      components={{
-                        h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4 text-black" {...props} />,
-                        h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 text-black" {...props} />,
-                        h3: ({node, ...props}) => <h3 className="text-lg font-semibold mb-2 text-black" {...props} />,
-                        p: ({node, ...props}) => <p className="mb-3 text-black leading-relaxed" {...props} />,
-                        ul: ({node, ...props}) => <ul className="list-disc ml-6 mb-3 text-black" {...props} />,
-                        ol: ({node, ...props}) => <ol className="list-decimal ml-6 mb-3 text-black" {...props} />,
-                        li: ({node, ...props}) => <li className="mb-1 text-black" {...props} />,
-                        strong: ({node, ...props}) => <strong className="font-bold text-black" {...props} />,
-                        em: ({node, ...props}) => <em className="italic text-black" {...props} />,
-                        code: ({node, ...props}) => <code className="bg-gray-100 px-1 rounded text-black font-mono text-sm" {...props} />,
-                        table: ({node, ...props}) => <table className="border-collapse border border-gray-300 my-3 text-black w-full" {...props} />,
-                        th: ({node, ...props}) => <th className="border border-gray-300 px-2 py-1 bg-gray-50 text-black font-semibold" {...props} />,
-                        td: ({node, ...props}) => <td className="border border-gray-300 px-2 py-1 text-black" {...props} />,
-                      }}
-                    >
-                      {currentProcessedPage.text}
-                    </ReactMarkdown>
+                  <div className="max-w-none select-text cursor-text font-serif text-base leading-[1.8]">
+                    {/* Word-by-word rendering with preserved positioning */}
+                    {currentProcessedPage.text.split('\n').map((line, lineIdx) => (
+                      <div key={lineIdx} className="min-h-[1.8em]">
+                        {line.trim() ? (
+                          <span className="inline">
+                            {line.split(/(\s+)/).map((segment, segIdx) => (
+                              <span 
+                                key={segIdx} 
+                                className={segment.trim() ? "inline" : "whitespace-pre"}
+                              >
+                                {segment}
+                              </span>
+                            ))}
+                          </span>
+                        ) : (
+                          <br />
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </Card>
               )}

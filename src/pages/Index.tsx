@@ -15,7 +15,8 @@ import { OCRSplitView } from "@/components/OCRSplitView";
 import { FlashcardDeck } from "@/components/FlashcardDeck";
 import { QuizMode } from "@/components/QuizMode";
 import { StudyModeSelector } from "@/components/StudyModeSelector";
-import { StudyToolsPanel } from "@/components/StudyToolsPanel";
+import { StudyToolsBar } from "@/components/StudyToolsBar";
+import { FullScreenStudyTool } from "@/components/FullScreenStudyTool";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -73,6 +74,9 @@ const Index = () => {
   const [videoSummary, setVideoSummary] = useState("");
   const [videoMindMap, setVideoMindMap] = useState("");
   const [isTopicSearching, setIsTopicSearching] = useState(false);
+  const [activeGenerating, setActiveGenerating] = useState<"quiz" | "flashcards" | "summary" | "mindmap" | null>(null);
+  const [showFullScreenMindMap, setShowFullScreenMindMap] = useState(false);
+  const [fullScreenMindMapTitle, setFullScreenMindMapTitle] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -1275,6 +1279,7 @@ const Index = () => {
                 onGenerateSummary={handleGenerateSummaryFromVideo}
                 onGenerateMindMap={handleGenerateMindMapFromVideo}
                 isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap}
+                activeGenerating={activeGenerating}
               />
             </div>
           )}
@@ -1354,53 +1359,45 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Study Tools Bar - Top Row */}
+        <StudyToolsBar
+          onGenerateQuiz={handleGenerateQuizFromContent}
+          onGenerateFlashcards={handleGenerateFlashcardsFromContent}
+          onGenerateSummary={handleGenerateSummary}
+          onGenerateMindMap={handleGenerateMindMap}
+          isGeneratingQuiz={isGeneratingQuiz}
+          isGeneratingFlashcards={isGeneratingFlashcards}
+          isGeneratingSummary={isGeneratingSummary}
+          isGeneratingMindMap={isGeneratingMindMap}
+          disabled={!pdfText && !fileData?.ocrText}
+        />
+
         {/* Main Content - Responsive Layout */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Conditional rendering: Show PDF/Image or Search Results */}
           {!showVideosPanel && !solutionData ? (
-            // File View with Search, Chat, and Study Tools Panel
-            <div className="flex-1 flex overflow-hidden">
-              <div className="flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in flex-1">
-                <SearchBox onSearch={handleSearch} isSearching={isSearching} />
-                <div className="flex-1 overflow-hidden">
-                  {fileData.isPdf ? (
-                    <PDFReader 
-                      pdfUrl={fileData.url} 
-                      onTextSelect={handleTextSelect}
-                      onImageCapture={handleImageCapture}
-                      onPdfTextExtracted={setPdfText}
-                    />
-                  ) : (
-                    <ImageViewer
-                      imageUrl={fileData.url}
-                      imageName={fileData.name}
-                      ocrText={fileData.ocrText}
-                      onTextSelect={handleTextSelect}
-                      onImageCapture={handleImageCapture}
-                    />
-                  )}
-                </div>
-                {fileData.isPdf && <PDFChat pdfText={pdfText} pdfName={fileData.name} />}
+            // File View with Search and Chat
+            <div className="flex-1 flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in">
+              <SearchBox onSearch={handleSearch} isSearching={isSearching} />
+              <div className="flex-1 overflow-hidden">
+                {fileData.isPdf ? (
+                  <PDFReader 
+                    pdfUrl={fileData.url} 
+                    onTextSelect={handleTextSelect}
+                    onImageCapture={handleImageCapture}
+                    onPdfTextExtracted={setPdfText}
+                  />
+                ) : (
+                  <ImageViewer
+                    imageUrl={fileData.url}
+                    imageName={fileData.name}
+                    ocrText={fileData.ocrText}
+                    onTextSelect={handleTextSelect}
+                    onImageCapture={handleImageCapture}
+                  />
+                )}
               </div>
-              
-              {/* Study Tools Panel - Right Side */}
-              <div className="hidden md:block w-64 shrink-0">
-                <StudyToolsPanel
-                  onGenerateQuiz={handleGenerateQuizFromContent}
-                  onGenerateFlashcards={handleGenerateFlashcardsFromContent}
-                  onGenerateSummary={handleGenerateSummary}
-                  onGenerateMindMap={handleGenerateMindMap}
-                  isGeneratingQuiz={isGeneratingQuiz}
-                  isGeneratingFlashcards={isGeneratingFlashcards}
-                  isGeneratingSummary={isGeneratingSummary}
-                  isGeneratingMindMap={isGeneratingMindMap}
-                  disabled={!pdfText && !fileData?.ocrText}
-                  summary={summary}
-                  mindMap={mindMap}
-                  onCloseSummary={() => setSummary("")}
-                  onCloseMindMap={() => setMindMap("")}
-                />
-              </div>
+              {fileData.isPdf && <PDFChat pdfText={pdfText} pdfName={fileData.name} />}
             </div>
           ) : (
             // Search Results View: Resizable panels for Solution and Videos
@@ -1447,6 +1444,7 @@ const Index = () => {
                       onGenerateSummary={handleGenerateSummaryFromVideo}
                       onGenerateMindMap={handleGenerateMindMapFromVideo}
                       isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap}
+                      activeGenerating={activeGenerating}
                       defaultTab="explanation"
                     />
                   </div>
@@ -1485,6 +1483,47 @@ const Index = () => {
               title={quizTitle}
               onClose={handleCloseQuiz}
               onComplete={handleQuizComplete}
+            />
+          )}
+
+          {/* Summary Half-Screen (Right Side) */}
+          {summary && (
+            <FullScreenStudyTool
+              type="summary"
+              title={fileData?.name || "Document Summary"}
+              content={summary}
+              onClose={() => setSummary("")}
+            />
+          )}
+
+          {/* Mind Map Full Screen */}
+          {mindMap && (
+            <FullScreenStudyTool
+              type="mindmap"
+              title={fileData?.name || "Document Mind Map"}
+              content={mindMap}
+              onClose={() => setMindMap("")}
+            />
+          )}
+
+          {/* Video Summary Half-Screen */}
+          {videoSummary && (
+            <FullScreenStudyTool
+              type="summary"
+              title="Video Summary"
+              content={videoSummary}
+              onClose={() => setVideoSummary("")}
+            />
+          )}
+
+          {/* Video Mind Map Full Screen */}
+          {videoMindMap && (
+            <FullScreenStudyTool
+              type="mindmap"
+              title="Video Mind Map"
+              content={videoMindMap}
+              onClose={() => setVideoMindMap("")}
+              showVideoSlide={showVideosPanel}
             />
           )}
         </div>
