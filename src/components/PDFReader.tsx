@@ -269,165 +269,10 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
   };
 
   return (
-    <div className="h-full flex">
-      {/* Main PDF Area */}
-      <div className={`flex-1 flex flex-col ${showSolution ? 'w-1/2' : 'w-full'}`}>
-        {/* Navigation bar with screenshot button */}
-        <div className="group/nav">
-          <Card className="p-2 border-0 shadow-sm bg-background/80 backdrop-blur-sm md:opacity-0 md:group-hover/nav:opacity-100 transition-opacity duration-300">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
-                disabled={pageNumber <= 1}
-                className="h-10 w-10 md:h-8 md:w-8"
-              >
-                <ChevronLeft className="w-5 h-5 md:w-4 md:h-4" />
-              </Button>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground px-2">
-                  {pageNumber} / {numPages}
-                </span>
-                
-                {!isScreenshotMode ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={activateScreenshotMode}
-                    className="h-9 md:h-7 gap-1 text-xs px-3"
-                  >
-                    <Camera className="w-4 h-4 md:w-3 md:h-3" />
-                    <span className="hidden sm:inline">Capture & Solve</span>
-                  </Button>
-                ) : (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={cancelScreenshotMode}
-                    className="h-9 md:h-7 gap-1 text-xs px-3"
-                  >
-                    <X className="w-4 h-4 md:w-3 md:h-3" />
-                    Cancel
-                  </Button>
-                )}
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPageNumber(prev => Math.min(numPages, prev + 1))}
-                disabled={pageNumber >= numPages}
-                className="h-10 w-10 md:h-8 md:w-8"
-              >
-                <ChevronRight className="w-5 h-5 md:w-4 md:h-4" />
-              </Button>
-            </div>
-          </Card>
-        </div>
-
-        {/* PDF Display */}
-        <div 
-          ref={containerRef}
-          className={`flex-1 flex justify-center overflow-auto bg-muted/10 scrollbar-thin pdf-container relative ${
-            isLongPressing ? 'bg-primary/5' : ''
-          }`}
-          onTouchStart={!isScreenshotMode ? handleTouchStart : undefined}
-          onTouchMove={!isScreenshotMode ? handleTouchMove : undefined}
-          onTouchEnd={!isScreenshotMode ? handleTouchEnd : undefined}
-        >
-          {/* Screenshot capture overlay */}
-          <ScreenshotCapture
-            targetRef={containerRef}
-            isActive={isScreenshotMode}
-            onCapture={handleScreenshotCapture}
-            onCancel={cancelScreenshotMode}
-            getCanvas={getCanvas}
-          />
-
-          {/* Long press indicator */}
-          {isLongPressing && (
-            <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-            </div>
-          )}
-          
-          <div
-            onTouchStart={handleSwipeStart}
-            onTouchEnd={handleSwipeEnd}
-            className="w-full"
-          >
-            <Document
-              file={pdfUrl}
-              onLoadSuccess={onDocumentLoadSuccess}
-              loading={
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                </div>
-              }
-              className="w-full"
-            >
-              <Page 
-                pageNumber={pageNumber}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-                className="max-w-full mx-auto"
-                width={typeof window !== 'undefined' ? Math.min(window.innerWidth * (showSolution ? 0.45 : 0.9), showSolution ? 500 : 800) : 800}
-              />
-            </Document>
-          </div>
-        </div>
-
-        {/* Desktop search prompt */}
-        {!isMobile && showSearchPrompt && !isScreenshotMode && (
-          <Card className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-sm w-11/12 md:max-w-md">
-            <div className="space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground mb-1">Selected:</p>
-                  <p className="text-sm font-medium line-clamp-2 break-words">{selectedText}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleDismiss}
-                  className="h-6 w-6 shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              <Button 
-                onClick={handleSearchClick}
-                className="w-full"
-                size="sm"
-              >
-                Find Videos
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Mobile search prompt (bottom drawer) */}
-        <MobileSearchPrompt
-          open={showMobilePrompt}
-          onOpenChange={setShowMobilePrompt}
-          selectedText={selectedText}
-          onSearch={handleMobileSearch}
-        />
-
-        <div className="text-center text-xs text-muted-foreground mt-2 px-2">
-          {isMobile ? (
-            "💡 Capture area to solve • Select text & long-press to search"
-          ) : (
-            "💡 Click 'Capture & Solve' to analyze any area with AI"
-          )}
-        </div>
-      </div>
-
-      {/* Solution Panel */}
+    <div className="h-full flex flex-col relative">
+      {/* Solution Panel Overlay - appears on top */}
       {showSolution && (
-        <div className="w-1/2 h-full border-l">
+        <div className="absolute inset-0 z-40 bg-background/95 backdrop-blur-sm animate-fade-in overflow-hidden">
           <SolutionPanel
             content={solutionContent}
             isQuestion={true}
@@ -438,6 +283,158 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
           />
         </div>
       )}
+
+      {/* Navigation bar with screenshot button */}
+      <div className="group/nav">
+        <Card className="p-2 border-0 shadow-sm bg-background/80 backdrop-blur-sm md:opacity-0 md:group-hover/nav:opacity-100 transition-opacity duration-300">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
+              disabled={pageNumber <= 1}
+              className="h-10 w-10 md:h-8 md:w-8"
+            >
+              <ChevronLeft className="w-5 h-5 md:w-4 md:h-4" />
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground px-2">
+                {pageNumber} / {numPages}
+              </span>
+              
+              {!isScreenshotMode ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={activateScreenshotMode}
+                  className="h-9 md:h-7 gap-1 text-xs px-3"
+                >
+                  <Camera className="w-4 h-4 md:w-3 md:h-3" />
+                  <span className="hidden sm:inline">Capture & Solve</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={cancelScreenshotMode}
+                  className="h-9 md:h-7 gap-1 text-xs px-3"
+                >
+                  <X className="w-4 h-4 md:w-3 md:h-3" />
+                  Cancel
+                </Button>
+              )}
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPageNumber(prev => Math.min(numPages, prev + 1))}
+              disabled={pageNumber >= numPages}
+              className="h-10 w-10 md:h-8 md:w-8"
+            >
+              <ChevronRight className="w-5 h-5 md:w-4 md:h-4" />
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      {/* PDF Display */}
+      <div 
+        ref={containerRef}
+        className={`flex-1 flex justify-center overflow-auto bg-muted/10 scrollbar-thin pdf-container relative ${
+          isLongPressing ? 'bg-primary/5' : ''
+        }`}
+        onTouchStart={!isScreenshotMode ? handleTouchStart : undefined}
+        onTouchMove={!isScreenshotMode ? handleTouchMove : undefined}
+        onTouchEnd={!isScreenshotMode ? handleTouchEnd : undefined}
+      >
+        {/* Screenshot capture overlay */}
+        <ScreenshotCapture
+          targetRef={containerRef}
+          isActive={isScreenshotMode}
+          onCapture={handleScreenshotCapture}
+          onCancel={cancelScreenshotMode}
+          getCanvas={getCanvas}
+        />
+
+        {/* Long press indicator */}
+        {isLongPressing && (
+          <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          </div>
+        )}
+        
+        <div
+          onTouchStart={handleSwipeStart}
+          onTouchEnd={handleSwipeEnd}
+          className="w-full"
+        >
+          <Document
+            file={pdfUrl}
+            onLoadSuccess={onDocumentLoadSuccess}
+            loading={
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            }
+            className="w-full"
+          >
+            <Page 
+              pageNumber={pageNumber}
+              renderTextLayer={true}
+              renderAnnotationLayer={true}
+              className="max-w-full mx-auto"
+              width={typeof window !== 'undefined' ? Math.min(window.innerWidth * 0.9, 800) : 800}
+            />
+          </Document>
+        </div>
+      </div>
+
+      {/* Desktop search prompt */}
+      {!isMobile && showSearchPrompt && !isScreenshotMode && (
+        <Card className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-sm w-11/12 md:max-w-md">
+          <div className="space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground mb-1">Selected:</p>
+                <p className="text-sm font-medium line-clamp-2 break-words">{selectedText}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDismiss}
+                className="h-6 w-6 shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <Button 
+              onClick={handleSearchClick}
+              className="w-full"
+              size="sm"
+            >
+              Find Videos
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* Mobile search prompt (bottom drawer) */}
+      <MobileSearchPrompt
+        open={showMobilePrompt}
+        onOpenChange={setShowMobilePrompt}
+        selectedText={selectedText}
+        onSearch={handleMobileSearch}
+      />
+
+      <div className="text-center text-xs text-muted-foreground mt-2 px-2">
+        {isMobile ? (
+          "💡 Capture area to solve • Select text & long-press to search"
+        ) : (
+          "💡 Click 'Capture & Solve' to analyze any area with AI"
+        )}
+      </div>
     </div>
   );
 };
