@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Check, Loader2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import html2canvas from "html2canvas";
 
 interface ScreenshotCaptureProps {
   targetRef: React.RefObject<HTMLElement>;
@@ -139,7 +140,7 @@ export const ScreenshotCapture = ({
   };
 
   const handleConfirm = async () => {
-    if (!start || !end) return;
+    if (!start || !end || !targetRef.current) return;
     
     const width = Math.abs(end.x - start.x);
     const height = Math.abs(end.y - start.y);
@@ -151,36 +152,45 @@ export const ScreenshotCapture = ({
     setIsProcessing(true);
 
     try {
-      const canvas = getCanvas?.();
-      if (!canvas) {
-        console.error("No canvas found");
-        setIsProcessing(false);
-        return;
-      }
-
       const container = targetRef.current;
-      if (!container) {
-        setIsProcessing(false);
-        return;
+      
+      // Hide the overlay temporarily for clean screenshot
+      if (overlayRef.current) {
+        overlayRef.current.style.display = 'none';
       }
 
-      const containerRect = container.getBoundingClientRect();
-      const canvasRect = canvas.getBoundingClientRect();
+      // Use html2canvas to capture the container
+      const fullCanvas = await html2canvas(container, {
+        useCORS: true,
+        allowTaint: true,
+        scrollX: -container.scrollLeft,
+        scrollY: -container.scrollTop,
+        x: container.scrollLeft,
+        y: container.scrollTop,
+        width: container.clientWidth,
+        height: container.clientHeight,
+      });
 
-      const canvasOffsetX = canvasRect.left - containerRect.left + container.scrollLeft;
-      const canvasOffsetY = canvasRect.top - containerRect.top + container.scrollTop;
+      // Show overlay again
+      if (overlayRef.current) {
+        overlayRef.current.style.display = 'block';
+      }
 
-      const x = Math.min(start.x, end.x) - canvasOffsetX;
-      const y = Math.min(start.y, end.y) - canvasOffsetY;
+      // Calculate crop coordinates
+      const x = Math.min(start.x, end.x);
+      const y = Math.min(start.y, end.y);
 
-      const scaleX = canvas.width / canvasRect.width;
-      const scaleY = canvas.height / canvasRect.height;
+      // Scale factors
+      const scaleX = fullCanvas.width / container.clientWidth;
+      const scaleY = fullCanvas.height / container.clientHeight;
 
-      const scaledX = Math.max(0, x * scaleX);
-      const scaledY = Math.max(0, y * scaleY);
-      const scaledWidth = Math.min(width * scaleX, canvas.width - scaledX);
-      const scaledHeight = Math.min(height * scaleY, canvas.height - scaledY);
+      // Adjust for scroll position
+      const adjustedX = (x - container.scrollLeft) * scaleX;
+      const adjustedY = (y - container.scrollTop) * scaleY;
+      const scaledWidth = width * scaleX;
+      const scaledHeight = height * scaleY;
 
+      // Create cropped canvas
       const cropCanvas = document.createElement("canvas");
       const ctx = cropCanvas.getContext("2d");
       if (!ctx) {
@@ -192,9 +202,9 @@ export const ScreenshotCapture = ({
       cropCanvas.height = scaledHeight;
 
       ctx.drawImage(
-        canvas,
-        scaledX,
-        scaledY,
+        fullCanvas,
+        Math.max(0, adjustedX),
+        Math.max(0, adjustedY),
         scaledWidth,
         scaledHeight,
         0,
@@ -204,9 +214,14 @@ export const ScreenshotCapture = ({
       );
 
       const imageData = cropCanvas.toDataURL("image/png");
+      console.log("Screenshot captured successfully, size:", imageData.length);
       onCapture(imageData);
     } catch (error) {
       console.error("Error capturing screenshot:", error);
+      // Show overlay again in case of error
+      if (overlayRef.current) {
+        overlayRef.current.style.display = 'block';
+      }
     } finally {
       setIsProcessing(false);
     }
