@@ -123,12 +123,34 @@ Return ONLY a JSON array with this exact format:
       } else if (jsonStr.includes('```')) {
         jsonStr = jsonStr.replace(/```\n?/g, '');
       }
-      flashcards = JSON.parse(jsonStr.trim());
-    } catch {
+      
+      // Fix common escape sequence issues before parsing
+      jsonStr = jsonStr.trim();
+      // Fix unescaped backslashes (common in LaTeX)
+      jsonStr = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+      
+      flashcards = JSON.parse(jsonStr);
+    } catch (parseError) {
+      console.log("Initial parse failed, trying fallback extraction");
       // Try to extract JSON array from the response
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+      const jsonMatch = responseText.match(/\[[\s\S]*?\]/);
       if (jsonMatch) {
-        flashcards = JSON.parse(jsonMatch[0]);
+        try {
+          let extracted = jsonMatch[0];
+          // Fix escape sequences in extracted JSON
+          extracted = extracted.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+          flashcards = JSON.parse(extracted);
+        } catch (extractError) {
+          // Last resort: try to manually parse the structure
+          console.log("Fallback extraction failed, trying manual parse");
+          const cardMatches = responseText.matchAll(/"front"\s*:\s*"([^"]*(?:\\.[^"]*)*)"\s*,\s*"back"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/g);
+          for (const match of cardMatches) {
+            flashcards.push({
+              front: match[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\'),
+              back: match[2].replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+            });
+          }
+        }
       }
     }
 
