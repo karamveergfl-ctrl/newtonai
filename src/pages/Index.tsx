@@ -1403,11 +1403,9 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Search and Study Tools Bar - Top Row */}
-        <div className="flex items-center gap-1 p-1.5 bg-card/50 border-b">
-          <SearchBox onSearch={handleSearch} isSearching={isSearching} />
-          <div className="h-6 w-px bg-border mx-1" />
-          <span className="text-xs font-medium text-muted-foreground">Study Tools:</span>
+        {/* Study Tools Bar - Compact Row */}
+        <div className="flex items-center gap-1 p-1 bg-card/50 border-b w-fit">
+          <span className="text-xs font-medium text-muted-foreground px-1">Tools:</span>
           <StudyToolsBar
             onGenerateQuiz={handleGenerateQuizFromContent}
             onGenerateFlashcards={handleGenerateFlashcardsFromContent}
@@ -1422,6 +1420,8 @@ const Index = () => {
             totalPages={pdfPageCount}
             className="border-0 p-0 bg-transparent"
           />
+          <div className="h-5 w-px bg-border mx-0.5" />
+          <SearchBox onSearch={handleSearch} isSearching={isSearching} />
         </div>
 
         {/* Main Content - Responsive Layout */}
