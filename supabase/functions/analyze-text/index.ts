@@ -179,12 +179,22 @@ RULES:
 
     const youtubeData = await youtubeResponse.json();
     
+    // Filter out YouTube Shorts
     const explanationVideos = (youtubeData.items || [])
       .filter((item: any) => {
         const title = item.snippet.title.toLowerCase();
         const topicWords = topic.toLowerCase().split(' ');
-        return topicWords.some((word: string) => word.length > 3 && title.includes(word));
+        const matchesTopic = topicWords.some((word: string) => word.length > 3 && title.includes(word));
+        // Filter out shorts
+        const isShort = title.includes('#shorts') || 
+                       title.includes('#short') || 
+                       title.includes('| shorts') ||
+                       title.includes('(shorts)') ||
+                       title.endsWith(' shorts') ||
+                       title.includes('youtube shorts');
+        return matchesTopic && !isShort;
       })
+      .slice(0, 6)
       .map((item: any) => ({
         id: item.id.videoId,
         videoId: item.id.videoId,
