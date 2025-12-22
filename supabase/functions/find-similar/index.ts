@@ -21,66 +21,66 @@ serve(async (req) => {
 
     console.log("Finding similar questions for topic:", topic);
 
-    // Generate ONE similar practice problem with COMPLETE physics diagram
+    // Generate ONE similar practice problem with SVG diagram
     const problemsPrompt = `Based on this topic: "${topic}"
 
-Generate exactly 1 similar practice problem. Include:
+Generate exactly 1 similar practice problem with a clean SVG diagram.
 
-1. A clear problem statement with specific numerical values
-2. A COMPLETE ASCII LINE DIAGRAM showing ALL elements clearly:
-   - Objects (blocks, balls, wedges, pulleys, etc.)
-   - Surfaces (horizontal, inclined planes, walls, curves)
-   - Forces with arrows and labels (P→, W=500N, N↑, f←)
-   - Angles with degree marks (30°, 45°, θ)
-   - Friction coefficients (μₛ=0.25, μₖ=0.20)
-   - Dimensions and measurements
-3. Given values and what to find
-
-FORMAT EXACTLY LIKE THIS EXAMPLE:
+FORMAT EXACTLY LIKE THIS:
 
 ---
 
 ## 🎯 Practice Problem
 
-**Problem:** Determine the range of values of P for which equilibrium of the block shown is maintained.
+**Problem:** [Clear problem statement with specific numerical values]
 
 **Diagram:**
-\`\`\`
-                              μₛ = 0.25
-                              μₖ = 0.20
-        _______________          ↘
-       /               \\          30°
-      /                 \\      ___↘____
-     |                   |    /        |
-     |    CURVED         |   /   P →   |  ← Block on incline
-     |    SURFACE        |  /    ◼     |
-      \\                 / /      |     |
-       \\_______________ /        |     |
-                       ⌞_________|_____|
-                                 ↓
-                              W = 500 N
-\`\`\`
+<svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" style="background:#f8fafc">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="currentColor"/>
+    </marker>
+  </defs>
+  <!-- Example: Inclined plane with block -->
+  <polygon points="50,240 350,240 350,80" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+  <rect x="200" y="130" width="50" height="35" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2" transform="rotate(-25,225,147)"/>
+  <line x1="225" y1="147" x2="225" y2="220" stroke="#22c55e" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="235" y="210" fill="#22c55e" font-size="12" font-weight="bold">W</text>
+  <line x1="240" y1="140" x2="300" y2="115" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="305" y="112" fill="#ef4444" font-size="12" font-weight="bold">P</text>
+  <path d="M310,240 A40,40 0 0,0 335,210" fill="none" stroke="#334155" stroke-width="1.5"/>
+  <text x="320" y="225" fill="#334155" font-size="11">θ</text>
+</svg>
 
 **Given:**
-- Weight of block: $W = 500\\,\\text{N}$
-- Angle of incline: $\\theta = 30°$
-- Static friction coefficient: $\\mu_s = 0.25$
-- Kinetic friction coefficient: $\\mu_k = 0.20$
+- List all given values with LaTeX: $m = 10\\,\\text{kg}$
+- Include angles, forces, coefficients
 
-**Find:** Range of force $P$ for equilibrium
+**Find:** What to calculate
 
 ---
 
-CRITICAL RULES FOR DIAGRAM:
-- Draw COMPLETE shapes (blocks as rectangles ◼ or [===], surfaces as lines)
-- Show ALL forces with arrows: → ← ↑ ↓ ↗ ↘ ↙ ↖
-- Label forces with values (500 N, P, N, f)
-- Show angles clearly with degree symbol (30°, 45°)
-- Include friction coefficients near the surface (μₛ=0.25)
-- Use box characters: ┌ ┐ └ ┘ │ ─ ┬ ┴ ├ ┤ ┼
-- Use special symbols: ◼ ● ○ ▲ ▼ ◀ ▶ ⌐ ⌞ ⌝ ⌜
-- Make diagram 10-15 lines for complete representation
-- Every element from the problem must appear in diagram`;
+SVG DIAGRAM RULES:
+1. Use viewBox="0 0 400 280" for consistent sizing
+2. Add style="background:#f8fafc" for light background
+3. Include arrow marker in <defs> for force vectors
+4. Draw objects:
+   - Blocks: <rect> with fill="#3b82f6" (blue)
+   - Surfaces: <polygon> or <line> with fill="#e2e8f0"
+   - Circles: <circle> with appropriate fill
+   - Pulleys: <circle> with stroke only
+   - Ropes: <line> or <path> with stroke="#475569"
+5. Force arrows with distinct colors:
+   - Weight (green): fill="#22c55e"
+   - Normal (purple): fill="#a855f7"  
+   - Friction (orange): fill="#f97316"
+   - Applied force (red): fill="#ef4444"
+   - Tension (blue): fill="#0ea5e9"
+6. Use <text> for labels with font-size="11" or "12"
+7. Use <path> with A (arc) for angle arcs
+8. Keep diagram clean and educational
+9. Every element from problem MUST appear in SVG`;
+
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

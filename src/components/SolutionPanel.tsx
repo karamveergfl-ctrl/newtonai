@@ -6,7 +6,17 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { SolutionChatInput } from "./SolutionChatInput";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+
+// Component to render SVG diagrams from markdown content
+const SvgDiagram = ({ svgContent }: { svgContent: string }) => {
+  return (
+    <div 
+      className="my-6 flex justify-center rounded-lg overflow-hidden border border-border bg-muted/30 p-4"
+      dangerouslySetInnerHTML={{ __html: svgContent }}
+    />
+  );
+};
 
 interface SolutionPanelProps {
   content: string;
@@ -52,9 +62,29 @@ export const SolutionPanel = ({
     };
   }, []);
 
+  // Extract SVG diagrams from content and return processed content
+  const { processedContent, svgDiagrams } = useMemo(() => {
+    const svgRegex = /<svg[\s\S]*?<\/svg>/gi;
+    const diagrams: string[] = [];
+    let processed = content;
+    
+    // Find all SVG elements and replace with placeholders
+    let match;
+    let index = 0;
+    while ((match = svgRegex.exec(content)) !== null) {
+      diagrams.push(match[0]);
+      processed = processed.replace(match[0], `__SVG_DIAGRAM_${index}__`);
+      index++;
+    }
+    
+    return { processedContent: processed, svgDiagrams: diagrams };
+  }, [content]);
+
   const extractTextForSpeech = (markdown: string): string => {
+    // Remove SVG content first
+    let text = markdown.replace(/<svg[\s\S]*?<\/svg>/gi, ' [diagram shown] ');
     // Remove LaTeX display math
-    let text = markdown.replace(/\$\$[^$]+\$\$/g, ' [equation] ');
+    text = text.replace(/\$\$[^$]+\$\$/g, ' [equation] ');
     // Remove LaTeX inline math but try to read simple values
     text = text.replace(/\$([^$]+)\$/g, (_, content) => {
       // Extract numbers and units
@@ -209,9 +239,18 @@ export const SolutionPanel = ({
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}
               components={{
-                p: ({ children, ...props }) => (
-                  <p className="mb-4 leading-loose" {...props}>{children}</p>
-                ),
+                p: ({ children, ...props }) => {
+                  // Check if children contains SVG placeholder
+                  const childText = typeof children === 'string' ? children : '';
+                  const svgMatch = childText.match(/__SVG_DIAGRAM_(\d+)__/);
+                  if (svgMatch) {
+                    const index = parseInt(svgMatch[1]);
+                    if (svgDiagrams[index]) {
+                      return <SvgDiagram svgContent={svgDiagrams[index]} />;
+                    }
+                  }
+                  return <p className="mb-4 leading-loose" {...props}>{children}</p>;
+                },
                 h2: ({ children, ...props }) => (
                   <h2 className="text-xl font-bold mt-8 mb-4 border-b border-border pb-2 text-foreground" {...props}>{children}</h2>
                 ),
@@ -227,9 +266,21 @@ export const SolutionPanel = ({
                 li: ({ children, ...props }) => (
                   <li className="my-2 leading-relaxed" {...props}>{children}</li>
                 ),
+                // Handle code blocks that might contain SVG
+                code: ({ children, className, ...props }) => {
+                  const childText = typeof children === 'string' ? children : '';
+                  const svgMatch = childText.match(/__SVG_DIAGRAM_(\d+)__/);
+                  if (svgMatch) {
+                    const index = parseInt(svgMatch[1]);
+                    if (svgDiagrams[index]) {
+                      return <SvgDiagram svgContent={svgDiagrams[index]} />;
+                    }
+                  }
+                  return <code className={className} {...props}>{children}</code>;
+                },
               }}
             >
-              {content}
+              {processedContent}
             </ReactMarkdown>
             {isStreaming && (
               <span className="inline-block w-2 h-5 bg-primary animate-pulse ml-0.5" />
