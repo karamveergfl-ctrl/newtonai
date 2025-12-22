@@ -137,7 +137,7 @@ const Index = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authSession.access_token}`,
           },
-          body: JSON.stringify({ selectedText: query, imageData }),
+          body: JSON.stringify({ imageData }),
         }
       );
 
