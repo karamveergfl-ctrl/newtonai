@@ -7,6 +7,7 @@ import { ImageViewer } from "@/components/ImageViewer";
 import { VideoPanel } from "@/components/VideoPanel";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchBox } from "@/components/SearchBox";
+import { GlobalSearchBox } from "@/components/GlobalSearchBox";
 import { SolutionPanel } from "@/components/SolutionPanel";
 import { StudyTracker } from "@/components/StudyTracker";
 import { PDFChat } from "@/components/PDFChat";
@@ -69,6 +70,9 @@ const Index = () => {
   const [isGeneratingMindMap, setIsGeneratingMindMap] = useState(false);
   const [summary, setSummary] = useState("");
   const [mindMap, setMindMap] = useState("");
+  const [videoSummary, setVideoSummary] = useState("");
+  const [videoMindMap, setVideoMindMap] = useState("");
+  const [isTopicSearching, setIsTopicSearching] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -348,13 +352,44 @@ const Index = () => {
     setOcrFile(null);
   };
 
-  const handleGenerateFlashcards = async (videoTitle: string) => {
+  // Helper function to fetch video transcript
+  const fetchVideoTranscript = async (videoId: string, videoTitle: string): Promise<string> => {
+    const { data: { session: authSession } } = await supabase.auth.getSession();
+    if (!authSession?.access_token) {
+      throw new Error("Not authenticated");
+    }
+
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authSession.access_token}`,
+        },
+        body: JSON.stringify({ videoId, videoTitle }),
+      }
+    );
+
+    if (!response.ok) {
+      // Fallback to video title if transcript fetch fails
+      return `Educational video about: ${videoTitle}`;
+    }
+
+    const data = await response.json();
+    return data.transcript || `Educational video about: ${videoTitle}`;
+  };
+
+  const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string) => {
     setIsGeneratingFlashcards(true);
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
       if (!authSession?.access_token) {
         throw new Error("Not authenticated");
       }
+
+      // Fetch transcript first
+      const transcript = await fetchVideoTranscript(videoId, videoTitle);
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`,
@@ -366,7 +401,8 @@ const Index = () => {
           },
           body: JSON.stringify({ 
             type: "video",
-            videoTitle 
+            videoTitle,
+            content: transcript.slice(0, 8000)
           }),
         }
       );
@@ -377,11 +413,11 @@ const Index = () => {
 
       const data = await response.json();
       setFlashcards(data.flashcards);
-      setFlashcardTitle(data.title);
+      setFlashcardTitle(videoTitle);
       
       toast({
         title: "Flashcards Ready! 📚",
-        description: `Generated ${data.flashcards.length} flashcards for studying`,
+        description: `Generated ${data.flashcards.length} flashcards from video`,
       });
     } catch (error) {
       console.error("Error generating flashcards:", error);
@@ -457,13 +493,16 @@ const Index = () => {
     setFlashcardTitle("");
   };
 
-  const handleGenerateQuiz = async (videoTitle: string) => {
+  const handleGenerateQuizFromVideo = async (videoId: string, videoTitle: string) => {
     setIsGeneratingQuiz(true);
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
       if (!authSession?.access_token) {
         throw new Error("Not authenticated");
       }
+
+      // Fetch transcript first
+      const transcript = await fetchVideoTranscript(videoId, videoTitle);
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`,
@@ -475,7 +514,8 @@ const Index = () => {
           },
           body: JSON.stringify({ 
             type: "video",
-            title: videoTitle 
+            title: videoTitle,
+            content: transcript.slice(0, 8000)
           }),
         }
       );
@@ -486,11 +526,11 @@ const Index = () => {
 
       const data = await response.json();
       setQuizQuestions(data.questions);
-      setQuizTitle(data.title);
+      setQuizTitle(videoTitle);
       
       toast({
         title: "Quiz Ready! 🧠",
-        description: `Generated ${data.questions.length} questions for testing`,
+        description: `Generated ${data.questions.length} questions from video`,
       });
     } catch (error) {
       console.error("Error generating quiz:", error);
@@ -501,6 +541,98 @@ const Index = () => {
       });
     } finally {
       setIsGeneratingQuiz(false);
+    }
+  };
+
+  const handleGenerateSummaryFromVideo = async (videoId: string, videoTitle: string) => {
+    setIsGeneratingSummary(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      // Fetch transcript first
+      const transcript = await fetchVideoTranscript(videoId, videoTitle);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ content: transcript.slice(0, 10000) }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate summary");
+      }
+
+      const data = await response.json();
+      setVideoSummary(data.summary);
+      
+      toast({
+        title: "Summary Ready! 📝",
+        description: "Video summary generated successfully",
+      });
+    } catch (error) {
+      console.error("Error generating summary:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate summary",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
+  const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string) => {
+    setIsGeneratingMindMap(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      // Fetch transcript first
+      const transcript = await fetchVideoTranscript(videoId, videoTitle);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ content: transcript.slice(0, 8000) }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate mind map");
+      }
+
+      const data = await response.json();
+      setVideoMindMap(data.mindMap);
+      
+      toast({
+        title: "Mind Map Ready! 🧠",
+        description: "Video mind map generated successfully",
+      });
+    } catch (error) {
+      console.error("Error generating mind map:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate mind map",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingMindMap(false);
     }
   };
 
@@ -1044,6 +1176,54 @@ const Index = () => {
     }
   };
 
+  // Global topic search - searches YouTube without document
+  const handleTopicSearch = async (topic: string) => {
+    setIsTopicSearching(true);
+    setSearchQuery(topic);
+    
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ query: topic }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to search videos");
+      }
+
+      const data = await response.json();
+      setExplanationVideos(data.videos || []);
+      setAnimationVideos([]);
+      setShowVideosPanel(true);
+      
+      toast({
+        title: "Videos Found!",
+        description: `Found ${data.videos?.length || 0} videos for "${topic}"`,
+      });
+    } catch (error) {
+      console.error("Error searching topic:", error);
+      toast({
+        title: "Error",
+        description: "Failed to search videos",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTopicSearching(false);
+    }
+  };
+
   if (!session) {
     return null; // Auth redirect will happen in useEffect
   }
@@ -1081,7 +1261,7 @@ const Index = () => {
           </div>
         </div>
         <div className="max-w-4xl mx-auto px-6 py-8">
-          <SearchBox onSearch={handleSearch} isSearching={isSearching} />
+          <GlobalSearchBox onTopicSearch={handleTopicSearch} isSearching={isTopicSearching} />
           {showVideosPanel && (
             <div className="mt-8 animate-fade-in">
               <VideoPanel 
@@ -1090,9 +1270,11 @@ const Index = () => {
                 searchQuery={searchQuery}
                 onVideoClick={handleVideoClick}
                 onClose={handleCloseVideosPanel}
-                onGenerateFlashcards={handleGenerateFlashcards}
-                onGenerateQuiz={handleGenerateQuiz}
-                isGenerating={isGeneratingFlashcards || isGeneratingQuiz}
+                onGenerateFlashcards={handleGenerateFlashcardsFromVideo}
+                onGenerateQuiz={handleGenerateQuizFromVideo}
+                onGenerateSummary={handleGenerateSummaryFromVideo}
+                onGenerateMindMap={handleGenerateMindMapFromVideo}
+                isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap}
               />
             </div>
           )}
@@ -1260,9 +1442,11 @@ const Index = () => {
                       searchQuery={searchQuery}
                       onVideoClick={handleVideoClick}
                       onClose={handleCloseVideosPanel}
-                      onGenerateFlashcards={handleGenerateFlashcards}
-                      onGenerateQuiz={handleGenerateQuiz}
-                      isGenerating={isGeneratingFlashcards || isGeneratingQuiz}
+                      onGenerateFlashcards={handleGenerateFlashcardsFromVideo}
+                      onGenerateQuiz={handleGenerateQuizFromVideo}
+                      onGenerateSummary={handleGenerateSummaryFromVideo}
+                      onGenerateMindMap={handleGenerateMindMapFromVideo}
+                      isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap}
                       defaultTab="explanation"
                     />
                   </div>
