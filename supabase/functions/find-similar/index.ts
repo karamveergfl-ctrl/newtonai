@@ -21,44 +21,66 @@ serve(async (req) => {
 
     console.log("Finding similar questions for topic:", topic);
 
-    // Generate ONE similar practice problem with ASCII line diagram
+    // Generate ONE similar practice problem with COMPLETE physics diagram
     const problemsPrompt = `Based on this topic: "${topic}"
 
 Generate exactly 1 similar practice problem. Include:
 
-1. A clear problem statement with specific numbers
-2. A simple ASCII LINE DIAGRAM using only these characters: | - / \\ + o * < > ^ v
+1. A clear problem statement with specific numerical values
+2. A COMPLETE ASCII LINE DIAGRAM showing ALL elements clearly:
+   - Objects (blocks, balls, wedges, pulleys, etc.)
+   - Surfaces (horizontal, inclined planes, walls, curves)
+   - Forces with arrows and labels (P→, W=500N, N↑, f←)
+   - Angles with degree marks (30°, 45°, θ)
+   - Friction coefficients (μₛ=0.25, μₖ=0.20)
+   - Dimensions and measurements
 3. Given values and what to find
 
-Format EXACTLY like this:
+FORMAT EXACTLY LIKE THIS EXAMPLE:
 
 ---
 
 ## 🎯 Practice Problem
 
-**Problem:** A ball is thrown at 25 m/s at 45° angle. Find max height.
+**Problem:** Determine the range of values of P for which equilibrium of the block shown is maintained.
 
 **Diagram:**
 \`\`\`
-        *  max height
-       / \\
-      /   \\
-     /     \\
-    o-------+-----> x
-   45°
+                              μₛ = 0.25
+                              μₖ = 0.20
+        _______________          ↘
+       /               \\          30°
+      /                 \\      ___↘____
+     |                   |    /        |
+     |    CURVED         |   /   P →   |  ← Block on incline
+     |    SURFACE        |  /    ◼     |
+      \\                 / /      |     |
+       \\_______________ /        |     |
+                       ⌞_________|_____|
+                                 ↓
+                              W = 500 N
 \`\`\`
 
-**Given:** $v_0 = 25\\,\\text{m/s}$, $\\theta = 45°$, $g = 10\\,\\text{m/s}^2$
+**Given:**
+- Weight of block: $W = 500\\,\\text{N}$
+- Angle of incline: $\\theta = 30°$
+- Static friction coefficient: $\\mu_s = 0.25$
+- Kinetic friction coefficient: $\\mu_k = 0.20$
 
-**Find:** Maximum height $H$
+**Find:** Range of force $P$ for equilibrium
 
 ---
 
-RULES:
-- Use ONLY ASCII characters for diagram: | - / \\ + o * < > ^ v [ ] ( )
-- Keep diagram simple (5-8 lines max)
-- Make problem solvable with the given information
-- Use LaTeX: $inline$ and $$display$$`;
+CRITICAL RULES FOR DIAGRAM:
+- Draw COMPLETE shapes (blocks as rectangles ◼ or [===], surfaces as lines)
+- Show ALL forces with arrows: → ← ↑ ↓ ↗ ↘ ↙ ↖
+- Label forces with values (500 N, P, N, f)
+- Show angles clearly with degree symbol (30°, 45°)
+- Include friction coefficients near the surface (μₛ=0.25)
+- Use box characters: ┌ ┐ └ ┘ │ ─ ┬ ┴ ├ ┤ ┼
+- Use special symbols: ◼ ● ○ ▲ ▼ ◀ ▶ ⌐ ⌞ ⌝ ⌜
+- Make diagram 10-15 lines for complete representation
+- Every element from the problem must appear in diagram`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
