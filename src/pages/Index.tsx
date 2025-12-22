@@ -750,6 +750,7 @@ const Index = () => {
                     onGenerateFlashcards={handleGenerateFlashcards}
                     onGenerateQuiz={handleGenerateQuiz}
                     isGenerating={isGeneratingFlashcards || isGeneratingQuiz}
+                    defaultTab="explanation"
                   />
                 </div>
               )}
