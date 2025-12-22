@@ -14,6 +14,7 @@ import { OCRSplitView } from "@/components/OCRSplitView";
 import { FlashcardDeck } from "@/components/FlashcardDeck";
 import { QuizMode } from "@/components/QuizMode";
 import { StudyModeSelector } from "@/components/StudyModeSelector";
+import { StudyToolsPanel } from "@/components/StudyToolsPanel";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -64,6 +65,10 @@ const Index = () => {
   const [isFindingSimilar, setIsFindingSimilar] = useState(false);
   const [isGettingDetailed, setIsGettingDetailed] = useState(false);
   const [isSolvingSimilar, setIsSolvingSimilar] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [isGeneratingMindMap, setIsGeneratingMindMap] = useState(false);
+  const [summary, setSummary] = useState("");
+  const [mindMap, setMindMap] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -933,6 +938,112 @@ const Index = () => {
     }
   };
 
+  const handleGenerateSummary = async () => {
+    const content = pdfText || fileData?.ocrText || "";
+    if (!content) {
+      toast({
+        title: "No content",
+        description: "Please upload a document first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingSummary(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ content: content.slice(0, 10000) }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate summary");
+      }
+
+      const data = await response.json();
+      setSummary(data.summary);
+      
+      toast({
+        title: "Summary Ready! 📝",
+        description: "Document summary generated successfully",
+      });
+    } catch (error) {
+      console.error("Error generating summary:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate summary",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
+  const handleGenerateMindMap = async () => {
+    const content = pdfText || fileData?.ocrText || "";
+    if (!content) {
+      toast({
+        title: "No content",
+        description: "Please upload a document first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingMindMap(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ content: content.slice(0, 8000) }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate mind map");
+      }
+
+      const data = await response.json();
+      setMindMap(data.mindMap);
+      
+      toast({
+        title: "Mind Map Ready! 🧠",
+        description: "Visual mind map generated successfully",
+      });
+    } catch (error) {
+      console.error("Error generating mind map:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate mind map",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingMindMap(false);
+    }
+  };
+
   if (!session) {
     return null; // Auth redirect will happen in useEffect
   }
@@ -1065,28 +1176,49 @@ const Index = () => {
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Conditional rendering: Show PDF/Image or Search Results */}
           {!showVideosPanel && !solutionData ? (
-            // File View with Search and Chat
-            <div className="flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in flex-1">
-              <SearchBox onSearch={handleSearch} isSearching={isSearching} />
-              <div className="flex-1 overflow-hidden">
-                {fileData.isPdf ? (
-                  <PDFReader 
-                    pdfUrl={fileData.url} 
-                    onTextSelect={handleTextSelect}
-                    onImageCapture={handleImageCapture}
-                    onPdfTextExtracted={setPdfText}
-                  />
-                ) : (
-                  <ImageViewer
-                    imageUrl={fileData.url}
-                    imageName={fileData.name}
-                    ocrText={fileData.ocrText}
-                    onTextSelect={handleTextSelect}
-                    onImageCapture={handleImageCapture}
-                  />
-                )}
+            // File View with Search, Chat, and Study Tools Panel
+            <div className="flex-1 flex overflow-hidden">
+              <div className="flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in flex-1">
+                <SearchBox onSearch={handleSearch} isSearching={isSearching} />
+                <div className="flex-1 overflow-hidden">
+                  {fileData.isPdf ? (
+                    <PDFReader 
+                      pdfUrl={fileData.url} 
+                      onTextSelect={handleTextSelect}
+                      onImageCapture={handleImageCapture}
+                      onPdfTextExtracted={setPdfText}
+                    />
+                  ) : (
+                    <ImageViewer
+                      imageUrl={fileData.url}
+                      imageName={fileData.name}
+                      ocrText={fileData.ocrText}
+                      onTextSelect={handleTextSelect}
+                      onImageCapture={handleImageCapture}
+                    />
+                  )}
+                </div>
+                {fileData.isPdf && <PDFChat pdfText={pdfText} pdfName={fileData.name} />}
               </div>
-              {fileData.isPdf && <PDFChat pdfText={pdfText} pdfName={fileData.name} />}
+              
+              {/* Study Tools Panel - Right Side */}
+              <div className="hidden md:block w-64 shrink-0">
+                <StudyToolsPanel
+                  onGenerateQuiz={handleGenerateQuizFromContent}
+                  onGenerateFlashcards={handleGenerateFlashcardsFromContent}
+                  onGenerateSummary={handleGenerateSummary}
+                  onGenerateMindMap={handleGenerateMindMap}
+                  isGeneratingQuiz={isGeneratingQuiz}
+                  isGeneratingFlashcards={isGeneratingFlashcards}
+                  isGeneratingSummary={isGeneratingSummary}
+                  isGeneratingMindMap={isGeneratingMindMap}
+                  disabled={!pdfText && !fileData?.ocrText}
+                  summary={summary}
+                  mindMap={mindMap}
+                  onCloseSummary={() => setSummary("")}
+                  onCloseMindMap={() => setMindMap("")}
+                />
+              </div>
             </div>
           ) : (
             // Search Results View: Resizable panels for Solution and Videos
