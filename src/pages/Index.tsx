@@ -146,93 +146,20 @@ const Index = () => {
   const handleSearch = async (query: string, imageData?: string) => {
     setIsSearching(true);
     
-    // Initialize solution panel immediately with streaming state
-    setSolutionData({ content: "", isQuestion: true, capturedImage: imageData, isStreaming: true });
-    setShowVideosPanel(false);
-    
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
       if (!authSession?.access_token) {
         throw new Error("Not authenticated");
       }
 
-      // Start streaming request
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-text`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authSession.access_token}`,
-          },
-          body: JSON.stringify({ imageData, stream: true }),
-        }
-      );
+      // If we have image data, use analyze-text for problem solving
+      if (imageData) {
+        // Initialize solution panel immediately with streaming state
+        setSolutionData({ content: "", isQuestion: true, capturedImage: imageData, isStreaming: true });
+        setShowVideosPanel(false);
 
-      if (!response.ok) {
-        throw new Error("Failed to analyze text");
-      }
-
-      // Parse SSE stream
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = "";
-      let textBuffer = "";
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          textBuffer += decoder.decode(value, { stream: true });
-          
-          // Process line-by-line
-          let newlineIndex: number;
-          while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-            let line = textBuffer.slice(0, newlineIndex);
-            textBuffer = textBuffer.slice(newlineIndex + 1);
-
-            if (line.endsWith("\r")) line = line.slice(0, -1);
-            if (line.startsWith(":") || line.trim() === "") continue;
-            if (!line.startsWith("data: ")) continue;
-
-            const jsonStr = line.slice(6).trim();
-            if (jsonStr === "[DONE]") break;
-
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-              if (content) {
-                fullContent += content;
-                setSolutionData(prev => prev ? { ...prev, content: fullContent } : null);
-              }
-            } catch {
-              textBuffer = line + "\n" + textBuffer;
-              break;
-            }
-          }
-        }
-      }
-
-      // Mark streaming as complete
-      setSolutionData(prev => prev ? { ...prev, isStreaming: false } : null);
-
-      // Extract topic and fetch videos in background
-      const lines = fullContent.split('\n');
-      let topic = "Problem Solution";
-      
-      if (lines[0]?.startsWith("TOPIC:")) {
-        topic = lines[0].replace("TOPIC:", "").trim();
-        // Remove TOPIC line from displayed content
-        const solutionContent = lines.slice(1).join('\n').trim();
-        setSolutionData(prev => prev ? { ...prev, content: solutionContent } : null);
-      }
-      
-      setSearchQuery(topic);
-
-      // Fetch videos in background (non-streaming call)
-      try {
-        const videoResponse = await fetch(
+        // Start streaming request
+        const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-text`,
           {
             method: "POST",
@@ -240,23 +167,129 @@ const Index = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${authSession.access_token}`,
             },
-            body: JSON.stringify({ imageData, stream: false }),
+            body: JSON.stringify({ imageData, stream: true }),
           }
         );
 
-        if (videoResponse.ok) {
-          const videoData = await videoResponse.json();
-          setAnimationVideos(videoData.animationVideos || []);
-          setExplanationVideos(videoData.explanationVideos || []);
-          setShowVideosPanel(true);
-          
-          toast({
-            title: "Videos Found!",
-            description: `Found ${videoData.explanationVideos?.length || 0} explanation videos`,
-          });
+        if (!response.ok) {
+          throw new Error("Failed to analyze text");
         }
-      } catch (videoError) {
-        console.error("Error fetching videos:", videoError);
+
+        // Parse SSE stream
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = "";
+        let textBuffer = "";
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            textBuffer += decoder.decode(value, { stream: true });
+            
+            // Process line-by-line
+            let newlineIndex: number;
+            while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+              let line = textBuffer.slice(0, newlineIndex);
+              textBuffer = textBuffer.slice(newlineIndex + 1);
+
+              if (line.endsWith("\r")) line = line.slice(0, -1);
+              if (line.startsWith(":") || line.trim() === "") continue;
+              if (!line.startsWith("data: ")) continue;
+
+              const jsonStr = line.slice(6).trim();
+              if (jsonStr === "[DONE]") break;
+
+              try {
+                const parsed = JSON.parse(jsonStr);
+                const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+                if (content) {
+                  fullContent += content;
+                  setSolutionData(prev => prev ? { ...prev, content: fullContent } : null);
+                }
+              } catch {
+                textBuffer = line + "\n" + textBuffer;
+                break;
+              }
+            }
+          }
+        }
+
+        // Mark streaming as complete
+        setSolutionData(prev => prev ? { ...prev, isStreaming: false } : null);
+
+        // Extract topic and fetch videos in background
+        const lines = fullContent.split('\n');
+        let topic = "Problem Solution";
+        
+        if (lines[0]?.startsWith("TOPIC:")) {
+          topic = lines[0].replace("TOPIC:", "").trim();
+          // Remove TOPIC line from displayed content
+          const solutionContent = lines.slice(1).join('\n').trim();
+          setSolutionData(prev => prev ? { ...prev, content: solutionContent } : null);
+        }
+        
+        setSearchQuery(topic);
+
+        // Fetch videos in background (non-streaming call)
+        try {
+          const videoResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-text`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${authSession.access_token}`,
+              },
+              body: JSON.stringify({ imageData, stream: false }),
+            }
+          );
+
+          if (videoResponse.ok) {
+            const videoData = await videoResponse.json();
+            setAnimationVideos(videoData.animationVideos || []);
+            setExplanationVideos(videoData.explanationVideos || []);
+            setShowVideosPanel(true);
+            
+            toast({
+              title: "Videos Found!",
+              description: `Found ${videoData.explanationVideos?.length || 0} explanation videos`,
+            });
+          }
+        } catch (videoError) {
+          console.error("Error fetching videos:", videoError);
+        }
+      } else {
+        // Text-only search - use search-youtube to find videos
+        setSearchQuery(query);
+        setShowVideosPanel(false);
+        
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authSession.access_token}`,
+            },
+            body: JSON.stringify({ query }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to search videos");
+        }
+
+        const data = await response.json();
+        setExplanationVideos(data.videos || []);
+        setAnimationVideos([]);
+        setShowVideosPanel(true);
+        
+        toast({
+          title: "Videos Found!",
+          description: `Found ${data.videos?.length || 0} videos for "${query}"`,
+        });
       }
       
       // Track search
@@ -265,8 +298,8 @@ const Index = () => {
         if (user) {
           await supabase.from("search_history").insert({
             user_id: user.id,
-            search_query: topic,
-            is_question: true,
+            search_query: query || "image analysis",
+            is_question: !!imageData,
           });
         }
       } catch (error) {
@@ -277,7 +310,7 @@ const Index = () => {
       setSolutionData(null);
       toast({
         title: "Error",
-        description: "Failed to analyze problem",
+        description: "Failed to search. Please try again.",
         variant: "destructive",
       });
     } finally {
