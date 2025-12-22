@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { X, Image as ImageIcon, Loader2, Search } from "lucide-react";
+import { X, Image as ImageIcon, Loader2, Search, BookOpen, Volume2, VolumeX } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { SolutionChatInput } from "./SolutionChatInput";
+import { useState, useRef, useEffect } from "react";
 
 interface SolutionPanelProps {
   content: string;
@@ -19,6 +20,8 @@ interface SolutionPanelProps {
   isFindingSimilar?: boolean;
   onGetDetailedSolution?: () => void;
   isGettingDetailed?: boolean;
+  onSolveSimilar?: (problemText: string) => void;
+  isSolvingSimilar?: boolean;
 }
 
 export const SolutionPanel = ({ 
@@ -32,8 +35,102 @@ export const SolutionPanel = ({
   onFindSimilar,
   isFindingSimilar,
   onGetDetailedSolution,
-  isGettingDetailed
+  isGettingDetailed,
+  onSolveSimilar,
+  isSolvingSimilar
 }: SolutionPanelProps) => {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const speechSynthesis = useRef<SpeechSynthesis | null>(null);
+
+  useEffect(() => {
+    speechSynthesis.current = window.speechSynthesis;
+    return () => {
+      if (speechSynthesis.current) {
+        speechSynthesis.current.cancel();
+      }
+    };
+  }, []);
+
+  const extractTextForSpeech = (markdown: string): string => {
+    // Remove LaTeX display math
+    let text = markdown.replace(/\$\$[^$]+\$\$/g, ' [equation] ');
+    // Remove LaTeX inline math but try to read simple values
+    text = text.replace(/\$([^$]+)\$/g, (_, content) => {
+      // Extract numbers and units
+      const simplified = content
+        .replace(/\\text\{([^}]+)\}/g, '$1')
+        .replace(/\\,/g, ' ')
+        .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 over $2')
+        .replace(/\\boxed\{([^}]+)\}/g, 'Answer: $1')
+        .replace(/[\\{}]/g, '')
+        .replace(/\^(\d+)/g, ' to the power $1')
+        .replace(/_(\d+)/g, ' sub $1');
+      return simplified;
+    });
+    // Remove markdown formatting
+    text = text.replace(/#{1,6}\s/g, '');
+    text = text.replace(/\*\*([^*]+)\*\*/g, '$1');
+    text = text.replace(/\*([^*]+)\*/g, '$1');
+    text = text.replace(/`[^`]+`/g, '');
+    text = text.replace(/```[\s\S]*?```/g, '');
+    // Clean up extra whitespace
+    text = text.replace(/\n{3,}/g, '\n\n');
+    text = text.replace(/---+/g, '');
+    return text.trim();
+  };
+
+  const handleVoiceReadout = () => {
+    if (!speechSynthesis.current) return;
+
+    if (isSpeaking) {
+      speechSynthesis.current.cancel();
+      setIsSpeaking(false);
+      setCurrentUtterance(null);
+      return;
+    }
+
+    const textToRead = extractTextForSpeech(content);
+    if (!textToRead) return;
+
+    const utterance = new SpeechSynthesisUtterance(textToRead);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    
+    // Try to get a good English voice
+    const voices = speechSynthesis.current.getVoices();
+    const englishVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) 
+      || voices.find(v => v.lang.startsWith('en'));
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setCurrentUtterance(null);
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setCurrentUtterance(null);
+    };
+
+    setCurrentUtterance(utterance);
+    setIsSpeaking(true);
+    speechSynthesis.current.speak(utterance);
+  };
+
+  // Extract similar problem text for "Solve This" button
+  const extractSimilarProblem = (): string | null => {
+    const match = content.match(/## 🎯 Practice Problem\s*\n([\s\S]*?)(?=\n---|\n## |$)/);
+    if (match) {
+      return match[1].trim();
+    }
+    return null;
+  };
+
+  const similarProblem = extractSimilarProblem();
+
   return (
     <div className="h-full flex flex-col bg-card border-l animate-fade-in">
       <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between z-10">
@@ -48,14 +145,31 @@ export const SolutionPanel = ({
             </div>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="h-8 w-8 shrink-0"
-        >
-          <X className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Voice Readout Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleVoiceReadout}
+            className="h-8 w-8"
+            disabled={isStreaming || !content}
+            title={isSpeaking ? "Stop reading" : "Read aloud"}
+          >
+            {isSpeaking ? (
+              <VolumeX className="w-4 h-4 text-primary" />
+            ) : (
+              <Volume2 className="w-4 h-4" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8 shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-6 space-y-6">
@@ -76,36 +190,42 @@ export const SolutionPanel = ({
             </div>
           )}
           
-          {/* LaTeX-rendered Solution */}
+          {/* LaTeX-rendered Solution with improved spacing */}
           <div className="prose prose-sm dark:prose-invert max-w-none
             prose-headings:text-foreground prose-headings:font-bold
-            prose-h2:text-xl prose-h2:mt-6 prose-h2:mb-3 prose-h2:border-b prose-h2:border-border prose-h2:pb-2
-            prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2
-            prose-p:text-foreground prose-p:leading-relaxed
+            prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-border prose-h2:pb-2
+            prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
+            prose-p:text-foreground prose-p:leading-loose prose-p:mb-4
             prose-strong:text-primary prose-strong:font-semibold
             prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
-            prose-pre:bg-muted prose-pre:p-4 prose-pre:rounded-lg
-            prose-ul:my-2 prose-li:my-0.5
-            prose-hr:my-6 prose-hr:border-border
+            prose-pre:bg-muted prose-pre:p-4 prose-pre:rounded-lg prose-pre:my-4
+            prose-ul:my-4 prose-li:my-2 prose-li:leading-relaxed
+            prose-ol:my-4
+            prose-hr:my-8 prose-hr:border-border
+            [&_.katex-display]:my-6 [&_.katex-display]:py-2
+            [&_.katex]:text-base
           ">
             <ReactMarkdown
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}
               components={{
                 p: ({ children, ...props }) => (
-                  <p className="mb-3" {...props}>{children}</p>
+                  <p className="mb-4 leading-loose" {...props}>{children}</p>
                 ),
                 h2: ({ children, ...props }) => (
-                  <h2 className="text-xl font-bold mt-6 mb-3 border-b border-border pb-2 text-foreground" {...props}>{children}</h2>
+                  <h2 className="text-xl font-bold mt-8 mb-4 border-b border-border pb-2 text-foreground" {...props}>{children}</h2>
                 ),
                 h3: ({ children, ...props }) => (
-                  <h3 className="text-lg font-semibold mt-4 mb-2 text-foreground" {...props}>{children}</h3>
+                  <h3 className="text-lg font-semibold mt-6 mb-3 text-foreground" {...props}>{children}</h3>
                 ),
                 strong: ({ children, ...props }) => (
                   <strong className="font-semibold text-primary" {...props}>{children}</strong>
                 ),
                 hr: () => (
-                  <hr className="my-6 border-border" />
+                  <hr className="my-8 border-border" />
+                ),
+                li: ({ children, ...props }) => (
+                  <li className="my-2 leading-relaxed" {...props}>{children}</li>
                 ),
               }}
             >
@@ -118,7 +238,29 @@ export const SolutionPanel = ({
 
           {/* Action Buttons */}
           {!isStreaming && content && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3 pt-4">
+              {/* Solve Similar Problem Button */}
+              {similarProblem && onSolveSimilar && (
+                <Button
+                  onClick={() => onSolveSimilar(similarProblem)}
+                  variant="default"
+                  className="w-full gap-2"
+                  disabled={isSolvingSimilar}
+                >
+                  {isSolvingSimilar ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Solving practice problem...
+                    </>
+                  ) : (
+                    <>
+                      <BookOpen className="w-4 h-4" />
+                      🎯 Solve This Practice Problem
+                    </>
+                  )}
+                </Button>
+              )}
+
               {/* Detailed Solution Button */}
               {onGetDetailedSolution && (
                 <Button

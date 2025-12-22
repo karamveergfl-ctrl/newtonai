@@ -19,9 +19,9 @@ serve(async (req) => {
       throw new Error("YOUTUBE_API_KEY not configured");
     }
 
-    const searchQuery = `${query} educational animation`;
+    const searchQuery = `${query} educational animation -shorts`;
     const response = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&videoDuration=medium`
     );
 
     if (!response.ok) {
@@ -32,13 +32,26 @@ serve(async (req) => {
 
     const data = await response.json();
     
-    const videos = (data.items || []).map((item: any) => ({
-      id: item.id.videoId,
-      videoId: item.id.videoId,
-      title: item.snippet.title,
-      thumbnail: item.snippet.thumbnails.medium.url,
-      channelTitle: item.snippet.channelTitle,
-    }));
+    // Filter out YouTube Shorts
+    const videos = (data.items || [])
+      .filter((item: any) => {
+        const title = item.snippet.title.toLowerCase();
+        const isShort = title.includes('#shorts') || 
+                       title.includes('#short') || 
+                       title.includes('| shorts') ||
+                       title.includes('(shorts)') ||
+                       title.endsWith(' shorts') ||
+                       title.includes('youtube shorts');
+        return !isShort;
+      })
+      .slice(0, 5)
+      .map((item: any) => ({
+        id: item.id.videoId,
+        videoId: item.id.videoId,
+        title: item.snippet.title,
+        thumbnail: item.snippet.thumbnails.medium.url,
+        channelTitle: item.snippet.channelTitle,
+      }));
 
     console.log("Found videos:", videos.length);
 

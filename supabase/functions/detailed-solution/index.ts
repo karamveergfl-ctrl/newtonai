@@ -11,73 +11,179 @@ serve(async (req) => {
   }
 
   try {
-    const { imageData, currentSolution } = await req.json();
+    const { imageData, currentSolution, problemText, isSimilarProblem } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Generating detailed solution...");
+    console.log("Generating detailed solution...", { isSimilarProblem });
 
-    const systemPrompt = `You are given a quick solution to a physics/math problem. Expand it into a DETAILED step-by-step solution.
+    let systemPrompt: string;
 
-Current quick solution:
-${currentSolution}
+    if (isSimilarProblem && problemText) {
+      // Solving a practice problem from scratch
+      systemPrompt = `Solve this practice problem step by step:
 
-Now provide a COMPREHENSIVE solution with:
+${problemText}
 
-## 📊 Complete Figure Analysis
-- Describe every element in the diagram
-- Explain what each symbol, arrow, angle represents
-- Identify the coordinate system and reference points
+Provide a COMPREHENSIVE solution with clear spacing for readability:
 
-## 📚 Theory & Concepts
-- What physics/math principles apply here?
-- Write out the key formulas with explanations
-- Why do these formulas work for this problem?
+## 📊 Understanding the Problem
 
-## 📝 Detailed Step-by-Step Solution
+Describe what's given and what we need to find.
 
-**Given:** List ALL values with proper LaTeX notation
+
+## 📚 Key Concepts
+
+- List the relevant formulas
+- Explain briefly why they apply
+
+
+## 📝 Step-by-Step Solution
+
+**Given:**
+
 $$v_0 = 20 \\, \\text{m/s}$$
 
-**Find:** What exactly needs to be calculated
+$$\\theta = 30°$$
 
-### Step 1: Set Up the Problem
-- Explain the approach
-- Draw free body diagram description if needed
-- Identify known and unknown quantities
+(List all given values with proper spacing)
 
-### Step 2: Apply Relevant Equations
-$$\\text{Show each formula}$$
-Explain why this formula is appropriate
 
-### Step 3: Substitute Values
-$$v = 20 \\cos 30° = 20 \\times 0.866 = 17.32 \\, \\text{m/s}$$
-Show EVERY calculation step
+**Find:** What to calculate
 
-### Step 4: Solve & Simplify
-Show all algebraic steps
-$$\\text{Final calculation here}$$
 
-[Continue with more steps as needed]
+### Step 1: Identify the Approach
+
+Explain what method we'll use.
+
+
+### Step 2: Apply the Formula
+
+$$v_x = v_0 \\cos\\theta$$
+
+$$v_x = 20 \\times \\cos 30°$$
+
+$$v_x = 20 \\times 0.866$$
+
+$$v_x = 17.32 \\, \\text{m/s}$$
+
+
+### Step 3: Continue Calculation
+
+(More steps as needed, each on separate lines)
+
 
 ---
 
 ## ✅ Final Answer
+
 $$\\boxed{x = 35.3 \\, \\text{m}}$$
 
+
+## 💡 Quick Tips
+
+- Key concept tested
+- Common mistake to avoid
+
+FORMATTING:
+- Use $...$ for inline math
+- Use $$...$$ for display equations (one per line)
+- Add blank lines between steps for readability
+- Use \\boxed{} for final answer`;
+    } else {
+      // Expanding an existing quick solution
+      systemPrompt = `You are given a quick solution to a physics/math problem. Expand it into a DETAILED step-by-step solution.
+
+Current quick solution:
+${currentSolution}
+
+Now provide a COMPREHENSIVE solution with CLEAR SPACING:
+
+## 📊 Complete Figure Analysis
+
+- Describe every element in the diagram
+- Explain what each symbol, arrow, angle represents
+- Identify the coordinate system and reference points
+
+
+## 📚 Theory & Concepts
+
+- What physics/math principles apply here?
+- Write out the key formulas with explanations
+- Why do these formulas work for this problem?
+
+
+## 📝 Detailed Step-by-Step Solution
+
+**Given:** List ALL values with proper LaTeX notation
+
+$$v_0 = 20 \\, \\text{m/s}$$
+
+$$\\theta = 30°$$
+
+$$g = 10 \\, \\text{m/s}^2$$
+
+
+**Find:** What exactly needs to be calculated
+
+
+### Step 1: Set Up the Problem
+
+- Explain the approach
+- Draw free body diagram description if needed
+- Identify known and unknown quantities
+
+
+### Step 2: Apply Relevant Equations
+
+$$\\text{Show each formula}$$
+
+Explain why this formula is appropriate
+
+
+### Step 3: Substitute Values
+
+$$v = 20 \\cos 30°$$
+
+$$v = 20 \\times 0.866$$
+
+$$v = 17.32 \\, \\text{m/s}$$
+
+Show EVERY calculation step on separate lines
+
+
+### Step 4: Solve & Simplify
+
+Show all algebraic steps
+
+$$\\text{Final calculation here}$$
+
+[Continue with more steps as needed]
+
+
+---
+
+## ✅ Final Answer
+
+$$\\boxed{x = 35.3 \\, \\text{m}}$$
+
+
 ## 💡 Key Takeaways
+
 - What concept was tested?
 - Common mistakes to avoid
 - When to use this approach
 
 FORMATTING RULES:
 - Use $...$ for inline math
-- Use $$...$$ for display equations
+- Use $$...$$ for display equations (one per line for clarity)
+- Add blank lines between steps for easy reading
 - Use \\boxed{} for final answers
 - Be extremely thorough and educational`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

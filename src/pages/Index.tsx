@@ -63,6 +63,7 @@ const Index = () => {
   const [isAnsweringFollowUp, setIsAnsweringFollowUp] = useState(false);
   const [isFindingSimilar, setIsFindingSimilar] = useState(false);
   const [isGettingDetailed, setIsGettingDetailed] = useState(false);
+  const [isSolvingSimilar, setIsSolvingSimilar] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -829,6 +830,109 @@ const Index = () => {
     }
   };
 
+  const handleSolveSimilar = async (problemText: string) => {
+    setIsSolvingSimilar(true);
+    
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      // Clear the similar problem section and show new streaming solution
+      setSolutionData(prev => prev ? {
+        ...prev,
+        content: "",
+        isStreaming: true
+      } : null);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/detailed-solution`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({
+            problemText,
+            isSimilarProblem: true,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to solve problem");
+      }
+
+      // Parse streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let solution = "";
+      let textBuffer = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          textBuffer += decoder.decode(value, { stream: true });
+          
+          let newlineIndex: number;
+          while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+            let line = textBuffer.slice(0, newlineIndex);
+            textBuffer = textBuffer.slice(newlineIndex + 1);
+
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (line.startsWith(":") || line.trim() === "") continue;
+            if (!line.startsWith("data: ")) continue;
+
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") break;
+
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) {
+                solution += content;
+                setSolutionData(prev => prev ? {
+                  ...prev,
+                  content: solution,
+                  isStreaming: true
+                } : null);
+              }
+            } catch {
+              textBuffer = line + "\n" + textBuffer;
+              break;
+            }
+          }
+        }
+      }
+
+      // Final update
+      setSolutionData(prev => prev ? {
+        ...prev,
+        content: solution,
+        isStreaming: false
+      } : null);
+
+      toast({
+        title: "Practice Problem Solved! ✅",
+        description: "Step-by-step solution ready",
+      });
+
+    } catch (error) {
+      console.error("Error solving similar problem:", error);
+      toast({
+        title: "Error",
+        description: "Failed to solve practice problem",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSolvingSimilar(false);
+    }
+  };
+
   if (!session) {
     return null; // Auth redirect will happen in useEffect
   }
@@ -1006,6 +1110,8 @@ const Index = () => {
                       isFindingSimilar={isFindingSimilar}
                       onGetDetailedSolution={handleGetDetailedSolution}
                       isGettingDetailed={isGettingDetailed}
+                      onSolveSimilar={handleSolveSimilar}
+                      isSolvingSimilar={isSolvingSimilar}
                     />
                   </ResizablePanel>
                   {showVideosPanel && <ResizableHandle withHandle />}

@@ -122,15 +122,15 @@ RULES:
       console.error("AI search query generation failed:", e);
     }
 
-    // Search YouTube for similar problems
+    // Search YouTube for similar problems (filter out Shorts)
     let videos: { id: string; title: string; thumbnail: string; channelTitle: string; videoId: string }[] = [];
     
     if (YOUTUBE_API_KEY) {
       const youtubeUrl = new URL("https://www.googleapis.com/youtube/v3/search");
       youtubeUrl.searchParams.set("part", "snippet");
-      youtubeUrl.searchParams.set("q", searchQuery);
+      youtubeUrl.searchParams.set("q", searchQuery + " -shorts");
       youtubeUrl.searchParams.set("type", "video");
-      youtubeUrl.searchParams.set("maxResults", "6");
+      youtubeUrl.searchParams.set("maxResults", "12");
       youtubeUrl.searchParams.set("key", YOUTUBE_API_KEY);
       youtubeUrl.searchParams.set("videoDuration", "medium");
       youtubeUrl.searchParams.set("relevanceLanguage", "en");
@@ -139,20 +139,40 @@ RULES:
       
       if (ytResponse.ok) {
         const ytData = await ytResponse.json();
-        videos = ytData.items?.map((item: {
-          id: { videoId: string };
-          snippet: {
-            title: string;
-            thumbnails: { medium: { url: string } };
-            channelTitle: string;
-          };
-        }) => ({
-          id: item.id.videoId,
-          title: item.snippet.title,
-          thumbnail: item.snippet.thumbnails.medium.url,
-          channelTitle: item.snippet.channelTitle,
-          videoId: item.id.videoId,
-        })) || [];
+        videos = (ytData.items || [])
+          .filter((item: {
+            id: { videoId: string };
+            snippet: {
+              title: string;
+              thumbnails: { medium: { url: string } };
+              channelTitle: string;
+            };
+          }) => {
+            const title = item.snippet.title.toLowerCase();
+            // Filter out shorts by checking title patterns
+            const isShort = title.includes('#shorts') || 
+                           title.includes('#short') || 
+                           title.includes('| shorts') ||
+                           title.includes('(shorts)') ||
+                           title.endsWith(' shorts') ||
+                           title.includes('youtube shorts');
+            return !isShort;
+          })
+          .slice(0, 6)
+          .map((item: {
+            id: { videoId: string };
+            snippet: {
+              title: string;
+              thumbnails: { medium: { url: string } };
+              channelTitle: string;
+            };
+          }) => ({
+            id: item.id.videoId,
+            title: item.snippet.title,
+            thumbnail: item.snippet.thumbnails.medium.url,
+            channelTitle: item.snippet.channelTitle,
+            videoId: item.id.videoId,
+          }));
       }
     }
 
