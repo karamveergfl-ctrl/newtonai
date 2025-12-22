@@ -10,18 +10,18 @@ interface FlashcardProps {
   back: string;
   index: number;
   total: number;
+  isFlipped: boolean;
+  onFlip: () => void;
 }
 
-export const Flashcard = ({ front, back, index, total }: FlashcardProps) => {
-  const [isFlipped, setIsFlipped] = useState(false);
-
+export const Flashcard = ({ front, back, index, total, isFlipped, onFlip }: FlashcardProps) => {
   return (
     <div className="w-full max-w-md mx-auto perspective-1000">
       <div className="text-center mb-3 text-sm text-muted-foreground">
         Card {index + 1} of {total}
       </div>
       <div
-        onClick={() => setIsFlipped(!isFlipped)}
+        onClick={onFlip}
         className={cn(
           "relative w-full aspect-[3/2] cursor-pointer transition-transform duration-500 preserve-3d",
           isFlipped && "rotate-y-180"

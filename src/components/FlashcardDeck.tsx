@@ -9,7 +9,9 @@ import {
   RotateCcw, 
   X,
   Trophy,
-  Sparkles
+  Sparkles,
+  Check,
+  RotateCw
 } from "lucide-react";
 
 interface FlashcardData {
@@ -29,17 +31,24 @@ export const FlashcardDeck = ({ flashcards, title, onClose }: FlashcardDeckProps
   const [cards, setCards] = useState(flashcards);
   const [completedCards, setCompletedCards] = useState<Set<string>>(new Set());
   const [showCongrats, setShowCongrats] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const progress = (completedCards.size / cards.length) * 100;
 
+  const handleFlip = () => {
+    setIsFlipped(!isFlipped);
+  };
+
   const handleNext = () => {
     if (currentIndex < cards.length - 1) {
+      setIsFlipped(false); // Reset to question side
       setCurrentIndex(currentIndex + 1);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
+      setIsFlipped(false); // Reset to question side
       setCurrentIndex(currentIndex - 1);
     }
   };
@@ -48,6 +57,7 @@ export const FlashcardDeck = ({ flashcards, title, onClose }: FlashcardDeckProps
     const shuffled = [...cards].sort(() => Math.random() - 0.5);
     setCards(shuffled);
     setCurrentIndex(0);
+    setIsFlipped(false);
   };
 
   const handleReset = () => {
@@ -55,9 +65,10 @@ export const FlashcardDeck = ({ flashcards, title, onClose }: FlashcardDeckProps
     setCurrentIndex(0);
     setCompletedCards(new Set());
     setShowCongrats(false);
+    setIsFlipped(false);
   };
 
-  const markCompleted = () => {
+  const markMastered = () => {
     const newCompleted = new Set(completedCards);
     newCompleted.add(cards[currentIndex].id);
     setCompletedCards(newCompleted);
@@ -65,9 +76,18 @@ export const FlashcardDeck = ({ flashcards, title, onClose }: FlashcardDeckProps
     if (newCompleted.size === cards.length) {
       setShowCongrats(true);
     } else if (currentIndex < cards.length - 1) {
-      handleNext();
+      setIsFlipped(false);
+      setCurrentIndex(currentIndex + 1);
     }
   };
+
+  const unmarkMastered = () => {
+    const newCompleted = new Set(completedCards);
+    newCompleted.delete(cards[currentIndex].id);
+    setCompletedCards(newCompleted);
+  };
+
+  const isMastered = completedCards.has(cards[currentIndex]?.id);
 
   if (showCongrats) {
     return (
@@ -133,42 +153,60 @@ export const FlashcardDeck = ({ flashcards, title, onClose }: FlashcardDeckProps
           back={cards[currentIndex].back}
           index={currentIndex}
           total={cards.length}
+          isFlipped={isFlipped}
+          onFlip={handleFlip}
         />
       </div>
 
       {/* Controls */}
       <div className="p-4 border-t bg-card/50">
-        <div className="max-w-md mx-auto flex items-center justify-between gap-4">
-          <Button
-            onClick={handlePrev}
-            disabled={currentIndex === 0}
-            variant="outline"
-            size="lg"
-            className="gap-2"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">Previous</span>
-          </Button>
-          
-          <Button
-            onClick={markCompleted}
-            className="gap-2 bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-            size="lg"
-            disabled={completedCards.has(cards[currentIndex].id)}
-          >
-            {completedCards.has(cards[currentIndex].id) ? "Mastered ✓" : "Got it!"}
-          </Button>
+        <div className="max-w-lg mx-auto space-y-3">
+          {/* Flip Button */}
+          <div className="flex justify-center">
+            <Button
+              onClick={handleFlip}
+              variant="outline"
+              size="lg"
+              className="gap-2 w-40"
+            >
+              <RotateCw className="w-4 h-4" />
+              Flip Card
+            </Button>
+          </div>
 
-          <Button
-            onClick={handleNext}
-            disabled={currentIndex === cards.length - 1}
-            variant="outline"
-            size="lg"
-            className="gap-2"
-          >
-            <span className="hidden sm:inline">Next</span>
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+          {/* Navigation Row */}
+          <div className="flex items-center justify-between gap-3">
+            <Button
+              onClick={handlePrev}
+              disabled={currentIndex === 0}
+              variant="outline"
+              size="lg"
+              className="gap-2"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="hidden sm:inline">Previous</span>
+            </Button>
+            
+            <Button
+              onClick={isMastered ? unmarkMastered : markMastered}
+              className={`gap-2 ${isMastered ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-primary to-secondary hover:opacity-90'}`}
+              size="lg"
+            >
+              <Check className="w-4 h-4" />
+              {isMastered ? "Mastered ✓" : "Mastered"}
+            </Button>
+
+            <Button
+              onClick={handleNext}
+              disabled={currentIndex === cards.length - 1}
+              variant="outline"
+              size="lg"
+              className="gap-2"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

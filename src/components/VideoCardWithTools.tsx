@@ -256,12 +256,12 @@ export const VideoCardWithTools = ({
     );
   }
 
-  // Compact view (original)
+  // Compact card view - styled like reference image
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
-      {/* Video Thumbnail */}
+    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group flex gap-3 p-3">
+      {/* Video Thumbnail - Left side */}
       <div 
-        className="relative aspect-video overflow-hidden bg-black cursor-pointer"
+        className="relative w-40 min-w-[160px] aspect-video overflow-hidden bg-black cursor-pointer rounded-lg shrink-0"
         onClick={() => onVideoClick(video.videoId)}
       >
         <img 
@@ -269,29 +269,35 @@ export const VideoCardWithTools = ({
           alt={video.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full bg-primary/90 group-hover:bg-primary flex items-center justify-center transition-all">
-            <Play className="w-5 h-5 text-primary-foreground ml-0.5" fill="currentColor" />
+        <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <div className="w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center">
+            <Play className="w-4 h-4 text-primary-foreground ml-0.5" fill="currentColor" />
           </div>
         </div>
         
         {/* Duration Badge */}
         {formattedDuration && (
-          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded">
+          <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
+            <Clock className="w-3 h-3" />
             {formattedDuration}
           </div>
         )}
       </div>
 
-      {/* Video Info */}
-      <div className="p-3">
-        <h3 className="font-semibold text-xs line-clamp-2 mb-1">
-          {video.title}
-        </h3>
-        <div className="flex items-center justify-between mb-3">
+      {/* Video Info - Right side */}
+      <div className="flex flex-col justify-between flex-1 min-w-0 py-0.5">
+        <div>
+          <h3 className="font-semibold text-sm line-clamp-2 mb-1">
+            {video.title}
+          </h3>
           <p className="text-xs text-muted-foreground truncate">{video.channelTitle}</p>
+          
+          {/* Animated badge */}
+          <span className="inline-block text-xs text-primary font-medium mt-1">Animated</span>
+          
+          {/* Views */}
           {formattedViews && (
-            <p className="text-xs text-muted-foreground flex items-center gap-0.5">
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               <Eye className="w-3 h-3" />
               {formattedViews}
             </p>
@@ -300,7 +306,7 @@ export const VideoCardWithTools = ({
 
         {/* Study Tools Row at Bottom */}
         {hasStudyTools && (
-          <div className="flex items-center justify-between gap-1 pt-2 border-t">
+          <div className="flex items-center gap-1.5 mt-2">
             {onGenerateQuiz && (
               <Button
                 onClick={(e) => {
@@ -310,16 +316,16 @@ export const VideoCardWithTools = ({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "flex-1 h-7 gap-1 p-1",
-                  activeGenerating === "quiz" && "bg-primary/10"
+                  "h-8 w-8 p-0 rounded-lg bg-muted/50 hover:bg-primary/20",
+                  activeGenerating === "quiz" && "bg-primary/20"
                 )}
                 disabled={isGenerating}
                 title="Generate Quiz"
               >
                 {activeGenerating === "quiz" ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Brain className="w-3 h-3 text-primary" />
+                  <Brain className="w-4 h-4 text-primary" />
                 )}
               </Button>
             )}
@@ -333,16 +339,16 @@ export const VideoCardWithTools = ({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "flex-1 h-7 gap-1 p-1",
-                  activeGenerating === "flashcards" && "bg-secondary/10"
+                  "h-8 w-8 p-0 rounded-lg bg-muted/50 hover:bg-secondary/20",
+                  activeGenerating === "flashcards" && "bg-secondary/20"
                 )}
                 disabled={isGenerating}
                 title="Generate Flashcards"
               >
                 {activeGenerating === "flashcards" ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <BookOpen className="w-3 h-3 text-secondary" />
+                  <BookOpen className="w-4 h-4 text-secondary" />
                 )}
               </Button>
             )}
@@ -356,16 +362,16 @@ export const VideoCardWithTools = ({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "flex-1 h-7 gap-1 p-1",
-                  activeGenerating === "summary" && "bg-accent/10"
+                  "h-8 w-8 p-0 rounded-lg bg-muted/50 hover:bg-accent/20",
+                  activeGenerating === "summary" && "bg-accent/20"
                 )}
                 disabled={isGenerating}
                 title="Generate Summary"
               >
                 {activeGenerating === "summary" ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <FileText className="w-3 h-3 text-accent-foreground" />
+                  <FileText className="w-4 h-4 text-orange-500" />
                 )}
               </Button>
             )}
@@ -379,16 +385,16 @@ export const VideoCardWithTools = ({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "flex-1 h-7 gap-1 p-1",
-                  activeGenerating === "mindmap" && "bg-primary/10"
+                  "h-8 w-8 p-0 rounded-lg bg-muted/50 hover:bg-primary/20",
+                  activeGenerating === "mindmap" && "bg-primary/20"
                 )}
                 disabled={isGenerating}
                 title="Generate Mind Map"
               >
                 {activeGenerating === "mindmap" ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Network className="w-3 h-3 text-primary" />
+                  <Network className="w-4 h-4 text-red-500" />
                 )}
               </Button>
             )}
