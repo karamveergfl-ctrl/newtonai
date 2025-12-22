@@ -26,3 +26,9 @@ verify_jwt = true
 
 [functions.generate-quiz]
 verify_jwt = true
+
+[functions.solution-chat]
+verify_jwt = true
+
+[functions.find-similar]
+verify_jwt = true
