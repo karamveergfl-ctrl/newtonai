@@ -449,8 +449,8 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
       </div>
 
       {/* Floating Navigation bar */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-40 group/nav">
-        <Card className="p-2 border-0 shadow-lg bg-background/90 backdrop-blur-md md:opacity-70 md:hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-40 group/nav opacity-0 hover:opacity-100 transition-opacity duration-300">
+        <Card className="p-2 border-0 shadow-lg bg-background/90 backdrop-blur-md">
           <div className="flex items-center justify-between gap-2">
             <Button
               variant="ghost"
