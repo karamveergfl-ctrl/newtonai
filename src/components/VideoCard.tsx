@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, BookOpen, Brain, Loader2 } from "lucide-react";
+import { Play, BookOpen, Brain, Loader2, FileText, Network } from "lucide-react";
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -18,8 +18,10 @@ interface VideoCardProps {
     videoId: string;
   };
   onVideoClick: (videoId: string) => void;
-  onGenerateFlashcards?: (videoTitle: string) => void;
-  onGenerateQuiz?: (videoTitle: string) => void;
+  onGenerateFlashcards?: (videoId: string, videoTitle: string) => void;
+  onGenerateQuiz?: (videoId: string, videoTitle: string) => void;
+  onGenerateSummary?: (videoId: string, videoTitle: string) => void;
+  onGenerateMindMap?: (videoId: string, videoTitle: string) => void;
   isGenerating?: boolean;
 }
 
@@ -28,9 +30,13 @@ export const VideoCard = ({
   onVideoClick, 
   onGenerateFlashcards,
   onGenerateQuiz,
+  onGenerateSummary,
+  onGenerateMindMap,
   isGenerating 
 }: VideoCardProps) => {
   const [showStudyBtn, setShowStudyBtn] = useState(false);
+
+  const hasStudyTools = onGenerateFlashcards || onGenerateQuiz || onGenerateSummary || onGenerateMindMap;
 
   return (
     <Card 
@@ -60,7 +66,7 @@ export const VideoCard = ({
         </h3>
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground truncate flex-1">{video.channelTitle}</p>
-          {(onGenerateFlashcards || onGenerateQuiz) && (
+          {hasStudyTools && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -81,16 +87,40 @@ export const VideoCard = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                {onGenerateFlashcards && (
-                  <DropdownMenuItem onClick={() => onGenerateFlashcards(video.title)} className="gap-2">
-                    <BookOpen className="w-4 h-4" />
-                    Flashcards
+                {onGenerateQuiz && (
+                  <DropdownMenuItem 
+                    onClick={() => onGenerateQuiz(video.videoId, video.title)} 
+                    className="gap-2"
+                  >
+                    <Brain className="w-4 h-4" />
+                    Generate Quiz
                   </DropdownMenuItem>
                 )}
-                {onGenerateQuiz && (
-                  <DropdownMenuItem onClick={() => onGenerateQuiz(video.title)} className="gap-2">
-                    <Brain className="w-4 h-4" />
-                    Quiz
+                {onGenerateFlashcards && (
+                  <DropdownMenuItem 
+                    onClick={() => onGenerateFlashcards(video.videoId, video.title)} 
+                    className="gap-2"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    Generate Flashcards
+                  </DropdownMenuItem>
+                )}
+                {onGenerateSummary && (
+                  <DropdownMenuItem 
+                    onClick={() => onGenerateSummary(video.videoId, video.title)} 
+                    className="gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Generate Summary
+                  </DropdownMenuItem>
+                )}
+                {onGenerateMindMap && (
+                  <DropdownMenuItem 
+                    onClick={() => onGenerateMindMap(video.videoId, video.title)} 
+                    className="gap-2"
+                  >
+                    <Network className="w-4 h-4" />
+                    Generate Mind Map
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>

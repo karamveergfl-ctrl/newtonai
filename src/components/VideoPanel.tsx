@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { VideoCard } from "./VideoCard";
 import { Button } from "@/components/ui/button";
-import { Sparkles, X, BookOpen, Brain, Loader2 } from "lucide-react";
+import { Sparkles, X, BookOpen, Brain, Loader2, FileText, Network } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
@@ -24,8 +24,10 @@ interface VideoPanelProps {
   searchQuery: string;
   onVideoClick: (videoId: string) => void;
   onClose: () => void;
-  onGenerateFlashcards?: (videoTitle: string) => void;
-  onGenerateQuiz?: (videoTitle: string) => void;
+  onGenerateFlashcards?: (videoId: string, videoTitle: string) => void;
+  onGenerateQuiz?: (videoId: string, videoTitle: string) => void;
+  onGenerateSummary?: (videoId: string, videoTitle: string) => void;
+  onGenerateMindMap?: (videoId: string, videoTitle: string) => void;
   isGenerating?: boolean;
   defaultTab?: "animation" | "explanation";
 }
@@ -38,23 +40,34 @@ export const VideoPanel = ({
   onClose,
   onGenerateFlashcards,
   onGenerateQuiz,
+  onGenerateSummary,
+  onGenerateMindMap,
   isGenerating,
   defaultTab = "animation"
 }: VideoPanelProps) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
-  const handleGenerateAll = (type: 'flashcards' | 'quiz') => {
-    const allTitles = [...animationVideos, ...explanationVideos]
-      .slice(0, 5)
-      .map(v => v.title)
-      .join(", ");
+  const handleGenerateAll = (type: 'flashcards' | 'quiz' | 'summary' | 'mindmap') => {
+    const firstVideo = [...animationVideos, ...explanationVideos][0];
+    if (!firstVideo) return;
     
-    if (type === 'flashcards' && onGenerateFlashcards) {
-      onGenerateFlashcards(allTitles);
-    } else if (type === 'quiz' && onGenerateQuiz) {
-      onGenerateQuiz(allTitles);
+    switch (type) {
+      case 'flashcards':
+        onGenerateFlashcards?.(firstVideo.videoId, firstVideo.title);
+        break;
+      case 'quiz':
+        onGenerateQuiz?.(firstVideo.videoId, firstVideo.title);
+        break;
+      case 'summary':
+        onGenerateSummary?.(firstVideo.videoId, firstVideo.title);
+        break;
+      case 'mindmap':
+        onGenerateMindMap?.(firstVideo.videoId, firstVideo.title);
+        break;
     }
   };
+
+  const hasStudyTools = onGenerateFlashcards || onGenerateQuiz || onGenerateSummary || onGenerateMindMap;
 
   return (
     <div className="relative h-full flex flex-col">
@@ -71,7 +84,7 @@ export const VideoPanel = ({
             <span className="hidden sm:inline">Close</span>
           </Button>
           
-          {(onGenerateFlashcards || onGenerateQuiz) && (
+          {hasStudyTools && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -85,21 +98,33 @@ export const VideoPanel = ({
                   ) : (
                     <Brain className="w-4 h-4" />
                   )}
-                  <span className="hidden sm:inline">Study All</span>
+                  <span className="hidden sm:inline">Study Tools</span>
                   <span className="sm:hidden">Study</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {onGenerateQuiz && (
+                  <DropdownMenuItem onClick={() => handleGenerateAll('quiz')} className="gap-2">
+                    <Brain className="w-4 h-4" />
+                    Generate Quiz
+                  </DropdownMenuItem>
+                )}
                 {onGenerateFlashcards && (
                   <DropdownMenuItem onClick={() => handleGenerateAll('flashcards')} className="gap-2">
                     <BookOpen className="w-4 h-4" />
                     Generate Flashcards
                   </DropdownMenuItem>
                 )}
-                {onGenerateQuiz && (
-                  <DropdownMenuItem onClick={() => handleGenerateAll('quiz')} className="gap-2">
-                    <Brain className="w-4 h-4" />
-                    Take a Quiz
+                {onGenerateSummary && (
+                  <DropdownMenuItem onClick={() => handleGenerateAll('summary')} className="gap-2">
+                    <FileText className="w-4 h-4" />
+                    Generate Summary
+                  </DropdownMenuItem>
+                )}
+                {onGenerateMindMap && (
+                  <DropdownMenuItem onClick={() => handleGenerateAll('mindmap')} className="gap-2">
+                    <Network className="w-4 h-4" />
+                    Generate Mind Map
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -134,6 +159,8 @@ export const VideoPanel = ({
                 onVideoClick={onVideoClick}
                 onGenerateFlashcards={onGenerateFlashcards}
                 onGenerateQuiz={onGenerateQuiz}
+                onGenerateSummary={onGenerateSummary}
+                onGenerateMindMap={onGenerateMindMap}
                 isGenerating={isGenerating}
               />
             ))
@@ -149,6 +176,8 @@ export const VideoPanel = ({
                 onVideoClick={onVideoClick}
                 onGenerateFlashcards={onGenerateFlashcards}
                 onGenerateQuiz={onGenerateQuiz}
+                onGenerateSummary={onGenerateSummary}
+                onGenerateMindMap={onGenerateMindMap}
                 isGenerating={isGenerating}
               />
             ))
