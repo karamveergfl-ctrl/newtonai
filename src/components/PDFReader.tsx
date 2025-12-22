@@ -407,7 +407,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
   };
 
   return (
-    <div className="h-full flex flex-col relative bg-muted/20">
+    <div className="h-full flex flex-col relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
       {/* Previous Page Button - Top Left */}
       <Button
         variant="ghost"
