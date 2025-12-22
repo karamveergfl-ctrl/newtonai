@@ -5,7 +5,8 @@ import {
   BookOpen, 
   FileText, 
   Network, 
-  Loader2 
+  Loader2,
+  Camera
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GenerationSettingsDialog, GenerationSettings } from "./GenerationSettingsDialog";
@@ -15,6 +16,7 @@ interface StudyToolsBarProps {
   onGenerateFlashcards: (settings?: GenerationSettings) => void;
   onGenerateSummary: () => void;
   onGenerateMindMap: () => void;
+  onScreenshot?: () => void;
   isGeneratingQuiz: boolean;
   isGeneratingFlashcards: boolean;
   isGeneratingSummary: boolean;
@@ -29,6 +31,7 @@ export const StudyToolsBar = ({
   onGenerateFlashcards,
   onGenerateSummary,
   onGenerateMindMap,
+  onScreenshot,
   isGeneratingQuiz,
   isGeneratingFlashcards,
   isGeneratingSummary,
@@ -122,6 +125,19 @@ export const StudyToolsBar = ({
           )}
           <span className="text-xs">Mind Map</span>
         </Button>
+
+        {onScreenshot && (
+          <Button
+            onClick={onScreenshot}
+            disabled={disabled || isAnyGenerating}
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8"
+          >
+            <Camera className="w-4 h-4 text-orange-500" />
+            <span className="text-xs">Screenshot</span>
+          </Button>
+        )}
       </div>
 
       {/* Quiz Settings Dialog */}
