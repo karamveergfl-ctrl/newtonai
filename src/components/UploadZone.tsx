@@ -1,16 +1,14 @@
 import { useCallback, useState } from "react";
-import { Upload, FileText, Image, Loader2, Sparkles } from "lucide-react";
+import { Upload, FileText, Image, Loader2, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface UploadZoneProps {
-  onUploadComplete: (data: { pdfUrl: string; pdfName: string; isHandwritten?: boolean; ocrText?: string }) => void;
+  onUploadComplete: (data: { pdfUrl: string; pdfName: string }) => void;
 }
 
 export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isDetectingHandwriting, setIsDetectingHandwriting] = useState(false);
   const [fileName, setFileName] = useState("");
   const { toast } = useToast();
 
@@ -24,52 +22,6 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
     }
   }, []);
 
-  const detectHandwriting = async (imageData: string): Promise<{ isHandwritten: boolean; ocrText?: string }> => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        return { isHandwritten: false };
-      }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-handwriting`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ 
-            imageData,
-            detectOnly: true // Flag to detect handwriting and extract text
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        return { isHandwritten: false };
-      }
-
-      const data = await response.json();
-      // If we got text back, assume it contains handwriting
-      if (data.text && data.text.length > 20) {
-        return { isHandwritten: true, ocrText: data.text };
-      }
-      return { isHandwritten: false };
-    } catch (error) {
-      console.error("Error detecting handwriting:", error);
-      return { isHandwritten: false };
-    }
-  };
-
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
-  };
 
   const processFile = async (file: File) => {
     setIsProcessing(true);
@@ -92,87 +44,16 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
       // Create object URL for viewer
       const fileUrl = URL.createObjectURL(file);
       
-      // For images, detect handwriting
-      if (isImage) {
-        setIsDetectingHandwriting(true);
-        const imageData = await fileToBase64(file);
-        const { isHandwritten, ocrText } = await detectHandwriting(imageData);
-        setIsDetectingHandwriting(false);
-        
-        onUploadComplete({ 
-          pdfUrl: fileUrl,
-          pdfName: file.name,
-          isHandwritten,
-          ocrText
-        });
-        
-        if (isHandwritten) {
-          toast({
-            title: "Handwritten Content Detected!",
-            description: "Text has been extracted. Select any text to search for videos.",
-          });
-        } else {
-          toast({
-            title: "Image Loaded!",
-            description: "Use screenshot mode to capture areas for search",
-          });
-        }
-      } else {
-        // For PDFs, check first page for handwriting
-        setIsDetectingHandwriting(true);
-        
-        // Convert first page to image for detection
-        const pdfjs = await import('pdfjs-dist');
-        pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-        
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-        const page = await pdf.getPage(1);
-        
-        const scale = 1.5;
-        const viewport = page.getViewport({ scale });
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        
-        if (context) {
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-          
-          await page.render({
-            canvasContext: context,
-            viewport: viewport
-          }).promise;
-          
-          const imageData = canvas.toDataURL('image/png');
-          const { isHandwritten, ocrText } = await detectHandwriting(imageData);
-          setIsDetectingHandwriting(false);
-          
-          onUploadComplete({ 
-            pdfUrl: fileUrl,
-            pdfName: file.name,
-            isHandwritten,
-            ocrText
-          });
-          
-          if (isHandwritten) {
-            toast({
-              title: "Handwritten PDF Detected!",
-              description: "Text extracted from handwriting. Select any text to search.",
-            });
-          } else {
-            toast({
-              title: "PDF Loaded!",
-              description: "Select any text to find related videos",
-            });
-          }
-        } else {
-          setIsDetectingHandwriting(false);
-          onUploadComplete({ 
-            pdfUrl: fileUrl,
-            pdfName: file.name 
-          });
-        }
-      }
+      // Directly load the file without OCR - use screenshot feature for analysis
+      onUploadComplete({ 
+        pdfUrl: fileUrl,
+        pdfName: file.name 
+      });
+      
+      toast({
+        title: isImage ? "Image Loaded!" : "PDF Loaded!",
+        description: "Use screenshot mode to capture areas and solve problems",
+      });
     } catch (error) {
       console.error("Error loading file:", error);
       toast({
@@ -182,7 +63,6 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
       });
     } finally {
       setIsProcessing(false);
-      setIsDetectingHandwriting(false);
     }
   };
 
@@ -239,12 +119,10 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
             <Loader2 className="w-16 h-16 mx-auto text-primary animate-spin" />
             <div>
               <p className="text-lg font-semibold text-foreground mb-2">
-                {isDetectingHandwriting ? "Detecting Handwriting..." : `Processing ${fileName}`}
+                Processing {fileName}
               </p>
               <p className="text-sm text-muted-foreground">
-                {isDetectingHandwriting 
-                  ? "Analyzing content with AI..." 
-                  : "Loading your file..."}
+                Loading your file...
               </p>
             </div>
           </div>
@@ -263,11 +141,11 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
                 {isDragging ? "Drop your file here" : "Drop PDF or Image"}
               </p>
               <p className="text-sm text-muted-foreground mb-3">
-                Supports PDFs and images (including handwritten content)
+                Supports PDFs and images
               </p>
               <div className="flex items-center justify-center gap-2 text-xs text-primary">
-                <Sparkles className="w-4 h-4" />
-                <span>AI detects handwriting automatically</span>
+                <Camera className="w-4 h-4" />
+                <span>Screenshot to solve & find videos</span>
               </div>
             </div>
           </div>
@@ -277,15 +155,15 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
       <div className="mt-8 grid grid-cols-3 gap-4 text-center animate-fade-in">
         <div className="p-4 rounded-lg bg-card/50 backdrop-blur-sm">
           <div className="text-2xl font-bold text-primary mb-1">AI Powered</div>
-          <div className="text-sm text-muted-foreground">Smart topic extraction</div>
+          <div className="text-sm text-muted-foreground">Smart problem solving</div>
         </div>
         <div className="p-4 rounded-lg bg-card/50 backdrop-blur-sm">
-          <div className="text-2xl font-bold text-secondary mb-1">Handwriting</div>
-          <div className="text-sm text-muted-foreground">OCR detection</div>
+          <div className="text-2xl font-bold text-secondary mb-1">Screenshot</div>
+          <div className="text-sm text-muted-foreground">Select any area</div>
         </div>
         <div className="p-4 rounded-lg bg-card/50 backdrop-blur-sm">
-          <div className="text-2xl font-bold text-accent mb-1">Instant</div>
-          <div className="text-sm text-muted-foreground">Results in seconds</div>
+          <div className="text-2xl font-bold text-accent mb-1">Videos</div>
+          <div className="text-sm text-muted-foreground">Find related tutorials</div>
         </div>
       </div>
     </div>
