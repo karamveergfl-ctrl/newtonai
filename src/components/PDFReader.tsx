@@ -396,8 +396,8 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
     setTouchStartX(null);
   };
 
-  const handleZoomIn = () => setZoom(prev => Math.min(200, prev + 25));
-  const handleZoomOut = () => setZoom(prev => Math.max(50, prev - 25));
+  const handleZoomIn = () => setZoom(prev => Math.min(200, prev + 5));
+  const handleZoomOut = () => setZoom(prev => Math.max(25, prev - 5));
   const handleFitScreen = () => setZoom(100);
 
   const getPageWidth = () => {
@@ -444,7 +444,7 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
               variant="ghost"
               size="icon"
               onClick={handleZoomOut}
-              disabled={zoom <= 50}
+              disabled={zoom <= 25}
               className="h-7 w-7"
               title="Zoom Out"
             >
