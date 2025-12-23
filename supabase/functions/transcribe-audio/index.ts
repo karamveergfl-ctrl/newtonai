@@ -12,46 +12,82 @@ serve(async (req) => {
   }
 
   try {
-    const { audio } = await req.json();
+    const { audio, mimeType = "audio/webm" } = await req.json();
     
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    console.log("Transcribing audio...");
+    console.log("Transcribing audio using Gemini...");
 
-    // Decode base64 audio
-    const binaryString = atob(audio);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
+    // Create data URL from base64 audio
+    const audioDataUrl = `data:${mimeType};base64,${audio}`;
 
-    // Prepare form data
-    const formData = new FormData();
-    const blob = new Blob([bytes], { type: "audio/webm" });
-    formData.append("file", blob, "audio.webm");
-    formData.append("model", "whisper-1");
-
-    const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
       },
-      body: formData,
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert transcription assistant. Your task is to accurately transcribe audio content. Transcribe everything you hear, including spoken words, important sounds, and speaker changes if applicable. Provide only the transcription without any additional commentary or formatting. If the audio is unclear or inaudible, indicate [inaudible] for those parts."
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Please transcribe the following audio recording accurately. Include all spoken content."
+              },
+              {
+                type: "input_audio",
+                input_audio: {
+                  data: audio,
+                  format: mimeType.split('/')[1] || "webm"
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 8000,
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Transcription error:", response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Usage credits exhausted. Please add credits to continue." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
       throw new Error(`Transcription failed: ${response.status}`);
     }
 
     const data = await response.json();
+    const transcription = data.choices?.[0]?.message?.content;
+    
+    if (!transcription) {
+      throw new Error("No transcription generated");
+    }
+
     console.log("Transcription successful");
 
-    return new Response(JSON.stringify({ text: data.text }), {
+    return new Response(JSON.stringify({ text: transcription }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
