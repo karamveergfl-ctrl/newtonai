@@ -19,6 +19,7 @@ import { StudyToolsBar } from "@/components/StudyToolsBar";
 import { FullScreenStudyTool } from "@/components/FullScreenStudyTool";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { GenerationSettings } from "@/components/GenerationSettingsDialog";
+import { VideoGenerationSettings } from "@/components/VideoGenerationSettingsDialog";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -428,7 +429,7 @@ const Index = () => {
     return data.transcript || `Educational video about: ${videoTitle}`;
   };
 
-  const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string) => {
+  const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     setIsGeneratingFlashcards(true);
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
@@ -450,7 +451,8 @@ const Index = () => {
           body: JSON.stringify({ 
             type: "video",
             videoTitle,
-            content: transcript.slice(0, 8000)
+            content: transcript.slice(0, 8000),
+            settings: settings ? { count: settings.count, difficulty: settings.difficulty } : undefined
           }),
         }
       );
@@ -542,7 +544,7 @@ const Index = () => {
     setFlashcardTitle("");
   };
 
-  const handleGenerateQuizFromVideo = async (videoId: string, videoTitle: string) => {
+  const handleGenerateQuizFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     setIsGeneratingQuiz(true);
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
@@ -564,7 +566,8 @@ const Index = () => {
           body: JSON.stringify({ 
             type: "video",
             title: videoTitle,
-            content: transcript.slice(0, 8000)
+            content: transcript.slice(0, 8000),
+            settings: settings ? { count: settings.count, difficulty: settings.difficulty } : undefined
           }),
         }
       );
@@ -593,7 +596,7 @@ const Index = () => {
     }
   };
 
-  const handleGenerateSummaryFromVideo = async (videoId: string, videoTitle: string) => {
+  const handleGenerateSummaryFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     setIsGeneratingSummary(true);
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
@@ -612,7 +615,10 @@ const Index = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authSession.access_token}`,
           },
-          body: JSON.stringify({ content: transcript.slice(0, 10000) }),
+          body: JSON.stringify({ 
+            content: transcript.slice(0, 10000),
+            detailLevel: settings?.detailLevel
+          }),
         }
       );
 
@@ -639,7 +645,7 @@ const Index = () => {
     }
   };
 
-  const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string) => {
+  const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     setIsGeneratingMindMap(true);
     setActiveGenerating("mindmap");
     try {
@@ -659,7 +665,10 @@ const Index = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authSession.access_token}`,
           },
-          body: JSON.stringify({ content: transcript.slice(0, 8000) }),
+          body: JSON.stringify({ 
+            content: transcript.slice(0, 8000),
+            detailLevel: settings?.detailLevel
+          }),
         }
       );
 

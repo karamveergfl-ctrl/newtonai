@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, BookOpen, Brain, Loader2, FileText, Network, Clock, Eye, Settings } from "lucide-react";
@@ -8,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { VideoGenerationSettingsDialog, VideoGenerationSettings } from "./VideoGenerationSettingsDialog";
 
 interface VideoCardWithToolsProps {
   video: {
@@ -20,10 +22,10 @@ interface VideoCardWithToolsProps {
     viewCount?: string;
   };
   onVideoClick: (videoId: string) => void;
-  onGenerateFlashcards?: (videoId: string, videoTitle: string) => void;
-  onGenerateQuiz?: (videoId: string, videoTitle: string) => void;
-  onGenerateSummary?: (videoId: string, videoTitle: string) => void;
-  onGenerateMindMap?: (videoId: string, videoTitle: string) => void;
+  onGenerateFlashcards?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
+  onGenerateQuiz?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
+  onGenerateSummary?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
+  onGenerateMindMap?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
   isGenerating?: boolean;
   activeGenerating?: "quiz" | "flashcards" | "summary" | "mindmap" | null;
   isLargeView?: boolean;
@@ -79,9 +81,37 @@ export const VideoCardWithTools = ({
   activeGenerating,
   isLargeView = false,
 }: VideoCardWithToolsProps) => {
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [pendingToolType, setPendingToolType] = useState<"quiz" | "flashcards" | "summary" | "mindmap" | null>(null);
+  
   const hasStudyTools = onGenerateFlashcards || onGenerateQuiz || onGenerateSummary || onGenerateMindMap;
   const formattedDuration = formatDuration(video.duration);
   const formattedViews = formatViewCount(video.viewCount);
+
+  const handleToolClick = (toolType: "quiz" | "flashcards" | "summary" | "mindmap") => {
+    setPendingToolType(toolType);
+    setSettingsDialogOpen(true);
+  };
+
+  const handleGenerateWithSettings = (settings: VideoGenerationSettings) => {
+    if (!pendingToolType) return;
+    
+    switch (pendingToolType) {
+      case "quiz":
+        onGenerateQuiz?.(video.videoId, video.title, settings);
+        break;
+      case "flashcards":
+        onGenerateFlashcards?.(video.videoId, video.title, settings);
+        break;
+      case "summary":
+        onGenerateSummary?.(video.videoId, video.title, settings);
+        break;
+      case "mindmap":
+        onGenerateMindMap?.(video.videoId, video.title, settings);
+        break;
+    }
+    setPendingToolType(null);
+  };
 
   if (isLargeView) {
     return (
@@ -162,7 +192,7 @@ export const VideoCardWithTools = ({
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onGenerateQuiz(video.videoId, video.title);
+                    handleToolClick("quiz");
                   }}
                   variant="outline"
                   size="sm"
@@ -185,7 +215,7 @@ export const VideoCardWithTools = ({
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onGenerateFlashcards(video.videoId, video.title);
+                    handleToolClick("flashcards");
                   }}
                   variant="outline"
                   size="sm"
@@ -208,7 +238,7 @@ export const VideoCardWithTools = ({
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onGenerateSummary(video.videoId, video.title);
+                    handleToolClick("summary");
                   }}
                   variant="outline"
                   size="sm"
@@ -231,7 +261,7 @@ export const VideoCardWithTools = ({
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onGenerateMindMap(video.videoId, video.title);
+                    handleToolClick("mindmap");
                   }}
                   variant="outline"
                   size="sm"
@@ -252,6 +282,17 @@ export const VideoCardWithTools = ({
             </div>
           )}
         </div>
+        
+        {/* Settings Dialog for Large View */}
+        {pendingToolType && (
+          <VideoGenerationSettingsDialog
+            open={settingsDialogOpen}
+            onOpenChange={setSettingsDialogOpen}
+            type={pendingToolType}
+            videoTitle={video.title}
+            onGenerate={handleGenerateWithSettings}
+          />
+        )}
       </Card>
     );
   }
@@ -311,7 +352,7 @@ export const VideoCardWithTools = ({
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onGenerateQuiz(video.videoId, video.title);
+                  handleToolClick("quiz");
                 }}
                 variant="ghost"
                 size="sm"
@@ -334,7 +375,7 @@ export const VideoCardWithTools = ({
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onGenerateFlashcards(video.videoId, video.title);
+                  handleToolClick("flashcards");
                 }}
                 variant="ghost"
                 size="sm"
@@ -357,7 +398,7 @@ export const VideoCardWithTools = ({
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onGenerateSummary(video.videoId, video.title);
+                  handleToolClick("summary");
                 }}
                 variant="ghost"
                 size="sm"
@@ -380,7 +421,7 @@ export const VideoCardWithTools = ({
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onGenerateMindMap(video.videoId, video.title);
+                  handleToolClick("mindmap");
                 }}
                 variant="ghost"
                 size="sm"
@@ -401,6 +442,17 @@ export const VideoCardWithTools = ({
           </div>
         )}
       </div>
+      
+      {/* Settings Dialog for Compact View */}
+      {pendingToolType && (
+        <VideoGenerationSettingsDialog
+          open={settingsDialogOpen}
+          onOpenChange={setSettingsDialogOpen}
+          type={pendingToolType}
+          videoTitle={video.title}
+          onGenerate={handleGenerateWithSettings}
+        />
+      )}
     </Card>
   );
 };
