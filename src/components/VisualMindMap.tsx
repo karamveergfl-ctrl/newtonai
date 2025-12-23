@@ -222,53 +222,130 @@ export const VisualMindMap = ({
     );
   };
 
-  // Tree Layout - Top-down hierarchy
+  // Tree Layout - Horizontal hierarchy with curved connectors (like reference image)
   const renderTreeLayout = (rootNode: MindMapNode) => {
-    return (
-      <div className="flex flex-col items-center gap-8 py-8">
-        {/* Root */}
-        <div 
-          className="px-8 py-4 rounded-2xl font-bold text-lg text-white shadow-2xl"
-          style={{ backgroundColor: getNodeColor(0, 0), boxShadow: `0 8px 25px ${getNodeColor(0, 0)}50` }}
-        >
-          {rootNode.text}
-        </div>
-        
-        {/* Level 1 */}
-        {rootNode.children && rootNode.children.length > 0 && (
-          <>
-            <div className="w-0.5 h-8" style={{ backgroundColor: getNodeColor(0, 0) }} />
-            <div className="flex items-start gap-12">
-              {rootNode.children.map((child, idx) => (
-                <div key={child.id} className="flex flex-col items-center gap-4">
-                  <div 
-                    className="px-5 py-3 rounded-xl font-semibold text-white shadow-lg"
-                    style={{ backgroundColor: getNodeColor(1, idx), boxShadow: `0 4px 15px ${getNodeColor(1, idx)}40` }}
-                  >
-                    {child.text}
-                  </div>
-                  {/* Level 2 */}
-                  {child.children && child.children.length > 0 && (
-                    <>
-                      <div className="w-0.5 h-6" style={{ backgroundColor: getNodeColor(1, idx) }} />
-                      <div className="flex gap-4 flex-wrap justify-center max-w-xs">
-                        {child.children.slice(0, 4).map((sub, si) => (
-                          <div 
-                            key={sub.id}
-                            className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
-                            style={{ backgroundColor: getNodeColor(2, idx + si) }}
-                          >
-                            {sub.text}
-                          </div>
-                        ))}
+    const renderBranch = (node: MindMapNode, depth: number, parentIdx: number) => {
+      const color = getNodeColor(depth, parentIdx);
+      const hasChildren = node.children && node.children.length > 0;
+      
+      return (
+        <div key={node.id} className="flex items-center gap-0">
+          {/* Current node */}
+          <div 
+            className={cn(
+              "px-4 py-2 rounded-full font-medium text-white shadow-md whitespace-nowrap border-2 border-white/20",
+              depth === 0 && "px-6 py-3 text-lg font-bold",
+              depth === 1 && "px-4 py-2 text-sm font-semibold",
+              depth >= 2 && "px-3 py-1.5 text-xs"
+            )}
+            style={{ 
+              backgroundColor: color, 
+              boxShadow: `0 4px 12px ${color}40` 
+            }}
+          >
+            {node.text}
+          </div>
+          
+          {/* Children with curved connectors */}
+          {hasChildren && (
+            <div className="flex items-center">
+              {/* Horizontal line from node */}
+              <svg width="40" height="2" className="flex-shrink-0">
+                <line x1="0" y1="1" x2="40" y2="1" stroke={color} strokeWidth="2" />
+              </svg>
+              
+              {/* Vertical distribution with curved branches */}
+              <div className="relative flex flex-col gap-1">
+                {node.children!.map((child, idx) => {
+                  const childColor = getNodeColor(depth + 1, idx);
+                  const hasGrandchildren = child.children && child.children.length > 0;
+                  
+                  return (
+                    <div key={child.id} className="flex items-center gap-0">
+                      {/* Curved connector */}
+                      <svg width="30" height="24" className="flex-shrink-0">
+                        <path 
+                          d={`M 0 12 Q 15 12 30 12`} 
+                          fill="none" 
+                          stroke={childColor} 
+                          strokeWidth="2" 
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      
+                      {/* Child node */}
+                      <div 
+                        className={cn(
+                          "px-3 py-1.5 rounded-full font-medium text-white shadow-sm whitespace-nowrap",
+                          depth === 0 && "text-sm",
+                          depth >= 1 && "text-xs px-2 py-1"
+                        )}
+                        style={{ backgroundColor: childColor }}
+                      >
+                        {child.text}
                       </div>
-                    </>
-                  )}
-                </div>
-              ))}
+                      
+                      {/* Grandchildren */}
+                      {hasGrandchildren && (
+                        <div className="flex items-center">
+                          <svg width="25" height="2">
+                            <line x1="0" y1="1" x2="25" y2="1" stroke={childColor} strokeWidth="1.5" />
+                          </svg>
+                          <div className="flex flex-col gap-0.5">
+                            {child.children!.slice(0, 3).map((grandChild, gIdx) => {
+                              const gcColor = getNodeColor(depth + 2, gIdx);
+                              const hasGreatGrand = grandChild.children && grandChild.children.length > 0;
+                              
+                              return (
+                                <div key={grandChild.id} className="flex items-center gap-0">
+                                  <svg width="20" height="16">
+                                    <path d="M 0 8 Q 10 8 20 8" fill="none" stroke={gcColor} strokeWidth="1.5" />
+                                  </svg>
+                                  <span 
+                                    className="text-[10px] px-2 py-0.5 rounded-full text-white whitespace-nowrap"
+                                    style={{ backgroundColor: gcColor }}
+                                  >
+                                    {grandChild.text}
+                                  </span>
+                                  
+                                  {/* Deepest level */}
+                                  {hasGreatGrand && (
+                                    <div className="flex items-center ml-1">
+                                      <svg width="15" height="2">
+                                        <line x1="0" y1="1" x2="15" y2="1" stroke={gcColor} strokeWidth="1" strokeDasharray="2,2" />
+                                      </svg>
+                                      <div className="flex flex-col gap-0.5">
+                                        {grandChild.children!.slice(0, 2).map((leaf, lIdx) => (
+                                          <span 
+                                            key={leaf.id}
+                                            className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 whitespace-nowrap border"
+                                            style={{ borderColor: gcColor }}
+                                          >
+                                            {leaf.text}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </>
-        )}
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <div className="flex items-center justify-start py-8 px-12 overflow-x-auto">
+        {renderBranch(rootNode, 0, 0)}
       </div>
     );
   };
