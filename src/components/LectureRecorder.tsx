@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Mic, MicOff, Folder, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -9,22 +9,134 @@ interface LectureRecorderProps {
   onNotesGenerated: (notes: string, title: string) => void;
 }
 
+// Speech Recognition types
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
 export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState("");
   const [progress, setProgress] = useState(0);
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const [finalTranscript, setFinalTranscript] = useState("");
+  
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const isRecordingRef = useRef(false);
   const { toast } = useToast();
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognitionAPI) {
+      const recognition = new SpeechRecognitionAPI();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let interim = '';
+        let final = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            final += transcript + ' ';
+          } else {
+            interim += transcript;
+          }
+        }
+        
+        if (final) {
+          setFinalTranscript(prev => prev + final);
+        }
+        setLiveTranscript(interim);
+      };
+
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error('Speech recognition error:', event.error);
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          toast({
+            title: "Speech recognition error",
+            description: event.error,
+            variant: "destructive",
+          });
+        }
+      };
+
+      recognition.onend = () => {
+        // Restart if still recording
+        if (isRecordingRef.current && recognitionRef.current) {
+          try {
+            recognitionRef.current.start();
+          } catch (e) {
+            console.log('Recognition restart skipped');
+          }
+        }
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // Ignore
+        }
+      }
+    };
+  }, [toast]);
 
   const startRecording = async () => {
     try {
       audioRecorderRef.current = new AudioRecorder();
       await audioRecorderRef.current.start();
       setIsRecording(true);
+      isRecordingRef.current = true;
+      setFinalTranscript('');
+      setLiveTranscript('');
+      
+      // Start speech recognition for live transcription
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch (e) {
+          console.log('Recognition start error:', e);
+        }
+      }
+      
       toast({
         title: "Recording started",
-        description: "Speak clearly into your microphone",
+        description: recognitionRef.current 
+          ? "Live transcription enabled - speak clearly" 
+          : "Speak clearly into your microphone",
       });
     } catch (error) {
       console.error("Failed to start recording:", error);
@@ -40,9 +152,29 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
     if (!audioRecorderRef.current) return;
 
     try {
+      // Stop speech recognition
+      isRecordingRef.current = false;
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // Ignore
+        }
+      }
+      
       setIsRecording(false);
       const audioBlob = await audioRecorderRef.current.stop();
-      await processAudio(audioBlob);
+      
+      // Combine transcripts
+      const fullTranscript = (finalTranscript + liveTranscript).trim();
+      
+      if (fullTranscript.length > 100) {
+        // Use live transcription if substantial
+        await processTranscription(fullTranscript);
+      } else {
+        // Fallback to audio transcription
+        await processAudio(audioBlob);
+      }
     } catch (error) {
       console.error("Failed to stop recording:", error);
       toast({
@@ -89,6 +221,41 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
     await processAudio(file);
   };
 
+  const processTranscription = async (transcription: string) => {
+    setIsProcessing(true);
+    setProgress(50);
+    setProcessingStep("Generating study notes...");
+
+    try {
+      const { data: notesData, error: notesError } = await supabase
+        .functions.invoke("generate-lecture-notes", {
+          body: { transcription },
+        });
+
+      if (notesError || !notesData?.notes) {
+        throw new Error(notesError?.message || "Notes generation failed");
+      }
+
+      setProgress(100);
+      
+      toast({
+        title: "Notes generated!",
+        description: "Your lecture notes are ready",
+      });
+
+      onNotesGenerated(notesData.notes, notesData.title || "Lecture Notes");
+    } catch (error) {
+      console.error("Processing failed:", error);
+      toast({
+        title: "Processing failed",
+        description: error instanceof Error ? error.message : "Could not generate notes",
+        variant: "destructive",
+      });
+    } finally {
+      resetState();
+    }
+  };
+
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
     setProgress(0);
@@ -102,7 +269,7 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       
       const { data: transcriptionData, error: transcriptionError } = await supabase
         .functions.invoke("transcribe-audio", {
-          body: { audio: base64Audio },
+          body: { audio: base64Audio, mimeType: audioBlob.type || 'audio/webm' },
         });
 
       if (transcriptionError || !transcriptionData?.text) {
@@ -138,10 +305,16 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
         variant: "destructive",
       });
     } finally {
-      setIsProcessing(false);
-      setProcessingStep("");
-      setProgress(0);
+      resetState();
     }
+  };
+
+  const resetState = () => {
+    setIsProcessing(false);
+    setProcessingStep("");
+    setProgress(0);
+    setLiveTranscript("");
+    setFinalTranscript("");
   };
 
   return (
@@ -192,6 +365,17 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
                 Supported: MP3, WAV, WEBM, M4A, FLAC • Max: 25MB
               </p>
             </div>
+
+            {/* Live Transcription Display */}
+            {isRecording && (finalTranscript || liveTranscript) && (
+              <div className="max-h-32 overflow-y-auto bg-muted/50 rounded-lg p-3 text-left">
+                <p className="text-xs text-muted-foreground mb-1 font-medium">Live Transcription:</p>
+                <p className="text-sm text-foreground">
+                  {finalTranscript}
+                  <span className="text-muted-foreground italic">{liveTranscript}</span>
+                </p>
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <input
