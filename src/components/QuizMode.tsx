@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -10,7 +10,8 @@ import {
   ArrowRight,
   RotateCcw,
   Download,
-  Loader2
+  Loader2,
+  Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -33,9 +34,18 @@ interface QuizModeProps {
   title: string;
   onClose: () => void;
   onComplete: (score: number, total: number, xpEarned: number) => void;
+  isLoading?: boolean;
+  loadingMessage?: string;
 }
 
-export const QuizMode = ({ questions, title, onClose, onComplete }: QuizModeProps) => {
+export const QuizMode = ({ 
+  questions, 
+  title, 
+  onClose, 
+  onComplete,
+  isLoading = false,
+  loadingMessage = "Generating quiz questions..."
+}: QuizModeProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -43,11 +53,30 @@ export const QuizMode = ({ questions, title, onClose, onComplete }: QuizModeProp
   const [answers, setAnswers] = useState<(number | null)[]>(new Array(questions.length).fill(null));
   const [isComplete, setIsComplete] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  // Animate progress bar while loading
+  useEffect(() => {
+    if (isLoading) {
+      setLoadingProgress(0);
+      const interval = setInterval(() => {
+        setLoadingProgress(prev => {
+          if (prev < 30) return prev + 3;
+          if (prev < 60) return prev + 2;
+          if (prev < 85) return prev + 0.5;
+          return prev;
+        });
+      }, 100);
+      return () => clearInterval(interval);
+    } else {
+      setLoadingProgress(100);
+    }
+  }, [isLoading]);
+
   const currentQuestion = questions[currentIndex];
-  const progress = ((currentIndex + 1) / questions.length) * 100;
+  const progress = questions.length > 0 ? ((currentIndex + 1) / questions.length) * 100 : 0;
   const isCorrect = selectedAnswer === currentQuestion.correctIndex;
 
   const downloadAsPDF = async () => {
@@ -155,6 +184,43 @@ export const QuizMode = ({ questions, title, onClose, onComplete }: QuizModeProp
 
   const finalScore = score + (showResult && isCorrect ? 1 : 0);
   const percentage = Math.round((finalScore / questions.length) * 100);
+
+  // Loading state
+  if (isLoading || questions.length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+        <div className="p-4 border-b bg-card/50">
+          <div className="max-w-2xl mx-auto flex items-center justify-between">
+            <h2 className="font-bold text-lg truncate">{title}</h2>
+            <Button onClick={onClose} variant="ghost" size="icon">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        <div className="px-4 py-3 bg-card border-b">
+          <div className="max-w-2xl mx-auto flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium mb-1">{loadingMessage}</p>
+              <Progress value={loadingProgress} className="h-2" />
+            </div>
+            <span className="text-xs text-muted-foreground w-10">{Math.round(loadingProgress)}%</span>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center space-y-4">
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
+              <Brain className="w-10 h-10 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold">Creating Your Quiz</h3>
+            <p className="text-muted-foreground max-w-sm">
+              Analyzing content and generating personalized questions...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isComplete) {
     return (

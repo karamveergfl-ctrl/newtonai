@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Flashcard } from "./Flashcard";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -13,7 +13,8 @@ import {
   Check,
   RotateCw,
   Download,
-  Loader2
+  Loader2,
+  BookOpen
 } from "lucide-react";
 import jsPDF from "jspdf";
 import { useToast } from "@/hooks/use-toast";
@@ -28,18 +29,52 @@ interface FlashcardDeckProps {
   flashcards: FlashcardData[];
   title: string;
   onClose: () => void;
+  isLoading?: boolean;
+  loadingMessage?: string;
 }
 
-export const FlashcardDeck = ({ flashcards, title, onClose }: FlashcardDeckProps) => {
+export const FlashcardDeck = ({ 
+  flashcards, 
+  title, 
+  onClose, 
+  isLoading = false,
+  loadingMessage = "Generating flashcards..." 
+}: FlashcardDeckProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cards, setCards] = useState(flashcards);
   const [completedCards, setCompletedCards] = useState<Set<string>>(new Set());
   const [showCongrats, setShowCongrats] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const { toast } = useToast();
 
-  const progress = (completedCards.size / cards.length) * 100;
+  // Update cards when flashcards prop changes
+  useEffect(() => {
+    if (flashcards.length > 0) {
+      setCards(flashcards);
+    }
+  }, [flashcards]);
+
+  // Animate progress bar while loading
+  useEffect(() => {
+    if (isLoading) {
+      setLoadingProgress(0);
+      const interval = setInterval(() => {
+        setLoadingProgress(prev => {
+          if (prev < 30) return prev + 3;
+          if (prev < 60) return prev + 2;
+          if (prev < 85) return prev + 0.5;
+          return prev;
+        });
+      }, 100);
+      return () => clearInterval(interval);
+    } else {
+      setLoadingProgress(100);
+    }
+  }, [isLoading]);
+
+  const progress = cards.length > 0 ? (completedCards.size / cards.length) * 100 : 0;
 
   const downloadAsPDF = async () => {
     setIsDownloading(true);
@@ -138,7 +173,52 @@ export const FlashcardDeck = ({ flashcards, title, onClose }: FlashcardDeckProps
     setCompletedCards(newCompleted);
   };
 
-  const isMastered = completedCards.has(cards[currentIndex]?.id);
+  const isMastered = cards[currentIndex] ? completedCards.has(cards[currentIndex].id) : false;
+
+  // Loading state
+  if (isLoading || cards.length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b bg-card/50">
+          <div className="max-w-2xl mx-auto flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <h2 className="font-bold text-lg truncate">{title}</h2>
+              <p className="text-sm text-muted-foreground">Generating...</p>
+            </div>
+            <Button onClick={onClose} variant="ghost" size="icon">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Loading Progress */}
+        <div className="px-4 py-3 bg-card border-b">
+          <div className="max-w-2xl mx-auto flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium mb-1">{loadingMessage}</p>
+              <Progress value={loadingProgress} className="h-2" />
+            </div>
+            <span className="text-xs text-muted-foreground w-10">{Math.round(loadingProgress)}%</span>
+          </div>
+        </div>
+        
+        {/* Loading placeholder */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center space-y-4">
+            <div className="w-20 h-20 rounded-full bg-secondary/20 flex items-center justify-center mx-auto">
+              <BookOpen className="w-10 h-10 text-secondary" />
+            </div>
+            <h3 className="text-lg font-semibold">Creating Your Flashcards</h3>
+            <p className="text-muted-foreground max-w-sm">
+              Analyzing content and generating personalized flashcards for effective studying...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showCongrats) {
     return (

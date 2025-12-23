@@ -89,6 +89,11 @@ const Index = () => {
   const [videoMindMapData, setVideoMindMapData] = useState<any>(null);
   const [pdfPageCount, setPdfPageCount] = useState(10);
   const [triggerScreenshot, setTriggerScreenshot] = useState(false);
+  
+  // Instant UI state - show screens immediately while loading
+  const [showVideoSummaryScreen, setShowVideoSummaryScreen] = useState(false);
+  const [showVideoMindMapScreen, setShowVideoMindMapScreen] = useState(false);
+  const [videoStudyToolTitle, setVideoStudyToolTitle] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -597,7 +602,11 @@ const Index = () => {
   };
 
   const handleGenerateSummaryFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // Instantly show the screen with loading state
+    setVideoStudyToolTitle(videoTitle);
+    setShowVideoSummaryScreen(true);
     setIsGeneratingSummary(true);
+    
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
       if (!authSession?.access_token) {
@@ -635,6 +644,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating summary:", error);
+      setShowVideoSummaryScreen(false);
       toast({
         title: "Error",
         description: "Failed to generate summary",
@@ -646,8 +656,12 @@ const Index = () => {
   };
 
   const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // Instantly show the screen with loading state
+    setVideoStudyToolTitle(videoTitle);
+    setShowVideoMindMapScreen(true);
     setIsGeneratingMindMap(true);
     setActiveGenerating("mindmap");
+    
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
       if (!authSession?.access_token) {
@@ -692,6 +706,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating mind map:", error);
+      setShowVideoMindMapScreen(false);
       toast({
         title: "Error",
         description: "Failed to generate mind map",
@@ -1683,34 +1698,59 @@ const Index = () => {
             )
           )}
 
-          {/* Video Summary Half-Screen */}
-          {videoSummary && (
+          {/* Video Summary Half-Screen - Shows immediately with loading */}
+          {(showVideoSummaryScreen || videoSummary) && (
             <FullScreenStudyTool
               type="summary"
-              title="Video Summary"
+              title={videoStudyToolTitle || "Video Summary"}
               content={videoSummary}
-              onClose={() => setVideoSummary("")}
+              onClose={() => { 
+                setShowVideoSummaryScreen(false); 
+                setVideoSummary(""); 
+              }}
+              isLoading={isGeneratingSummary}
+              loadingMessage="Analyzing video content and creating summary..."
             />
           )}
 
-          {/* Video Mind Map Full Screen - Visual or Text */}
-          {videoMindMap && (
-            videoMindMapData ? (
+          {/* Video Mind Map Full Screen - Shows immediately with loading */}
+          {(showVideoMindMapScreen || videoMindMap) && (
+            isGeneratingMindMap ? (
+              <FullScreenStudyTool
+                type="mindmap"
+                title={videoStudyToolTitle || "Video Mind Map"}
+                content=""
+                onClose={() => { 
+                  setShowVideoMindMapScreen(false); 
+                  setVideoMindMap(""); 
+                  setVideoMindMapData(null); 
+                }}
+                isLoading={true}
+                loadingMessage="Analyzing video content and creating mind map..."
+              />
+            ) : videoMindMapData ? (
               <VisualMindMap
                 data={videoMindMapData}
                 title={fullScreenMindMapTitle || "Video Mind Map"}
-                onClose={() => { setVideoMindMap(""); setVideoMindMapData(null); }}
+                onClose={() => { 
+                  setShowVideoMindMapScreen(false); 
+                  setVideoMindMap(""); 
+                  setVideoMindMapData(null); 
+                }}
                 showVideoSlide={showVideosPanel}
               />
-            ) : (
+            ) : videoMindMap ? (
               <FullScreenStudyTool
                 type="mindmap"
-                title="Video Mind Map"
+                title={fullScreenMindMapTitle || "Video Mind Map"}
                 content={videoMindMap}
-                onClose={() => setVideoMindMap("")}
+                onClose={() => { 
+                  setShowVideoMindMapScreen(false); 
+                  setVideoMindMap(""); 
+                }}
                 showVideoSlide={showVideosPanel}
               />
-            )
+            ) : null
           )}
         </div>
       </div>
