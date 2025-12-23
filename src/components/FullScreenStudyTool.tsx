@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import { X, Download, Loader2, Brain, BookOpen, FileText, Network } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -18,6 +19,8 @@ interface FullScreenStudyToolProps {
   content: string;
   onClose: () => void;
   showVideoSlide?: boolean;
+  isLoading?: boolean;
+  loadingMessage?: string;
 }
 
 export const FullScreenStudyTool = ({
@@ -26,10 +29,33 @@ export const FullScreenStudyTool = ({
   content,
   onClose,
   showVideoSlide = false,
+  isLoading = false,
+  loadingMessage = "Generating content...",
 }: FullScreenStudyToolProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Animate progress bar while loading
+  useEffect(() => {
+    if (isLoading) {
+      setProgress(0);
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          // Slow down as we approach 90%
+          if (prev < 30) return prev + 3;
+          if (prev < 60) return prev + 2;
+          if (prev < 85) return prev + 0.5;
+          return prev;
+        });
+      }, 100);
+      return () => clearInterval(interval);
+    } else {
+      // Complete the progress bar when done
+      setProgress(100);
+    }
+  }, [isLoading]);
 
   const getIcon = () => {
     switch (type) {
@@ -188,7 +214,7 @@ export const FullScreenStudyTool = ({
             onClick={downloadAsPDF}
             variant="outline"
             size="sm"
-            disabled={isDownloading}
+            disabled={isDownloading || isLoading}
             className="gap-2"
           >
             {isDownloading ? (
@@ -204,8 +230,33 @@ export const FullScreenStudyTool = ({
         </div>
       </div>
 
+      {/* Loading Progress Bar */}
+      {isLoading && (
+        <div className="px-4 py-3 bg-card border-b">
+          <div className="flex items-center gap-3 max-w-2xl mx-auto">
+            <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium mb-1">{loadingMessage}</p>
+              <Progress value={progress} className="h-2" />
+            </div>
+            <span className="text-xs text-muted-foreground w-10">{Math.round(progress)}%</span>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <ScrollArea className="flex-1">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+              {getIcon()}
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Generating {getTypeLabel()}</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              Analyzing content and creating your personalized {getTypeLabel().toLowerCase()}...
+            </p>
+          </div>
+        ) : (
         <div ref={contentRef} className="p-8 bg-white text-black min-h-full">
           <Card className="max-w-4xl mx-auto p-8 shadow-lg">
             <h3 className="text-2xl font-bold mb-6 text-center">{title}</h3>
@@ -265,6 +316,7 @@ export const FullScreenStudyTool = ({
             </div>
           </Card>
         </div>
+        )}
       </ScrollArea>
 
       {/* Video slide area */}
