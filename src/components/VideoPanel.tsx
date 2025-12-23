@@ -92,7 +92,7 @@ export const VideoPanel = ({
               Animation ({animationVideos.length})
             </TabsTrigger>
             <TabsTrigger value="explanation" className="text-xs md:text-sm">
-              Theory ({explanationVideos.length})
+              Explanation ({explanationVideos.length})
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -103,7 +103,7 @@ export const VideoPanel = ({
         <p className="text-xs text-muted-foreground mb-3">
           {activeTab === "animation" 
             ? "High-quality animated explanations with visual learning" 
-            : "In-depth theoretical explanations and lectures"}
+            : "In-depth explanations, lectures and tutorials"}
         </p>
         
         <div className="space-y-3">
