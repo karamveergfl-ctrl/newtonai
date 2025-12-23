@@ -19,14 +19,16 @@ serve(async (req) => {
       throw new Error("YOUTUBE_API_KEY not configured");
     }
 
-    // Build search query based on type
+    // Build search query based on type - more specific to get relevant results
     let searchQuery = query;
     if (type === "animation") {
-      searchQuery = `${query} animation explained visual -shorts`;
+      // Focus on animated educational content for the specific topic
+      searchQuery = `"${query}" animated explanation OR "${query}" animation tutorial OR "${query}" visual learning -shorts -music -gameplay -vlog`;
     } else if (type === "explanation") {
-      searchQuery = `${query} lecture explanation tutorial -shorts`;
+      // Focus on lecture/explanation content for the specific topic
+      searchQuery = `"${query}" lecture OR "${query}" explained OR "${query}" tutorial full course -shorts -music -gameplay -vlog -animation`;
     } else {
-      searchQuery = `${query} educational -shorts`;
+      searchQuery = `"${query}" educational tutorial -shorts`;
     }
 
     // Fetch 15 results to have buffer after filtering shorts
