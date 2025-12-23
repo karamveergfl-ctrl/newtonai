@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UploadZone } from "@/components/UploadZone";
+import { LectureRecorder } from "@/components/LectureRecorder";
 import { PDFReader } from "@/components/PDFReader";
 import { ImageViewer } from "@/components/ImageViewer";
 import { VideoPanel } from "@/components/VideoPanel";
@@ -94,6 +95,10 @@ const Index = () => {
   const [showVideoSummaryScreen, setShowVideoSummaryScreen] = useState(false);
   const [showVideoMindMapScreen, setShowVideoMindMapScreen] = useState(false);
   const [videoStudyToolTitle, setVideoStudyToolTitle] = useState("");
+  
+  // Lecture notes state
+  const [lectureNotes, setLectureNotes] = useState("");
+  const [lectureNotesTitle, setLectureNotesTitle] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -1454,7 +1459,13 @@ const Index = () => {
           )}
           <div className="mt-8 space-y-6">
             <StudyTracker />
-            <UploadZone onUploadComplete={handleUploadComplete} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <UploadZone onUploadComplete={handleUploadComplete} />
+              <LectureRecorder onNotesGenerated={(notes, title) => {
+                setLectureNotes(notes);
+                setLectureNotesTitle(title);
+              }} />
+            </div>
           </div>
         </div>
         {selectedVideoId && (
@@ -1465,6 +1476,14 @@ const Index = () => {
             file={ocrFile} 
             onClose={handleCloseOCR}
             onTextSelect={handleSearch}
+          />
+        )}
+        {lectureNotes && (
+          <FullScreenStudyTool
+            type="summary"
+            title={lectureNotesTitle || "Lecture Notes"}
+            content={lectureNotes}
+            onClose={() => { setLectureNotes(""); setLectureNotesTitle(""); }}
           />
         )}
       </div>
