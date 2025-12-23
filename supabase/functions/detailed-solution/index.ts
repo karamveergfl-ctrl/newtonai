@@ -28,123 +28,40 @@ serve(async (req) => {
 
 ${problemText}
 
-Provide a COMPREHENSIVE solution with clear spacing for readability:
+Provide a COMPREHENSIVE solution with NUMBERED STEPS. Each step must have a clear header.
 
-## 📊 Understanding the Problem
+FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
+
+## Answer
+
+State the final answer briefly here.
+
+## Explanation
+
+Brief overview of the approach and key concepts involved.
+
+### Step 1: Understanding the Problem
 
 Describe what's given and what we need to find.
 
+- Given values with LaTeX: $v_0 = 20 \\, \\text{m/s}$
+- What we need to find
 
-## 📚 Key Concepts
+### Step 2: Identify Key Concepts
 
-- List the relevant formulas
-- Explain briefly why they apply
+- List the relevant formulas with LaTeX
+- $$F = ma$$
+- Explain why they apply
 
+### Step 3: Set Up Equations
 
-## 📝 Step-by-Step Solution
+Show the equations we'll use:
 
-**Given:**
+$$\\sum F_x = 0: P + N_x + f_{sx} = 0$$
 
-$$v_0 = 20 \\, \\text{m/s}$$
+$$\\sum F_y = 0: N_y + f_{sy} - W = 0$$
 
-$$\\theta = 30°$$
-
-(List all given values with proper spacing)
-
-
-**Find:** What to calculate
-
-
-### Step 1: Identify the Approach
-
-Explain what method we'll use.
-
-
-### Step 2: Apply the Formula
-
-$$v_x = v_0 \\cos\\theta$$
-
-$$v_x = 20 \\times \\cos 30°$$
-
-$$v_x = 20 \\times 0.866$$
-
-$$v_x = 17.32 \\, \\text{m/s}$$
-
-
-### Step 3: Continue Calculation
-
-(More steps as needed, each on separate lines)
-
-
----
-
-## ✅ Final Answer
-
-$$\\boxed{x = 35.3 \\, \\text{m}}$$
-
-
-## 💡 Quick Tips
-
-- Key concept tested
-- Common mistake to avoid
-
-FORMATTING:
-- Use $...$ for inline math
-- Use $$...$$ for display equations (one per line)
-- Add blank lines between steps for readability
-- Use \\boxed{} for final answer`;
-    } else {
-      // Expanding an existing quick solution
-      systemPrompt = `You are given a quick solution to a physics/math problem. Expand it into a DETAILED step-by-step solution.
-
-Current quick solution:
-${currentSolution}
-
-Now provide a COMPREHENSIVE solution with CLEAR SPACING:
-
-## 📊 Complete Figure Analysis
-
-- Describe every element in the diagram
-- Explain what each symbol, arrow, angle represents
-- Identify the coordinate system and reference points
-
-
-## 📚 Theory & Concepts
-
-- What physics/math principles apply here?
-- Write out the key formulas with explanations
-- Why do these formulas work for this problem?
-
-
-## 📝 Detailed Step-by-Step Solution
-
-**Given:** List ALL values with proper LaTeX notation
-
-$$v_0 = 20 \\, \\text{m/s}$$
-
-$$\\theta = 30°$$
-
-$$g = 10 \\, \\text{m/s}^2$$
-
-
-**Find:** What exactly needs to be calculated
-
-
-### Step 1: Set Up the Problem
-
-- Explain the approach
-- Draw free body diagram description if needed
-- Identify known and unknown quantities
-
-
-### Step 2: Apply Relevant Equations
-
-$$\\text{Show each formula}$$
-
-Explain why this formula is appropriate
-
-
-### Step 3: Substitute Values
+### Step 4: Substitute Values
 
 $$v = 20 \\cos 30°$$
 
@@ -152,36 +69,109 @@ $$v = 20 \\times 0.866$$
 
 $$v = 17.32 \\, \\text{m/s}$$
 
-Show EVERY calculation step on separate lines
+### Step 5: Solve for Unknown
 
+Continue with calculations...
 
-### Step 4: Solve & Simplify
+$$N = \\frac{500}{1.0825} \\approx 461.89 \\, \\text{N}$$
 
-Show all algebraic steps
+### Step 6: Calculate Final Answer
 
-$$\\text{Final calculation here}$$
+$$P_{min} = 230.945 - 57.736 = 173.209 \\, \\text{N}$$
 
-[Continue with more steps as needed]
+### Step 7: Final Answer
 
+$$\\boxed{173.21 \\, \\text{N} \\leq P \\leq 481.13 \\, \\text{N}}$$
 
----
-
-## ✅ Final Answer
-
-$$\\boxed{x = 35.3 \\, \\text{m}}$$
-
-
-## 💡 Key Takeaways
-
-- What concept was tested?
-- Common mistakes to avoid
-- When to use this approach
-
-FORMATTING RULES:
+CRITICAL RULES:
+- Each step MUST start with "### Step N:" format
 - Use $...$ for inline math
-- Use $$...$$ for display equations (one per line for clarity)
-- Add blank lines between steps for easy reading
-- Use \\boxed{} for final answers
+- Use $$...$$ for display equations (each on its own line)
+- Number steps sequentially (Step 1, Step 2, Step 3...)
+- Make each step focused on ONE calculation or concept
+- Show EVERY algebraic step`;
+    } else {
+      // Expanding an existing quick solution
+      systemPrompt = `You are given a quick solution to a physics/math problem. Expand it into a DETAILED step-by-step solution.
+
+Current quick solution:
+${currentSolution}
+
+Provide a COMPREHENSIVE solution with NUMBERED STEPS. Each step must have a clear header.
+
+FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
+
+## Answer
+
+State the final answer briefly (from the quick solution).
+
+## Explanation
+
+Overview of the problem-solving approach and key physics/math concepts used.
+
+### Step 1: Ideas for Solving the Problem
+
+1. Draw a free body diagram of the system
+2. Define coordinate system
+3. Identify all forces: weight, applied force, normal force, friction
+4. Resolve forces into components
+5. Apply equilibrium conditions: $\\sum F_x = 0$ and $\\sum F_y = 0$
+
+### Step 2: Case Analysis (if applicable)
+
+The friction force $f_s$ acts down the incline. The surface makes an angle of $60°$ with the horizontal.
+
+Resolve the normal force $N$ into components:
+- Horizontal: $N_x = -N \\sin(30°)$ (acting to the left)
+- Vertical: $N_y = N \\cos(30°)$ (acting upwards)
+
+### Step 3: Force Equilibrium Equations
+
+$$\\sum F_x = 0: P + N_x + f_{sx} = 0 \\implies P - N \\sin(30°) - f_s \\cos(60°) = 0$$
+
+$$\\sum F_y = 0: N_y + f_{sy} - W = 0 \\implies N \\cos(30°) - f_s \\sin(60°) - 500 = 0$$
+
+Since the block is about to move up, $f_s = f_{s,max} = \\mu_s N = 0.25N$
+
+### Step 4: Substituting Friction and Solving for N
+
+Substituting $f_s = 0.25N$:
+
+$$P - N \\sin(30°) - 0.25N \\cos(60°) = 0$$
+
+$$N \\cos(30°) - 0.25N \\sin(60°) - 500 = 0$$
+
+From the second equation:
+
+$$N(\\cos(30°) - 0.25 \\sin(60°)) = 500$$
+
+$$N(0.866 - 0.25 \\times 0.866) = 500$$
+
+$$N(0.6495) = 500$$
+
+$$N = \\frac{500}{0.6495} \\approx 769.81 \\, \\text{N}$$
+
+### Step 5: Solving for P_max
+
+Substitute $N$ into the first equation:
+
+$$P_{max} - 769.81 \\times 0.5 - 0.25 \\times 769.81 \\times 0.5 = 0$$
+
+$$P_{max} - 384.905 - 96.226 = 0$$
+
+$$P_{max} = 384.905 + 96.226 = 481.131 \\, \\text{N}$$
+
+### Step 6: Final Answer
+
+$$\\boxed{173.21 \\, \\text{N} \\leq P \\leq 481.13 \\, \\text{N}}$$
+
+CRITICAL RULES:
+- Each step MUST start with "### Step N:" format
+- Use $...$ for inline math  
+- Use $$...$$ for display equations (each on its own line)
+- Number steps sequentially (Step 1, Step 2, Step 3...)
+- Make each step focused on ONE calculation or concept
+- Show EVERY algebraic step with clear substitutions
 - Be extremely thorough and educational`;
     }
 
