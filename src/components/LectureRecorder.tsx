@@ -103,6 +103,7 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
   const [progress, setProgress] = useState(0);
   const [liveTranscript, setLiveTranscript] = useState("");
   const [finalTranscript, setFinalTranscript] = useState("");
+  const [elapsedTime, setElapsedTime] = useState(0);
   
   // Template selection state
   const [showTemplateSelection, setShowTemplateSelection] = useState(false);
@@ -114,7 +115,35 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isRecordingRef = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+
+  // Format elapsed time as MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Timer effect for recording
+  useEffect(() => {
+    if (isRecording) {
+      setElapsedTime(0);
+      timerRef.current = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [isRecording]);
 
   // Initialize Speech Recognition with selected language
   useEffect(() => {
@@ -565,6 +594,16 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
               <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse" />
               <Sparkles className="absolute -bottom-1 -left-1 w-4 h-4 text-secondary animate-pulse" style={{ animationDelay: '0.5s' }} />
             </div>
+
+            {/* Recording Timer */}
+            {isRecording && (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                <span className="text-2xl font-mono font-bold text-red-500">
+                  {formatTime(elapsedTime)}
+                </span>
+              </div>
+            )}
 
             <div>
               <h3 className="text-xl font-bold text-foreground mb-2">
