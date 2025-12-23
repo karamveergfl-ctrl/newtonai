@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { transcription } = await req.json();
+    const { transcription, template, templateStructure, language } = await req.json();
 
     if (!transcription) {
       throw new Error("No transcription provided");
@@ -23,27 +23,89 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    console.log("Generating lecture notes from transcription...");
+    console.log("Generating brief summary from transcription...");
+    console.log("Template:", template);
+    console.log("Language:", language);
 
-    const systemPrompt = `You are an expert academic note-taker and study guide creator. Your task is to transform lecture transcriptions into comprehensive, well-organized study notes.
+    // Get language name for the prompt
+    const languageNames: Record<string, string> = {
+      "en-US": "English",
+      "es-ES": "Spanish",
+      "fr-FR": "French",
+      "de-DE": "German",
+      "it-IT": "Italian",
+      "pt-BR": "Portuguese",
+      "zh-CN": "Chinese",
+      "ja-JP": "Japanese",
+      "ko-KR": "Korean",
+      "ar-SA": "Arabic",
+      "hi-IN": "Hindi",
+      "ru-RU": "Russian",
+    };
+    const targetLanguage = languageNames[language] || "English";
 
-Create study notes that include:
+    // Template-specific prompts
+    const templatePrompts: Record<string, string> = {
+      "lecture": `Create a brief summary following this structure:
+## Key Points
+- List 2-3 main points from the content
 
-1. **Title**: Generate a descriptive title for the lecture topic
+## Details
+- Brief elaboration on the key points (1-2 sentences each)
 
-2. **Key Concepts**: List the main concepts covered with clear definitions
+## Summary
+- A concise 2-3 sentence summary of the entire content`,
 
-3. **Detailed Notes**: Organize the content into logical sections with:
-   - Clear headings and subheadings
-   - Bullet points for key information
-   - Important terms highlighted in **bold**
-   - Formulas or equations in LaTeX format when applicable
+      "study-guide": `Create a brief study guide following this structure:
+## Summary
+- A concise 2-3 sentence overview
 
-4. **Summary**: A concise summary of the main takeaways
+## Chapters
+- Break down the content into 2-3 logical sections with brief descriptions
 
-5. **Study Questions**: 3-5 questions to test understanding
+## Action Items
+- List 2-3 actionable takeaways or things to do`,
 
-Format the notes using proper markdown with clear hierarchy. Make the notes scannable and easy to review.`;
+      "research": `Create a brief research summary following this structure:
+## Topics
+- List the main topics covered (2-3 topics)
+
+## Review
+- Brief analysis of the content (2-3 sentences)
+
+## Progress
+- Key insights or findings`,
+
+      "project": `Create a brief project work plan following this structure:
+## Summary
+- Brief overview of the content (2-3 sentences)
+
+## Issue
+- Identify the main problem or challenge discussed
+
+## Solution
+- Outline the proposed solution or approach`,
+    };
+
+    const selectedTemplatePrompt = templatePrompts[template] || templatePrompts["lecture"];
+    const structureInfo = templateStructure?.length > 0 
+      ? `Use these sections: ${templateStructure.join(", ")}` 
+      : "";
+
+    const systemPrompt = `You are a concise summarizer. Your task is to create BRIEF summaries from transcriptions.
+
+IMPORTANT RULES:
+1. Keep it SHORT - if the input is 5 sentences, output should be about 3 sentences worth of content
+2. Correct any spelling, grammar, and language errors in the transcription
+3. Fix incomplete or unclear sentences
+4. Output MUST be in ${targetLanguage}
+5. Use proper markdown formatting
+6. Do NOT add extra information - only summarize what was actually said
+7. Be concise but capture the essential meaning
+
+${structureInfo}
+
+${selectedTemplatePrompt}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -55,9 +117,9 @@ Format the notes using proper markdown with clear hierarchy. Make the notes scan
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Please create comprehensive study notes from this lecture transcription:\n\n${transcription}` },
+          { role: "user", content: `Please create a brief summary from this transcription. Remember to be concise and output in ${targetLanguage}:\n\n${transcription}` },
         ],
-        max_tokens: 4000,
+        max_tokens: 1500,
       }),
     });
 

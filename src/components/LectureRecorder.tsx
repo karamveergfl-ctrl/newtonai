@@ -1,13 +1,72 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Mic, MicOff, Folder, Loader2, Sparkles } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Mic, MicOff, Folder, Loader2, Sparkles, Globe, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AudioRecorder, blobToBase64 } from "@/utils/audioRecorder";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface LectureRecorderProps {
   onNotesGenerated: (notes: string, title: string) => void;
 }
+
+// Template types
+type TemplateType = "lecture" | "study-guide" | "research" | "project";
+
+interface Template {
+  id: TemplateType;
+  name: string;
+  description: string;
+  structure: string[];
+}
+
+const templates: Template[] = [
+  {
+    id: "lecture",
+    name: "Lecture Notes",
+    description: "Auto supplement details based on meeting information.",
+    structure: ["Key Points", "Details", "Summary"],
+  },
+  {
+    id: "study-guide",
+    name: "Study Guide",
+    description: "Organized study material with action items.",
+    structure: ["Summary", "Chapters", "Action Items"],
+  },
+  {
+    id: "research",
+    name: "Research Summary",
+    description: "Academic research format with progress tracking.",
+    structure: ["Topics", "Review", "Progress"],
+  },
+  {
+    id: "project",
+    name: "Project Work Plan",
+    description: "Problem-solution focused structure.",
+    structure: ["Summary", "Issue", "Solution"],
+  },
+];
+
+const languages = [
+  { code: "en-US", name: "English" },
+  { code: "es-ES", name: "Spanish" },
+  { code: "fr-FR", name: "French" },
+  { code: "de-DE", name: "German" },
+  { code: "it-IT", name: "Italian" },
+  { code: "pt-BR", name: "Portuguese" },
+  { code: "zh-CN", name: "Chinese" },
+  { code: "ja-JP", name: "Japanese" },
+  { code: "ko-KR", name: "Korean" },
+  { code: "ar-SA", name: "Arabic" },
+  { code: "hi-IN", name: "Hindi" },
+  { code: "ru-RU", name: "Russian" },
+];
 
 // Speech Recognition types
 interface SpeechRecognitionEvent extends Event {
@@ -45,19 +104,26 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
   const [liveTranscript, setLiveTranscript] = useState("");
   const [finalTranscript, setFinalTranscript] = useState("");
   
+  // Template selection state
+  const [showTemplateSelection, setShowTemplateSelection] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>("lecture");
+  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
+  const [pendingTranscription, setPendingTranscription] = useState<string | null>(null);
+  const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null);
+  
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isRecordingRef = useRef(false);
   const { toast } = useToast();
 
-  // Initialize Speech Recognition
+  // Initialize Speech Recognition with selected language
   useEffect(() => {
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognitionAPI) {
       const recognition = new SpeechRecognitionAPI();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = selectedLanguage;
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let interim = '';
@@ -90,7 +156,6 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       };
 
       recognition.onend = () => {
-        // Restart if still recording
         if (isRecordingRef.current && recognitionRef.current) {
           try {
             recognitionRef.current.start();
@@ -112,7 +177,7 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
         }
       }
     };
-  }, [toast]);
+  }, [toast, selectedLanguage]);
 
   const startRecording = async () => {
     try {
@@ -123,8 +188,8 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       setFinalTranscript('');
       setLiveTranscript('');
       
-      // Start speech recognition for live transcription
       if (recognitionRef.current) {
+        recognitionRef.current.lang = selectedLanguage;
         try {
           recognitionRef.current.start();
         } catch (e) {
@@ -152,7 +217,6 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
     if (!audioRecorderRef.current) return;
 
     try {
-      // Stop speech recognition
       isRecordingRef.current = false;
       if (recognitionRef.current) {
         try {
@@ -165,15 +229,18 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       setIsRecording(false);
       const audioBlob = await audioRecorderRef.current.stop();
       
-      // Combine transcripts
       const fullTranscript = (finalTranscript + liveTranscript).trim();
       
-      if (fullTranscript.length > 100) {
-        // Use live transcription if substantial
-        await processTranscription(fullTranscript);
+      if (fullTranscript.length > 50) {
+        // Show template selection with transcription
+        setPendingTranscription(fullTranscript);
+        setPendingAudioBlob(null);
+        setShowTemplateSelection(true);
       } else {
-        // Fallback to audio transcription
-        await processAudio(audioBlob);
+        // Show template selection with audio blob
+        setPendingTranscription(null);
+        setPendingAudioBlob(audioBlob);
+        setShowTemplateSelection(true);
       }
     } catch (error) {
       console.error("Failed to stop recording:", error);
@@ -218,37 +285,57 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       return;
     }
 
-    await processAudio(file);
+    // Show template selection with audio blob
+    setPendingTranscription(null);
+    setPendingAudioBlob(file);
+    setShowTemplateSelection(true);
+  };
+
+  const handleGenerateSummary = async () => {
+    setShowTemplateSelection(false);
+    
+    if (pendingTranscription) {
+      await processTranscription(pendingTranscription);
+    } else if (pendingAudioBlob) {
+      await processAudio(pendingAudioBlob);
+    }
   };
 
   const processTranscription = async (transcription: string) => {
     setIsProcessing(true);
     setProgress(50);
-    setProcessingStep("Generating study notes...");
+    setProcessingStep("Generating summary...");
 
     try {
+      const template = templates.find(t => t.id === selectedTemplate);
+      
       const { data: notesData, error: notesError } = await supabase
         .functions.invoke("generate-lecture-notes", {
-          body: { transcription },
+          body: { 
+            transcription,
+            template: selectedTemplate,
+            templateStructure: template?.structure || [],
+            language: selectedLanguage,
+          },
         });
 
       if (notesError || !notesData?.notes) {
-        throw new Error(notesError?.message || "Notes generation failed");
+        throw new Error(notesError?.message || "Summary generation failed");
       }
 
       setProgress(100);
       
       toast({
-        title: "Notes generated!",
-        description: "Your lecture notes are ready",
+        title: "Summary generated!",
+        description: "Your brief summary is ready",
       });
 
-      onNotesGenerated(notesData.notes, notesData.title || "Lecture Notes");
+      onNotesGenerated(notesData.notes, notesData.title || template?.name || "Summary");
     } catch (error) {
       console.error("Processing failed:", error);
       toast({
         title: "Processing failed",
-        description: error instanceof Error ? error.message : "Could not generate notes",
+        description: error instanceof Error ? error.message : "Could not generate summary",
         variant: "destructive",
       });
     } finally {
@@ -261,7 +348,6 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
     setProgress(0);
 
     try {
-      // Step 1: Transcribe audio
       setProcessingStep("Transcribing audio...");
       setProgress(20);
       
@@ -277,26 +363,32 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       }
 
       setProgress(50);
-      setProcessingStep("Generating study notes...");
+      setProcessingStep("Generating summary...");
 
-      // Step 2: Generate notes from transcription
+      const template = templates.find(t => t.id === selectedTemplate);
+
       const { data: notesData, error: notesError } = await supabase
         .functions.invoke("generate-lecture-notes", {
-          body: { transcription: transcriptionData.text },
+          body: { 
+            transcription: transcriptionData.text,
+            template: selectedTemplate,
+            templateStructure: template?.structure || [],
+            language: selectedLanguage,
+          },
         });
 
       if (notesError || !notesData?.notes) {
-        throw new Error(notesError?.message || "Notes generation failed");
+        throw new Error(notesError?.message || "Summary generation failed");
       }
 
       setProgress(100);
       
       toast({
-        title: "Notes generated!",
-        description: "Your lecture notes are ready",
+        title: "Summary generated!",
+        description: "Your brief summary is ready",
       });
 
-      onNotesGenerated(notesData.notes, notesData.title || "Lecture Notes");
+      onNotesGenerated(notesData.notes, notesData.title || template?.name || "Summary");
     } catch (error) {
       console.error("Processing failed:", error);
       toast({
@@ -315,7 +407,110 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
     setProgress(0);
     setLiveTranscript("");
     setFinalTranscript("");
+    setPendingTranscription(null);
+    setPendingAudioBlob(null);
   };
+
+  const handleBackToRecorder = () => {
+    setShowTemplateSelection(false);
+    setPendingTranscription(null);
+    setPendingAudioBlob(null);
+  };
+
+  // Template Selection View
+  if (showTemplateSelection) {
+    return (
+      <div className="w-full">
+        <div className="relative border-2 border-dashed rounded-2xl p-6 transition-all duration-300 backdrop-blur-sm border-border bg-card/50 min-h-[320px]">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBackToRecorder}
+                className="h-8 w-8"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="text-lg font-semibold text-foreground">
+                  Click a template to summarize your notes
+                </h3>
+              </div>
+            </div>
+
+            {/* Templates Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {templates.map((template) => (
+                <button
+                  key={template.id}
+                  onClick={() => setSelectedTemplate(template.id)}
+                  className={`relative p-4 rounded-xl text-left transition-all duration-200 border-2 ${
+                    selectedTemplate === template.id
+                      ? "border-primary bg-primary/10 ring-2 ring-primary/30"
+                      : "border-border bg-card/80 hover:border-primary/50"
+                  }`}
+                >
+                  <h4 className="font-semibold text-foreground mb-2">{template.name}</h4>
+                  <div className="space-y-1.5 mb-3">
+                    <p className="text-xs text-muted-foreground">{template.description}</p>
+                  </div>
+                  <div className="space-y-1">
+                    {template.structure.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">{item}</span>
+                        <div className="flex-1 h-1.5 bg-muted/50 rounded-full" />
+                      </div>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Language Selection */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Globe className="w-4 h-4 text-primary" />
+                Select the language for your summary
+              </div>
+              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger className="w-full bg-card/80">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {languages.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={handleBackToRecorder}
+              >
+                Resume
+              </Button>
+              <Button
+                className="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90 gap-2"
+                onClick={handleGenerateSummary}
+              >
+                <Sparkles className="w-4 h-4" />
+                Generate
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -340,6 +535,23 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Language Selection in Recorder View */}
+            <div className="absolute top-4 right-4">
+              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger className="w-[140px] h-8 text-xs bg-card/80">
+                  <Globe className="w-3 h-3 mr-1" />
+                  <SelectValue placeholder="Language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {languages.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Microphone Icon with glow */}
             <div className="relative mx-auto w-24 h-24">
               <div className={`absolute inset-0 rounded-full ${isRecording ? 'bg-red-500/20 animate-pulse' : 'bg-primary/10'}`} />
@@ -359,7 +571,7 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
                 Live Lecture Transcription
               </h3>
               <p className="text-sm text-muted-foreground mb-3">
-                <span className="text-primary">Live recording</span> or <span className="text-secondary">upload audio</span> to get instant study notes
+                <span className="text-primary">Live recording</span> or <span className="text-secondary">upload audio</span> to get brief summaries
               </p>
               <p className="text-xs text-muted-foreground mb-3">
                 Supported: MP3, WAV, WEBM, M4A, FLAC • Max: 25MB
