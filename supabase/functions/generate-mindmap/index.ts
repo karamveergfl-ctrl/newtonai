@@ -27,28 +27,44 @@ serve(async (req) => {
 
     console.log(`Generating mind map for ${textToMap.length} characters with structure: ${structure}`);
 
-    const systemPrompt = `You are an expert at creating structured mind maps. You MUST return valid JSON only.
-Return a JSON object representing a mind map with this exact structure:
+    const systemPrompt = `You are an expert at creating DETAILED hierarchical mind maps. You MUST return valid JSON only.
+
+Return a JSON object with this DEEP hierarchical structure (4-5 levels deep):
 {
   "id": "root",
-  "text": "Main Topic",
+  "text": "Main Topic Title",
   "children": [
     {
       "id": "branch1",
-      "text": "Branch 1",
+      "text": "Category Name",
       "children": [
-        { "id": "leaf1", "text": "Detail 1" },
-        { "id": "leaf2", "text": "Detail 2" }
+        {
+          "id": "sub1",
+          "text": "Sub-Category",
+          "children": [
+            {
+              "id": "detail1",
+              "text": "Key Point or Fact",
+              "children": [
+                { "id": "leaf1", "text": "Specific detail or example" }
+              ]
+            }
+          ]
+        }
       ]
     }
   ]
 }
 
-Rules:
-- Keep text concise (2-5 words per node)
-- Create 3-6 main branches from the root
-- Each branch can have 2-4 sub-items
-- Use unique IDs for each node
+CRITICAL RULES:
+- Create 4-6 MAIN branches (major categories/topics)
+- Each main branch MUST have 2-4 sub-branches
+- Each sub-branch MUST have 2-3 detail nodes
+- Detail nodes can have 1-2 leaf nodes for specifics
+- Keep each node text SHORT: 2-6 words max
+- Make it EDUCATIONAL and DETAILED
+- Include definitions, examples, characteristics, comparisons
+- Use unique IDs (like "b1", "b1_s1", "b1_s1_d1", "b1_s1_d1_l1")
 - Return ONLY valid JSON, no markdown, no explanation`;
 
     const userPrompt = `Create a mind map JSON for this content:
