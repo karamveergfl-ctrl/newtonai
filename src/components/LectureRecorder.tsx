@@ -319,7 +319,7 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
 
   return (
     <div className="w-full">
-      <div className="relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 backdrop-blur-sm border-border bg-card/50 hover:border-primary/50">
+      <div className="relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 backdrop-blur-sm border-border bg-card/50 hover:border-primary/50 min-h-[320px] flex items-center justify-center">
         {isProcessing ? (
           <div className="space-y-4 animate-fade-in">
             <Loader2 className="w-16 h-16 mx-auto text-primary animate-spin" />
@@ -358,11 +358,14 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
               <h3 className="text-xl font-bold text-foreground mb-2">
                 Live Lecture Transcription
               </h3>
-              <p className="text-sm text-muted-foreground mb-1">
+              <p className="text-sm text-muted-foreground mb-3">
                 <span className="text-primary">Live recording</span> or <span className="text-secondary">upload audio</span> to get instant study notes
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mb-3">
                 Supported: MP3, WAV, WEBM, M4A, FLAC • Max: 25MB
+              </p>
+              <p className="text-sm text-primary">
+                Record audio or upload audio to make complete study notes
               </p>
             </div>
 

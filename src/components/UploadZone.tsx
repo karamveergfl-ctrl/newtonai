@@ -92,7 +92,7 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
       <div
         className={`
           relative border-2 border-dashed rounded-2xl p-12 text-center
-          transition-all duration-300 backdrop-blur-sm
+          transition-all duration-300 backdrop-blur-sm min-h-[320px] flex items-center justify-center
           ${
             isDragging
               ? "border-primary bg-primary/5 scale-105"
@@ -152,20 +152,6 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
         )}
       </div>
 
-      <div className="mt-8 grid grid-cols-3 gap-4 text-center animate-fade-in">
-        <div className="p-4 rounded-lg bg-card/50 backdrop-blur-sm">
-          <div className="text-2xl font-bold text-primary mb-1">AI Powered</div>
-          <div className="text-sm text-muted-foreground">Smart problem solving</div>
-        </div>
-        <div className="p-4 rounded-lg bg-card/50 backdrop-blur-sm">
-          <div className="text-2xl font-bold text-secondary mb-1">Screenshot</div>
-          <div className="text-sm text-muted-foreground">Select any area</div>
-        </div>
-        <div className="p-4 rounded-lg bg-card/50 backdrop-blur-sm">
-          <div className="text-2xl font-bold text-accent mb-1">Videos</div>
-          <div className="text-sm text-muted-foreground">Find related tutorials</div>
-        </div>
-      </div>
     </div>
   );
 };
