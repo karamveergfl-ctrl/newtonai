@@ -83,7 +83,7 @@ export const VideoPanel = ({
         </Tabs>
       </div>
 
-      {/* Video Content - Grid View Only */}
+      {/* Video Content */}
       <div className="flex-1 overflow-auto px-2 md:px-4 pb-4">
         <p className="text-xs text-muted-foreground mb-3">
           {activeTab === "animation" 
