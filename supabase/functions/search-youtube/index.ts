@@ -11,52 +11,123 @@ serve(async (req) => {
   }
 
   try {
-    const { query } = await req.json();
-    console.log("Searching YouTube for:", query);
+    const { query, type = "all", pageToken } = await req.json();
+    console.log("Searching YouTube for:", query, "type:", type, "pageToken:", pageToken);
 
     const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
     if (!YOUTUBE_API_KEY) {
       throw new Error("YOUTUBE_API_KEY not configured");
     }
 
-    const searchQuery = `${query} educational animation -shorts`;
-    const response = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&videoDuration=medium`
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("YouTube API error:", response.status, errorText);
-      throw new Error(`YouTube API error: ${response.status}`);
+    // Build search query based on type
+    let searchQuery = query;
+    if (type === "animation") {
+      searchQuery = `${query} animation explained visual -shorts`;
+    } else if (type === "explanation") {
+      searchQuery = `${query} lecture explanation tutorial -shorts`;
+    } else {
+      searchQuery = `${query} educational -shorts`;
     }
 
-    const data = await response.json();
+    // Fetch 15 results to have buffer after filtering shorts
+    let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&videoDuration=medium&relevanceLanguage=en`;
     
-    // Filter out YouTube Shorts
-    const videos = (data.items || [])
-      .filter((item: any) => {
-        const title = item.snippet.title.toLowerCase();
-        const isShort = title.includes('#shorts') || 
-                       title.includes('#short') || 
-                       title.includes('| shorts') ||
-                       title.includes('(shorts)') ||
-                       title.endsWith(' shorts') ||
-                       title.includes('youtube shorts');
-        return !isShort;
-      })
-      .slice(0, 5)
-      .map((item: any) => ({
+    if (pageToken) {
+      url += `&pageToken=${pageToken}`;
+    }
+
+    const searchResponse = await fetch(url);
+
+    if (!searchResponse.ok) {
+      const errorText = await searchResponse.text();
+      console.error("YouTube Search API error:", searchResponse.status, errorText);
+      throw new Error(`YouTube API error: ${searchResponse.status}`);
+    }
+
+    const searchData = await searchResponse.json();
+    
+    // Filter out YouTube Shorts by title
+    const filteredItems = (searchData.items || []).filter((item: any) => {
+      const title = item.snippet.title.toLowerCase();
+      const isShort = title.includes('#shorts') || 
+                     title.includes('#short') || 
+                     title.includes('| shorts') ||
+                     title.includes('(shorts)') ||
+                     title.endsWith(' shorts') ||
+                     title.includes('youtube shorts');
+      return !isShort;
+    }).slice(0, 10); // Take top 10
+
+    // Get video IDs for detailed info (duration, view count)
+    const videoIds = filteredItems.map((item: any) => item.id.videoId).join(',');
+    
+    if (!videoIds) {
+      return new Response(
+        JSON.stringify({ 
+          videos: [], 
+          nextPageToken: searchData.nextPageToken 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Fetch video details (duration, view count)
+    const detailsResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=${videoIds}&key=${YOUTUBE_API_KEY}`
+    );
+
+    if (!detailsResponse.ok) {
+      console.error("YouTube Videos API error:", detailsResponse.status);
+      // Return videos without duration/views if details fetch fails
+      const videos = filteredItems.map((item: any) => ({
         id: item.id.videoId,
         videoId: item.id.videoId,
         title: item.snippet.title,
-        thumbnail: item.snippet.thumbnails.medium.url,
+        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
         channelTitle: item.snippet.channelTitle,
       }));
 
-    console.log("Found videos:", videos.length);
+      return new Response(
+        JSON.stringify({ 
+          videos, 
+          nextPageToken: searchData.nextPageToken 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const detailsData = await detailsResponse.json();
+    
+    // Create a map of video details
+    const detailsMap = new Map();
+    (detailsData.items || []).forEach((item: any) => {
+      detailsMap.set(item.id, {
+        duration: item.contentDetails?.duration,
+        viewCount: item.statistics?.viewCount,
+      });
+    });
+
+    // Merge search results with details
+    const videos = filteredItems.map((item: any) => {
+      const details = detailsMap.get(item.id.videoId) || {};
+      return {
+        id: item.id.videoId,
+        videoId: item.id.videoId,
+        title: item.snippet.title,
+        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+        channelTitle: item.snippet.channelTitle,
+        duration: details.duration,
+        viewCount: details.viewCount,
+      };
+    });
+
+    console.log("Found videos:", videos.length, "with details");
 
     return new Response(
-      JSON.stringify({ videos }),
+      JSON.stringify({ 
+        videos, 
+        nextPageToken: searchData.nextPageToken 
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

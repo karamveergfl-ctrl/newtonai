@@ -138,7 +138,31 @@ export const FullScreenStudyTool = ({
   };
 
   // Format content for LaTeX - ensure math is wrapped properly
+  // Also detect if content is raw JSON (for mind maps) and format appropriately
   const formatContent = (text: string) => {
+    // Check if content looks like JSON (for mind maps that failed to render visually)
+    if (type === "mindmap") {
+      const trimmed = text.trim();
+      if (trimmed.startsWith('{') && trimmed.includes('"id"')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          // Convert JSON mind map to readable format
+          const formatNode = (node: any, depth: number = 0): string => {
+            const indent = "  ".repeat(depth);
+            const bullet = depth === 0 ? "# " : depth === 1 ? "## " : "- ";
+            let result = `${indent}${bullet}${node.text || "Topic"}\n`;
+            if (node.children && Array.isArray(node.children)) {
+              result += node.children.map((child: any) => formatNode(child, depth + 1)).join("");
+            }
+            return result;
+          };
+          return formatNode(parsed);
+        } catch {
+          // Not valid JSON, continue with original
+        }
+      }
+    }
+    
     // Already has LaTeX markers, return as is
     if (text.includes('$') || text.includes('\\(') || text.includes('\\[')) {
       return text;

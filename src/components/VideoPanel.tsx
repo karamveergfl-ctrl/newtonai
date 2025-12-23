@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { VideoCardWithTools } from "./VideoCardWithTools";
 import { Button } from "@/components/ui/button";
-import { Sparkles, X } from "lucide-react";
+import { Sparkles, X, Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Video {
@@ -27,6 +27,10 @@ interface VideoPanelProps {
   isGenerating?: boolean;
   activeGenerating?: "quiz" | "flashcards" | "summary" | "mindmap" | null;
   defaultTab?: "animation" | "explanation";
+  onLoadMore?: (type: "animation" | "explanation") => Promise<void>;
+  isLoadingMore?: boolean;
+  hasMoreAnimation?: boolean;
+  hasMoreExplanation?: boolean;
 }
 
 export const VideoPanel = ({ 
@@ -41,14 +45,25 @@ export const VideoPanel = ({
   onGenerateMindMap,
   isGenerating,
   activeGenerating,
-  defaultTab = "animation"
+  defaultTab = "animation",
+  onLoadMore,
+  isLoadingMore,
+  hasMoreAnimation = true,
+  hasMoreExplanation = true,
 }: VideoPanelProps) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   const currentVideos = activeTab === "animation" ? animationVideos : explanationVideos;
+  const hasMore = activeTab === "animation" ? hasMoreAnimation : hasMoreExplanation;
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as "animation" | "explanation");
+  };
+
+  const handleLoadMore = async () => {
+    if (onLoadMore && !isLoadingMore) {
+      await onLoadMore(activeTab);
+    }
   };
 
   return (
@@ -93,19 +108,44 @@ export const VideoPanel = ({
         
         <div className="space-y-3">
           {currentVideos.length > 0 ? (
-            currentVideos.map((video) => (
-              <VideoCardWithTools 
-                key={video.videoId} 
-                video={video}
-                onVideoClick={onVideoClick}
-                onGenerateFlashcards={onGenerateFlashcards}
-                onGenerateQuiz={onGenerateQuiz}
-                onGenerateSummary={onGenerateSummary}
-                onGenerateMindMap={onGenerateMindMap}
-                isGenerating={isGenerating}
-                activeGenerating={activeGenerating}
-              />
-            ))
+            <>
+              {currentVideos.map((video) => (
+                <VideoCardWithTools 
+                  key={video.videoId} 
+                  video={video}
+                  onVideoClick={onVideoClick}
+                  onGenerateFlashcards={onGenerateFlashcards}
+                  onGenerateQuiz={onGenerateQuiz}
+                  onGenerateSummary={onGenerateSummary}
+                  onGenerateMindMap={onGenerateMindMap}
+                  isGenerating={isGenerating}
+                  activeGenerating={activeGenerating}
+                />
+              ))}
+              
+              {/* Load More Button */}
+              {onLoadMore && hasMore && (
+                <div className="pt-4 pb-2">
+                  <Button
+                    onClick={handleLoadMore}
+                    variant="outline"
+                    className="w-full gap-2"
+                    disabled={isLoadingMore}
+                  >
+                    {isLoadingMore ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Loading more videos...
+                      </>
+                    ) : (
+                      <>
+                        Load More {activeTab === "animation" ? "Animations" : "Explanations"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-8">
               No {activeTab === "animation" ? "animation" : "explanation"} videos found
