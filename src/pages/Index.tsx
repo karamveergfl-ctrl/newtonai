@@ -33,6 +33,8 @@ interface Video {
   thumbnail: string;
   channelTitle: string;
   videoId: string;
+  duration?: string;
+  viewCount?: string;
 }
 
 const Index = () => {
@@ -46,6 +48,9 @@ const Index = () => {
   } | null>(null);
   const [animationVideos, setAnimationVideos] = useState<Video[]>([]);
   const [explanationVideos, setExplanationVideos] = useState<Video[]>([]);
+  const [animationNextPageToken, setAnimationNextPageToken] = useState<string | null>(null);
+  const [explanationNextPageToken, setExplanationNextPageToken] = useState<string | null>(null);
+  const [isLoadingMoreVideos, setIsLoadingMoreVideos] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
@@ -636,6 +641,7 @@ const Index = () => {
 
   const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string) => {
     setIsGeneratingMindMap(true);
+    setActiveGenerating("mindmap");
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
       if (!authSession?.access_token) {
@@ -664,6 +670,13 @@ const Index = () => {
       const data = await response.json();
       setVideoMindMap(data.mindMap);
       
+      // Set the parsed mind map data for visual rendering
+      if (data.mindMapData) {
+        setVideoMindMapData(data.mindMapData);
+      }
+      
+      setFullScreenMindMapTitle(videoTitle);
+      
       toast({
         title: "Mind Map Ready! 🧠",
         description: "Video mind map generated successfully",
@@ -677,6 +690,7 @@ const Index = () => {
       });
     } finally {
       setIsGeneratingMindMap(false);
+      setActiveGenerating(null);
     }
   };
 
@@ -1228,6 +1242,80 @@ const Index = () => {
   const handleTopicSearch = async (topic: string) => {
     setIsTopicSearching(true);
     setSearchQuery(topic);
+    setAnimationVideos([]);
+    setExplanationVideos([]);
+    setAnimationNextPageToken(null);
+    setExplanationNextPageToken(null);
+    
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      // Fetch both animation and explanation videos in parallel
+      const [animationResponse, explanationResponse] = await Promise.all([
+        fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authSession.access_token}`,
+            },
+            body: JSON.stringify({ query: topic, type: "animation" }),
+          }
+        ),
+        fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authSession.access_token}`,
+            },
+            body: JSON.stringify({ query: topic, type: "explanation" }),
+          }
+        )
+      ]);
+
+      if (!animationResponse.ok || !explanationResponse.ok) {
+        throw new Error("Failed to search videos");
+      }
+
+      const [animationData, explanationData] = await Promise.all([
+        animationResponse.json(),
+        explanationResponse.json()
+      ]);
+
+      setAnimationVideos(animationData.videos || []);
+      setExplanationVideos(explanationData.videos || []);
+      setAnimationNextPageToken(animationData.nextPageToken || null);
+      setExplanationNextPageToken(explanationData.nextPageToken || null);
+      setShowVideosPanel(true);
+      
+      toast({
+        title: "Videos Found!",
+        description: `Found ${animationData.videos?.length || 0} animations and ${explanationData.videos?.length || 0} explanations`,
+      });
+    } catch (error) {
+      console.error("Error searching topic:", error);
+      toast({
+        title: "Error",
+        description: "Failed to search videos",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTopicSearching(false);
+    }
+  };
+
+  // Load more videos for pagination
+  const handleLoadMoreVideos = async (type: "animation" | "explanation") => {
+    const pageToken = type === "animation" ? animationNextPageToken : explanationNextPageToken;
+    if (!pageToken || isLoadingMoreVideos) return;
+
+    setIsLoadingMoreVideos(true);
     
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
@@ -1243,32 +1331,41 @@ const Index = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authSession.access_token}`,
           },
-          body: JSON.stringify({ query: topic }),
+          body: JSON.stringify({ 
+            query: searchQuery, 
+            type, 
+            pageToken 
+          }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to search videos");
+        throw new Error("Failed to load more videos");
       }
 
       const data = await response.json();
-      setExplanationVideos(data.videos || []);
-      setAnimationVideos([]);
-      setShowVideosPanel(true);
+      
+      if (type === "animation") {
+        setAnimationVideos(prev => [...prev, ...(data.videos || [])]);
+        setAnimationNextPageToken(data.nextPageToken || null);
+      } else {
+        setExplanationVideos(prev => [...prev, ...(data.videos || [])]);
+        setExplanationNextPageToken(data.nextPageToken || null);
+      }
       
       toast({
-        title: "Videos Found!",
-        description: `Found ${data.videos?.length || 0} videos for "${topic}"`,
+        title: "More Videos Loaded",
+        description: `Loaded ${data.videos?.length || 0} more videos`,
       });
     } catch (error) {
-      console.error("Error searching topic:", error);
+      console.error("Error loading more videos:", error);
       toast({
         title: "Error",
-        description: "Failed to search videos",
+        description: "Failed to load more videos",
         variant: "destructive",
       });
     } finally {
-      setIsTopicSearching(false);
+      setIsLoadingMoreVideos(false);
     }
   };
 
@@ -1324,6 +1421,10 @@ const Index = () => {
                 onGenerateMindMap={handleGenerateMindMapFromVideo}
                 isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap}
                 activeGenerating={activeGenerating}
+                onLoadMore={handleLoadMoreVideos}
+                isLoadingMore={isLoadingMoreVideos}
+                hasMoreAnimation={!!animationNextPageToken}
+                hasMoreExplanation={!!explanationNextPageToken}
               />
             </div>
           )}
@@ -1501,6 +1602,10 @@ const Index = () => {
                       isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap}
                       activeGenerating={activeGenerating}
                       defaultTab="explanation"
+                      onLoadMore={handleLoadMoreVideos}
+                      isLoadingMore={isLoadingMoreVideos}
+                      hasMoreAnimation={!!animationNextPageToken}
+                      hasMoreExplanation={!!explanationNextPageToken}
                     />
                   </div>
                 </ResizablePanel>
@@ -1579,15 +1684,24 @@ const Index = () => {
             />
           )}
 
-          {/* Video Mind Map Full Screen */}
+          {/* Video Mind Map Full Screen - Visual or Text */}
           {videoMindMap && (
-            <FullScreenStudyTool
-              type="mindmap"
-              title="Video Mind Map"
-              content={videoMindMap}
-              onClose={() => setVideoMindMap("")}
-              showVideoSlide={showVideosPanel}
-            />
+            videoMindMapData ? (
+              <VisualMindMap
+                data={videoMindMapData}
+                title={fullScreenMindMapTitle || "Video Mind Map"}
+                onClose={() => { setVideoMindMap(""); setVideoMindMapData(null); }}
+                showVideoSlide={showVideosPanel}
+              />
+            ) : (
+              <FullScreenStudyTool
+                type="mindmap"
+                title="Video Mind Map"
+                content={videoMindMap}
+                onClose={() => setVideoMindMap("")}
+                showVideoSlide={showVideosPanel}
+              />
+            )
           )}
         </div>
       </div>
