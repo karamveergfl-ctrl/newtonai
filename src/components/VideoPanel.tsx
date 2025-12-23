@@ -80,26 +80,15 @@ export const VideoPanel = ({
           </Button>
           
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-            <Button
-              variant={viewMode === "single" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => setViewMode("single")}
-              title="Single Video View"
-            >
-              <LayoutList className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => setViewMode("grid")}
-              title="Grid View"
-            >
-              <Grid className="w-4 h-4" />
-            </Button>
-          </div>
+          <Button
+            variant={viewMode === "grid" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 w-8 p-0 bg-muted rounded-lg"
+            onClick={() => setViewMode(viewMode === "single" ? "grid" : "single")}
+            title={viewMode === "single" ? "Grid View" : "Single View"}
+          >
+            {viewMode === "single" ? <Grid className="w-4 h-4" /> : <LayoutList className="w-4 h-4" />}
+          </Button>
         </div>
         <h2 className="text-base md:text-lg font-bold text-foreground flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0" />
