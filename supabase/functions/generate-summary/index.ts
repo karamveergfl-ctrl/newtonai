@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { content, selectedText } = await req.json();
+    const { content, selectedText, detailLevel = "standard" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -25,7 +25,13 @@ serve(async (req) => {
       throw new Error("No content provided");
     }
 
-    console.log(`Generating summary for ${textToSummarize.length} characters`);
+    console.log(`Generating ${detailLevel} summary for ${textToSummarize.length} characters`);
+
+    const detailGuide = {
+      brief: "Create a very concise summary with only the most essential points. Keep it short - max 3-4 bullet points per section.",
+      standard: "Create a balanced summary covering main ideas with supporting details. Include 5-6 bullet points per section.",
+      detailed: "Create a comprehensive summary with thorough coverage of all concepts, examples, and nuances. Include 8-10 bullet points per section."
+    };
 
     const systemPrompt = `You are an expert educator that creates clear, concise summaries.
 Your summaries should:
@@ -33,7 +39,10 @@ Your summaries should:
 - Be organized with clear sections
 - Use bullet points for clarity
 - Highlight important terms
-- Be easy to review for studying`;
+- Be easy to review for studying
+
+Detail level: ${detailLevel.toUpperCase()}
+${detailGuide[detailLevel as keyof typeof detailGuide]}`;
 
     const userPrompt = `Create a comprehensive study summary of the following content:
 

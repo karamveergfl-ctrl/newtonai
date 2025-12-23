@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { content, selectedText, structure = "horizontal" } = await req.json();
+    const { content, selectedText, structure = "horizontal", detailLevel = "standard" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -25,9 +25,18 @@ serve(async (req) => {
       throw new Error("No content provided");
     }
 
-    console.log(`Generating mind map for ${textToMap.length} characters with structure: ${structure}`);
+    console.log(`Generating ${detailLevel} mind map for ${textToMap.length} characters with structure: ${structure}`);
+
+    const detailGuide = {
+      brief: "Create a simpler mind map with 3-4 main branches and 1-2 sub-branches each. Keep it concise.",
+      standard: "Create a balanced mind map with 4-5 main branches and 2-3 sub-branches each with detail nodes.",
+      detailed: "Create a comprehensive mind map with 5-6 main branches, 3-4 sub-branches each, and detailed leaf nodes with examples."
+    };
 
     const systemPrompt = `You are an expert at creating DETAILED hierarchical mind maps. You MUST return valid JSON only.
+
+Detail level: ${detailLevel.toUpperCase()}
+${detailGuide[detailLevel as keyof typeof detailGuide]}
 
 Return a JSON object with this DEEP hierarchical structure (4-5 levels deep):
 {
