@@ -57,6 +57,8 @@ export const PDFReader = ({
   const [isCapturing, setIsCapturing] = useState(false);
   const [screenshotStart, setScreenshotStart] = useState<{ x: number; y: number } | null>(null);
   const [screenshotEnd, setScreenshotEnd] = useState<{ x: number; y: number } | null>(null);
+  const [viewportStart, setViewportStart] = useState<{ x: number; y: number } | null>(null);
+  const [viewportEnd, setViewportEnd] = useState<{ x: number; y: number } | null>(null);
   const [showMobilePrompt, setShowMobilePrompt] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [zoom, setZoom] = useState(100);
@@ -196,6 +198,8 @@ export const PDFReader = ({
     setIsCapturing(false);
     setScreenshotStart(null);
     setScreenshotEnd(null);
+    setViewportStart(null);
+    setViewportEnd(null);
   };
 
   const captureFullPage = async () => {
@@ -259,6 +263,10 @@ export const PDFReader = ({
       x: e.clientX - rect.left + scrollLeft, 
       y: e.clientY - rect.top + scrollTop 
     });
+    
+    // Store viewport coords for fixed display
+    setViewportStart({ x: e.clientX, y: e.clientY });
+    setViewportEnd({ x: e.clientX, y: e.clientY });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -276,6 +284,9 @@ export const PDFReader = ({
       x: e.clientX - rect.left + scrollLeft, 
       y: e.clientY - rect.top + scrollTop 
     });
+    
+    // Update viewport coords (cursor at bottom-right)
+    setViewportEnd({ x: e.clientX, y: e.clientY });
   };
 
   // Touch handlers for screenshot mode
@@ -296,6 +307,9 @@ export const PDFReader = ({
       x: touch.clientX - rect.left + container.scrollLeft, 
       y: touch.clientY - rect.top + container.scrollTop 
     });
+    
+    setViewportStart({ x: touch.clientX, y: touch.clientY });
+    setViewportEnd({ x: touch.clientX, y: touch.clientY });
   };
 
   const handleScreenshotTouchMove = (e: React.TouchEvent) => {
@@ -310,6 +324,8 @@ export const PDFReader = ({
       x: touch.clientX - rect.left + container.scrollLeft, 
       y: touch.clientY - rect.top + container.scrollTop 
     });
+    
+    setViewportEnd({ x: touch.clientX, y: touch.clientY });
   };
 
   const handleScreenshotTouchEnd = async () => {
@@ -425,32 +441,31 @@ export const PDFReader = ({
     setNumPages(numPages);
   };
 
+  // Fixed position style for selection rectangle (cursor at bottom-right)
   const getSelectionStyle = (): React.CSSProperties => {
-    if (!screenshotStart || !screenshotEnd || !containerRef.current) return {};
+    if (!viewportStart || !viewportEnd) return {};
     
-    const container = containerRef.current;
-    const scrollTop = container.scrollTop;
-    const scrollLeft = container.scrollLeft;
-    
-    const left = Math.min(screenshotStart.x, screenshotEnd.x) - scrollLeft;
-    const top = Math.min(screenshotStart.y, screenshotEnd.y) - scrollTop;
-    const width = Math.abs(screenshotEnd.x - screenshotStart.x);
-    const height = Math.abs(screenshotEnd.y - screenshotStart.y);
+    // Anchor is top-left, cursor is bottom-right
+    const left = Math.min(viewportStart.x, viewportEnd.x);
+    const top = Math.min(viewportStart.y, viewportEnd.y);
+    const width = Math.abs(viewportEnd.x - viewportStart.x);
+    const height = Math.abs(viewportEnd.y - viewportStart.y);
     
     return {
+      position: 'fixed',
       left,
       top,
       width,
       height,
-      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.4)',
-      transition: 'all 0.02s ease-out',
+      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+      zIndex: 9999,
     };
   };
   
   const getSelectionDimensions = () => {
-    if (!screenshotStart || !screenshotEnd) return null;
-    const width = Math.abs(screenshotEnd.x - screenshotStart.x);
-    const height = Math.abs(screenshotEnd.y - screenshotStart.y);
+    if (!viewportStart || !viewportEnd) return null;
+    const width = Math.abs(viewportEnd.x - viewportStart.x);
+    const height = Math.abs(viewportEnd.y - viewportStart.y);
     return { width: Math.round(width), height: Math.round(height) };
   };
 
@@ -625,10 +640,10 @@ export const PDFReader = ({
           <div className="absolute inset-0 bg-primary/5 z-10 pointer-events-none" />
         )}
         
-        {/* Selection rectangle with dimmed overlay */}
-        {isScreenshotMode && isCapturing && screenshotStart && screenshotEnd && (
+        {/* Selection rectangle with dimmed overlay - fixed position */}
+        {isScreenshotMode && isCapturing && viewportStart && viewportEnd && (
           <div
-            className="absolute border-2 border-dashed border-primary bg-transparent z-20 pointer-events-none"
+            className="border-2 border-dashed border-primary bg-transparent pointer-events-none"
             style={getSelectionStyle()}
           >
             {/* Size indicator */}
