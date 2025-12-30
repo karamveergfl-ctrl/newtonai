@@ -10,6 +10,7 @@ import {
   X,
   Sparkles
 } from "lucide-react";
+import DOMPurify from "dompurify";
 
 interface StudyToolsPanelProps {
   onGenerateQuiz: () => void;
@@ -171,7 +172,12 @@ export const StudyToolsPanel = ({
               </div>
               <div 
                 className="text-xs font-mono whitespace-pre leading-relaxed overflow-x-auto"
-                dangerouslySetInnerHTML={{ __html: mindMap }}
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(mindMap, {
+                    ALLOWED_TAGS: ['br', 'b', 'i', 'em', 'strong', 'p', 'div', 'span', 'ul', 'ol', 'li'],
+                    ALLOWED_ATTR: ['class', 'style']
+                  })
+                }}
               />
             </Card>
           )}
