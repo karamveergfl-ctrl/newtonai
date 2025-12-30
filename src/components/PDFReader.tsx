@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Loader2, Camera, X, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MobileSearchPrompt } from "@/components/MobileSearchPrompt";
+import { TextSelectionToolbar } from "@/components/TextSelectionToolbar";
+import { MobileTextSelectionDrawer } from "@/components/MobileTextSelectionDrawer";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -18,9 +19,35 @@ interface PDFReaderProps {
   onPdfTextExtracted?: (text: string) => void;
   triggerScreenshot?: boolean;
   onScreenshotTriggered?: () => void;
+  // Study tool callbacks for selected text
+  onGenerateQuizFromText?: (text: string) => void;
+  onGenerateFlashcardsFromText?: (text: string) => void;
+  onGenerateSummaryFromText?: (text: string) => void;
+  onGenerateMindMapFromText?: (text: string) => void;
+  isGeneratingQuiz?: boolean;
+  isGeneratingFlashcards?: boolean;
+  isGeneratingSummary?: boolean;
+  isGeneratingMindMap?: boolean;
+  isSearching?: boolean;
 }
 
-export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtracted, triggerScreenshot, onScreenshotTriggered }: PDFReaderProps) => {
+export const PDFReader = ({ 
+  pdfUrl, 
+  onTextSelect, 
+  onImageCapture, 
+  onPdfTextExtracted, 
+  triggerScreenshot, 
+  onScreenshotTriggered,
+  onGenerateQuizFromText,
+  onGenerateFlashcardsFromText,
+  onGenerateSummaryFromText,
+  onGenerateMindMapFromText,
+  isGeneratingQuiz = false,
+  isGeneratingFlashcards = false,
+  isGeneratingSummary = false,
+  isGeneratingMindMap = false,
+  isSearching = false,
+}: PDFReaderProps) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [selectedText, setSelectedText] = useState<string>("");
@@ -568,41 +595,41 @@ export const PDFReader = ({ pdfUrl, onTextSelect, onImageCapture, onPdfTextExtra
         </div>
       )}
 
-      {/* Desktop search prompt */}
+      {/* Desktop text selection toolbar with study tools */}
       {!isMobile && showSearchPrompt && !isScreenshotMode && (
-        <Card className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50 p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-sm w-11/12 md:max-w-md">
-          <div className="space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground mb-1">Selected:</p>
-                <p className="text-sm font-medium line-clamp-2 break-words">{selectedText}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDismiss}
-                className="h-6 w-6 shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            <Button 
-              onClick={handleSearchClick}
-              className="w-full"
-              size="sm"
-            >
-              Find Videos
-            </Button>
-          </div>
-        </Card>
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 md:max-w-md">
+          <TextSelectionToolbar
+            selectedText={selectedText}
+            onDismiss={handleDismiss}
+            onSearchVideos={handleSearchClick}
+            onGenerateQuiz={() => onGenerateQuizFromText?.(selectedText)}
+            onGenerateFlashcards={() => onGenerateFlashcardsFromText?.(selectedText)}
+            onGenerateSummary={() => onGenerateSummaryFromText?.(selectedText)}
+            onGenerateMindMap={() => onGenerateMindMapFromText?.(selectedText)}
+            isGeneratingQuiz={isGeneratingQuiz}
+            isGeneratingFlashcards={isGeneratingFlashcards}
+            isGeneratingSummary={isGeneratingSummary}
+            isGeneratingMindMap={isGeneratingMindMap}
+            isSearching={isSearching}
+          />
+        </div>
       )}
 
-      {/* Mobile search prompt (bottom drawer) */}
-      <MobileSearchPrompt
+      {/* Mobile text selection drawer with study tools */}
+      <MobileTextSelectionDrawer
         open={showMobilePrompt}
         onOpenChange={setShowMobilePrompt}
         selectedText={selectedText}
-        onSearch={handleMobileSearch}
+        onSearchVideos={() => handleMobileSearch(selectedText)}
+        onGenerateQuiz={() => onGenerateQuizFromText?.(selectedText)}
+        onGenerateFlashcards={() => onGenerateFlashcardsFromText?.(selectedText)}
+        onGenerateSummary={() => onGenerateSummaryFromText?.(selectedText)}
+        onGenerateMindMap={() => onGenerateMindMapFromText?.(selectedText)}
+        isGeneratingQuiz={isGeneratingQuiz}
+        isGeneratingFlashcards={isGeneratingFlashcards}
+        isGeneratingSummary={isGeneratingSummary}
+        isGeneratingMindMap={isGeneratingMindMap}
+        isSearching={isSearching}
       />
     </div>
   );

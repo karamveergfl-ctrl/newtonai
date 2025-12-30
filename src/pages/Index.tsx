@@ -1267,6 +1267,228 @@ const Index = () => {
     }
   };
 
+  // Generate study tools from selected text
+  const handleGenerateQuizFromText = async (selectedText: string) => {
+    if (!selectedText || selectedText.length < 20) {
+      toast({
+        title: "Text too short",
+        description: "Please select more text to generate a quiz",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingQuiz(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ 
+            type: "text",
+            content: selectedText,
+            title: "Selected Text Quiz"
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate quiz");
+      }
+
+      const data = await response.json();
+      setQuizQuestions(data.questions);
+      setQuizTitle("Quiz from Selected Text");
+      
+      toast({
+        title: "Quiz Ready! 🧠",
+        description: `Generated ${data.questions.length} questions from selected text`,
+      });
+    } catch (error) {
+      console.error("Error generating quiz from text:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate quiz",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  };
+
+  const handleGenerateFlashcardsFromText = async (selectedText: string) => {
+    if (!selectedText || selectedText.length < 20) {
+      toast({
+        title: "Text too short",
+        description: "Please select more text to generate flashcards",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingFlashcards(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ 
+            type: "text",
+            content: selectedText,
+            title: "Selected Text"
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate flashcards");
+      }
+
+      const data = await response.json();
+      setFlashcards(data.flashcards);
+      setFlashcardTitle("Flashcards from Selected Text");
+      
+      toast({
+        title: "Flashcards Ready! 📚",
+        description: `Generated ${data.flashcards.length} flashcards from selected text`,
+      });
+    } catch (error) {
+      console.error("Error generating flashcards from text:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate flashcards",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingFlashcards(false);
+    }
+  };
+
+  const handleGenerateSummaryFromText = async (selectedText: string) => {
+    if (!selectedText || selectedText.length < 20) {
+      toast({
+        title: "Text too short",
+        description: "Please select more text to generate a summary",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingSummary(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ content: selectedText }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate summary");
+      }
+
+      const data = await response.json();
+      setSummary(data.summary);
+      
+      toast({
+        title: "Summary Ready! 📝",
+        description: "Summary generated from selected text",
+      });
+    } catch (error) {
+      console.error("Error generating summary from text:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate summary",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
+  const handleGenerateMindMapFromText = async (selectedText: string) => {
+    if (!selectedText || selectedText.length < 20) {
+      toast({
+        title: "Text too short",
+        description: "Please select more text to generate a mind map",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingMindMap(true);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authSession.access_token}`,
+          },
+          body: JSON.stringify({ content: selectedText }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate mind map");
+      }
+
+      const data = await response.json();
+      setMindMap(data.mindMap);
+      if (data.mindMapData) {
+        setMindMapData(data.mindMapData);
+      }
+      
+      toast({
+        title: "Mind Map Ready! 🧠",
+        description: "Mind map generated from selected text",
+      });
+    } catch (error) {
+      console.error("Error generating mind map from text:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate mind map",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingMindMap(false);
+    }
+  };
+
   // Global topic search - searches YouTube without document
   const handleTopicSearch = async (topic: string) => {
     setIsTopicSearching(true);
@@ -1585,6 +1807,15 @@ const Index = () => {
                     onPdfTextExtracted={setPdfText}
                     triggerScreenshot={triggerScreenshot}
                     onScreenshotTriggered={() => setTriggerScreenshot(false)}
+                    onGenerateQuizFromText={handleGenerateQuizFromText}
+                    onGenerateFlashcardsFromText={handleGenerateFlashcardsFromText}
+                    onGenerateSummaryFromText={handleGenerateSummaryFromText}
+                    onGenerateMindMapFromText={handleGenerateMindMapFromText}
+                    isGeneratingQuiz={isGeneratingQuiz}
+                    isGeneratingFlashcards={isGeneratingFlashcards}
+                    isGeneratingSummary={isGeneratingSummary}
+                    isGeneratingMindMap={isGeneratingMindMap}
+                    isSearching={isSearching}
                   />
                 ) : (
                   <ImageViewer
@@ -1593,6 +1824,15 @@ const Index = () => {
                     ocrText={fileData.ocrText}
                     onTextSelect={handleTextSelect}
                     onImageCapture={handleImageCapture}
+                    onGenerateQuizFromText={handleGenerateQuizFromText}
+                    onGenerateFlashcardsFromText={handleGenerateFlashcardsFromText}
+                    onGenerateSummaryFromText={handleGenerateSummaryFromText}
+                    onGenerateMindMapFromText={handleGenerateMindMapFromText}
+                    isGeneratingQuiz={isGeneratingQuiz}
+                    isGeneratingFlashcards={isGeneratingFlashcards}
+                    isGeneratingSummary={isGeneratingSummary}
+                    isGeneratingMindMap={isGeneratingMindMap}
+                    isSearching={isSearching}
                   />
                 )}
               </div>

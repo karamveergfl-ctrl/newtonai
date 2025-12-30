@@ -1,0 +1,152 @@
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { 
+  X, 
+  Search, 
+  Brain, 
+  BookOpen, 
+  FileText, 
+  Network,
+  Loader2,
+  Sparkles
+} from "lucide-react";
+
+interface TextSelectionToolbarProps {
+  selectedText: string;
+  onDismiss: () => void;
+  onSearchVideos: () => void;
+  onGenerateQuiz: () => void;
+  onGenerateFlashcards: () => void;
+  onGenerateSummary: () => void;
+  onGenerateMindMap: () => void;
+  isGeneratingQuiz?: boolean;
+  isGeneratingFlashcards?: boolean;
+  isGeneratingSummary?: boolean;
+  isGeneratingMindMap?: boolean;
+  isSearching?: boolean;
+}
+
+export const TextSelectionToolbar = ({
+  selectedText,
+  onDismiss,
+  onSearchVideos,
+  onGenerateQuiz,
+  onGenerateFlashcards,
+  onGenerateSummary,
+  onGenerateMindMap,
+  isGeneratingQuiz = false,
+  isGeneratingFlashcards = false,
+  isGeneratingSummary = false,
+  isGeneratingMindMap = false,
+  isSearching = false,
+}: TextSelectionToolbarProps) => {
+  const isAnyLoading = isGeneratingQuiz || isGeneratingFlashcards || isGeneratingSummary || isGeneratingMindMap || isSearching;
+
+  return (
+    <Card className="p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-md w-full">
+      <div className="space-y-3">
+        {/* Header with selected text */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles className="w-3 h-3 text-primary" />
+              <p className="text-xs text-muted-foreground">Selected text:</p>
+            </div>
+            <p className="text-sm font-medium line-clamp-2 break-words text-foreground/90">{selectedText}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onDismiss}
+            className="h-6 w-6 shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+        
+        {/* Tool buttons grid */}
+        <div className="grid grid-cols-5 gap-1.5">
+          <Button 
+            onClick={onSearchVideos}
+            variant="outline"
+            size="sm"
+            disabled={isAnyLoading}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-primary/10 hover:border-primary/50"
+            title="Find Videos"
+          >
+            {isSearching ? (
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            ) : (
+              <Search className="w-4 h-4 text-primary" />
+            )}
+            <span className="text-[10px] leading-tight">Videos</span>
+          </Button>
+
+          <Button 
+            onClick={onGenerateQuiz}
+            variant="outline"
+            size="sm"
+            disabled={isAnyLoading}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-primary/10 hover:border-primary/50"
+            title="Generate Quiz"
+          >
+            {isGeneratingQuiz ? (
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            ) : (
+              <Brain className="w-4 h-4 text-primary" />
+            )}
+            <span className="text-[10px] leading-tight">Quiz</span>
+          </Button>
+
+          <Button 
+            onClick={onGenerateFlashcards}
+            variant="outline"
+            size="sm"
+            disabled={isAnyLoading}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-secondary/10 hover:border-secondary/50"
+            title="Generate Flashcards"
+          >
+            {isGeneratingFlashcards ? (
+              <Loader2 className="w-4 h-4 animate-spin text-secondary" />
+            ) : (
+              <BookOpen className="w-4 h-4 text-secondary" />
+            )}
+            <span className="text-[10px] leading-tight">Cards</span>
+          </Button>
+
+          <Button 
+            onClick={onGenerateSummary}
+            variant="outline"
+            size="sm"
+            disabled={isAnyLoading}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-accent/10 hover:border-accent/50"
+            title="Generate Summary"
+          >
+            {isGeneratingSummary ? (
+              <Loader2 className="w-4 h-4 animate-spin text-accent" />
+            ) : (
+              <FileText className="w-4 h-4 text-accent" />
+            )}
+            <span className="text-[10px] leading-tight">Summary</span>
+          </Button>
+
+          <Button 
+            onClick={onGenerateMindMap}
+            variant="outline"
+            size="sm"
+            disabled={isAnyLoading}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-primary/10 hover:border-primary/50"
+            title="Generate Mind Map"
+          >
+            {isGeneratingMindMap ? (
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            ) : (
+              <Network className="w-4 h-4 text-primary" />
+            )}
+            <span className="text-[10px] leading-tight">Map</span>
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+};
