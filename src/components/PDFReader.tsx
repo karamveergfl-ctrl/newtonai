@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Loader2, Camera, X, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Camera, X, ZoomIn, ZoomOut, Maximize2, Scan, Square } from "lucide-react";
+import html2canvas from "html2canvas";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TextSelectionToolbar } from "@/components/TextSelectionToolbar";
@@ -186,7 +187,7 @@ export const PDFReader = ({
     setScreenshotEnd(null);
     toast({
       title: "Screenshot Mode Active",
-      description: isMobile ? "Tap and drag to select an area" : "Click and drag to select an area to capture",
+      description: "Select area or use 'Full Page' for instant capture",
     });
   };
 
@@ -195,6 +196,47 @@ export const PDFReader = ({
     setIsCapturing(false);
     setScreenshotStart(null);
     setScreenshotEnd(null);
+  };
+
+  const captureFullPage = async () => {
+    const pageElement = document.querySelector('.react-pdf__Page') as HTMLElement;
+    if (!pageElement) {
+      toast({
+        title: "Error",
+        description: "Could not find PDF page to capture",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      toast({
+        title: "Capturing...",
+        description: "Please wait while we capture the full page",
+      });
+      
+      const canvas = await html2canvas(pageElement, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 2,
+      });
+      const imageData = canvas.toDataURL('image/png');
+      
+      cancelScreenshotMode();
+      onImageCapture(imageData);
+      
+      toast({
+        title: "Processing...",
+        description: "Analyzing captured page with OCR",
+      });
+    } catch (error) {
+      console.error("Full page capture error:", error);
+      toast({
+        title: "Capture Failed",
+        description: "Could not capture the page. Please try selecting an area.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -383,19 +425,33 @@ export const PDFReader = ({
     setNumPages(numPages);
   };
 
-  const getSelectionStyle = () => {
+  const getSelectionStyle = (): React.CSSProperties => {
     if (!screenshotStart || !screenshotEnd || !containerRef.current) return {};
     
     const container = containerRef.current;
     const scrollTop = container.scrollTop;
     const scrollLeft = container.scrollLeft;
     
+    const left = Math.min(screenshotStart.x, screenshotEnd.x) - scrollLeft;
+    const top = Math.min(screenshotStart.y, screenshotEnd.y) - scrollTop;
+    const width = Math.abs(screenshotEnd.x - screenshotStart.x);
+    const height = Math.abs(screenshotEnd.y - screenshotStart.y);
+    
     return {
-      left: Math.min(screenshotStart.x, screenshotEnd.x) - scrollLeft,
-      top: Math.min(screenshotStart.y, screenshotEnd.y) - scrollTop,
-      width: Math.abs(screenshotEnd.x - screenshotStart.x),
-      height: Math.abs(screenshotEnd.y - screenshotStart.y),
+      left,
+      top,
+      width,
+      height,
+      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.4)',
+      transition: 'all 0.02s ease-out',
     };
+  };
+  
+  const getSelectionDimensions = () => {
+    if (!screenshotStart || !screenshotEnd) return null;
+    const width = Math.abs(screenshotEnd.x - screenshotStart.x);
+    const height = Math.abs(screenshotEnd.y - screenshotStart.y);
+    return { width: Math.round(width), height: Math.round(height) };
   };
 
   // Swipe navigation for mobile
@@ -516,15 +572,36 @@ export const PDFReader = ({
                 <Camera className="w-3.5 h-3.5" />
               </Button>
             ) : (
-              <Button
-                variant="destructive"
-                size="icon"
-                onClick={cancelScreenshotMode}
-                className="h-7 w-7"
-                title="Cancel Screenshot"
-              >
-                <X className="w-3.5 h-3.5" />
-              </Button>
+              <>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={captureFullPage}
+                  className="h-7 gap-1 text-xs px-2"
+                  title="Capture Full Page"
+                >
+                  <Scan className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Full Page</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1 text-xs px-2 pointer-events-none opacity-70"
+                  title="Select Area"
+                >
+                  <Square className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Select Area</span>
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={cancelScreenshotMode}
+                  className="h-7 w-7"
+                  title="Cancel"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              </>
             )}
           </div>
         </Card>
@@ -548,12 +625,19 @@ export const PDFReader = ({
           <div className="absolute inset-0 bg-primary/5 z-10 pointer-events-none" />
         )}
         
-        {/* Selection rectangle */}
+        {/* Selection rectangle with dimmed overlay */}
         {isScreenshotMode && isCapturing && screenshotStart && screenshotEnd && (
           <div
-            className="absolute border-2 border-primary bg-primary/20 z-20 pointer-events-none"
+            className="absolute border-2 border-dashed border-primary bg-transparent z-20 pointer-events-none"
             style={getSelectionStyle()}
-          />
+          >
+            {/* Size indicator */}
+            {getSelectionDimensions() && (
+              <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded whitespace-nowrap">
+                {getSelectionDimensions()?.width} × {getSelectionDimensions()?.height} px
+              </div>
+            )}
+          </div>
         )}
 
         {/* Long press indicator */}
@@ -590,8 +674,9 @@ export const PDFReader = ({
 
       {/* Screenshot mode instructions */}
       {isScreenshotMode && !isCapturing && (
-        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg animate-pulse text-sm">
-          {isMobile ? "Tap and drag to select" : "Click and drag to select area"}
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2">
+          <Square className="w-4 h-4" />
+          {isMobile ? "Tap and drag to select area, or use Full Page" : "Drag to select area, or click 'Full Page' for instant capture"}
         </div>
       )}
 

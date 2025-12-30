@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { X, Eye, EyeOff, ZoomIn, ZoomOut, Camera } from "lucide-react";
+import { X, Eye, EyeOff, ZoomIn, ZoomOut, Camera, Scan, Square } from "lucide-react";
+import html2canvas from "html2canvas";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TextSelectionToolbar } from "@/components/TextSelectionToolbar";
@@ -157,7 +158,7 @@ export const ImageViewer = ({
     setShowOverlay(false);
     toast({
       title: "Screenshot Mode Active",
-      description: isMobile ? "Tap and drag to select an area" : "Click and drag to select an area",
+      description: "Select area or use 'Full Image' for instant capture",
     });
   };
 
@@ -166,6 +167,51 @@ export const ImageViewer = ({
     setIsCapturing(false);
     setScreenshotStart(null);
     setScreenshotEnd(null);
+  };
+
+  const captureFullImage = async () => {
+    const imageElement = imageRef.current;
+    if (!imageElement) {
+      toast({
+        title: "Error",
+        description: "Could not find image to capture",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      toast({
+        title: "Capturing...",
+        description: "Please wait while we capture the full image",
+      });
+      
+      // Create a canvas and draw the image at full resolution
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      canvas.width = imageElement.naturalWidth;
+      canvas.height = imageElement.naturalHeight;
+      ctx.drawImage(imageElement, 0, 0);
+      
+      const imageData = canvas.toDataURL('image/png');
+      
+      cancelScreenshotMode();
+      onImageCapture(imageData);
+      
+      toast({
+        title: "Processing...",
+        description: "Analyzing captured image with OCR",
+      });
+    } catch (error) {
+      console.error("Full image capture error:", error);
+      toast({
+        title: "Capture Failed",
+        description: "Could not capture the image. Please try selecting an area.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -319,17 +365,31 @@ export const ImageViewer = ({
     await captureScreenshot();
   };
 
-  const getSelectionStyle = () => {
+  const getSelectionStyle = (): React.CSSProperties => {
     if (!screenshotStart || !screenshotEnd || !containerRef.current) return {};
     
     const container = containerRef.current;
     
+    const left = Math.min(screenshotStart.x, screenshotEnd.x) - container.scrollLeft;
+    const top = Math.min(screenshotStart.y, screenshotEnd.y) - container.scrollTop;
+    const width = Math.abs(screenshotEnd.x - screenshotStart.x);
+    const height = Math.abs(screenshotEnd.y - screenshotStart.y);
+    
     return {
-      left: Math.min(screenshotStart.x, screenshotEnd.x) - container.scrollLeft,
-      top: Math.min(screenshotStart.y, screenshotEnd.y) - container.scrollTop,
-      width: Math.abs(screenshotEnd.x - screenshotStart.x),
-      height: Math.abs(screenshotEnd.y - screenshotStart.y),
+      left,
+      top,
+      width,
+      height,
+      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.4)',
+      transition: 'all 0.02s ease-out',
     };
+  };
+  
+  const getSelectionDimensions = () => {
+    if (!screenshotStart || !screenshotEnd) return null;
+    const width = Math.abs(screenshotEnd.x - screenshotStart.x);
+    const height = Math.abs(screenshotEnd.y - screenshotStart.y);
+    return { width: Math.round(width), height: Math.round(height) };
   };
 
   const textLines = ocrText?.split('\n').filter(line => line.trim()) || [];
@@ -413,15 +473,36 @@ export const ImageViewer = ({
                 <span className="hidden sm:inline">Screenshot</span>
               </Button>
             ) : (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={cancelScreenshotMode}
-                className="h-9 md:h-8 gap-1 text-xs px-2 md:px-3"
-              >
-                <X className="w-4 h-4 md:w-3 md:h-3" />
-                Cancel
-              </Button>
+              <>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={captureFullImage}
+                  className="h-9 md:h-8 gap-1 text-xs px-2 md:px-3"
+                  title="Capture Full Image"
+                >
+                  <Scan className="w-4 h-4 md:w-3 md:h-3" />
+                  <span className="hidden sm:inline">Full Image</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 md:h-8 gap-1 text-xs px-2 md:px-3 pointer-events-none opacity-70"
+                  title="Select Area"
+                >
+                  <Square className="w-4 h-4 md:w-3 md:h-3" />
+                  <span className="hidden sm:inline">Select Area</span>
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={cancelScreenshotMode}
+                  className="h-9 md:h-8 gap-1 text-xs px-2 md:px-3"
+                >
+                  <X className="w-4 h-4 md:w-3 md:h-3" />
+                  Cancel
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -466,12 +547,19 @@ export const ImageViewer = ({
           <div className="absolute inset-0 bg-primary/5 z-10 pointer-events-none" />
         )}
         
-        {/* Selection rectangle */}
+        {/* Selection rectangle with dimmed overlay */}
         {isScreenshotMode && isCapturing && screenshotStart && screenshotEnd && (
           <div
-            className="absolute border-2 border-primary bg-primary/20 z-20 pointer-events-none"
+            className="absolute border-2 border-dashed border-primary bg-transparent z-20 pointer-events-none"
             style={getSelectionStyle()}
-          />
+          >
+            {/* Size indicator */}
+            {getSelectionDimensions() && (
+              <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded whitespace-nowrap">
+                {getSelectionDimensions()?.width} × {getSelectionDimensions()?.height} px
+              </div>
+            )}
+          </div>
         )}
 
         {/* Long press indicator */}
@@ -520,8 +608,9 @@ export const ImageViewer = ({
 
       {/* Screenshot mode instructions */}
       {isScreenshotMode && !isCapturing && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg animate-pulse text-sm">
-          {isMobile ? "Tap and drag to select" : "Click and drag to select area"}
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2">
+          <Square className="w-4 h-4" />
+          {isMobile ? "Tap and drag to select area, or use Full Image" : "Drag to select area, or click 'Full Image' for instant capture"}
         </div>
       )}
 
