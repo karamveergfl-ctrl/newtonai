@@ -167,6 +167,8 @@ export const ImageViewer = ({
     setIsCapturing(false);
     setScreenshotStart(null);
     setScreenshotEnd(null);
+    setViewportStart(null);
+    setViewportEnd(null);
   };
 
   const captureFullImage = async () => {
@@ -214,6 +216,10 @@ export const ImageViewer = ({
     }
   };
 
+  // Store both container-relative coords (for capture) and viewport coords (for display)
+  const [viewportStart, setViewportStart] = useState<{ x: number; y: number } | null>(null);
+  const [viewportEnd, setViewportEnd] = useState<{ x: number; y: number } | null>(null);
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isScreenshotMode) return;
     e.preventDefault();
@@ -223,6 +229,8 @@ export const ImageViewer = ({
     
     const rect = container.getBoundingClientRect();
     setIsCapturing(true);
+    
+    // Store container-relative coords for capture
     setScreenshotStart({ 
       x: e.clientX - rect.left + container.scrollLeft, 
       y: e.clientY - rect.top + container.scrollTop 
@@ -231,6 +239,10 @@ export const ImageViewer = ({
       x: e.clientX - rect.left + container.scrollLeft, 
       y: e.clientY - rect.top + container.scrollTop 
     });
+    
+    // Store viewport coords for fixed display (cursor at bottom-right)
+    setViewportStart({ x: e.clientX, y: e.clientY });
+    setViewportEnd({ x: e.clientX, y: e.clientY });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -241,10 +253,15 @@ export const ImageViewer = ({
     if (!container) return;
     
     const rect = container.getBoundingClientRect();
+    
+    // Update container-relative coords for capture
     setScreenshotEnd({ 
       x: e.clientX - rect.left + container.scrollLeft, 
       y: e.clientY - rect.top + container.scrollTop 
     });
+    
+    // Update viewport coords (cursor follows bottom-right)
+    setViewportEnd({ x: e.clientX, y: e.clientY });
   };
 
   // Touch handlers for screenshot mode
@@ -257,6 +274,7 @@ export const ImageViewer = ({
     
     const rect = container.getBoundingClientRect();
     setIsCapturing(true);
+    
     setScreenshotStart({ 
       x: touch.clientX - rect.left + container.scrollLeft, 
       y: touch.clientY - rect.top + container.scrollTop 
@@ -265,6 +283,9 @@ export const ImageViewer = ({
       x: touch.clientX - rect.left + container.scrollLeft, 
       y: touch.clientY - rect.top + container.scrollTop 
     });
+    
+    setViewportStart({ x: touch.clientX, y: touch.clientY });
+    setViewportEnd({ x: touch.clientX, y: touch.clientY });
   };
 
   const handleScreenshotTouchMove = (e: React.TouchEvent) => {
@@ -279,6 +300,8 @@ export const ImageViewer = ({
       x: touch.clientX - rect.left + container.scrollLeft, 
       y: touch.clientY - rect.top + container.scrollTop 
     });
+    
+    setViewportEnd({ x: touch.clientX, y: touch.clientY });
   };
 
   const captureScreenshot = async () => {
@@ -365,30 +388,31 @@ export const ImageViewer = ({
     await captureScreenshot();
   };
 
+  // Fixed position style for selection rectangle (cursor at bottom-right)
   const getSelectionStyle = (): React.CSSProperties => {
-    if (!screenshotStart || !screenshotEnd || !containerRef.current) return {};
+    if (!viewportStart || !viewportEnd) return {};
     
-    const container = containerRef.current;
-    
-    const left = Math.min(screenshotStart.x, screenshotEnd.x) - container.scrollLeft;
-    const top = Math.min(screenshotStart.y, screenshotEnd.y) - container.scrollTop;
-    const width = Math.abs(screenshotEnd.x - screenshotStart.x);
-    const height = Math.abs(screenshotEnd.y - screenshotStart.y);
+    // Anchor is top-left, cursor is bottom-right
+    const left = Math.min(viewportStart.x, viewportEnd.x);
+    const top = Math.min(viewportStart.y, viewportEnd.y);
+    const width = Math.abs(viewportEnd.x - viewportStart.x);
+    const height = Math.abs(viewportEnd.y - viewportStart.y);
     
     return {
+      position: 'fixed',
       left,
       top,
       width,
       height,
-      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.4)',
-      transition: 'all 0.02s ease-out',
+      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+      zIndex: 9999,
     };
   };
   
   const getSelectionDimensions = () => {
-    if (!screenshotStart || !screenshotEnd) return null;
-    const width = Math.abs(screenshotEnd.x - screenshotStart.x);
-    const height = Math.abs(screenshotEnd.y - screenshotStart.y);
+    if (!viewportStart || !viewportEnd) return null;
+    const width = Math.abs(viewportEnd.x - viewportStart.x);
+    const height = Math.abs(viewportEnd.y - viewportStart.y);
     return { width: Math.round(width), height: Math.round(height) };
   };
 
@@ -547,10 +571,10 @@ export const ImageViewer = ({
           <div className="absolute inset-0 bg-primary/5 z-10 pointer-events-none" />
         )}
         
-        {/* Selection rectangle with dimmed overlay */}
-        {isScreenshotMode && isCapturing && screenshotStart && screenshotEnd && (
+        {/* Selection rectangle with dimmed overlay - fixed position */}
+        {isScreenshotMode && isCapturing && viewportStart && viewportEnd && (
           <div
-            className="absolute border-2 border-dashed border-primary bg-transparent z-20 pointer-events-none"
+            className="border-2 border-dashed border-primary bg-transparent pointer-events-none"
             style={getSelectionStyle()}
           >
             {/* Size indicator */}
