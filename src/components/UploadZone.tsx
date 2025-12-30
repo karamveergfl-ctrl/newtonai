@@ -23,18 +23,54 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
   }, []);
 
 
+  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
+  const supportedTypes = [
+    "application/pdf",
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "application/msword", // .doc
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+    "application/vnd.ms-powerpoint", // .ppt
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
+  ];
+
+  const isFileSupported = (file: File) => {
+    return supportedTypes.includes(file.type) || file.type.startsWith("image/");
+  };
+
+  const getFileTypeLabel = (file: File) => {
+    if (file.type.startsWith("image/")) return "Image";
+    if (file.type === "application/pdf") return "PDF";
+    if (file.type.includes("word")) return "Document";
+    if (file.type.includes("presentation") || file.type.includes("powerpoint")) return "Presentation";
+    return "File";
+  };
+
   const processFile = async (file: File) => {
     setIsProcessing(true);
     setFileName(file.name);
 
     try {
-      const isPDF = file.type === "application/pdf";
-      const isImage = file.type.startsWith("image/");
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "File too large",
+          description: "Maximum file size is 20MB",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
+      }
 
-      if (!isPDF && !isImage) {
+      // Check file type
+      if (!isFileSupported(file)) {
         toast({
           title: "Invalid file type",
-          description: "Please upload a PDF or image file",
+          description: "Please upload an image, PDF, DOC, DOCX, PPT, or PPTX file",
           variant: "destructive",
         });
         setIsProcessing(false);
@@ -43,6 +79,7 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
 
       // Create object URL for viewer
       const fileUrl = URL.createObjectURL(file);
+      const fileType = getFileTypeLabel(file);
       
       // Directly load the file without OCR - use screenshot feature for analysis
       onUploadComplete({ 
@@ -51,7 +88,7 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
       });
       
       toast({
-        title: isImage ? "Image Loaded!" : "PDF Loaded!",
+        title: `${fileType} Loaded!`,
         description: "Use screenshot mode to capture areas and solve problems",
       });
     } catch (error) {
@@ -109,7 +146,7 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
         <input
           id="file-input"
           type="file"
-          accept="application/pdf,image/*"
+          accept="application/pdf,image/*,.doc,.docx,.ppt,.pptx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
           onChange={handleFileInput}
           className="hidden"
         />
@@ -138,10 +175,10 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
             )}
             <div>
               <p className="text-lg font-semibold text-foreground mb-2">
-                {isDragging ? "Drop your file here" : "Drop PDF or Image"}
+                {isDragging ? "Drop your file here" : "Upload Document"}
               </p>
               <p className="text-sm text-muted-foreground mb-3">
-                Supports PDFs and images
+                Images, PDF, Doc, Docx, PPT, PPTX • Max 20MB
               </p>
               <div className="flex items-center justify-center gap-2 text-xs text-primary">
                 <Camera className="w-4 h-4" />
