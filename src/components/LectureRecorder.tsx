@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, MicOff, Folder, Loader2, Sparkles, Globe, ArrowLeft, FileText, Image } from "lucide-react";
+import { Mic, MicOff, Folder, Loader2, Sparkles, Globe, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,8 +111,6 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
   const [selectedLanguage, setSelectedLanguage] = useState("en-US");
   const [pendingTranscription, setPendingTranscription] = useState<string | null>(null);
   const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null);
-  const [pendingDocumentBase64, setPendingDocumentBase64] = useState<string | null>(null);
-  const [pendingDocumentType, setPendingDocumentType] = useState<string | null>(null);
   
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -287,7 +285,7 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const audioTypes = [
+    const validTypes = [
       "audio/mpeg",
       "audio/mp3",
       "audio/wav",
@@ -298,26 +296,10 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       "audio/aac",
     ];
 
-    const imageTypes = [
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "image/webp",
-      "image/gif",
-    ];
-
-    const documentTypes = [
-      "application/pdf",
-    ];
-
-    const isAudio = audioTypes.some((type) => file.type.includes(type.split("/")[1]));
-    const isImage = imageTypes.some((type) => file.type === type);
-    const isDocument = documentTypes.includes(file.type);
-
-    if (!isAudio && !isImage && !isDocument) {
+    if (!validTypes.some((type) => file.type.includes(type.split("/")[1]))) {
       toast({
         title: "Invalid file type",
-        description: "Please upload audio (MP3, WAV), images (PNG, JPG), or PDF files",
+        description: "Please upload MP3, WAV, WEBM, M4A, or FLAC audio files",
         variant: "destructive",
       });
       return;
@@ -332,26 +314,10 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       return;
     }
 
-    if (isAudio) {
-      // Show template selection with audio blob
-      setPendingTranscription(null);
-      setPendingAudioBlob(file);
-      setPendingDocumentBase64(null);
-      setPendingDocumentType(null);
-      setShowTemplateSelection(true);
-    } else {
-      // Convert image/PDF to base64
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = (reader.result as string).split(',')[1];
-        setPendingTranscription(null);
-        setPendingAudioBlob(null);
-        setPendingDocumentBase64(base64);
-        setPendingDocumentType(file.type);
-        setShowTemplateSelection(true);
-      };
-      reader.readAsDataURL(file);
-    }
+    // Show template selection with audio blob
+    setPendingTranscription(null);
+    setPendingAudioBlob(file);
+    setShowTemplateSelection(true);
   };
 
   const handleGenerateSummary = async () => {
@@ -361,8 +327,6 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       await processTranscription(pendingTranscription);
     } else if (pendingAudioBlob) {
       await processAudio(pendingAudioBlob);
-    } else if (pendingDocumentBase64 && pendingDocumentType) {
-      await processDocument(pendingDocumentBase64, pendingDocumentType);
     }
   };
 
@@ -466,63 +430,6 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
     }
   };
 
-  const processDocument = async (base64Data: string, mimeType: string) => {
-    setIsProcessing(true);
-    setProgress(0);
-
-    try {
-      setProcessingStep("Extracting text from document...");
-      setProgress(20);
-      
-      // Use OCR/analyze-text function to extract content
-      const { data: ocrData, error: ocrError } = await supabase
-        .functions.invoke("ocr-handwriting", {
-          body: { image: `data:${mimeType};base64,${base64Data}` },
-        });
-
-      if (ocrError || !ocrData?.text) {
-        throw new Error(ocrError?.message || "Document text extraction failed");
-      }
-
-      setProgress(50);
-      setProcessingStep("Generating summary...");
-
-      const template = templates.find(t => t.id === selectedTemplate);
-
-      const { data: notesData, error: notesError } = await supabase
-        .functions.invoke("generate-lecture-notes", {
-          body: { 
-            transcription: ocrData.text,
-            template: selectedTemplate,
-            templateStructure: template?.structure || [],
-            language: selectedLanguage,
-          },
-        });
-
-      if (notesError || !notesData?.notes) {
-        throw new Error(notesError?.message || "Summary generation failed");
-      }
-
-      setProgress(100);
-      
-      toast({
-        title: "Summary generated!",
-        description: "Your document summary is ready",
-      });
-
-      onNotesGenerated(notesData.notes, notesData.title || template?.name || "Summary");
-    } catch (error) {
-      console.error("Processing failed:", error);
-      toast({
-        title: "Processing failed",
-        description: error instanceof Error ? error.message : "Could not process document",
-        variant: "destructive",
-      });
-    } finally {
-      resetState();
-    }
-  };
-
   const resetState = () => {
     setIsProcessing(false);
     setProcessingStep("");
@@ -531,16 +438,12 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
     setFinalTranscript("");
     setPendingTranscription(null);
     setPendingAudioBlob(null);
-    setPendingDocumentBase64(null);
-    setPendingDocumentType(null);
   };
 
   const handleBackToRecorder = () => {
     setShowTemplateSelection(false);
     setPendingTranscription(null);
     setPendingAudioBlob(null);
-    setPendingDocumentBase64(null);
-    setPendingDocumentType(null);
   };
 
   // Template Selection View
@@ -704,18 +607,17 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
 
             <div>
               <h3 className="text-xl font-bold text-foreground mb-2">
-                Content to Notes
+                Live Lecture Transcription
               </h3>
               <p className="text-sm text-muted-foreground mb-3">
-                <span className="text-primary">Record audio</span>, <span className="text-secondary">upload files</span>, or <span className="text-primary">capture screenshots</span>
+                <span className="text-primary">Live recording</span> or <span className="text-secondary">upload audio</span> to get brief summaries
               </p>
               <p className="text-xs text-muted-foreground mb-3">
-                Audio: MP3, WAV, WEBM, M4A • Images: PNG, JPG • Documents: PDF • Max: 25MB
+                Supported: MP3, WAV, WEBM, M4A, FLAC • Max: 25MB
               </p>
-              <div className="flex items-center justify-center gap-2 text-sm text-primary">
-                <FileText className="w-4 h-4" />
-                <span>Upload any content to generate structured notes</span>
-              </div>
+              <p className="text-sm text-primary">
+                Record audio or upload audio to make complete study notes
+              </p>
             </div>
 
             {/* Live Transcription Display */}
@@ -733,7 +635,7 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
               <input
                 id="audio-file-input"
                 type="file"
-                accept="audio/*,image/png,image/jpeg,image/jpg,image/webp,application/pdf"
+                accept="audio/*"
                 onChange={handleFileUpload}
                 className="hidden"
               />
@@ -744,12 +646,8 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
                 className="gap-2 px-6"
                 onClick={() => document.getElementById("audio-file-input")?.click()}
               >
-                <Folder className="w-4 h-4" />
-                <span>Audio</span>
-                <Image className="w-4 h-4" />
-                <span>Image</span>
-                <FileText className="w-4 h-4" />
-                <span>PDF</span>
+                <Folder className="w-5 h-5" />
+                Select file
               </Button>
 
               <Button
