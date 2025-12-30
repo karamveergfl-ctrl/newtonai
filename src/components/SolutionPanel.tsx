@@ -7,13 +7,19 @@ import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { SolutionChatInput } from "./SolutionChatInput";
 import { useState, useRef, useEffect, useMemo } from "react";
+import DOMPurify from "dompurify";
 
 // Component to render SVG diagrams from markdown content
 const SvgDiagram = ({ svgContent }: { svgContent: string }) => {
+  const sanitizedSvg = DOMPurify.sanitize(svgContent, {
+    ALLOWED_TAGS: ['svg', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'text', 'g', 'defs', 'use', 'marker', 'ellipse', 'tspan'],
+    ALLOWED_ATTR: ['viewBox', 'width', 'height', 'xmlns', 'd', 'fill', 'stroke', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'transform', 'class', 'style', 'id', 'markerWidth', 'markerHeight', 'refX', 'refY', 'orient', 'points', 'marker-end', 'font-size', 'font-weight', 'text-anchor', 'stroke-width', 'rx', 'ry']
+  });
+  
   return (
     <div 
       className="my-6 flex justify-center rounded-lg overflow-hidden border border-border bg-muted/30 p-4"
-      dangerouslySetInnerHTML={{ __html: svgContent }}
+      dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
     />
   );
 };
