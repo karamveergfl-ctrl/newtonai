@@ -5,6 +5,13 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import DOMPurify from "dompurify";
+
+// Sanitize text content to prevent XSS
+const sanitizeText = (text: string): string => {
+  if (!text) return "";
+  return DOMPurify.sanitize(text, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+};
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -153,7 +160,7 @@ export const VisualMindMap = ({
                         className="text-xs font-medium px-2 py-1 rounded-lg text-white whitespace-nowrap"
                         style={{ backgroundColor: getNodeColor(2, si) }}
                       >
-                        {sub.text}
+                        {sanitizeText(sub.text)}
                       </span>
                       <svg width="30" height="2" className="ml-1">
                         <line x1="0" y1="1" x2="30" y2="1" stroke={getNodeColor(2, si)} strokeWidth="2" />
@@ -167,7 +174,7 @@ export const VisualMindMap = ({
                 className="px-4 py-2 rounded-xl font-semibold text-white shadow-lg whitespace-nowrap"
                 style={{ backgroundColor: getNodeColor(1, idx), boxShadow: `0 4px 12px ${getNodeColor(1, idx)}40` }}
               >
-                {child.text}
+                {sanitizeText(child.text)}
               </div>
               {/* Curved connector */}
               <svg width="80" height="50" className="flex-shrink-0">
@@ -182,7 +189,7 @@ export const VisualMindMap = ({
           className="px-8 py-5 rounded-full font-bold text-lg text-white shadow-2xl z-10 min-w-[120px] text-center"
           style={{ backgroundColor: getNodeColor(0, 0), boxShadow: `0 8px 30px ${getNodeColor(0, 0)}50` }}
         >
-          {rootNode.text}
+          {sanitizeText(rootNode.text)}
         </div>
 
         {/* Right branches */}
@@ -196,7 +203,7 @@ export const VisualMindMap = ({
                 className="px-4 py-2 rounded-xl font-semibold text-white shadow-lg whitespace-nowrap"
                 style={{ backgroundColor: getNodeColor(1, leftChildren.length + idx), boxShadow: `0 4px 12px ${getNodeColor(1, leftChildren.length + idx)}40` }}
               >
-                {child.text}
+                {sanitizeText(child.text)}
               </div>
               {child.children && child.children.length > 0 && (
                 <div className="flex flex-col gap-2 items-start ml-2">
@@ -209,7 +216,7 @@ export const VisualMindMap = ({
                         className="text-xs font-medium px-2 py-1 rounded-lg text-white whitespace-nowrap"
                         style={{ backgroundColor: getNodeColor(2, si + 3) }}
                       >
-                        {sub.text}
+                        {sanitizeText(sub.text)}
                       </span>
                     </div>
                   ))}
@@ -243,7 +250,7 @@ export const VisualMindMap = ({
               boxShadow: `0 4px 12px ${color}40` 
             }}
           >
-            {node.text}
+            {sanitizeText(node.text)}
           </div>
           
           {/* Children with curved connectors */}
@@ -282,7 +289,7 @@ export const VisualMindMap = ({
                         )}
                         style={{ backgroundColor: childColor }}
                       >
-                        {child.text}
+                        {sanitizeText(child.text)}
                       </div>
                       
                       {/* Grandchildren */}
@@ -305,7 +312,7 @@ export const VisualMindMap = ({
                                     className="text-[10px] px-2 py-0.5 rounded-full text-white whitespace-nowrap"
                                     style={{ backgroundColor: gcColor }}
                                   >
-                                    {grandChild.text}
+                                    {sanitizeText(grandChild.text)}
                                   </span>
                                   
                                   {/* Deepest level */}
@@ -321,7 +328,7 @@ export const VisualMindMap = ({
                                             className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 whitespace-nowrap border"
                                             style={{ borderColor: gcColor }}
                                           >
-                                            {leaf.text}
+                                            {sanitizeText(leaf.text)}
                                           </span>
                                         ))}
                                       </div>
@@ -366,7 +373,7 @@ export const VisualMindMap = ({
                 <div className="flex gap-2 mb-2 flex-wrap justify-center max-w-[150px]">
                   {child.children.slice(0, 3).map((sub, si) => (
                     <span key={sub.id} className="text-xs px-2 py-0.5 rounded text-white" style={{ backgroundColor: getNodeColor(2, si) }}>
-                      {sub.text}
+                      {sanitizeText(sub.text)}
                     </span>
                   ))}
                 </div>
@@ -375,7 +382,7 @@ export const VisualMindMap = ({
                 className="px-4 py-2 rounded-xl font-semibold text-white shadow-lg"
                 style={{ backgroundColor: getNodeColor(1, idx * 2) }}
               >
-                {child.text}
+                {sanitizeText(child.text)}
               </div>
               <svg width="2" height="40">
                 <line x1="1" y1="0" x2="1" y2="40" stroke={getNodeColor(1, idx * 2)} strokeWidth="2" />
@@ -391,7 +398,7 @@ export const VisualMindMap = ({
             className="px-8 py-4 rounded-full font-bold text-lg text-white shadow-2xl mx-4"
             style={{ backgroundColor: getNodeColor(0, 0), boxShadow: `0 8px 25px ${getNodeColor(0, 0)}50` }}
           >
-            {rootNode.text}
+            {sanitizeText(rootNode.text)}
           </div>
           <div className="w-24 h-1 rounded" style={{ backgroundColor: getNodeColor(0, 0) }} />
         </div>
@@ -407,13 +414,13 @@ export const VisualMindMap = ({
                 className="px-4 py-2 rounded-xl font-semibold text-white shadow-lg"
                 style={{ backgroundColor: getNodeColor(1, idx * 2 + 1) }}
               >
-                {child.text}
+                {sanitizeText(child.text)}
               </div>
               {child.children && (
                 <div className="flex gap-2 mt-2 flex-wrap justify-center max-w-[150px]">
                   {child.children.slice(0, 3).map((sub, si) => (
                     <span key={sub.id} className="text-xs px-2 py-0.5 rounded text-white" style={{ backgroundColor: getNodeColor(2, si + 3) }}>
-                      {sub.text}
+                      {sanitizeText(sub.text)}
                     </span>
                   ))}
                 </div>
@@ -434,7 +441,7 @@ export const VisualMindMap = ({
           className="px-8 py-4 rounded-xl font-bold text-lg text-white shadow-2xl border-4 border-white/30"
           style={{ backgroundColor: getNodeColor(0, 0), boxShadow: `0 10px 30px ${getNodeColor(0, 0)}50` }}
         >
-          {rootNode.text}
+          {sanitizeText(rootNode.text)}
         </div>
 
         {rootNode.children && rootNode.children.length > 0 && (
@@ -454,7 +461,7 @@ export const VisualMindMap = ({
                     className="px-5 py-3 rounded-lg font-semibold text-white shadow-lg min-w-[100px] text-center border-2 border-white/20"
                     style={{ backgroundColor: getNodeColor(1, idx), boxShadow: `0 4px 15px ${getNodeColor(1, idx)}40` }}
                   >
-                    {child.text}
+                    {sanitizeText(child.text)}
                   </div>
                   
                   {/* Level 2 */}
@@ -468,7 +475,7 @@ export const VisualMindMap = ({
                             className="px-3 py-1.5 rounded text-xs font-medium text-white text-center"
                             style={{ backgroundColor: getNodeColor(2, idx + si) }}
                           >
-                            {sub.text}
+                            {sanitizeText(sub.text)}
                           </div>
                         ))}
                       </div>
