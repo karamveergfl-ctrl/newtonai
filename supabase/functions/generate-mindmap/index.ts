@@ -13,7 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    // Validate JWT token
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.log("Missing authorization header");
@@ -54,39 +53,30 @@ serve(async (req) => {
       throw new Error("No content provided");
     }
 
-    console.log(`Generating ${detailLevel} mind map for ${textToMap.length} characters with structure: ${structure}`);
+    console.log(`Generating ${detailLevel} mind map for ${textToMap.length} characters`);
 
-    const detailGuide = {
-      brief: "Create a simpler mind map with 3-4 main branches and 1-2 sub-branches each. Keep it concise.",
-      standard: "Create a balanced mind map with 4-5 main branches and 2-3 sub-branches each with detail nodes.",
-      detailed: "Create a comprehensive mind map with 5-6 main branches, 3-4 sub-branches each, and detailed leaf nodes with examples."
-    };
+    const systemPrompt = `You are an expert at creating educational mind maps following Google NotebookLM's clean, organized style.
 
-    const systemPrompt = `You are an expert at creating DETAILED hierarchical mind maps. You MUST return valid JSON only.
+Create a hierarchical mind map that is:
+- Well-balanced with 5-6 main branches
+- Each main branch has 2-4 sub-nodes
+- Each sub-node can have 1-3 leaf nodes
+- Uses SHORT, CLEAR labels (2-5 words max per node)
 
-Detail level: ${detailLevel.toUpperCase()}
-${detailGuide[detailLevel as keyof typeof detailGuide]}
-
-Return a JSON object with this DEEP hierarchical structure (4-5 levels deep):
+Return ONLY valid JSON with this structure:
 {
   "id": "root",
-  "text": "Main Topic Title",
+  "text": "Main Topic (2-4 words)",
   "children": [
     {
-      "id": "branch1",
-      "text": "Category Name",
+      "id": "b1",
+      "text": "Branch 1 Label",
       "children": [
         {
-          "id": "sub1",
-          "text": "Sub-Category",
+          "id": "b1_s1",
+          "text": "Sub-topic",
           "children": [
-            {
-              "id": "detail1",
-              "text": "Key Point or Fact",
-              "children": [
-                { "id": "leaf1", "text": "Specific detail or example" }
-              ]
-            }
+            { "id": "b1_s1_l1", "text": "Detail point" }
           ]
         }
       ]
@@ -95,21 +85,20 @@ Return a JSON object with this DEEP hierarchical structure (4-5 levels deep):
 }
 
 CRITICAL RULES:
-- Create 4-6 MAIN branches (major categories/topics)
-- Each main branch MUST have 2-4 sub-branches
-- Each sub-branch MUST have 2-3 detail nodes
-- Detail nodes can have 1-2 leaf nodes for specifics
-- Keep each node text SHORT: 2-6 words max
-- Make it EDUCATIONAL and DETAILED
-- Include definitions, examples, characteristics, comparisons
-- Use unique IDs (like "b1", "b1_s1", "b1_s1_d1", "b1_s1_d1_l1")
-- Return ONLY valid JSON, no markdown, no explanation`;
+- EXACTLY 5-6 main branches for balance
+- Each node text: 2-5 words MAXIMUM
+- Use action words and clear nouns
+- Create logical groupings
+- Include key concepts, definitions, relationships
+- Make it educational and memorable
+- Use unique IDs (b1, b1_s1, b1_s1_l1 pattern)
+- Return ONLY the JSON, no markdown or explanation`;
 
-    const userPrompt = `Create a mind map JSON for this content:
+    const userPrompt = `Create a balanced, educational mind map for this content:
 
 ${textToMap.slice(0, 6000)}
 
-Return ONLY the JSON object, nothing else.`;
+Return ONLY the JSON object.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -153,7 +142,6 @@ Return ONLY the JSON object, nothing else.`;
     // Parse JSON from response
     let mindMapData;
     try {
-      // Remove markdown code blocks if present
       let jsonStr = rawContent;
       if (jsonStr.includes('```json')) {
         jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
@@ -165,17 +153,16 @@ Return ONLY the JSON object, nothing else.`;
       mindMapData = JSON.parse(jsonStr);
       console.log("Successfully parsed mind map JSON");
     } catch (parseError) {
-      console.error("Failed to parse JSON, returning text format:", parseError);
-      // Fallback: create a simple structure from the text
+      console.error("Failed to parse JSON, creating fallback structure:", parseError);
       mindMapData = {
         id: "root",
         text: "Main Topic",
         children: rawContent.split('\n')
           .filter((line: string) => line.trim())
-          .slice(0, 5)
+          .slice(0, 6)
           .map((line: string, i: number) => ({
-            id: `branch${i}`,
-            text: line.replace(/^[-*•]\s*/, '').slice(0, 50),
+            id: `b${i + 1}`,
+            text: line.replace(/^[-*•]\s*/, '').slice(0, 40),
             children: []
           }))
       };

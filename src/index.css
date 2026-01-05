@@ -48,6 +48,14 @@ All colors MUST be HSL.
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
+    /* NotebookLM Style Colors */
+    --nlm-blue: 217 91% 60%;
+    --nlm-green: 142 71% 45%;
+    --nlm-yellow: 45 93% 47%;
+    --nlm-red: 0 84% 60%;
+    --nlm-purple: 271 81% 56%;
+    --nlm-cyan: 187 92% 42%;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
