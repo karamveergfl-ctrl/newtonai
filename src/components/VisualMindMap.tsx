@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Download, Loader2, Network, Palette, ZoomIn, ZoomOut, Maximize2, LayoutGrid, Info } from "lucide-react";
+import { X, Download, Loader2, Network, Palette, ZoomIn, ZoomOut, Maximize2, LayoutGrid, Info, ArrowLeft } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useToast } from "@/hooks/use-toast";
@@ -570,8 +570,9 @@ export const VisualMindMap = ({
             {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             PDF
           </Button>
-          <Button onClick={onClose} variant="ghost" size="icon">
-            <X className="w-4 h-4" />
+          <Button onClick={onClose} variant="outline" size="sm" className="gap-2 font-sans text-gray-700 hover:bg-gray-100">
+            <ArrowLeft className="w-4 h-4" />
+            Return to PDF
           </Button>
         </div>
       </div>

@@ -14,7 +14,8 @@ import {
   RotateCw,
   Download,
   Loader2,
-  BookOpen
+  BookOpen,
+  ArrowLeft
 } from "lucide-react";
 import jsPDF from "jspdf";
 import { useToast } from "@/hooks/use-toast";
@@ -186,8 +187,9 @@ export const FlashcardDeck = ({
               <h2 className="font-bold text-lg truncate">{title}</h2>
               <p className="text-sm text-muted-foreground">Generating...</p>
             </div>
-            <Button onClick={onClose} variant="ghost" size="icon">
-              <X className="w-4 h-4" />
+            <Button onClick={onClose} variant="outline" size="sm" className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Return to PDF
             </Button>
           </div>
         </div>
@@ -276,8 +278,9 @@ export const FlashcardDeck = ({
             <Button onClick={handleReset} variant="ghost" size="icon" title="Reset">
               <RotateCcw className="w-4 h-4" />
             </Button>
-            <Button onClick={onClose} variant="ghost" size="icon">
-              <X className="w-4 h-4" />
+            <Button onClick={onClose} variant="outline" size="sm" className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Return to PDF
             </Button>
           </div>
         </div>
