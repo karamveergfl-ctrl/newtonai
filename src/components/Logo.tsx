@@ -12,7 +12,7 @@ const sizeMap = {
   lg: { icon: 64, text: "text-3xl" },
 };
 
-const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
+const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
   const { icon, text } = sizeMap[size];
 
   return (
