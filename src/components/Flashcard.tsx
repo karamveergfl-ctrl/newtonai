@@ -1,9 +1,5 @@
-import { useState } from "react";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 interface FlashcardProps {
   front: string;
@@ -41,9 +37,7 @@ export const Flashcard = ({ front, back, index, total, isFlipped, onFlip }: Flas
             Question
           </div>
           <div className="text-lg md:text-xl font-medium text-center text-foreground leading-relaxed">
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-              {front}
-            </ReactMarkdown>
+            <MarkdownRenderer content={front} className="prose-sm" />
           </div>
           <div className="absolute bottom-4 text-xs text-muted-foreground">
             Tap to flip
@@ -63,9 +57,7 @@ export const Flashcard = ({ front, back, index, total, isFlipped, onFlip }: Flas
             Answer
           </div>
           <div className="text-base md:text-lg text-center text-foreground leading-relaxed overflow-auto max-h-full">
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-              {back}
-            </ReactMarkdown>
+            <MarkdownRenderer content={back} className="prose-sm" />
           </div>
           <div className="absolute bottom-4 text-xs text-muted-foreground">
             Tap to flip

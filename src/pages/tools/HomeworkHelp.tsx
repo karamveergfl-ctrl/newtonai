@@ -7,10 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Button } from "@/components/ui/button";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -172,21 +169,7 @@ const HomeworkHelp = () => {
                   </Button>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="prose prose-lg dark:prose-invert max-w-none
-                    prose-headings:font-semibold prose-headings:tracking-tight
-                    prose-h2:text-xl prose-h2:mt-6 prose-h2:mb-3 prose-h2:border-b prose-h2:pb-2 prose-h2:border-border
-                    prose-p:leading-relaxed prose-p:text-foreground/90
-                    prose-strong:text-foreground prose-strong:font-semibold
-                    prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-                    [&_.katex]:text-lg [&_.katex-display]:my-4 [&_.katex-display]:overflow-x-auto
-                  ">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[rehypeKatex]}
-                    >
-                      {solution}
-                    </ReactMarkdown>
-                  </div>
+                  <MarkdownRenderer content={solution} />
                 </CardContent>
               </Card>
             </motion.div>

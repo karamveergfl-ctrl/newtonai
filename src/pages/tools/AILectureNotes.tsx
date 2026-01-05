@@ -7,10 +7,7 @@ import { Mic, Download, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -148,11 +145,7 @@ const AILectureNotes = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none prose-headings:font-display prose-headings:font-semibold prose-headings:tracking-tight prose-p:font-sans prose-p:leading-relaxed prose-li:font-sans">
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {notes}
-                    </ReactMarkdown>
-                  </div>
+                  <MarkdownRenderer content={notes} />
                 </CardContent>
               </Card>
             </motion.div>
