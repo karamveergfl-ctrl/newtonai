@@ -16,7 +16,8 @@ import {
   ChevronRight, 
   ChevronLeft,
   Check,
-  Sparkles
+  Sparkles,
+  MessageCircleQuestion
 } from "lucide-react";
 
 const educationLevels = [
@@ -50,6 +51,17 @@ const studyGoals = [
   { id: "revision", label: "Revision & Review", description: "Reinforce what you know" },
   { id: "research", label: "Research", description: "Deep dive into topics" },
   { id: "skill_building", label: "Skill Building", description: "Develop new skills" },
+];
+
+const referralSources = [
+  { id: "social_media", label: "Social Media", icon: "📱", description: "TikTok, Instagram, Twitter, etc." },
+  { id: "youtube", label: "YouTube", icon: "▶️", description: "Saw a video or ad" },
+  { id: "friend", label: "Friend or Classmate", icon: "👥", description: "Someone recommended it" },
+  { id: "teacher", label: "Teacher or Mentor", icon: "👨‍🏫", description: "Recommended by an educator" },
+  { id: "search", label: "Google Search", icon: "🔍", description: "Found it while searching" },
+  { id: "app_store", label: "App Store", icon: "📲", description: "Discovered in the app store" },
+  { id: "blog", label: "Blog or Article", icon: "📝", description: "Read about it online" },
+  { id: "other", label: "Other", icon: "✨", description: "Something else" },
 ];
 
 const slideVariants = {
@@ -122,9 +134,10 @@ const Onboarding = () => {
     educationLevel: "",
     subjects: [] as string[],
     studyGoals: [] as string[],
+    referralSource: "",
   });
 
-  const totalSteps = 4;
+  const totalSteps = 5;
   const progress = (step / totalSteps) * 100;
 
   useEffect(() => {
@@ -167,6 +180,10 @@ const Onboarding = () => {
       toast.error("Please select at least one subject");
       return;
     }
+    if (step === 4 && formData.studyGoals.length === 0) {
+      toast.error("Please select at least one study goal");
+      return;
+    }
     setDirection(1);
     setStep(step + 1);
   };
@@ -195,8 +212,8 @@ const Onboarding = () => {
   };
 
   const handleComplete = async () => {
-    if (formData.studyGoals.length === 0) {
-      toast.error("Please select at least one study goal");
+    if (!formData.referralSource) {
+      toast.error("Please select how you heard about us");
       return;
     }
 
@@ -629,6 +646,100 @@ const Onboarding = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4 }}
+                    >
+                      <Button variant="outline" onClick={handleBack} className="flex-1 h-12 group">
+                        <ChevronLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                        Back
+                      </Button>
+                      <Button onClick={handleNext} className="flex-1 h-12 group">
+                        Continue
+                        <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 5: How did you hear about us */}
+            {step === 5 && (
+              <motion.div
+                key="step5"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Card className="border-0 shadow-xl backdrop-blur-sm bg-card/95">
+                  <CardHeader className="text-center pb-2">
+                    <motion.div 
+                      className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4"
+                      variants={iconVariants}
+                      initial="initial"
+                      animate="animate"
+                    >
+                      <MessageCircleQuestion className="w-8 h-8 text-primary" />
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <CardTitle className="text-2xl md:text-3xl">How did you hear about us?</CardTitle>
+                      <CardDescription className="text-base mt-2">
+                        Help us understand how you found StudySmart
+                      </CardDescription>
+                    </motion.div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 gap-3">
+                      {referralSources.map((source, i) => (
+                        <motion.button
+                          key={source.id}
+                          custom={i}
+                          variants={cardItemVariants}
+                          initial="hidden"
+                          animate="visible"
+                          onClick={() => setFormData(prev => ({ ...prev, referralSource: source.id }))}
+                          className={`p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50 hover:scale-[1.02] relative ${
+                            formData.referralSource === source.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border"
+                          }`}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <AnimatePresence>
+                            {formData.referralSource === source.id && (
+                              <motion.div 
+                                className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center"
+                                variants={checkmarkVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                              >
+                                <Check className="w-3 h-3 text-primary-foreground" />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                          <motion.span 
+                            className="text-2xl mb-2 block"
+                            animate={formData.referralSource === source.id ? { scale: [1, 1.2, 1] } : {}}
+                            transition={{ duration: 0.3 }}
+                          >
+                            {source.icon}
+                          </motion.span>
+                          <span className="font-medium text-sm block">{source.label}</span>
+                          <span className="text-xs text-muted-foreground">{source.description}</span>
+                        </motion.button>
+                      ))}
+                    </div>
+                    <motion.div 
+                      className="flex gap-3 mt-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
                     >
                       <Button variant="outline" onClick={handleBack} className="flex-1 h-12 group">
                         <ChevronLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
