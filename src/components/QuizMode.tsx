@@ -11,7 +11,8 @@ import {
   RotateCcw,
   Download,
   Loader2,
-  Brain
+  Brain,
+  ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -192,8 +193,9 @@ export const QuizMode = ({
         <div className="p-4 border-b bg-card/50">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <h2 className="font-bold text-lg truncate">{title}</h2>
-            <Button onClick={onClose} variant="ghost" size="icon">
-              <X className="w-4 h-4" />
+            <Button onClick={onClose} variant="outline" size="sm" className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Return to PDF
             </Button>
           </div>
         </div>
@@ -293,8 +295,9 @@ export const QuizMode = ({
             >
               {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             </Button>
-            <Button onClick={onClose} variant="ghost" size="icon">
-              <X className="w-4 h-4" />
+            <Button onClick={onClose} variant="outline" size="sm" className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Return to PDF
             </Button>
           </div>
         </div>
