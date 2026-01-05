@@ -93,13 +93,17 @@ export const getYouTubeTranscript = async (
     }
   );
 
+  const data = await response.json();
+  
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: "Failed to fetch transcript" }));
-    throw new Error(error.error || "Failed to fetch transcript");
+    throw new Error(data.error || "Failed to fetch transcript");
   }
 
-  const { transcript } = await response.json();
-  return transcript;
+  if (!data.transcript || data.transcript.length < 20) {
+    throw new Error("This video doesn't have captions available. Please try a different video or paste the content directly.");
+  }
+
+  return data.transcript;
 };
 
 /**

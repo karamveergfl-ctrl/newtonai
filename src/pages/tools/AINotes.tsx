@@ -2,11 +2,15 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Notebook, Download } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Notebook, Download, Copy, Check, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -16,6 +20,7 @@ import {
 const AINotes = () => {
   const [notes, setNotes] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
@@ -37,7 +42,7 @@ const AINotes = () => {
       }
 
       if (!textContent?.trim()) {
-        throw new Error("No content to process");
+        throw new Error("No content to process. Please try with different content or paste text directly.");
       }
 
       const response = await fetch(
@@ -80,9 +85,16 @@ const AINotes = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "ai-notes.txt";
+    a.download = "ai-notes.md";
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(notes);
+    setCopied(true);
+    toast({ title: "Copied to clipboard!" });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -97,13 +109,13 @@ const AINotes = () => {
             <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <Notebook className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold">AI Notes</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-4xl font-display font-bold tracking-tight">AI Notes</h1>
+            <p className="text-muted-foreground mt-2 text-lg font-body">
               Give any content — textbooks, videos, slides, or recordings — and get clear, organized notes
             </p>
           </div>
 
-          <Card>
+          <Card className="border-border/50 shadow-lg">
             <CardContent className="pt-6">
               <ContentInputTabs
                 onContentReady={handleContentReady}
@@ -119,17 +131,47 @@ const AINotes = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Generated Notes</CardTitle>
-                  <Button variant="outline" size="sm" onClick={handleDownload}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
+              <Card className="border-border/50 shadow-lg overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-b border-border/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/20">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                      </div>
+                      <h2 className="text-2xl font-display font-bold tracking-tight">Generated Notes</h2>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleCopy}
+                        className="gap-2"
+                      >
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied ? "Copied" : "Copy"}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleDownload} className="gap-2">
+                        <Download className="h-4 w-4" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
-                    {notes}
+                <CardContent className="pt-6">
+                  <div className="prose prose-lg dark:prose-invert max-w-none 
+                    prose-headings:font-display prose-headings:font-bold prose-headings:tracking-tight
+                    prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-foreground prose-h2:border-b prose-h2:border-border/50 prose-h2:pb-2
+                    prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-h3:text-foreground/90
+                    prose-p:font-body prose-p:text-foreground/80 prose-p:leading-relaxed prose-p:text-base
+                    prose-li:font-body prose-li:text-foreground/80 prose-li:my-1
+                    prose-ul:my-4 prose-ul:space-y-1
+                    prose-strong:text-foreground prose-strong:font-semibold
+                    prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                    prose-pre:bg-muted prose-pre:border prose-pre:border-border/50"
+                  >
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                      {notes}
+                    </ReactMarkdown>
                   </div>
                 </CardContent>
               </Card>
