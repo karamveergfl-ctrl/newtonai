@@ -21,6 +21,7 @@ export type Database = {
           full_name: string | null
           id: string
           onboarding_completed: boolean | null
+          referral_source: string | null
           study_goals: string[] | null
           subjects: string[] | null
           updated_at: string
@@ -31,6 +32,7 @@ export type Database = {
           full_name?: string | null
           id: string
           onboarding_completed?: boolean | null
+          referral_source?: string | null
           study_goals?: string[] | null
           subjects?: string[] | null
           updated_at?: string
@@ -41,6 +43,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           onboarding_completed?: boolean | null
+          referral_source?: string | null
           study_goals?: string[] | null
           subjects?: string[] | null
           updated_at?: string
