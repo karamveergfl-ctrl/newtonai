@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Download, Loader2, Network, Palette, ZoomIn, ZoomOut, Maximize2, LayoutGrid } from "lucide-react";
+import { X, Download, Loader2, Network, Palette, ZoomIn, ZoomOut, Maximize2, LayoutGrid, Info } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { notebookLMTheme } from "./NotebookLMStyles";
 
 // Sanitize text content to prevent XSS
@@ -23,6 +28,7 @@ const sanitizeText = (text: string): string => {
 interface MindMapNode {
   id: string;
   text: string;
+  definition?: string;
   children?: MindMapNode[];
 }
 
@@ -134,38 +140,83 @@ export const VisualMindMap = ({
     return colors[(depth + index) % colors.length];
   };
 
-  // NotebookLM-style node rendering
-  const renderCentralNode = (text: string) => (
-    <div 
-      className="px-8 py-4 rounded-2xl font-display font-bold text-lg text-white shadow-lg border-2 border-white/20 transition-transform hover:scale-105"
-      style={{ 
-        background: `linear-gradient(135deg, ${getNodeColor(0, 0)} 0%, ${getNodeColor(0, 0)}dd 100%)`,
-        boxShadow: `0 8px 32px ${getNodeColor(0, 0)}40`
-      }}
-    >
-      {sanitizeText(text)}
-    </div>
+  // NotebookLM-style node rendering with click for definition
+  const renderCentralNode = (node: MindMapNode) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <div 
+          className="px-8 py-4 rounded-2xl font-display font-bold text-lg text-white shadow-lg border-2 border-white/20 transition-transform hover:scale-105 cursor-pointer relative group"
+          style={{ 
+            background: `linear-gradient(135deg, ${getNodeColor(0, 0)} 0%, ${getNodeColor(0, 0)}dd 100%)`,
+            boxShadow: `0 8px 32px ${getNodeColor(0, 0)}40`
+          }}
+        >
+          {sanitizeText(node.text)}
+          {node.definition && (
+            <Info className="w-3.5 h-3.5 absolute -top-1 -right-1 bg-white text-gray-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          )}
+        </div>
+      </PopoverTrigger>
+      {node.definition && (
+        <PopoverContent className="w-72 p-3 bg-white shadow-xl border-0 rounded-xl">
+          <div className="space-y-2">
+            <h4 className="font-display font-semibold text-sm text-gray-900">{sanitizeText(node.text)}</h4>
+            <p className="text-sm text-gray-600 leading-relaxed">{sanitizeText(node.definition)}</p>
+          </div>
+        </PopoverContent>
+      )}
+    </Popover>
   );
 
-  const renderBranchNode = (text: string, colorIndex: number) => (
-    <div 
-      className="px-4 py-2 rounded-xl font-display font-medium text-sm text-white shadow-md border border-white/10 cursor-pointer transition-all hover:scale-105 hover:shadow-lg whitespace-nowrap"
-      style={{ 
-        background: `linear-gradient(135deg, ${getNodeColor(1, colorIndex)} 0%, ${getNodeColor(1, colorIndex)}dd 100%)`,
-        boxShadow: `0 4px 16px ${getNodeColor(1, colorIndex)}30`
-      }}
-    >
-      {sanitizeText(text)}
-    </div>
+  const renderBranchNode = (node: MindMapNode, colorIndex: number) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <div 
+          className="px-4 py-2 rounded-xl font-display font-medium text-sm text-white shadow-md border border-white/10 cursor-pointer transition-all hover:scale-105 hover:shadow-lg whitespace-nowrap relative group"
+          style={{ 
+            background: `linear-gradient(135deg, ${getNodeColor(1, colorIndex)} 0%, ${getNodeColor(1, colorIndex)}dd 100%)`,
+            boxShadow: `0 4px 16px ${getNodeColor(1, colorIndex)}30`
+          }}
+        >
+          {sanitizeText(node.text)}
+          {node.definition && (
+            <Info className="w-3 h-3 absolute -top-0.5 -right-0.5 bg-white text-gray-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          )}
+        </div>
+      </PopoverTrigger>
+      {node.definition && (
+        <PopoverContent className="w-64 p-3 bg-white shadow-xl border-0 rounded-xl z-50">
+          <div className="space-y-2">
+            <h4 className="font-display font-semibold text-sm text-gray-900">{sanitizeText(node.text)}</h4>
+            <p className="text-xs text-gray-600 leading-relaxed">{sanitizeText(node.definition)}</p>
+          </div>
+        </PopoverContent>
+      )}
+    </Popover>
   );
 
-  const renderLeafNode = (text: string, parentColor: string) => (
-    <span 
-      className="px-3 py-1.5 rounded-lg text-xs font-sans font-medium bg-white text-gray-700 shadow-sm border border-gray-200 whitespace-nowrap transition-all hover:shadow-md hover:border-gray-300"
-      style={{ borderLeftColor: parentColor, borderLeftWidth: '3px' }}
-    >
-      {sanitizeText(text)}
-    </span>
+  const renderLeafNode = (node: MindMapNode, parentColor: string) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <span 
+          className="px-3 py-1.5 rounded-lg text-xs font-sans font-medium bg-white text-gray-700 shadow-sm border border-gray-200 whitespace-nowrap transition-all hover:shadow-md hover:border-gray-300 cursor-pointer relative group"
+          style={{ borderLeftColor: parentColor, borderLeftWidth: '3px' }}
+        >
+          {sanitizeText(node.text)}
+          {node.definition && (
+            <Info className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 bg-gray-100 text-gray-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          )}
+        </span>
+      </PopoverTrigger>
+      {node.definition && (
+        <PopoverContent className="w-56 p-2.5 bg-white shadow-xl border-0 rounded-lg z-50">
+          <div className="space-y-1.5">
+            <h4 className="font-display font-semibold text-xs text-gray-900">{sanitizeText(node.text)}</h4>
+            <p className="text-xs text-gray-600 leading-relaxed">{sanitizeText(node.definition)}</p>
+          </div>
+        </PopoverContent>
+      )}
+    </Popover>
   );
 
   // Radial Layout - Central node with branches radiating out
@@ -184,7 +235,7 @@ export const VisualMindMap = ({
                 <div className="flex flex-col gap-2 items-end mr-3">
                   {child.children.slice(0, 4).map((sub, si) => (
                     <div key={sub.id} className="flex items-center gap-2">
-                      {renderLeafNode(sub.text, getNodeColor(1, idx))}
+                      {renderLeafNode(sub, getNodeColor(1, idx))}
                       <svg width="24" height="2">
                         <line x1="0" y1="1" x2="24" y2="1" stroke={getNodeColor(1, idx)} strokeWidth="2" strokeLinecap="round" />
                       </svg>
@@ -192,7 +243,7 @@ export const VisualMindMap = ({
                   ))}
                 </div>
               )}
-              {renderBranchNode(child.text, idx)}
+              {renderBranchNode(child, idx)}
               <svg width="60" height="40" className="flex-shrink-0">
                 <path 
                   d={`M 0 20 Q 30 ${20 + (idx - leftChildren.length/2) * 6} 60 20`} 
@@ -207,7 +258,7 @@ export const VisualMindMap = ({
         </div>
 
         {/* Center node */}
-        {renderCentralNode(rootNode.text)}
+        {renderCentralNode(rootNode)}
 
         {/* Right branches */}
         <div className="flex flex-col gap-6">
@@ -222,7 +273,7 @@ export const VisualMindMap = ({
                   strokeLinecap="round"
                 />
               </svg>
-              {renderBranchNode(child.text, leftChildren.length + idx)}
+              {renderBranchNode(child, leftChildren.length + idx)}
               {child.children && child.children.length > 0 && (
                 <div className="flex flex-col gap-2 items-start ml-3">
                   {child.children.slice(0, 4).map((sub, si) => (
@@ -230,7 +281,7 @@ export const VisualMindMap = ({
                       <svg width="24" height="2">
                         <line x1="0" y1="1" x2="24" y2="1" stroke={getNodeColor(1, leftChildren.length + idx)} strokeWidth="2" strokeLinecap="round" />
                       </svg>
-                      {renderLeafNode(sub.text, getNodeColor(1, leftChildren.length + idx))}
+                      {renderLeafNode(sub, getNodeColor(1, leftChildren.length + idx))}
                     </div>
                   ))}
                 </div>
@@ -250,7 +301,7 @@ export const VisualMindMap = ({
       
       return (
         <div key={node.id} className="flex items-center gap-0">
-          {depth === 0 ? renderCentralNode(node.text) : (
+          {depth === 0 ? renderCentralNode(node) : (
             <div 
               className={cn(
                 "rounded-full font-display text-white shadow-md whitespace-nowrap border border-white/10 transition-all hover:scale-105",
@@ -345,7 +396,7 @@ export const VisualMindMap = ({
                   ))}
                 </div>
               )}
-              {renderBranchNode(child.text, idx * 2)}
+              {renderBranchNode(child, idx * 2)}
               <svg width="2" height="32">
                 <line x1="1" y1="0" x2="1" y2="32" stroke={getNodeColor(1, idx * 2)} strokeWidth="2" strokeLinecap="round" />
               </svg>
@@ -356,7 +407,7 @@ export const VisualMindMap = ({
         {/* Main spine */}
         <div className="flex items-center">
           <div className="w-20 h-1 rounded-full" style={{ backgroundColor: getNodeColor(0, 0) }} />
-          {renderCentralNode(rootNode.text)}
+          {renderCentralNode(rootNode)}
           <div className="w-20 h-1 rounded-full" style={{ backgroundColor: getNodeColor(0, 0) }} />
         </div>
 
@@ -367,7 +418,7 @@ export const VisualMindMap = ({
               <svg width="2" height="32">
                 <line x1="1" y1="0" x2="1" y2="32" stroke={getNodeColor(1, idx * 2 + 1)} strokeWidth="2" strokeLinecap="round" />
               </svg>
-              {renderBranchNode(child.text, idx * 2 + 1)}
+              {renderBranchNode(child, idx * 2 + 1)}
               {child.children && (
                 <div className="flex gap-2 mt-2 flex-wrap justify-center max-w-[140px]">
                   {child.children.slice(0, 3).map((sub, si) => (
@@ -388,7 +439,7 @@ export const VisualMindMap = ({
   const renderOrgLayout = (rootNode: MindMapNode) => {
     return (
       <div className="flex flex-col items-center py-8 gap-6">
-        {renderCentralNode(rootNode.text)}
+        {renderCentralNode(rootNode)}
 
         {rootNode.children && rootNode.children.length > 0 && (
           <>
@@ -399,7 +450,7 @@ export const VisualMindMap = ({
               {rootNode.children.map((child, idx) => (
                 <div key={child.id} className="flex flex-col items-center gap-3">
                   <div className="w-0.5 h-4 rounded-full" style={{ backgroundColor: getNodeColor(1, idx) }} />
-                  {renderBranchNode(child.text, idx)}
+                  {renderBranchNode(child, idx)}
                   
                   {child.children && child.children.length > 0 && (
                     <div className="flex flex-col items-center gap-2">

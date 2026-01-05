@@ -62,21 +62,29 @@ Create a hierarchical mind map that is:
 - Each main branch has 2-4 sub-nodes
 - Each sub-node can have 1-3 leaf nodes
 - Uses SHORT, CLEAR labels (2-5 words max per node)
+- INCLUDES a definition/explanation for EVERY node
 
 Return ONLY valid JSON with this structure:
 {
   "id": "root",
   "text": "Main Topic (2-4 words)",
+  "definition": "A comprehensive 1-2 sentence definition explaining this topic",
   "children": [
     {
       "id": "b1",
       "text": "Branch 1 Label",
+      "definition": "Clear explanation of this branch concept in 1-2 sentences",
       "children": [
         {
           "id": "b1_s1",
           "text": "Sub-topic",
+          "definition": "Brief explanation of this sub-topic",
           "children": [
-            { "id": "b1_s1_l1", "text": "Detail point" }
+            { 
+              "id": "b1_s1_l1", 
+              "text": "Detail point",
+              "definition": "Explanation of this detail"
+            }
           ]
         }
       ]
@@ -87,10 +95,11 @@ Return ONLY valid JSON with this structure:
 CRITICAL RULES:
 - EXACTLY 5-6 main branches for balance
 - Each node text: 2-5 words MAXIMUM
+- EVERY node MUST have a "definition" field with a helpful 1-2 sentence explanation
 - Use action words and clear nouns
 - Create logical groupings
 - Include key concepts, definitions, relationships
-- Make it educational and memorable
+- Make definitions educational, clear, and informative
 - Use unique IDs (b1, b1_s1, b1_s1_l1 pattern)
 - Return ONLY the JSON, no markdown or explanation`;
 
