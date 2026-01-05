@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          created_at: string
+          education_level: string | null
+          full_name: string | null
+          id: string
+          onboarding_completed: boolean | null
+          study_goals: string[] | null
+          subjects: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          education_level?: string | null
+          full_name?: string | null
+          id: string
+          onboarding_completed?: boolean | null
+          study_goals?: string[] | null
+          subjects?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          education_level?: string | null
+          full_name?: string | null
+          id?: string
+          onboarding_completed?: boolean | null
+          study_goals?: string[] | null
+          subjects?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       search_history: {
         Row: {
           created_at: string
