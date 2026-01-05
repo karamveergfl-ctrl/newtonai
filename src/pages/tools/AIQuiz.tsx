@@ -8,10 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -194,9 +191,7 @@ const AIQuiz = () => {
               <Card className="border-border/50 shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg font-display font-semibold leading-relaxed">
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {currentQuestion?.question}
-                    </ReactMarkdown>
+                    <MarkdownRenderer content={currentQuestion?.question || ""} />
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -225,9 +220,7 @@ const AIQuiz = () => {
                         <XCircle className="h-5 w-5 text-red-500 shrink-0" />
                       )}
                       <span className="flex-1">
-                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                          {option}
-                        </ReactMarkdown>
+                        <MarkdownRenderer content={option} className="prose-sm" />
                       </span>
                     </motion.button>
                   ))}
@@ -243,12 +236,8 @@ const AIQuiz = () => {
                     <CardContent className="pt-4">
                       <p className="text-sm font-sans">
                         <span className="font-semibold text-foreground">Explanation: </span>
-                        <span className="text-muted-foreground">
-                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                            {currentQuestion?.explanation}
-                          </ReactMarkdown>
-                        </span>
                       </p>
+                      <MarkdownRenderer content={currentQuestion?.explanation || ""} className="prose-sm text-muted-foreground" />
                     </CardContent>
                   </Card>
                   

@@ -7,10 +7,7 @@ import { Notebook, Download, Copy, Check, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -158,21 +155,7 @@ const AINotes = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="prose prose-lg dark:prose-invert max-w-none 
-                    prose-headings:font-display prose-headings:font-bold prose-headings:tracking-tight
-                    prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-foreground prose-h2:border-b prose-h2:border-border/50 prose-h2:pb-2
-                    prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-h3:text-foreground/90
-                    prose-p:font-body prose-p:text-foreground/80 prose-p:leading-relaxed prose-p:text-base
-                    prose-li:font-body prose-li:text-foreground/80 prose-li:my-1
-                    prose-ul:my-4 prose-ul:space-y-1
-                    prose-strong:text-foreground prose-strong:font-semibold
-                    prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-                    prose-pre:bg-muted prose-pre:border prose-pre:border-border/50"
-                  >
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {notes}
-                    </ReactMarkdown>
-                  </div>
+                  <MarkdownRenderer content={notes} />
                 </CardContent>
               </Card>
             </motion.div>
