@@ -2,50 +2,81 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Notebook, Upload, Loader2, FileText, Download } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Notebook, Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ContentInputTabs } from "@/components/ContentInputTabs";
 
 const AINotes = () => {
-  const [content, setContent] = useState("");
   const [notes, setNotes] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.type === "text/plain") {
-        const text = await file.text();
-        setContent(text);
-      } else {
-        toast({
-          title: "Unsupported file",
-          description: "Please upload a text file or paste your content",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handleGenerate = async () => {
-    if (!content.trim()) {
-      toast({
-        title: "No content",
-        description: "Please enter or upload some content first",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
     setIsGenerating(true);
     setNotes("");
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
+
+      let textContent = content;
+
+      // Handle different input types
+      if (type === "youtube" && metadata?.videoId) {
+        const transcriptResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ videoId: metadata.videoId, videoTitle: "Video" }),
+          }
+        );
+        if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
+        const { transcript } = await transcriptResponse.json();
+        textContent = transcript;
+      } else if (type === "recording") {
+        const transcribeResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ audio: content }),
+          }
+        );
+        if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
+        const { text } = await transcribeResponse.json();
+        textContent = text;
+      } else if (type === "upload" && metadata?.file) {
+        if (metadata.file.type === "application/pdf") {
+          const formData = new FormData();
+          formData.append("file", metadata.file);
+          const processResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session.access_token}` },
+              body: formData,
+            }
+          );
+          if (!processResponse.ok) throw new Error("Failed to process PDF");
+          const { text } = await processResponse.json();
+          textContent = text;
+        } else if (content) {
+          textContent = content;
+        }
+      }
+
+      if (!textContent?.trim()) {
+        throw new Error("No content to process");
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-lecture-notes`,
@@ -55,7 +86,7 @@ const AINotes = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ content: content.slice(0, 15000) }),
+          body: JSON.stringify({ content: textContent.slice(0, 15000) }),
         }
       );
 
@@ -71,7 +102,7 @@ const AINotes = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to generate notes. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate notes. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -97,64 +128,24 @@ const AINotes = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto space-y-6"
         >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 rounded-xl bg-primary/10">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <Notebook className="h-8 w-8 text-primary" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">AI Notes</h1>
-              <p className="text-muted-foreground">Transform your content into organized study notes</p>
-            </div>
+            <h1 className="text-3xl font-bold">AI Notes</h1>
+            <p className="text-muted-foreground mt-2">
+              Give any content — textbooks, videos, slides, or recordings — and get clear, organized notes
+            </p>
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Your Content</CardTitle>
-              <CardDescription>Paste text or upload a document to generate notes</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
+            <CardContent className="pt-6">
+              <ContentInputTabs
+                onContentReady={handleContentReady}
+                isProcessing={isGenerating}
                 placeholder="Paste your lecture content, textbook excerpts, or any study material here..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={8}
-                className="resize-none"
+                supportedFormats="PDF, TXT, Images; Max size: 20MB"
               />
-
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-accent transition-colors">
-                  <Upload className="h-4 w-4" />
-                  <span className="text-sm">Upload Text File</span>
-                  <input
-                    type="file"
-                    accept=".txt"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </label>
-
-                <span className="text-sm text-muted-foreground">
-                  {content.length.toLocaleString()} characters
-                </span>
-              </div>
-
-              <Button
-                onClick={handleGenerate}
-                disabled={isGenerating || !content.trim()}
-                className="w-full"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating Notes...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Generate AI Notes
-                  </>
-                )}
-              </Button>
             </CardContent>
           </Card>
 

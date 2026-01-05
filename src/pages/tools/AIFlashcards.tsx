@@ -2,11 +2,11 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Layers, Loader2, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Layers, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ContentInputTabs } from "@/components/ContentInputTabs";
 
 interface Flashcard {
   id: string;
@@ -15,29 +15,75 @@ interface Flashcard {
 }
 
 const AIFlashcards = () => {
-  const [content, setContent] = useState("");
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const handleGenerate = async () => {
-    if (!content.trim()) {
-      toast({
-        title: "No content",
-        description: "Please enter some content to generate flashcards",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
     setIsGenerating(true);
     setFlashcards([]);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
+
+      let textContent = content;
+
+      if (type === "youtube" && metadata?.videoId) {
+        const transcriptResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ videoId: metadata.videoId, videoTitle: "Video" }),
+          }
+        );
+        if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
+        const { transcript } = await transcriptResponse.json();
+        textContent = transcript;
+      } else if (type === "recording") {
+        const transcribeResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ audio: content }),
+          }
+        );
+        if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
+        const { text } = await transcribeResponse.json();
+        textContent = text;
+      } else if (type === "upload" && metadata?.file) {
+        if (metadata.file.type === "application/pdf") {
+          const formData = new FormData();
+          formData.append("file", metadata.file);
+          const processResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session.access_token}` },
+              body: formData,
+            }
+          );
+          if (!processResponse.ok) throw new Error("Failed to process PDF");
+          const { text } = await processResponse.json();
+          textContent = text;
+        } else if (content) {
+          textContent = content;
+        }
+      }
+
+      if (!textContent?.trim()) {
+        throw new Error("No content to process");
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`,
@@ -49,7 +95,7 @@ const AIFlashcards = () => {
           },
           body: JSON.stringify({ 
             type: "text",
-            content: content.slice(0, 8000),
+            content: textContent.slice(0, 8000),
           }),
         }
       );
@@ -68,7 +114,7 @@ const AIFlashcards = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to generate flashcards. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate flashcards. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -96,48 +142,25 @@ const AIFlashcards = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto space-y-6"
         >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 rounded-xl bg-primary/10">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <Layers className="h-8 w-8 text-primary" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">AI Flashcards</h1>
-              <p className="text-muted-foreground">Generate flashcards from any content for effective studying</p>
-            </div>
+            <h1 className="text-3xl font-bold">AI Flashcards</h1>
+            <p className="text-muted-foreground mt-2">
+              Generate flashcards from any content for effective studying
+            </p>
           </div>
 
           {flashcards.length === 0 ? (
             <Card>
-              <CardHeader>
-                <CardTitle>Create Flashcards</CardTitle>
-                <CardDescription>Enter your study material to generate flashcards</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Textarea
+              <CardContent className="pt-6">
+                <ContentInputTabs
+                  onContentReady={handleContentReady}
+                  isProcessing={isGenerating}
                   placeholder="Paste your study content here (lecture notes, textbook excerpts, etc.)..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={8}
-                  className="resize-none"
+                  supportedFormats="PDF, TXT, Images; Max size: 20MB"
                 />
-
-                <Button
-                  onClick={handleGenerate}
-                  disabled={isGenerating || !content.trim()}
-                  className="w-full"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating Flashcards...
-                    </>
-                  ) : (
-                    <>
-                      <Layers className="h-4 w-4 mr-2" />
-                      Generate Flashcards
-                    </>
-                  )}
-                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -151,7 +174,6 @@ const AIFlashcards = () => {
                   size="sm"
                   onClick={() => {
                     setFlashcards([]);
-                    setContent("");
                   }}
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
@@ -169,7 +191,6 @@ const AIFlashcards = () => {
                   transition={{ duration: 0.6 }}
                   style={{ transformStyle: "preserve-3d" }}
                 >
-                  {/* Front */}
                   <Card 
                     className="absolute inset-0 flex items-center justify-center p-6 backface-hidden"
                     style={{ backfaceVisibility: "hidden" }}
@@ -180,7 +201,6 @@ const AIFlashcards = () => {
                     </div>
                   </Card>
 
-                  {/* Back */}
                   <Card 
                     className="absolute inset-0 flex items-center justify-center p-6 bg-primary/5"
                     style={{ 

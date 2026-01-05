@@ -1,41 +1,20 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Upload, Loader2, Download, File } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useDropzone } from "react-dropzone";
+import { ContentInputTabs } from "@/components/ContentInputTabs";
 
 const PDFSummarizer = () => {
-  const [file, setFile] = useState<File | null>(null);
   const [summary, setSummary] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [fileName, setFileName] = useState("");
   const { toast } = useToast();
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const pdfFile = acceptedFiles[0];
-    if (pdfFile && pdfFile.type === "application/pdf") {
-      setFile(pdfFile);
-    } else {
-      toast({
-        title: "Invalid file",
-        description: "Please upload a PDF file",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { "application/pdf": [".pdf"] },
-    maxFiles: 1,
-  });
-
-  const handleSummarize = async () => {
-    if (!file) return;
-
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
     setIsLoading(true);
     setSummary("");
 
@@ -43,26 +22,63 @@ const PDFSummarizer = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
 
-      // First, process the PDF to extract text
-      const formData = new FormData();
-      formData.append("file", file);
+      let textContent = content;
 
-      const processResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: formData,
+      if (type === "youtube" && metadata?.videoId) {
+        const transcriptResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ videoId: metadata.videoId, videoTitle: "Video" }),
+          }
+        );
+        if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
+        const { transcript } = await transcriptResponse.json();
+        textContent = transcript;
+      } else if (type === "recording") {
+        const transcribeResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ audio: content }),
+          }
+        );
+        if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
+        const { text } = await transcribeResponse.json();
+        textContent = text;
+      } else if (type === "upload" && metadata?.file) {
+        setFileName(metadata.file.name);
+        if (metadata.file.type === "application/pdf") {
+          const formData = new FormData();
+          formData.append("file", metadata.file);
+          const processResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session.access_token}` },
+              body: formData,
+            }
+          );
+          if (!processResponse.ok) throw new Error("Failed to process PDF");
+          const { text } = await processResponse.json();
+          textContent = text;
+        } else if (content) {
+          textContent = content;
         }
-      );
+      }
 
-      if (!processResponse.ok) throw new Error("Failed to process PDF");
+      if (!textContent?.trim()) {
+        throw new Error("No content to process");
+      }
 
-      const { text } = await processResponse.json();
-
-      // Then generate summary
       const summaryResponse = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`,
         {
@@ -71,7 +87,7 @@ const PDFSummarizer = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ content: text.slice(0, 15000) }),
+          body: JSON.stringify({ content: textContent.slice(0, 15000) }),
         }
       );
 
@@ -82,12 +98,12 @@ const PDFSummarizer = () => {
 
       toast({
         title: "Summary Generated! 📄",
-        description: "Your PDF has been summarized",
+        description: "Your content has been summarized",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to summarize PDF. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to summarize. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -100,7 +116,7 @@ const PDFSummarizer = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${file?.name.replace(".pdf", "")}-summary.txt`;
+    a.download = fileName ? `${fileName.replace(/\.[^/.]+$/, "")}-summary.txt` : "summary.txt";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -113,66 +129,28 @@ const PDFSummarizer = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto space-y-6"
         >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 rounded-xl bg-primary/10">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <FileText className="h-8 w-8 text-primary" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">PDF Summarizer</h1>
-              <p className="text-muted-foreground">Get concise summaries of your PDF documents</p>
-            </div>
+            <h1 className="text-3xl font-bold">PDF Summarizer</h1>
+            <p className="text-muted-foreground mt-2">
+              Get concise summaries from PDFs, videos, recordings, or text
+            </p>
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Upload PDF</CardTitle>
-              <CardDescription>Drag and drop or click to upload your PDF</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div
-                {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                  isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                }`}
-              >
-                <input {...getInputProps()} />
-                {file ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <File className="h-8 w-8 text-primary" />
-                    <div className="text-left">
-                      <p className="font-medium">{file.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-                    <p className="text-muted-foreground">
-                      {isDragActive ? "Drop the PDF here" : "Drop your PDF here or click to browse"}
-                    </p>
-                  </>
-                )}
-              </div>
-
-              <Button
-                onClick={handleSummarize}
-                disabled={isLoading || !file}
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Summarizing...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Summarize PDF
-                  </>
-                )}
-              </Button>
+            <CardContent className="pt-6">
+              <ContentInputTabs
+                onContentReady={handleContentReady}
+                isProcessing={isLoading}
+                placeholder="Paste your content here to summarize..."
+                supportedFormats="PDF, TXT; Max size: 20MB"
+                acceptedFileTypes={{
+                  "application/pdf": [".pdf"],
+                  "text/plain": [".txt"],
+                }}
+              />
             </CardContent>
           </Card>
 

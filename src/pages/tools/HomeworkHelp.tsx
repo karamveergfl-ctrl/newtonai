@@ -1,47 +1,88 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileQuestion, Upload, Camera, Loader2, Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileQuestion } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ContentInputTabs } from "@/components/ContentInputTabs";
 
 const HomeworkHelp = () => {
-  const [question, setQuestion] = useState("");
-  const [imageData, setImageData] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [solution, setSolution] = useState("");
   const { toast } = useToast();
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImageData(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSolve = async () => {
-    if (!question && !imageData) {
-      toast({
-        title: "Please provide a question",
-        description: "Enter a question or upload an image of your homework",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
     setIsLoading(true);
     setSolution("");
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
+
+      let textContent = content;
+      let imageData: string | undefined;
+
+      if (type === "youtube" && metadata?.videoId) {
+        const transcriptResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ videoId: metadata.videoId, videoTitle: "Video" }),
+          }
+        );
+        if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
+        const { transcript } = await transcriptResponse.json();
+        textContent = transcript;
+      } else if (type === "recording") {
+        const transcribeResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ audio: content }),
+          }
+        );
+        if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
+        const { text } = await transcribeResponse.json();
+        textContent = text;
+      } else if (type === "upload" && metadata?.file) {
+        if (metadata.file.type.startsWith("image/")) {
+          const reader = new FileReader();
+          imageData = await new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(metadata.file!);
+          });
+          textContent = "";
+        } else if (metadata.file.type === "application/pdf") {
+          const formData = new FormData();
+          formData.append("file", metadata.file);
+          const processResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session.access_token}` },
+              body: formData,
+            }
+          );
+          if (!processResponse.ok) throw new Error("Failed to process PDF");
+          const { text } = await processResponse.json();
+          textContent = text;
+        } else if (content) {
+          textContent = content;
+        }
+      }
+
+      if (!textContent?.trim() && !imageData) {
+        throw new Error("No content to process");
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-text`,
@@ -53,7 +94,7 @@ const HomeworkHelp = () => {
           },
           body: JSON.stringify({ 
             imageData: imageData || undefined,
-            text: question || undefined,
+            text: textContent || undefined,
             stream: true 
           }),
         }
@@ -87,10 +128,15 @@ const HomeworkHelp = () => {
           }
         }
       }
+
+      toast({
+        title: "Solution Ready! ✨",
+        description: "Your homework has been solved",
+      });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to solve the problem. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to solve the problem. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -106,81 +152,24 @@ const HomeworkHelp = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto space-y-6"
         >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 rounded-xl bg-primary/10">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <FileQuestion className="h-8 w-8 text-primary" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">Homework Help</h1>
-              <p className="text-muted-foreground">Get step-by-step solutions to your homework problems</p>
-            </div>
+            <h1 className="text-3xl font-bold">Homework Help</h1>
+            <p className="text-muted-foreground mt-2">
+              Get step-by-step solutions to your homework problems from any format
+            </p>
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Ask a Question</CardTitle>
-              <CardDescription>Type your question or upload an image of your homework</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
+            <CardContent className="pt-6">
+              <ContentInputTabs
+                onContentReady={handleContentReady}
+                isProcessing={isLoading}
                 placeholder="Type your homework question here..."
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                rows={4}
-                className="resize-none"
+                supportedFormats="Images, PDF, TXT; Max size: 20MB"
               />
-
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-accent transition-colors">
-                  <Upload className="h-4 w-4" />
-                  <span className="text-sm">Upload Image</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </label>
-
-                {imageData && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Camera className="h-4 w-4" />
-                    Image uploaded
-                  </div>
-                )}
-              </div>
-
-              {imageData && (
-                <div className="relative max-w-xs">
-                  <img src={imageData} alt="Uploaded" className="rounded-lg border" />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => setImageData(null)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              )}
-
-              <Button
-                onClick={handleSolve}
-                disabled={isLoading || (!question && !imageData)}
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Solving...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Solve Problem
-                  </>
-                )}
-              </Button>
             </CardContent>
           </Card>
 
