@@ -40,11 +40,14 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { imageData, stream } = await req.json();
-    console.log("Analyzing screenshot with Gemini 2.5 Pro, streaming:", stream);
+    const { imageData, text, stream, language } = await req.json();
+    const hasImage = !!imageData;
+    const hasText = !!text?.trim();
+    
+    console.log("Analyzing content with Gemini 2.5 Flash, streaming:", stream, "hasImage:", hasImage, "hasText:", hasText);
 
-    if (!imageData) {
-      throw new Error("No image provided");
+    if (!hasImage && !hasText) {
+      throw new Error("No content provided - please provide text or an image");
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -52,33 +55,47 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    const systemPrompt = `Solve this numerical problem by analyzing the diagram and text in the image.
+    const langInstruction = language && language !== "en" 
+      ? `\nIMPORTANT: Respond in ${language} language.` 
+      : "";
+
+    const systemPrompt = `Solve this problem step by step.${langInstruction}
 
 INSTRUCTIONS:
 1. First line MUST be: "TOPIC: [specific topic for YouTube, e.g., "projectile motion", "RC circuit"]"
 
 2. Provide a SHORT, CONCISE solution:
 
-## 📊 Figure
-Brief 1-2 line description of what's shown.
+## 📊 Problem
+Brief 1-2 line description of the problem.
 
 ## 📝 Quick Solution
 
-**Given:** $v = 20\\,\\text{m/s}$, $\\theta = 30°$ (list key values only)
+**Given:** List key values only
 
 **Find:** What to calculate
 
 **Solution:**
-Key formula: $$v = u + at$$
-Substitute: $$v = 20 \\cos 30° = 17.3\\,\\text{m/s}$$
+Key formula and steps with clear substitution
 
-**✅ Answer:** $$\\boxed{x = 35.3\\,\\text{m}}$$
+**✅ Answer:** Use \\boxed{} for final answer
 
 RULES:
 - Keep solution SHORT (max 10 lines of math)
 - Only show essential steps, skip obvious algebra
 - Use $...$ for inline, $$...$$ for display math
 - Use \\boxed{} for final answer`;
+
+    // Build message content based on available inputs
+    const messageContent: any[] = [{ type: "text", text: systemPrompt }];
+    
+    if (hasText) {
+      messageContent.push({ type: "text", text: `\n\nProblem:\n${text}` });
+    }
+    
+    if (hasImage) {
+      messageContent.push({ type: "image_url", image_url: { url: imageData } });
+    }
 
     // Streaming response
     if (stream) {
@@ -95,10 +112,7 @@ RULES:
           messages: [
             {
               role: "user",
-              content: [
-                { type: "text", text: systemPrompt },
-                { type: "image_url", image_url: { url: imageData } }
-              ]
+              content: messageContent
             }
           ],
         }),
@@ -142,10 +156,7 @@ RULES:
         messages: [
           {
             role: "user",
-            content: [
-              { type: "text", text: systemPrompt },
-              { type: "image_url", image_url: { url: imageData } }
-            ]
+            content: messageContent
           }
         ],
       }),
