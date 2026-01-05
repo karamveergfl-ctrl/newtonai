@@ -8,6 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -136,14 +140,14 @@ const AIQuiz = () => {
             <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <Brain className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold">AI Quiz</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-3xl font-display font-bold tracking-tight">AI Quiz</h1>
+            <p className="text-muted-foreground mt-2 font-sans">
               Test your knowledge with AI-generated quizzes from any content
             </p>
           </div>
 
           {questions.length === 0 ? (
-            <Card>
+            <Card className="border-border/50 shadow-lg">
               <CardContent className="pt-6">
                 <ContentInputTabs
                   onContentReady={handleContentReady}
@@ -158,15 +162,15 @@ const AIQuiz = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
             >
-              <Card className="text-center">
+              <Card className="text-center border-border/50 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-2xl">Quiz Complete! 🎉</CardTitle>
+                  <CardTitle className="text-2xl font-display font-bold">Quiz Complete! 🎉</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="text-6xl font-bold text-primary">
+                  <div className="text-6xl font-display font-bold text-primary">
                     {Math.round((score / questions.length) * 100)}%
                   </div>
-                  <p className="text-lg text-muted-foreground">
+                  <p className="text-lg text-muted-foreground font-sans">
                     You got {score} out of {questions.length} correct
                   </p>
                   <Button onClick={resetQuiz} className="w-full max-w-xs">
@@ -179,17 +183,21 @@ const AIQuiz = () => {
           ) : (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground font-sans">
                   Question {currentIndex + 1} of {questions.length}
                 </span>
-                <span className="text-sm font-medium">
+                <span className="text-sm font-medium font-sans">
                   Score: {score}/{currentIndex + (showResult ? 1 : 0)}
                 </span>
               </div>
 
-              <Card>
+              <Card className="border-border/50 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-lg">{currentQuestion?.question}</CardTitle>
+                  <CardTitle className="text-lg font-display font-semibold leading-relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                      {currentQuestion?.question}
+                    </ReactMarkdown>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {currentQuestion?.options.map((option, index) => (
@@ -200,7 +208,7 @@ const AIQuiz = () => {
                       onClick={() => handleAnswerSelect(index)}
                       disabled={showResult}
                       className={cn(
-                        "w-full p-4 rounded-lg border text-left transition-colors flex items-center gap-3",
+                        "w-full p-4 rounded-xl border text-left transition-all flex items-center gap-3 font-sans",
                         showResult
                           ? index === currentQuestion.correctIndex
                             ? "border-green-500 bg-green-500/10"
@@ -216,7 +224,11 @@ const AIQuiz = () => {
                       {showResult && selectedAnswer === index && index !== currentQuestion.correctIndex && (
                         <XCircle className="h-5 w-5 text-red-500 shrink-0" />
                       )}
-                      <span>{option}</span>
+                      <span className="flex-1">
+                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                          {option}
+                        </ReactMarkdown>
+                      </span>
                     </motion.button>
                   ))}
                 </CardContent>
@@ -227,11 +239,15 @@ const AIQuiz = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <Card className="bg-muted/50">
+                  <Card className="bg-muted/50 border-border/50">
                     <CardContent className="pt-4">
-                      <p className="text-sm">
-                        <span className="font-medium">Explanation: </span>
-                        {currentQuestion?.explanation}
+                      <p className="text-sm font-sans">
+                        <span className="font-semibold text-foreground">Explanation: </span>
+                        <span className="text-muted-foreground">
+                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                            {currentQuestion?.explanation}
+                          </ReactMarkdown>
+                        </span>
                       </p>
                     </CardContent>
                   </Card>

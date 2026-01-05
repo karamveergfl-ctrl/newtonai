@@ -92,14 +92,14 @@ const MindMap = () => {
             <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <Sparkles className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold">Mind Map</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-3xl font-display font-bold tracking-tight">Mind Map</h1>
+            <p className="text-muted-foreground mt-2 font-sans">
               Visualize concepts and relationships from any content
             </p>
           </div>
 
           {!mindMapData ? (
-            <Card>
+            <Card className="border-border/50 shadow-lg">
               <CardContent className="pt-6">
                 <ContentInputTabs
                   onContentReady={handleContentReady}
@@ -123,7 +123,7 @@ const MindMap = () => {
                   <Button variant="outline" size="icon" onClick={handleZoomOut}>
                     <ZoomOut className="h-4 w-4" />
                   </Button>
-                  <span className="text-sm text-muted-foreground w-16 text-center">
+                  <span className="text-sm text-muted-foreground w-16 text-center font-sans">
                     {Math.round(zoom * 100)}%
                   </span>
                   <Button variant="outline" size="icon" onClick={handleZoomIn}>
@@ -132,7 +132,7 @@ const MindMap = () => {
                 </div>
               </div>
 
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden border-border/50 shadow-lg">
                 <CardContent className="p-0">
                   <div 
                     className="min-h-[600px] overflow-auto"
