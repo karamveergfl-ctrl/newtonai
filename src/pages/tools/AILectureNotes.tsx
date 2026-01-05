@@ -49,7 +49,7 @@ const AILectureNotes = () => {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ 
-            content: textContent,
+            transcription: textContent,
             language: metadata?.language || "en",
           }),
         }
