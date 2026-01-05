@@ -131,7 +131,7 @@ const Auth = () => {
               <FileText className="w-8 h-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl">SmartReader Pro</CardTitle>
+          <CardTitle className="text-2xl">newtonAI</CardTitle>
           <CardDescription>
             {isLogin ? "Sign in to your account" : "Create a new account"}
           </CardDescription>

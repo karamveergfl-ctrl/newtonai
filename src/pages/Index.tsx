@@ -1630,7 +1630,7 @@ const Index = () => {
         <div className="p-4 border-b bg-card/50 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              SmartReader Pro
+              newtonAI
             </h1>
             <div className="flex items-center gap-2">
               <GamificationBadge />
