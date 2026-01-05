@@ -27,7 +27,7 @@ const AIQuiz = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const { toast } = useToast();
 
-  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     setIsGenerating(true);
     setQuestions([]);
     setScore(0);
@@ -105,6 +105,7 @@ const AIQuiz = () => {
           body: JSON.stringify({ 
             type: "text",
             content: textContent.slice(0, 8000),
+            language: metadata?.language || "en",
           }),
         }
       );

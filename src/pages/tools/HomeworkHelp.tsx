@@ -12,7 +12,7 @@ const HomeworkHelp = () => {
   const [solution, setSolution] = useState("");
   const { toast } = useToast();
 
-  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     setIsLoading(true);
     setSolution("");
 
@@ -95,7 +95,8 @@ const HomeworkHelp = () => {
           body: JSON.stringify({ 
             imageData: imageData || undefined,
             text: textContent || undefined,
-            stream: true 
+            stream: true,
+            language: metadata?.language || "en",
           }),
         }
       );
