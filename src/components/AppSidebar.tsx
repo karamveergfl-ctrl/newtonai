@@ -1,8 +1,10 @@
+import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Sidebar,
   SidebarContent,
@@ -30,18 +32,20 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Search,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const studyTools = [
-  { id: "homework", label: "Homework Help", icon: FileQuestion, action: "homework" },
-  { id: "notes", label: "AI Notes", icon: Notebook, action: "notes" },
-  { id: "flashcards", label: "AI Flashcards", icon: Layers, action: "flashcards" },
-  { id: "quiz", label: "AI Quiz", icon: Brain, action: "quiz" },
-  { id: "pdf", label: "PDF Summarizer", icon: FileText, action: "summary" },
-  { id: "video", label: "Video Summarizer", icon: Video, action: "video" },
-  { id: "lecture", label: "AI Lecture Notes", icon: Mic, action: "lecture" },
-  { id: "mindmap", label: "Mind Map", icon: Sparkles, action: "mindmap" },
+  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help" },
+  { id: "notes", label: "AI Notes", icon: Notebook, path: "/tools/ai-notes" },
+  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards" },
+  { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz" },
+  { id: "pdf", label: "PDF Summarizer", icon: FileText, path: "/tools/pdf-summarizer" },
+  { id: "video", label: "Video Summarizer", icon: Video, path: "/tools/video-summarizer" },
+  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes" },
+  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map" },
 ];
 
 interface AppSidebarProps {
@@ -54,8 +58,19 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const navigate = useNavigate();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isActive = (path: string) => location.pathname === path;
+
+  const filteredTools = useMemo(() => {
+    if (!searchQuery.trim()) return studyTools;
+    const query = searchQuery.toLowerCase();
+    return studyTools.filter(
+      (tool) =>
+        tool.label.toLowerCase().includes(query) ||
+        tool.id.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
 
   return (
     <Sidebar
@@ -78,6 +93,32 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             )}
           </Button>
         </div>
+
+        {/* Search Bar */}
+        {!isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 relative"
+          >
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search tools..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-8 h-9 bg-sidebar-accent/50 border-sidebar-border"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </motion.div>
+        )}
       </SidebarHeader>
 
       <SidebarContent className="px-2">
@@ -116,21 +157,41 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           )}
           <SidebarGroupContent>
             <SidebarMenu>
-              {studyTools.map((tool) => (
-                <SidebarMenuItem key={tool.id}>
-                  <SidebarMenuButton asChild tooltip={tool.label}>
-                    <motion.button
-                      whileHover={{ x: 4 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => onToolSelect?.(tool.action)}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
-                    >
-                      <tool.icon className="h-5 w-5 shrink-0" />
-                      {!isCollapsed && <span>{tool.label}</span>}
-                    </motion.button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <AnimatePresence mode="popLayout">
+                {filteredTools.map((tool) => (
+                  <motion.div
+                    key={tool.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    layout
+                  >
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip={tool.label}>
+                        <motion.button
+                          whileHover={{ x: 4 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => navigate(tool.path)}
+                          className={cn(
+                            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                            isActive(tool.path)
+                              ? "bg-primary text-primary-foreground"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent"
+                          )}
+                        >
+                          <tool.icon className="h-5 w-5 shrink-0" />
+                          {!isCollapsed && <span>{tool.label}</span>}
+                        </motion.button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              {filteredTools.length === 0 && !isCollapsed && (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  No tools found
+                </p>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
