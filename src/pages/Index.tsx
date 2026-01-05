@@ -22,6 +22,7 @@ import { VisualMindMap } from "@/components/VisualMindMap";
 import { GenerationSettings } from "@/components/GenerationSettingsDialog";
 import { VideoGenerationSettings } from "@/components/VideoGenerationSettingsDialog";
 import { GamificationBadge } from "@/components/GamificationBadge";
+import { AppLayout } from "@/components/AppLayout";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -1621,17 +1622,48 @@ const Index = () => {
     }
   };
 
+  // Handler for sidebar tool selection
+  const handleSidebarToolSelect = (tool: string) => {
+    switch (tool) {
+      case "homework":
+        // Focus on search/upload for homework help
+        break;
+      case "notes":
+        // Open lecture recorder
+        break;
+      case "flashcards":
+        if (pdfText) handleGenerateFlashcardsFromText(pdfText);
+        break;
+      case "quiz":
+        if (pdfText) handleGenerateQuizFromText(pdfText);
+        break;
+      case "summary":
+        if (pdfText) handleGenerateSummaryFromText(pdfText);
+        break;
+      case "video":
+        // Scroll to video section
+        break;
+      case "lecture":
+        // Focus on lecture recorder
+        break;
+      case "mindmap":
+        if (pdfText) handleGenerateMindMapFromText(pdfText);
+        break;
+      default:
+        break;
+    }
+  };
+
   if (!session) {
     return null; // Auth redirect will happen in useEffect
   }
 
   if (!fileData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-        <div className="p-4 border-b bg-card/50 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <Logo size="md" />
-            <div className="flex items-center gap-2">
+      <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
+        <div className="flex-1 bg-gradient-to-br from-background via-background to-primary/5 overflow-auto">
+          <div className="max-w-4xl mx-auto px-6 py-8">
+            <div className="flex items-center justify-between mb-6">
               <GamificationBadge />
               <Button
                 onClick={handleOCRUpload}
@@ -1642,81 +1674,69 @@ const Index = () => {
                 <FileText className="w-4 h-4" />
                 Rewrite Handwritten (A4)
               </Button>
-              <ThemeToggle />
-              <Button
-                onClick={handleSignOut}
-                variant="ghost"
-                size="sm"
-                className="gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
+            </div>
+            <GlobalSearchBox onTopicSearch={handleTopicSearch} isSearching={isTopicSearching} />
+            {showVideosPanel && (
+              <div className="mt-8 animate-fade-in">
+                <VideoPanel 
+                  animationVideos={animationVideos}
+                  explanationVideos={explanationVideos}
+                  searchQuery={searchQuery}
+                  onVideoClick={handleVideoClick}
+                  onClose={handleCloseVideosPanel}
+                  onGenerateFlashcards={handleGenerateFlashcardsFromVideo}
+                  onGenerateQuiz={handleGenerateQuizFromVideo}
+                  onGenerateSummary={handleGenerateSummaryFromVideo}
+                  onGenerateMindMap={handleGenerateMindMapFromVideo}
+                  isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap}
+                  activeGenerating={activeGenerating}
+                  onLoadMore={handleLoadMoreVideos}
+                  isLoadingMore={isLoadingMoreVideos}
+                  hasMoreAnimation={!!animationNextPageToken}
+                  hasMoreExplanation={!!explanationNextPageToken}
+                />
+              </div>
+            )}
+            <div className="mt-8 space-y-6">
+              <StudyTracker />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <UploadZone onUploadComplete={handleUploadComplete} />
+                <LectureRecorder onNotesGenerated={(notes, title) => {
+                  setLectureNotes(notes);
+                  setLectureNotesTitle(title);
+                }} />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <GlobalSearchBox onTopicSearch={handleTopicSearch} isSearching={isTopicSearching} />
-          {showVideosPanel && (
-            <div className="mt-8 animate-fade-in">
-              <VideoPanel 
-                animationVideos={animationVideos}
-                explanationVideos={explanationVideos}
-                searchQuery={searchQuery}
-                onVideoClick={handleVideoClick}
-                onClose={handleCloseVideosPanel}
-                onGenerateFlashcards={handleGenerateFlashcardsFromVideo}
-                onGenerateQuiz={handleGenerateQuizFromVideo}
-                onGenerateSummary={handleGenerateSummaryFromVideo}
-                onGenerateMindMap={handleGenerateMindMapFromVideo}
-                isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap}
-                activeGenerating={activeGenerating}
-                onLoadMore={handleLoadMoreVideos}
-                isLoadingMore={isLoadingMoreVideos}
-                hasMoreAnimation={!!animationNextPageToken}
-                hasMoreExplanation={!!explanationNextPageToken}
-              />
-            </div>
+          {selectedVideoId && (
+            <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
           )}
-          <div className="mt-8 space-y-6">
-            <StudyTracker />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UploadZone onUploadComplete={handleUploadComplete} />
-              <LectureRecorder onNotesGenerated={(notes, title) => {
-                setLectureNotes(notes);
-                setLectureNotesTitle(title);
-              }} />
-            </div>
-          </div>
+          {showOCRView && ocrFile && (
+            <OCRSplitView 
+              file={ocrFile} 
+              onClose={handleCloseOCR}
+              onTextSelect={handleSearch}
+            />
+          )}
+          {lectureNotes && (
+            <FullScreenStudyTool
+              type="summary"
+              title={lectureNotesTitle || "Lecture Notes"}
+              content={lectureNotes}
+              onClose={() => { setLectureNotes(""); setLectureNotesTitle(""); }}
+            />
+          )}
         </div>
-        {selectedVideoId && (
-          <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />
-        )}
-        {showOCRView && ocrFile && (
-          <OCRSplitView 
-            file={ocrFile} 
-            onClose={handleCloseOCR}
-            onTextSelect={handleSearch}
-          />
-        )}
-        {lectureNotes && (
-          <FullScreenStudyTool
-            type="summary"
-            title={lectureNotesTitle || "Lecture Notes"}
-            content={lectureNotes}
-            onClose={() => { setLectureNotes(""); setLectureNotesTitle(""); }}
-          />
-        )}
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="h-screen flex flex-col">
+    <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
+      <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
         {/* Compact Header */}
         <div className="p-2 md:p-3 border-b bg-card/50 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Button
                 onClick={handleReset}
@@ -1754,16 +1774,6 @@ const Index = () => {
                 isGenerating={isGeneratingFlashcards || isGeneratingQuiz}
                 disabled={!pdfText && !fileData?.ocrText}
               />
-              <ThemeToggle />
-              <Button
-                onClick={handleSignOut}
-                variant="ghost"
-                size="sm"
-                className="gap-1 h-8"
-              >
-                <LogOut className="w-3 h-3 md:w-4 md:h-4" />
-                <span className="hidden sm:inline text-xs">Sign Out</span>
-              </Button>
             </div>
           </div>
         </div>
@@ -2012,7 +2022,7 @@ const Index = () => {
           )}
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
