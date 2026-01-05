@@ -12,7 +12,7 @@ export const nlmColors = {
 
 // Mind Map Theme following NotebookLM style
 export const notebookLMTheme = {
-  name: "NotebookLM",
+  name: "Colours",
   colors: [nlmColors.blue, nlmColors.green, nlmColors.yellow, nlmColors.red, nlmColors.purple, nlmColors.cyan],
   bgGradient: "linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)",
 };
