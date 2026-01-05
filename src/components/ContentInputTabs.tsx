@@ -1,17 +1,45 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Mic, Youtube, FileText, Square, Play, Pause, Loader2, File, X } from "lucide-react";
+import { Upload, Mic, Youtube, FileText, Square, Play, Pause, Loader2, File, X, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useDropzone } from "react-dropzone";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const LANGUAGES = [
+  { code: "en", name: "English" },
+  { code: "es", name: "Spanish" },
+  { code: "fr", name: "French" },
+  { code: "de", name: "German" },
+  { code: "it", name: "Italian" },
+  { code: "pt", name: "Portuguese" },
+  { code: "zh", name: "Chinese" },
+  { code: "ja", name: "Japanese" },
+  { code: "ko", name: "Korean" },
+  { code: "ar", name: "Arabic" },
+  { code: "hi", name: "Hindi" },
+  { code: "ru", name: "Russian" },
+  { code: "nl", name: "Dutch" },
+  { code: "pl", name: "Polish" },
+  { code: "tr", name: "Turkish" },
+  { code: "vi", name: "Vietnamese" },
+  { code: "th", name: "Thai" },
+  { code: "id", name: "Indonesian" },
+];
 
 type InputType = "upload" | "recording" | "youtube" | "text";
 
 interface ContentInputTabsProps {
-  onContentReady: (content: string, type: InputType, metadata?: { videoId?: string; videoTitle?: string; file?: File }) => void;
+  onContentReady: (content: string, type: InputType, metadata?: { videoId?: string; videoTitle?: string; file?: File; language?: string }) => void;
   isProcessing?: boolean;
   supportedFormats?: string;
   acceptedFileTypes?: Record<string, string[]>;
@@ -20,6 +48,8 @@ interface ContentInputTabsProps {
   showRecording?: boolean;
   showUpload?: boolean;
   showText?: boolean;
+  showLanguageSelector?: boolean;
+  defaultLanguage?: string;
 }
 
 export const ContentInputTabs = ({
@@ -38,6 +68,8 @@ export const ContentInputTabs = ({
   showRecording = true,
   showUpload = true,
   showText = true,
+  showLanguageSelector = true,
+  defaultLanguage = "en",
 }: ContentInputTabsProps) => {
   const [activeTab, setActiveTab] = useState<InputType>("upload");
   const [textContent, setTextContent] = useState("");
@@ -48,6 +80,7 @@ export const ContentInputTabs = ({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(defaultLanguage);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -153,7 +186,7 @@ export const ContentInputTabs = ({
           toast({ title: "No content", description: "Please enter some text", variant: "destructive" });
           return;
         }
-        onContentReady(textContent, "text");
+        onContentReady(textContent, "text", { language: selectedLanguage });
         break;
 
       case "upload":
@@ -164,10 +197,10 @@ export const ContentInputTabs = ({
         // For text files, read content directly
         if (file.type === "text/plain") {
           const text = await file.text();
-          onContentReady(text, "upload", { file });
+          onContentReady(text, "upload", { file, language: selectedLanguage });
         } else {
           // For other files, pass the file for processing
-          onContentReady("", "upload", { file });
+          onContentReady("", "upload", { file, language: selectedLanguage });
         }
         break;
 
@@ -177,7 +210,7 @@ export const ContentInputTabs = ({
           toast({ title: "Invalid URL", description: "Please enter a valid YouTube URL", variant: "destructive" });
           return;
         }
-        onContentReady(youtubeUrl, "youtube", { videoId });
+        onContentReady(youtubeUrl, "youtube", { videoId, language: selectedLanguage });
         break;
 
       case "recording":
@@ -196,7 +229,7 @@ export const ContentInputTabs = ({
             };
             reader.readAsDataURL(audioBlob);
           });
-          onContentReady(base64, "recording");
+          onContentReady(base64, "recording", { language: selectedLanguage });
         } finally {
           setIsTranscribing(false);
         }
@@ -224,8 +257,8 @@ export const ContentInputTabs = ({
 
   return (
     <div className="space-y-6">
-      {/* Tab Selector */}
-      <div className="flex items-center justify-between">
+      {/* Tab Selector and Language Dropdown */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="inline-flex items-center p-1 rounded-full bg-muted/50 border border-border">
           {tabs.map((tab) => (
             <button
@@ -242,6 +275,22 @@ export const ContentInputTabs = ({
             </button>
           ))}
         </div>
+
+        {showLanguageSelector && (
+          <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+            <SelectTrigger className="w-[180px] bg-background">
+              <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Select language" />
+            </SelectTrigger>
+            <SelectContent>
+              {LANGUAGES.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>
+                  {lang.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Content Areas */}
