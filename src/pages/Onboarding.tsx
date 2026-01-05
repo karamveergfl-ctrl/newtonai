@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,8 @@ import {
   User, 
   ChevronRight, 
   ChevronLeft,
-  Check
+  Check,
+  Sparkles
 } from "lucide-react";
 
 const educationLevels = [
@@ -50,9 +52,70 @@ const studyGoals = [
   { id: "skill_building", label: "Skill Building", description: "Develop new skills" },
 ];
 
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 300 : -300,
+    opacity: 0,
+    scale: 0.95,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    scale: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction < 0 ? 300 : -300,
+    opacity: 0,
+    scale: 0.95,
+  }),
+};
+
+const cardItemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.05,
+      duration: 0.3,
+      ease: "easeOut" as const,
+    },
+  }),
+};
+
+const iconVariants = {
+  initial: { scale: 0, rotate: -180 },
+  animate: { 
+    scale: 1, 
+    rotate: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 200,
+      damping: 15,
+    }
+  },
+};
+
+const checkmarkVariants = {
+  initial: { scale: 0 },
+  animate: { 
+    scale: 1,
+    transition: {
+      type: "spring" as const,
+      stiffness: 500,
+      damping: 25,
+    }
+  },
+  exit: { 
+    scale: 0,
+    transition: { duration: 0.15 }
+  },
+};
+
 const Onboarding = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [direction, setDirection] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -75,7 +138,6 @@ const Onboarding = () => {
       return;
     }
 
-    // Check if onboarding is already completed
     const { data: profile } = await supabase
       .from("profiles")
       .select("onboarding_completed, full_name")
@@ -105,10 +167,12 @@ const Onboarding = () => {
       toast.error("Please select at least one subject");
       return;
     }
+    setDirection(1);
     setStep(step + 1);
   };
 
   const handleBack = () => {
+    setDirection(-1);
     setStep(step - 1);
   };
 
@@ -167,203 +231,440 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex flex-col overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <motion.div
+          className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"
+          animate={{
+            x: [0, 50, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"
+          animate={{
+            x: [0, -30, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+
       {/* Header */}
-      <header className="p-4 md:p-6">
+      <motion.header 
+        className="p-4 md:p-6 relative z-10"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <Logo size="md" />
-      </header>
+      </motion.header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-8">
+      <main className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
         <div className="w-full max-w-2xl">
           {/* Progress */}
-          <div className="mb-8">
+          <motion.div 
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             <div className="flex justify-between text-sm text-muted-foreground mb-2">
               <span>Step {step} of {totalSteps}</span>
               <span>{Math.round(progress)}% complete</span>
             </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-
-          {/* Step 1: Name */}
-          {step === 1 && (
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="text-center pb-2">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="w-8 h-8 text-primary" />
-                </div>
-                <CardTitle className="text-2xl md:text-3xl">What's your name?</CardTitle>
-                <CardDescription className="text-base">
-                  Let's personalize your learning experience
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <Input
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                  className="text-lg h-14 text-center"
-                  autoFocus
+            <div className="relative">
+              <Progress value={progress} className="h-2" />
+              <motion.div
+                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary rounded-full shadow-lg"
+                style={{ left: `calc(${progress}% - 8px)` }}
+                layoutId="progress-indicator"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <motion.div
+                  className="absolute inset-0 bg-primary rounded-full"
+                  animate={{ scale: [1, 1.3, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  style={{ opacity: 0.4 }}
                 />
-                <Button 
-                  onClick={handleNext} 
-                  className="w-full mt-6 h-12 text-lg"
-                >
-                  Continue
-                  <ChevronRight className="w-5 h-5 ml-2" />
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+              </motion.div>
+            </div>
+          </motion.div>
 
-          {/* Step 2: Education Level */}
-          {step === 2 && (
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="text-center pb-2">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <GraduationCap className="w-8 h-8 text-primary" />
-                </div>
-                <CardTitle className="text-2xl md:text-3xl">What's your education level?</CardTitle>
-                <CardDescription className="text-base">
-                  This helps us tailor content to your level
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {educationLevels.map((level) => (
-                    <button
-                      key={level.id}
-                      onClick={() => setFormData(prev => ({ ...prev, educationLevel: level.id }))}
-                      className={`p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50 ${
-                        formData.educationLevel === level.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border"
-                      }`}
+          {/* Step Cards */}
+          <AnimatePresence mode="wait" custom={direction}>
+            {/* Step 1: Name */}
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Card className="border-0 shadow-xl backdrop-blur-sm bg-card/95">
+                  <CardHeader className="text-center pb-2">
+                    <motion.div 
+                      className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4"
+                      variants={iconVariants}
+                      initial="initial"
+                      animate="animate"
                     >
-                      <span className="text-2xl mb-2 block">{level.icon}</span>
-                      <span className="font-medium">{level.label}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-3 mt-6">
-                  <Button variant="outline" onClick={handleBack} className="flex-1 h-12">
-                    <ChevronLeft className="w-5 h-5 mr-2" />
-                    Back
-                  </Button>
-                  <Button onClick={handleNext} className="flex-1 h-12">
-                    Continue
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                      <User className="w-8 h-8 text-primary" />
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <CardTitle className="text-2xl md:text-3xl">What's your name?</CardTitle>
+                      <CardDescription className="text-base mt-2">
+                        Let's personalize your learning experience
+                      </CardDescription>
+                    </motion.div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <Input
+                        placeholder="Enter your full name"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                        className="text-lg h-14 text-center transition-all focus:scale-[1.02]"
+                        autoFocus
+                      />
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <Button 
+                        onClick={handleNext} 
+                        className="w-full mt-6 h-12 text-lg group"
+                      >
+                        Continue
+                        <motion.span
+                          className="ml-2"
+                          animate={{ x: [0, 5, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </motion.span>
+                      </Button>
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-          {/* Step 3: Subjects */}
-          {step === 3 && (
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="text-center pb-2">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <BookOpen className="w-8 h-8 text-primary" />
-                </div>
-                <CardTitle className="text-2xl md:text-3xl">What subjects do you study?</CardTitle>
-                <CardDescription className="text-base">
-                  Select all that apply
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {subjects.map((subject) => (
-                    <button
-                      key={subject.id}
-                      onClick={() => toggleSubject(subject.id)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50 relative ${
-                        formData.subjects.includes(subject.id)
-                          ? "border-primary bg-primary/5"
-                          : "border-border"
-                      }`}
+            {/* Step 2: Education Level */}
+            {step === 2 && (
+              <motion.div
+                key="step2"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Card className="border-0 shadow-xl backdrop-blur-sm bg-card/95">
+                  <CardHeader className="text-center pb-2">
+                    <motion.div 
+                      className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4"
+                      variants={iconVariants}
+                      initial="initial"
+                      animate="animate"
                     >
-                      {formData.subjects.includes(subject.id) && (
-                        <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                          <Check className="w-3 h-3 text-primary-foreground" />
-                        </div>
-                      )}
-                      <span className="text-2xl mb-2 block">{subject.icon}</span>
-                      <span className="font-medium text-sm">{subject.label}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-3 mt-6">
-                  <Button variant="outline" onClick={handleBack} className="flex-1 h-12">
-                    <ChevronLeft className="w-5 h-5 mr-2" />
-                    Back
-                  </Button>
-                  <Button onClick={handleNext} className="flex-1 h-12">
-                    Continue
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                      <GraduationCap className="w-8 h-8 text-primary" />
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <CardTitle className="text-2xl md:text-3xl">What's your education level?</CardTitle>
+                      <CardDescription className="text-base mt-2">
+                        This helps us tailor content to your level
+                      </CardDescription>
+                    </motion.div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {educationLevels.map((level, i) => (
+                        <motion.button
+                          key={level.id}
+                          custom={i}
+                          variants={cardItemVariants}
+                          initial="hidden"
+                          animate="visible"
+                          onClick={() => setFormData(prev => ({ ...prev, educationLevel: level.id }))}
+                          className={`p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50 hover:scale-[1.02] ${
+                            formData.educationLevel === level.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border"
+                          }`}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <motion.span 
+                            className="text-2xl mb-2 block"
+                            animate={formData.educationLevel === level.id ? { scale: [1, 1.2, 1] } : {}}
+                            transition={{ duration: 0.3 }}
+                          >
+                            {level.icon}
+                          </motion.span>
+                          <span className="font-medium">{level.label}</span>
+                        </motion.button>
+                      ))}
+                    </div>
+                    <motion.div 
+                      className="flex gap-3 mt-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <Button variant="outline" onClick={handleBack} className="flex-1 h-12 group">
+                        <ChevronLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                        Back
+                      </Button>
+                      <Button onClick={handleNext} className="flex-1 h-12 group">
+                        Continue
+                        <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-          {/* Step 4: Study Goals */}
-          {step === 4 && (
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="text-center pb-2">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Target className="w-8 h-8 text-primary" />
-                </div>
-                <CardTitle className="text-2xl md:text-3xl">What are your study goals?</CardTitle>
-                <CardDescription className="text-base">
-                  We'll customize your experience based on your goals
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="grid gap-3">
-                  {studyGoals.map((goal) => (
-                    <button
-                      key={goal.id}
-                      onClick={() => toggleGoal(goal.id)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50 relative flex items-center gap-4 ${
-                        formData.studyGoals.includes(goal.id)
-                          ? "border-primary bg-primary/5"
-                          : "border-border"
-                      }`}
+            {/* Step 3: Subjects */}
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Card className="border-0 shadow-xl backdrop-blur-sm bg-card/95">
+                  <CardHeader className="text-center pb-2">
+                    <motion.div 
+                      className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4"
+                      variants={iconVariants}
+                      initial="initial"
+                      animate="animate"
                     >
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        formData.studyGoals.includes(goal.id)
-                          ? "border-primary bg-primary"
-                          : "border-muted-foreground"
-                      }`}>
-                        {formData.studyGoals.includes(goal.id) && (
-                          <Check className="w-4 h-4 text-primary-foreground" />
+                      <BookOpen className="w-8 h-8 text-primary" />
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <CardTitle className="text-2xl md:text-3xl">What subjects do you study?</CardTitle>
+                      <CardDescription className="text-base mt-2">
+                        Select all that apply
+                      </CardDescription>
+                    </motion.div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {subjects.map((subject, i) => (
+                        <motion.button
+                          key={subject.id}
+                          custom={i}
+                          variants={cardItemVariants}
+                          initial="hidden"
+                          animate="visible"
+                          onClick={() => toggleSubject(subject.id)}
+                          className={`p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50 hover:scale-[1.02] relative ${
+                            formData.subjects.includes(subject.id)
+                              ? "border-primary bg-primary/5"
+                              : "border-border"
+                          }`}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <AnimatePresence>
+                            {formData.subjects.includes(subject.id) && (
+                              <motion.div 
+                                className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center"
+                                variants={checkmarkVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                              >
+                                <Check className="w-3 h-3 text-primary-foreground" />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                          <motion.span 
+                            className="text-2xl mb-2 block"
+                            animate={formData.subjects.includes(subject.id) ? { rotate: [0, -10, 10, 0] } : {}}
+                            transition={{ duration: 0.3 }}
+                          >
+                            {subject.icon}
+                          </motion.span>
+                          <span className="font-medium text-sm">{subject.label}</span>
+                        </motion.button>
+                      ))}
+                    </div>
+                    <motion.div 
+                      className="flex gap-3 mt-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <Button variant="outline" onClick={handleBack} className="flex-1 h-12 group">
+                        <ChevronLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                        Back
+                      </Button>
+                      <Button onClick={handleNext} className="flex-1 h-12 group">
+                        Continue
+                        <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 4: Study Goals */}
+            {step === 4 && (
+              <motion.div
+                key="step4"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Card className="border-0 shadow-xl backdrop-blur-sm bg-card/95">
+                  <CardHeader className="text-center pb-2">
+                    <motion.div 
+                      className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4"
+                      variants={iconVariants}
+                      initial="initial"
+                      animate="animate"
+                    >
+                      <Target className="w-8 h-8 text-primary" />
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <CardTitle className="text-2xl md:text-3xl">What are your study goals?</CardTitle>
+                      <CardDescription className="text-base mt-2">
+                        We'll customize your experience based on your goals
+                      </CardDescription>
+                    </motion.div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid gap-3">
+                      {studyGoals.map((goal, i) => (
+                        <motion.button
+                          key={goal.id}
+                          custom={i}
+                          variants={cardItemVariants}
+                          initial="hidden"
+                          animate="visible"
+                          onClick={() => toggleGoal(goal.id)}
+                          className={`p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50 hover:scale-[1.01] relative flex items-center gap-4 ${
+                            formData.studyGoals.includes(goal.id)
+                              ? "border-primary bg-primary/5"
+                              : "border-border"
+                          }`}
+                          whileTap={{ scale: 0.99 }}
+                        >
+                          <motion.div 
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                              formData.studyGoals.includes(goal.id)
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground"
+                            }`}
+                            animate={formData.studyGoals.includes(goal.id) ? { scale: [1, 1.2, 1] } : {}}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <AnimatePresence>
+                              {formData.studyGoals.includes(goal.id) && (
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  exit={{ scale: 0 }}
+                                >
+                                  <Check className="w-4 h-4 text-primary-foreground" />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+                          <div>
+                            <span className="font-medium block">{goal.label}</span>
+                            <span className="text-sm text-muted-foreground">{goal.description}</span>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                    <motion.div 
+                      className="flex gap-3 mt-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <Button variant="outline" onClick={handleBack} className="flex-1 h-12 group">
+                        <ChevronLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                        Back
+                      </Button>
+                      <Button 
+                        onClick={handleComplete} 
+                        className="flex-1 h-12 group relative overflow-hidden"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          >
+                            <Sparkles className="w-5 h-5" />
+                          </motion.div>
+                        ) : (
+                          <>
+                            Get Started
+                            <motion.span
+                              className="ml-2"
+                              animate={{ x: [0, 5, 0] }}
+                              transition={{ duration: 1.5, repeat: Infinity }}
+                            >
+                              <ChevronRight className="w-5 h-5" />
+                            </motion.span>
+                          </>
                         )}
-                      </div>
-                      <div>
-                        <span className="font-medium block">{goal.label}</span>
-                        <span className="text-sm text-muted-foreground">{goal.description}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-3 mt-6">
-                  <Button variant="outline" onClick={handleBack} className="flex-1 h-12">
-                    <ChevronLeft className="w-5 h-5 mr-2" />
-                    Back
-                  </Button>
-                  <Button 
-                    onClick={handleComplete} 
-                    className="flex-1 h-12"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Saving..." : "Get Started"}
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                      </Button>
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </main>
     </div>
