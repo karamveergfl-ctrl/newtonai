@@ -49,7 +49,7 @@ const AINotes = () => {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ 
-            content: textContent.slice(0, 15000),
+            transcription: textContent.slice(0, 15000),
             language: metadata?.language || "en",
           }),
         }
