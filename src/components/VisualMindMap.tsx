@@ -6,18 +6,19 @@ import jsPDF from "jspdf";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import DOMPurify from "dompurify";
-
-// Sanitize text content to prevent XSS
-const sanitizeText = (text: string): string => {
-  if (!text) return "";
-  return DOMPurify.sanitize(text, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
-};
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { notebookLMTheme } from "./NotebookLMStyles";
+
+// Sanitize text content to prevent XSS
+const sanitizeText = (text: string): string => {
+  if (!text) return "";
+  return DOMPurify.sanitize(text, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+};
 
 interface MindMapNode {
   id: string;
@@ -32,39 +33,35 @@ interface VisualMindMapProps {
   showVideoSlide?: boolean;
 }
 
-type ThemeKey = "radial" | "organic" | "corporate" | "neon" | "nature" | "sunset";
+type ThemeKey = "notebookLM" | "ocean" | "forest" | "sunset" | "purple" | "monochrome";
 type LayoutType = "radial" | "tree" | "fishbone" | "org";
 
 const themes: Record<ThemeKey, { name: string; colors: string[]; bgGradient: string }> = {
-  radial: {
-    name: "Ocean Depths",
+  notebookLM: notebookLMTheme,
+  ocean: {
+    name: "Ocean",
     colors: ["#3B82F6", "#06B6D4", "#8B5CF6", "#10B981", "#6366F1", "#14B8A6"],
     bgGradient: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
   },
-  organic: {
+  forest: {
     name: "Forest",
     colors: ["#059669", "#84CC16", "#22C55E", "#10B981", "#65A30D", "#16A34A"],
     bgGradient: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)"
-  },
-  corporate: {
-    name: "Professional",
-    colors: ["#1E40AF", "#3B82F6", "#6366F1", "#4F46E5", "#2563EB", "#7C3AED"],
-    bgGradient: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)"
-  },
-  neon: {
-    name: "Neon Glow",
-    colors: ["#F43F5E", "#EC4899", "#A855F7", "#8B5CF6", "#D946EF", "#F472B6"],
-    bgGradient: "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)"
-  },
-  nature: {
-    name: "Earth Tones",
-    colors: ["#92400E", "#B45309", "#D97706", "#CA8A04", "#A16207", "#78350F"],
-    bgGradient: "linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)"
   },
   sunset: {
     name: "Sunset",
     colors: ["#DC2626", "#EA580C", "#F97316", "#FB923C", "#D97706", "#EF4444"],
     bgGradient: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)"
+  },
+  purple: {
+    name: "Purple",
+    colors: ["#7C3AED", "#8B5CF6", "#A855F7", "#9333EA", "#6D28D9", "#C084FC"],
+    bgGradient: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)"
+  },
+  monochrome: {
+    name: "Monochrome",
+    colors: ["#374151", "#4B5563", "#6B7280", "#9CA3AF", "#1F2937", "#111827"],
+    bgGradient: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)"
   }
 };
 
@@ -72,7 +69,7 @@ const layouts: Record<LayoutType, { name: string; icon: string }> = {
   radial: { name: "Radial", icon: "🌐" },
   tree: { name: "Tree", icon: "🌳" },
   fishbone: { name: "Fishbone", icon: "🐟" },
-  org: { name: "Organization", icon: "📊" }
+  org: { name: "Hierarchy", icon: "📊" }
 };
 
 export const VisualMindMap = ({
@@ -82,15 +79,13 @@ export const VisualMindMap = ({
   showVideoSlide = false
 }: VisualMindMapProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState<ThemeKey>("radial");
+  const [selectedTheme, setSelectedTheme] = useState<ThemeKey>("notebookLM");
   const [selectedLayout, setSelectedLayout] = useState<LayoutType>("radial");
-  const [showThemes, setShowThemes] = useState(false);
   const [zoom, setZoom] = useState(1);
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Auto-fit on mount and data change
   useEffect(() => {
     const timer = setTimeout(() => fitToScreen(), 100);
     return () => clearTimeout(timer);
@@ -139,6 +134,40 @@ export const VisualMindMap = ({
     return colors[(depth + index) % colors.length];
   };
 
+  // NotebookLM-style node rendering
+  const renderCentralNode = (text: string) => (
+    <div 
+      className="px-8 py-4 rounded-2xl font-display font-bold text-lg text-white shadow-lg border-2 border-white/20 transition-transform hover:scale-105"
+      style={{ 
+        background: `linear-gradient(135deg, ${getNodeColor(0, 0)} 0%, ${getNodeColor(0, 0)}dd 100%)`,
+        boxShadow: `0 8px 32px ${getNodeColor(0, 0)}40`
+      }}
+    >
+      {sanitizeText(text)}
+    </div>
+  );
+
+  const renderBranchNode = (text: string, colorIndex: number) => (
+    <div 
+      className="px-4 py-2 rounded-xl font-display font-medium text-sm text-white shadow-md border border-white/10 cursor-pointer transition-all hover:scale-105 hover:shadow-lg whitespace-nowrap"
+      style={{ 
+        background: `linear-gradient(135deg, ${getNodeColor(1, colorIndex)} 0%, ${getNodeColor(1, colorIndex)}dd 100%)`,
+        boxShadow: `0 4px 16px ${getNodeColor(1, colorIndex)}30`
+      }}
+    >
+      {sanitizeText(text)}
+    </div>
+  );
+
+  const renderLeafNode = (text: string, parentColor: string) => (
+    <span 
+      className="px-3 py-1.5 rounded-lg text-xs font-sans font-medium bg-white text-gray-700 shadow-sm border border-gray-200 whitespace-nowrap transition-all hover:shadow-md hover:border-gray-300"
+      style={{ borderLeftColor: parentColor, borderLeftWidth: '3px' }}
+    >
+      {sanitizeText(text)}
+    </span>
+  );
+
   // Radial Layout - Central node with branches radiating out
   const renderRadialLayout = (rootNode: MindMapNode) => {
     const children = rootNode.children || [];
@@ -151,73 +180,57 @@ export const VisualMindMap = ({
         <div className="flex flex-col gap-6">
           {leftChildren.map((child, idx) => (
             <div key={child.id} className="flex items-center gap-0">
-              {/* Sub-children */}
               {child.children && child.children.length > 0 && (
-                <div className="flex flex-col gap-2 items-end mr-2">
+                <div className="flex flex-col gap-2 items-end mr-3">
                   {child.children.slice(0, 4).map((sub, si) => (
-                    <div key={sub.id} className="flex items-center">
-                      <span 
-                        className="text-xs font-medium px-2 py-1 rounded-lg text-white whitespace-nowrap"
-                        style={{ backgroundColor: getNodeColor(2, si) }}
-                      >
-                        {sanitizeText(sub.text)}
-                      </span>
-                      <svg width="30" height="2" className="ml-1">
-                        <line x1="0" y1="1" x2="30" y2="1" stroke={getNodeColor(2, si)} strokeWidth="2" />
+                    <div key={sub.id} className="flex items-center gap-2">
+                      {renderLeafNode(sub.text, getNodeColor(1, idx))}
+                      <svg width="24" height="2">
+                        <line x1="0" y1="1" x2="24" y2="1" stroke={getNodeColor(1, idx)} strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
                   ))}
                 </div>
               )}
-              {/* Branch node */}
-              <div 
-                className="px-4 py-2 rounded-xl font-semibold text-white shadow-lg whitespace-nowrap"
-                style={{ backgroundColor: getNodeColor(1, idx), boxShadow: `0 4px 12px ${getNodeColor(1, idx)}40` }}
-              >
-                {sanitizeText(child.text)}
-              </div>
-              {/* Curved connector */}
-              <svg width="80" height="50" className="flex-shrink-0">
-                <path d={`M 0 25 Q 40 ${25 + (idx - leftChildren.length/2) * 8} 80 25`} fill="none" stroke={getNodeColor(1, idx)} strokeWidth="3" strokeLinecap="round" />
+              {renderBranchNode(child.text, idx)}
+              <svg width="60" height="40" className="flex-shrink-0">
+                <path 
+                  d={`M 0 20 Q 30 ${20 + (idx - leftChildren.length/2) * 6} 60 20`} 
+                  fill="none" 
+                  stroke={getNodeColor(1, idx)} 
+                  strokeWidth="3" 
+                  strokeLinecap="round"
+                />
               </svg>
             </div>
           ))}
         </div>
 
         {/* Center node */}
-        <div 
-          className="px-8 py-5 rounded-full font-bold text-lg text-white shadow-2xl z-10 min-w-[120px] text-center"
-          style={{ backgroundColor: getNodeColor(0, 0), boxShadow: `0 8px 30px ${getNodeColor(0, 0)}50` }}
-        >
-          {sanitizeText(rootNode.text)}
-        </div>
+        {renderCentralNode(rootNode.text)}
 
         {/* Right branches */}
         <div className="flex flex-col gap-6">
           {rightChildren.map((child, idx) => (
             <div key={child.id} className="flex items-center gap-0">
-              <svg width="80" height="50" className="flex-shrink-0">
-                <path d={`M 0 25 Q 40 ${25 + (idx - rightChildren.length/2) * 8} 80 25`} fill="none" stroke={getNodeColor(1, leftChildren.length + idx)} strokeWidth="3" strokeLinecap="round" />
+              <svg width="60" height="40" className="flex-shrink-0">
+                <path 
+                  d={`M 0 20 Q 30 ${20 + (idx - rightChildren.length/2) * 6} 60 20`} 
+                  fill="none" 
+                  stroke={getNodeColor(1, leftChildren.length + idx)} 
+                  strokeWidth="3" 
+                  strokeLinecap="round"
+                />
               </svg>
-              <div 
-                className="px-4 py-2 rounded-xl font-semibold text-white shadow-lg whitespace-nowrap"
-                style={{ backgroundColor: getNodeColor(1, leftChildren.length + idx), boxShadow: `0 4px 12px ${getNodeColor(1, leftChildren.length + idx)}40` }}
-              >
-                {sanitizeText(child.text)}
-              </div>
+              {renderBranchNode(child.text, leftChildren.length + idx)}
               {child.children && child.children.length > 0 && (
-                <div className="flex flex-col gap-2 items-start ml-2">
+                <div className="flex flex-col gap-2 items-start ml-3">
                   {child.children.slice(0, 4).map((sub, si) => (
-                    <div key={sub.id} className="flex items-center">
-                      <svg width="30" height="2" className="mr-1">
-                        <line x1="0" y1="1" x2="30" y2="1" stroke={getNodeColor(2, si + 3)} strokeWidth="2" />
+                    <div key={sub.id} className="flex items-center gap-2">
+                      <svg width="24" height="2">
+                        <line x1="0" y1="1" x2="24" y2="1" stroke={getNodeColor(1, leftChildren.length + idx)} strokeWidth="2" strokeLinecap="round" />
                       </svg>
-                      <span 
-                        className="text-xs font-medium px-2 py-1 rounded-lg text-white whitespace-nowrap"
-                        style={{ backgroundColor: getNodeColor(2, si + 3) }}
-                      >
-                        {sanitizeText(sub.text)}
-                      </span>
+                      {renderLeafNode(sub.text, getNodeColor(1, leftChildren.length + idx))}
                     </div>
                   ))}
                 </div>
@@ -229,114 +242,68 @@ export const VisualMindMap = ({
     );
   };
 
-  // Tree Layout - Horizontal hierarchy with curved connectors (like reference image)
+  // Tree Layout
   const renderTreeLayout = (rootNode: MindMapNode) => {
-    const renderBranch = (node: MindMapNode, depth: number, parentIdx: number) => {
-      const color = getNodeColor(depth, parentIdx);
+    const renderBranch = (node: MindMapNode, depth: number, colorIdx: number) => {
+      const color = getNodeColor(depth, colorIdx);
       const hasChildren = node.children && node.children.length > 0;
       
       return (
         <div key={node.id} className="flex items-center gap-0">
-          {/* Current node */}
-          <div 
-            className={cn(
-              "px-4 py-2 rounded-full font-medium text-white shadow-md whitespace-nowrap border-2 border-white/20",
-              depth === 0 && "px-6 py-3 text-lg font-bold",
-              depth === 1 && "px-4 py-2 text-sm font-semibold",
-              depth >= 2 && "px-3 py-1.5 text-xs"
-            )}
-            style={{ 
-              backgroundColor: color, 
-              boxShadow: `0 4px 12px ${color}40` 
-            }}
-          >
-            {sanitizeText(node.text)}
-          </div>
+          {depth === 0 ? renderCentralNode(node.text) : (
+            <div 
+              className={cn(
+                "rounded-full font-display text-white shadow-md whitespace-nowrap border border-white/10 transition-all hover:scale-105",
+                depth === 1 && "px-4 py-2 text-sm font-medium",
+                depth >= 2 && "px-3 py-1.5 text-xs font-medium"
+              )}
+              style={{ 
+                background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+                boxShadow: `0 4px 12px ${color}30`
+              }}
+            >
+              {sanitizeText(node.text)}
+            </div>
+          )}
           
-          {/* Children with curved connectors */}
           {hasChildren && (
             <div className="flex items-center">
-              {/* Horizontal line from node */}
-              <svg width="40" height="2" className="flex-shrink-0">
-                <line x1="0" y1="1" x2="40" y2="1" stroke={color} strokeWidth="2" />
+              <svg width="32" height="2">
+                <line x1="0" y1="1" x2="32" y2="1" stroke={color} strokeWidth="2" strokeLinecap="round" />
               </svg>
               
-              {/* Vertical distribution with curved branches */}
-              <div className="relative flex flex-col gap-1">
-                {node.children!.map((child, idx) => {
+              <div className="flex flex-col gap-1">
+                {node.children!.slice(0, 5).map((child, idx) => {
                   const childColor = getNodeColor(depth + 1, idx);
-                  const hasGrandchildren = child.children && child.children.length > 0;
                   
                   return (
                     <div key={child.id} className="flex items-center gap-0">
-                      {/* Curved connector */}
-                      <svg width="30" height="24" className="flex-shrink-0">
-                        <path 
-                          d={`M 0 12 Q 15 12 30 12`} 
-                          fill="none" 
-                          stroke={childColor} 
-                          strokeWidth="2" 
-                          strokeLinecap="round"
-                        />
+                      <svg width="24" height="20">
+                        <path d="M 0 10 Q 12 10 24 10" fill="none" stroke={childColor} strokeWidth="2" strokeLinecap="round" />
                       </svg>
                       
-                      {/* Child node */}
-                      <div 
-                        className={cn(
-                          "px-3 py-1.5 rounded-full font-medium text-white shadow-sm whitespace-nowrap",
-                          depth === 0 && "text-sm",
-                          depth >= 1 && "text-xs px-2 py-1"
-                        )}
+                      <span 
+                        className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
                         style={{ backgroundColor: childColor }}
                       >
                         {sanitizeText(child.text)}
-                      </div>
+                      </span>
                       
-                      {/* Grandchildren */}
-                      {hasGrandchildren && (
-                        <div className="flex items-center">
-                          <svg width="25" height="2">
-                            <line x1="0" y1="1" x2="25" y2="1" stroke={childColor} strokeWidth="1.5" />
+                      {child.children && child.children.length > 0 && (
+                        <div className="flex items-center ml-1">
+                          <svg width="16" height="2">
+                            <line x1="0" y1="1" x2="16" y2="1" stroke={childColor} strokeWidth="1.5" strokeDasharray="3,2" />
                           </svg>
                           <div className="flex flex-col gap-0.5">
-                            {child.children!.slice(0, 3).map((grandChild, gIdx) => {
-                              const gcColor = getNodeColor(depth + 2, gIdx);
-                              const hasGreatGrand = grandChild.children && grandChild.children.length > 0;
-                              
-                              return (
-                                <div key={grandChild.id} className="flex items-center gap-0">
-                                  <svg width="20" height="16">
-                                    <path d="M 0 8 Q 10 8 20 8" fill="none" stroke={gcColor} strokeWidth="1.5" />
-                                  </svg>
-                                  <span 
-                                    className="text-[10px] px-2 py-0.5 rounded-full text-white whitespace-nowrap"
-                                    style={{ backgroundColor: gcColor }}
-                                  >
-                                    {sanitizeText(grandChild.text)}
-                                  </span>
-                                  
-                                  {/* Deepest level */}
-                                  {hasGreatGrand && (
-                                    <div className="flex items-center ml-1">
-                                      <svg width="15" height="2">
-                                        <line x1="0" y1="1" x2="15" y2="1" stroke={gcColor} strokeWidth="1" strokeDasharray="2,2" />
-                                      </svg>
-                                      <div className="flex flex-col gap-0.5">
-                                        {grandChild.children!.slice(0, 2).map((leaf, lIdx) => (
-                                          <span 
-                                            key={leaf.id}
-                                            className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 whitespace-nowrap border"
-                                            style={{ borderColor: gcColor }}
-                                          >
-                                            {sanitizeText(leaf.text)}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
+                            {child.children.slice(0, 3).map((gc, gIdx) => (
+                              <span 
+                                key={gc.id}
+                                className="text-[10px] px-2 py-0.5 rounded bg-white text-gray-700 whitespace-nowrap border"
+                                style={{ borderColor: childColor, borderLeftWidth: '2px' }}
+                              >
+                                {sanitizeText(gc.text)}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       )}
@@ -357,7 +324,7 @@ export const VisualMindMap = ({
     );
   };
 
-  // Fishbone Layout - Diagonal branches
+  // Fishbone Layout
   const renderFishboneLayout = (rootNode: MindMapNode) => {
     const children = rootNode.children || [];
     const topChildren = children.filter((_, i) => i % 2 === 0);
@@ -366,26 +333,21 @@ export const VisualMindMap = ({
     return (
       <div className="flex flex-col items-center py-12 px-8">
         {/* Top branches */}
-        <div className="flex justify-center gap-20 mb-4">
+        <div className="flex justify-center gap-16 mb-4">
           {topChildren.map((child, idx) => (
             <div key={child.id} className="flex flex-col items-center">
               {child.children && (
-                <div className="flex gap-2 mb-2 flex-wrap justify-center max-w-[150px]">
-                  {child.children.slice(0, 3).map((sub, si) => (
-                    <span key={sub.id} className="text-xs px-2 py-0.5 rounded text-white" style={{ backgroundColor: getNodeColor(2, si) }}>
+                <div className="flex gap-2 mb-2 flex-wrap justify-center max-w-[140px]">
+                  {child.children.slice(0, 3).map((sub) => (
+                    <span key={sub.id} className="text-xs px-2 py-0.5 rounded-lg text-white font-medium" style={{ backgroundColor: getNodeColor(2, idx) }}>
                       {sanitizeText(sub.text)}
                     </span>
                   ))}
                 </div>
               )}
-              <div 
-                className="px-4 py-2 rounded-xl font-semibold text-white shadow-lg"
-                style={{ backgroundColor: getNodeColor(1, idx * 2) }}
-              >
-                {sanitizeText(child.text)}
-              </div>
-              <svg width="2" height="40">
-                <line x1="1" y1="0" x2="1" y2="40" stroke={getNodeColor(1, idx * 2)} strokeWidth="2" />
+              {renderBranchNode(child.text, idx * 2)}
+              <svg width="2" height="32">
+                <line x1="1" y1="0" x2="1" y2="32" stroke={getNodeColor(1, idx * 2)} strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
           ))}
@@ -393,33 +355,23 @@ export const VisualMindMap = ({
 
         {/* Main spine */}
         <div className="flex items-center">
-          <div className="w-24 h-1 rounded" style={{ backgroundColor: getNodeColor(0, 0) }} />
-          <div 
-            className="px-8 py-4 rounded-full font-bold text-lg text-white shadow-2xl mx-4"
-            style={{ backgroundColor: getNodeColor(0, 0), boxShadow: `0 8px 25px ${getNodeColor(0, 0)}50` }}
-          >
-            {sanitizeText(rootNode.text)}
-          </div>
-          <div className="w-24 h-1 rounded" style={{ backgroundColor: getNodeColor(0, 0) }} />
+          <div className="w-20 h-1 rounded-full" style={{ backgroundColor: getNodeColor(0, 0) }} />
+          {renderCentralNode(rootNode.text)}
+          <div className="w-20 h-1 rounded-full" style={{ backgroundColor: getNodeColor(0, 0) }} />
         </div>
 
         {/* Bottom branches */}
-        <div className="flex justify-center gap-20 mt-4">
+        <div className="flex justify-center gap-16 mt-4">
           {bottomChildren.map((child, idx) => (
             <div key={child.id} className="flex flex-col items-center">
-              <svg width="2" height="40">
-                <line x1="1" y1="0" x2="1" y2="40" stroke={getNodeColor(1, idx * 2 + 1)} strokeWidth="2" />
+              <svg width="2" height="32">
+                <line x1="1" y1="0" x2="1" y2="32" stroke={getNodeColor(1, idx * 2 + 1)} strokeWidth="2" strokeLinecap="round" />
               </svg>
-              <div 
-                className="px-4 py-2 rounded-xl font-semibold text-white shadow-lg"
-                style={{ backgroundColor: getNodeColor(1, idx * 2 + 1) }}
-              >
-                {sanitizeText(child.text)}
-              </div>
+              {renderBranchNode(child.text, idx * 2 + 1)}
               {child.children && (
-                <div className="flex gap-2 mt-2 flex-wrap justify-center max-w-[150px]">
+                <div className="flex gap-2 mt-2 flex-wrap justify-center max-w-[140px]">
                   {child.children.slice(0, 3).map((sub, si) => (
-                    <span key={sub.id} className="text-xs px-2 py-0.5 rounded text-white" style={{ backgroundColor: getNodeColor(2, si + 3) }}>
+                    <span key={sub.id} className="text-xs px-2 py-0.5 rounded-lg text-white font-medium" style={{ backgroundColor: getNodeColor(2, si + 3) }}>
                       {sanitizeText(sub.text)}
                     </span>
                   ))}
@@ -436,47 +388,31 @@ export const VisualMindMap = ({
   const renderOrgLayout = (rootNode: MindMapNode) => {
     return (
       <div className="flex flex-col items-center py-8 gap-6">
-        {/* Root card */}
-        <div 
-          className="px-8 py-4 rounded-xl font-bold text-lg text-white shadow-2xl border-4 border-white/30"
-          style={{ backgroundColor: getNodeColor(0, 0), boxShadow: `0 10px 30px ${getNodeColor(0, 0)}50` }}
-        >
-          {sanitizeText(rootNode.text)}
-        </div>
+        {renderCentralNode(rootNode.text)}
 
         {rootNode.children && rootNode.children.length > 0 && (
           <>
-            {/* Connector line */}
-            <div className="flex items-center">
-              <div className="w-0.5 h-8" style={{ backgroundColor: getNodeColor(0, 0) }} />
-            </div>
-            <div className="h-0.5 w-full max-w-2xl" style={{ backgroundColor: getNodeColor(0, 0) }} />
+            <div className="w-0.5 h-6 rounded-full" style={{ backgroundColor: getNodeColor(0, 0) }} />
+            <div className="h-0.5 rounded-full" style={{ backgroundColor: getNodeColor(0, 0), width: `${Math.min(rootNode.children.length * 140, 800)}px` }} />
 
-            {/* Level 1 cards */}
             <div className="flex gap-8 flex-wrap justify-center">
               {rootNode.children.map((child, idx) => (
-                <div key={child.id} className="flex flex-col items-center gap-4">
-                  <div className="w-0.5 h-4" style={{ backgroundColor: getNodeColor(1, idx) }} />
-                  <div 
-                    className="px-5 py-3 rounded-lg font-semibold text-white shadow-lg min-w-[100px] text-center border-2 border-white/20"
-                    style={{ backgroundColor: getNodeColor(1, idx), boxShadow: `0 4px 15px ${getNodeColor(1, idx)}40` }}
-                  >
-                    {sanitizeText(child.text)}
-                  </div>
+                <div key={child.id} className="flex flex-col items-center gap-3">
+                  <div className="w-0.5 h-4 rounded-full" style={{ backgroundColor: getNodeColor(1, idx) }} />
+                  {renderBranchNode(child.text, idx)}
                   
-                  {/* Level 2 */}
                   {child.children && child.children.length > 0 && (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-0.5 h-4" style={{ backgroundColor: getNodeColor(1, idx) }} />
-                      <div className="flex gap-2 flex-wrap justify-center max-w-[180px]">
+                      <div className="w-0.5 h-3 rounded-full" style={{ backgroundColor: getNodeColor(1, idx) }} />
+                      <div className="flex gap-2 flex-wrap justify-center max-w-[160px]">
                         {child.children.slice(0, 4).map((sub, si) => (
-                          <div 
+                          <span 
                             key={sub.id}
-                            className="px-3 py-1.5 rounded text-xs font-medium text-white text-center"
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium text-white text-center"
                             style={{ backgroundColor: getNodeColor(2, idx + si) }}
                           >
                             {sanitizeText(sub.text)}
-                          </div>
+                          </span>
                         ))}
                       </div>
                     </div>
@@ -501,27 +437,38 @@ export const VisualMindMap = ({
   };
 
   return (
-    <div className={cn("fixed inset-0 z-50 bg-background flex flex-col", showVideoSlide && "pr-80")}>
+    <div className={cn("fixed inset-0 z-50 bg-gray-50 flex flex-col", showVideoSlide && "pr-80")}>
       {/* Header */}
-      <div className="p-4 border-b bg-card/50 flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-2">
-          <Network className="w-5 h-5 text-primary" />
-          <h2 className="font-bold text-lg">Mind Map</h2>
-          <span className="text-sm text-muted-foreground truncate max-w-[200px]">- {title}</span>
+      <div className="p-4 border-b bg-white/80 backdrop-blur-sm flex items-center justify-between gap-4 flex-wrap sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <div 
+            className="w-9 h-9 rounded-lg flex items-center justify-center shadow-sm"
+            style={{ backgroundColor: themes[selectedTheme].colors[0] }}
+          >
+            <Network className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg text-gray-900">Mind Map</h2>
+            <span className="text-sm text-gray-500 font-sans truncate max-w-[200px] block">{title}</span>
+          </div>
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
           {/* Layout selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2 font-sans">
                 <LayoutGrid className="w-4 h-4" />
                 {layouts[selectedLayout].icon} {layouts[selectedLayout].name}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover z-50">
+            <DropdownMenuContent align="end" className="bg-white z-50">
               {(Object.keys(layouts) as LayoutType[]).map((layoutKey) => (
-                <DropdownMenuItem key={layoutKey} onClick={() => setSelectedLayout(layoutKey)}>
+                <DropdownMenuItem 
+                  key={layoutKey} 
+                  onClick={() => setSelectedLayout(layoutKey)}
+                  className="font-sans"
+                >
                   {layouts[layoutKey].icon} {layouts[layoutKey].name}
                 </DropdownMenuItem>
               ))}
@@ -531,17 +478,21 @@ export const VisualMindMap = ({
           {/* Theme selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2 font-sans">
                 <Palette className="w-4 h-4" />
                 {themes[selectedTheme].name}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover z-50 w-48">
+            <DropdownMenuContent align="end" className="bg-white z-50 w-48">
               {(Object.keys(themes) as ThemeKey[]).map((themeKey) => (
-                <DropdownMenuItem key={themeKey} onClick={() => setSelectedTheme(themeKey)} className="gap-2">
+                <DropdownMenuItem 
+                  key={themeKey} 
+                  onClick={() => setSelectedTheme(themeKey)} 
+                  className="gap-2 font-sans"
+                >
                   <div className="flex gap-0.5">
                     {themes[themeKey].colors.slice(0, 4).map((color, i) => (
-                      <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                      <div key={i} className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: color }} />
                     ))}
                   </div>
                   {themes[themeKey].name}
@@ -551,11 +502,11 @@ export const VisualMindMap = ({
           </DropdownMenu>
 
           {/* Zoom controls */}
-          <div className="flex items-center gap-1 border rounded-lg px-1">
+          <div className="flex items-center gap-1 border rounded-lg px-1 bg-white">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut}>
               <ZoomOut className="w-4 h-4" />
             </Button>
-            <span className="text-xs w-12 text-center">{Math.round(zoom * 100)}%</span>
+            <span className="text-xs w-12 text-center font-sans text-gray-600">{Math.round(zoom * 100)}%</span>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomIn}>
               <ZoomIn className="w-4 h-4" />
             </Button>
@@ -564,7 +515,7 @@ export const VisualMindMap = ({
             </Button>
           </div>
 
-          <Button onClick={downloadAsPDF} variant="outline" size="sm" disabled={isDownloading} className="gap-2">
+          <Button onClick={downloadAsPDF} variant="outline" size="sm" disabled={isDownloading} className="gap-2 font-sans">
             {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             PDF
           </Button>
@@ -582,14 +533,14 @@ export const VisualMindMap = ({
       >
         <div 
           ref={contentRef} 
-          className="transition-transform duration-200 origin-center"
+          className="transition-transform duration-200 origin-center p-8"
           style={{ transform: `scale(${zoom})` }}
         >
           {renderLayout()}
         </div>
       </div>
 
-      {showVideoSlide && <div className="fixed inset-y-0 right-0 w-80 bg-card border-l" />}
+      {showVideoSlide && <div className="fixed inset-y-0 right-0 w-80 bg-white border-l" />}
     </div>
   );
 };
