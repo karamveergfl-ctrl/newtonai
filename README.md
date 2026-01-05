@@ -1,8 +1,8 @@
-# SmartReader Pro
+# newtonAI
 
 > AI-Powered PDF Learning Assistant - Upload any PDF and discover curated educational videos for every topic
 
-SmartReader Pro is a full-stack web application that revolutionizes how you learn from documents. Simply upload a PDF (textbook, research paper, manual, etc.), and our AI will extract key topics and find the best animated educational videos from YouTube to help you understand each concept.
+newtonAI is a full-stack web application that revolutionizes how you learn from documents. Simply upload a PDF (textbook, research paper, manual, etc.), and our AI will extract key topics and find the best animated educational videos from YouTube to help you understand each concept.
 
 ## ✨ Features
 
@@ -50,7 +50,7 @@ SmartReader Pro is a full-stack web application that revolutionizes how you lear
 
 ```bash
 git clone <your-repo-url>
-cd smartreader-pro
+cd newtonai
 ```
 
 ### 2. Install Dependencies
@@ -140,7 +140,7 @@ POST /functions/v1/search-youtube
 
 ## 🎨 Design System
 
-SmartReader Pro uses a carefully crafted design system with:
+newtonAI uses a carefully crafted design system with:
 
 - **Primary Color**: Deep Teal (#0D9488) - Trust and education
 - **Secondary Color**: Bright Blue (#3B82F6) - Actions and interactivity  
@@ -154,7 +154,7 @@ All design tokens are defined in `src/index.css` and can be easily customized.
 ## 📦 Project Structure
 
 ```
-smartreader-pro/
+newtonai/
 ├── src/
 │   ├── components/
 │   │   ├── UploadZone.tsx       # Drag-and-drop PDF upload
@@ -191,7 +191,7 @@ smartreader-pro/
 
 ## 🎓 Targeted Educational Channels
 
-SmartReader Pro prioritizes content from these high-quality educational channels:
+newtonAI prioritizes content from these high-quality educational channels:
 
 - Khan Academy
 - CrashCourse
