@@ -230,6 +230,7 @@ const Onboarding = () => {
           education_level: formData.educationLevel,
           subjects: formData.subjects,
           study_goals: formData.studyGoals,
+          referral_source: formData.referralSource,
           onboarding_completed: true,
         })
         .eq("id", session.user.id);
