@@ -7,11 +7,17 @@ const corsHeaders = {
 };
 
 // Function to extract transcript from YouTube
-async function getYouTubeTranscript(videoId: string): Promise<string> {
+async function getYouTubeTranscript(videoId: string): Promise<{ transcript: string; hasRealTranscript: boolean }> {
   try {
     // Try to get transcript using YouTube's timedtext API
     const response = await fetch(
-      `https://www.youtube.com/watch?v=${videoId}`
+      `https://www.youtube.com/watch?v=${videoId}`,
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9',
+        }
+      }
     );
     
     if (!response.ok) {
@@ -20,68 +26,88 @@ async function getYouTubeTranscript(videoId: string): Promise<string> {
     
     const html = await response.text();
     
+    // Extract video title
+    const titleMatch = html.match(/"title":"([^"]+)"/) || html.match(/<title>([^<]+)<\/title>/);
+    const videoTitle = titleMatch ? titleMatch[1].replace(/\\u[\dA-F]{4}/gi, match => 
+      String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))
+    ) : "";
+    
+    // Extract video description
+    const descMatch = html.match(/"shortDescription":"([^"]+)"/);
+    const description = descMatch ? descMatch[1]
+      .replace(/\\n/g, "\n")
+      .replace(/\\u[\dA-F]{4}/gi, match => 
+        String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))
+      ).slice(0, 3000) : "";
+    
     // Extract captions track URL from the page
     const captionMatch = html.match(/"captionTracks":\s*\[(.*?)\]/);
-    if (!captionMatch) {
-      console.log("No captions found, using video title/description instead");
-      
-      // Extract video title and description as fallback
-      const titleMatch = html.match(/"title":"([^"]+)"/);
-      const descMatch = html.match(/"shortDescription":"([^"]+)"/);
-      
-      const title = titleMatch ? titleMatch[1] : "";
-      const desc = descMatch ? descMatch[1].replace(/\\n/g, " ").slice(0, 1000) : "";
-      
-      return `Video Title: ${title}\n\nDescription: ${desc}`;
+    
+    if (captionMatch) {
+      try {
+        // Parse caption tracks
+        const captionsJson = `[${captionMatch[1]}]`;
+        const captions = JSON.parse(captionsJson);
+        
+        // Find English captions or first available
+        const englishTrack = captions.find((c: any) => 
+          c.languageCode === 'en' || c.languageCode?.startsWith('en')
+        ) || captions[0];
+        
+        if (englishTrack?.baseUrl) {
+          // Fetch the caption content
+          const captionUrl = englishTrack.baseUrl.replace(/\\u0026/g, '&');
+          const captionResponse = await fetch(captionUrl);
+          
+          if (captionResponse.ok) {
+            const captionXml = await captionResponse.text();
+            
+            // Parse XML and extract text
+            const textMatches = captionXml.matchAll(/<text[^>]*>([^<]*)<\/text>/g);
+            const texts: string[] = [];
+            
+            for (const match of textMatches) {
+              let text = match[1];
+              // Decode HTML entities
+              text = text.replace(/&amp;/g, '&')
+                         .replace(/&lt;/g, '<')
+                         .replace(/&gt;/g, '>')
+                         .replace(/&quot;/g, '"')
+                         .replace(/&#39;/g, "'")
+                         .replace(/\n/g, ' ');
+              texts.push(text);
+            }
+            
+            const transcript = texts.join(' ').trim();
+            
+            if (transcript && transcript.length > 50) {
+              console.log(`Extracted transcript: ${transcript.length} characters`);
+              return { transcript, hasRealTranscript: true };
+            }
+          }
+        }
+      } catch (e) {
+        console.log("Error parsing captions:", e);
+      }
     }
     
-    // Parse caption tracks
-    const captionsJson = `[${captionMatch[1]}]`;
-    const captions = JSON.parse(captionsJson);
+    // No captions available - return title and description with a clear message
+    console.log("No captions found, using video title and description");
     
-    // Find English captions or first available
-    const englishTrack = captions.find((c: any) => 
-      c.languageCode === 'en' || c.languageCode?.startsWith('en')
-    ) || captions[0];
-    
-    if (!englishTrack?.baseUrl) {
-      throw new Error("No caption URL found");
+    if (!videoTitle && !description) {
+      return { 
+        transcript: "", 
+        hasRealTranscript: false 
+      };
     }
     
-    // Fetch the caption content
-    const captionUrl = englishTrack.baseUrl.replace(/\\u0026/g, '&');
-    const captionResponse = await fetch(captionUrl);
+    // Create a more useful content from title and description
+    const content = `Video Title: ${videoTitle}\n\nVideo Description:\n${description}`.trim();
     
-    if (!captionResponse.ok) {
-      throw new Error("Failed to fetch captions");
-    }
-    
-    const captionXml = await captionResponse.text();
-    
-    // Parse XML and extract text
-    const textMatches = captionXml.matchAll(/<text[^>]*>([^<]*)<\/text>/g);
-    const texts: string[] = [];
-    
-    for (const match of textMatches) {
-      let text = match[1];
-      // Decode HTML entities
-      text = text.replace(/&amp;/g, '&')
-                 .replace(/&lt;/g, '<')
-                 .replace(/&gt;/g, '>')
-                 .replace(/&quot;/g, '"')
-                 .replace(/&#39;/g, "'")
-                 .replace(/\n/g, ' ');
-      texts.push(text);
-    }
-    
-    const transcript = texts.join(' ').trim();
-    
-    if (!transcript) {
-      throw new Error("Empty transcript");
-    }
-    
-    console.log(`Extracted transcript: ${transcript.length} characters`);
-    return transcript;
+    return { 
+      transcript: content, 
+      hasRealTranscript: false 
+    };
     
   } catch (error) {
     console.error("Error fetching transcript:", error);
@@ -131,20 +157,24 @@ serve(async (req) => {
     
     console.log(`Fetching transcript for video: ${videoId}`);
     
-    let transcript: string;
+    const { transcript, hasRealTranscript } = await getYouTubeTranscript(videoId);
     
-    try {
-      transcript = await getYouTubeTranscript(videoId);
-    } catch (error) {
-      // Fallback: Use video title for generation if transcript not available
-      console.log("Transcript not available, using video title as fallback");
-      transcript = `Educational video about: ${videoTitle || videoId}. This video covers key concepts and explanations about the topic.`;
+    if (!transcript || transcript.length < 20) {
+      return new Response(
+        JSON.stringify({ 
+          error: "This video doesn't have captions or a description available. Please try a video with captions enabled, or paste the content directly.",
+          success: false,
+          hasRealTranscript: false
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
     
     return new Response(
       JSON.stringify({ 
         transcript,
         videoId,
+        hasRealTranscript,
         success: true
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
