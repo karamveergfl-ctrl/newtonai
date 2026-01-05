@@ -1,65 +1,19 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, Square, Loader2, Download, Play, Pause } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Mic, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ContentInputTabs } from "@/components/ContentInputTabs";
 
 const AILectureNotes = () => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        setAudioBlob(blob);
-        setAudioUrl(URL.createObjectURL(blob));
-        stream.getTracks().forEach((track) => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      toast({
-        title: "Microphone Error",
-        description: "Please allow microphone access to record",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const handleProcessAudio = async () => {
-    if (!audioBlob) return;
-
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
     setIsProcessing(true);
     setNotes("");
 
@@ -67,36 +21,62 @@ const AILectureNotes = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
 
-      // Convert blob to base64
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onload = () => {
-          const base64 = (reader.result as string).split(",")[1];
-          resolve(base64);
-        };
-        reader.readAsDataURL(audioBlob);
-      });
+      let textContent = content;
 
-      const audioBase64 = await base64Promise;
-
-      // Transcribe audio
-      const transcribeResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ audio: audioBase64 }),
+      if (type === "youtube" && metadata?.videoId) {
+        const transcriptResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ videoId: metadata.videoId, videoTitle: "Video" }),
+          }
+        );
+        if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
+        const { transcript } = await transcriptResponse.json();
+        textContent = transcript;
+      } else if (type === "recording") {
+        const transcribeResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ audio: content }),
+          }
+        );
+        if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
+        const { text } = await transcribeResponse.json();
+        textContent = text;
+      } else if (type === "upload" && metadata?.file) {
+        if (metadata.file.type === "application/pdf") {
+          const formData = new FormData();
+          formData.append("file", metadata.file);
+          const processResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session.access_token}` },
+              body: formData,
+            }
+          );
+          if (!processResponse.ok) throw new Error("Failed to process PDF");
+          const { text } = await processResponse.json();
+          textContent = text;
+        } else if (content) {
+          textContent = content;
         }
-      );
+      }
 
-      if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
+      if (!textContent?.trim()) {
+        throw new Error("No content to process");
+      }
 
-      const { transcript } = await transcribeResponse.json();
-
-      // Generate notes from transcript
       const notesResponse = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-lecture-notes`,
         {
@@ -105,7 +85,7 @@ const AILectureNotes = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ content: transcript }),
+          body: JSON.stringify({ content: textContent }),
         }
       );
 
@@ -116,27 +96,16 @@ const AILectureNotes = () => {
 
       toast({
         title: "Notes Generated! 🎤",
-        description: "Your lecture has been transcribed and summarized",
+        description: "Your lecture notes are ready",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to process audio. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to process. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const togglePlayback = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -158,92 +127,24 @@ const AILectureNotes = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto space-y-6"
         >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 rounded-xl bg-primary/10">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <Mic className="h-8 w-8 text-primary" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">AI Lecture Notes</h1>
-              <p className="text-muted-foreground">Record and transcribe lectures into organized notes</p>
-            </div>
+            <h1 className="text-3xl font-bold">AI Lecture Notes</h1>
+            <p className="text-muted-foreground mt-2">
+              Record lectures, upload content, or paste text to get organized notes
+            </p>
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Record Lecture</CardTitle>
-              <CardDescription>Start recording to capture your lecture audio</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex flex-col items-center gap-6 py-8">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={isRecording ? stopRecording : startRecording}
-                  className={`w-24 h-24 rounded-full flex items-center justify-center transition-colors ${
-                    isRecording
-                      ? "bg-destructive text-destructive-foreground"
-                      : "bg-primary text-primary-foreground"
-                  }`}
-                >
-                  {isRecording ? (
-                    <Square className="h-10 w-10" />
-                  ) : (
-                    <Mic className="h-10 w-10" />
-                  )}
-                </motion.button>
-
-                <p className="text-sm text-muted-foreground">
-                  {isRecording ? "Recording... Click to stop" : "Click to start recording"}
-                </p>
-
-                {isRecording && (
-                  <motion.div
-                    animate={{ opacity: [1, 0.5, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="flex items-center gap-2 text-destructive"
-                  >
-                    <span className="w-3 h-3 rounded-full bg-destructive" />
-                    Recording
-                  </motion.div>
-                )}
-              </div>
-
-              {audioUrl && (
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
-                  <Button variant="outline" size="icon" onClick={togglePlayback}>
-                    {isPlaying ? (
-                      <Pause className="h-4 w-4" />
-                    ) : (
-                      <Play className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <audio
-                    ref={audioRef}
-                    src={audioUrl}
-                    onEnded={() => setIsPlaying(false)}
-                    className="flex-1"
-                  />
-                  <span className="text-sm text-muted-foreground">Recording ready</span>
-                </div>
-              )}
-
-              <Button
-                onClick={handleProcessAudio}
-                disabled={isProcessing || !audioBlob}
-                className="w-full"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Mic className="h-4 w-4 mr-2" />
-                    Generate Notes from Recording
-                  </>
-                )}
-              </Button>
+            <CardContent className="pt-6">
+              <ContentInputTabs
+                onContentReady={handleContentReady}
+                isProcessing={isProcessing}
+                placeholder="Paste your lecture transcript or content here..."
+                supportedFormats="PDF, TXT; Max size: 20MB"
+              />
             </CardContent>
           </Card>
 

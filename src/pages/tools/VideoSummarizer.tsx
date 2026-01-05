@@ -2,41 +2,19 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Video, Loader2, Download, Play } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Video, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ContentInputTabs } from "@/components/ContentInputTabs";
 
 const VideoSummarizer = () => {
-  const [videoUrl, setVideoUrl] = useState("");
   const [summary, setSummary] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const extractVideoId = (url: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-    ];
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
-
-  const handleSummarize = async () => {
-    const videoId = extractVideoId(videoUrl);
-    if (!videoId) {
-      toast({
-        title: "Invalid URL",
-        description: "Please enter a valid YouTube video URL",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
     setIsLoading(true);
     setSummary("");
 
@@ -44,25 +22,68 @@ const VideoSummarizer = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
 
-      // Fetch transcript
-      const transcriptResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ videoId, videoTitle: "Video" }),
+      let textContent = content;
+
+      if (type === "youtube" && metadata?.videoId) {
+        const transcriptResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ videoId: metadata.videoId, videoTitle: "Video" }),
+          }
+        );
+        if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
+        const { transcript, title } = await transcriptResponse.json();
+        textContent = transcript;
+        setVideoTitle(title || "Video Summary");
+      } else if (type === "recording") {
+        const transcribeResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ audio: content }),
+          }
+        );
+        if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
+        const { text } = await transcribeResponse.json();
+        textContent = text;
+        setVideoTitle("Audio Recording");
+      } else if (type === "upload" && metadata?.file) {
+        if (metadata.file.type === "application/pdf") {
+          const formData = new FormData();
+          formData.append("file", metadata.file);
+          const processResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session.access_token}` },
+              body: formData,
+            }
+          );
+          if (!processResponse.ok) throw new Error("Failed to process PDF");
+          const { text } = await processResponse.json();
+          textContent = text;
+          setVideoTitle(metadata.file.name);
+        } else if (content) {
+          textContent = content;
+          setVideoTitle(metadata.file.name);
         }
-      );
+      } else if (type === "text") {
+        setVideoTitle("Text Content");
+      }
 
-      if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
+      if (!textContent?.trim()) {
+        throw new Error("No content to process");
+      }
 
-      const { transcript, title } = await transcriptResponse.json();
-      setVideoTitle(title || "Video Summary");
-
-      // Generate summary
       const summaryResponse = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`,
         {
@@ -71,7 +92,7 @@ const VideoSummarizer = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ content: transcript.slice(0, 15000), type: "video" }),
+          body: JSON.stringify({ content: textContent.slice(0, 15000), type: "video" }),
         }
       );
 
@@ -82,12 +103,12 @@ const VideoSummarizer = () => {
 
       toast({
         title: "Summary Generated! 🎬",
-        description: "Your video has been summarized",
+        description: "Your content has been summarized",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to summarize video. Make sure the video has captions.",
+        description: error instanceof Error ? error.message : "Failed to summarize. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -105,8 +126,6 @@ const VideoSummarizer = () => {
     URL.revokeObjectURL(url);
   };
 
-  const videoId = extractVideoId(videoUrl);
-
   return (
     <AppLayout>
       <div className="min-h-screen bg-background p-6">
@@ -115,51 +134,24 @@ const VideoSummarizer = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto space-y-6"
         >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 rounded-xl bg-primary/10">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <Video className="h-8 w-8 text-primary" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">Video Summarizer</h1>
-              <p className="text-muted-foreground">Get summaries from YouTube videos</p>
-            </div>
+            <h1 className="text-3xl font-bold">Video Summarizer</h1>
+            <p className="text-muted-foreground mt-2">
+              Get summaries from YouTube videos, recordings, or any content
+            </p>
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Enter Video URL</CardTitle>
-              <CardDescription>Paste a YouTube video URL to get a summary</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-3">
-                <Input
-                  placeholder="https://youtube.com/watch?v=..."
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={handleSummarize}
-                  disabled={isLoading || !videoUrl.trim()}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Play className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              {videoId && (
-                <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                  <iframe
-                    src={`https://www.youtube.com/embed/${videoId}`}
-                    className="w-full h-full"
-                    allowFullScreen
-                    title="YouTube video"
-                  />
-                </div>
-              )}
+            <CardContent className="pt-6">
+              <ContentInputTabs
+                onContentReady={handleContentReady}
+                isProcessing={isLoading}
+                placeholder="Paste video transcript or content here..."
+                supportedFormats="PDF, TXT; Max size: 20MB"
+              />
             </CardContent>
           </Card>
 

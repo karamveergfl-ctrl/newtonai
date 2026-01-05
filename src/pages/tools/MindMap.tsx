@@ -2,36 +2,82 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Loader2, Download, ZoomIn, ZoomOut } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Sparkles, ZoomIn, ZoomOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
+import { ContentInputTabs } from "@/components/ContentInputTabs";
 
 const MindMap = () => {
-  const [content, setContent] = useState("");
   const [mindMapData, setMindMapData] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [zoom, setZoom] = useState(1);
   const { toast } = useToast();
 
-  const handleGenerate = async () => {
-    if (!content.trim()) {
-      toast({
-        title: "No content",
-        description: "Please enter some content to generate a mind map",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
     setIsGenerating(true);
     setMindMapData(null);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
+
+      let textContent = content;
+
+      if (type === "youtube" && metadata?.videoId) {
+        const transcriptResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ videoId: metadata.videoId, videoTitle: "Video" }),
+          }
+        );
+        if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
+        const { transcript } = await transcriptResponse.json();
+        textContent = transcript;
+      } else if (type === "recording") {
+        const transcribeResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ audio: content }),
+          }
+        );
+        if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
+        const { text } = await transcribeResponse.json();
+        textContent = text;
+      } else if (type === "upload" && metadata?.file) {
+        if (metadata.file.type === "application/pdf") {
+          const formData = new FormData();
+          formData.append("file", metadata.file);
+          const processResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session.access_token}` },
+              body: formData,
+            }
+          );
+          if (!processResponse.ok) throw new Error("Failed to process PDF");
+          const { text } = await processResponse.json();
+          textContent = text;
+        } else if (content) {
+          textContent = content;
+        }
+      }
+
+      if (!textContent?.trim()) {
+        throw new Error("No content to process");
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`,
@@ -41,7 +87,7 @@ const MindMap = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ content: content.slice(0, 10000) }),
+          body: JSON.stringify({ content: textContent.slice(0, 10000) }),
         }
       );
 
@@ -57,7 +103,7 @@ const MindMap = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to generate mind map. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate mind map. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -76,48 +122,25 @@ const MindMap = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-6xl mx-auto space-y-6"
         >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 rounded-xl bg-primary/10">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <Sparkles className="h-8 w-8 text-primary" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">Mind Map</h1>
-              <p className="text-muted-foreground">Visualize concepts and relationships</p>
-            </div>
+            <h1 className="text-3xl font-bold">Mind Map</h1>
+            <p className="text-muted-foreground mt-2">
+              Visualize concepts and relationships from any content
+            </p>
           </div>
 
           {!mindMapData ? (
             <Card>
-              <CardHeader>
-                <CardTitle>Create Mind Map</CardTitle>
-                <CardDescription>Enter your study material to generate a visual mind map</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Textarea
+              <CardContent className="pt-6">
+                <ContentInputTabs
+                  onContentReady={handleContentReady}
+                  isProcessing={isGenerating}
                   placeholder="Paste your study content here (lecture notes, concepts, topics)..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={8}
-                  className="resize-none"
+                  supportedFormats="PDF, TXT; Max size: 20MB"
                 />
-
-                <Button
-                  onClick={handleGenerate}
-                  disabled={isGenerating || !content.trim()}
-                  className="w-full"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating Mind Map...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Generate Mind Map
-                    </>
-                  )}
-                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -125,10 +148,7 @@ const MindMap = () => {
               <div className="flex items-center justify-between">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setMindMapData(null);
-                    setContent("");
-                  }}
+                  onClick={() => setMindMapData(null)}
                 >
                   Create New
                 </Button>
@@ -155,10 +175,7 @@ const MindMap = () => {
                     <VisualMindMap 
                       data={mindMapData} 
                       title="Mind Map"
-                      onClose={() => {
-                        setMindMapData(null);
-                        setContent("");
-                      }}
+                      onClose={() => setMindMapData(null)}
                     />
                   </div>
                 </CardContent>
