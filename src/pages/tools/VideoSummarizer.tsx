@@ -14,7 +14,7 @@ const VideoSummarizer = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     setIsLoading(true);
     setSummary("");
 
@@ -92,7 +92,11 @@ const VideoSummarizer = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ content: textContent.slice(0, 15000), type: "video" }),
+          body: JSON.stringify({ 
+            content: textContent.slice(0, 15000), 
+            type: "video",
+            language: metadata?.language || "en",
+          }),
         }
       );
 

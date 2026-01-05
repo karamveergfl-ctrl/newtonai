@@ -15,7 +15,7 @@ const MindMap = () => {
   const [zoom, setZoom] = useState(1);
   const { toast } = useToast();
 
-  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     setIsGenerating(true);
     setMindMapData(null);
 
@@ -87,7 +87,10 @@ const MindMap = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ content: textContent.slice(0, 10000) }),
+          body: JSON.stringify({ 
+            content: textContent.slice(0, 10000),
+            language: metadata?.language || "en",
+          }),
         }
       );
 

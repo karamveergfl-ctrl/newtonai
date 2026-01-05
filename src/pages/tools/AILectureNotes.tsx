@@ -13,7 +13,7 @@ const AILectureNotes = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     setIsProcessing(true);
     setNotes("");
 
@@ -85,7 +85,10 @@ const AILectureNotes = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ content: textContent }),
+          body: JSON.stringify({ 
+            content: textContent,
+            language: metadata?.language || "en",
+          }),
         }
       );
 

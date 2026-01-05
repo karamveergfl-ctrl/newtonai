@@ -21,7 +21,7 @@ const AIFlashcards = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File }) => {
+  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     setIsGenerating(true);
     setFlashcards([]);
 
@@ -96,6 +96,7 @@ const AIFlashcards = () => {
           body: JSON.stringify({ 
             type: "text",
             content: textContent.slice(0, 8000),
+            language: metadata?.language || "en",
           }),
         }
       );
