@@ -7,20 +7,21 @@ import { Layers, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { Flashcard } from "@/components/Flashcard";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
   processUploadedFile 
 } from "@/utils/contentProcessing";
 
-interface Flashcard {
+interface FlashcardData {
   id: string;
   front: string;
   back: string;
 }
 
 const AIFlashcards = () => {
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -110,14 +111,14 @@ const AIFlashcards = () => {
             <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
               <Layers className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold">AI Flashcards</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-3xl font-display font-bold tracking-tight">AI Flashcards</h1>
+            <p className="text-muted-foreground mt-2 font-sans">
               Generate flashcards from any content for effective studying
             </p>
           </div>
 
           {flashcards.length === 0 ? (
-            <Card>
+            <Card className="border-border/50 shadow-lg">
               <CardContent className="pt-6">
                 <ContentInputTabs
                   onContentReady={handleContentReady}
@@ -130,7 +131,7 @@ const AIFlashcards = () => {
           ) : (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground font-sans">
                   Card {currentIndex + 1} of {flashcards.length}
                 </span>
                 <Button 
@@ -145,44 +146,16 @@ const AIFlashcards = () => {
                 </Button>
               </div>
 
-              <motion.div
-                className="relative h-64 cursor-pointer perspective-1000"
-                onClick={() => setIsFlipped(!isFlipped)}
-              >
-                <motion.div
-                  className="absolute inset-0"
-                  animate={{ rotateY: isFlipped ? 180 : 0 }}
-                  transition={{ duration: 0.6 }}
-                  style={{ transformStyle: "preserve-3d" }}
-                >
-                  <Card 
-                    className="absolute inset-0 flex items-center justify-center p-6 backface-hidden"
-                    style={{ backfaceVisibility: "hidden" }}
-                  >
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground mb-2">Question</p>
-                      <p className="text-lg font-medium">{currentCard?.front}</p>
-                    </div>
-                  </Card>
-
-                  <Card 
-                    className="absolute inset-0 flex items-center justify-center p-6 bg-primary/5"
-                    style={{ 
-                      backfaceVisibility: "hidden",
-                      transform: "rotateY(180deg)"
-                    }}
-                  >
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground mb-2">Answer</p>
-                      <p className="text-lg">{currentCard?.back}</p>
-                    </div>
-                  </Card>
-                </motion.div>
-              </motion.div>
-
-              <p className="text-center text-sm text-muted-foreground">
-                Click the card to flip
-              </p>
+              {currentCard && (
+                <Flashcard
+                  front={currentCard.front}
+                  back={currentCard.back}
+                  index={currentIndex}
+                  total={flashcards.length}
+                  isFlipped={isFlipped}
+                  onFlip={() => setIsFlipped(!isFlipped)}
+                />
+              )}
 
               <div className="flex items-center justify-center gap-4">
                 <Button variant="outline" onClick={goToPrevious}>
