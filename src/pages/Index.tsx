@@ -106,41 +106,19 @@ const Index = () => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         setSession(session);
         if (!session) {
           navigate("/auth");
-        } else {
-          // Check if onboarding is completed
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("onboarding_completed")
-            .eq("id", session.user.id)
-            .single();
-
-          if (!profile?.onboarding_completed) {
-            navigate("/onboarding");
-          }
         }
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (!session) {
         navigate("/auth");
-      } else {
-        // Check if onboarding is completed
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("onboarding_completed")
-          .eq("id", session.user.id)
-          .single();
-
-        if (!profile?.onboarding_completed) {
-          navigate("/onboarding");
-        }
       }
     });
 
