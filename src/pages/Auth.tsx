@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, FileText } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const sha1UpperHex = async (value: string) => {
   const data = new TextEncoder().encode(value);
@@ -127,11 +128,9 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-3 text-center">
           <div className="flex justify-center mb-2">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <FileText className="w-8 h-8 text-primary" />
-            </div>
+            <Logo size="lg" showText={false} />
           </div>
-          <CardTitle className="text-2xl">newtonAI</CardTitle>
+          <CardTitle className="text-2xl">NewtonAI</CardTitle>
           <CardDescription>
             {isLogin ? "Sign in to your account" : "Create a new account"}
           </CardDescription>

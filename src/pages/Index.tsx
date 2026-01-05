@@ -22,6 +22,7 @@ import { VisualMindMap } from "@/components/VisualMindMap";
 import { GenerationSettings } from "@/components/GenerationSettingsDialog";
 import { VideoGenerationSettings } from "@/components/VideoGenerationSettingsDialog";
 import { GamificationBadge } from "@/components/GamificationBadge";
+import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ArrowLeft, Loader2, LogOut, FileText } from "lucide-react";
@@ -1629,9 +1630,7 @@ const Index = () => {
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
         <div className="p-4 border-b bg-card/50 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              NewtonAI
-            </h1>
+            <Logo size="md" />
             <div className="flex items-center gap-2">
               <GamificationBadge />
               <Button
