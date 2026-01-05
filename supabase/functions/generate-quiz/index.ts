@@ -40,10 +40,91 @@ serve(async (req) => {
 
     const data = await response.json();
     let responseText = data.choices?.[0]?.message?.content || '';
-    let questions = [];
-    try { let jsonStr = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim().replace(/\\(?!["\\/bfnrtu])/g, '\\\\'); questions = JSON.parse(jsonStr); } catch { const jsonMatch = responseText.match(/\[[\s\S]*\]/); if (jsonMatch) { questions = JSON.parse(jsonMatch[0].replace(/\\(?!["\\/bfnrtu])/g, '\\\\')); } }
-    if (!Array.isArray(questions) || questions.length === 0) throw new Error("Failed to generate quiz");
-    const questionsWithIds = questions.map((q: any, i: number) => ({ id: `q-${Date.now()}-${i}`, question: q.question, options: q.options, correctIndex: q.correctIndex, explanation: q.explanation }));
+    console.log("AI Response preview:", responseText.slice(0, 300));
+    
+    let questions: any[] = [];
+    
+    // Robust extraction
+    const extractQuestions = (text: string): any[] => {
+      const items: any[] = [];
+      
+      // Method 1: Find JSON array
+      const arrayMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (arrayMatch) {
+        try {
+          let jsonStr = arrayMatch[0].replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+          const parsed = JSON.parse(jsonStr);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {
+          console.log("Array parse failed:", e);
+        }
+      }
+      
+      // Method 2: Extract question objects individually
+      const qPattern = /"question"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
+      const oPattern = /"options"\s*:\s*\[((?:[^\]]*?))\]/g;
+      const cPattern = /"correctIndex"\s*:\s*(\d+)/g;
+      
+      let qMatch, oMatch, cMatch;
+      const questions: string[] = [];
+      const options: string[][] = [];
+      const correctIndices: number[] = [];
+      
+      while ((qMatch = qPattern.exec(text)) !== null) questions.push(qMatch[1]);
+      while ((oMatch = oPattern.exec(text)) !== null) {
+        const opts = oMatch[1].match(/"((?:[^"\\]|\\.)*)"/g)?.map(s => s.replace(/^"|"$/g, '')) || [];
+        options.push(opts);
+      }
+      while ((cMatch = cPattern.exec(text)) !== null) correctIndices.push(parseInt(cMatch[1]));
+      
+      for (let i = 0; i < questions.length; i++) {
+        if (options[i]?.length >= 4) {
+          items.push({
+            question: questions[i],
+            options: options[i].slice(0, 4),
+            correctIndex: correctIndices[i] || 0,
+            explanation: "Based on the content provided."
+          });
+        }
+      }
+      
+      return items;
+    };
+    
+    // Clean and extract
+    let cleanText = responseText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    questions = extractQuestions(cleanText);
+    
+    console.log(`Extracted ${questions.length} questions`);
+    
+    // Validate questions
+    questions = questions.filter(q => 
+      q.question && 
+      Array.isArray(q.options) && 
+      q.options.length >= 4 &&
+      typeof q.correctIndex === 'number'
+    ).map(q => ({
+      question: q.question,
+      options: q.options.slice(0, 4),
+      correctIndex: Math.min(Math.max(0, q.correctIndex), 3),
+      explanation: q.explanation || "This is the correct answer based on the content."
+    }));
+    
+    if (questions.length === 0) {
+      throw new Error("Could not generate quiz questions. Please try with different content.");
+    }
+    
+    const questionsWithIds = questions.slice(0, count).map((q: any, i: number) => ({ 
+      id: `q-${Date.now()}-${i}`, 
+      question: q.question, 
+      options: q.options, 
+      correctIndex: q.correctIndex, 
+      explanation: q.explanation 
+    }));
+    
     return new Response(JSON.stringify({ questions: questionsWithIds, source: type, title: title || 'Content Quiz', difficulty }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (error) { console.error("Error generating quiz:", error); return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Failed to generate quiz" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
+  } catch (error) { 
+    console.error("Error generating quiz:", error); 
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Failed to generate quiz" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }); 
+  }
 });
