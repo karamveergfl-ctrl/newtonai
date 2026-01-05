@@ -45,8 +45,10 @@ const Contact = () => {
 
       <main className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Get in Touch</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">
+            Get in Touch
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
           </p>
         </div>
@@ -61,7 +63,7 @@ const Contact = () => {
                     <Mail className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">Email</h3>
+                    <h3 className="font-display font-semibold text-foreground mb-1">Email</h3>
                     <p className="text-muted-foreground text-sm">support@studysmart.com</p>
                   </div>
                 </div>
@@ -74,7 +76,7 @@ const Contact = () => {
                     <Phone className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">Phone</h3>
+                    <h3 className="font-display font-semibold text-foreground mb-1">Phone</h3>
                     <p className="text-muted-foreground text-sm">+1 (555) 123-4567</p>
                   </div>
                 </div>
@@ -87,7 +89,7 @@ const Contact = () => {
                     <MapPin className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">Office</h3>
+                    <h3 className="font-display font-semibold text-foreground mb-1">Office</h3>
                     <p className="text-muted-foreground text-sm">
                       123 Learning Street<br />
                       San Francisco, CA 94102
@@ -101,8 +103,8 @@ const Contact = () => {
           {/* Contact Form */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Send us a message</CardTitle>
-              <CardDescription>
+              <CardTitle className="font-display">Send us a message</CardTitle>
+              <CardDescription className="leading-relaxed">
                 Fill out the form below and we'll get back to you within 24 hours.
               </CardDescription>
             </CardHeader>
