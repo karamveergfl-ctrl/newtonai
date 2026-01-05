@@ -44,3 +44,9 @@ verify_jwt = true
 
 [functions.fetch-transcript]
 verify_jwt = true
+
+[functions.extract-pdf-text]
+verify_jwt = true
+
+[functions.generate-lecture-notes]
+verify_jwt = true

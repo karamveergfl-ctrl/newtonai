@@ -6,6 +6,12 @@ import { FileQuestion } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { 
+  getYouTubeTranscript, 
+  transcribeAudio, 
+  processUploadedFile,
+  fileToBase64
+} from "@/utils/contentProcessing";
 
 const HomeworkHelp = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,59 +30,17 @@ const HomeworkHelp = () => {
       let imageData: string | undefined;
 
       if (type === "youtube" && metadata?.videoId) {
-        const transcriptResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ videoId: metadata.videoId, videoTitle: "Video" }),
-          }
-        );
-        if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
-        const { transcript } = await transcriptResponse.json();
-        textContent = transcript;
+        textContent = await getYouTubeTranscript(metadata.videoId, session.access_token);
       } else if (type === "recording") {
-        const transcribeResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ audio: content }),
-          }
-        );
-        if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
-        const { text } = await transcribeResponse.json();
-        textContent = text;
+        textContent = await transcribeAudio(content, session.access_token);
       } else if (type === "upload" && metadata?.file) {
+        // For homework help, we want to send images directly to analyze-text
+        // as it supports multimodal input for better problem solving
         if (metadata.file.type.startsWith("image/")) {
-          const reader = new FileReader();
-          imageData = await new Promise<string>((resolve) => {
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(metadata.file!);
-          });
+          imageData = await fileToBase64(metadata.file);
           textContent = "";
-        } else if (metadata.file.type === "application/pdf") {
-          const formData = new FormData();
-          formData.append("file", metadata.file);
-          const processResponse = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${session.access_token}` },
-              body: formData,
-            }
-          );
-          if (!processResponse.ok) throw new Error("Failed to process PDF");
-          const { text } = await processResponse.json();
-          textContent = text;
-        } else if (content) {
-          textContent = content;
+        } else {
+          textContent = await processUploadedFile(metadata.file, session.access_token);
         }
       }
 
