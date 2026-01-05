@@ -60,10 +60,10 @@ serve(async (req) => {
       hard: "Focus on complex concepts, edge cases, and deeper analysis. Cards should challenge deep understanding."
     };
 
-    let systemPrompt = `You are an expert educator that creates effective flashcards for studying. 
-Generate flashcards that help students memorize and understand key concepts.
+    let systemPrompt = `You are an expert educator that creates effective flashcards for studying.
+CRITICAL: You MUST respond with ONLY a valid JSON array. No explanations, no markdown, no extra text.
 Each flashcard should have a clear question on the front and a concise answer on the back.
-Use LaTeX formatting for mathematical expressions: $formula$ for inline.
+For math, use simple notation like x^2, sqrt(x), etc. Avoid LaTeX backslashes.
 
 Difficulty level: ${difficulty.toUpperCase()}
 ${difficultyGuide[difficulty as keyof typeof difficultyGuide]}`;
@@ -142,45 +142,58 @@ Return ONLY a JSON array with this exact format:
     
     console.log("AI Response:", responseText.slice(0, 500));
 
-    // Extract JSON from response
+    // Extract JSON from response - robust parsing
     let flashcards = [];
-    try {
-      // Remove markdown code blocks if present
-      let jsonStr = responseText;
-      if (jsonStr.includes('```json')) {
-        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      } else if (jsonStr.includes('```')) {
-        jsonStr = jsonStr.replace(/```\n?/g, '');
-      }
-      
-      // Fix common escape sequence issues before parsing
-      jsonStr = jsonStr.trim();
-      // Fix unescaped backslashes (common in LaTeX)
-      jsonStr = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
-      
-      flashcards = JSON.parse(jsonStr);
-    } catch (parseError) {
-      console.log("Initial parse failed, trying fallback extraction");
-      // Try to extract JSON array from the response
-      const jsonMatch = responseText.match(/\[[\s\S]*?\]/);
-      if (jsonMatch) {
+    
+    // Try multiple extraction methods
+    const extractFlashcards = (text: string): any[] => {
+      // Method 1: Find JSON array pattern
+      const arrayMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (arrayMatch) {
         try {
-          let extracted = jsonMatch[0];
-          // Fix escape sequences in extracted JSON
-          extracted = extracted.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
-          flashcards = JSON.parse(extracted);
-        } catch (extractError) {
-          // Last resort: try to manually parse the structure
-          console.log("Fallback extraction failed, trying manual parse");
-          const cardMatches = responseText.matchAll(/"front"\s*:\s*"([^"]*(?:\\.[^"]*)*)"\s*,\s*"back"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/g);
-          for (const match of cardMatches) {
-            flashcards.push({
-              front: match[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\'),
-              back: match[2].replace(/\\"/g, '"').replace(/\\\\/g, '\\')
-            });
-          }
+          let jsonStr = arrayMatch[0];
+          // Clean up escape sequences
+          jsonStr = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+          return JSON.parse(jsonStr);
+        } catch (e) {
+          console.log("Array match parse failed");
         }
       }
+      
+      // Method 2: Extract individual card objects
+      const cards: any[] = [];
+      const cardPattern = /\{\s*"front"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"back"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}/g;
+      let match;
+      while ((match = cardPattern.exec(text)) !== null) {
+        cards.push({
+          front: match[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\').replace(/\\n/g, '\n'),
+          back: match[2].replace(/\\"/g, '"').replace(/\\\\/g, '\\').replace(/\\n/g, '\n')
+        });
+      }
+      if (cards.length > 0) return cards;
+      
+      // Method 3: Parse markdown-style flashcards
+      const mdPattern = /\*\*Front:\*\*\s*(.+?)[\n\r]+\*\*Back:\*\*\s*(.+?)(?=\*\*Front:\*\*|$)/gis;
+      while ((match = mdPattern.exec(text)) !== null) {
+        cards.push({
+          front: match[1].trim(),
+          back: match[2].trim()
+        });
+      }
+      
+      return cards;
+    };
+
+    try {
+      // Remove markdown code blocks if present
+      let cleanText = responseText;
+      cleanText = cleanText.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+      cleanText = cleanText.trim();
+      
+      flashcards = extractFlashcards(cleanText);
+    } catch (parseError) {
+      console.log("Parse error:", parseError);
+      flashcards = [];
     }
 
     if (!Array.isArray(flashcards) || flashcards.length === 0) {
