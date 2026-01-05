@@ -68,8 +68,10 @@ const FAQ = () => {
 
       <main className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Frequently Asked Questions</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">
+            Frequently Asked Questions
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Find answers to common questions about StudySmart. Can't find what you're looking for? Contact our support team.
           </p>
         </div>
@@ -82,10 +84,10 @@ const FAQ = () => {
                 value={`item-${index}`}
                 className="border rounded-lg px-6"
               >
-                <AccordionTrigger className="text-left hover:no-underline">
+                <AccordionTrigger className="text-left hover:no-underline font-display font-medium">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
+                <AccordionContent className="text-muted-foreground leading-relaxed">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -95,8 +97,8 @@ const FAQ = () => {
 
         {/* CTA Section */}
         <div className="text-center mt-16 p-8 bg-muted/50 rounded-2xl max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4">Still have questions?</h2>
-          <p className="text-muted-foreground mb-6">
+          <h2 className="font-display text-2xl font-bold text-foreground mb-4">Still have questions?</h2>
+          <p className="text-muted-foreground mb-6 leading-relaxed">
             Our support team is here to help. Get in touch and we'll respond within 24 hours.
           </p>
           <Link to="/contact">
