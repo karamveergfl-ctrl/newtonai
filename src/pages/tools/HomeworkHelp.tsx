@@ -2,10 +2,15 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileQuestion } from "lucide-react";
+import { FileQuestion, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { Button } from "@/components/ui/button";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -16,7 +21,15 @@ import {
 const HomeworkHelp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [solution, setSolution] = useState("");
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(solution);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast({ title: "Copied!", description: "Solution copied to clipboard" });
+  };
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     setIsLoading(true);
@@ -143,13 +156,36 @@ const HomeworkHelp = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Solution</CardTitle>
+              <Card className="overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+                  <CardTitle className="text-xl font-semibold tracking-tight">
+                    Solution
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="gap-2"
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? "Copied" : "Copy"}
+                  </Button>
                 </CardHeader>
-                <CardContent>
-                  <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
-                    {solution}
+                <CardContent className="pt-6">
+                  <div className="prose prose-lg dark:prose-invert max-w-none
+                    prose-headings:font-semibold prose-headings:tracking-tight
+                    prose-h2:text-xl prose-h2:mt-6 prose-h2:mb-3 prose-h2:border-b prose-h2:pb-2 prose-h2:border-border
+                    prose-p:leading-relaxed prose-p:text-foreground/90
+                    prose-strong:text-foreground prose-strong:font-semibold
+                    prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                    [&_.katex]:text-lg [&_.katex-display]:my-4 [&_.katex-display]:overflow-x-auto
+                  ">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkMath]}
+                      rehypePlugins={[rehypeKatex]}
+                    >
+                      {solution}
+                    </ReactMarkdown>
                   </div>
                 </CardContent>
               </Card>
