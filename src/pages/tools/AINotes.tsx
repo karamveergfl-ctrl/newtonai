@@ -3,10 +3,15 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Notebook, Download, Loader2 } from "lucide-react";
+import { Notebook, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { 
+  getYouTubeTranscript, 
+  transcribeAudio, 
+  processUploadedFile 
+} from "@/utils/contentProcessing";
 
 const AINotes = () => {
   const [notes, setNotes] = useState("");
@@ -23,55 +28,12 @@ const AINotes = () => {
 
       let textContent = content;
 
-      // Handle different input types
       if (type === "youtube" && metadata?.videoId) {
-        const transcriptResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ videoId: metadata.videoId, videoTitle: "Video" }),
-          }
-        );
-        if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
-        const { transcript } = await transcriptResponse.json();
-        textContent = transcript;
+        textContent = await getYouTubeTranscript(metadata.videoId, session.access_token);
       } else if (type === "recording") {
-        const transcribeResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ audio: content }),
-          }
-        );
-        if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
-        const { text } = await transcribeResponse.json();
-        textContent = text;
+        textContent = await transcribeAudio(content, session.access_token);
       } else if (type === "upload" && metadata?.file) {
-        if (metadata.file.type === "application/pdf") {
-          const formData = new FormData();
-          formData.append("file", metadata.file);
-          const processResponse = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${session.access_token}` },
-              body: formData,
-            }
-          );
-          if (!processResponse.ok) throw new Error("Failed to process PDF");
-          const { text } = await processResponse.json();
-          textContent = text;
-        } else if (content) {
-          textContent = content;
-        }
+        textContent = await processUploadedFile(metadata.file, session.access_token);
       }
 
       if (!textContent?.trim()) {

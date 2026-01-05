@@ -7,6 +7,11 @@ import { Video, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { 
+  getYouTubeTranscript, 
+  transcribeAudio, 
+  processUploadedFile 
+} from "@/utils/contentProcessing";
 
 const VideoSummarizer = () => {
   const [summary, setSummary] = useState("");
@@ -25,7 +30,7 @@ const VideoSummarizer = () => {
       let textContent = content;
 
       if (type === "youtube" && metadata?.videoId) {
-        const transcriptResponse = await fetch(
+        const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
           {
             method: "POST",
@@ -36,46 +41,16 @@ const VideoSummarizer = () => {
             body: JSON.stringify({ videoId: metadata.videoId, videoTitle: "Video" }),
           }
         );
-        if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript");
-        const { transcript, title } = await transcriptResponse.json();
+        if (!response.ok) throw new Error("Failed to fetch transcript");
+        const { transcript, title } = await response.json();
         textContent = transcript;
         setVideoTitle(title || "Video Summary");
       } else if (type === "recording") {
-        const transcribeResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ audio: content }),
-          }
-        );
-        if (!transcribeResponse.ok) throw new Error("Failed to transcribe");
-        const { text } = await transcribeResponse.json();
-        textContent = text;
+        textContent = await transcribeAudio(content, session.access_token);
         setVideoTitle("Audio Recording");
       } else if (type === "upload" && metadata?.file) {
-        if (metadata.file.type === "application/pdf") {
-          const formData = new FormData();
-          formData.append("file", metadata.file);
-          const processResponse = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-pdf`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${session.access_token}` },
-              body: formData,
-            }
-          );
-          if (!processResponse.ok) throw new Error("Failed to process PDF");
-          const { text } = await processResponse.json();
-          textContent = text;
-          setVideoTitle(metadata.file.name);
-        } else if (content) {
-          textContent = content;
-          setVideoTitle(metadata.file.name);
-        }
+        textContent = await processUploadedFile(metadata.file, session.access_token);
+        setVideoTitle(metadata.file.name);
       } else if (type === "text") {
         setVideoTitle("Text Content");
       }
@@ -154,7 +129,7 @@ const VideoSummarizer = () => {
                 onContentReady={handleContentReady}
                 isProcessing={isLoading}
                 placeholder="Paste video transcript or content here..."
-                supportedFormats="PDF, TXT; Max size: 20MB"
+                supportedFormats="PDF, TXT, Images; Max size: 20MB"
               />
             </CardContent>
           </Card>
