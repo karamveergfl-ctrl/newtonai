@@ -148,34 +148,47 @@ Return ONLY the JSON object.`;
     
     console.log("Raw AI response:", rawContent.slice(0, 500));
 
-    // Parse JSON from response
-    let mindMapData;
-    try {
-      let jsonStr = rawContent;
-      if (jsonStr.includes('```json')) {
-        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      } else if (jsonStr.includes('```')) {
-        jsonStr = jsonStr.replace(/```\n?/g, '');
-      }
-      jsonStr = jsonStr.trim();
+    // Robust JSON extraction for mind maps
+    const extractMindMap = (text: string): any => {
+      // Clean the text
+      let cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
       
-      mindMapData = JSON.parse(jsonStr);
-      console.log("Successfully parsed mind map JSON");
-    } catch (parseError) {
-      console.error("Failed to parse JSON, creating fallback structure:", parseError);
-      mindMapData = {
+      // Method 1: Direct parse
+      try {
+        const parsed = JSON.parse(cleaned);
+        if (parsed.id || parsed.text || parsed.central) return parsed;
+      } catch {}
+      
+      // Method 2: Find object with id/text/central
+      const objMatch = cleaned.match(/\{\s*"(?:id|text|central)"[\s\S]*\}/);
+      if (objMatch) {
+        try {
+          return JSON.parse(objMatch[0]);
+        } catch {}
+      }
+      
+      // Method 3: Create from bullet points
+      const lines = text.split('\n')
+        .map(l => l.trim())
+        .filter(l => l && !l.startsWith('{') && !l.startsWith('['));
+      
+      const branches = lines.slice(0, 6).map((line, i) => ({
+        id: `b${i + 1}`,
+        text: line.replace(/^[-*•#]+\s*/, '').replace(/\*\*/g, '').slice(0, 50),
+        definition: "Key concept from the content",
+        children: []
+      }));
+      
+      return {
         id: "root",
-        text: "Main Topic",
-        children: rawContent.split('\n')
-          .filter((line: string) => line.trim())
-          .slice(0, 6)
-          .map((line: string, i: number) => ({
-            id: `b${i + 1}`,
-            text: line.replace(/^[-*•]\s*/, '').slice(0, 40),
-            children: []
-          }))
+        text: "Content Summary",
+        definition: "Overview of the main topics",
+        children: branches
       };
-    }
+    };
+
+    const mindMapData = extractMindMap(rawContent);
+    console.log("Parsed mind map with", mindMapData.children?.length || 0, "branches");
 
     return new Response(JSON.stringify({ 
       mindMap: rawContent,

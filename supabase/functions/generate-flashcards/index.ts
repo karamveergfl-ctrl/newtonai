@@ -143,25 +143,25 @@ Return ONLY a JSON array with this exact format:
     console.log("AI Response:", responseText.slice(0, 500));
 
     // Extract JSON from response - robust parsing
-    let flashcards = [];
+    let flashcards: any[] = [];
     
-    // Try multiple extraction methods
     const extractFlashcards = (text: string): any[] => {
+      const cards: any[] = [];
+      
       // Method 1: Find JSON array pattern
       const arrayMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
       if (arrayMatch) {
         try {
           let jsonStr = arrayMatch[0];
-          // Clean up escape sequences
           jsonStr = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
-          return JSON.parse(jsonStr);
+          const parsed = JSON.parse(jsonStr);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         } catch (e) {
-          console.log("Array match parse failed");
+          console.log("Array match parse failed:", e);
         }
       }
       
-      // Method 2: Extract individual card objects
-      const cards: any[] = [];
+      // Method 2: Extract individual card objects using regex
       const cardPattern = /\{\s*"front"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"back"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}/g;
       let match;
       while ((match = cardPattern.exec(text)) !== null) {
@@ -173,8 +173,17 @@ Return ONLY a JSON array with this exact format:
       if (cards.length > 0) return cards;
       
       // Method 3: Parse markdown-style flashcards
-      const mdPattern = /\*\*Front:\*\*\s*(.+?)[\n\r]+\*\*Back:\*\*\s*(.+?)(?=\*\*Front:\*\*|$)/gis;
+      const mdPattern = /\*\*Front[:\s]*\*\*\s*(.+?)[\n\r]+\*\*Back[:\s]*\*\*\s*(.+?)(?=\*\*Front|$)/gis;
       while ((match = mdPattern.exec(text)) !== null) {
+        cards.push({
+          front: match[1].trim(),
+          back: match[2].trim()
+        });
+      }
+      
+      // Method 4: Parse Q: A: format
+      const qaPattern = /(?:Q:|Question:)\s*(.+?)[\n\r]+(?:A:|Answer:)\s*(.+?)(?=(?:Q:|Question:)|$)/gis;
+      while ((match = qaPattern.exec(text)) !== null) {
         cards.push({
           front: match[1].trim(),
           back: match[2].trim()
@@ -184,27 +193,38 @@ Return ONLY a JSON array with this exact format:
       return cards;
     };
 
-    try {
-      // Remove markdown code blocks if present
-      let cleanText = responseText;
-      cleanText = cleanText.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
-      cleanText = cleanText.trim();
+    // Clean and extract
+    let cleanText = responseText;
+    cleanText = cleanText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    flashcards = extractFlashcards(cleanText);
+    
+    console.log(`Extracted ${flashcards.length} flashcards from AI response`);
+
+    // Generate fallback flashcards if extraction failed
+    if (flashcards.length === 0 && content) {
+      console.log("Generating fallback flashcards from content");
+      const sentences = content.split(/[.!?]+/)
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 20 && s.length < 300);
       
-      flashcards = extractFlashcards(cleanText);
-    } catch (parseError) {
-      console.log("Parse error:", parseError);
-      flashcards = [];
+      for (let i = 0; i < Math.min(sentences.length, count); i++) {
+        const sentence = sentences[i];
+        flashcards.push({
+          front: `What is the key concept: "${sentence.slice(0, 50)}..."?`,
+          back: sentence
+        });
+      }
     }
 
-    if (!Array.isArray(flashcards) || flashcards.length === 0) {
-      throw new Error("Failed to generate flashcards");
+    if (flashcards.length === 0) {
+      throw new Error("Could not generate flashcards. Please try with different content.");
     }
 
     // Add IDs to flashcards
-    const flashcardsWithIds = flashcards.map((card: { front: string; back: string }, index: number) => ({
+    const flashcardsWithIds = flashcards.slice(0, count).map((card: { front: string; back: string }, index: number) => ({
       id: `card-${Date.now()}-${index}`,
-      front: card.front,
-      back: card.back,
+      front: card.front || "Question",
+      back: card.back || "Answer",
     }));
 
     console.log(`Generated ${flashcardsWithIds.length} flashcards`);
