@@ -54,13 +54,11 @@ const studyGoals = [
 ];
 
 const referralSources = [
-  { id: "social_media", label: "Social Media", icon: "📱", description: "TikTok, Instagram, Twitter, etc." },
+  { id: "tiktok", label: "TikTok", icon: "🎵", description: "Saw it on TikTok" },
   { id: "youtube", label: "YouTube", icon: "▶️", description: "Saw a video or ad" },
+  { id: "instagram", label: "Instagram", icon: "📸", description: "Found on Instagram" },
+  { id: "whatsapp", label: "WhatsApp", icon: "💬", description: "Shared via WhatsApp" },
   { id: "friend", label: "Friend or Classmate", icon: "👥", description: "Someone recommended it" },
-  { id: "teacher", label: "Teacher or Mentor", icon: "👨‍🏫", description: "Recommended by an educator" },
-  { id: "search", label: "Google Search", icon: "🔍", description: "Found it while searching" },
-  { id: "app_store", label: "App Store", icon: "📲", description: "Discovered in the app store" },
-  { id: "blog", label: "Blog or Article", icon: "📝", description: "Read about it online" },
   { id: "other", label: "Other", icon: "✨", description: "Something else" },
 ];
 
