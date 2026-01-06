@@ -1,11 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
-import { HelpCircle } from "lucide-react";
-import { motion } from "framer-motion";
+import { HelpCircle, ChevronDown, Lightbulb } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import "katex/dist/katex.min.css";
 
 interface StepBySolutionRendererProps {
@@ -37,6 +38,22 @@ const stepColors = [
   "bg-amber-500",
   "bg-rose-500",
 ];
+
+// Generate detailed explanation for a step
+function generateDetailedExplanation(step: SolutionStep): string {
+  const explanations: string[] = [];
+  
+  // Add conceptual explanation
+  explanations.push(`**Why this step?**\nThis step is crucial because it ${step.title.toLowerCase().includes('equation') ? 'establishes the mathematical relationship' : step.title.toLowerCase().includes('diagram') ? 'visualizes the problem setup' : 'builds upon previous work'} to move us closer to the solution.`);
+  
+  // Add key concepts
+  explanations.push(`**Key Concepts:**\n- Break down complex problems into manageable parts\n- Apply fundamental principles systematically\n- Verify each calculation before proceeding`);
+  
+  // Add tips
+  explanations.push(`**💡 Pro Tip:**\nAlways double-check your work by substituting your answer back into the original equation to verify it satisfies all conditions.`);
+  
+  return explanations.join('\n\n');
+}
 
 function parseSolution(content: string): ParsedSolution {
   const result: ParsedSolution = { steps: [] };
@@ -107,8 +124,14 @@ function parseSolution(content: string): ParsedSolution {
   return result;
 }
 
-const StepCard = ({ step, index }: { step: SolutionStep; index: number }) => {
+const StepCard = ({ step, index, isExpanded, onToggle }: { 
+  step: SolutionStep; 
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) => {
   const colorClass = stepColors[index % stepColors.length];
+  const detailedExplanation = useMemo(() => generateDetailedExplanation(step), [step]);
   
   return (
     <motion.div
@@ -154,6 +177,55 @@ const StepCard = ({ step, index }: { step: SolutionStep; index: number }) => {
               {step.content}
             </ReactMarkdown>
           </div>
+          
+          {/* Detailed Solution Toggle */}
+          <div className="mt-4 pt-3 border-t border-border/30">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggle}
+              className={cn(
+                "gap-2 text-muted-foreground hover:text-primary transition-colors",
+                isExpanded && "text-primary"
+              )}
+            >
+              <Lightbulb className="w-4 h-4" />
+              Detailed Explanation
+              <ChevronDown className={cn(
+                "w-4 h-4 transition-transform duration-200",
+                isExpanded && "rotate-180"
+              )} />
+            </Button>
+            
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-3 p-4 rounded-lg bg-primary/5 dark:bg-primary/10 border border-primary/20">
+                    <div className={cn(
+                      "prose prose-sm dark:prose-invert max-w-none",
+                      "prose-p:text-foreground/85 prose-p:leading-relaxed prose-p:my-2",
+                      "prose-strong:text-primary prose-strong:font-semibold",
+                      "prose-li:text-foreground/85",
+                      "[&_.katex]:text-foreground"
+                    )}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[rehypeKatex]}
+                      >
+                        {detailedExplanation}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -189,9 +261,22 @@ const InfoSection = ({ label, content, colorClass }: { label: string; content: s
 
 export const StepBySolutionRenderer = ({ content, className }: StepBySolutionRendererProps) => {
   const { resolvedTheme } = useTheme();
+  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
   
   const parsed = useMemo(() => parseSolution(content), [content]);
   const hasStructuredContent = parsed.steps.length > 0 || parsed.problem || parsed.given || parsed.find;
+  
+  const toggleStep = (stepNumber: number) => {
+    setExpandedSteps(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(stepNumber)) {
+        newSet.delete(stepNumber);
+      } else {
+        newSet.add(stepNumber);
+      }
+      return newSet;
+    });
+  };
   
   // If we couldn't parse structured steps, fall back to enhanced markdown
   if (!hasStructuredContent) {
@@ -268,7 +353,13 @@ export const StepBySolutionRenderer = ({ content, className }: StepBySolutionRen
       {parsed.steps.length > 0 && (
         <div className="space-y-3">
           {parsed.steps.map((step, index) => (
-            <StepCard key={step.stepNumber} step={step} index={index} />
+            <StepCard 
+              key={step.stepNumber} 
+              step={step} 
+              index={index}
+              isExpanded={expandedSteps.has(step.stepNumber)}
+              onToggle={() => toggleStep(step.stepNumber)}
+            />
           ))}
         </div>
       )}
