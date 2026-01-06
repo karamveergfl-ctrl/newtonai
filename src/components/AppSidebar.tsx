@@ -127,22 +127,22 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              isActive={isActive("/dashboard")}
-              tooltip="Dashboard"
+              isActive={isActive("/")}
+              tooltip="Home"
             >
               <motion.button
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/")}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive("/dashboard")
+                  isActive("/")
                     ? "bg-primary text-primary-foreground"
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
                 <Home className="h-5 w-5 shrink-0" />
-                {!isCollapsed && <span>Dashboard</span>}
+                {!isCollapsed && <span>Home</span>}
               </motion.button>
             </SidebarMenuButton>
           </SidebarMenuItem>

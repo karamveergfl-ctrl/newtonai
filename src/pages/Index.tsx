@@ -9,7 +9,6 @@ import { VideoPanel } from "@/components/VideoPanel";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchBox } from "@/components/SearchBox";
 import { GlobalSearchBox } from "@/components/GlobalSearchBox";
-import { TextToVideoSearch } from "@/components/TextToVideoSearch";
 import { SolutionPanel } from "@/components/SolutionPanel";
 import { StudyTracker } from "@/components/StudyTracker";
 import { PDFChat } from "@/components/PDFChat";
@@ -24,7 +23,6 @@ import { GenerationSettings } from "@/components/GenerationSettingsDialog";
 import { VideoGenerationSettings } from "@/components/VideoGenerationSettingsDialog";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { AppLayout } from "@/components/AppLayout";
-import { DashboardHome } from "@/components/DashboardHome";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -1601,61 +1599,39 @@ const Index = () => {
     return null; // Auth redirect will happen in useEffect
   }
   if (!fileData) {
-    return (
-      <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
-        <div className="flex-1 overflow-auto">
-          <DashboardHome
-            onUploadComplete={handleUploadComplete}
-            onTopicSearch={handleTopicSearch}
-            isTopicSearching={isTopicSearching}
-            onOCRUpload={handleOCRUpload}
-            onNotesGenerated={(notes, title) => {
-              setLectureNotes(notes);
-              setLectureNotesTitle(title);
-            }}
-          />
-          
-          {/* Video Panel Overlay */}
-          {showVideosPanel && (
-            <div className="fixed inset-0 z-40 bg-background/95 backdrop-blur-sm overflow-auto animate-fade-in">
-              <div className="max-w-7xl mx-auto p-4">
-                <VideoPanel
-                  animationVideos={animationVideos}
-                  explanationVideos={explanationVideos}
-                  searchQuery={searchQuery}
-                  onVideoClick={handleVideoClick}
-                  onClose={handleCloseVideosPanel}
-                  onGenerateFlashcards={handleGenerateFlashcardsFromVideo}
-                  onGenerateQuiz={handleGenerateQuizFromVideo}
-                  onGenerateSummary={handleGenerateSummaryFromVideo}
-                  onGenerateMindMap={handleGenerateMindMapFromVideo}
-                  isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap}
-                  activeGenerating={activeGenerating}
-                  onLoadMore={handleLoadMoreVideos}
-                  isLoadingMore={isLoadingMoreVideos}
-                  hasMoreAnimation={!!animationNextPageToken}
-                  hasMoreExplanation={!!explanationNextPageToken}
-                />
+    return <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
+        <div className="flex-1 bg-gradient-to-br from-background via-background to-primary/5 overflow-auto">
+          <div className="max-w-4xl mx-auto px-6 py-8">
+            <div className="flex items-center justify-between mb-6">
+              <GamificationBadge />
+              <Button onClick={handleOCRUpload} variant="default" size="sm" className="gap-2">
+                <FileText className="w-4 h-4" />
+                Rewrite Handwritten (A4)
+              </Button>
+            </div>
+            <GlobalSearchBox onTopicSearch={handleTopicSearch} isSearching={isTopicSearching} />
+            {showVideosPanel && <div className="mt-8 animate-fade-in">
+                <VideoPanel animationVideos={animationVideos} explanationVideos={explanationVideos} searchQuery={searchQuery} onVideoClick={handleVideoClick} onClose={handleCloseVideosPanel} onGenerateFlashcards={handleGenerateFlashcardsFromVideo} onGenerateQuiz={handleGenerateQuizFromVideo} onGenerateSummary={handleGenerateSummaryFromVideo} onGenerateMindMap={handleGenerateMindMapFromVideo} isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap} activeGenerating={activeGenerating} onLoadMore={handleLoadMoreVideos} isLoadingMore={isLoadingMoreVideos} hasMoreAnimation={!!animationNextPageToken} hasMoreExplanation={!!explanationNextPageToken} />
+              </div>}
+            <div className="mt-8 space-y-6 my-[3px]">
+              <StudyTracker />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <UploadZone onUploadComplete={handleUploadComplete} />
+                <LectureRecorder onNotesGenerated={(notes, title) => {
+                setLectureNotes(notes);
+                setLectureNotesTitle(title);
+              }} />
               </div>
             </div>
-          )}
-          
+          </div>
           {selectedVideoId && <VideoPlayer videoId={selectedVideoId} onClose={handleClosePlayer} />}
           {showOCRView && ocrFile && <OCRSplitView file={ocrFile} onClose={handleCloseOCR} onTextSelect={handleSearch} />}
-          {lectureNotes && (
-            <FullScreenStudyTool
-              type="summary"
-              title={lectureNotesTitle || "Lecture Notes"}
-              content={lectureNotes}
-              onClose={() => {
-                setLectureNotes("");
-                setLectureNotesTitle("");
-              }}
-            />
-          )}
+          {lectureNotes && <FullScreenStudyTool type="summary" title={lectureNotesTitle || "Lecture Notes"} content={lectureNotes} onClose={() => {
+          setLectureNotes("");
+          setLectureNotesTitle("");
+        }} />}
         </div>
-      </AppLayout>
-    );
+      </AppLayout>;
   }
   return <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
       <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
