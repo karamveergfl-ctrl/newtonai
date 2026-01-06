@@ -50,3 +50,15 @@ verify_jwt = true
 
 [functions.generate-lecture-notes]
 verify_jwt = true
+
+[functions.extract-text]
+verify_jwt = false
+
+[functions.structure-problem]
+verify_jwt = false
+
+[functions.solve-problem]
+verify_jwt = false
+
+[functions.search-videos]
+verify_jwt = false

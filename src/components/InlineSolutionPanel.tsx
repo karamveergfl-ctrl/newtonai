@@ -1,0 +1,368 @@
+import { useState, useEffect } from 'react';
+import { X, Loader2, Play, Clock, Eye, ChevronRight, Sparkles, BookOpen, Video } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
+import { MixedContent } from './LaTeXRenderer';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface Video {
+  id: string;
+  title: string;
+  thumbnail: string;
+  channelTitle: string;
+  duration?: string;
+  viewCount?: string;
+}
+
+interface SolutionStep {
+  stepNumber: number;
+  title: string;
+  content: string;
+  explanation?: string;
+}
+
+interface InlineSolutionPanelProps {
+  screenshot: {
+    imageBase64: string;
+    mimeType: string;
+  };
+  onClose: () => void;
+}
+
+export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanelProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingStage, setLoadingStage] = useState<'extracting' | 'structuring' | 'solving' | 'videos'>('extracting');
+  const [extractedText, setExtractedText] = useState('');
+  const [structuredProblem, setStructuredProblem] = useState<any>(null);
+  const [solution, setSolution] = useState<SolutionStep[]>([]);
+  const [finalAnswer, setFinalAnswer] = useState('');
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('solution');
+
+  useEffect(() => {
+    processProblem();
+  }, [screenshot]);
+
+  const processProblem = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Step 1: Extract text from image
+      setLoadingStage('extracting');
+      const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-text', {
+        body: { imageBase64: screenshot.imageBase64, mimeType: screenshot.mimeType }
+      });
+
+      if (extractError || !extractData?.success) {
+        throw new Error(extractData?.error || 'Failed to extract text from image');
+      }
+      setExtractedText(extractData.extractedText);
+
+      // Step 2: Structure the problem
+      setLoadingStage('structuring');
+      const { data: structureData, error: structureError } = await supabase.functions.invoke('structure-problem', {
+        body: { extractedText: extractData.extractedText }
+      });
+
+      if (structureError || !structureData?.success) {
+        throw new Error(structureData?.error || 'Failed to structure problem');
+      }
+      setStructuredProblem(structureData.structuredProblem);
+
+      // Step 3: Solve the problem
+      setLoadingStage('solving');
+      const { data: solveData, error: solveError } = await supabase.functions.invoke('solve-problem', {
+        body: { 
+          structuredProblem: structureData.structuredProblem,
+          extractedText: extractData.extractedText
+        }
+      });
+
+      if (solveError || !solveData?.success) {
+        throw new Error(solveData?.error || 'Failed to solve problem');
+      }
+      setSolution(solveData.steps || []);
+      setFinalAnswer(solveData.finalAnswer || '');
+
+      // Step 4: Search for related videos
+      setLoadingStage('videos');
+      const searchQuery = structureData.structuredProblem?.topic || extractData.extractedText.slice(0, 100);
+      const { data: videoData } = await supabase.functions.invoke('search-videos', {
+        body: { query: searchQuery, maxResults: 6 }
+      });
+
+      if (videoData?.videos) {
+        setVideos(videoData.videos);
+      }
+
+    } catch (err: any) {
+      console.error('Problem solving error:', err);
+      setError(err.message || 'An error occurred while solving the problem');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getLoadingMessage = () => {
+    switch (loadingStage) {
+      case 'extracting': return 'Extracting text from image...';
+      case 'structuring': return 'Understanding the problem...';
+      case 'solving': return 'Generating step-by-step solution...';
+      case 'videos': return 'Finding related videos...';
+      default: return 'Processing...';
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed inset-4 md:inset-8 z-50 bg-background rounded-xl shadow-2xl border border-border overflow-hidden flex flex-col"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-lg">AI Problem Solver</h2>
+            <p className="text-sm text-muted-foreground">Step-by-step solution with explanations</p>
+          </div>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose}>
+          <X className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-primary/20" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium text-lg">{getLoadingMessage()}</p>
+                <p className="text-sm text-muted-foreground mt-1">This may take a few seconds</p>
+              </div>
+              {/* Progress indicators */}
+              <div className="flex gap-2 mt-2">
+                {['extracting', 'structuring', 'solving', 'videos'].map((stage, idx) => (
+                  <div
+                    key={stage}
+                    className={`h-2 w-8 rounded-full transition-colors ${
+                      ['extracting', 'structuring', 'solving', 'videos'].indexOf(loadingStage) >= idx
+                        ? 'bg-primary'
+                        : 'bg-muted'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex-1 flex items-center justify-center p-8">
+            <div className="text-center max-w-md">
+              <div className="p-4 rounded-full bg-destructive/10 w-fit mx-auto mb-4">
+                <X className="h-8 w-8 text-destructive" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Error Processing Problem</h3>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button onClick={processProblem}>Try Again</Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex">
+            {/* Main solution area */}
+            <div className="flex-1 flex flex-col min-w-0">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+                <div className="px-6 pt-4">
+                  <TabsList className="grid w-full max-w-md grid-cols-2">
+                    <TabsTrigger value="solution" className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4" />
+                      Solution
+                    </TabsTrigger>
+                    <TabsTrigger value="videos" className="flex items-center gap-2">
+                      <Video className="h-4 w-4" />
+                      Videos ({videos.length})
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+
+                <TabsContent value="solution" className="flex-1 mt-0 overflow-hidden">
+                  <ScrollArea className="h-full">
+                    <div className="p-6 space-y-6">
+                      {/* Problem Statement */}
+                      {structuredProblem && (
+                        <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                          <h3 className="font-semibold mb-2 flex items-center gap-2">
+                            <span className="p-1 rounded bg-primary/10">
+                              <BookOpen className="h-4 w-4 text-primary" />
+                            </span>
+                            Problem
+                          </h3>
+                          <div className="text-sm">
+                            <MixedContent content={structuredProblem.problemStatement || extractedText} />
+                          </div>
+                          {structuredProblem.given && (
+                            <div className="mt-3 pt-3 border-t border-border">
+                              <span className="text-xs font-medium text-muted-foreground uppercase">Given:</span>
+                              <div className="mt-1 text-sm">
+                                <MixedContent content={structuredProblem.given} />
+                              </div>
+                            </div>
+                          )}
+                          {structuredProblem.find && (
+                            <div className="mt-2">
+                              <span className="text-xs font-medium text-muted-foreground uppercase">Find:</span>
+                              <div className="mt-1 text-sm">
+                                <MixedContent content={structuredProblem.find} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Solution Steps */}
+                      <div className="space-y-4">
+                        <h3 className="font-semibold text-lg flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-primary" />
+                          Step-by-Step Solution
+                        </h3>
+                        
+                        {solution.map((step, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="relative pl-8"
+                          >
+                            {/* Step connector line */}
+                            {index < solution.length - 1 && (
+                              <div className="absolute left-3 top-8 bottom-0 w-0.5 bg-border" />
+                            )}
+                            
+                            {/* Step number */}
+                            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                              {step.stepNumber || index + 1}
+                            </div>
+                            
+                            <div className="p-4 rounded-lg bg-card border border-border">
+                              <h4 className="font-medium mb-2">{step.title}</h4>
+                              <div className="text-sm text-muted-foreground">
+                                <MixedContent content={step.content} />
+                              </div>
+                              {step.explanation && (
+                                <div className="mt-3 p-3 rounded bg-muted/50 text-sm">
+                                  <span className="text-xs font-medium text-primary uppercase">Explanation: </span>
+                                  <MixedContent content={step.explanation} />
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      {/* Final Answer */}
+                      {finalAnswer && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="p-4 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/20"
+                        >
+                          <h3 className="font-semibold mb-2 flex items-center gap-2 text-primary">
+                            <ChevronRight className="h-5 w-5" />
+                            Final Answer
+                          </h3>
+                          <div className="text-lg font-medium">
+                            <MixedContent content={finalAnswer} />
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="videos" className="flex-1 mt-0 overflow-hidden">
+                  <ScrollArea className="h-full">
+                    <div className="p-6">
+                      {videos.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {videos.map((video) => (
+                            <a
+                              key={video.id}
+                              href={`https://www.youtube.com/watch?v=${video.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group block rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-colors"
+                            >
+                              <div className="relative aspect-video">
+                                <img
+                                  src={video.thumbnail}
+                                  alt={video.title}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Play className="h-12 w-12 text-white" />
+                                </div>
+                                {video.duration && (
+                                  <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 rounded text-xs text-white">
+                                    {video.duration}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="p-3">
+                                <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
+                                  {video.title}
+                                </h4>
+                                <p className="text-xs text-muted-foreground mt-1">{video.channelTitle}</p>
+                                {video.viewCount && (
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                    <Eye className="h-3 w-3" />
+                                    {video.viewCount} views
+                                  </div>
+                                )}
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 text-muted-foreground">
+                          <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>No related videos found</p>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            {/* Screenshot preview sidebar */}
+            <div className="hidden lg:block w-64 border-l border-border bg-muted/20">
+              <div className="p-4">
+                <h3 className="font-medium text-sm mb-3">Captured Problem</h3>
+                <div className="rounded-lg overflow-hidden border border-border">
+                  <img
+                    src={`data:${screenshot.mimeType};base64,${screenshot.imageBase64}`}
+                    alt="Captured problem"
+                    className="w-full h-auto"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
