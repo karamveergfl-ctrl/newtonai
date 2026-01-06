@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Loader2, Camera, X, ZoomIn, ZoomOut, Maximize2, Scan, Square } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Camera, X, ZoomIn, ZoomOut, Maximize2, Scan, Square, Search } from "lucide-react";
 import html2canvas from "html2canvas";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -692,6 +692,24 @@ export const PDFReader = ({
         <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2">
           <Square className="w-4 h-4" />
           {isMobile ? "Tap and drag to select area, or use Full Page" : "Drag to select area, or click 'Full Page' for instant capture"}
+        </div>
+      )}
+
+      {/* Floating Search Videos Button - More prominent */}
+      {!isMobile && showSearchPrompt && !isScreenshotMode && (
+        <div className="absolute top-20 right-4 z-50 animate-scale-in">
+          <Button
+            onClick={handleSearchClick}
+            disabled={isSearching}
+            className="gap-2 shadow-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground px-5 py-6 text-base font-semibold rounded-xl"
+          >
+            {isSearching ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Search className="w-5 h-5" />
+            )}
+            Search Videos
+          </Button>
         </div>
       )}
 
