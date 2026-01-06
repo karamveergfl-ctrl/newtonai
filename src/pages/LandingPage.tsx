@@ -205,37 +205,73 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-4">
+      <section className="py-24 bg-muted/30 relative overflow-hidden">
+        {/* Background decoration */}
+        <motion.div
+          className="absolute top-0 right-0 w-96 h-96 rounded-full bg-gradient-to-bl from-primary/10 to-transparent blur-3xl"
+          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        <div className="container mx-auto px-4 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.7 }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <motion.h2 
+              className="text-3xl md:text-4xl font-bold text-foreground mb-4"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
               Everything You Need to Study Effectively
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            </motion.h2>
+            <motion.p 
+              className="text-lg text-muted-foreground max-w-2xl mx-auto"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               Our AI-powered tools help you learn faster and retain more information.
-            </p>
+            </motion.p>
           </motion.div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 40, rotateX: -10 }}
+                whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-card rounded-xl p-6 border border-border hover:border-primary/50 transition-colors"
+                transition={{ 
+                  duration: 0.6, 
+                  delay: index * 0.1,
+                  type: "spring",
+                  stiffness: 100
+                }}
+                whileHover={{ 
+                  y: -8, 
+                  rotateX: 5,
+                  rotateY: 5,
+                  scale: 1.02,
+                  boxShadow: "0 20px 40px -15px hsl(var(--primary) / 0.2)"
+                }}
+                style={{ transformStyle: "preserve-3d", perspective: 1000 }}
+                className="bg-card rounded-xl p-6 border border-border hover:border-primary/50 transition-colors cursor-pointer group"
               >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">
+                <motion.div 
+                  className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4"
+                  whileHover={{ rotate: 360, scale: 1.1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <feature.icon className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+                </motion.div>
+                <h3 className="text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
                   {feature.title}
                 </h3>
                 <p className="text-muted-foreground">
@@ -248,32 +284,58 @@ const LandingPage = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-24">
-        <div className="container mx-auto px-4">
+      <section className="py-24 relative overflow-hidden">
+        <motion.div
+          className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-gradient-to-tr from-secondary/15 to-transparent blur-3xl"
+          animate={{ x: [0, 20, 0], y: [0, -20, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        <div className="container mx-auto px-4 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.7, type: "spring" }}
             >
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+              <motion.h2 
+                className="text-3xl md:text-4xl font-bold text-foreground mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
                 Why Students Love Our Platform
-              </h2>
-              <p className="text-lg text-muted-foreground mb-8">
+              </motion.h2>
+              <motion.p 
+                className="text-lg text-muted-foreground mb-8"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
                 Join thousands of students who are already studying smarter with our AI-powered tools.
-              </p>
+              </motion.p>
               <ul className="space-y-4">
                 {benefits.map((benefit, index) => (
                   <motion.li
                     key={benefit}
-                    initial={{ opacity: 0, x: -20 }}
+                    initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="flex items-center gap-3"
+                    transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
+                    whileHover={{ x: 10 }}
+                    className="flex items-center gap-3 cursor-default"
                   >
-                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                    <motion.div
+                      initial={{ scale: 0, rotate: -180 }}
+                      whileInView={{ scale: 1, rotate: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: 0.4 + index * 0.1, type: "spring" }}
+                    >
+                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                    </motion.div>
                     <span className="text-foreground">{benefit}</span>
                   </motion.li>
                 ))}
@@ -281,15 +343,45 @@ const LandingPage = () => {
             </motion.div>
             
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, x: 40, rotateY: -20 }}
+              whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl p-8 aspect-square flex items-center justify-center"
+              transition={{ duration: 0.8, type: "spring" }}
+              whileHover={{ scale: 1.02, rotateY: 5 }}
+              style={{ transformStyle: "preserve-3d", perspective: 1000 }}
+              className="bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl p-8 aspect-square flex items-center justify-center relative overflow-hidden group"
             >
-              <div className="text-center">
-                <div className="text-6xl font-bold text-primary mb-2">10K+</div>
-                <div className="text-xl text-muted-foreground">Active Students</div>
+              {/* Animated rings */}
+              <motion.div
+                className="absolute inset-0 rounded-2xl border-2 border-primary/20"
+                animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0, 0.5] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div
+                className="absolute inset-4 rounded-xl border border-primary/10"
+                animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0, 0.3] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+              />
+              
+              <div className="text-center relative z-10">
+                <motion.div 
+                  className="text-6xl font-bold text-primary mb-2"
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.3, type: "spring", stiffness: 200 }}
+                >
+                  10K+
+                </motion.div>
+                <motion.div 
+                  className="text-xl text-muted-foreground"
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                >
+                  Active Students
+                </motion.div>
               </div>
             </motion.div>
           </div>
