@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { FileQuestion, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Button } from "@/components/ui/button";
-import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { StepBySolutionRenderer } from "@/components/StepBySolutionRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { 
   getYouTubeTranscript, 
@@ -158,26 +158,29 @@ const HomeworkHelp = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
             >
-              <Card className="overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-primary/5 to-primary/10 border-b">
-                  <CardTitle className="text-xl font-semibold tracking-tight">
-                    Solution
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCopy}
-                    className="gap-2"
-                  >
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    {copied ? "Copied" : "Copy"}
-                  </Button>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <MarkdownRenderer content={solution} />
-                </CardContent>
-              </Card>
+              {/* Solution Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <FileQuestion className="h-5 w-5 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-bold tracking-tight">Step-by-Step Solution</h2>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopy}
+                  className="gap-2"
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied ? "Copied" : "Copy"}
+                </Button>
+              </div>
+              
+              {/* Solution Content */}
+              <StepBySolutionRenderer content={solution} />
             </motion.div>
           )}
         </motion.div>
