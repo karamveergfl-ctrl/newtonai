@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Flashcard } from "@/components/Flashcard";
+import { useFeatureGate } from "@/components/FeatureGate";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -26,8 +27,12 @@ const AIFlashcards = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const { tryUseFeature, modal } = useFeatureGate("flashcards");
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
+    const allowed = await tryUseFeature();
+    if (!allowed) return;
+
     setIsGenerating(true);
     setFlashcards([]);
 
@@ -171,6 +176,7 @@ const AIFlashcards = () => {
           )}
         </motion.div>
       </div>
+      {modal}
     </AppLayout>
   );
 };
