@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Eye, EyeOff, BookOpen, Brain, Layers, FileText, Sparkles } from "lucide-react";
 import Logo from "@/components/Logo";
+import Footer from "@/components/Footer";
 
 const sha1UpperHex = async (value: string) => {
   const data = new TextEncoder().encode(value);
@@ -138,14 +139,15 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Left Panel - Illustration */}
-      <motion.div
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6 }}
-        className="hidden lg:flex lg:w-1/2 bg-card relative overflow-hidden items-center justify-center p-12"
-      >
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex-1 flex">
+        {/* Left Panel - Illustration */}
+        <motion.div
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="hidden lg:flex lg:w-1/2 bg-card relative overflow-hidden items-center justify-center p-12"
+        >
         <div className="text-center max-w-lg relative">
           {/* Logo */}
           <motion.div
@@ -488,6 +490,8 @@ const Auth = () => {
           )}
         </div>
       </motion.div>
+      </div>
+      <Footer />
     </div>
   );
 };

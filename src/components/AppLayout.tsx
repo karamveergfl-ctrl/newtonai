@@ -1,21 +1,29 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import Footer from "@/components/Footer";
 
 interface AppLayoutProps {
   children: React.ReactNode;
   onToolSelect?: (tool: string) => void;
   onSignOut?: () => void;
   showSidebar?: boolean;
+  showFooter?: boolean;
 }
 
 export function AppLayout({ 
   children, 
   onToolSelect, 
   onSignOut,
-  showSidebar = true 
+  showSidebar = true,
+  showFooter = true
 }: AppLayoutProps) {
   if (!showSidebar) {
-    return <>{children}</>;
+    return (
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1">{children}</div>
+        {showFooter && <Footer />}
+      </div>
+    );
   }
 
   return (
@@ -27,7 +35,10 @@ export function AppLayout({
           <div className="md:hidden flex items-center h-12 px-4 border-b border-border bg-background">
             <SidebarTrigger />
           </div>
-          {children}
+          <div className="flex-1 overflow-auto">
+            {children}
+          </div>
+          {showFooter && <Footer />}
         </main>
       </div>
     </SidebarProvider>
