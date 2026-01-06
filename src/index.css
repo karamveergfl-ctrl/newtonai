@@ -168,3 +168,61 @@ All colors MUST be HSL.
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* Gradient text utility */
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
+}
+
+/* Card hover lift effect */
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+}
+
+/* Animation delays for staggered effects */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
+
+/* Gradient blob backgrounds */
+.blob-gradient {
+  @apply absolute rounded-full mix-blend-multiply filter blur-xl opacity-70;
+}
+
+.blob-gradient-dark {
+  @apply absolute rounded-full mix-blend-screen filter blur-xl opacity-30;
+}
+
+/* Glass morphism effect */
+.glass {
+  @apply bg-background/80 backdrop-blur-md border border-border/50;
+}
+
+/* Smooth underline animation for links */
+.link-underline {
+  @apply relative;
+}
+
+.link-underline::after {
+  content: '';
+  @apply absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300;
+}
+
+.link-underline:hover::after {
+  @apply w-full;
+}
+
+/* Star rating animation */
+@keyframes star-pop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.star-animate {
+  animation: star-pop 0.3s ease-out forwards;
+}
