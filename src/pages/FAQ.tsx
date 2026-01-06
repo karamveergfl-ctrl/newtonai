@@ -6,15 +6,15 @@ import Footer from "@/components/Footer";
 
 const faqs = [
   {
-    question: "What is StudySmart?",
-    answer: "StudySmart is an AI-powered learning platform that helps students study more effectively. Upload your PDFs, lecture notes, or textbooks, and our AI will generate flashcards, quizzes, summaries, and mind maps to help you learn faster."
+    question: "What is NewtonAI?",
+    answer: "NewtonAI is an AI-powered learning platform that helps students study more effectively. Upload your PDFs, lecture notes, or textbooks, and our AI will generate flashcards, quizzes, summaries, and mind maps to help you learn faster."
   },
   {
     question: "How does the AI flashcard generation work?",
     answer: "Our AI analyzes your uploaded documents and identifies key concepts, definitions, and important information. It then automatically creates flashcards that you can use for spaced repetition learning, proven to be one of the most effective study methods."
   },
   {
-    question: "Can I use StudySmart for free?",
+    question: "Can I use NewtonAI for free?",
     answer: "Yes! Our Free plan allows you to upload up to 5 PDFs per month and access basic features. For unlimited uploads and advanced features like AI tutoring and mind maps, check out our Pro and Ultra plans."
   },
   {
@@ -34,8 +34,8 @@ const faqs = [
     answer: "Yes! We offer a 20% discount for students with a valid .edu email address. Contact our support team with your student email to get your discount code."
   },
   {
-    question: "Can I use StudySmart on mobile devices?",
-    answer: "Yes, StudySmart is fully responsive and works great on smartphones and tablets. Study on the go, anytime, anywhere."
+    question: "Can I use NewtonAI on mobile devices?",
+    answer: "Yes, NewtonAI is fully responsive and works great on smartphones and tablets. Study on the go, anytime, anywhere."
   },
   {
     question: "How accurate is the AI-generated content?",
@@ -73,7 +73,7 @@ const FAQ = () => {
             Frequently Asked Questions
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Find answers to common questions about StudySmart. Can't find what you're looking for? Contact our support team.
+            Find answers to common questions about NewtonAI. Can't find what you're looking for? Contact our support team.
           </p>
         </div>
 
