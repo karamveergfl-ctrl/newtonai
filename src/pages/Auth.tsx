@@ -64,11 +64,11 @@ const Auth = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) navigate("/");
+      if (session) navigate("/dashboard");
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/");
+      if (session) navigate("/dashboard");
     });
 
     return () => subscription.unsubscribe();
@@ -83,7 +83,7 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast({ title: "Welcome back!", description: "You've successfully logged in." });
-        navigate("/");
+        navigate("/dashboard");
       } else {
         if (password.length < 6) {
           throw new Error("Password must be at least 6 characters");
@@ -100,7 +100,7 @@ const Auth = () => {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/` },
+          options: { emailRedirectTo: `${window.location.origin}/dashboard` },
         });
 
         if (error) throw error;
@@ -124,7 +124,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/dashboard`,
         },
       });
       if (error) throw error;
