@@ -235,22 +235,80 @@ const Terms = () => {
                 6. Acceptable Use Policy
               </AccordionTrigger>
               <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
-                <p>You agree not to use the Services to:</p>
+                <p>
+                  StudySmart is built to serve students, educators, and lifelong learners. By using our Services, 
+                  you agree to comply with this Acceptable Use Policy.
+                </p>
+
+                <h4>6.1 General Restrictions</h4>
+                <p>You agree not to use the Services in any way that:</p>
                 <ul>
-                  <li>Violate any applicable laws or regulations;</li>
-                  <li>Infringe upon the intellectual property rights of others;</li>
-                  <li>Transmit harmful, offensive, or illegal content;</li>
-                  <li>Engage in academic dishonesty or plagiarism;</li>
-                  <li>Harass, abuse, or harm other users;</li>
-                  <li>Distribute malware or other harmful code;</li>
-                  <li>Attempt to reverse engineer or hack the Services;</li>
-                  <li>Use automated systems to access the Services without permission;</li>
-                  <li>Resell or redistribute the Services without authorization;</li>
-                  <li>Impersonate others or misrepresent your affiliation.</li>
+                  <li>Violates any applicable laws, regulations, or government requirements;</li>
+                  <li>Involves fraudulent, deceptive, unfair, abusive, or predatory practices;</li>
+                  <li>Infringes upon the intellectual property rights of others;</li>
+                  <li>Threatens reputational damage to StudySmart;</li>
+                  <li>Engages in, encourages, promotes, or celebrates violence or physical harm;</li>
+                  <li>Targets any group based on race, religion, disability, gender, sexual orientation, national origin, or any other characteristic;</li>
+                  <li>Contravenes data protection regulations including GDPR.</li>
+                </ul>
+
+                <h4>6.2 Prohibited Uses</h4>
+                <p>The following uses of our Services are strictly prohibited:</p>
+                <ul>
+                  <li><strong>Academic Dishonesty:</strong> Submitting AI-generated content as your own work in violation of your institution's academic integrity policies;</li>
+                  <li><strong>Copyright Infringement:</strong> Uploading or processing copyrighted materials without proper authorization;</li>
+                  <li><strong>Harmful Content:</strong> Creating, distributing, or processing content that is illegal, harmful, threatening, abusive, harassing, defamatory, or obscene;</li>
+                  <li><strong>Malware Distribution:</strong> Using the Services to distribute viruses, malware, or other harmful code;</li>
+                  <li><strong>Unauthorized Access:</strong> Attempting to gain unauthorized access to our systems, other users' accounts, or third-party systems;</li>
+                  <li><strong>Automated Abuse:</strong> Using bots, scripts, or automated systems to access the Services without permission;</li>
+                  <li><strong>Resale:</strong> Reselling, redistributing, or sublicensing the Services without written authorization;</li>
+                  <li><strong>Impersonation:</strong> Impersonating others or misrepresenting your identity or affiliation;</li>
+                  <li><strong>Service Disruption:</strong> Interfering with or disrupting the Services or servers;</li>
+                  <li><strong>Reverse Engineering:</strong> Decompiling, disassembling, or reverse engineering any part of the Services.</li>
+                </ul>
+
+                <h4>6.3 Prohibited Content Categories</h4>
+                <p>You may not use our Services to create, process, or distribute content related to:</p>
+                <ul>
+                  <li>Adult, sexually explicit, or pornographic material;</li>
+                  <li>Gambling, betting, lotteries, or games of chance;</li>
+                  <li>Financial advice, trading signals, or investment recommendations;</li>
+                  <li>Medical diagnosis or treatment advice;</li>
+                  <li>Legal advice or legal document preparation;</li>
+                  <li>Essay mills, ghostwriting services for academic submissions, or contract cheating;</li>
+                  <li>Fake certifications or fraudulent credentials;</li>
+                  <li>Deepfakes, face swaps, or unauthorized use of someone's likeness;</li>
+                  <li>Voice impersonations without explicit consent;</li>
+                  <li>Political campaigning or propaganda;</li>
+                  <li>Pyramid schemes, multi-level marketing, or get-rich-quick schemes;</li>
+                  <li>Spyware, keyloggers, or surveillance tools;</li>
+                  <li>Content that enables unauthorized access to data or systems.</li>
+                </ul>
+
+                <h4>6.4 Content Generation Restrictions</h4>
+                <p>When using our AI-powered content generation features, you may not generate:</p>
+                <ul>
+                  <li>Content intended to deceive or mislead;</li>
+                  <li>Fake news or disinformation;</li>
+                  <li>Content impersonating real individuals without consent;</li>
+                  <li>Content for fraudulent or illegal purposes;</li>
+                  <li>Content that violates third-party intellectual property rights.</li>
+                </ul>
+
+                <h4>6.5 Enforcement</h4>
+                <p>
+                  We reserve the right to investigate and take appropriate action against anyone who violates 
+                  this Acceptable Use Policy, including:
+                </p>
+                <ul>
+                  <li>Removing or disabling access to violating content;</li>
+                  <li>Suspending or terminating accounts without notice or refund;</li>
+                  <li>Reporting violations to law enforcement authorities;</li>
+                  <li>Pursuing legal action where appropriate.</li>
                 </ul>
                 <p>
-                  We reserve the right to suspend or terminate Accounts that violate this Acceptable Use Policy, 
-                  without notice or refund.
+                  If you believe content on our platform violates this policy, please report it to 
+                  abuse@studysmart.com.
                 </p>
               </AccordionContent>
             </AccordionItem>
