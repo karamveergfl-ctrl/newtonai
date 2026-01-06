@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { useFeatureGate } from "@/components/FeatureGate";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -19,8 +20,12 @@ const AILectureNotes = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const { tryUseFeature, modal } = useFeatureGate("lecture_notes");
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
+    const allowed = await tryUseFeature();
+    if (!allowed) return;
+
     setIsProcessing(true);
     setNotes("");
 
@@ -152,6 +157,7 @@ const AILectureNotes = () => {
           )}
         </motion.div>
       </div>
+      {modal}
     </AppLayout>
   );
 };

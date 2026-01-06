@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { useFeatureGate } from "@/components/FeatureGate";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -19,8 +20,12 @@ const MindMap = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [zoom, setZoom] = useState(1);
   const { toast } = useToast();
+  const { tryUseFeature, modal } = useFeatureGate("mind_map");
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
+    const allowed = await tryUseFeature();
+    if (!allowed) return;
+
     setIsGenerating(true);
     setMindMapData(null);
 
@@ -150,6 +155,7 @@ const MindMap = () => {
           )}
         </motion.div>
       </div>
+      {modal}
     </AppLayout>
   );
 };
