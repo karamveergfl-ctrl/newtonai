@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Lock, Eye, EyeOff, BookOpen, Brain, Sparkles, FileText } from "lucide-react";
+import { Loader2, Mail, Eye, EyeOff } from "lucide-react";
 import Logo from "@/components/Logo";
-import { GradientBlob } from "@/components/GradientBlob";
 
 const sha1UpperHex = async (value: string) => {
   const data = new TextEncoder().encode(value);
@@ -44,15 +43,8 @@ const getPwnedPasswordCount = async (password: string) => {
   return 0;
 };
 
-const features = [
-  { icon: BookOpen, label: "AI Homework Helper" },
-  { icon: Brain, label: "Smart Flashcards" },
-  { icon: Sparkles, label: "Quiz Generator" },
-  { icon: FileText, label: "PDF Summarizer" },
-];
-
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -61,11 +53,15 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) navigate("/");
-    };
-    checkSession();
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) navigate("/");
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -79,6 +75,13 @@ const Auth = () => {
         toast({ title: "Welcome back!", description: "You've successfully logged in." });
         navigate("/");
       } else {
+        if (password.length < 6) {
+          throw new Error("Password must be at least 6 characters");
+        }
+        if (!/[A-Z]/.test(password)) {
+          throw new Error("Password must contain at least 1 capital letter");
+        }
+
         const pwnedCount = await getPwnedPasswordCount(password);
         if (pwnedCount > 0) {
           throw new Error("This password has appeared in data breaches. Please choose a different password.");
@@ -105,72 +108,121 @@ const Auth = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to sign in with Google",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-background">
       {/* Left Panel - Illustration */}
       <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 relative overflow-hidden"
+        className="hidden lg:flex lg:w-1/2 bg-card relative overflow-hidden items-center justify-center p-12"
       >
-        {/* Background Blobs */}
-        <GradientBlob color="primary" size="xl" className="top-10 -left-40" delay={0.2} />
-        <GradientBlob color="secondary" size="lg" className="bottom-20 right-10" delay={0.4} />
-
-        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
+        <div className="text-center max-w-md">
+          {/* Logo */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mb-6"
           >
             <Logo size="lg" />
           </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="text-3xl xl:text-4xl font-display font-bold text-foreground mt-8 mb-4"
-          >
-            Your AI-Powered
-            <span className="gradient-text block">Study Companion</span>
-          </motion.h1>
-
+          {/* Tagline */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="text-muted-foreground text-lg mb-8 max-w-md"
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="text-muted-foreground mb-12"
           >
-            Transform any document into interactive learning materials with the power of AI.
+            Transform your learning with AI-powered study tools. Create flashcards, quizzes, and summaries in seconds.
           </motion.p>
 
-          {/* Feature Pills */}
+          {/* Phone Mockup */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="flex flex-wrap gap-3"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="relative mx-auto"
           >
-            {features.map((feature, index) => (
+            {/* Phone Frame */}
+            <div className="relative mx-auto w-56">
+              <div className="bg-muted rounded-[2.5rem] p-3 shadow-2xl">
+                <div className="bg-background rounded-[2rem] overflow-hidden">
+                  {/* Phone Screen Content */}
+                  <div className="p-4 space-y-3">
+                    {/* App Header */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                        <div className="w-4 h-4 rounded-full bg-primary" />
+                      </div>
+                      <div className="w-3 h-3 rounded-full bg-primary" />
+                    </div>
+                    
+                    {/* Chat bubbles */}
+                    <div className="space-y-2">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                      </div>
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="pt-2">
+                      <div className="w-16 h-6 rounded bg-primary" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Person Illustration - simplified SVG representation */}
               <motion.div
-                key={feature.label}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.7 + index * 0.1 }}
-                className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm rounded-full border border-border/50 shadow-sm"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+                className="absolute -right-12 bottom-0"
               >
-                <feature.icon className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-foreground">{feature.label}</span>
+                <svg width="80" height="120" viewBox="0 0 80 120" fill="none" className="text-primary">
+                  {/* Head */}
+                  <circle cx="40" cy="20" r="15" fill="hsl(var(--muted))" />
+                  {/* Body */}
+                  <path d="M25 40 L40 45 L55 40 L50 85 L30 85 Z" fill="hsl(var(--primary))" />
+                  {/* Legs */}
+                  <path d="M30 85 L25 120 L35 120 L38 90 L42 90 L45 120 L55 120 L50 85 Z" fill="hsl(var(--foreground))" />
+                  {/* Arms */}
+                  <path d="M25 45 L15 70" stroke="hsl(var(--muted))" strokeWidth="6" strokeLinecap="round" />
+                  <path d="M55 45 L65 60" stroke="hsl(var(--muted))" strokeWidth="6" strokeLinecap="round" />
+                </svg>
               </motion.div>
-            ))}
+            </div>
           </motion.div>
         </div>
-
-        {/* Decorative circles */}
-        <div className="absolute bottom-10 right-10 w-20 h-20 rounded-full border-2 border-primary/20" />
-        <div className="absolute bottom-16 right-16 w-32 h-32 rounded-full border border-secondary/20" />
       </motion.div>
 
       {/* Right Panel - Form */}
@@ -178,7 +230,7 @@ const Auth = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8"
+        className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 lg:p-12"
       >
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
@@ -196,19 +248,14 @@ const Auth = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-center mb-8"
+            className="mb-8"
           >
-            <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary mb-4 uppercase tracking-wider">
+            <span className="text-primary text-sm font-semibold uppercase tracking-wider">
               {isLogin ? "Welcome Back" : "Start For Free"}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">
-              {isLogin ? "Sign in to your account" : "Create your account"}
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mt-2">
+              {isLogin ? "Sign in to NewtonAI" : "Sign up to NewtonAI"}
             </h2>
-            <p className="text-muted-foreground">
-              {isLogin
-                ? "Enter your credentials to access your dashboard"
-                : "Join thousands of students learning smarter"}
-            </p>
           </motion.div>
 
           {/* Form */}
@@ -219,41 +266,42 @@ const Auth = () => {
             onSubmit={handleAuth}
             className="space-y-5"
           >
+            {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email Address
+              <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                Email
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
-                  className="pl-10 h-12"
+                  className="h-12 pr-10 bg-background border-border"
                 />
+                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               </div>
             </div>
 
+            {/* Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
+              <Label htmlFor="password" className="text-sm font-medium text-foreground">
                 Password
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder={isLogin ? "Enter your password" : "6+ Characters, 1 Capital letter"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
                   minLength={6}
-                  className="pl-10 pr-10 h-12"
+                  className="h-12 pr-10 bg-background border-border"
                 />
                 <button
                   type="button"
@@ -266,15 +314,59 @@ const Auth = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={loading}>
+            {/* Submit Button */}
+            <Button 
+              type="submit" 
+              className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90" 
+              disabled={loading}
+            >
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   {isLogin ? "Signing in..." : "Creating account..."}
                 </>
               ) : (
-                <>{isLogin ? "Sign In" : "Create Account"}</>
+                <>{isLogin ? "Sign In" : "Create an account"}</>
               )}
+            </Button>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-background px-4 text-muted-foreground">or</span>
+              </div>
+            </div>
+
+            {/* Google Sign In */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full h-12 text-base font-medium border-border hover:bg-muted/50"
+            >
+              <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Sign {isLogin ? "in" : "up"} with Google
             </Button>
           </motion.form>
 
@@ -283,7 +375,7 @@ const Auth = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-6 text-center"
+            className="mt-6"
           >
             <p className="text-sm text-muted-foreground">
               {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
@@ -304,7 +396,7 @@ const Auth = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="mt-6 text-xs text-center text-muted-foreground"
+              className="mt-6 text-xs text-muted-foreground"
             >
               By creating an account, you agree to our{" "}
               <a href="/terms" className="text-primary hover:underline">
