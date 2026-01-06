@@ -115,12 +115,14 @@ const Pricing = () => {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button 
-                  className="w-full" 
-                  variant={plan.popular ? "default" : "outline"}
-                >
-                  {plan.cta}
-                </Button>
+                <Link to={plan.name === "Free" ? "/auth" : "/auth"} className="w-full">
+                  <Button 
+                    className="w-full" 
+                    variant={plan.popular ? "default" : "outline"}
+                  >
+                    {plan.cta}
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
           ))}
