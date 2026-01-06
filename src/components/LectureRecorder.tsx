@@ -509,15 +509,11 @@ export const LectureRecorder = ({
             </div>
 
             {/* Microphone Icon with glow */}
-            <div className="relative mx-auto w-24 h-24">
+            <div className="relative mx-auto w-20 h-20">
               <div className={`absolute inset-0 rounded-full ${isRecording ? 'bg-red-500/20 animate-pulse' : 'bg-primary/10'}`} />
               <div className="absolute inset-2 rounded-full bg-gradient-to-br from-primary/30 to-secondary/30 flex items-center justify-center">
                 {isRecording ? <MicOff className="w-10 h-10 text-red-500" /> : <Mic className="w-10 h-10 text-primary" />}
               </div>
-              <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse" />
-              <Sparkles className="absolute -bottom-1 -left-1 w-4 h-4 text-secondary animate-pulse" style={{
-            animationDelay: '0.5s'
-          }} />
             </div>
 
             {/* Recording Timer */}

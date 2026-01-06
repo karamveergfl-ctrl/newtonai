@@ -166,11 +166,11 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
         ) : (
           <div className="space-y-4">
             {isDragging ? (
-              <FileText className="w-16 h-16 mx-auto text-primary animate-bounce" />
+              <FileText className="w-10 h-10 mx-auto text-primary animate-bounce" />
             ) : (
-              <div className="flex justify-center gap-2">
-                <Upload className="w-12 h-12 text-muted-foreground" />
-                <Image className="w-12 h-12 text-muted-foreground" />
+              <div className="flex justify-center gap-3">
+                <Upload className="w-10 h-10 text-muted-foreground" />
+                <Image className="w-10 h-10 text-muted-foreground" />
               </div>
             )}
             <div>
