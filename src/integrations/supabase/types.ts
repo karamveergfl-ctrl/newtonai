@@ -14,16 +14,52 @@ export type Database = {
   }
   public: {
     Tables: {
+      feature_usage: {
+        Row: {
+          created_at: string
+          feature_name: string
+          id: string
+          period_start: string
+          updated_at: string
+          usage_count: number
+          usage_minutes: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_name: string
+          id?: string
+          period_start?: string
+          updated_at?: string
+          usage_count?: number
+          usage_minutes?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_name?: string
+          id?: string
+          period_start?: string
+          updated_at?: string
+          usage_count?: number
+          usage_minutes?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           education_level: string | null
           full_name: string | null
           id: string
+          language_preference: string | null
           onboarding_completed: boolean | null
           referral_source: string | null
           study_goals: string[] | null
           subjects: string[] | null
+          subscription_expires_at: string | null
+          subscription_tier: string
           updated_at: string
         }
         Insert: {
@@ -31,10 +67,13 @@ export type Database = {
           education_level?: string | null
           full_name?: string | null
           id: string
+          language_preference?: string | null
           onboarding_completed?: boolean | null
           referral_source?: string | null
           study_goals?: string[] | null
           subjects?: string[] | null
+          subscription_expires_at?: string | null
+          subscription_tier?: string
           updated_at?: string
         }
         Update: {
@@ -42,10 +81,13 @@ export type Database = {
           education_level?: string | null
           full_name?: string | null
           id?: string
+          language_preference?: string | null
           onboarding_completed?: boolean | null
           referral_source?: string | null
           study_goals?: string[] | null
           subjects?: string[] | null
+          subscription_expires_at?: string | null
+          subscription_tier?: string
           updated_at?: string
         }
         Relationships: []
