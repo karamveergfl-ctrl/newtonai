@@ -75,6 +75,7 @@ export const ContentInputTabs = ({
   const [textContent, setTextContent] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -107,6 +108,17 @@ export const ContentInputTabs = ({
         return;
       }
       setFile(uploadedFile);
+      
+      // Generate image preview if it's an image file
+      if (uploadedFile.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(uploadedFile);
+      } else {
+        setImagePreview(null);
+      }
     }
   }, [toast]);
 
@@ -237,7 +249,10 @@ export const ContentInputTabs = ({
     }
   };
 
-  const clearFile = () => setFile(null);
+  const clearFile = () => {
+    setFile(null);
+    setImagePreview(null);
+  };
   const clearAudio = () => {
     setAudioBlob(null);
     setAudioUrl(null);
@@ -316,22 +331,40 @@ export const ContentInputTabs = ({
               >
                 <input {...getInputProps()} />
                 {file ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <File className="h-10 w-10 text-primary" />
-                    <div className="text-left">
-                      <p className="font-medium">{file.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
+                  <div className="flex flex-col items-center gap-4">
+                    {/* Image Preview */}
+                    {imagePreview && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="relative max-w-xs max-h-48 rounded-lg overflow-hidden border border-border shadow-sm"
+                      >
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-contain bg-muted/50"
+                        />
+                      </motion.div>
+                    )}
+                    
+                    {/* File Info */}
+                    <div className="flex items-center justify-center gap-3">
+                      <File className="h-10 w-10 text-primary" />
+                      <div className="text-left">
+                        <p className="font-medium">{file.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => { e.stopPropagation(); clearFile(); }}
+                        className="ml-2"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => { e.stopPropagation(); clearFile(); }}
-                      className="ml-2"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
