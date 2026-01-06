@@ -127,7 +127,7 @@ const Index = () => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (!session) {
-        navigate("/auth");
+        navigate("/");
       }
     });
 
@@ -139,7 +139,7 @@ const Index = () => {
     }) => {
       setSession(session);
       if (!session) {
-        navigate("/auth");
+        navigate("/");
       }
     });
     return () => subscription.unsubscribe();
