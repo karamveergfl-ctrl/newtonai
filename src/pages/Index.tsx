@@ -9,6 +9,7 @@ import { VideoPanel } from "@/components/VideoPanel";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchBox } from "@/components/SearchBox";
 import { GlobalSearchBox } from "@/components/GlobalSearchBox";
+import { TextToVideoSearch } from "@/components/TextToVideoSearch";
 import { SolutionPanel } from "@/components/SolutionPanel";
 import { StudyTracker } from "@/components/StudyTracker";
 import { PDFChat } from "@/components/PDFChat";
@@ -1609,11 +1610,21 @@ const Index = () => {
                 Rewrite Handwritten (A4)
               </Button>
             </div>
-            <GlobalSearchBox onTopicSearch={handleTopicSearch} isSearching={isTopicSearching} />
-            {showVideosPanel && <div className="mt-8 animate-fade-in">
+            
+            {/* Prominent Text to Video Search */}
+            <div className="mb-8">
+              <TextToVideoSearch onSearch={handleTopicSearch} isSearching={isTopicSearching} />
+            </div>
+            
+            {/* Quick Topic Search */}
+            <div className="mb-6">
+              <GlobalSearchBox onTopicSearch={handleTopicSearch} isSearching={isTopicSearching} />
+            </div>
+            
+            {showVideosPanel && <div className="mb-8 animate-fade-in">
                 <VideoPanel animationVideos={animationVideos} explanationVideos={explanationVideos} searchQuery={searchQuery} onVideoClick={handleVideoClick} onClose={handleCloseVideosPanel} onGenerateFlashcards={handleGenerateFlashcardsFromVideo} onGenerateQuiz={handleGenerateQuizFromVideo} onGenerateSummary={handleGenerateSummaryFromVideo} onGenerateMindMap={handleGenerateMindMapFromVideo} isGenerating={isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap} activeGenerating={activeGenerating} onLoadMore={handleLoadMoreVideos} isLoadingMore={isLoadingMoreVideos} hasMoreAnimation={!!animationNextPageToken} hasMoreExplanation={!!explanationNextPageToken} />
               </div>}
-            <div className="mt-8 space-y-6 my-[3px]">
+            <div className="space-y-6">
               <StudyTracker />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <UploadZone onUploadComplete={handleUploadComplete} />
