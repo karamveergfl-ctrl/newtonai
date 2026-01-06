@@ -476,7 +476,7 @@ export const LectureRecorder = ({
       </div>;
   }
   return <div className="w-full">
-      <div className="relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 backdrop-blur-sm border-border bg-card/50 hover:border-primary/50 min-h-[320px] flex items-center justify-center my-[32px] px-0 py-0">
+      <div className="relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 backdrop-blur-sm border-border bg-card/50 hover:border-primary/50 min-h-[320px] flex items-center justify-center">
         {isProcessing ? <div className="space-y-4 animate-fade-in">
             <Loader2 className="w-16 h-16 mx-auto text-primary animate-spin" />
             <div>
