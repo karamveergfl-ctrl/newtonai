@@ -84,9 +84,7 @@ const Contact = () => {
                   
                   <div>
                     <h3 className="font-display font-semibold text-foreground mb-1">Office</h3>
-                    <p className="text-muted-foreground text-sm">Aligarh , UP,202150<br />
-                      San Francisco, CA 94102
-                    </p>
+                    <p className="text-muted-foreground text-sm">Aligarh, UP, INDIA, 202150</p>
                   </div>
                 </div>
               </CardContent>
