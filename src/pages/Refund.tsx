@@ -60,7 +60,7 @@ const Refund = () => {
             <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 text-center">
               <Mail className="h-8 w-8 text-purple-500 mx-auto mb-2" />
               <h3 className="font-semibold text-purple-700 dark:text-purple-400">Easy Process</h3>
-              <p className="text-sm text-muted-foreground">Email refunds@studysmart.com</p>
+              <p className="text-sm text-muted-foreground">Email refunds@newtonai.com</p>
             </div>
           </div>
 
@@ -87,7 +87,7 @@ const Refund = () => {
               </AccordionTrigger>
               <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
                 <p>
-                  At StudySmart, we want you to be completely satisfied with your purchase. We understand 
+                  At NewtonAI, we want you to be completely satisfied with your purchase. We understand 
                   that sometimes a product may not meet your expectations, and we've designed our refund 
                   policy to be fair and transparent.
                 </p>
@@ -156,7 +156,7 @@ const Refund = () => {
               <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
                 <h4>Step 1: Contact Us</h4>
                 <p>
-                  Send an email to <strong>refunds@studysmart.com</strong> with the subject line 
+                  Send an email to <strong>refunds@newtonai.com</strong> with the subject line 
                   "Refund Request - [Your Email]".
                 </p>
 
@@ -278,7 +278,7 @@ const Refund = () => {
                 <p>You can cancel your subscription at any time by:</p>
                 <ul>
                   <li>Going to your Account Settings → Subscription → Cancel Subscription;</li>
-                  <li>Emailing support@studysmart.com with your cancellation request.</li>
+                  <li>Emailing support@newtonai.com with your cancellation request.</li>
                 </ul>
 
                 <h4>5.2 Effect of Cancellation</h4>
@@ -341,7 +341,7 @@ const Refund = () => {
 
                 <h4>6.3 Resolution</h4>
                 <p>
-                  If you have a billing dispute, please contact us at billing@studysmart.com. We are 
+                  If you have a billing dispute, please contact us at billing@newtonai.com. We are 
                   committed to resolving issues fairly and promptly.
                 </p>
               </AccordionContent>
@@ -405,17 +405,17 @@ const Refund = () => {
                 <div className="grid md:grid-cols-2 gap-4 mt-4">
                   <div className="bg-muted/50 rounded-lg p-4">
                     <h5 className="font-medium mb-2">Refund Requests</h5>
-                    <p className="text-sm text-muted-foreground">refunds@studysmart.com</p>
+                    <p className="text-sm text-muted-foreground">refunds@newtonai.com</p>
                     <p className="text-xs text-muted-foreground mt-1">Response within 2 business days</p>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-4">
                     <h5 className="font-medium mb-2">Billing Questions</h5>
-                    <p className="text-sm text-muted-foreground">billing@studysmart.com</p>
+                    <p className="text-sm text-muted-foreground">billing@newtonai.com</p>
                     <p className="text-xs text-muted-foreground mt-1">Response within 1 business day</p>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-4">
                     <h5 className="font-medium mb-2">General Support</h5>
-                    <p className="text-sm text-muted-foreground">support@studysmart.com</p>
+                    <p className="text-sm text-muted-foreground">support@newtonai.com</p>
                     <p className="text-xs text-muted-foreground mt-1">Response within 24 hours</p>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-4">

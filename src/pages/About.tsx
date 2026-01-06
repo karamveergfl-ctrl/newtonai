@@ -32,7 +32,7 @@ const About = () => {
             Revolutionizing How You Learn
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed">
-            StudySmart combines cutting-edge AI technology with proven learning methods 
+            NewtonAI combines cutting-edge AI technology with proven learning methods 
             to help students achieve their academic goals faster and more effectively.
           </p>
         </section>
@@ -107,7 +107,7 @@ const About = () => {
           <div className="container mx-auto px-4 text-center">
             <h2 className="font-display text-3xl font-bold mb-4">Ready to Transform Your Learning?</h2>
             <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Join thousands of students who are already using StudySmart to ace their studies.
+              Join thousands of students who are already using NewtonAI to ace their studies.
             </p>
             <Link to="/auth">
               <Button size="lg" variant="secondary">

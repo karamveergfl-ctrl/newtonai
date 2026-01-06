@@ -76,7 +76,7 @@ const Terms = () => {
               <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
                 <p>
                   This Terms of Service Agreement, together with the Privacy Policy and any applicable Order Form 
-                  (collectively, the "Agreement") govern the services provided to you ("User" or "you") by StudySmart 
+                  (collectively, the "Agreement") govern the services provided to you ("User" or "you") by NewtonAI 
                   ("we," "us," or "our").
                 </p>
                 <p>
@@ -112,7 +112,7 @@ const Terms = () => {
                   <li><strong>"Data Protection Legislation"</strong> means all applicable data protection and privacy legislation including GDPR, UK GDPR, and applicable local laws.</li>
                   <li><strong>"Intellectual Property Rights"</strong> means patents, copyrights, trademarks, trade secrets, and all other intellectual property rights.</li>
                   <li><strong>"Personal Data"</strong> means any information relating to an identified or identifiable natural person.</li>
-                  <li><strong>"Services"</strong> means the AI-powered study tools, flashcard generation, quiz creation, note-taking, PDF summarization, video summarization, and all other features provided by StudySmart.</li>
+                  <li><strong>"Services"</strong> means the AI-powered study tools, flashcard generation, quiz creation, note-taking, PDF summarization, video summarization, and all other features provided by NewtonAI.</li>
                   <li><strong>"Subscription"</strong> means a paid plan that provides access to premium features of the Services.</li>
                   <li><strong>"User"</strong> or <strong>"you"</strong> means any individual or entity using the Services.</li>
                 </ul>
@@ -132,7 +132,7 @@ const Terms = () => {
                 3. Description of Services
               </AccordionTrigger>
               <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
-                <p>StudySmart provides the following Services:</p>
+                <p>NewtonAI provides the following Services:</p>
                 <ul>
                   <li><strong>AI Homework Help:</strong> AI-powered assistance for solving academic problems and understanding concepts.</li>
                   <li><strong>AI Notes:</strong> Automatic generation of study notes from text, documents, or topics.</li>
@@ -236,7 +236,7 @@ const Terms = () => {
               </AccordionTrigger>
               <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
                 <p>
-                  StudySmart is built to serve students, educators, and lifelong learners. By using our Services, 
+                  NewtonAI is built to serve students, educators, and lifelong learners. By using our Services, 
                   you agree to comply with this Acceptable Use Policy.
                 </p>
 
@@ -246,7 +246,7 @@ const Terms = () => {
                   <li>Violates any applicable laws, regulations, or government requirements;</li>
                   <li>Involves fraudulent, deceptive, unfair, abusive, or predatory practices;</li>
                   <li>Infringes upon the intellectual property rights of others;</li>
-                  <li>Threatens reputational damage to StudySmart;</li>
+                  <li>Threatens reputational damage to NewtonAI;</li>
                   <li>Engages in, encourages, promotes, or celebrates violence or physical harm;</li>
                   <li>Targets any group based on race, religion, disability, gender, sexual orientation, national origin, or any other characteristic;</li>
                   <li>Contravenes data protection regulations including GDPR.</li>
@@ -308,7 +308,7 @@ const Terms = () => {
                 </ul>
                 <p>
                   If you believe content on our platform violates this policy, please report it to 
-                  abuse@studysmart.com.
+                  abuse@newtonai.com.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -322,7 +322,7 @@ const Terms = () => {
                 <h4>7.1 Our Intellectual Property</h4>
                 <p>
                   The Services, including all software, designs, text, graphics, and other content, are owned 
-                  by StudySmart and protected by intellectual property laws. You are granted a limited, 
+                  by NewtonAI and protected by intellectual property laws. You are granted a limited, 
                   non-exclusive, non-transferable license to use the Services for personal, non-commercial purposes.
                 </p>
                 
@@ -389,7 +389,7 @@ const Terms = () => {
               </AccordionTrigger>
               <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
                 <p>
-                  To the fullest extent permitted by applicable law, in no event will StudySmart, its partners, 
+                  To the fullest extent permitted by applicable law, in no event will NewtonAI, its partners, 
                   service providers, affiliates, or any of their respective directors, officers, employees, or 
                   agents be liable to you for any special, incidental, indirect, punitive, exemplary, or 
                   consequential damages, whether foreseeable or unforeseeable, which may arise out of or in 
@@ -543,7 +543,7 @@ const Terms = () => {
               <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
                 <h4>15.1 Entire Agreement</h4>
                 <p>
-                  This Agreement constitutes the entire agreement between you and StudySmart and supersedes 
+                  This Agreement constitutes the entire agreement between you and NewtonAI and supersedes 
                   all previous agreements, understandings, and arrangements.
                 </p>
                 
@@ -573,7 +573,7 @@ const Terms = () => {
                 <h4>15.6 Governing Law</h4>
                 <p>
                   This Agreement shall be governed by and construed in accordance with the laws of the 
-                  jurisdiction in which StudySmart operates, without regard to conflict of law principles.
+                  jurisdiction in which NewtonAI operates, without regard to conflict of law principles.
                 </p>
                 
                 <h4>15.7 Independent Parties</h4>
@@ -594,8 +594,8 @@ const Terms = () => {
                   For any questions or concerns regarding these Terms of Service, please contact us:
                 </p>
                 <ul>
-                  <li><strong>Email:</strong> legal@studysmart.com</li>
-                  <li><strong>Address:</strong> StudySmart Legal Department</li>
+                  <li><strong>Email:</strong> legal@newtonai.com</li>
+                  <li><strong>Address:</strong> NewtonAI Legal Department</li>
                   <li><strong>Contact Page:</strong> <Link to="/contact" className="text-primary hover:underline">/contact</Link></li>
                 </ul>
                 <p>

@@ -73,7 +73,7 @@ const Privacy = () => {
               </AccordionTrigger>
               <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
                 <p>
-                  Welcome to StudySmart ("we," "us," or "our"). We are committed to protecting your privacy 
+                  Welcome to NewtonAI ("we," "us," or "our"). We are committed to protecting your privacy 
                   and ensuring the security of your personal information. This Privacy Policy explains how we 
                   collect, use, disclose, and safeguard your information when you use our services.
                 </p>
@@ -97,7 +97,7 @@ const Privacy = () => {
               <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
                 <p>
                   For the purposes of applicable data protection laws, including the General Data Protection 
-                  Regulation (GDPR) and UK GDPR, StudySmart acts as the "data controller" of the personal 
+                  Regulation (GDPR) and UK GDPR, NewtonAI acts as the "data controller" of the personal 
                   data we process.
                 </p>
                 <p>
@@ -388,7 +388,7 @@ const Privacy = () => {
 
                 <h4>Exercising Your Rights</h4>
                 <p>
-                  To exercise any of these rights, please contact us at privacy@studysmart.com. We will 
+                  To exercise any of these rights, please contact us at privacy@newtonai.com. We will 
                   respond within 30 days. You also have the right to lodge a complaint with your local 
                   data protection authority.
                 </p>
@@ -480,8 +480,8 @@ const Privacy = () => {
                   data practices, please contact us:
                 </p>
                 <ul>
-                  <li><strong>Privacy Inquiries:</strong> privacy@studysmart.com</li>
-                  <li><strong>Data Protection Officer:</strong> dpo@studysmart.com</li>
+                  <li><strong>Privacy Inquiries:</strong> privacy@newtonai.com</li>
+                  <li><strong>Data Protection Officer:</strong> dpo@newtonai.com</li>
                   <li><strong>General Contact:</strong> <Link to="/contact" className="text-primary hover:underline">/contact</Link></li>
                 </ul>
                 <p>

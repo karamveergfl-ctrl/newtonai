@@ -157,7 +157,7 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-4 border-t border-border">
           <div className="flex items-center gap-3">
             <Logo size="sm" />
-            <p className="text-muted-foreground text-sm">© 2025 StudySmart. All rights reserved.</p>
+            <p className="text-muted-foreground text-sm">© 2025 NewtonAI. All rights reserved.</p>
           </div>
         </div>
       </div>

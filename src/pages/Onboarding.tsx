@@ -237,7 +237,7 @@ const Onboarding = () => {
 
       if (error) throw error;
 
-      toast.success("Welcome to StudySmart! 🎉");
+      toast.success("Welcome to NewtonAI! 🎉");
       navigate("/");
     } catch (error: any) {
       toast.error(error.message || "Failed to save profile");
@@ -688,7 +688,7 @@ const Onboarding = () => {
                     >
                       <CardTitle className="text-2xl md:text-3xl">How did you hear about us?</CardTitle>
                       <CardDescription className="text-base mt-2">
-                        Help us understand how you found StudySmart
+                        Help us understand how you found NewtonAI
                       </CardDescription>
                     </motion.div>
                   </CardHeader>
