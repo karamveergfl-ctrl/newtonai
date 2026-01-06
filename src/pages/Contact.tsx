@@ -9,24 +9,19 @@ import { useState } from "react";
 import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
-
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
     toast.success("Message sent! We'll get back to you soon.");
     setIsSubmitting(false);
     (e.target as HTMLFormElement).reset();
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/">
@@ -65,7 +60,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-display font-semibold text-foreground mb-1">Email</h3>
-                    <p className="text-muted-foreground text-sm">support@newtonai.com</p>
+                    <p className="text-muted-foreground text-sm">support@studysmart.com</p>
                   </div>
                 </div>
               </CardContent>
@@ -78,7 +73,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-display font-semibold text-foreground mb-1">Phone</h3>
-                    <p className="text-muted-foreground text-sm">+1 (555) 123-4567</p>
+                    <p className="text-muted-foreground text-sm">+91 7618495307</p>
                   </div>
                 </div>
               </CardContent>
@@ -91,8 +86,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-display font-semibold text-foreground mb-1">Office</h3>
-                    <p className="text-muted-foreground text-sm">
-                      123 Learning Street<br />
+                    <p className="text-muted-foreground text-sm">Aligarh , UP,202150<br />
                       San Francisco, CA 94102
                     </p>
                   </div>
@@ -131,12 +125,7 @@ const Contact = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
-                  <Textarea 
-                    id="message" 
-                    placeholder="Tell us more about your inquiry..." 
-                    rows={5}
-                    required 
-                  />
+                  <Textarea id="message" placeholder="Tell us more about your inquiry..." rows={5} required />
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? "Sending..." : "Send Message"}
@@ -148,8 +137,6 @@ const Contact = () => {
       </main>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Contact;
