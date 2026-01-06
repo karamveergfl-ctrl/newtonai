@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Brain, Users, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import Logo from "@/components/Logo";
+import Footer from "@/components/Footer";
 
 const About = () => {
   return (
@@ -117,17 +118,7 @@ const About = () => {
         </section>
       </main>
 
-      <footer className="border-t">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-muted-foreground">© 2025 StudySmart. All rights reserved.</p>
-            <div className="flex gap-6">
-              <Link to="/terms" className="text-muted-foreground hover:text-foreground">Terms</Link>
-              <Link to="/privacy" className="text-muted-foreground hover:text-foreground">Privacy</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
