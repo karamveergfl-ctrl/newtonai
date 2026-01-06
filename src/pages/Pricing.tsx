@@ -4,11 +4,14 @@ import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
+import { useState } from "react";
+import { Switch } from "@/components/ui/switch";
 
 const plans = [
   {
     name: "Free",
-    price: "$0",
+    monthlyPrice: "$0",
+    yearlyPrice: "$0",
     period: "forever",
     description: "Perfect for getting started",
     features: [
@@ -22,8 +25,10 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "$9.99",
+    monthlyPrice: "$9.99",
+    yearlyPrice: "$7.99",
     period: "per month",
+    yearlySavings: "Save 20%",
     description: "Best for students",
     features: [
       "Unlimited PDF uploads",
@@ -38,8 +43,10 @@ const plans = [
   },
   {
     name: "Ultra",
-    price: "$19.99",
+    monthlyPrice: "$19.99",
+    yearlyPrice: "$15.99",
     period: "per month",
+    yearlySavings: "Save 20%",
     description: "For power learners",
     features: [
       "Everything in Pro",
@@ -56,6 +63,8 @@ const plans = [
 ];
 
 const Pricing = () => {
+  const [isYearly, setIsYearly] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
@@ -78,9 +87,28 @@ const Pricing = () => {
       <main className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
             Choose the plan that fits your learning needs. Upgrade or downgrade anytime.
           </p>
+          
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-4">
+            <span className={`text-sm font-medium ${!isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Monthly
+            </span>
+            <Switch
+              checked={isYearly}
+              onCheckedChange={setIsYearly}
+            />
+            <span className={`text-sm font-medium ${isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Yearly
+            </span>
+            {isYearly && (
+              <span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full">
+                Save 20%
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -100,9 +128,18 @@ const Pricing = () => {
                 <CardTitle className="text-2xl">{plan.name}</CardTitle>
                 <CardDescription>{plan.description}</CardDescription>
                 <div className="mt-4">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-muted-foreground ml-2">/{plan.period}</span>
+                  <span className="text-4xl font-bold">
+                    {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
+                  </span>
+                  <span className="text-muted-foreground ml-2">
+                    /{plan.name === "Free" ? plan.period : (isYearly ? "month, billed yearly" : plan.period)}
+                  </span>
                 </div>
+                {isYearly && plan.yearlySavings && (
+                  <span className="inline-block mt-2 bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold px-2 py-1 rounded-full">
+                    {plan.yearlySavings}
+                  </span>
+                )}
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
