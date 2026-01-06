@@ -4,80 +4,86 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AudioRecorder, blobToBase64 } from "@/utils/audioRecorder";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 interface LectureRecorderProps {
   onNotesGenerated: (notes: string, title: string) => void;
 }
 
 // Template types
 type TemplateType = "lecture" | "study-guide" | "research" | "project";
-
 interface Template {
   id: TemplateType;
   name: string;
   description: string;
   structure: string[];
 }
-
-const templates: Template[] = [
-  {
-    id: "lecture",
-    name: "Lecture Notes",
-    description: "Auto supplement details based on meeting information.",
-    structure: ["Key Points", "Details", "Summary"],
-  },
-  {
-    id: "study-guide",
-    name: "Study Guide",
-    description: "Organized study material with action items.",
-    structure: ["Summary", "Chapters", "Action Items"],
-  },
-  {
-    id: "research",
-    name: "Research Summary",
-    description: "Academic research format with progress tracking.",
-    structure: ["Topics", "Review", "Progress"],
-  },
-  {
-    id: "project",
-    name: "Project Work Plan",
-    description: "Problem-solution focused structure.",
-    structure: ["Summary", "Issue", "Solution"],
-  },
-];
-
-const languages = [
-  { code: "en-US", name: "English" },
-  { code: "es-ES", name: "Spanish" },
-  { code: "fr-FR", name: "French" },
-  { code: "de-DE", name: "German" },
-  { code: "it-IT", name: "Italian" },
-  { code: "pt-BR", name: "Portuguese" },
-  { code: "zh-CN", name: "Chinese" },
-  { code: "ja-JP", name: "Japanese" },
-  { code: "ko-KR", name: "Korean" },
-  { code: "ar-SA", name: "Arabic" },
-  { code: "hi-IN", name: "Hindi" },
-  { code: "ru-RU", name: "Russian" },
-];
+const templates: Template[] = [{
+  id: "lecture",
+  name: "Lecture Notes",
+  description: "Auto supplement details based on meeting information.",
+  structure: ["Key Points", "Details", "Summary"]
+}, {
+  id: "study-guide",
+  name: "Study Guide",
+  description: "Organized study material with action items.",
+  structure: ["Summary", "Chapters", "Action Items"]
+}, {
+  id: "research",
+  name: "Research Summary",
+  description: "Academic research format with progress tracking.",
+  structure: ["Topics", "Review", "Progress"]
+}, {
+  id: "project",
+  name: "Project Work Plan",
+  description: "Problem-solution focused structure.",
+  structure: ["Summary", "Issue", "Solution"]
+}];
+const languages = [{
+  code: "en-US",
+  name: "English"
+}, {
+  code: "es-ES",
+  name: "Spanish"
+}, {
+  code: "fr-FR",
+  name: "French"
+}, {
+  code: "de-DE",
+  name: "German"
+}, {
+  code: "it-IT",
+  name: "Italian"
+}, {
+  code: "pt-BR",
+  name: "Portuguese"
+}, {
+  code: "zh-CN",
+  name: "Chinese"
+}, {
+  code: "ja-JP",
+  name: "Japanese"
+}, {
+  code: "ko-KR",
+  name: "Korean"
+}, {
+  code: "ar-SA",
+  name: "Arabic"
+}, {
+  code: "hi-IN",
+  name: "Hindi"
+}, {
+  code: "ru-RU",
+  name: "Russian"
+}];
 
 // Speech Recognition types
 interface SpeechRecognitionEvent extends Event {
   resultIndex: number;
   results: SpeechRecognitionResultList;
 }
-
 interface SpeechRecognitionErrorEvent extends Event {
   error: string;
 }
-
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -88,15 +94,15 @@ interface SpeechRecognition extends EventTarget {
   onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
 }
-
 declare global {
   interface Window {
     SpeechRecognition: new () => SpeechRecognition;
     webkitSpeechRecognition: new () => SpeechRecognition;
   }
 }
-
-export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
+export const LectureRecorder = ({
+  onNotesGenerated
+}: LectureRecorderProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState("");
@@ -104,19 +110,20 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
   const [liveTranscript, setLiveTranscript] = useState("");
   const [finalTranscript, setFinalTranscript] = useState("");
   const [elapsedTime, setElapsedTime] = useState(0);
-  
+
   // Template selection state
   const [showTemplateSelection, setShowTemplateSelection] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>("lecture");
   const [selectedLanguage, setSelectedLanguage] = useState("en-US");
   const [pendingTranscription, setPendingTranscription] = useState<string | null>(null);
   const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null);
-  
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isRecordingRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Format elapsed time as MM:SS
   const formatTime = (seconds: number) => {
@@ -153,11 +160,9 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = selectedLanguage;
-
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let interim = '';
         let final = '';
-        
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
@@ -166,24 +171,21 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
             interim += transcript;
           }
         }
-        
         if (final) {
           setFinalTranscript(prev => prev + final);
         }
         setLiveTranscript(interim);
       };
-
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         if (event.error !== 'no-speech' && event.error !== 'aborted') {
           toast({
             title: "Speech recognition error",
             description: event.error,
-            variant: "destructive",
+            variant: "destructive"
           });
         }
       };
-
       recognition.onend = () => {
         if (isRecordingRef.current && recognitionRef.current) {
           try {
@@ -193,10 +195,8 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
           }
         }
       };
-
       recognitionRef.current = recognition;
     }
-
     return () => {
       if (recognitionRef.current) {
         try {
@@ -207,7 +207,6 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       }
     };
   }, [toast, selectedLanguage]);
-
   const startRecording = async () => {
     try {
       audioRecorderRef.current = new AudioRecorder();
@@ -216,7 +215,6 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       isRecordingRef.current = true;
       setFinalTranscript('');
       setLiveTranscript('');
-      
       if (recognitionRef.current) {
         recognitionRef.current.lang = selectedLanguage;
         try {
@@ -225,26 +223,21 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
           console.log('Recognition start error:', e);
         }
       }
-      
       toast({
         title: "Recording started",
-        description: recognitionRef.current 
-          ? "Live transcription enabled - speak clearly" 
-          : "Speak clearly into your microphone",
+        description: recognitionRef.current ? "Live transcription enabled - speak clearly" : "Speak clearly into your microphone"
       });
     } catch (error) {
       console.error("Failed to start recording:", error);
       toast({
         title: "Microphone access denied",
         description: "Please allow microphone access to record lectures",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const stopRecording = async () => {
     if (!audioRecorderRef.current) return;
-
     try {
       isRecordingRef.current = false;
       if (recognitionRef.current) {
@@ -254,12 +247,9 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
           // Ignore
         }
       }
-      
       setIsRecording(false);
       const audioBlob = await audioRecorderRef.current.stop();
-      
       const fullTranscript = (finalTranscript + liveTranscript).trim();
-      
       if (fullTranscript.length > 50) {
         // Show template selection with transcription
         setPendingTranscription(fullTranscript);
@@ -276,40 +266,27 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
       toast({
         title: "Recording failed",
         description: "Could not process the recording",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const validTypes = [
-      "audio/mpeg",
-      "audio/mp3",
-      "audio/wav",
-      "audio/webm",
-      "audio/m4a",
-      "audio/ogg",
-      "audio/flac",
-      "audio/aac",
-    ];
-
-    if (!validTypes.some((type) => file.type.includes(type.split("/")[1]))) {
+    const validTypes = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/webm", "audio/m4a", "audio/ogg", "audio/flac", "audio/aac"];
+    if (!validTypes.some(type => file.type.includes(type.split("/")[1]))) {
       toast({
         title: "Invalid file type",
         description: "Please upload MP3, WAV, WEBM, M4A, or FLAC audio files",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     if (file.size > 25 * 1024 * 1024) {
       toast({
         title: "File too large",
         description: "Maximum file size is 25MB",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -319,117 +296,104 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
     setPendingAudioBlob(file);
     setShowTemplateSelection(true);
   };
-
   const handleGenerateSummary = async () => {
     setShowTemplateSelection(false);
-    
     if (pendingTranscription) {
       await processTranscription(pendingTranscription);
     } else if (pendingAudioBlob) {
       await processAudio(pendingAudioBlob);
     }
   };
-
   const processTranscription = async (transcription: string) => {
     setIsProcessing(true);
     setProgress(50);
     setProcessingStep("Generating summary...");
-
     try {
       const template = templates.find(t => t.id === selectedTemplate);
-      
-      const { data: notesData, error: notesError } = await supabase
-        .functions.invoke("generate-lecture-notes", {
-          body: { 
-            transcription,
-            template: selectedTemplate,
-            templateStructure: template?.structure || [],
-            language: selectedLanguage,
-          },
-        });
-
+      const {
+        data: notesData,
+        error: notesError
+      } = await supabase.functions.invoke("generate-lecture-notes", {
+        body: {
+          transcription,
+          template: selectedTemplate,
+          templateStructure: template?.structure || [],
+          language: selectedLanguage
+        }
+      });
       if (notesError || !notesData?.notes) {
         throw new Error(notesError?.message || "Summary generation failed");
       }
-
       setProgress(100);
-      
       toast({
         title: "Summary generated!",
-        description: "Your brief summary is ready",
+        description: "Your brief summary is ready"
       });
-
       onNotesGenerated(notesData.notes, notesData.title || template?.name || "Summary");
     } catch (error) {
       console.error("Processing failed:", error);
       toast({
         title: "Processing failed",
         description: error instanceof Error ? error.message : "Could not generate summary",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       resetState();
     }
   };
-
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
     setProgress(0);
-
     try {
       setProcessingStep("Transcribing audio...");
       setProgress(20);
-      
       const base64Audio = await blobToBase64(audioBlob);
-      
-      const { data: transcriptionData, error: transcriptionError } = await supabase
-        .functions.invoke("transcribe-audio", {
-          body: { audio: base64Audio, mimeType: audioBlob.type || 'audio/webm' },
-        });
-
+      const {
+        data: transcriptionData,
+        error: transcriptionError
+      } = await supabase.functions.invoke("transcribe-audio", {
+        body: {
+          audio: base64Audio,
+          mimeType: audioBlob.type || 'audio/webm'
+        }
+      });
       if (transcriptionError || !transcriptionData?.text) {
         throw new Error(transcriptionError?.message || "Transcription failed");
       }
-
       setProgress(50);
       setProcessingStep("Generating summary...");
-
       const template = templates.find(t => t.id === selectedTemplate);
-
-      const { data: notesData, error: notesError } = await supabase
-        .functions.invoke("generate-lecture-notes", {
-          body: { 
-            transcription: transcriptionData.text,
-            template: selectedTemplate,
-            templateStructure: template?.structure || [],
-            language: selectedLanguage,
-          },
-        });
-
+      const {
+        data: notesData,
+        error: notesError
+      } = await supabase.functions.invoke("generate-lecture-notes", {
+        body: {
+          transcription: transcriptionData.text,
+          template: selectedTemplate,
+          templateStructure: template?.structure || [],
+          language: selectedLanguage
+        }
+      });
       if (notesError || !notesData?.notes) {
         throw new Error(notesError?.message || "Summary generation failed");
       }
-
       setProgress(100);
-      
       toast({
         title: "Summary generated!",
-        description: "Your brief summary is ready",
+        description: "Your brief summary is ready"
       });
-
       onNotesGenerated(notesData.notes, notesData.title || template?.name || "Summary");
     } catch (error) {
       console.error("Processing failed:", error);
       toast({
         title: "Processing failed",
         description: error instanceof Error ? error.message : "Could not process audio",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       resetState();
     }
   };
-
   const resetState = () => {
     setIsProcessing(false);
     setProcessingStep("");
@@ -439,7 +403,6 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
     setPendingTranscription(null);
     setPendingAudioBlob(null);
   };
-
   const handleBackToRecorder = () => {
     setShowTemplateSelection(false);
     setPendingTranscription(null);
@@ -448,18 +411,12 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
 
   // Template Selection View
   if (showTemplateSelection) {
-    return (
-      <div className="w-full">
+    return <div className="w-full">
         <div className="relative border-2 border-dashed rounded-2xl p-6 transition-all duration-300 backdrop-blur-sm border-border bg-card/50 min-h-[320px]">
           <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleBackToRecorder}
-                className="h-8 w-8"
-              >
+              <Button variant="ghost" size="icon" onClick={handleBackToRecorder} className="h-8 w-8">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <div className="flex items-center gap-2">
@@ -472,30 +429,18 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
 
             {/* Templates Grid */}
             <div className="grid grid-cols-2 gap-4">
-              {templates.map((template) => (
-                <button
-                  key={template.id}
-                  onClick={() => setSelectedTemplate(template.id)}
-                  className={`relative p-4 rounded-xl text-left transition-all duration-200 border-2 ${
-                    selectedTemplate === template.id
-                      ? "border-primary bg-primary/10 ring-2 ring-primary/30"
-                      : "border-border bg-card/80 hover:border-primary/50"
-                  }`}
-                >
+              {templates.map(template => <button key={template.id} onClick={() => setSelectedTemplate(template.id)} className={`relative p-4 rounded-xl text-left transition-all duration-200 border-2 ${selectedTemplate === template.id ? "border-primary bg-primary/10 ring-2 ring-primary/30" : "border-border bg-card/80 hover:border-primary/50"}`}>
                   <h4 className="font-semibold text-foreground mb-2">{template.name}</h4>
                   <div className="space-y-1.5 mb-3">
                     <p className="text-xs text-muted-foreground">{template.description}</p>
                   </div>
                   <div className="space-y-1">
-                    {template.structure.map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
+                    {template.structure.map((item, idx) => <div key={idx} className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">{item}</span>
                         <div className="flex-1 h-1.5 bg-muted/50 rounded-full" />
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
-                </button>
-              ))}
+                </button>)}
             </div>
 
             {/* Language Selection */}
@@ -509,61 +454,45 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
                 <SelectContent>
-                  {languages.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code}>
+                  {languages.map(lang => <SelectItem key={lang.code} value={lang.code}>
                       {lang.name}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={handleBackToRecorder}
-              >
+              <Button variant="outline" className="flex-1" onClick={handleBackToRecorder}>
                 Resume
               </Button>
-              <Button
-                className="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90 gap-2"
-                onClick={handleGenerateSummary}
-              >
+              <Button className="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90 gap-2" onClick={handleGenerateSummary}>
                 <Sparkles className="w-4 h-4" />
                 Generate
               </Button>
             </div>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="w-full">
-      <div className="relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 backdrop-blur-sm border-border bg-card/50 hover:border-primary/50 min-h-[320px] flex items-center justify-center">
-        {isProcessing ? (
-          <div className="space-y-4 animate-fade-in">
+  return <div className="w-full">
+      <div className="relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 backdrop-blur-sm border-border bg-card/50 hover:border-primary/50 min-h-[320px] flex items-center justify-center my-[32px] px-0 py-0">
+        {isProcessing ? <div className="space-y-4 animate-fade-in">
             <Loader2 className="w-16 h-16 mx-auto text-primary animate-spin" />
             <div>
               <p className="text-lg font-semibold text-foreground mb-2">
                 {processingStep}
               </p>
               <div className="w-full max-w-xs mx-auto h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
+                <div className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500" style={{
+              width: `${progress}%`
+            }} />
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 {progress}% complete
               </p>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
+          </div> : <div className="space-y-6">
             {/* Language Selection in Recorder View */}
             <div className="absolute top-4 right-4">
               <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
@@ -572,11 +501,9 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
                   <SelectValue placeholder="Language" />
                 </SelectTrigger>
                 <SelectContent>
-                  {languages.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code}>
+                  {languages.map(lang => <SelectItem key={lang.code} value={lang.code}>
                       {lang.name}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -585,25 +512,21 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
             <div className="relative mx-auto w-24 h-24">
               <div className={`absolute inset-0 rounded-full ${isRecording ? 'bg-red-500/20 animate-pulse' : 'bg-primary/10'}`} />
               <div className="absolute inset-2 rounded-full bg-gradient-to-br from-primary/30 to-secondary/30 flex items-center justify-center">
-                {isRecording ? (
-                  <MicOff className="w-10 h-10 text-red-500" />
-                ) : (
-                  <Mic className="w-10 h-10 text-primary" />
-                )}
+                {isRecording ? <MicOff className="w-10 h-10 text-red-500" /> : <Mic className="w-10 h-10 text-primary" />}
               </div>
               <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse" />
-              <Sparkles className="absolute -bottom-1 -left-1 w-4 h-4 text-secondary animate-pulse" style={{ animationDelay: '0.5s' }} />
+              <Sparkles className="absolute -bottom-1 -left-1 w-4 h-4 text-secondary animate-pulse" style={{
+            animationDelay: '0.5s'
+          }} />
             </div>
 
             {/* Recording Timer */}
-            {isRecording && (
-              <div className="flex items-center justify-center gap-2">
+            {isRecording && <div className="flex items-center justify-center gap-2">
                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
                 <span className="text-2xl font-mono font-bold text-red-500">
                   {formatTime(elapsedTime)}
                 </span>
-              </div>
-            )}
+              </div>}
 
             <div>
               <h3 className="text-xl font-bold text-foreground mb-2">
@@ -621,56 +544,33 @@ export const LectureRecorder = ({ onNotesGenerated }: LectureRecorderProps) => {
             </div>
 
             {/* Live Transcription Display */}
-            {isRecording && (finalTranscript || liveTranscript) && (
-              <div className="max-h-32 overflow-y-auto bg-muted/50 rounded-lg p-3 text-left">
+            {isRecording && (finalTranscript || liveTranscript) && <div className="max-h-32 overflow-y-auto bg-muted/50 rounded-lg p-3 text-left">
                 <p className="text-xs text-muted-foreground mb-1 font-medium">Live Transcription:</p>
                 <p className="text-sm text-foreground">
                   {finalTranscript}
                   <span className="text-muted-foreground italic">{liveTranscript}</span>
                 </p>
-              </div>
-            )}
+              </div>}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <input
-                id="audio-file-input"
-                type="file"
-                accept="audio/*"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
+              <input id="audio-file-input" type="file" accept="audio/*" onChange={handleFileUpload} className="hidden" />
               
-              <Button
-                variant="outline"
-                size="lg"
-                className="gap-2 px-6"
-                onClick={() => document.getElementById("audio-file-input")?.click()}
-              >
+              <Button variant="outline" size="lg" className="gap-2 px-6" onClick={() => document.getElementById("audio-file-input")?.click()}>
                 <Folder className="w-5 h-5" />
                 Select file
               </Button>
 
-              <Button
-                size="lg"
-                className={`gap-2 px-8 ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-primary to-secondary hover:opacity-90'}`}
-                onClick={isRecording ? stopRecording : startRecording}
-              >
-                {isRecording ? (
-                  <>
+              <Button size="lg" className={`gap-2 px-8 ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-primary to-secondary hover:opacity-90'}`} onClick={isRecording ? stopRecording : startRecording}>
+                {isRecording ? <>
                     <MicOff className="w-5 h-5" />
                     Stop recording
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     <Mic className="w-5 h-5" />
                     Start recording
-                  </>
-                )}
+                  </>}
               </Button>
             </div>
-          </div>
-        )}
+          </div>}
       </div>
-    </div>
-  );
+    </div>;
 };
