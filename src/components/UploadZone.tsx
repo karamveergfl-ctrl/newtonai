@@ -125,11 +125,11 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       <div
         className={`
           relative border-2 border-dashed rounded-2xl p-12 text-center
-          transition-all duration-300 backdrop-blur-sm min-h-[320px] flex items-center justify-center
+          transition-all duration-300 backdrop-blur-sm min-h-[320px] h-full flex items-center justify-center
           ${
             isDragging
               ? "border-primary bg-primary/5 scale-105"
