@@ -1,165 +1,172 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import Logo from "@/components/Logo";
-import { Instagram, Youtube, Facebook, Twitter } from "lucide-react";
+import { Instagram, Youtube, Facebook, Twitter, Mail, Phone } from "lucide-react";
+import { GradientBlob } from "./GradientBlob";
 
 const Footer = () => {
   return (
-    <footer className="bg-muted/80 border-t mt-16">
-      <div className="container mx-auto px-4 py-12">
+    <footer className="bg-muted/50 border-t relative overflow-hidden">
+      {/* Decorative Blob */}
+      <GradientBlob
+        color="primary"
+        size="xl"
+        className="-bottom-40 -right-40 opacity-10"
+      />
+
+      <div className="container mx-auto px-4 py-16 relative z-10">
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-          {/* Study Tools */}
-          <div>
-            <h3 className="font-display font-semibold text-foreground mb-4">Study Tools</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link to="/tools/homework-help" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  AI Homework Helper
-                </Link>
-              </li>
-              <li>
-                <Link to="/tools/ai-notes" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  AI Note Taker
-                </Link>
-              </li>
-              <li>
-                <Link to="/tools/ai-flashcards" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  AI Flashcards Maker
-                </Link>
-              </li>
-              <li>
-                <Link to="/tools/ai-quiz" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  AI Quiz Generator
-                </Link>
-              </li>
-              <li>
-                <Link to="/tools/pdf-summarizer" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  AI PDF Summarizer
-                </Link>
-              </li>
-              <li>
-                <Link to="/tools/mind-map" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  AI Mind Map
-                </Link>
-              </li>
-            </ul>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 mb-12">
+          {/* Brand Column */}
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <Logo size="lg" className="mb-4" />
+              <p className="text-muted-foreground text-sm leading-relaxed mb-6 max-w-sm">
+                Transform your learning experience with AI-powered study tools.
+                Upload any document and let our AI create flashcards, summaries,
+                quizzes, and more.
+              </p>
+              <div className="flex flex-col gap-2">
+                <a
+                  href="mailto:support@newtonai.site"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Mail className="w-4 h-4" />
+                  support@newtonai.site
+                </a>
+              </div>
+            </motion.div>
           </div>
 
-          {/* Subjects */}
-          <div>
-            <h3 className="font-display font-semibold text-foreground mb-4">Subjects</h3>
+          {/* Study Tools */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <h3 className="font-display font-semibold text-foreground mb-4">
+              Study Tools
+            </h3>
             <ul className="space-y-3">
-              <li>
-                <span className="text-muted-foreground text-sm">Math</span>
-              </li>
-              <li>
-                <span className="text-muted-foreground text-sm">Science</span>
-              </li>
-              <li>
-                <span className="text-muted-foreground text-sm">Business</span>
-              </li>
-              <li>
-                <span className="text-muted-foreground text-sm">Language</span>
-              </li>
-              <li>
-                <span className="text-muted-foreground text-sm">Arts & Humanities</span>
-              </li>
-              <li>
-                <span className="text-muted-foreground text-sm">Social Science</span>
-              </li>
+              {[
+                { to: "/tools/homework-help", label: "AI Homework Helper" },
+                { to: "/tools/ai-notes", label: "AI Note Taker" },
+                { to: "/tools/flashcards", label: "AI Flashcards" },
+                { to: "/tools/quiz", label: "AI Quiz Generator" },
+                { to: "/tools/pdf-summarizer", label: "PDF Summarizer" },
+                { to: "/tools/mind-map", label: "AI Mind Map" },
+              ].map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-muted-foreground hover:text-primary transition-colors text-sm link-underline"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Company */}
-          <div>
-            <h3 className="font-display font-semibold text-foreground mb-4">Company</h3>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <h3 className="font-display font-semibold text-foreground mb-4">
+              Company
+            </h3>
             <ul className="space-y-3">
-              <li>
-                <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  Contact Us
-                </Link>
-              </li>
+              {[
+                { to: "/about", label: "About Us" },
+                { to: "/pricing", label: "Pricing" },
+                { to: "/faq", label: "FAQ" },
+                { to: "/contact", label: "Contact Us" },
+              ].map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-muted-foreground hover:text-primary transition-colors text-sm link-underline"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
-          </div>
+          </motion.div>
 
-          {/* Connect */}
-          <div>
-            <h3 className="font-display font-semibold text-foreground mb-4">Connect With Us</h3>
-            <div className="flex gap-4 mb-6">
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-foreground/10 rounded-full flex items-center justify-center hover:bg-foreground/20 transition-colors"
-              >
-                <Instagram className="h-5 w-5 text-foreground" />
-              </a>
-              <a 
-                href="https://youtube.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-foreground/10 rounded-full flex items-center justify-center hover:bg-foreground/20 transition-colors"
-              >
-                <Youtube className="h-5 w-5 text-foreground" />
-              </a>
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-foreground/10 rounded-full flex items-center justify-center hover:bg-foreground/20 transition-colors"
-              >
-                <Facebook className="h-5 w-5 text-foreground" />
-              </a>
-              <a 
-                href="https://twitter.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-foreground/10 rounded-full flex items-center justify-center hover:bg-foreground/20 transition-colors"
-              >
-                <Twitter className="h-5 w-5 text-foreground" />
-              </a>
+          {/* Legal */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <h3 className="font-display font-semibold text-foreground mb-4">
+              Legal
+            </h3>
+            <ul className="space-y-3">
+              {[
+                { to: "/terms", label: "Terms of Service" },
+                { to: "/privacy", label: "Privacy Policy" },
+                { to: "/refund", label: "Refund Policy" },
+              ].map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-muted-foreground hover:text-primary transition-colors text-sm link-underline"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        </div>
+
+        {/* Bottom Section */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="pt-8 border-t border-border"
+        >
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-muted-foreground text-sm">
+              © {new Date().getFullYear()} NewtonAI. All rights reserved.
+            </p>
+
+            {/* Social Icons */}
+            <div className="flex gap-3">
+              {[
+                { href: "https://instagram.com", icon: Instagram, label: "Instagram" },
+                { href: "https://youtube.com", icon: Youtube, label: "YouTube" },
+                { href: "https://facebook.com", icon: Facebook, label: "Facebook" },
+                { href: "https://twitter.com", icon: Twitter, label: "Twitter" },
+              ].map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 hover:scale-110"
+                  aria-label={social.label}
+                >
+                  <social.icon className="w-5 h-5" />
+                </a>
+              ))}
             </div>
           </div>
-        </div>
-
-        {/* Legal Links */}
-        <div className="border-t border-border pt-8 mb-8">
-          <h3 className="font-display font-semibold text-foreground mb-4">Legal</h3>
-          <div className="flex flex-wrap gap-6">
-            <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-              Terms of Service
-            </Link>
-            <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-              Privacy Policy
-            </Link>
-            <Link to="/refund" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-              Refund Policy
-            </Link>
-          </div>
-        </div>
-
-        {/* Copyright */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-4 border-t border-border">
-          <div className="flex items-center gap-3">
-            <Logo size="sm" />
-            <p className="text-muted-foreground text-sm">© 2025 NewtonAI. All rights reserved.</p>
-          </div>
-        </div>
+        </motion.div>
       </div>
     </footer>
   );
