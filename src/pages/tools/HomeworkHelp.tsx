@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Button } from "@/components/ui/button";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { useFeatureGate } from "@/components/FeatureGate";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -20,6 +21,7 @@ const HomeworkHelp = () => {
   const [solution, setSolution] = useState("");
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const { canUse, tryUseFeature, modal } = useFeatureGate("homework_help");
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(solution);
@@ -29,6 +31,10 @@ const HomeworkHelp = () => {
   };
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
+    // Check if user can use this feature
+    const allowed = await tryUseFeature();
+    if (!allowed) return;
+
     setIsLoading(true);
     setSolution("");
 
@@ -176,6 +182,7 @@ const HomeworkHelp = () => {
           )}
         </motion.div>
       </div>
+      {modal}
     </AppLayout>
   );
 };
