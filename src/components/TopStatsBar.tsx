@@ -1,7 +1,13 @@
+import { useNavigate } from "react-router-dom";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { CreditBalance } from "@/components/CreditBalance";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { User } from "lucide-react";
 
 export function TopStatsBar() {
+  const navigate = useNavigate();
+
   return (
     <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
       <div className="container mx-auto px-4 py-2">
@@ -9,6 +15,17 @@ export function TopStatsBar() {
           <div className="flex items-center gap-3">
             <GamificationBadge />
             <CreditBalance showLabel />
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/profile")}
+              className="h-8 w-8"
+            >
+              <User className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
