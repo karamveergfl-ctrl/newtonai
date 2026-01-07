@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
@@ -23,6 +23,12 @@ import { useCredits } from "@/hooks/useCredits";
 import { AD_REWARDS, DAILY_AD_LIMITS, FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
 import { Skeleton } from "@/components/ui/skeleton";
 
+declare global {
+  interface Window {
+    adsbygoogle: unknown[];
+  }
+}
+
 export default function Credits() {
   const navigate = useNavigate();
   const { 
@@ -36,6 +42,20 @@ export default function Credits() {
   } = useCredits();
   
   const [watchingAd, setWatchingAd] = useState<30 | 60 | null>(null);
+  const adInitialized = useRef(false);
+
+  // Initialize Google AdSense ads
+  useEffect(() => {
+    if (!loading && !isPremium && !adInitialized.current) {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        adInitialized.current = true;
+      } catch (e) {
+        console.error('AdSense error:', e);
+      }
+    }
+  }, [loading, isPremium]);
 
   const handleWatchAd = async (duration: 30 | 60) => {
     setWatchingAd(duration);
@@ -235,13 +255,12 @@ export default function Credits() {
                 )}
 
                 {/* Google Ad Placement Zone */}
-                <div className="mt-6 p-4 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 min-h-[250px] flex items-center justify-center">
-                  {/* Google AdSense will auto-fill this space */}
+                <div className="mt-6 rounded-lg overflow-hidden">
                   <ins 
                     className="adsbygoogle"
-                    style={{ display: 'block', width: '100%', height: '250px' }}
+                    style={{ display: 'block' }}
                     data-ad-client="ca-pub-8032920863696759"
-                    data-ad-slot="auto"
+                    data-ad-slot="3142749567"
                     data-ad-format="auto"
                     data-full-width-responsive="true"
                   />
@@ -330,13 +349,13 @@ export default function Credits() {
 
         {/* Bottom Ad Placement */}
         {!isPremium && (
-          <div className="p-4 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 min-h-[100px] flex items-center justify-center">
+          <div className="rounded-lg overflow-hidden">
             <ins 
               className="adsbygoogle"
-              style={{ display: 'block', width: '100%', height: '100px' }}
+              style={{ display: 'block' }}
               data-ad-client="ca-pub-8032920863696759"
-              data-ad-slot="auto"
-              data-ad-format="horizontal"
+              data-ad-slot="3142749567"
+              data-ad-format="auto"
               data-full-width-responsive="true"
             />
           </div>
