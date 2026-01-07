@@ -1,6 +1,7 @@
-import { useState, useEffect, ReactNode } from "react";
-import { useFeatureUsage } from "@/hooks/useFeatureUsage";
-import { UsageLimitModal } from "@/components/UsageLimitModal";
+import { useState, ReactNode } from "react";
+import { useCredits } from "@/hooks/useCredits";
+import { CreditModal } from "@/components/CreditModal";
+import { FEATURE_NAMES } from "@/lib/creditConfig";
 
 interface FeatureGateProps {
   featureName: string;
@@ -9,13 +10,13 @@ interface FeatureGateProps {
 }
 
 export function FeatureGate({ featureName, children, onBlocked }: FeatureGateProps) {
-  const { checkCanUse, usage, subscription } = useFeatureUsage();
+  const { hasEnoughCredits, isPremium, getFeatureCost, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
   const [showModal, setShowModal] = useState(false);
 
-  const feature = usage.find((u) => u.name === featureName);
-  const canUse = checkCanUse(featureName);
+  const canUse = isPremium || hasEnoughCredits(featureName);
+  const cost = getFeatureCost(featureName);
 
-  if (!canUse && subscription.tier === "free") {
+  if (!canUse) {
     return (
       <>
         <div 
@@ -27,12 +28,15 @@ export function FeatureGate({ featureName, children, onBlocked }: FeatureGatePro
         >
           {children}
         </div>
-        <UsageLimitModal
+        <CreditModal
           open={showModal}
-          onClose={() => setShowModal(false)}
-          featureName={feature?.label || featureName}
-          currentUsage={feature?.used || 0}
-          limit={feature?.limit || 0}
+          onOpenChange={setShowModal}
+          featureName={FEATURE_NAMES[featureName] || featureName}
+          requiredCredits={cost}
+          currentCredits={credits}
+          onWatchAd={earnCredits}
+          canWatchMoreAds={canWatchMoreAds()}
+          remainingAds={getRemainingAds()}
         />
       </>
     );
@@ -42,29 +46,42 @@ export function FeatureGate({ featureName, children, onBlocked }: FeatureGatePro
 }
 
 export function useFeatureGate(featureName: string) {
-  const { checkCanUse, incrementUsage, usage, subscription, refreshUsage } = useFeatureUsage();
+  const { hasEnoughCredits, spendCredits, isPremium, getFeatureCost, credits, loading, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
   const [showModal, setShowModal] = useState(false);
 
-  const feature = usage.find((u) => u.name === featureName);
-  const canUse = checkCanUse(featureName);
+  const cost = getFeatureCost(featureName);
+  const canUse = isPremium || hasEnoughCredits(featureName);
 
   const tryUseFeature = async (): Promise<boolean> => {
-    if (!canUse && subscription.tier === "free") {
+    // Premium users bypass credit system
+    if (isPremium) return true;
+    
+    // Check if enough credits
+    if (!hasEnoughCredits(featureName)) {
       setShowModal(true);
       return false;
     }
     
-    await incrementUsage(featureName);
+    // Deduct credits
+    const success = await spendCredits(featureName);
+    if (!success) {
+      setShowModal(true);
+      return false;
+    }
+    
     return true;
   };
 
   const modal = (
-    <UsageLimitModal
+    <CreditModal
       open={showModal}
-      onClose={() => setShowModal(false)}
-      featureName={feature?.label || featureName}
-      currentUsage={feature?.used || 0}
-      limit={feature?.limit || 0}
+      onOpenChange={setShowModal}
+      featureName={FEATURE_NAMES[featureName] || featureName}
+      requiredCredits={cost}
+      currentCredits={credits}
+      onWatchAd={earnCredits}
+      canWatchMoreAds={canWatchMoreAds()}
+      remainingAds={getRemainingAds()}
     />
   );
 
@@ -72,7 +89,9 @@ export function useFeatureGate(featureName: string) {
     canUse,
     tryUseFeature,
     modal,
-    usage: feature,
-    refreshUsage,
+    credits,
+    cost,
+    loading,
+    isPremium,
   };
 }
