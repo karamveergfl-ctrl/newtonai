@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { X, Loader2, Play, Clock, Eye, ChevronRight, Sparkles, BookOpen, Video } from 'lucide-react';
+import { X, Loader2, Play, Eye, ChevronRight, Sparkles, BookOpen, Video, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { MixedContent } from './LaTeXRenderer';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SolutionPipeline, PipelineStage } from './SolutionPipeline';
 
 interface Video {
   id: string;
@@ -33,7 +34,7 @@ interface InlineSolutionPanelProps {
 
 export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanelProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [loadingStage, setLoadingStage] = useState<'extracting' | 'structuring' | 'solving' | 'videos'>('extracting');
+  const [loadingStage, setLoadingStage] = useState<PipelineStage>('extracting');
   const [extractedText, setExtractedText] = useState('');
   const [structuredProblem, setStructuredProblem] = useState<any>(null);
   const [solution, setSolution] = useState<SolutionStep[]>([]);
@@ -99,21 +100,13 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
         setVideos(videoData.videos);
       }
 
+      setLoadingStage('complete');
+
     } catch (err: any) {
       console.error('Problem solving error:', err);
       setError(err.message || 'An error occurred while solving the problem');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const getLoadingMessage = () => {
-    switch (loadingStage) {
-      case 'extracting': return 'Extracting text from image...';
-      case 'structuring': return 'Understanding the problem...';
-      case 'solving': return 'Generating step-by-step solution...';
-      case 'videos': return 'Finding related videos...';
-      default: return 'Processing...';
     }
   };
 
@@ -143,30 +136,27 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
       {/* Content */}
       <div className="flex-1 flex overflow-hidden">
         {isLoading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-primary/20" />
-              </div>
-              <div className="text-center">
-                <p className="font-medium text-lg">{getLoadingMessage()}</p>
-                <p className="text-sm text-muted-foreground mt-1">This may take a few seconds</p>
-              </div>
-              {/* Progress indicators */}
-              <div className="flex gap-2 mt-2">
-                {['extracting', 'structuring', 'solving', 'videos'].map((stage, idx) => (
-                  <div
-                    key={stage}
-                    className={`h-2 w-8 rounded-full transition-colors ${
-                      ['extracting', 'structuring', 'solving', 'videos'].indexOf(loadingStage) >= idx
-                        ? 'bg-primary'
-                        : 'bg-muted'
-                    }`}
-                  />
-                ))}
-              </div>
+          <div className="flex-1 flex flex-col items-center justify-center p-8">
+            {/* Visual Pipeline */}
+            <div className="w-full max-w-2xl mb-8">
+              <SolutionPipeline currentStage={loadingStage} />
             </div>
+            
+            {/* Screenshot preview during loading */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-4 max-w-xs"
+            >
+              <p className="text-sm text-muted-foreground text-center mb-3">Processing your problem...</p>
+              <div className="rounded-lg overflow-hidden border border-border shadow-lg">
+                <img
+                  src={`data:${screenshot.mimeType};base64,${screenshot.imageBase64}`}
+                  alt="Captured problem"
+                  className="w-full h-auto max-h-48 object-contain bg-muted/50"
+                />
+              </div>
+            </motion.div>
           </div>
         ) : error ? (
           <div className="flex-1 flex items-center justify-center p-8">
@@ -176,7 +166,10 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
               </div>
               <h3 className="font-semibold text-lg mb-2">Error Processing Problem</h3>
               <p className="text-muted-foreground mb-4">{error}</p>
-              <Button onClick={processProblem}>Try Again</Button>
+              <Button onClick={processProblem} className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Try Again
+              </Button>
             </div>
           </div>
         ) : (
