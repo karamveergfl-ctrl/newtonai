@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      credit_transactions: {
+        Row: {
+          ad_duration: number | null
+          amount: number
+          created_at: string
+          feature_name: string | null
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          ad_duration?: number | null
+          amount: number
+          created_at?: string
+          feature_name?: string | null
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          ad_duration?: number | null
+          amount?: number
+          created_at?: string
+          feature_name?: string | null
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       feature_usage: {
         Row: {
           created_at: string
@@ -139,6 +169,42 @@ export type Database = {
           pdf_name?: string
           session_end?: string | null
           session_start?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_credits: {
+        Row: {
+          ads_watched_today: number
+          created_at: string
+          credits: number
+          id: string
+          last_ad_date: string | null
+          lifetime_earned: number
+          lifetime_spent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ads_watched_today?: number
+          created_at?: string
+          credits?: number
+          id?: string
+          last_ad_date?: string | null
+          lifetime_earned?: number
+          lifetime_spent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ads_watched_today?: number
+          created_at?: string
+          credits?: number
+          id?: string
+          last_ad_date?: string | null
+          lifetime_earned?: number
+          lifetime_spent?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

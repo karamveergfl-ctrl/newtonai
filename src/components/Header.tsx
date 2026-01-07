@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CreditBalance } from "@/components/CreditBalance";
 import Logo from "@/components/Logo";
 import { Menu, X } from "lucide-react";
 
@@ -75,6 +76,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
+              <CreditBalance />
               <ThemeToggle />
               <Button asChild variant="ghost" size="sm">
                 <Link to="/auth">Log in</Link>
