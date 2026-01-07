@@ -1,13 +1,14 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileQuestion, Copy, Check } from "lucide-react";
+import { FileQuestion, Copy, Check, ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Button } from "@/components/ui/button";
 import { StepBySolutionRenderer } from "@/components/StepBySolutionRenderer";
+import { InlineSolutionPanel } from "@/components/InlineSolutionPanel";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { 
   getYouTubeTranscript, 
@@ -20,8 +21,38 @@ const HomeworkHelp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [solution, setSolution] = useState("");
   const [copied, setCopied] = useState(false);
+  const [capturedScreenshot, setCapturedScreenshot] = useState<{ imageBase64: string; mimeType: string } | null>(null);
   const { toast } = useToast();
   const { canUse, tryUseFeature, modal } = useFeatureGate("homework_help");
+
+  // Clipboard paste support for images
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            const allowed = await tryUseFeature();
+            if (!allowed) return;
+
+            const base64 = await fileToBase64(file);
+            setCapturedScreenshot({
+              imageBase64: base64.split(",")[1], // Remove data:image/...;base64, prefix
+              mimeType: file.type,
+            });
+          }
+          break;
+        }
+      }
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [tryUseFeature]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(solution);
@@ -35,6 +66,16 @@ const HomeworkHelp = () => {
     const allowed = await tryUseFeature();
     if (!allowed) return;
 
+    // For image uploads, use the visual solver (InlineSolutionPanel)
+    if (type === "upload" && metadata?.file?.type.startsWith("image/")) {
+      const base64 = await fileToBase64(metadata.file);
+      setCapturedScreenshot({
+        imageBase64: base64.split(",")[1], // Remove data:image/...;base64, prefix
+        mimeType: metadata.file.type,
+      });
+      return;
+    }
+
     setIsLoading(true);
     setSolution("");
 
@@ -43,24 +84,16 @@ const HomeworkHelp = () => {
       if (!session?.access_token) throw new Error("Not authenticated");
 
       let textContent = content;
-      let imageData: string | undefined;
 
       if (type === "youtube" && metadata?.videoId) {
         textContent = await getYouTubeTranscript(metadata.videoId, session.access_token);
       } else if (type === "recording") {
         textContent = await transcribeAudio(content, session.access_token);
       } else if (type === "upload" && metadata?.file) {
-        // For homework help, we want to send images directly to analyze-text
-        // as it supports multimodal input for better problem solving
-        if (metadata.file.type.startsWith("image/")) {
-          imageData = await fileToBase64(metadata.file);
-          textContent = "";
-        } else {
-          textContent = await processUploadedFile(metadata.file, session.access_token);
-        }
+        textContent = await processUploadedFile(metadata.file, session.access_token);
       }
 
-      if (!textContent?.trim() && !imageData) {
+      if (!textContent?.trim()) {
         throw new Error("No content to process");
       }
 
@@ -73,8 +106,7 @@ const HomeworkHelp = () => {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ 
-            imageData: imageData || undefined,
-            text: textContent || undefined,
+            text: textContent,
             stream: true,
             language: metadata?.language || "en",
           }),
@@ -141,6 +173,10 @@ const HomeworkHelp = () => {
             <p className="text-muted-foreground mt-2">
               Get step-by-step solutions to your homework problems from any format
             </p>
+            <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
+              <ImageIcon className="h-3 w-3" />
+              Tip: Paste an image directly with Ctrl+V / Cmd+V
+            </p>
           </div>
 
           <Card>
@@ -185,6 +221,17 @@ const HomeworkHelp = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Visual Solver Panel for Images */}
+      <AnimatePresence>
+        {capturedScreenshot && (
+          <InlineSolutionPanel
+            screenshot={capturedScreenshot}
+            onClose={() => setCapturedScreenshot(null)}
+          />
+        )}
+      </AnimatePresence>
+
       {modal}
     </AppLayout>
   );
