@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { VideoGenerationSettingsDialog, VideoGenerationSettings } from "./VideoGenerationSettingsDialog";
+import { CreditBadge } from "./CreditBadge";
+import { FEATURE_COSTS } from "@/lib/creditConfig";
 
 interface VideoCardWithToolsProps {
   video: {
@@ -141,11 +143,14 @@ export const VideoCardWithTools = ({
           
           {/* Duration Badge */}
           {formattedDuration && (
-            <div className="absolute bottom-3 right-3 bg-black/80 text-white text-sm px-2 py-1 rounded flex items-center gap-1.5">
+            <div className="absolute bottom-3 left-3 bg-black/80 text-white text-sm px-2 py-1 rounded flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
               {formattedDuration}
             </div>
           )}
+          
+          {/* Credit Badge */}
+          <CreditBadge cost={FEATURE_COSTS.watch_video} className="absolute bottom-3 right-3" size="md" />
 
           {/* Settings Button */}
           <DropdownMenu>
@@ -318,11 +323,14 @@ export const VideoCardWithTools = ({
         
         {/* Duration Badge */}
         {formattedDuration && (
-          <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
+          <div className="absolute bottom-1.5 left-1.5 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {formattedDuration}
           </div>
         )}
+        
+        {/* Credit Badge */}
+        <CreditBadge cost={FEATURE_COSTS.watch_video} className="absolute bottom-1.5 right-1.5" />
       </div>
 
       {/* Video Info - Right side */}

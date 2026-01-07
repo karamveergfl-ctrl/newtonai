@@ -7,6 +7,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { MixedContent } from './LaTeXRenderer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SolutionPipeline, PipelineStage } from './SolutionPipeline';
+import { VideoGate } from './VideoGate';
+import { CreditBadge } from './CreditBadge';
+import { VideoPlayer } from './VideoPlayer';
+import { FEATURE_COSTS } from '@/lib/creditConfig';
 
 interface Video {
   id: string;
@@ -42,6 +46,7 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
   const [videos, setVideos] = useState<Video[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('solution');
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
   useEffect(() => {
     processProblem();
@@ -291,41 +296,44 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                       {videos.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {videos.map((video) => (
-                            <a
+                            <VideoGate
                               key={video.id}
-                              href={`https://www.youtube.com/watch?v=${video.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="group block rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-colors"
+                              videoId={video.id}
+                              videoTitle={video.title}
+                              onUnlock={() => setSelectedVideoId(video.id)}
                             >
-                              <div className="relative aspect-video">
-                                <img
-                                  src={video.thumbnail}
-                                  alt={video.title}
-                                  className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Play className="h-12 w-12 text-white" />
+                              <div className="group block rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-colors cursor-pointer">
+                                <div className="relative aspect-video">
+                                  <img
+                                    src={video.thumbnail}
+                                    alt={video.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Play className="h-12 w-12 text-white" />
+                                  </div>
+                                  {video.duration && (
+                                    <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/80 rounded text-xs text-white">
+                                      {video.duration}
+                                    </div>
+                                  )}
+                                  {/* Credit cost badge */}
+                                  <CreditBadge cost={FEATURE_COSTS.watch_video} className="absolute bottom-2 right-2" />
                                 </div>
-                                {video.duration && (
-                                  <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 rounded text-xs text-white">
-                                    {video.duration}
-                                  </div>
-                                )}
+                                <div className="p-3">
+                                  <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
+                                    {video.title}
+                                  </h4>
+                                  <p className="text-xs text-muted-foreground mt-1">{video.channelTitle}</p>
+                                  {video.viewCount && (
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                      <Eye className="h-3 w-3" />
+                                      {video.viewCount} views
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              <div className="p-3">
-                                <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                                  {video.title}
-                                </h4>
-                                <p className="text-xs text-muted-foreground mt-1">{video.channelTitle}</p>
-                                {video.viewCount && (
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                                    <Eye className="h-3 w-3" />
-                                    {video.viewCount} views
-                                  </div>
-                                )}
-                              </div>
-                            </a>
+                            </VideoGate>
                           ))}
                         </div>
                       ) : (
@@ -356,6 +364,11 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
           </div>
         )}
       </div>
+
+      {/* Video Player Modal */}
+      {selectedVideoId && (
+        <VideoPlayer videoId={selectedVideoId} onClose={() => setSelectedVideoId(null)} />
+      )}
     </motion.div>
   );
 }

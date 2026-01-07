@@ -8,7 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
+import { CreditBadge } from "@/components/CreditBadge";
+import { FEATURE_COSTS } from "@/lib/creditConfig";
 interface VideoCardProps {
   video: {
     id: string;
@@ -59,6 +60,8 @@ export const VideoCard = ({
             <Play className="w-6 h-6 md:w-8 md:h-8 text-primary-foreground ml-1" fill="currentColor" />
           </div>
         </div>
+        {/* Credit cost badge */}
+        <CreditBadge cost={FEATURE_COSTS.watch_video} className="absolute bottom-2 right-2" />
       </div>
       <div className="p-3 md:p-4">
         <h3 className="font-semibold text-xs md:text-sm line-clamp-2 mb-2">
