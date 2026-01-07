@@ -2,6 +2,7 @@ import { useState, ReactNode } from "react";
 import { useCredits } from "@/hooks/useCredits";
 import { CreditModal } from "@/components/CreditModal";
 import { FEATURE_NAMES } from "@/lib/creditConfig";
+import { toast } from "sonner";
 
 interface FeatureGateProps {
   featureName: string;
@@ -68,6 +69,12 @@ export function useFeatureGate(featureName: string) {
       setShowModal(true);
       return false;
     }
+    
+    // Show notification of credit spent
+    const featureDisplayName = FEATURE_NAMES[featureName] || featureName;
+    toast.info(`-${cost} credits used for ${featureDisplayName}`, {
+      duration: 3000,
+    });
     
     return true;
   };
