@@ -16,6 +16,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Refund from "./pages/Refund";
 import Profile from "./pages/Profile";
+import Credits from "./pages/Credits";
 import Onboarding from "./pages/Onboarding";
 
 // Tool pages
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/refund" element={<Refund />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/credits" element={<Credits />} />
             
             {/* Tool Routes */}
             <Route path="/tools/homework-help" element={<HomeworkHelp />} />

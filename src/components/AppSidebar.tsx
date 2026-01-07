@@ -235,6 +235,24 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             )}
           </div>
 
+          {/* Credits */}
+          <SidebarMenuButton asChild tooltip="Credits">
+            <motion.button
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate("/credits")}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                isActive("/credits")
+                  ? "bg-primary text-primary-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent"
+              )}
+            >
+              <Coins className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span>Credits</span>}
+            </motion.button>
+          </SidebarMenuButton>
+
           {/* Profile */}
           <SidebarMenuButton asChild tooltip="Profile">
             <motion.button
