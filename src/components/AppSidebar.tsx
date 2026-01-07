@@ -5,6 +5,7 @@ import Logo from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -34,18 +35,21 @@ import {
   ChevronRight,
   Search,
   X,
+  Coins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FEATURE_COSTS } from "@/lib/creditConfig";
+import { useCredits } from "@/hooks/useCredits";
 
 const studyTools = [
-  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help" },
-  { id: "notes", label: "AI Notes", icon: Notebook, path: "/tools/ai-notes" },
-  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards" },
-  { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz" },
-  { id: "pdf", label: "PDF Summarizer", icon: FileText, path: "/tools/pdf-summarizer" },
-  { id: "video", label: "Video Summarizer", icon: Video, path: "/tools/video-summarizer" },
-  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes" },
-  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map" },
+  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help", feature: "homework_help" },
+  { id: "notes", label: "AI Notes", icon: Notebook, path: "/tools/ai-notes", feature: "ai_notes" },
+  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards", feature: "flashcards" },
+  { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz", feature: "quiz" },
+  { id: "pdf", label: "PDF Summarizer", icon: FileText, path: "/tools/pdf-summarizer", feature: "summary" },
+  { id: "video", label: "Video Summarizer", icon: Video, path: "/tools/video-summarizer", feature: "summary" },
+  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes", feature: "lecture_notes" },
+  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map", feature: "mind_map" },
 ];
 
 interface AppSidebarProps {
@@ -59,6 +63,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [searchQuery, setSearchQuery] = useState("");
+  const { isPremium } = useCredits();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -180,7 +185,25 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                           )}
                         >
                           <tool.icon className="h-5 w-5 shrink-0" />
-                          {!isCollapsed && <span>{tool.label}</span>}
+                          {!isCollapsed && (
+                            <>
+                              <span className="flex-1">{tool.label}</span>
+                              {!isPremium && FEATURE_COSTS[tool.feature] && (
+                                <Badge 
+                                  variant="secondary" 
+                                  className={cn(
+                                    "text-[10px] px-1.5 py-0 h-5 font-medium gap-0.5",
+                                    isActive(tool.path) 
+                                      ? "bg-primary-foreground/20 text-primary-foreground" 
+                                      : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                                  )}
+                                >
+                                  <Coins className="h-3 w-3" />
+                                  {FEATURE_COSTS[tool.feature]}
+                                </Badge>
+                              )}
+                            </>
+                          )}
                         </motion.button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
