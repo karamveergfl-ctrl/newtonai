@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Coins, Crown, Play, TrendingUp, TrendingDown, Wallet, Loader2, Sparkles } from "lucide-react";
+import { Crown, Play, TrendingUp, TrendingDown, Wallet, Loader2, Sparkles } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { AD_REWARDS, DAILY_AD_LIMITS } from "@/lib/creditConfig";
+import { AnimatedCreditCounter } from "@/components/AnimatedCreditCounter";
 
 interface CreditBalanceProps {
   className?: string;
@@ -90,9 +91,7 @@ export function CreditBalance({ className, showLabel = false }: CreditBalancePro
           "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border hover:bg-muted hover:border-primary/30 transition-colors cursor-pointer",
           className
         )}>
-          <Coins className="w-4 h-4 text-yellow-500" />
-          <span className="text-sm font-semibold">{credits}</span>
-          {showLabel && <span className="text-xs text-muted-foreground">SC</span>}
+          <AnimatedCreditCounter value={credits} showLabel={showLabel} />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
