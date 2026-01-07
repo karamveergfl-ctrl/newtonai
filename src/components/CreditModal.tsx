@@ -1,9 +1,9 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Play, Crown, Coins, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AD_REWARDS } from "@/lib/creditConfig";
-import { useState } from "react";
 
 interface CreditModalProps {
   open: boolean;
