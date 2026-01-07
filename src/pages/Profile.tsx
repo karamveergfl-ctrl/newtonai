@@ -4,13 +4,13 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useFeatureUsage, FEATURE_LABELS } from "@/hooks/useFeatureUsage";
+import { useFeatureUsage } from "@/hooks/useFeatureUsage";
+import { useCredits } from "@/hooks/useCredits";
+import { FEATURE_NAMES } from "@/lib/creditConfig";
 import { 
   ArrowLeft, 
-  User, 
   Save, 
   Loader2, 
   ChevronRight, 
@@ -22,11 +22,18 @@ import {
   CreditCard,
   LogOut,
   Crown,
-  Sparkles
+  Sparkles,
+  Coins,
+  TrendingUp,
+  TrendingDown,
+  Play,
+  Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -34,6 +41,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { format, formatDistanceToNow } from "date-fns";
+
+interface CreditTransaction {
+  id: string;
+  amount: number;
+  type: string;
+  feature_name: string | null;
+  ad_duration: number | null;
+  created_at: string;
+}
 
 const languages = [
   { value: "en", label: "English" },
@@ -50,9 +67,14 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { usage, subscription, loading: usageLoading } = useFeatureUsage();
+  const { credits, isPremium } = useCredits();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showMoreUsage, setShowMoreUsage] = useState(false);
+  const [showCreditHistory, setShowCreditHistory] = useState(false);
+  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [lifetimeStats, setLifetimeStats] = useState({ earned: 0, spent: 0 });
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -71,6 +93,7 @@ const Profile = () => {
 
       setUserId(session.user.id);
 
+      // Fetch profile
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("*")
@@ -93,11 +116,59 @@ const Profile = () => {
           language_preference: profile.language_preference || "auto",
         });
       }
+
+      // Fetch user credits for lifetime stats
+      const { data: creditsData } = await supabase
+        .from("user_credits")
+        .select("lifetime_earned, lifetime_spent")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (creditsData) {
+        setLifetimeStats({
+          earned: creditsData.lifetime_earned,
+          spent: creditsData.lifetime_spent,
+        });
+      }
+
       setLoading(false);
     };
 
     fetchProfile();
   }, [navigate, toast]);
+
+  const fetchTransactions = async () => {
+    if (!userId) return;
+    setLoadingTransactions(true);
+    
+    const { data, error } = await supabase
+      .from("credit_transactions")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (!error && data) {
+      setTransactions(data);
+    }
+    setLoadingTransactions(false);
+  };
+
+  const handleToggleCreditHistory = () => {
+    if (!showCreditHistory && transactions.length === 0) {
+      fetchTransactions();
+    }
+    setShowCreditHistory(!showCreditHistory);
+  };
+
+  const getTransactionLabel = (tx: CreditTransaction) => {
+    if (tx.type === "signup_bonus") return "Welcome Bonus";
+    if (tx.type === "ad_reward") return `Watched ${tx.ad_duration}s video`;
+    if (tx.type === "feature_use" && tx.feature_name) {
+      return FEATURE_NAMES[tx.feature_name] || tx.feature_name;
+    }
+    return tx.type;
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -305,11 +376,132 @@ const Profile = () => {
           </Card>
         </motion.div>
 
-        {/* Preference Section */}
+        {/* Credit Balance & History Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="mb-6"
+        >
+          <h2 className="text-primary font-semibold mb-3 px-1 flex items-center gap-2">
+            <Coins className="h-4 w-4" />
+            Study Credits
+          </h2>
+          <Card className="border-0 bg-card/50 overflow-hidden">
+            <CardContent className="p-0">
+              {/* Credit Summary */}
+              <div className="p-4 bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-orange-500/10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-yellow-500/20">
+                      <Wallet className="h-5 w-5 text-yellow-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Available Balance</p>
+                      <p className="text-2xl font-bold">
+                        {isPremium ? "∞" : credits} <span className="text-sm font-normal text-muted-foreground">SC</span>
+                      </p>
+                    </div>
+                  </div>
+                  {isPremium && (
+                    <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white border-0">
+                      <Crown className="h-3 w-3 mr-1" />
+                      Premium
+                    </Badge>
+                  )}
+                </div>
+                
+                {/* Lifetime Stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-2 bg-green-500/10 rounded-lg text-center">
+                    <div className="flex items-center justify-center gap-1 text-green-600 dark:text-green-400">
+                      <TrendingUp className="h-3 w-3" />
+                      <span className="text-lg font-bold">{lifetimeStats.earned}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Total Earned</p>
+                  </div>
+                  <div className="p-2 bg-orange-500/10 rounded-lg text-center">
+                    <div className="flex items-center justify-center gap-1 text-orange-600 dark:text-orange-400">
+                      <TrendingDown className="h-3 w-3" />
+                      <span className="text-lg font-bold">{lifetimeStats.spent}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Total Spent</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Toggle History */}
+              <button
+                onClick={handleToggleCreditHistory}
+                className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors border-t"
+              >
+                <div className="flex items-center gap-3">
+                  <History className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm font-medium">Transaction History</span>
+                </div>
+                <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-transform", showCreditHistory && "rotate-90")} />
+              </button>
+
+              {/* Transaction List */}
+              {showCreditHistory && (
+                <div className="border-t">
+                  {loadingTransactions ? (
+                    <div className="p-8 flex items-center justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : transactions.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground text-sm">
+                      No transactions yet
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-64">
+                      <div className="divide-y divide-border/50">
+                        {transactions.map((tx) => (
+                          <div key={tx.id} className="flex items-center justify-between p-3 hover:bg-muted/30">
+                            <div className="flex items-center gap-3">
+                              <div className={cn(
+                                "p-1.5 rounded-full",
+                                tx.amount > 0 ? "bg-green-500/10" : "bg-orange-500/10"
+                              )}>
+                                {tx.amount > 0 ? (
+                                  tx.type === "ad_reward" ? (
+                                    <Play className="h-3.5 w-3.5 text-green-500" />
+                                  ) : (
+                                    <TrendingUp className="h-3.5 w-3.5 text-green-500" />
+                                  )
+                                ) : (
+                                  <TrendingDown className="h-3.5 w-3.5 text-orange-500" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">{getTransactionLabel(tx)}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={cn(
+                              "text-sm font-semibold",
+                              tx.amount > 0 ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"
+                            )}>
+                              {tx.amount > 0 ? "+" : ""}{tx.amount} SC
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Preference Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
           className="mb-6"
         >
           <h2 className="text-primary font-semibold mb-3 px-1">Preference</h2>
