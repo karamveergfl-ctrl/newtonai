@@ -17,7 +17,22 @@ interface CreditsContextType {
   refreshCredits: () => Promise<void>;
 }
 
-const CreditsContext = createContext<CreditsContextType | undefined>(undefined);
+// Default values for when context is not available
+const defaultContextValue: CreditsContextType = {
+  credits: 0,
+  loading: true,
+  isPremium: false,
+  adsWatchedToday: 0,
+  hasEnoughCredits: () => false,
+  getFeatureCost: (feature: string) => FEATURE_COSTS[feature] || 0,
+  spendCredits: async () => false,
+  earnCredits: async () => false,
+  canWatchMoreAds: () => false,
+  getRemainingAds: () => 0,
+  refreshCredits: async () => {},
+};
+
+const CreditsContext = createContext<CreditsContextType>(defaultContextValue);
 
 export function CreditsProvider({ children }: { children: ReactNode }) {
   const [credits, setCredits] = useState<number>(0);
@@ -224,9 +239,5 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
 }
 
 export function useCreditsContext() {
-  const context = useContext(CreditsContext);
-  if (context === undefined) {
-    throw new Error('useCreditsContext must be used within a CreditsProvider');
-  }
-  return context;
+  return useContext(CreditsContext);
 }
