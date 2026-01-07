@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   Brain, 
   BookOpen, 
   FileText, 
   Network, 
   Loader2,
-  Camera
+  Camera,
+  Coins
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GenerationSettingsDialog, GenerationSettings } from "./GenerationSettingsDialog";
+import { FEATURE_COSTS } from "@/lib/creditConfig";
+import { useCredits } from "@/hooks/useCredits";
 
 interface StudyToolsBarProps {
   onGenerateQuiz: (settings?: GenerationSettings) => void;
@@ -42,8 +46,21 @@ export const StudyToolsBar = ({
 }: StudyToolsBarProps) => {
   const [showQuizSettings, setShowQuizSettings] = useState(false);
   const [showFlashcardSettings, setShowFlashcardSettings] = useState(false);
+  const { isPremium } = useCredits();
   
   const isAnyGenerating = isGeneratingQuiz || isGeneratingFlashcards || isGeneratingSummary || isGeneratingMindMap;
+
+  const CreditBadge = ({ feature }: { feature: string }) => {
+    if (isPremium) return null;
+    const cost = FEATURE_COSTS[feature];
+    if (!cost) return null;
+    return (
+      <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 font-medium gap-0.5 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 ml-1">
+        <Coins className="h-2.5 w-2.5" />
+        {cost}
+      </Badge>
+    );
+  };
 
   const handleQuizClick = () => {
     if (totalPages > 1) {
@@ -79,6 +96,7 @@ export const StudyToolsBar = ({
             <Brain className="w-4 h-4 text-primary" />
           )}
           <span className="text-xs">Quiz</span>
+          <CreditBadge feature="quiz" />
         </Button>
 
         <Button
@@ -94,6 +112,7 @@ export const StudyToolsBar = ({
             <BookOpen className="w-4 h-4 text-secondary" />
           )}
           <span className="text-xs">Flashcards</span>
+          <CreditBadge feature="flashcards" />
         </Button>
 
         <Button
@@ -109,6 +128,7 @@ export const StudyToolsBar = ({
             <FileText className="w-4 h-4 text-accent" />
           )}
           <span className="text-xs">Summary</span>
+          <CreditBadge feature="summary" />
         </Button>
 
         <Button
@@ -124,6 +144,7 @@ export const StudyToolsBar = ({
             <Network className="w-4 h-4 text-primary" />
           )}
           <span className="text-xs">Mind Map</span>
+          <CreditBadge feature="mind_map" />
         </Button>
 
         {onScreenshot && (
