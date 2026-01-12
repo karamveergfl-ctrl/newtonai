@@ -186,19 +186,25 @@ export const QuizMode = ({
   const finalScore = score + (showResult && isCorrect ? 1 : 0);
   const percentage = Math.round((finalScore / questions.length) * 100);
 
-  // Loading state
+  // Loading state with skeleton
   if (isLoading || questions.length === 0) {
     return (
       <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+        {/* Header */}
         <div className="p-4 border-b bg-card/50">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
-            <h2 className="font-bold text-lg truncate">{title}</h2>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-bold text-lg truncate">{title}</h2>
+              <p className="text-sm text-muted-foreground">Generating quiz...</p>
+            </div>
             <Button onClick={onClose} variant="outline" size="sm" className="gap-2">
               <ArrowLeft className="w-4 h-4" />
               Return to PDF
             </Button>
           </div>
         </div>
+        
+        {/* Loading Progress */}
         <div className="px-4 py-3 bg-card border-b">
           <div className="max-w-2xl mx-auto flex items-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0" />
@@ -209,15 +215,63 @@ export const QuizMode = ({
             <span className="text-xs text-muted-foreground w-10">{Math.round(loadingProgress)}%</span>
           </div>
         </div>
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center space-y-4">
-            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
-              <Brain className="w-10 h-10 text-primary" />
+        
+        {/* Skeleton Quiz Content */}
+        <div className="flex-1 overflow-auto p-4 bg-muted/30">
+          <div className="max-w-3xl mx-auto space-y-6">
+            {/* Skeleton Question Card */}
+            <div className="bg-card rounded-lg p-6 border shadow-sm relative overflow-hidden">
+              <div className="space-y-3 animate-pulse">
+                <div className="flex items-start gap-2">
+                  <div className="h-6 w-10 bg-muted rounded" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 bg-muted rounded w-full" />
+                    <div className="h-5 bg-muted rounded w-3/4" />
+                  </div>
+                </div>
+              </div>
+              {/* Shimmer effect */}
+              <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
             </div>
-            <h3 className="text-lg font-semibold">Creating Your Quiz</h3>
-            <p className="text-muted-foreground max-w-sm">
-              Analyzing content and generating personalized questions...
-            </p>
+
+            {/* Skeleton Options */}
+            <div className="space-y-3">
+              {[...Array(4)].map((_, index) => (
+                <div 
+                  key={index}
+                  className="w-full p-4 rounded-lg border-2 border-transparent bg-card relative overflow-hidden animate-pulse"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-full bg-muted shrink-0" />
+                    <div className="flex-1 space-y-2 pt-1">
+                      <div className="h-4 bg-muted rounded w-full" />
+                      <div className="h-4 bg-muted rounded w-2/3" />
+                    </div>
+                  </div>
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" style={{ animationDelay: `${index * 200}ms` }} />
+                </div>
+              ))}
+            </div>
+            
+            {/* Loading message */}
+            <div className="text-center space-y-2 pt-4">
+              <div className="flex items-center justify-center gap-2">
+                <Brain className="w-5 h-5 text-primary animate-pulse" />
+                <span className="text-sm font-medium text-muted-foreground">Creating your quiz</span>
+              </div>
+              <p className="text-xs text-muted-foreground/70">
+                Analyzing content and generating personalized questions...
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Skeleton Footer */}
+        <div className="p-4 border-t bg-card/50">
+          <div className="max-w-2xl mx-auto flex justify-end">
+            <div className="h-10 w-36 bg-muted rounded-md animate-pulse" />
           </div>
         </div>
       </div>

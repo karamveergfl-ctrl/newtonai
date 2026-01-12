@@ -111,8 +111,8 @@ export default {
           "100%": { transform: "translate(0px, 0px) scale(1)" },
         },
         "shimmer": {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
         },
         "pulse-soft": {
           "0%, 100%": { opacity: "1" },
