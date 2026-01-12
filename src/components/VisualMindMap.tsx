@@ -88,9 +88,36 @@ export const VisualMindMap = ({
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey>("notebookLM");
   const [selectedLayout, setSelectedLayout] = useState<LayoutType>("radial");
   const [zoom, setZoom] = useState(1);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Pan/drag handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return; // Only left click
+    setIsPanning(true);
+    setPanStart({ x: e.clientX, y: e.clientY });
+    if (containerRef.current) {
+      setScrollStart({ 
+        x: containerRef.current.scrollLeft, 
+        y: containerRef.current.scrollTop 
+      });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning || !containerRef.current) return;
+    const dx = e.clientX - panStart.x;
+    const dy = e.clientY - panStart.y;
+    containerRef.current.scrollLeft = scrollStart.x - dx;
+    containerRef.current.scrollTop = scrollStart.y - dy;
+  };
+
+  const handleMouseUp = () => setIsPanning(false);
+  const handleMouseLeave = () => setIsPanning(false);
 
   useEffect(() => {
     const timer = setTimeout(() => fitToScreen(), 100);
@@ -692,11 +719,18 @@ export const VisualMindMap = ({
         </div>
       </div>
 
-      {/* Content with zoom */}
+      {/* Content with zoom and pan */}
       <div 
         ref={containerRef} 
-        className="flex-1 overflow-auto flex items-start justify-start w-full h-full"
+        className={cn(
+          "flex-1 overflow-auto flex items-start justify-start w-full h-full select-none",
+          isPanning ? "cursor-grabbing" : "cursor-grab"
+        )}
         style={{ background: themes[selectedTheme].bgGradient }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
       >
         <div 
           ref={contentRef} 
