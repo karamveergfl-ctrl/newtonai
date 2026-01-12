@@ -17,6 +17,9 @@ import { FullScreenStudyTool } from "@/components/FullScreenStudyTool";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { VideoGenerationSettings } from "@/components/VideoGenerationSettingsDialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useCredits } from "@/hooks/useCredits";
+import { CreditModal } from "@/components/CreditModal";
+import { FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
 import {
   processUploadedFile,
   transcribeAudio,
@@ -79,6 +82,41 @@ const AISummarizer = () => {
   const [mindMapTitle, setMindMapTitle] = useState("");
 
   const [activeGenerating, setActiveGenerating] = useState<"quiz" | "flashcards" | "summary" | "mindmap" | null>(null);
+
+  // Credit modal state
+  const [showCreditModal, setShowCreditModal] = useState(false);
+  const [blockedFeature, setBlockedFeature] = useState("");
+
+  const { 
+    credits, 
+    hasEnoughCredits, 
+    spendCredits, 
+    earnCredits, 
+    canWatchMoreAds, 
+    getRemainingAds, 
+    isPremium 
+  } = useCredits();
+
+  // Helper function to check and spend credits
+  const trySpendCredits = async (feature: string): Promise<boolean> => {
+    if (isPremium) return true;
+    
+    if (!hasEnoughCredits(feature)) {
+      setBlockedFeature(feature);
+      setShowCreditModal(true);
+      return false;
+    }
+    
+    const success = await spendCredits(feature);
+    if (success) {
+      const cost = FEATURE_COSTS[feature];
+      toast({
+        title: `${cost} credits used`,
+        description: FEATURE_NAMES[feature]
+      });
+    }
+    return success;
+  };
 
   // Helper to extract video ID from URL
   const extractVideoId = (url: string): string | null => {
@@ -267,6 +305,10 @@ const AISummarizer = () => {
 
   // Video study tool handlers
   const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // Check and spend credits first
+    const allowed = await trySpendCredits("flashcards");
+    if (!allowed) return;
+    
     setIsGeneratingFlashcards(true);
     setActiveGenerating("flashcards");
     setVideoError(null);
@@ -322,6 +364,10 @@ const AISummarizer = () => {
   };
 
   const handleGenerateQuizFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // Check and spend credits first
+    const allowed = await trySpendCredits("quiz");
+    if (!allowed) return;
+    
     setIsGeneratingQuiz(true);
     setActiveGenerating("quiz");
     setVideoError(null);
@@ -377,6 +423,10 @@ const AISummarizer = () => {
   };
 
   const handleGenerateSummaryFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // Check and spend credits first
+    const allowed = await trySpendCredits("summary");
+    if (!allowed) return;
+    
     setShowSummaryScreen(true);
     setIsGeneratingSummary(true);
     setActiveGenerating("summary");
@@ -433,6 +483,10 @@ const AISummarizer = () => {
   };
 
   const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // Check and spend credits first
+    const allowed = await trySpendCredits("mind_map");
+    if (!allowed) return;
+    
     setShowMindMapScreen(true);
     setIsGeneratingMindMap(true);
     setActiveGenerating("mindmap");
@@ -754,6 +808,18 @@ const AISummarizer = () => {
             onClose={() => setSelectedVideoId(null)}
           />
         )}
+
+        {/* Credit Modal */}
+        <CreditModal
+          open={showCreditModal}
+          onOpenChange={setShowCreditModal}
+          featureName={FEATURE_NAMES[blockedFeature] || blockedFeature}
+          requiredCredits={FEATURE_COSTS[blockedFeature] || 0}
+          currentCredits={credits}
+          onWatchAd={earnCredits}
+          canWatchMoreAds={canWatchMoreAds()}
+          remainingAds={getRemainingAds()}
+        />
       </div>
     </AppLayout>
   );
