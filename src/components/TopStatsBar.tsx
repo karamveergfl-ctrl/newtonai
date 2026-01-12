@@ -16,13 +16,13 @@ export function TopStatsBar() {
             <GamificationBadge />
             <CreditBalance showLabel />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-muted/50 rounded-full px-1 py-1">
             <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate("/profile")}
-              className="h-8 w-8"
+              className="h-8 w-8 rounded-full hover:bg-accent"
             >
               <User className="h-4 w-4" />
             </Button>
