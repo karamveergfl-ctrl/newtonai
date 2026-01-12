@@ -59,7 +59,7 @@ const Footer = () => {
                 { to: "/tools/ai-notes", label: "AI Note Taker" },
                 { to: "/tools/flashcards", label: "AI Flashcards" },
                 { to: "/tools/quiz", label: "AI Quiz Generator" },
-                { to: "/tools/pdf-summarizer", label: "PDF Summarizer" },
+                { to: "/tools/summarizer", label: "AI Summarizer" },
                 { to: "/tools/mind-map", label: "AI Mind Map" },
               ].map((link) => (
                 <li key={link.to}>
