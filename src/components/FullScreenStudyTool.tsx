@@ -157,9 +157,9 @@ export const FullScreenStudyTool = ({
     // If no sections parsed, fall back to regular markdown
     if (sections.length === 0) {
       return (
-        <Card className="max-w-4xl mx-auto p-8 shadow-lg bg-white">
-          <h3 className={cn(typography.heading1, "mb-6 text-center text-gray-900")}>{title}</h3>
-          <div className="prose prose-lg max-w-none">
+        <Card className="max-w-4xl mx-auto p-8 shadow-lg bg-card">
+          <h3 className={cn(typography.heading1, "mb-6 text-center text-foreground")}>{title}</h3>
+          <div className="prose prose-lg max-w-none dark:prose-invert">
             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
               {content}
             </ReactMarkdown>
@@ -171,27 +171,27 @@ export const FullScreenStudyTool = ({
     return (
       <div className="max-w-4xl mx-auto space-y-4">
         {/* Title Card */}
-        <Card className="p-6 bg-white shadow-sm border border-gray-100">
-          <h1 className={cn(typography.heading1, "text-center text-gray-900")}>{title}</h1>
-          <p className="text-center text-gray-500 mt-2 font-sans text-sm">Study Guide • {sections.length} sections</p>
+        <Card className="p-6 bg-card shadow-sm border">
+          <h1 className={cn(typography.heading1, "text-center text-foreground")}>{title}</h1>
+          <p className="text-center text-muted-foreground mt-2 font-sans text-sm">Study Guide • {sections.length} sections</p>
         </Card>
 
         {/* Section Cards */}
         {sections.map((section, index) => (
           <Card 
             key={section.type} 
-            className="bg-white shadow-sm border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300"
+            className="bg-card shadow-sm border overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300"
             style={{ animationDelay: `${index * 50}ms` }}
           >
             {/* Section Header */}
-            <div className="flex items-center gap-3 p-4 border-b border-gray-100">
+            <div className="flex items-center gap-3 p-4 border-b">
               <div 
                 className="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm"
                 style={{ backgroundColor: section.iconColor }}
               >
                 {getSectionIcon(section.type)}
               </div>
-              <h2 className={cn(typography.heading2, "text-gray-900")}>{section.title}</h2>
+              <h2 className={cn(typography.heading2, "text-foreground")}>{section.title}</h2>
             </div>
 
             {/* Section Content */}
@@ -209,23 +209,23 @@ export const FullScreenStudyTool = ({
                         </Table>
                       ),
                       thead: ({ children }) => (
-                        <TableHeader className="bg-gray-50">
+                        <TableHeader className="bg-muted/50">
                           {children}
                         </TableHeader>
                       ),
                       tbody: ({ children }) => <TableBody>{children}</TableBody>,
-                      tr: ({ children }) => <TableRow className="border-b border-gray-100">{children}</TableRow>,
+                      tr: ({ children }) => <TableRow className="border-b">{children}</TableRow>,
                       th: ({ children }) => (
-                        <TableHead className="font-display font-semibold text-gray-700 py-3 px-4">
+                        <TableHead className="font-display font-semibold text-foreground/80 py-3 px-4">
                           {children}
                         </TableHead>
                       ),
                       td: ({ children }) => (
-                        <TableCell className="py-3 px-4 text-gray-600">
+                        <TableCell className="py-3 px-4 text-muted-foreground">
                           {children}
                         </TableCell>
                       ),
-                      p: ({ children }) => <p className="mb-3 text-gray-700 leading-relaxed">{children}</p>,
+                      p: ({ children }) => <p className="mb-3 text-foreground/80 leading-relaxed">{children}</p>,
                     }}
                   >
                     {section.content}
@@ -233,23 +233,23 @@ export const FullScreenStudyTool = ({
                 </div>
               ) : (
                 // Regular markdown for other sections
-                <div className="prose prose-gray max-w-none">
+                <div className="prose prose-gray max-w-none dark:prose-invert">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
                     components={{
-                      p: ({ children }) => <p className="mb-3 text-gray-700 leading-relaxed font-sans">{children}</p>,
-                      strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                      p: ({ children }) => <p className="mb-3 text-foreground/80 leading-relaxed font-sans">{children}</p>,
+                      strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
                       ul: ({ children }) => <ul className="space-y-2 my-3">{children}</ul>,
                       ol: ({ children }) => <ol className="space-y-3 my-3 list-decimal list-inside">{children}</ol>,
                       li: ({ children }) => (
-                        <li className="text-gray-700 leading-relaxed pl-1">
-                          <span className="text-gray-700">{children}</span>
+                        <li className="text-foreground/80 leading-relaxed pl-1">
+                          <span className="text-foreground/80">{children}</span>
                         </li>
                       ),
-                      h3: ({ children }) => <h3 className="font-display font-medium text-gray-800 mt-4 mb-2">{children}</h3>,
+                      h3: ({ children }) => <h3 className="font-display font-medium text-foreground/90 mt-4 mb-2">{children}</h3>,
                       blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 pl-4 italic text-gray-600 my-3" style={{ borderColor: section.iconColor }}>
+                        <blockquote className="border-l-4 pl-4 italic text-muted-foreground my-3" style={{ borderColor: section.iconColor }}>
                           {children}
                         </blockquote>
                       ),
@@ -290,16 +290,16 @@ export const FullScreenStudyTool = ({
   };
 
   return (
-    <div className={cn("fixed inset-0 z-50 bg-gray-50 flex flex-col", showVideoSlide && "pr-80")}>
+    <div className={cn("fixed inset-0 z-50 bg-muted/50 flex flex-col", showVideoSlide && "pr-80")}>
       {/* Header */}
-      <div className="p-4 border-b bg-white/80 backdrop-blur-sm flex items-center justify-between sticky top-0 z-10">
+      <div className="p-4 border-b bg-background/80 backdrop-blur-sm flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: nlmColors.blue }}>
             <span className="text-white">{getIcon()}</span>
           </div>
           <div>
-            <h2 className="font-display font-bold text-lg text-gray-900">{getTypeLabel()}</h2>
-            <span className="text-sm text-gray-500 font-sans">{title}</span>
+            <h2 className="font-display font-bold text-lg text-foreground">{getTypeLabel()}</h2>
+            <span className="text-sm text-muted-foreground font-sans">{title}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -313,7 +313,12 @@ export const FullScreenStudyTool = ({
             {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Download PDF
           </Button>
-          <Button onClick={onClose} variant="outline" size="sm" className="gap-2 font-sans text-gray-700 hover:bg-gray-100">
+          <Button 
+            onClick={onClose} 
+            variant="outline" 
+            size="sm" 
+            className="gap-2 font-sans"
+          >
             <ArrowLeft className="w-4 h-4" />
             Return to PDF
           </Button>
@@ -322,14 +327,14 @@ export const FullScreenStudyTool = ({
 
       {/* Loading Progress Bar */}
       {isLoading && (
-        <div className="px-4 py-3 bg-white border-b">
+        <div className="px-4 py-3 bg-background border-b">
           <div className="flex items-center gap-3 max-w-2xl mx-auto">
-            <Loader2 className="w-5 h-5 animate-spin shrink-0" style={{ color: nlmColors.blue }} />
+            <Loader2 className="w-5 h-5 animate-spin shrink-0 text-primary" />
             <div className="flex-1">
-              <p className="text-sm font-medium mb-1 font-sans text-gray-700">{loadingMessage}</p>
+              <p className="text-sm font-medium mb-1 font-sans text-foreground">{loadingMessage}</p>
               <Progress value={progress} className="h-2" />
             </div>
-            <span className="text-xs text-gray-500 w-10 font-sans">{Math.round(progress)}%</span>
+            <span className="text-xs text-muted-foreground w-10 font-sans">{Math.round(progress)}%</span>
           </div>
         </div>
       )}
@@ -344,45 +349,45 @@ export const FullScreenStudyTool = ({
             >
               <span className="text-white scale-150">{getIcon()}</span>
             </div>
-            <h3 className="text-xl font-display font-semibold mb-2 text-gray-900">Generating {getTypeLabel()}</h3>
-            <p className="text-gray-500 text-center max-w-md font-sans">
+            <h3 className="text-xl font-display font-semibold mb-2 text-foreground">Generating {getTypeLabel()}</h3>
+            <p className="text-muted-foreground text-center max-w-md font-sans">
               Analyzing content and creating your personalized {getTypeLabel().toLowerCase()}...
             </p>
           </div>
         ) : (
-          <div ref={contentRef} className="p-8 bg-gray-50 min-h-full">
+          <div ref={contentRef} className="p-8 bg-muted/30 min-h-full">
             {type === "summary" ? (
               renderStudyGuide()
             ) : (
-              <Card className="max-w-4xl mx-auto p-8 shadow-lg bg-white border border-gray-100">
-                <h3 className={cn(typography.heading1, "mb-6 text-center text-gray-900")}>{title}</h3>
-                <div className="prose prose-lg max-w-none leading-relaxed">
+              <Card className="max-w-4xl mx-auto p-8 shadow-lg bg-card border">
+                <h3 className={cn(typography.heading1, "mb-6 text-center text-foreground")}>{title}</h3>
+                <div className="prose prose-lg max-w-none leading-relaxed dark:prose-invert">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
                     components={{
-                      p: ({ children }) => <p className="mb-4 text-base leading-relaxed text-gray-700 font-sans">{children}</p>,
-                      h1: ({ children }) => <h1 className="text-2xl font-display font-bold mt-6 mb-4 text-gray-900">{children}</h1>,
-                      h2: ({ children }) => <h2 className="text-xl font-display font-semibold mt-5 mb-3 text-gray-900">{children}</h2>,
-                      h3: ({ children }) => <h3 className="text-lg font-display font-medium mt-4 mb-2 text-gray-800">{children}</h3>,
+                      p: ({ children }) => <p className="mb-4 text-base leading-relaxed text-foreground/80 font-sans">{children}</p>,
+                      h1: ({ children }) => <h1 className="text-2xl font-display font-bold mt-6 mb-4 text-foreground">{children}</h1>,
+                      h2: ({ children }) => <h2 className="text-xl font-display font-semibold mt-5 mb-3 text-foreground">{children}</h2>,
+                      h3: ({ children }) => <h3 className="text-lg font-display font-medium mt-4 mb-2 text-foreground/90">{children}</h3>,
                       ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
                       ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
-                      li: ({ children }) => <li className="text-base text-gray-700 font-sans">{children}</li>,
+                      li: ({ children }) => <li className="text-base text-foreground/80 font-sans">{children}</li>,
                       code: ({ children, className }) => {
                         const isInline = !className;
                         return isInline ? (
-                          <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
+                          <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
                         ) : (
-                          <code className="block bg-gray-100 p-4 rounded-lg text-sm font-mono overflow-x-auto">{children}</code>
+                          <code className="block bg-muted p-4 rounded-lg text-sm font-mono overflow-x-auto">{children}</code>
                         );
                       },
-                      pre: ({ children }) => <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>,
+                      pre: ({ children }) => <pre className="bg-muted p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>,
                       blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 pl-4 italic my-4 text-gray-600" style={{ borderColor: nlmColors.blue }}>
+                        <blockquote className="border-l-4 pl-4 italic my-4 text-muted-foreground" style={{ borderColor: nlmColors.blue }}>
                           {children}
                         </blockquote>
                       ),
-                      strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                      strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
                     }}
                   >
                     {formatContent(content)}
@@ -394,7 +399,7 @@ export const FullScreenStudyTool = ({
         )}
       </ScrollArea>
 
-      {showVideoSlide && <div className="fixed inset-y-0 right-0 w-80 bg-white border-l" />}
+      {showVideoSlide && <div className="fixed inset-y-0 right-0 w-80 bg-background border-l" />}
     </div>
   );
 };
