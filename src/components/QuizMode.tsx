@@ -78,7 +78,7 @@ export const QuizMode = ({
 
   const currentQuestion = questions[currentIndex];
   const progress = questions.length > 0 ? ((currentIndex + 1) / questions.length) * 100 : 0;
-  const isCorrect = selectedAnswer === currentQuestion.correctIndex;
+  const isCorrect = currentQuestion ? selectedAnswer === currentQuestion.correctIndex : false;
 
   const downloadAsPDF = async () => {
     setIsDownloading(true);
