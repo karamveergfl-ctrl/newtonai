@@ -1623,6 +1623,32 @@ const Index = () => {
           setLectureNotes("");
           setLectureNotesTitle("");
         }} />}
+        
+          {/* Flashcard Deck for topic search */}
+          {flashcards.length > 0 && <FlashcardDeck flashcards={flashcards} title={flashcardTitle} onClose={handleCloseFlashcards} />}
+          
+          {/* Quiz Mode for topic search */}
+          {quizQuestions.length > 0 && <QuizMode questions={quizQuestions} title={quizTitle} onClose={handleCloseQuiz} onComplete={handleQuizComplete} />}
+
+          {/* Video Summary for topic search */}
+          {(showVideoSummaryScreen || videoSummary) && <FullScreenStudyTool type="summary" title={videoStudyToolTitle || "Video Summary"} content={videoSummary} onClose={() => {
+          setShowVideoSummaryScreen(false);
+          setVideoSummary("");
+        }} isLoading={isGeneratingSummary} loadingMessage="Analyzing video content and creating summary..." />}
+
+          {/* Video Mind Map for topic search */}
+          {(showVideoMindMapScreen || videoMindMap) && (isGeneratingMindMap ? <FullScreenStudyTool type="mindmap" title={videoStudyToolTitle || "Video Mind Map"} content="" onClose={() => {
+          setShowVideoMindMapScreen(false);
+          setVideoMindMap("");
+          setVideoMindMapData(null);
+        }} isLoading={true} loadingMessage="Analyzing video content and creating mind map..." /> : videoMindMapData ? <VisualMindMap data={videoMindMapData} title={fullScreenMindMapTitle || "Video Mind Map"} onClose={() => {
+          setShowVideoMindMapScreen(false);
+          setVideoMindMap("");
+          setVideoMindMapData(null);
+        }} showVideoSlide={showVideosPanel} /> : videoMindMap ? <FullScreenStudyTool type="mindmap" title={fullScreenMindMapTitle || "Video Mind Map"} content={videoMindMap} onClose={() => {
+          setShowVideoMindMapScreen(false);
+          setVideoMindMap("");
+        }} showVideoSlide={showVideosPanel} /> : null)}
         </div>
       </AppLayout>;
   }
