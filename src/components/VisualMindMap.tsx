@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Download, Loader2, Network, Palette, ZoomIn, ZoomOut, Maximize2, LayoutGrid, Info, ArrowLeft } from "lucide-react";
+import { Download, Loader2, Network, Palette, ZoomIn, ZoomOut, Maximize2, LayoutGrid, Info, ArrowLeft, FileImage, FileText } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useToast } from "@/hooks/use-toast";
@@ -130,6 +130,28 @@ export const VisualMindMap = ({
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({ title: "Error", description: "Failed to generate PDF", variant: "destructive" });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const downloadAsPNG = async () => {
+    if (!contentRef.current) return;
+    setIsDownloading(true);
+    try {
+      const canvas = await html2canvas(contentRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+      const link = document.createElement('a');
+      link.download = `MindMap_${title.slice(0, 30)}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+      toast({ title: "Downloaded", description: "PNG image downloaded successfully" });
+    } catch (error) {
+      console.error("Error generating PNG:", error);
+      toast({ title: "Error", description: "Failed to generate PNG", variant: "destructive" });
     } finally {
       setIsDownloading(false);
     }
@@ -644,10 +666,25 @@ export const VisualMindMap = ({
             </Button>
           </div>
 
-          <Button onClick={downloadAsPDF} variant="outline" size="sm" disabled={isDownloading} className="gap-2 font-sans">
-            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            PDF
-          </Button>
+          {/* Export dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={isDownloading} className="gap-2 font-sans">
+                {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-white z-50">
+              <DropdownMenuItem onClick={downloadAsPNG} className="gap-2 font-sans cursor-pointer">
+                <FileImage className="w-4 h-4" />
+                Save as PNG
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={downloadAsPDF} className="gap-2 font-sans cursor-pointer">
+                <FileText className="w-4 h-4" />
+                Save as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={onClose} variant="outline" size="sm" className="gap-2 font-sans text-gray-700 hover:bg-gray-100">
             <ArrowLeft className="w-4 h-4" />
             Return to PDF
