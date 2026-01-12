@@ -469,7 +469,11 @@ const Index = () => {
     return data.transcript || `Educational video about: ${videoTitle}`;
   };
   const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // INSTANT UI: Show flashcards screen immediately with loading
+    setFlashcards([]);
+    setFlashcardTitle(videoTitle);
     setIsGeneratingFlashcards(true);
+    
     try {
       const {
         data: {
@@ -503,13 +507,14 @@ const Index = () => {
       }
       const data = await response.json();
       setFlashcards(data.flashcards);
-      setFlashcardTitle(videoTitle);
       toast({
         title: "Flashcards Ready! 📚",
         description: `Generated ${data.flashcards.length} flashcards from video`
       });
     } catch (error) {
       console.error("Error generating flashcards:", error);
+      setFlashcards([]);
+      setFlashcardTitle("");
       toast({
         title: "Error",
         description: "Failed to generate flashcards",
@@ -528,7 +533,12 @@ const Index = () => {
       });
       return;
     }
+    
+    // INSTANT UI: Show flashcards screen immediately with loading
+    setFlashcards([]);
+    setFlashcardTitle(fileData?.name || "Document Flashcards");
     setIsGeneratingFlashcards(true);
+    
     try {
       const {
         data: {
@@ -556,13 +566,14 @@ const Index = () => {
       }
       const data = await response.json();
       setFlashcards(data.flashcards);
-      setFlashcardTitle(fileData?.name || "Document Flashcards");
       toast({
         title: "Flashcards Ready! 📚",
         description: `Generated ${data.flashcards.length} flashcards for studying`
       });
     } catch (error) {
       console.error("Error generating flashcards:", error);
+      setFlashcards([]);
+      setFlashcardTitle("");
       toast({
         title: "Error",
         description: "Failed to generate flashcards",
@@ -577,7 +588,11 @@ const Index = () => {
     setFlashcardTitle("");
   };
   const handleGenerateQuizFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // INSTANT UI: Show quiz screen immediately with loading
+    setQuizQuestions([]);
+    setQuizTitle(videoTitle);
     setIsGeneratingQuiz(true);
+    
     try {
       const {
         data: {
@@ -611,13 +626,14 @@ const Index = () => {
       }
       const data = await response.json();
       setQuizQuestions(data.questions);
-      setQuizTitle(videoTitle);
       toast({
         title: "Quiz Ready! 🧠",
         description: `Generated ${data.questions.length} questions from video`
       });
     } catch (error) {
       console.error("Error generating quiz:", error);
+      setQuizQuestions([]);
+      setQuizTitle("");
       toast({
         title: "Error",
         description: "Failed to generate quiz",
@@ -742,7 +758,12 @@ const Index = () => {
       });
       return;
     }
+    
+    // INSTANT UI: Show quiz screen immediately with loading
+    setQuizQuestions([]);
+    setQuizTitle(fileData?.name || "Document Quiz");
     setIsGeneratingQuiz(true);
+    
     try {
       const {
         data: {
@@ -771,13 +792,14 @@ const Index = () => {
       }
       const data = await response.json();
       setQuizQuestions(data.questions);
-      setQuizTitle(fileData?.name || "Document Quiz");
       toast({
         title: "Quiz Ready! 🧠",
         description: `Generated ${data.questions.length} questions for testing`
       });
     } catch (error) {
       console.error("Error generating quiz:", error);
+      setQuizQuestions([]);
+      setQuizTitle("");
       toast({
         title: "Error",
         description: "Failed to generate quiz",
@@ -1145,7 +1167,13 @@ const Index = () => {
       });
       return;
     }
+    
+    // INSTANT UI: Show summary screen immediately with loading
+    setSummary("");
+    setShowVideoSummaryScreen(true);
+    setVideoStudyToolTitle(fileData?.name || "Document Summary");
     setIsGeneratingSummary(true);
+    
     try {
       const {
         data: {
@@ -1176,6 +1204,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating summary:", error);
+      setShowVideoSummaryScreen(false);
       toast({
         title: "Error",
         description: "Failed to generate summary",
@@ -1195,7 +1224,14 @@ const Index = () => {
       });
       return;
     }
+    
+    // INSTANT UI: Show mind map screen immediately with loading
+    setMindMapData(null);
+    setMindMap("");
+    setShowFullScreenMindMap(true);
+    setFullScreenMindMapTitle(fileData?.name || "Document Mind Map");
     setIsGeneratingMindMap(true);
+    
     try {
       const {
         data: {
@@ -1229,6 +1265,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating mind map:", error);
+      setShowFullScreenMindMap(false);
       toast({
         title: "Error",
         description: "Failed to generate mind map",
@@ -1249,7 +1286,12 @@ const Index = () => {
       });
       return;
     }
+    
+    // INSTANT UI: Show quiz screen immediately with loading
+    setQuizQuestions([]);
+    setQuizTitle("Quiz from Selected Text");
     setIsGeneratingQuiz(true);
+    
     try {
       const {
         data: {
@@ -1276,13 +1318,14 @@ const Index = () => {
       }
       const data = await response.json();
       setQuizQuestions(data.questions);
-      setQuizTitle("Quiz from Selected Text");
       toast({
         title: "Quiz Ready! 🧠",
         description: `Generated ${data.questions.length} questions from selected text`
       });
     } catch (error) {
       console.error("Error generating quiz from text:", error);
+      setQuizQuestions([]);
+      setQuizTitle("");
       toast({
         title: "Error",
         description: "Failed to generate quiz",
@@ -1301,7 +1344,12 @@ const Index = () => {
       });
       return;
     }
+    
+    // INSTANT UI: Show flashcards screen immediately with loading
+    setFlashcards([]);
+    setFlashcardTitle("Flashcards from Selected Text");
     setIsGeneratingFlashcards(true);
+    
     try {
       const {
         data: {
@@ -1328,13 +1376,14 @@ const Index = () => {
       }
       const data = await response.json();
       setFlashcards(data.flashcards);
-      setFlashcardTitle("Flashcards from Selected Text");
       toast({
         title: "Flashcards Ready! 📚",
         description: `Generated ${data.flashcards.length} flashcards from selected text`
       });
     } catch (error) {
       console.error("Error generating flashcards from text:", error);
+      setFlashcards([]);
+      setFlashcardTitle("");
       toast({
         title: "Error",
         description: "Failed to generate flashcards",
@@ -1353,7 +1402,13 @@ const Index = () => {
       });
       return;
     }
+    
+    // INSTANT UI: Show summary screen immediately with loading
+    setSummary("");
+    setShowVideoSummaryScreen(true);
+    setVideoStudyToolTitle("Summary from Selected Text");
     setIsGeneratingSummary(true);
+    
     try {
       const {
         data: {
@@ -1384,6 +1439,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating summary from text:", error);
+      setShowVideoSummaryScreen(false);
       toast({
         title: "Error",
         description: "Failed to generate summary",
@@ -1402,7 +1458,14 @@ const Index = () => {
       });
       return;
     }
+    
+    // INSTANT UI: Show mind map screen immediately with loading
+    setMindMapData(null);
+    setMindMap("");
+    setShowFullScreenMindMap(true);
+    setFullScreenMindMapTitle("Mind Map from Selected Text");
     setIsGeneratingMindMap(true);
+    
     try {
       const {
         data: {
@@ -1436,6 +1499,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating mind map from text:", error);
+      setShowFullScreenMindMap(false);
       toast({
         title: "Error",
         description: "Failed to generate mind map",
