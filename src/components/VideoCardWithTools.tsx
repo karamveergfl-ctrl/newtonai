@@ -312,14 +312,17 @@ export const VideoCardWithTools = ({
         onClick={() => onVideoClick(video.videoId)}
       >
         <img 
-          src={video.thumbnail.replace('default', 'mqdefault').replace('hqdefault', 'mqdefault')} 
+          src={video.thumbnail}
           alt={video.title}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            if (!target.src.includes('hqdefault')) {
-              target.src = video.thumbnail;
+            // Try hqdefault as fallback
+            if (target.src.includes('mqdefault')) {
+              target.src = target.src.replace('mqdefault', 'hqdefault');
+            } else if (target.src.includes('maxresdefault')) {
+              target.src = target.src.replace('maxresdefault', 'hqdefault');
             }
           }}
         />
