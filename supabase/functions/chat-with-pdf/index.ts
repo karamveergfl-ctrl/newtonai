@@ -38,6 +38,21 @@ serve(async (req) => {
       );
     }
 
+    // Check rate limit (100 requests per hour)
+    const { data: allowed, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
+      p_user_id: user.id,
+      p_function_name: 'chat-with-pdf',
+      p_max_requests: 100,
+      p_window_minutes: 60
+    });
+
+    if (rateLimitError || !allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log("Authenticated user:", user.id);
 
     const { question, pdfContext, pdfName, conversationHistory } = await req.json();
