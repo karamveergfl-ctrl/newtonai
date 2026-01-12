@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,6 +37,7 @@ serve(async (req) => {
     }
 
     const userId = user.id;
+    const userEmail = user.email;
 
     // Create admin client with service role to delete user data and auth account
     const supabaseAdmin = createClient(
@@ -43,6 +45,15 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
+
+    // Get user's name from profile before deletion
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const userName = profile?.full_name || "User";
 
     // Delete user data from all tables (order matters due to potential dependencies)
     const tablesToClean = [
@@ -85,10 +96,76 @@ serve(async (req) => {
       );
     }
 
+    // Send confirmation email
+    if (userEmail) {
+      try {
+        const resendApiKey = Deno.env.get("RESEND_API_KEY");
+        if (resendApiKey) {
+          const resend = new Resend(resendApiKey);
+          
+          await resend.emails.send({
+            from: "NewtonAI <onboarding@resend.dev>",
+            to: [userEmail],
+            subject: "Your NewtonAI Account Has Been Deleted",
+            html: `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              </head>
+              <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb; padding: 40px 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+                    <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Account Deletion Confirmed</h1>
+                  </div>
+                  <div style="padding: 40px 30px;">
+                    <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">Hi ${userName},</p>
+                    <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
+                      This email confirms that your NewtonAI account and all associated data have been permanently deleted as per your request.
+                    </p>
+                    <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 24px 0;">
+                      <h3 style="font-size: 14px; color: #6b7280; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px;">Data Deleted:</h3>
+                      <ul style="font-size: 14px; color: #4b5563; margin: 0; padding-left: 20px; line-height: 1.8;">
+                        <li>Profile information</li>
+                        <li>Credit transactions and balance</li>
+                        <li>Feature usage history</li>
+                        <li>Search history</li>
+                        <li>Study sessions</li>
+                        <li>Video watch history</li>
+                      </ul>
+                    </div>
+                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">
+                      If you did not request this deletion, please contact our support team immediately.
+                    </p>
+                    <p style="font-size: 16px; color: #374151; margin-bottom: 8px;">Thank you for using NewtonAI.</p>
+                    <p style="font-size: 14px; color: #6b7280; margin: 0;">The NewtonAI Team</p>
+                  </div>
+                  <div style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                    <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+                      This is an automated message. Please do not reply to this email.
+                    </p>
+                  </div>
+                </div>
+              </body>
+              </html>
+            `,
+          });
+          console.log("Deletion confirmation email sent to:", userEmail);
+        } else {
+          console.warn("RESEND_API_KEY not configured, skipping confirmation email");
+        }
+      } catch (emailError) {
+        // Don't fail the deletion if email fails
+        console.error("Failed to send confirmation email:", emailError);
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: "Account and all associated data deleted successfully",
+        emailSent: !!userEmail,
         warnings: errors.length > 0 ? errors : undefined
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
