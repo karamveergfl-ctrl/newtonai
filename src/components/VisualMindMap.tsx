@@ -102,8 +102,8 @@ export const VisualMindMap = ({
     const container = containerRef.current.getBoundingClientRect();
     const content = contentRef.current.getBoundingClientRect();
     
-    const scaleX = (container.width - 80) / (content.width / zoom);
-    const scaleY = (container.height - 80) / (content.height / zoom);
+    const scaleX = (container.width - 32) / (content.width / zoom);
+    const scaleY = (container.height - 32) / (content.height / zoom);
     const newZoom = Math.min(scaleX, scaleY, 1.2);
     setZoom(Math.max(0.3, Math.min(newZoom, 1.5)));
   }, [zoom]);
@@ -588,7 +588,7 @@ export const VisualMindMap = ({
   };
 
   return (
-    <div className={cn("fixed inset-0 z-50 bg-gray-50 flex flex-col", showVideoSlide && "pr-80")}>
+    <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="p-4 border-b bg-white/80 backdrop-blur-sm flex items-center justify-between gap-4 flex-wrap sticky top-0 z-10">
         <div className="flex items-center gap-3">
@@ -695,19 +695,17 @@ export const VisualMindMap = ({
       {/* Content with zoom */}
       <div 
         ref={containerRef} 
-        className="flex-1 overflow-auto flex items-center justify-center p-4"
+        className="flex-1 overflow-auto flex items-start justify-start w-full h-full"
         style={{ background: themes[selectedTheme].bgGradient }}
       >
         <div 
           ref={contentRef} 
-          className="transition-transform duration-200 origin-center p-8"
+          className="transition-transform duration-200 origin-top-left min-w-full min-h-full flex items-center justify-center p-8"
           style={{ transform: `scale(${zoom})` }}
         >
           {renderLayout()}
         </div>
       </div>
-
-      {showVideoSlide && <div className="fixed inset-y-0 right-0 w-80 bg-white border-l" />}
     </div>
   );
 };
