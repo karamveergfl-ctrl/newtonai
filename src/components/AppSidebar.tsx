@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -36,10 +35,13 @@ import {
   Search,
   X,
   Coins,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FEATURE_COSTS } from "@/lib/creditConfig";
 import { useCredits } from "@/hooks/useCredits";
+import { useEffect } from "react";
 
 const studyTools = [
   { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help", feature: "homework_help" },
@@ -64,6 +66,22 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const isCollapsed = state === "collapsed";
   const [searchQuery, setSearchQuery] = useState("");
   const { isPremium } = useCredits();
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
+    setTheme(initialTheme);
+    document.documentElement.classList.toggle("dark", initialTheme === "dark");
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
+  };
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -221,19 +239,23 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        <div className="space-y-2">
-          {/* Theme Toggle */}
-          <div
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2",
-              isCollapsed ? "justify-center" : ""
-            )}
-          >
-            <ThemeToggle />
-            {!isCollapsed && (
-              <span className="text-sm text-sidebar-foreground">Theme</span>
-            )}
-          </div>
+        <div className="space-y-1">
+          {/* Theme Toggle - styled like other menu buttons */}
+          <SidebarMenuButton asChild tooltip="Toggle Theme">
+            <motion.button
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={toggleTheme}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+            >
+              {theme === "light" ? (
+                <Moon className="h-5 w-5 shrink-0" />
+              ) : (
+                <Sun className="h-5 w-5 shrink-0" />
+              )}
+              {!isCollapsed && <span>Theme</span>}
+            </motion.button>
+          </SidebarMenuButton>
 
           {/* Credits */}
           <SidebarMenuButton asChild tooltip="Credits">
