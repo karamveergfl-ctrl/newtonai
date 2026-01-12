@@ -119,6 +119,12 @@ export const VisualMindMap = ({
   const handleMouseUp = () => setIsPanning(false);
   const handleMouseLeave = () => setIsPanning(false);
 
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setZoom(prev => Math.max(0.3, Math.min(prev + delta, 2)));
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => fitToScreen(), 100);
     return () => clearTimeout(timer);
@@ -731,6 +737,7 @@ export const VisualMindMap = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onWheel={handleWheel}
       >
         <div 
           ref={contentRef} 
