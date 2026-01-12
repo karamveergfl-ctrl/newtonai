@@ -27,6 +27,7 @@ import AIQuiz from "./pages/tools/AIQuiz";
 import AISummarizer from "./pages/tools/AISummarizer";
 import AILectureNotes from "./pages/tools/AILectureNotes";
 import MindMap from "./pages/tools/MindMap";
+import CookieConsent from "./components/CookieConsent";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <CookieConsent />
         </BrowserRouter>
       </TooltipProvider>
     </CreditsProvider>
