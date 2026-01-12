@@ -302,35 +302,41 @@ export const VideoCardWithTools = ({
     );
   }
 
-  // Compact card view - styled like reference image
+  // Compact card view - styled like reference image with full-size thumbnails
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group flex gap-3 p-3">
-      {/* Video Thumbnail - Left side */}
+    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group flex gap-4 p-3">
+      {/* Video Thumbnail - Left side - Full size */}
       <div 
-        className="relative w-40 min-w-[160px] aspect-video overflow-hidden bg-black cursor-pointer rounded-lg shrink-0"
+        className="relative w-64 min-w-[256px] aspect-video overflow-hidden bg-black cursor-pointer rounded-lg shrink-0"
         onClick={() => onVideoClick(video.videoId)}
       >
         <img 
-          src={video.thumbnail} 
+          src={video.thumbnail.replace('default', 'mqdefault').replace('hqdefault', 'mqdefault')} 
           alt={video.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            if (!target.src.includes('hqdefault')) {
+              target.src = video.thumbnail;
+            }
+          }}
         />
         <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-          <div className="w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center">
-            <Play className="w-4 h-4 text-primary-foreground ml-0.5" fill="currentColor" />
+          <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+            <Play className="w-5 h-5 text-primary-foreground ml-0.5" fill="currentColor" />
           </div>
         </div>
         
         {/* Duration Badge */}
         {formattedDuration && (
-          <div className="absolute bottom-1.5 left-1.5 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
-            <Clock className="w-3 h-3" />
+          <div className="absolute bottom-2 left-2 bg-black/80 text-white text-sm px-2 py-0.5 rounded flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5" />
             {formattedDuration}
           </div>
         )}
         
         {/* Credit Badge */}
-        <CreditBadge cost={FEATURE_COSTS.watch_video} className="absolute bottom-1.5 right-1.5" />
+        <CreditBadge cost={FEATURE_COSTS.watch_video} className="absolute bottom-2 right-2" />
       </div>
 
       {/* Video Info - Right side */}
