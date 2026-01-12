@@ -13,6 +13,18 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return new Response(JSON.stringify({ error: 'Invalid or expired token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
+    // Check rate limit (30 requests per hour)
+    const { data: allowed, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
+      p_user_id: user.id,
+      p_function_name: 'transcribe-audio',
+      p_max_requests: 30,
+      p_window_minutes: 60
+    });
+
+    if (rateLimitError || !allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const { audio, mimeType = "audio/webm" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");

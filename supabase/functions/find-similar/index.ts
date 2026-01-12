@@ -38,6 +38,21 @@ serve(async (req) => {
       );
     }
 
+    // Check rate limit (30 requests per hour)
+    const { data: allowed, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
+      p_user_id: user.id,
+      p_function_name: 'find-similar',
+      p_max_requests: 30,
+      p_window_minutes: 60
+    });
+
+    if (rateLimitError || !allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log("Authenticated user:", user.id);
 
     const { topic, problemType, currentSolution } = await req.json();

@@ -12,6 +12,18 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return new Response(JSON.stringify({ error: 'Invalid or expired token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
+    // Check rate limit (30 requests per hour)
+    const { data: allowed, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
+      p_user_id: user.id,
+      p_function_name: 'process-pdf',
+      p_max_requests: 30,
+      p_window_minutes: 60
+    });
+
+    if (rateLimitError || !allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const { pdfContent, fileName } = await req.json();
     const pdfBytes = Uint8Array.from(atob(pdfContent), c => c.charCodeAt(0));
     const text = new TextDecoder().decode(pdfBytes).replace(/[^\x20-\x7E\n]/g, '').slice(0, 20000);
