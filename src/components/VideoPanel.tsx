@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { VideoCardWithTools } from "./VideoCardWithTools";
 import { Button } from "@/components/ui/button";
 import { Sparkles, X, Loader2 } from "lucide-react";
@@ -52,6 +52,7 @@ export const VideoPanel = ({
   hasMoreExplanation = true,
 }: VideoPanelProps) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
   const currentVideos = activeTab === "animation" ? animationVideos : explanationVideos;
   const hasMore = activeTab === "animation" ? hasMoreAnimation : hasMoreExplanation;
@@ -60,11 +61,33 @@ export const VideoPanel = ({
     setActiveTab(value as "animation" | "explanation");
   };
 
-  const handleLoadMore = async () => {
-    if (onLoadMore && !isLoadingMore) {
+  const handleLoadMore = useCallback(async () => {
+    if (onLoadMore && !isLoadingMore && hasMore) {
       await onLoadMore(activeTab);
     }
-  };
+  }, [onLoadMore, isLoadingMore, hasMore, activeTab]);
+
+  // Infinite scroll with Intersection Observer
+  useEffect(() => {
+    const loader = loaderRef.current;
+    if (!loader || !onLoadMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && !isLoadingMore && hasMore) {
+          handleLoadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: "100px" }
+    );
+
+    observer.observe(loader);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [handleLoadMore, isLoadingMore, hasMore, onLoadMore]);
 
   return (
     <div className="relative h-full flex flex-col">
@@ -123,27 +146,23 @@ export const VideoPanel = ({
                 />
               ))}
               
-              {/* Load More Button */}
+              {/* Infinite Scroll Loader */}
               {onLoadMore && hasMore && (
-                <div className="pt-4 pb-2">
-                  <Button
-                    onClick={handleLoadMore}
-                    variant="outline"
-                    className="w-full gap-2"
-                    disabled={isLoadingMore}
-                  >
-                    {isLoadingMore ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Loading more videos...
-                      </>
-                    ) : (
-                      <>
-                        Load More {activeTab === "animation" ? "Animations" : "Explanations"}
-                      </>
-                    )}
-                  </Button>
+                <div ref={loaderRef} className="py-6 flex justify-center">
+                  {isLoadingMore && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="text-sm">Loading more videos...</span>
+                    </div>
+                  )}
                 </div>
+              )}
+              
+              {/* End of results message */}
+              {!hasMore && currentVideos.length > 0 && (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  No more {activeTab === "animation" ? "animation" : "explanation"} videos
+                </p>
               )}
             </>
           ) : (
