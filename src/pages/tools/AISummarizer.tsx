@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Download, Copy, Check, ArrowLeft } from "lucide-react";
+import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle } from "lucide-react";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { VideoCardWithTools } from "@/components/VideoCardWithTools";
@@ -16,6 +16,7 @@ import { QuizMode } from "@/components/QuizMode";
 import { FullScreenStudyTool } from "@/components/FullScreenStudyTool";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { VideoGenerationSettings } from "@/components/VideoGenerationSettingsDialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   processUploadedFile,
   transcribeAudio,
@@ -50,6 +51,7 @@ const AISummarizer = () => {
   const [contentTitle, setContentTitle] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const { toast } = useToast();
   const { checkCanUse, incrementUsage } = useFeatureUsage();
 
@@ -135,14 +137,14 @@ const AISummarizer = () => {
       body: JSON.stringify({ videoId, videoTitle }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error("Failed to fetch transcript");
+      throw new Error(data.error || "Failed to fetch transcript");
     }
 
-    const data = await response.json();
-    
     if (!data.hasRealTranscript) {
-      throw new Error("This video doesn't have captions available. Please try a video with captions enabled.");
+      throw new Error("This video doesn't have captions available. Please try a video with captions enabled, or use an educational video.");
     }
 
     return data.transcript || "";
@@ -161,6 +163,7 @@ const AISummarizer = () => {
     // For YouTube URLs, show video card instead of immediately generating
     if (type === "youtube" && metadata?.videoId) {
       setIsLoading(true);
+      setVideoError(null);
       try {
         const videoMetadata = await fetchVideoMetadata(metadata.videoId);
         setVideoData(videoMetadata);
@@ -258,6 +261,7 @@ const AISummarizer = () => {
   const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     setIsGeneratingFlashcards(true);
     setActiveGenerating("flashcards");
+    setVideoError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
@@ -289,9 +293,11 @@ const AISummarizer = () => {
       });
     } catch (error: any) {
       console.error("Error generating flashcards:", error);
+      const errorMessage = error.message || "Failed to generate flashcards";
+      setVideoError(errorMessage);
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate flashcards",
+        title: "Cannot Generate Flashcards",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -303,6 +309,7 @@ const AISummarizer = () => {
   const handleGenerateQuizFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     setIsGeneratingQuiz(true);
     setActiveGenerating("quiz");
+    setVideoError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
@@ -334,9 +341,11 @@ const AISummarizer = () => {
       });
     } catch (error: any) {
       console.error("Error generating quiz:", error);
+      const errorMessage = error.message || "Failed to generate quiz";
+      setVideoError(errorMessage);
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate quiz",
+        title: "Cannot Generate Quiz",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -349,6 +358,7 @@ const AISummarizer = () => {
     setShowSummaryScreen(true);
     setIsGeneratingSummary(true);
     setActiveGenerating("summary");
+    setVideoError(null);
     setContentTitle(videoTitle);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -380,9 +390,11 @@ const AISummarizer = () => {
     } catch (error: any) {
       console.error("Error generating summary:", error);
       setShowSummaryScreen(false);
+      const errorMessage = error.message || "Failed to generate summary";
+      setVideoError(errorMessage);
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate summary",
+        title: "Cannot Generate Summary",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -396,6 +408,7 @@ const AISummarizer = () => {
     setIsGeneratingMindMap(true);
     setActiveGenerating("mindmap");
     setMindMapTitle(videoTitle);
+    setVideoError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
@@ -427,9 +440,11 @@ const AISummarizer = () => {
     } catch (error: any) {
       console.error("Error generating mind map:", error);
       setShowMindMapScreen(false);
+      const errorMessage = error.message || "Failed to generate mind map";
+      setVideoError(errorMessage);
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate mind map",
+        title: "Cannot Generate Mind Map",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -446,6 +461,7 @@ const AISummarizer = () => {
     setVideoData(null);
     setSummary(null);
     setContentTitle("");
+    setVideoError(null);
   };
 
   const handleCloseFlashcards = () => {
@@ -605,6 +621,21 @@ const AISummarizer = () => {
               <ArrowLeft className="h-4 w-4" />
               Back to input
             </Button>
+
+            {/* Error Alert */}
+            {videoError && (
+              <Alert variant="destructive" className="max-w-2xl mx-auto">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Cannot Process This Video</AlertTitle>
+                <AlertDescription>
+                  {videoError}
+                  <br />
+                  <span className="text-sm mt-2 block">
+                    Tip: Educational videos, tutorials, and lectures usually have captions. Music videos often don't.
+                  </span>
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="flex justify-center">
               <div className="w-full max-w-2xl">
