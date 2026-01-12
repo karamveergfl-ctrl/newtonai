@@ -29,6 +29,7 @@ import {
   Play,
   Wallet
 } from "lucide-react";
+import { DeleteAccountDialog } from "@/components/DeleteAccountDialog";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -568,11 +569,12 @@ const Profile = () => {
           </Button>
         </motion.div>
 
-        {/* Sign Out */}
+        {/* Sign Out & Delete Account */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
+          className="space-y-2"
         >
           <button
             onClick={handleSignOut}
@@ -581,6 +583,8 @@ const Profile = () => {
             <LogOut className="h-5 w-5" />
             <span className="text-sm font-medium">Log out</span>
           </button>
+          
+          <DeleteAccountDialog userEmail={formData.email} />
         </motion.div>
       </div>
     </div>
