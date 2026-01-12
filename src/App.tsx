@@ -24,8 +24,7 @@ import HomeworkHelp from "./pages/tools/HomeworkHelp";
 import AINotes from "./pages/tools/AINotes";
 import AIFlashcards from "./pages/tools/AIFlashcards";
 import AIQuiz from "./pages/tools/AIQuiz";
-import PDFSummarizer from "./pages/tools/PDFSummarizer";
-import VideoSummarizer from "./pages/tools/VideoSummarizer";
+import AISummarizer from "./pages/tools/AISummarizer";
 import AILectureNotes from "./pages/tools/AILectureNotes";
 import MindMap from "./pages/tools/MindMap";
 
@@ -58,8 +57,7 @@ const App = () => (
             <Route path="/tools/ai-notes" element={<AINotes />} />
             <Route path="/tools/flashcards" element={<AIFlashcards />} />
             <Route path="/tools/quiz" element={<AIQuiz />} />
-            <Route path="/tools/pdf-summarizer" element={<PDFSummarizer />} />
-            <Route path="/tools/video-summarizer" element={<VideoSummarizer />} />
+            <Route path="/tools/summarizer" element={<AISummarizer />} />
             <Route path="/tools/lecture-notes" element={<AILectureNotes />} />
             <Route path="/tools/mind-map" element={<MindMap />} />
             

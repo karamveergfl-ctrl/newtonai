@@ -25,7 +25,6 @@ import {
   Layers,
   Brain,
   FileText,
-  Video,
   Mic,
   Sparkles,
   User,
@@ -48,8 +47,7 @@ const studyTools = [
   { id: "notes", label: "AI Notes", icon: Notebook, path: "/tools/ai-notes", feature: "ai_notes" },
   { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards", feature: "flashcards" },
   { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz", feature: "quiz" },
-  { id: "pdf", label: "PDF Summarizer", icon: FileText, path: "/tools/pdf-summarizer", feature: "summary" },
-  { id: "video", label: "Video Summarizer", icon: Video, path: "/tools/video-summarizer", feature: "summary" },
+  { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer", feature: "summary" },
   { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes", feature: "lecture_notes" },
   { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map", feature: "mind_map" },
 ];
