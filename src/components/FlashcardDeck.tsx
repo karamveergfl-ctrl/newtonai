@@ -176,7 +176,7 @@ export const FlashcardDeck = ({
 
   const isMastered = cards[currentIndex] ? completedCards.has(cards[currentIndex].id) : false;
 
-  // Loading state
+  // Loading state with skeleton
   if (isLoading || cards.length === 0) {
     return (
       <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
@@ -185,7 +185,7 @@ export const FlashcardDeck = ({
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <h2 className="font-bold text-lg truncate">{title}</h2>
-              <p className="text-sm text-muted-foreground">Generating...</p>
+              <p className="text-sm text-muted-foreground">Generating flashcards...</p>
             </div>
             <Button onClick={onClose} variant="outline" size="sm" className="gap-2">
               <ArrowLeft className="w-4 h-4" />
@@ -206,16 +206,67 @@ export const FlashcardDeck = ({
           </div>
         </div>
         
-        {/* Loading placeholder */}
+        {/* Skeleton Flashcard */}
         <div className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center space-y-4">
-            <div className="w-20 h-20 rounded-full bg-secondary/20 flex items-center justify-center mx-auto">
-              <BookOpen className="w-10 h-10 text-secondary" />
+          <div className="w-full max-w-md">
+            {/* Skeleton Card */}
+            <div className="relative h-64 rounded-2xl border-2 border-dashed border-muted-foreground/20 bg-card shadow-lg overflow-hidden animate-pulse">
+              <div className="absolute inset-0 p-6 flex flex-col">
+                {/* Card number skeleton */}
+                <div className="h-4 w-16 bg-muted rounded mb-4" />
+                
+                {/* Content skeleton lines */}
+                <div className="flex-1 space-y-3">
+                  <div className="h-5 bg-muted rounded w-3/4" />
+                  <div className="h-5 bg-muted rounded w-full" />
+                  <div className="h-5 bg-muted rounded w-2/3" />
+                </div>
+                
+                {/* Flip hint skeleton */}
+                <div className="flex justify-center mt-4">
+                  <div className="h-4 w-24 bg-muted rounded" />
+                </div>
+              </div>
+              
+              {/* Shimmer effect */}
+              <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
             </div>
-            <h3 className="text-lg font-semibold">Creating Your Flashcards</h3>
-            <p className="text-muted-foreground max-w-sm">
-              Analyzing content and generating personalized flashcards for effective studying...
-            </p>
+            
+            {/* Skeleton progress dots */}
+            <div className="flex justify-center gap-1.5 mt-6">
+              {[...Array(5)].map((_, i) => (
+                <div 
+                  key={i} 
+                  className="w-2 h-2 rounded-full bg-muted animate-pulse"
+                  style={{ animationDelay: `${i * 100}ms` }}
+                />
+              ))}
+            </div>
+            
+            {/* Loading message */}
+            <div className="text-center mt-6 space-y-2">
+              <div className="flex items-center justify-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary animate-pulse" />
+                <span className="text-sm font-medium text-muted-foreground">Creating your flashcards</span>
+              </div>
+              <p className="text-xs text-muted-foreground/70">
+                Analyzing content and generating personalized cards...
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Skeleton Controls */}
+        <div className="p-4 border-t bg-card/50">
+          <div className="max-w-lg mx-auto space-y-3">
+            <div className="flex justify-center">
+              <div className="h-10 w-40 bg-muted rounded-md animate-pulse" />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="h-10 w-24 bg-muted rounded-md animate-pulse" />
+              <div className="h-10 w-32 bg-muted rounded-md animate-pulse" />
+              <div className="h-10 w-24 bg-muted rounded-md animate-pulse" />
+            </div>
           </div>
         </div>
       </div>
