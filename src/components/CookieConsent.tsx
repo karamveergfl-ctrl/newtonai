@@ -28,47 +28,52 @@ const CookieConsent = () => {
   if (!showBanner) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-      <Card className="max-w-[400px] shadow-lg border bg-card">
-        <CardContent className="p-6 relative">
-          {/* Cookie emoji */}
-          <span className="absolute top-4 right-4 text-3xl">🍪</span>
-          
-          {/* Title */}
-          <h3 className="text-lg font-semibold text-foreground mb-2 pr-10">
-            Your data. Your choice.
-          </h3>
-          
-          {/* Description */}
-          <p className="text-sm text-muted-foreground mb-4">
-            We use cookies to analyze our traffic and improve your experience. 
-            Learn more in our{" "}
-            <Link 
-              to="/privacy" 
-              className="text-primary hover:underline font-medium"
-            >
-              Privacy Hub
-            </Link>
-            .
-          </p>
-          
-          {/* Buttons */}
-          <div className="flex gap-3">
-            <Button 
-              onClick={handleAccept}
-              className="flex-1 gap-2"
-            >
-              <Check className="h-4 w-4" />
-              Accept
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleDisable}
-              className="flex-1 gap-2"
-            >
-              <X className="h-4 w-4" />
-              Disable
-            </Button>
+    <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300 p-4">
+      <Card className="w-full max-w-screen-xl mx-auto shadow-lg border bg-card">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            {/* Cookie emoji and content */}
+            <div className="flex items-start gap-4 flex-1">
+              <span className="text-3xl flex-shrink-0">🍪</span>
+              <div className="flex-1">
+                {/* Title */}
+                <h3 className="text-lg font-semibold text-foreground mb-1">
+                  Your data. Your choice.
+                </h3>
+                
+                {/* Description */}
+                <p className="text-sm text-muted-foreground">
+                  We use cookies to analyze our traffic and improve your experience. 
+                  Learn more in our{" "}
+                  <Link 
+                    to="/privacy" 
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Privacy Hub
+                  </Link>
+                  .
+                </p>
+              </div>
+            </div>
+            
+            {/* Buttons */}
+            <div className="flex gap-3 flex-shrink-0">
+              <Button 
+                onClick={handleAccept}
+                className="gap-2 min-w-[120px]"
+              >
+                <Check className="h-4 w-4" />
+                Accept
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleDisable}
+                className="gap-2 min-w-[120px]"
+              >
+                <X className="h-4 w-4" />
+                Disable
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

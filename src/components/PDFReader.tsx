@@ -62,6 +62,7 @@ export const PDFReader = ({
   const [showMobilePrompt, setShowMobilePrompt] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [zoom, setZoom] = useState(100);
+  const [isAutoFit, setIsAutoFit] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -494,12 +495,30 @@ export const PDFReader = ({
     setTouchStartX(null);
   };
 
-  const handleZoomIn = () => setZoom(prev => Math.min(200, prev + 5));
-  const handleZoomOut = () => setZoom(prev => Math.max(25, prev - 5));
-  const handleFitScreen = () => setZoom(100);
+  const handleZoomIn = () => {
+    setIsAutoFit(false);
+    setZoom(prev => Math.min(200, prev + 5));
+  };
+  const handleZoomOut = () => {
+    setIsAutoFit(false);
+    setZoom(prev => Math.max(25, prev - 5));
+  };
+  const handleFitScreen = () => {
+    setIsAutoFit(true);
+    setZoom(100);
+  };
 
   const getPageWidth = () => {
     if (typeof window === 'undefined') return 800;
+    
+    // Auto-fit mode: calculate width to fit the container
+    if (isAutoFit && containerRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight - 56; // subtract header space
+      // Use 95% of container width for better fit
+      return Math.min(containerWidth * 0.95, containerHeight * 0.75);
+    }
+    
     const baseWidth = Math.min(window.innerWidth * 0.95, 1200);
     return baseWidth * (zoom / 100);
   };
