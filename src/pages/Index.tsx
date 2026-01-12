@@ -29,6 +29,9 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { ArrowLeft, Loader2, LogOut, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useCredits } from "@/hooks/useCredits";
+import { CreditModal } from "@/components/CreditModal";
+import { FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
 import { Session } from "@supabase/supabase-js";
 interface Video {
   id: string;
@@ -113,12 +116,47 @@ const Index = () => {
   const [showFlashcardsScreen, setShowFlashcardsScreen] = useState(false);
   const [showQuizScreen, setShowQuizScreen] = useState(false);
 
+  // Credit modal state
+  const [showCreditModal, setShowCreditModal] = useState(false);
+  const [blockedFeature, setBlockedFeature] = useState("");
+
   // Lecture notes state
   const [lectureNotes, setLectureNotes] = useState("");
   const [lectureNotesTitle, setLectureNotesTitle] = useState("");
   const {
     toast
   } = useToast();
+  
+  const { 
+    credits, 
+    hasEnoughCredits, 
+    spendCredits, 
+    earnCredits, 
+    canWatchMoreAds, 
+    getRemainingAds, 
+    isPremium 
+  } = useCredits();
+
+  // Helper function to check and spend credits
+  const trySpendCredits = async (feature: string): Promise<boolean> => {
+    if (isPremium) return true;
+    
+    if (!hasEnoughCredits(feature)) {
+      setBlockedFeature(feature);
+      setShowCreditModal(true);
+      return false;
+    }
+    
+    const success = await spendCredits(feature);
+    if (success) {
+      const cost = FEATURE_COSTS[feature];
+      toast({
+        title: `${cost} credits used`,
+        description: FEATURE_NAMES[feature]
+      });
+    }
+    return success;
+  };
   const navigate = useNavigate();
   useEffect(() => {
     // Set up auth state listener
@@ -471,6 +509,10 @@ const Index = () => {
     return data.transcript || `Educational video about: ${videoTitle}`;
   };
   const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // Check and spend credits first
+    const allowed = await trySpendCredits("flashcards");
+    if (!allowed) return;
+    
     // INSTANT UI: Show flashcards screen immediately with loading
     setFlashcards([]);
     setFlashcardTitle(videoTitle);
@@ -538,6 +580,10 @@ const Index = () => {
       return;
     }
     
+    // Check and spend credits first
+    const allowed = await trySpendCredits("flashcards");
+    if (!allowed) return;
+    
     // INSTANT UI: Show flashcards screen immediately with loading
     setFlashcards([]);
     setFlashcardTitle(fileData?.name || "Document Flashcards");
@@ -595,6 +641,10 @@ const Index = () => {
     setFlashcardTitle("");
   };
   const handleGenerateQuizFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // Check and spend credits first
+    const allowed = await trySpendCredits("quiz");
+    if (!allowed) return;
+    
     // INSTANT UI: Show quiz screen immediately with loading
     setQuizQuestions([]);
     setQuizTitle(videoTitle);
@@ -653,6 +703,10 @@ const Index = () => {
     }
   };
   const handleGenerateSummaryFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // Check and spend credits first
+    const allowed = await trySpendCredits("summary");
+    if (!allowed) return;
+    
     // Instantly show the screen with loading state
     setVideoStudyToolTitle(videoTitle);
     setShowVideoSummaryScreen(true);
@@ -702,6 +756,10 @@ const Index = () => {
     }
   };
   const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    // Check and spend credits first
+    const allowed = await trySpendCredits("mind_map");
+    if (!allowed) return;
+    
     // Instantly show the screen with loading state
     setVideoStudyToolTitle(videoTitle);
     setShowVideoMindMapScreen(true);
@@ -767,6 +825,10 @@ const Index = () => {
       });
       return;
     }
+    
+    // Check and spend credits first
+    const allowed = await trySpendCredits("quiz");
+    if (!allowed) return;
     
     // INSTANT UI: Show quiz screen immediately with loading
     setQuizQuestions([]);
@@ -1180,6 +1242,10 @@ const Index = () => {
       return;
     }
     
+    // Check and spend credits first
+    const allowed = await trySpendCredits("summary");
+    if (!allowed) return;
+    
     // INSTANT UI: Show summary screen immediately with loading
     setSummary("");
     setShowVideoSummaryScreen(true);
@@ -1236,6 +1302,10 @@ const Index = () => {
       });
       return;
     }
+    
+    // Check and spend credits first
+    const allowed = await trySpendCredits("mind_map");
+    if (!allowed) return;
     
     // INSTANT UI: Show mind map screen immediately with loading
     setMindMapData(null);
@@ -1299,6 +1369,10 @@ const Index = () => {
       return;
     }
     
+    // Check and spend credits first
+    const allowed = await trySpendCredits("quiz");
+    if (!allowed) return;
+    
     // INSTANT UI: Show quiz screen immediately with loading
     setQuizQuestions([]);
     setQuizTitle("Quiz from Selected Text");
@@ -1358,6 +1432,10 @@ const Index = () => {
       });
       return;
     }
+    
+    // Check and spend credits first
+    const allowed = await trySpendCredits("flashcards");
+    if (!allowed) return;
     
     // INSTANT UI: Show flashcards screen immediately with loading
     setFlashcards([]);
@@ -1419,6 +1497,10 @@ const Index = () => {
       return;
     }
     
+    // Check and spend credits first
+    const allowed = await trySpendCredits("summary");
+    if (!allowed) return;
+    
     // INSTANT UI: Show summary screen immediately with loading
     setSummary("");
     setShowVideoSummaryScreen(true);
@@ -1474,6 +1556,10 @@ const Index = () => {
       });
       return;
     }
+    
+    // Check and spend credits first
+    const allowed = await trySpendCredits("mind_map");
+    if (!allowed) return;
     
     // INSTANT UI: Show mind map screen immediately with loading
     setMindMapData(null);
@@ -1835,6 +1921,18 @@ const Index = () => {
           setShowVideoMindMapScreen(false);
           setVideoMindMap("");
         }} showVideoSlide={showVideosPanel} /> : null)}
+
+          {/* Credit Modal */}
+          <CreditModal
+            open={showCreditModal}
+            onOpenChange={setShowCreditModal}
+            featureName={FEATURE_NAMES[blockedFeature] || blockedFeature}
+            requiredCredits={FEATURE_COSTS[blockedFeature] || 0}
+            currentCredits={credits}
+            onWatchAd={earnCredits}
+            canWatchMoreAds={canWatchMoreAds()}
+            remainingAds={getRemainingAds()}
+          />
         </div>
       </div>
     </AppLayout>;
