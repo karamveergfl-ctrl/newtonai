@@ -36,6 +36,23 @@ serve(async (req) => {
       );
     }
 
+    const userId = claimsData.claims.sub as string;
+
+    // Check rate limit (100 requests per hour)
+    const { data: allowed, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
+      p_user_id: userId,
+      p_function_name: 'extract-text',
+      p_max_requests: 100,
+      p_window_minutes: 60
+    });
+
+    if (rateLimitError || !allowed) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Rate limit exceeded. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { imageBase64, mimeType } = await req.json();
     
     if (!imageBase64) {
