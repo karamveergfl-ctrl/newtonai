@@ -6,13 +6,44 @@ import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Download, Copy, Check } from "lucide-react";
+import { Sparkles, Download, Copy, Check, ArrowLeft } from "lucide-react";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
+import { VideoCardWithTools } from "@/components/VideoCardWithTools";
+import { VideoPlayer } from "@/components/VideoPlayer";
+import { FlashcardDeck } from "@/components/FlashcardDeck";
+import { QuizMode } from "@/components/QuizMode";
+import { FullScreenStudyTool } from "@/components/FullScreenStudyTool";
+import { VisualMindMap } from "@/components/VisualMindMap";
+import { VideoGenerationSettings } from "@/components/VideoGenerationSettingsDialog";
 import {
   processUploadedFile,
   transcribeAudio,
 } from "@/utils/contentProcessing";
+
+interface VideoData {
+  id: string;
+  title: string;
+  thumbnail: string;
+  channelTitle: string;
+  videoId: string;
+  duration?: string;
+  viewCount?: string;
+}
+
+interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+interface FlashcardData {
+  id: string;
+  front: string;
+  back: string;
+}
 
 const AISummarizer = () => {
   const [summary, setSummary] = useState<string | null>(null);
@@ -22,11 +53,133 @@ const AISummarizer = () => {
   const { toast } = useToast();
   const { checkCanUse, incrementUsage } = useFeatureUsage();
 
+  // Video-specific state
+  const [videoData, setVideoData] = useState<VideoData | null>(null);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
+
+  // Study tools state
+  const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
+  const [flashcardTitle, setFlashcardTitle] = useState("");
+  const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
+
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [quizTitle, setQuizTitle] = useState("");
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [showSummaryScreen, setShowSummaryScreen] = useState(false);
+  const [videoSummary, setVideoSummary] = useState("");
+
+  const [isGeneratingMindMap, setIsGeneratingMindMap] = useState(false);
+  const [showMindMapScreen, setShowMindMapScreen] = useState(false);
+  const [mindMapData, setMindMapData] = useState<any>(null);
+  const [mindMapTitle, setMindMapTitle] = useState("");
+
+  const [activeGenerating, setActiveGenerating] = useState<"quiz" | "flashcards" | "summary" | "mindmap" | null>(null);
+
+  // Helper to extract video ID from URL
+  const extractVideoId = (url: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    ];
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  };
+
+  // Fetch video metadata using oEmbed
+  const fetchVideoMetadata = async (videoId: string): Promise<VideoData> => {
+    try {
+      const response = await fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          id: videoId,
+          videoId: videoId,
+          title: data.title || "YouTube Video",
+          thumbnail: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
+          channelTitle: data.author_name || "Unknown Channel",
+        };
+      }
+    } catch (error) {
+      console.error("Error fetching video metadata:", error);
+    }
+    // Fallback
+    return {
+      id: videoId,
+      videoId: videoId,
+      title: "YouTube Video",
+      thumbnail: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
+      channelTitle: "Unknown Channel",
+    };
+  };
+
+  // Helper to fetch video transcript
+  const fetchVideoTranscript = async (videoId: string, videoTitle: string): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error("Not authenticated");
+    }
+
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ videoId, videoTitle }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch transcript");
+    }
+
+    const data = await response.json();
+    
+    if (!data.hasRealTranscript) {
+      throw new Error("This video doesn't have captions available. Please try a video with captions enabled.");
+    }
+
+    return data.transcript || "";
+  };
+
   const handleContentReady = async (
     content: string,
     type: "upload" | "recording" | "youtube" | "text",
     metadata?: { file?: File; videoId?: string; videoTitle?: string; language?: string }
   ) => {
+    // Store language for later use
+    if (metadata?.language) {
+      setSelectedLanguage(metadata.language);
+    }
+
+    // For YouTube URLs, show video card instead of immediately generating
+    if (type === "youtube" && metadata?.videoId) {
+      setIsLoading(true);
+      try {
+        const videoMetadata = await fetchVideoMetadata(metadata.videoId);
+        setVideoData(videoMetadata);
+        setSummary(null);
+        setContentTitle("");
+      } catch (error) {
+        console.error("Error fetching video metadata:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load video information. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // For non-YouTube content, generate summary directly
     if (!checkCanUse("summary")) {
       toast({
         title: "Usage limit reached",
@@ -40,9 +193,7 @@ const AISummarizer = () => {
     setSummary(null);
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         toast({
           title: "Authentication required",
@@ -55,28 +206,7 @@ const AISummarizer = () => {
       let textContent = content;
       let title = "";
 
-      if (type === "youtube" && metadata?.videoId) {
-        // Fetch transcript with video title
-        const { data, error } = await supabase.functions.invoke("fetch-transcript", {
-          body: { videoId: metadata.videoId },
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-
-        if (error) throw error;
-        
-        // Validate transcript content
-        if (!data?.transcript || data.transcript.length < 50) {
-          throw new Error("This video doesn't have captions available. Try a different video or paste the content directly.");
-        }
-        
-        // Check for fallback content (just title/description)
-        if (data.transcript.startsWith("Video Title:") && data.transcript.length < 200) {
-          throw new Error("Could not extract transcript from this video. The video may not have captions enabled.");
-        }
-
-        textContent = data.transcript;
-        title = metadata?.videoTitle || data.title || "Video Summary";
-      } else if (type === "recording") {
+      if (type === "recording") {
         const base64Audio = content.split(",")[1] || content;
         textContent = await transcribeAudio(base64Audio, session.access_token);
         title = "Audio Recording Summary";
@@ -91,10 +221,8 @@ const AISummarizer = () => {
         throw new Error("No content could be extracted. Please try again with different content.");
       }
 
-      // Increment usage after successful content extraction
       await incrementUsage("summary");
 
-      // Generate summary
       const { data: summaryData, error: summaryError } = await supabase.functions.invoke(
         "generate-summary",
         {
@@ -126,6 +254,228 @@ const AISummarizer = () => {
     }
   };
 
+  // Video study tool handlers
+  const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    setIsGeneratingFlashcards(true);
+    setActiveGenerating("flashcards");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      const transcript = await fetchVideoTranscript(videoId, videoTitle);
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          type: "video",
+          videoTitle,
+          content: transcript.slice(0, 8000),
+          settings: settings ? { count: settings.count, difficulty: settings.difficulty } : undefined,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to generate flashcards");
+      
+      const data = await response.json();
+      setFlashcards(data.flashcards);
+      setFlashcardTitle(videoTitle);
+      toast({
+        title: "Flashcards Ready! 📚",
+        description: `Generated ${data.flashcards.length} flashcards from video`,
+      });
+    } catch (error: any) {
+      console.error("Error generating flashcards:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate flashcards",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingFlashcards(false);
+      setActiveGenerating(null);
+    }
+  };
+
+  const handleGenerateQuizFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    setIsGeneratingQuiz(true);
+    setActiveGenerating("quiz");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      const transcript = await fetchVideoTranscript(videoId, videoTitle);
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          type: "video",
+          title: videoTitle,
+          content: transcript.slice(0, 8000),
+          settings: settings ? { count: settings.count, difficulty: settings.difficulty } : undefined,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to generate quiz");
+      
+      const data = await response.json();
+      setQuizQuestions(data.questions);
+      setQuizTitle(videoTitle);
+      toast({
+        title: "Quiz Ready! 🧠",
+        description: `Generated ${data.questions.length} questions from video`,
+      });
+    } catch (error: any) {
+      console.error("Error generating quiz:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate quiz",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingQuiz(false);
+      setActiveGenerating(null);
+    }
+  };
+
+  const handleGenerateSummaryFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    setShowSummaryScreen(true);
+    setIsGeneratingSummary(true);
+    setActiveGenerating("summary");
+    setContentTitle(videoTitle);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      const transcript = await fetchVideoTranscript(videoId, videoTitle);
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          content: transcript.slice(0, 10000),
+          detailLevel: settings?.detailLevel,
+          language: selectedLanguage,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to generate summary");
+      
+      const data = await response.json();
+      setVideoSummary(data.summary);
+      toast({
+        title: "Summary Ready! 📝",
+        description: "Video summary generated successfully",
+      });
+    } catch (error: any) {
+      console.error("Error generating summary:", error);
+      setShowSummaryScreen(false);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate summary",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingSummary(false);
+      setActiveGenerating(null);
+    }
+  };
+
+  const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
+    setShowMindMapScreen(true);
+    setIsGeneratingMindMap(true);
+    setActiveGenerating("mindmap");
+    setMindMapTitle(videoTitle);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      const transcript = await fetchVideoTranscript(videoId, videoTitle);
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          content: transcript.slice(0, 8000),
+          detailLevel: settings?.detailLevel,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to generate mind map");
+      
+      const data = await response.json();
+      if (data.mindMapData) {
+        setMindMapData(data.mindMapData);
+      }
+      toast({
+        title: "Mind Map Ready! 🧠",
+        description: "Video mind map generated successfully",
+      });
+    } catch (error: any) {
+      console.error("Error generating mind map:", error);
+      setShowMindMapScreen(false);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate mind map",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingMindMap(false);
+      setActiveGenerating(null);
+    }
+  };
+
+  const handleVideoClick = (videoId: string) => {
+    setSelectedVideoId(videoId);
+  };
+
+  const handleBackToInput = () => {
+    setVideoData(null);
+    setSummary(null);
+    setContentTitle("");
+  };
+
+  const handleCloseFlashcards = () => {
+    setFlashcards([]);
+    setFlashcardTitle("");
+  };
+
+  const handleCloseQuiz = () => {
+    setQuizQuestions([]);
+    setQuizTitle("");
+  };
+
+  const handleCloseSummary = () => {
+    setShowSummaryScreen(false);
+    setVideoSummary("");
+  };
+
+  const handleCloseMindMap = () => {
+    setShowMindMapScreen(false);
+    setMindMapData(null);
+    setMindMapTitle("");
+  };
+
+  const handleQuizComplete = (score: number, total: number, xpEarned: number) => {
+    toast({
+      title: `Quiz Complete! +${xpEarned} XP`,
+      description: `You scored ${score}/${total}`,
+    });
+  };
+
   const handleDownload = () => {
     if (!summary) return;
     const blob = new Blob([summary], { type: "text/markdown" });
@@ -146,6 +496,83 @@ const AISummarizer = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const isAnyGenerating = isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap;
+
+  // Render flashcards view
+  if (flashcards.length > 0) {
+    return (
+      <AppLayout>
+        <FlashcardDeck
+          flashcards={flashcards}
+          title={flashcardTitle}
+          onClose={handleCloseFlashcards}
+        />
+      </AppLayout>
+    );
+  }
+
+  // Render quiz view
+  if (quizQuestions.length > 0) {
+    return (
+      <AppLayout>
+        <QuizMode
+          questions={quizQuestions}
+          title={quizTitle}
+          onClose={handleCloseQuiz}
+          onComplete={handleQuizComplete}
+        />
+      </AppLayout>
+    );
+  }
+
+  // Render full-screen summary view
+  if (showSummaryScreen) {
+    return (
+      <AppLayout>
+        <FullScreenStudyTool
+          type="summary"
+          title={contentTitle}
+          content={videoSummary}
+          isLoading={isGeneratingSummary}
+          onClose={handleCloseSummary}
+        />
+      </AppLayout>
+    );
+  }
+
+  // Render full-screen mind map view
+  if (showMindMapScreen && mindMapData) {
+    return (
+      <AppLayout>
+        <VisualMindMap
+          data={mindMapData}
+          title={mindMapTitle}
+          onClose={handleCloseMindMap}
+        />
+      </AppLayout>
+    );
+  }
+
+  // Show loading state for mind map generation
+  if (showMindMapScreen && isGeneratingMindMap) {
+    return (
+      <AppLayout>
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto animate-pulse">
+              <Sparkles className="w-10 h-10 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold">Generating Mind Map</h3>
+            <p className="text-muted-foreground">Analyzing video content...</p>
+            <Button variant="outline" onClick={handleCloseMindMap}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -159,58 +586,106 @@ const AISummarizer = () => {
             <h1 className="text-3xl font-bold">AI Summarizer</h1>
           </div>
           <p className="text-muted-foreground">
-            Get concise summaries from PDFs, YouTube videos, audio recordings, or text
+            Get summaries, flashcards, quizzes, and mind maps from PDFs, YouTube videos, audio recordings, or text
           </p>
         </motion.div>
 
-        <ContentInputTabs
-          onContentReady={handleContentReady}
-          isProcessing={isLoading}
-          acceptedFileTypes={{
-            "application/pdf": [".pdf"],
-            "image/*": [".png", ".jpg", ".jpeg", ".webp"],
-            "text/plain": [".txt"],
-          }}
-          placeholder="Drop a PDF, image, or text file here"
-          showLanguageSelector
-        />
-
-        {summary && (
+        {/* Video Card View */}
+        {videoData ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-8"
+            className="space-y-4"
           >
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Summary</CardTitle>
-                    {contentTitle && (
-                      <CardDescription>{contentTitle}</CardDescription>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleCopy}>
-                      {copied ? (
-                        <Check className="h-4 w-4 mr-1" />
-                      ) : (
-                        <Copy className="h-4 w-4 mr-1" />
-                      )}
-                      {copied ? "Copied" : "Copy"}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleDownload}>
-                      <Download className="h-4 w-4 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <MarkdownRenderer content={summary} />
-              </CardContent>
-            </Card>
+            <Button
+              variant="ghost"
+              onClick={handleBackToInput}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to input
+            </Button>
+
+            <div className="flex justify-center">
+              <div className="w-full max-w-2xl">
+                <VideoCardWithTools
+                  video={videoData}
+                  onVideoClick={handleVideoClick}
+                  onGenerateFlashcards={handleGenerateFlashcardsFromVideo}
+                  onGenerateQuiz={handleGenerateQuizFromVideo}
+                  onGenerateSummary={handleGenerateSummaryFromVideo}
+                  onGenerateMindMap={handleGenerateMindMapFromVideo}
+                  isGenerating={isAnyGenerating}
+                  activeGenerating={activeGenerating}
+                  isLargeView={true}
+                />
+              </div>
+            </div>
+
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              Select a study tool above to generate content from this video
+            </p>
           </motion.div>
+        ) : (
+          <>
+            <ContentInputTabs
+              onContentReady={handleContentReady}
+              isProcessing={isLoading}
+              acceptedFileTypes={{
+                "application/pdf": [".pdf"],
+                "image/*": [".png", ".jpg", ".jpeg", ".webp"],
+                "text/plain": [".txt"],
+              }}
+              placeholder="Drop a PDF, image, or text file here"
+              showLanguageSelector
+            />
+
+            {summary && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8"
+              >
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Summary</CardTitle>
+                        {contentTitle && (
+                          <CardDescription>{contentTitle}</CardDescription>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={handleCopy}>
+                          {copied ? (
+                            <Check className="h-4 w-4 mr-1" />
+                          ) : (
+                            <Copy className="h-4 w-4 mr-1" />
+                          )}
+                          {copied ? "Copied" : "Copy"}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleDownload}>
+                          <Download className="h-4 w-4 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <MarkdownRenderer content={summary} />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </>
+        )}
+
+        {/* Video Player Modal */}
+        {selectedVideoId && (
+          <VideoPlayer
+            videoId={selectedVideoId}
+            onClose={() => setSelectedVideoId(null)}
+          />
         )}
       </div>
     </AppLayout>
