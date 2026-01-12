@@ -126,6 +126,7 @@ export const VideoCardWithTools = ({
           <img 
             src={video.thumbnail.replace('default', 'maxresdefault').replace('mqdefault', 'maxresdefault')} 
             alt={video.title}
+            loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
               // Fallback to hqdefault if maxresdefault doesn't exist
@@ -313,6 +314,7 @@ export const VideoCardWithTools = ({
         <img 
           src={video.thumbnail.replace('default', 'mqdefault').replace('hqdefault', 'mqdefault')} 
           alt={video.title}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
