@@ -110,6 +110,8 @@ const Index = () => {
   const [showVideoSummaryScreen, setShowVideoSummaryScreen] = useState(false);
   const [showVideoMindMapScreen, setShowVideoMindMapScreen] = useState(false);
   const [videoStudyToolTitle, setVideoStudyToolTitle] = useState("");
+  const [showFlashcardsScreen, setShowFlashcardsScreen] = useState(false);
+  const [showQuizScreen, setShowQuizScreen] = useState(false);
 
   // Lecture notes state
   const [lectureNotes, setLectureNotes] = useState("");
@@ -472,6 +474,7 @@ const Index = () => {
     // INSTANT UI: Show flashcards screen immediately with loading
     setFlashcards([]);
     setFlashcardTitle(videoTitle);
+    setShowFlashcardsScreen(true);
     setIsGeneratingFlashcards(true);
     
     try {
@@ -513,6 +516,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating flashcards:", error);
+      setShowFlashcardsScreen(false);
       setFlashcards([]);
       setFlashcardTitle("");
       toast({
@@ -537,6 +541,7 @@ const Index = () => {
     // INSTANT UI: Show flashcards screen immediately with loading
     setFlashcards([]);
     setFlashcardTitle(fileData?.name || "Document Flashcards");
+    setShowFlashcardsScreen(true);
     setIsGeneratingFlashcards(true);
     
     try {
@@ -572,6 +577,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating flashcards:", error);
+      setShowFlashcardsScreen(false);
       setFlashcards([]);
       setFlashcardTitle("");
       toast({
@@ -584,6 +590,7 @@ const Index = () => {
     }
   };
   const handleCloseFlashcards = () => {
+    setShowFlashcardsScreen(false);
     setFlashcards([]);
     setFlashcardTitle("");
   };
@@ -591,6 +598,7 @@ const Index = () => {
     // INSTANT UI: Show quiz screen immediately with loading
     setQuizQuestions([]);
     setQuizTitle(videoTitle);
+    setShowQuizScreen(true);
     setIsGeneratingQuiz(true);
     
     try {
@@ -632,6 +640,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating quiz:", error);
+      setShowQuizScreen(false);
       setQuizQuestions([]);
       setQuizTitle("");
       toast({
@@ -762,6 +771,7 @@ const Index = () => {
     // INSTANT UI: Show quiz screen immediately with loading
     setQuizQuestions([]);
     setQuizTitle(fileData?.name || "Document Quiz");
+    setShowQuizScreen(true);
     setIsGeneratingQuiz(true);
     
     try {
@@ -798,6 +808,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating quiz:", error);
+      setShowQuizScreen(false);
       setQuizQuestions([]);
       setQuizTitle("");
       toast({
@@ -810,6 +821,7 @@ const Index = () => {
     }
   };
   const handleCloseQuiz = () => {
+    setShowQuizScreen(false);
     setQuizQuestions([]);
     setQuizTitle("");
   };
@@ -1290,6 +1302,7 @@ const Index = () => {
     // INSTANT UI: Show quiz screen immediately with loading
     setQuizQuestions([]);
     setQuizTitle("Quiz from Selected Text");
+    setShowQuizScreen(true);
     setIsGeneratingQuiz(true);
     
     try {
@@ -1324,6 +1337,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating quiz from text:", error);
+      setShowQuizScreen(false);
       setQuizQuestions([]);
       setQuizTitle("");
       toast({
@@ -1348,6 +1362,7 @@ const Index = () => {
     // INSTANT UI: Show flashcards screen immediately with loading
     setFlashcards([]);
     setFlashcardTitle("Flashcards from Selected Text");
+    setShowFlashcardsScreen(true);
     setIsGeneratingFlashcards(true);
     
     try {
@@ -1382,6 +1397,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error generating flashcards from text:", error);
+      setShowFlashcardsScreen(false);
       setFlashcards([]);
       setFlashcardTitle("");
       toast({
@@ -1689,10 +1705,10 @@ const Index = () => {
         }} />}
         
           {/* Flashcard Deck for topic search */}
-          {flashcards.length > 0 && <FlashcardDeck flashcards={flashcards} title={flashcardTitle} onClose={handleCloseFlashcards} />}
+          {(showFlashcardsScreen || flashcards.length > 0) && <FlashcardDeck flashcards={flashcards} title={flashcardTitle} onClose={handleCloseFlashcards} isLoading={isGeneratingFlashcards} />}
           
           {/* Quiz Mode for topic search */}
-          {quizQuestions.length > 0 && <QuizMode questions={quizQuestions} title={quizTitle} onClose={handleCloseQuiz} onComplete={handleQuizComplete} />}
+          {(showQuizScreen || quizQuestions.length > 0) && <QuizMode questions={quizQuestions} title={quizTitle} onClose={handleCloseQuiz} onComplete={handleQuizComplete} isLoading={isGeneratingQuiz} />}
 
           {/* Video Summary for topic search */}
           {(showVideoSummaryScreen || videoSummary) && <FullScreenStudyTool type="summary" title={videoStudyToolTitle || "Video Summary"} content={videoSummary} onClose={() => {
@@ -1786,10 +1802,10 @@ const Index = () => {
           {showOCRView && ocrFile && <OCRSplitView file={ocrFile} onClose={handleCloseOCR} onTextSelect={handleSearch} />}
           
           {/* Flashcard Deck */}
-          {flashcards.length > 0 && <FlashcardDeck flashcards={flashcards} title={flashcardTitle} onClose={handleCloseFlashcards} />}
+          {(showFlashcardsScreen || flashcards.length > 0) && <FlashcardDeck flashcards={flashcards} title={flashcardTitle} onClose={handleCloseFlashcards} isLoading={isGeneratingFlashcards} />}
           
           {/* Quiz Mode */}
-          {quizQuestions.length > 0 && <QuizMode questions={quizQuestions} title={quizTitle} onClose={handleCloseQuiz} onComplete={handleQuizComplete} />}
+          {(showQuizScreen || quizQuestions.length > 0) && <QuizMode questions={quizQuestions} title={quizTitle} onClose={handleCloseQuiz} onComplete={handleQuizComplete} isLoading={isGeneratingQuiz} />}
 
           {/* Summary Half-Screen (Right Side) */}
           {summary && <FullScreenStudyTool type="summary" title={fileData?.name || "Document Summary"} content={summary} onClose={() => setSummary("")} />}
