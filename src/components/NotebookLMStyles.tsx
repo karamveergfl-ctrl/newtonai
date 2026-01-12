@@ -15,6 +15,7 @@ export const notebookLMTheme = {
   name: "Colours",
   colors: [nlmColors.blue, nlmColors.green, nlmColors.yellow, nlmColors.red, nlmColors.purple, nlmColors.cyan],
   bgGradient: "linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)",
+  bgGradientDark: "linear-gradient(135deg, #18181b 0%, #1c1917 100%)",
 };
 
 // Section icons for study guide
@@ -40,8 +41,8 @@ export const typography = {
 
 // Card styles for study sections
 export const cardStyles = {
-  section: "bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-4",
-  sectionHeader: "flex items-center gap-3 mb-4 pb-3 border-b border-gray-100",
+  section: "bg-card rounded-xl border border-border shadow-sm p-6 mb-4",
+  sectionHeader: "flex items-center gap-3 mb-4 pb-3 border-b border-border",
   sectionIcon: "w-8 h-8 rounded-lg flex items-center justify-center",
   sectionTitle: "font-display font-semibold text-lg",
 };
@@ -50,7 +51,7 @@ export const cardStyles = {
 export const mindMapNodeStyles = {
   central: "px-8 py-4 rounded-2xl font-display font-bold text-lg text-white shadow-lg border-2 border-white/20",
   branch: "px-4 py-2 rounded-xl font-medium text-sm text-white shadow-md border border-white/10 cursor-pointer hover:scale-105 transition-transform duration-200",
-  leaf: "px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-gray-200 text-gray-700 shadow-sm hover:shadow-md transition-shadow duration-200",
+  leaf: "px-3 py-1.5 rounded-lg text-xs font-medium bg-card border border-border text-foreground shadow-sm hover:shadow-md transition-shadow duration-200",
   connector: "transition-all duration-300",
 };
 

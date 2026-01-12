@@ -42,32 +42,37 @@ interface VisualMindMapProps {
 type ThemeKey = "notebookLM" | "ocean" | "forest" | "sunset" | "purple" | "monochrome";
 type LayoutType = "radial" | "tree" | "fishbone" | "org";
 
-const themes: Record<ThemeKey, { name: string; colors: string[]; bgGradient: string }> = {
+const themes: Record<ThemeKey, { name: string; colors: string[]; bgGradient: string; bgGradientDark: string }> = {
   notebookLM: notebookLMTheme,
   ocean: {
     name: "Ocean",
     colors: ["#3B82F6", "#06B6D4", "#8B5CF6", "#10B981", "#6366F1", "#14B8A6"],
-    bgGradient: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
+    bgGradient: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
+    bgGradientDark: "linear-gradient(135deg, #0c1929 0%, #0f172a 100%)"
   },
   forest: {
     name: "Forest",
     colors: ["#059669", "#84CC16", "#22C55E", "#10B981", "#65A30D", "#16A34A"],
-    bgGradient: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)"
+    bgGradient: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+    bgGradientDark: "linear-gradient(135deg, #0a1f0f 0%, #052e16 100%)"
   },
   sunset: {
     name: "Sunset",
     colors: ["#DC2626", "#EA580C", "#F97316", "#FB923C", "#D97706", "#EF4444"],
-    bgGradient: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)"
+    bgGradient: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+    bgGradientDark: "linear-gradient(135deg, #1c130a 0%, #2a1a0a 100%)"
   },
   purple: {
     name: "Purple",
     colors: ["#7C3AED", "#8B5CF6", "#A855F7", "#9333EA", "#6D28D9", "#C084FC"],
-    bgGradient: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)"
+    bgGradient: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)",
+    bgGradientDark: "linear-gradient(135deg, #1a0a2e 0%, #2e1065 100%)"
   },
   monochrome: {
     name: "Monochrome",
     colors: ["#374151", "#4B5563", "#6B7280", "#9CA3AF", "#1F2937", "#111827"],
-    bgGradient: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)"
+    bgGradient: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
+    bgGradientDark: "linear-gradient(135deg, #111827 0%, #1f2937 100%)"
   }
 };
 
@@ -91,9 +96,21 @@ export const VisualMindMap = ({
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    checkDarkMode();
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   // Pan/drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -208,15 +225,15 @@ export const VisualMindMap = ({
         >
           {sanitizeText(node.text)}
           {node.definition && (
-            <Info className="w-3.5 h-3.5 absolute -top-1 -right-1 bg-white text-gray-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Info className="w-3.5 h-3.5 absolute -top-1 -right-1 bg-background text-muted-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
           )}
         </div>
       </PopoverTrigger>
       {node.definition && (
-        <PopoverContent className="w-72 p-3 bg-white shadow-xl border-0 rounded-xl">
+        <PopoverContent className="w-72 p-3 bg-popover shadow-xl border-0 rounded-xl">
           <div className="space-y-2">
-            <h4 className="font-display font-semibold text-sm text-gray-900">{sanitizeText(node.text)}</h4>
-            <p className="text-sm text-gray-600 leading-relaxed">{sanitizeText(node.definition)}</p>
+            <h4 className="font-display font-semibold text-sm text-foreground">{sanitizeText(node.text)}</h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">{sanitizeText(node.definition)}</p>
           </div>
         </PopoverContent>
       )}
@@ -235,15 +252,15 @@ export const VisualMindMap = ({
         >
           {sanitizeText(node.text)}
           {node.definition && (
-            <Info className="w-3 h-3 absolute -top-0.5 -right-0.5 bg-white text-gray-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Info className="w-3 h-3 absolute -top-0.5 -right-0.5 bg-background text-muted-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
           )}
         </div>
       </PopoverTrigger>
       {node.definition && (
-        <PopoverContent className="w-64 p-3 bg-white shadow-xl border-0 rounded-xl z-50">
+        <PopoverContent className="w-64 p-3 bg-popover shadow-xl border-0 rounded-xl z-50">
           <div className="space-y-2">
-            <h4 className="font-display font-semibold text-sm text-gray-900">{sanitizeText(node.text)}</h4>
-            <p className="text-xs text-gray-600 leading-relaxed">{sanitizeText(node.definition)}</p>
+            <h4 className="font-display font-semibold text-sm text-foreground">{sanitizeText(node.text)}</h4>
+            <p className="text-xs text-muted-foreground leading-relaxed">{sanitizeText(node.definition)}</p>
           </div>
         </PopoverContent>
       )}
@@ -254,20 +271,20 @@ export const VisualMindMap = ({
     <Popover>
       <PopoverTrigger asChild>
         <span 
-          className="px-3 py-1.5 rounded-lg text-xs font-sans font-medium bg-white text-gray-700 shadow-sm border border-gray-200 whitespace-nowrap transition-all hover:shadow-md hover:border-gray-300 cursor-pointer relative group"
+          className="px-3 py-1.5 rounded-lg text-xs font-sans font-medium bg-card text-foreground shadow-sm border border-border whitespace-nowrap transition-all hover:shadow-md hover:border-muted-foreground/50 cursor-pointer relative group"
           style={{ borderLeftColor: parentColor, borderLeftWidth: '3px' }}
         >
           {sanitizeText(node.text)}
           {node.definition && (
-            <Info className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 bg-gray-100 text-gray-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Info className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 bg-muted text-muted-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
           )}
         </span>
       </PopoverTrigger>
       {node.definition && (
-        <PopoverContent className="w-56 p-2.5 bg-white shadow-xl border-0 rounded-lg z-50">
+        <PopoverContent className="w-56 p-2.5 bg-popover shadow-xl border-0 rounded-lg z-50">
           <div className="space-y-1.5">
-            <h4 className="font-display font-semibold text-xs text-gray-900">{sanitizeText(node.text)}</h4>
-            <p className="text-xs text-gray-600 leading-relaxed">{sanitizeText(node.definition)}</p>
+            <h4 className="font-display font-semibold text-xs text-foreground">{sanitizeText(node.text)}</h4>
+            <p className="text-xs text-muted-foreground leading-relaxed">{sanitizeText(node.definition)}</p>
           </div>
         </PopoverContent>
       )}
@@ -373,15 +390,15 @@ export const VisualMindMap = ({
             >
               {sanitizeText(node.text)}
               {node.definition && (
-                <Info className="w-3 h-3 absolute -top-0.5 -right-0.5 bg-white text-gray-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Info className="w-3 h-3 absolute -top-0.5 -right-0.5 bg-background text-muted-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
               )}
             </div>
           </PopoverTrigger>
           {node.definition && (
-            <PopoverContent className="w-64 p-3 bg-white shadow-xl border-0 rounded-xl z-50">
+            <PopoverContent className="w-64 p-3 bg-popover shadow-xl border-0 rounded-xl z-50">
               <div className="space-y-2">
-                <h4 className="font-display font-semibold text-sm text-gray-900">{sanitizeText(node.text)}</h4>
-                <p className="text-xs text-gray-600 leading-relaxed">{sanitizeText(node.definition)}</p>
+                <h4 className="font-display font-semibold text-sm text-foreground">{sanitizeText(node.text)}</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">{sanitizeText(node.definition)}</p>
               </div>
             </PopoverContent>
           )}
@@ -393,20 +410,20 @@ export const VisualMindMap = ({
       <Popover>
         <PopoverTrigger asChild>
           <span 
-            className="text-[11px] px-2.5 py-1 rounded-lg bg-white text-gray-700 whitespace-nowrap border shadow-sm transition-all hover:shadow-md cursor-pointer relative group"
+            className="text-[11px] px-2.5 py-1 rounded-lg bg-card text-foreground whitespace-nowrap border border-border shadow-sm transition-all hover:shadow-md cursor-pointer relative group"
             style={{ borderColor: parentColor, borderLeftWidth: '3px' }}
           >
             {sanitizeText(node.text)}
             {node.definition && (
-              <Info className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 bg-gray-100 text-gray-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Info className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 bg-muted text-muted-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
             )}
           </span>
         </PopoverTrigger>
         {node.definition && (
-          <PopoverContent className="w-56 p-2.5 bg-white shadow-xl border-0 rounded-lg z-50">
+          <PopoverContent className="w-56 p-2.5 bg-popover shadow-xl border-0 rounded-lg z-50">
             <div className="space-y-1.5">
-              <h4 className="font-display font-semibold text-xs text-gray-900">{sanitizeText(node.text)}</h4>
-              <p className="text-xs text-gray-600 leading-relaxed">{sanitizeText(node.definition)}</p>
+              <h4 className="font-display font-semibold text-xs text-foreground">{sanitizeText(node.text)}</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">{sanitizeText(node.definition)}</p>
             </div>
           </PopoverContent>
         )}
@@ -479,15 +496,15 @@ export const VisualMindMap = ({
           >
             {sanitizeText(node.text)}
             {node.definition && (
-              <Info className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 bg-white text-gray-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Info className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 bg-background text-muted-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
             )}
           </span>
         </PopoverTrigger>
         {node.definition && (
-          <PopoverContent className="w-56 p-2.5 bg-white shadow-xl border-0 rounded-lg z-50">
+          <PopoverContent className="w-56 p-2.5 bg-popover shadow-xl border-0 rounded-lg z-50">
             <div className="space-y-1.5">
-              <h4 className="font-display font-semibold text-xs text-gray-900">{sanitizeText(node.text)}</h4>
-              <p className="text-xs text-gray-600 leading-relaxed">{sanitizeText(node.definition)}</p>
+              <h4 className="font-display font-semibold text-xs text-foreground">{sanitizeText(node.text)}</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">{sanitizeText(node.definition)}</p>
             </div>
           </PopoverContent>
         )}
@@ -559,15 +576,15 @@ export const VisualMindMap = ({
           >
             {sanitizeText(node.text)}
             {node.definition && (
-              <Info className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 bg-white text-gray-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Info className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 bg-background text-muted-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
             )}
           </span>
         </PopoverTrigger>
         {node.definition && (
-          <PopoverContent className="w-56 p-2.5 bg-white shadow-xl border-0 rounded-lg z-50">
+          <PopoverContent className="w-56 p-2.5 bg-popover shadow-xl border-0 rounded-lg z-50">
             <div className="space-y-1.5">
-              <h4 className="font-display font-semibold text-xs text-gray-900">{sanitizeText(node.text)}</h4>
-              <p className="text-xs text-gray-600 leading-relaxed">{sanitizeText(node.definition)}</p>
+              <h4 className="font-display font-semibold text-xs text-foreground">{sanitizeText(node.text)}</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">{sanitizeText(node.definition)}</p>
             </div>
           </PopoverContent>
         )}
@@ -621,9 +638,9 @@ export const VisualMindMap = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b bg-white/80 backdrop-blur-sm flex items-center justify-between gap-4 flex-wrap sticky top-0 z-10">
+      <div className="p-4 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between gap-4 flex-wrap sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <div 
             className="w-9 h-9 rounded-lg flex items-center justify-center shadow-sm"
@@ -632,8 +649,8 @@ export const VisualMindMap = ({
             <Network className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="font-display font-bold text-lg text-gray-900">Mind Map</h2>
-            <span className="text-sm text-gray-500 font-sans truncate max-w-[200px] block">{title}</span>
+            <h2 className="font-display font-bold text-lg text-foreground">Mind Map</h2>
+            <span className="text-sm text-muted-foreground font-sans truncate max-w-[200px] block">{title}</span>
           </div>
         </div>
         
@@ -646,7 +663,7 @@ export const VisualMindMap = ({
                 {layouts[selectedLayout].icon} {layouts[selectedLayout].name}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white z-50">
+            <DropdownMenuContent align="end" className="bg-popover z-50">
               {(Object.keys(layouts) as LayoutType[]).map((layoutKey) => (
                 <DropdownMenuItem 
                   key={layoutKey} 
@@ -667,7 +684,7 @@ export const VisualMindMap = ({
                 {themes[selectedTheme].name}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white z-50 w-48">
+            <DropdownMenuContent align="end" className="bg-popover z-50 w-48">
               {(Object.keys(themes) as ThemeKey[]).map((themeKey) => (
                 <DropdownMenuItem 
                   key={themeKey} 
@@ -686,11 +703,11 @@ export const VisualMindMap = ({
           </DropdownMenu>
 
           {/* Zoom controls */}
-          <div className="flex items-center gap-1 border rounded-lg px-1 bg-white">
+          <div className="flex items-center gap-1 border rounded-lg px-1 bg-card">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut}>
               <ZoomOut className="w-4 h-4" />
             </Button>
-            <span className="text-xs w-12 text-center font-sans text-gray-600">{Math.round(zoom * 100)}%</span>
+            <span className="text-xs w-12 text-center font-sans text-muted-foreground">{Math.round(zoom * 100)}%</span>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomIn}>
               <ZoomIn className="w-4 h-4" />
             </Button>
@@ -707,7 +724,7 @@ export const VisualMindMap = ({
                 Export
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white z-50">
+            <DropdownMenuContent align="end" className="bg-popover z-50">
               <DropdownMenuItem onClick={downloadAsPNG} className="gap-2 font-sans cursor-pointer">
                 <FileImage className="w-4 h-4" />
                 Save as PNG
@@ -718,7 +735,7 @@ export const VisualMindMap = ({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button onClick={onClose} variant="outline" size="sm" className="gap-2 font-sans text-gray-700 hover:bg-gray-100">
+          <Button onClick={onClose} variant="outline" size="sm" className="gap-2 font-sans">
             <ArrowLeft className="w-4 h-4" />
             Return to PDF
           </Button>
@@ -732,7 +749,7 @@ export const VisualMindMap = ({
           "flex-1 overflow-auto flex items-start justify-start w-full h-full select-none",
           isPanning ? "cursor-grabbing" : "cursor-grab"
         )}
-        style={{ background: themes[selectedTheme].bgGradient }}
+        style={{ background: isDarkMode ? themes[selectedTheme].bgGradientDark : themes[selectedTheme].bgGradient }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

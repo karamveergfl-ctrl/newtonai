@@ -585,9 +585,9 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
               {currentProcessedPage?.status === "completed" && (
                 <Card 
                   ref={(el) => { pageRefs.current[currentPage] = el; }}
-                  className="max-w-[595px] mx-auto aspect-[1/1.414] p-12 bg-white text-black shadow-lg overflow-auto"
+                  className="max-w-[595px] mx-auto aspect-[1/1.414] p-12 bg-white dark:bg-white text-black shadow-lg overflow-auto"
                 >
-                  <div className="max-w-none select-text cursor-text font-serif text-base leading-[1.8]">
+                  <div className="max-w-none select-text cursor-text font-serif text-base leading-[1.8] text-black">
                     {/* Word-by-word rendering with preserved positioning */}
                     {currentProcessedPage.text.split('\n').map((line, lineIdx) => (
                       <div key={lineIdx} className="min-h-[1.8em]">
