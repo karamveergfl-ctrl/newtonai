@@ -31,7 +31,7 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
         />
       </div>
       {showText && (
-        <span className={`font-logo font-extrabold tracking-tight text-primary ${text}`}>
+        <span className={`font-logo font-extrabold tracking-tight text-primary [filter:brightness(0.8)] ${text}`}>
           NewtonAI
         </span>
       )}
