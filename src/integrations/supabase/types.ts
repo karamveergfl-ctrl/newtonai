@@ -44,6 +44,30 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_costs: {
+        Row: {
+          cost: number
+          created_at: string
+          feature_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          feature_name: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          feature_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feature_usage: {
         Row: {
           created_at: string
@@ -412,10 +436,9 @@ export type Database = {
         Args: { p_ad_duration: number; p_credits_earned: number }
         Returns: Json
       }
-      spend_credits: {
-        Args: { p_amount: number; p_feature_name: string }
-        Returns: Json
-      }
+      spend_credits:
+        | { Args: { p_feature_name: string }; Returns: Json }
+        | { Args: { p_amount: number; p_feature_name: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
