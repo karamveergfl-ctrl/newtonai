@@ -223,7 +223,6 @@ const Pricing = () => {
             return (
               <motion.div
                 key={plan.name}
-                className="relative"
                 initial={{ opacity: 0, y: 50, rotateX: -10 }}
                 animate={{ opacity: 1, y: 0, rotateX: 0 }}
                 transition={{ 
@@ -237,16 +236,11 @@ const Pricing = () => {
                   scale: plan.popular ? 1.02 : 1.05,
                   rotateX: 5,
                   rotateY: index === 0 ? -5 : index === 2 ? 5 : 0,
-                  zIndex: 20,
                 }}
-                style={{ 
-                  transformStyle: "preserve-3d", 
-                  perspective: 1000,
-                  zIndex: plan.popular ? 10 : 1,
-                }}
+                style={{ transformStyle: "preserve-3d", perspective: 1000 }}
               >
                 <Card 
-                  className={`relative h-full ${plan.popular ? 'border-primary shadow-lg shadow-primary/20' : ''}`}
+                  className={`relative h-full ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105' : ''}`}
                 >
                   {plan.popular && (
                     <motion.div 

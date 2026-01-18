@@ -55,7 +55,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     initiatePayment(planName, billingCycle);
   };
 
-  const isDisabled = isLoading || isCheckingAuth || disabled;
+  const isDisabled = isLoading || isCheckingAuth || !isScriptLoaded || disabled;
 
   return (
     <Button
