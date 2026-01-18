@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Upload, FileText, Image, Loader2, Camera } from "lucide-react";
+import { Upload, FileText, Image, Loader2, Camera, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface UploadZoneProps {
@@ -180,9 +180,29 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
               <p className="text-sm text-muted-foreground mb-3">
                 Images, PDF, Doc, Docx, PPT, PPTX • Max 20MB
               </p>
-              <div className="flex items-center justify-center gap-2 text-xs text-primary">
-                <Camera className="w-4 h-4" />
-                <span>Screenshot to solve & find videos</span>
+              <div className="mt-4 pt-4 border-t border-border/30 space-y-3">
+                <div className="flex items-start gap-3 text-left">
+                  <div className="p-1.5 rounded-md bg-primary/10">
+                    <Search className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-foreground">Topic-Based Video Search</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Select any text or topic to instantly find curated YouTube tutorials and explanations
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 text-left">
+                  <div className="p-1.5 rounded-md bg-primary/10">
+                    <Camera className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-foreground">Screenshot to Solve</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Capture any numerical problem and get step-by-step AI solutions in seconds
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
