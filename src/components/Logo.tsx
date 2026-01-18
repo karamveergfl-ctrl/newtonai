@@ -18,8 +18,8 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div 
-        className="rounded-full bg-gradient-to-br from-primary/20 via-secondary/15 to-accent/10 p-2 ring-2 ring-primary/30 shadow-md shadow-primary/10 overflow-hidden group cursor-pointer"
-        style={{ width: icon + 16, height: icon + 16 }}
+        className="rounded-full bg-gradient-to-br from-primary/20 via-secondary/15 to-accent/10 p-1 ring-2 ring-primary/30 shadow-md shadow-primary/10 overflow-hidden group cursor-pointer"
+        style={{ width: icon + 6, height: icon + 6 }}
       >
         <img
           src={logoImage}
