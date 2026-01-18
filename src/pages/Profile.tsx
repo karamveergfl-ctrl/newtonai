@@ -27,7 +27,11 @@ import {
   TrendingUp,
   TrendingDown,
   Play,
-  Wallet
+  Wallet,
+  Calendar,
+  AlertCircle,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 import { DeleteAccountDialog } from "@/components/DeleteAccountDialog";
 import { cn } from "@/lib/utils";
@@ -42,6 +46,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format, formatDistanceToNow } from "date-fns";
 
 interface CreditTransaction {
@@ -50,6 +65,15 @@ interface CreditTransaction {
   type: string;
   feature_name: string | null;
   ad_duration: number | null;
+  created_at: string;
+}
+
+interface Subscription {
+  id: string;
+  plan_name: string;
+  billing_cycle: string;
+  status: string;
+  current_period_end: string | null;
   created_at: string;
 }
 
@@ -76,6 +100,8 @@ const Profile = () => {
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [lifetimeStats, setLifetimeStats] = useState({ earned: 0, spent: 0 });
+  const [activeSubscription, setActiveSubscription] = useState<Subscription | null>(null);
+  const [cancellingSubscription, setCancellingSubscription] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -132,6 +158,20 @@ const Profile = () => {
         });
       }
 
+      // Fetch active subscription
+      const { data: subscriptionData } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (subscriptionData) {
+        setActiveSubscription(subscriptionData);
+      }
+
       setLoading(false);
     };
 
@@ -169,6 +209,46 @@ const Profile = () => {
       return FEATURE_NAMES[tx.feature_name] || tx.feature_name;
     }
     return tx.type;
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!activeSubscription || !userId) return;
+    
+    setCancellingSubscription(true);
+    
+    try {
+      // Update subscription status to cancelled
+      const { error: subError } = await supabase
+        .from("subscriptions")
+        .update({ status: "cancelled" })
+        .eq("id", activeSubscription.id);
+
+      if (subError) throw subError;
+
+      // Update profile to free tier (but keep access until period ends)
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ subscription_tier: "free" })
+        .eq("id", userId);
+
+      if (profileError) throw profileError;
+
+      setActiveSubscription(prev => prev ? { ...prev, status: "cancelled" } : null);
+      
+      toast({
+        title: "Subscription cancelled",
+        description: "You'll retain access until your current billing period ends.",
+      });
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel subscription. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingSubscription(false);
+    }
   };
 
   const handleSave = async () => {
@@ -533,6 +613,136 @@ const Profile = () => {
           </Card>
         </motion.div>
 
+        {/* Subscription Management Section */}
+        {(activeSubscription || subscription.tier !== "free") && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="mb-6"
+          >
+            <h2 className="text-primary font-semibold mb-3 px-1 flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Subscription
+            </h2>
+            <Card className="border-0 bg-card/50 overflow-hidden">
+              <CardContent className="p-0">
+                {/* Current Plan */}
+                <div className="p-4 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-primary/20">
+                        <Crown className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Current Plan</p>
+                        <p className="text-xl font-bold capitalize">
+                          {activeSubscription?.plan_name || subscription.tier} 
+                          {activeSubscription?.billing_cycle && (
+                            <span className="text-sm font-normal text-muted-foreground ml-2">
+                              ({activeSubscription.billing_cycle})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge 
+                      className={cn(
+                        "border-0",
+                        activeSubscription?.status === "active" 
+                          ? "bg-green-500/10 text-green-600" 
+                          : activeSubscription?.status === "cancelled"
+                          ? "bg-orange-500/10 text-orange-600"
+                          : "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      {activeSubscription?.status === "active" && <CheckCircle className="h-3 w-3 mr-1" />}
+                      {activeSubscription?.status === "cancelled" && <AlertCircle className="h-3 w-3 mr-1" />}
+                      {activeSubscription?.status || "Active"}
+                    </Badge>
+                  </div>
+
+                  {/* Expiry Date */}
+                  {activeSubscription?.current_period_end && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {activeSubscription.status === "cancelled" ? "Access until: " : "Renews on: "}
+                        <span className="font-medium text-foreground">
+                          {format(new Date(activeSubscription.current_period_end), "MMM d, yyyy")}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Subscription Actions */}
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigate("/pricing")}
+                      className="flex-1"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {subscription.tier === "pro" ? "Upgrade to Ultra" : "Change Plan"}
+                    </Button>
+                    
+                    {activeSubscription?.status === "active" && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Cancel
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to cancel your {activeSubscription.plan_name} subscription? 
+                              You'll retain access to premium features until {activeSubscription.current_period_end 
+                                ? format(new Date(activeSubscription.current_period_end), "MMMM d, yyyy")
+                                : "the end of your billing period"
+                              }.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleCancelSubscription}
+                              disabled={cancellingSubscription}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {cancellingSubscription && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                              Cancel Subscription
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
+                </div>
+
+                {/* Payment History Link */}
+                <button
+                  onClick={() => navigate("/pricing")}
+                  className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors border-t"
+                >
+                  <div className="flex items-center gap-3">
+                    <History className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-sm font-medium">View Payment History</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Management Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -547,7 +757,9 @@ const Profile = () => {
               <MenuItem icon={Bell} label="Notifications" onClick={() => {}} />
               <MenuItem icon={Settings} label="Settings" onClick={() => {}} />
               <MenuItem icon={Gift} label="Redeem Code" onClick={() => {}} />
-              <MenuItem icon={CreditCard} label="My subscription" onClick={() => navigate("/pricing")} />
+              {subscription.tier === "free" && (
+                <MenuItem icon={CreditCard} label="Subscribe to Pro" onClick={() => navigate("/pricing")} />
+              )}
             </CardContent>
           </Card>
         </motion.div>
