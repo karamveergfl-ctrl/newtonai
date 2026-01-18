@@ -77,7 +77,7 @@ export const GlobalSearchBox = ({ onTopicSearch, isSearching }: GlobalSearchBoxP
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-6">
+    <div className="w-full max-w-2xl mx-auto mb-6" data-tutorial="search-box">
       <div className="flex items-center gap-2 mb-2 text-muted-foreground">
         <Youtube className="w-4 h-4" />
         <span className="text-sm">Search any topic for educational videos</span>
