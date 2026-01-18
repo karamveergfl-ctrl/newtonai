@@ -7,23 +7,28 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  sm: { icon: 32, text: "text-lg" },
-  md: { icon: 48, text: "text-2xl" },
-  lg: { icon: 64, text: "text-3xl" },
+  sm: { icon: 40, text: "text-lg" },
+  md: { icon: 56, text: "text-2xl" },
+  lg: { icon: 72, text: "text-3xl" },
 };
 
 const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
   const { icon, text } = sizeMap[size];
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <img
-        src={logoImage}
-        alt="NewtonAI Logo"
-        width={icon}
-        height={icon}
-        className="object-contain"
-      />
+    <div className={`flex items-center gap-3 ${className}`}>
+      <div 
+        className="rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 p-1.5 ring-2 ring-primary/20"
+        style={{ width: icon + 12, height: icon + 12 }}
+      >
+        <img
+          src={logoImage}
+          alt="NewtonAI Logo"
+          width={icon}
+          height={icon}
+          className="object-contain rounded-full"
+        />
+      </div>
       {showText && (
         <span className={`font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent ${text}`}>
           NewtonAI
