@@ -28,7 +28,7 @@ const Logo = ({ size = "md", showText = true, variant = "default", className = "
           alt="NewtonAI Logo"
           width={icon}
           height={icon}
-          className="object-contain"
+          className="object-contain transition-transform duration-200 hover:scale-110"
         />
       </Link>
     );
