@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UploadZone } from "@/components/UploadZone";
 import { LectureRecorder } from "@/components/LectureRecorder";
 import { FeatureTutorial } from "@/components/FeatureTutorial";
+import { WelcomeModal } from "@/components/WelcomeModal";
 import { PDFReader } from "@/components/PDFReader";
 import { ImageViewer } from "@/components/ImageViewer";
 import { VideoPanel } from "@/components/VideoPanel";
@@ -1766,8 +1767,19 @@ const Index = () => {
     return null; // Auth redirect will happen in useEffect
   }
   if (!fileData) {
-    return <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
+  const triggerUploadClick = () => {
+    const uploadZone = document.querySelector("[data-tutorial='upload-zone']") as HTMLElement;
+    uploadZone?.click();
+  };
+
+  const triggerRecordClick = () => {
+    const recordButton = document.querySelector("[data-action='record-lecture']") as HTMLElement;
+    recordButton?.click();
+  };
+
+  return <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
         <FeatureTutorial />
+        <WelcomeModal onUploadClick={triggerUploadClick} onRecordClick={triggerRecordClick} />
         <div className="flex-1 bg-gradient-to-br from-background via-background to-primary/5 overflow-auto">
           <div className="max-w-4xl mx-auto px-6 py-8">
             <GlobalSearchBox onTopicSearch={handleTopicSearch} isSearching={isTopicSearching} />
