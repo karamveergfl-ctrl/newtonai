@@ -29,6 +29,10 @@ import AILectureNotes from "./pages/tools/AILectureNotes";
 import MindMap from "./pages/tools/MindMap";
 import CookieConsent from "./components/CookieConsent";
 
+// Payment pages
+import PaymentSuccess from "./pages/payment/Success";
+import PaymentFailure from "./pages/payment/Failure";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -52,6 +56,10 @@ const App = () => (
             <Route path="/refund" element={<Refund />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/credits" element={<Credits />} />
+            
+            {/* Payment Routes */}
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/failure" element={<PaymentFailure />} />
             
             {/* Tool Routes */}
             <Route path="/tools/homework-help" element={<HomeworkHelp />} />
