@@ -335,36 +335,25 @@ const Pricing = () => {
                   <CardFooter>
                     {plan.name === "Free" ? (
                       <Link to="/auth" className="w-full">
-                        <motion.div
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Button 
-                            className="w-full" 
-                            variant="outline"
-                            disabled={isCurrentPlan}
-                          >
-                            {isCurrentPlan ? "Current Plan" : plan.cta}
-                          </Button>
-                        </motion.div>
-                      </Link>
-                    ) : (
-                      <motion.div 
-                        className="w-full"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <PaymentButton
-                          planName={planKey as 'pro' | 'ultra'}
-                          billingCycle={isYearly ? 'yearly' : 'monthly'}
-                          className="w-full bg-gradient-to-r from-primary to-purple-600 hover:opacity-90"
-                          variant="default"
-                          onSuccess={handlePaymentSuccess}
+                        <Button 
+                          className="w-full" 
+                          variant="outline"
                           disabled={isCurrentPlan}
                         >
                           {isCurrentPlan ? "Current Plan" : plan.cta}
-                        </PaymentButton>
-                      </motion.div>
+                        </Button>
+                      </Link>
+                    ) : (
+                      <PaymentButton
+                        planName={planKey as 'pro' | 'ultra'}
+                        billingCycle={isYearly ? 'yearly' : 'monthly'}
+                        className="w-full"
+                        variant="default"
+                        onSuccess={handlePaymentSuccess}
+                        disabled={isCurrentPlan}
+                      >
+                        {isCurrentPlan ? "Current Plan" : plan.cta}
+                      </PaymentButton>
                     )}
                   </CardFooter>
                 </Card>
