@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 
 interface LogoProps {
@@ -16,9 +17,9 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
   const { icon, text } = sizeMap[size];
 
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <Link to="/" className={`flex items-center gap-3 ${className}`}>
       <div 
-        className="rounded-full bg-gradient-to-br from-primary/20 via-secondary/15 to-accent/10 p-0.5 ring-2 ring-primary/30 shadow-md shadow-primary/10 overflow-hidden group cursor-pointer"
+        className="rounded-full bg-gradient-to-br from-primary/20 via-secondary/15 to-accent/10 p-0.5 ring-2 ring-primary/30 shadow-md shadow-primary/10 overflow-hidden group"
         style={{ width: icon + 4, height: icon + 4 }}
       >
         <img
@@ -34,7 +35,7 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
           NewtonAI
         </span>
       )}
-    </div>
+    </Link>
   );
 };
 
