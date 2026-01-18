@@ -556,7 +556,7 @@ export const LectureRecorder = ({
                 Select file
               </Button>
 
-              <Button size="lg" className={`gap-2 px-8 ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-primary to-secondary hover:opacity-90'}`} onClick={isRecording ? stopRecording : startRecording}>
+              <Button size="lg" data-action="record-lecture" className={`gap-2 px-8 ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-primary to-secondary hover:opacity-90'}`} onClick={isRecording ? stopRecording : startRecording}>
                 {isRecording ? <>
                     <MicOff className="w-5 h-5" />
                     Stop recording
