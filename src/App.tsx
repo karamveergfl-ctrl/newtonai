@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CreditsProvider } from "@/contexts/CreditsContext";
-import AuthRedirect from "@/components/AuthRedirect";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -44,20 +43,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Landing page - redirect authenticated users to dashboard */}
-            <Route path="/" element={
-              <AuthRedirect redirectTo="/dashboard" whenAuthenticated={true}>
-                <LandingPage />
-              </AuthRedirect>
-            } />
-            
-            {/* Dashboard - redirect unauthenticated users to landing */}
-            <Route path="/dashboard" element={
-              <AuthRedirect redirectTo="/" whenAuthenticated={false}>
-                <Dashboard />
-              </AuthRedirect>
-            } />
-            
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/pricing" element={<Pricing />} />
@@ -74,42 +61,14 @@ const App = () => (
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/failure" element={<PaymentFailure />} />
             
-            {/* Tool Routes - protected */}
-            <Route path="/tools/homework-help" element={
-              <AuthRedirect redirectTo="/auth" whenAuthenticated={false}>
-                <HomeworkHelp />
-              </AuthRedirect>
-            } />
-            <Route path="/tools/ai-notes" element={
-              <AuthRedirect redirectTo="/auth" whenAuthenticated={false}>
-                <AINotes />
-              </AuthRedirect>
-            } />
-            <Route path="/tools/flashcards" element={
-              <AuthRedirect redirectTo="/auth" whenAuthenticated={false}>
-                <AIFlashcards />
-              </AuthRedirect>
-            } />
-            <Route path="/tools/quiz" element={
-              <AuthRedirect redirectTo="/auth" whenAuthenticated={false}>
-                <AIQuiz />
-              </AuthRedirect>
-            } />
-            <Route path="/tools/summarizer" element={
-              <AuthRedirect redirectTo="/auth" whenAuthenticated={false}>
-                <AISummarizer />
-              </AuthRedirect>
-            } />
-            <Route path="/tools/lecture-notes" element={
-              <AuthRedirect redirectTo="/auth" whenAuthenticated={false}>
-                <AILectureNotes />
-              </AuthRedirect>
-            } />
-            <Route path="/tools/mind-map" element={
-              <AuthRedirect redirectTo="/auth" whenAuthenticated={false}>
-                <MindMap />
-              </AuthRedirect>
-            } />
+            {/* Tool Routes */}
+            <Route path="/tools/homework-help" element={<HomeworkHelp />} />
+            <Route path="/tools/ai-notes" element={<AINotes />} />
+            <Route path="/tools/flashcards" element={<AIFlashcards />} />
+            <Route path="/tools/quiz" element={<AIQuiz />} />
+            <Route path="/tools/summarizer" element={<AISummarizer />} />
+            <Route path="/tools/lecture-notes" element={<AILectureNotes />} />
+            <Route path="/tools/mind-map" element={<MindMap />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
