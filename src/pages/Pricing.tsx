@@ -11,8 +11,8 @@ import { Switch } from "@/components/ui/switch";
 const plans = [
   {
     name: "Free",
+    weeklyPrice: "$0",
     monthlyPrice: "$0",
-    yearlyPrice: "$0",
     period: "forever",
     description: "Perfect for getting started",
     features: [
@@ -26,10 +26,10 @@ const plans = [
   },
   {
     name: "Pro",
-    monthlyPrice: "$9.99",
-    yearlyPrice: "$7.99",
-    period: "per month",
-    yearlySavings: "Save 20%",
+    weeklyPrice: "$2",
+    monthlyPrice: "$6",
+    monthlySavings: "Save 25%",
+    period: "per week",
     description: "Best for students",
     features: [
       "Unlimited PDF uploads",
@@ -44,10 +44,10 @@ const plans = [
   },
   {
     name: "Ultra",
-    monthlyPrice: "$19.99",
-    yearlyPrice: "$15.99",
-    period: "per month",
-    yearlySavings: "Save 20%",
+    weeklyPrice: "$4",
+    monthlyPrice: "$12",
+    monthlySavings: "Save 25%",
+    period: "per week",
     description: "For power learners",
     features: [
       "Everything in Pro",
@@ -64,7 +64,7 @@ const plans = [
 ];
 
 const Pricing = () => {
-  const [isYearly, setIsYearly] = useState(false);
+  const [isMonthly, setIsMonthly] = useState(false);
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
@@ -151,24 +151,24 @@ const Pricing = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            <span className={`text-sm font-medium ${!isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
-              Monthly
+            <span className={`text-sm font-medium ${!isMonthly ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Weekly
             </span>
             <Switch
-              checked={isYearly}
-              onCheckedChange={setIsYearly}
+              checked={isMonthly}
+              onCheckedChange={setIsMonthly}
             />
-            <span className={`text-sm font-medium ${isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
-              Yearly
+            <span className={`text-sm font-medium ${isMonthly ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Monthly
             </span>
-            {isYearly && (
+            {isMonthly && (
               <motion.span 
                 className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: "spring" }}
               >
-                Save 20%
+                Save 25%
               </motion.span>
             )}
           </motion.div>
@@ -215,25 +215,25 @@ const Pricing = () => {
                   <div className="mt-4">
                     <motion.span 
                       className="text-4xl font-bold"
-                      key={isYearly ? 'yearly' : 'monthly'}
+                      key={isMonthly ? 'monthly' : 'weekly'}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
+                      {isMonthly ? plan.monthlyPrice : plan.weeklyPrice}
                     </motion.span>
                     <span className="text-muted-foreground ml-2">
-                      /{plan.name === "Free" ? plan.period : (isYearly ? "month, billed yearly" : plan.period)}
+                      /{plan.name === "Free" ? plan.period : (isMonthly ? "month" : plan.period)}
                     </span>
                   </div>
-                  {isYearly && plan.yearlySavings && (
+                  {isMonthly && plan.monthlySavings && (
                     <motion.span 
                       className="inline-block mt-2 bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold px-2 py-1 rounded-full"
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ type: "spring" }}
                     >
-                      {plan.yearlySavings}
+                      {plan.monthlySavings}
                     </motion.span>
                   )}
                 </CardHeader>
