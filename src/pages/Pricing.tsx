@@ -5,16 +5,17 @@ import { Check, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
+import { PaymentButton } from "@/components/PaymentButton";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 const plans = [
   {
     name: "Free",
-    weeklyRate: "$0",
-    monthlyBilled: "$0",
-    yearlyBilled: "$0",
-    billingNote: "",
+    inrMonthly: "₹0",
+    inrYearly: "₹0",
     description: "Perfect for getting started",
     features: [
       "5 PDF uploads per month",
@@ -27,13 +28,10 @@ const plans = [
   },
   {
     name: "Pro",
-    weeklyRate: "$2",
-    monthlyBilled: "$8",
-    yearlyBilled: "$79",
-    yearlyWeeklyRate: "$1.50",
-    yearlySavings: "Save 18%",
-    billingNote: "Billed monthly",
-    yearlyBillingNote: "Billed annually",
+    inrMonthly: "₹699",
+    inrYearly: "₹6,499",
+    yearlyPerMonth: "₹542",
+    yearlySavings: "Save ₹1,889",
     description: "Best for students",
     features: [
       "Unlimited PDF uploads",
@@ -43,18 +41,15 @@ const plans = [
       "Video search & summaries",
       "Priority support",
     ],
-    cta: "Start Free Trial",
+    cta: "Subscribe Now",
     popular: true,
   },
   {
     name: "Ultra",
-    weeklyRate: "$4",
-    monthlyBilled: "$16",
-    yearlyBilled: "$149",
-    yearlyWeeklyRate: "$2.85",
-    yearlySavings: "Save 20%",
-    billingNote: "Billed monthly",
-    yearlyBillingNote: "Billed annually",
+    inrMonthly: "₹1,299",
+    inrYearly: "₹11,999",
+    yearlyPerMonth: "₹999",
+    yearlySavings: "Save ₹3,589",
     description: "For power learners",
     features: [
       "Everything in Pro",
@@ -65,13 +60,52 @@ const plans = [
       "API access",
       "Dedicated support",
     ],
-    cta: "Start Free Trial",
+    cta: "Subscribe Now",
     popular: false,
   },
 ];
 
 const Pricing = () => {
   const [isYearly, setIsYearly] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+      
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('subscription_tier')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          setCurrentPlan(profile.subscription_tier);
+        }
+      }
+    };
+    
+    checkAuth();
+  }, []);
+
+  const handlePaymentSuccess = async () => {
+    // Refresh the current plan after successful payment
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_tier')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile) {
+        setCurrentPlan(profile.subscription_tier);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
@@ -106,8 +140,8 @@ const Pricing = () => {
             <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
             <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
           </nav>
-          <Link to="/auth">
-            <Button>Sign In</Button>
+          <Link to={isLoggedIn ? "/dashboard" : "/auth"}>
+            <Button>{isLoggedIn ? "Dashboard" : "Sign In"}</Button>
           </Link>
         </div>
       </header>
@@ -182,126 +216,182 @@ const Pricing = () => {
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 50, rotateX: -10 }}
-              animate={{ opacity: 1, y: 0, rotateX: 0 }}
-              transition={{ 
-                duration: 0.6, 
-                delay: 0.2 + index * 0.15,
-                type: "spring",
-                stiffness: 100
-              }}
-              whileHover={{ 
-                y: -10, 
-                scale: plan.popular ? 1.02 : 1.05,
-                rotateX: 5,
-                rotateY: index === 0 ? -5 : index === 2 ? 5 : 0,
-              }}
-              style={{ transformStyle: "preserve-3d", perspective: 1000 }}
-            >
-              <Card 
-                className={`relative h-full ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105' : ''}`}
+          {plans.map((plan, index) => {
+            const planKey = plan.name.toLowerCase();
+            const isCurrentPlan = currentPlan === planKey;
+            
+            return (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 50, rotateX: -10 }}
+                animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                transition={{ 
+                  duration: 0.6, 
+                  delay: 0.2 + index * 0.15,
+                  type: "spring",
+                  stiffness: 100
+                }}
+                whileHover={{ 
+                  y: -10, 
+                  scale: plan.popular ? 1.02 : 1.05,
+                  rotateX: 5,
+                  rotateY: index === 0 ? -5 : index === 2 ? 5 : 0,
+                }}
+                style={{ transformStyle: "preserve-3d", perspective: 1000 }}
               >
-                {plan.popular && (
-                  <motion.div 
-                    className="absolute -top-3 left-1/2 -translate-x-1/2"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6, type: "spring" }}
-                  >
-                    <span className="bg-primary text-primary-foreground text-sm font-medium px-3 py-1 rounded-full">
-                      Most Popular
-                    </span>
-                  </motion.div>
-                )}
-                <CardHeader>
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
-                  <div className="mt-4">
-                    <motion.span 
-                      className="text-4xl font-bold"
-                      key={isYearly ? 'yearly' : 'monthly'}
+                <Card 
+                  className={`relative h-full ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105' : ''}`}
+                >
+                  {plan.popular && (
+                    <motion.div 
+                      className="absolute -top-3 left-1/2 -translate-x-1/2"
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
+                      transition={{ delay: 0.6, type: "spring" }}
                     >
-                      {plan.name === "Free" ? "$0" : (isYearly ? plan.yearlyWeeklyRate : plan.weeklyRate)}
-                    </motion.span>
-                    <span className="text-muted-foreground ml-2">
-                      {plan.name === "Free" ? "/forever" : "/week"}
-                    </span>
-                  </div>
-                  {plan.name !== "Free" && (
-                    <motion.div 
-                      className="mt-2 space-y-1"
-                      key={isYearly ? 'yearly-note' : 'monthly-note'}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <p className="text-sm text-muted-foreground">
-                        {isYearly ? plan.yearlyBillingNote : plan.billingNote} at{' '}
-                        <span className="font-semibold text-foreground">
-                          {isYearly ? plan.yearlyBilled : plan.monthlyBilled}
-                        </span>
-                        {isYearly ? '/year' : '/month'}
-                      </p>
-                      {isYearly && plan.yearlySavings && (
-                        <motion.span 
-                          className="inline-block bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold px-2 py-1 rounded-full"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ type: "spring" }}
-                        >
-                          {plan.yearlySavings}
-                        </motion.span>
-                      )}
+                      <span className="bg-primary text-primary-foreground text-sm font-medium px-3 py-1 rounded-full">
+                        Most Popular
+                      </span>
                     </motion.div>
                   )}
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, featureIndex) => (
-                      <motion.li 
-                        key={feature} 
-                        className="flex items-center gap-2"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4 + index * 0.1 + featureIndex * 0.05 }}
-                      >
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 0.5 + index * 0.1 + featureIndex * 0.05, type: "spring" }}
-                        >
-                          <Check className="h-5 w-5 text-primary" />
-                        </motion.div>
-                        <span>{feature}</span>
-                      </motion.li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Link to={plan.name === "Free" ? "/auth" : "/auth"} className="w-full">
-                    <motion.div
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}
+                  {isCurrentPlan && (
+                    <motion.div 
+                      className="absolute -top-3 right-4"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
                     >
-                      <Button 
-                        className="w-full" 
-                        variant={plan.popular ? "default" : "outline"}
-                      >
-                        {plan.cta}
-                      </Button>
+                      <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20">
+                        Current Plan
+                      </Badge>
                     </motion.div>
-                  </Link>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          ))}
+                  )}
+                  <CardHeader>
+                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                    <CardDescription>{plan.description}</CardDescription>
+                    <div className="mt-4">
+                      <motion.span 
+                        className="text-4xl font-bold"
+                        key={isYearly ? 'yearly' : 'monthly'}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {plan.name === "Free" ? "₹0" : (isYearly ? plan.yearlyPerMonth : plan.inrMonthly)}
+                      </motion.span>
+                      <span className="text-muted-foreground ml-2">
+                        {plan.name === "Free" ? "/forever" : "/month"}
+                      </span>
+                    </div>
+                    {plan.name !== "Free" && (
+                      <motion.div 
+                        className="mt-2 space-y-1"
+                        key={isYearly ? 'yearly-note' : 'monthly-note'}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <p className="text-sm text-muted-foreground">
+                          {isYearly ? 'Billed annually' : 'Billed monthly'} at{' '}
+                          <span className="font-semibold text-foreground">
+                            {isYearly ? plan.inrYearly : plan.inrMonthly}
+                          </span>
+                          {isYearly ? '/year' : '/month'}
+                        </p>
+                        {isYearly && plan.yearlySavings && (
+                          <motion.span 
+                            className="inline-block bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold px-2 py-1 rounded-full"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ type: "spring" }}
+                          >
+                            {plan.yearlySavings}
+                          </motion.span>
+                        )}
+                      </motion.div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3">
+                      {plan.features.map((feature, featureIndex) => (
+                        <motion.li 
+                          key={feature} 
+                          className="flex items-center gap-2"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.4 + index * 0.1 + featureIndex * 0.05 }}
+                        >
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.5 + index * 0.1 + featureIndex * 0.05, type: "spring" }}
+                          >
+                            <Check className="h-5 w-5 text-primary" />
+                          </motion.div>
+                          <span>{feature}</span>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    {plan.name === "Free" ? (
+                      <Link to="/auth" className="w-full">
+                        <motion.div
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Button 
+                            className="w-full" 
+                            variant="outline"
+                            disabled={isCurrentPlan}
+                          >
+                            {isCurrentPlan ? "Current Plan" : plan.cta}
+                          </Button>
+                        </motion.div>
+                      </Link>
+                    ) : (
+                      <motion.div
+                        className="w-full"
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <PaymentButton
+                          planName={planKey as 'pro' | 'ultra'}
+                          billingCycle={isYearly ? 'yearly' : 'monthly'}
+                          className={`w-full ${plan.popular ? 'bg-gradient-to-r from-primary to-purple-600 hover:opacity-90' : ''}`}
+                          variant={plan.popular ? "default" : "outline"}
+                          onSuccess={handlePaymentSuccess}
+                        >
+                          {isCurrentPlan ? "Current Plan" : plan.cta}
+                        </PaymentButton>
+                      </motion.div>
+                    )}
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
+
+        {/* Payment Methods Info */}
+        <motion.div
+          className="mt-16 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          <p className="text-sm text-muted-foreground mb-4">
+            Secure payments powered by Razorpay
+          </p>
+          <div className="flex items-center justify-center gap-4 text-muted-foreground/60">
+            <span className="text-xs">UPI</span>
+            <span className="text-xs">•</span>
+            <span className="text-xs">Cards</span>
+            <span className="text-xs">•</span>
+            <span className="text-xs">Net Banking</span>
+            <span className="text-xs">•</span>
+            <span className="text-xs">Wallets</span>
+          </div>
+        </motion.div>
       </main>
 
       <Footer />

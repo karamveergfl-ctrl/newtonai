@@ -77,6 +77,53 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          id: string
+          razorpay_order_id: string
+          razorpay_payment_id: string | null
+          razorpay_signature: string | null
+          status: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          razorpay_order_id: string
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          status?: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          razorpay_order_id?: string
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          status?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -196,6 +243,45 @@ export type Database = {
           pdf_name?: string
           session_end?: string | null
           session_start?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          billing_cycle: string
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_name: string
+          razorpay_subscription_id: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          billing_cycle: string
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_name: string
+          razorpay_subscription_id?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_name?: string
+          razorpay_subscription_id?: string | null
+          status?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
