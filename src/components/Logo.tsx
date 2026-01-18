@@ -18,7 +18,7 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div 
-        className="rounded-full bg-gradient-to-br from-primary/20 via-secondary/15 to-accent/10 p-2 ring-2 ring-primary/30 shadow-md shadow-primary/10"
+        className="rounded-full bg-gradient-to-br from-primary/20 via-secondary/15 to-accent/10 p-2 ring-2 ring-primary/30 shadow-md shadow-primary/10 overflow-hidden group cursor-pointer"
         style={{ width: icon + 16, height: icon + 16 }}
       >
         <img
@@ -26,7 +26,7 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
           alt="NewtonAI Logo"
           width={icon}
           height={icon}
-          className="object-contain rounded-full"
+          className="object-contain rounded-full transition-transform duration-300 group-hover:scale-110"
         />
       </div>
       {showText && (
