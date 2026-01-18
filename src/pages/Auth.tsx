@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Eye, EyeOff, BookOpen, Brain, Layers, FileText, Sparkles } from "lucide-react";
+import { Loader2, Mail, Eye, EyeOff, BookOpen, Brain, Layers, FileText, Sparkles, AlertTriangle, ShieldAlert } from "lucide-react";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
 
@@ -62,6 +62,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -80,6 +81,7 @@ const Auth = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setPasswordError(null);
 
     try {
       if (mode === "forgot-password") {
@@ -96,15 +98,19 @@ const Auth = () => {
         navigate("/dashboard");
       } else {
         if (password.length < 6) {
+          setPasswordError("Password must be at least 6 characters");
           throw new Error("Password must be at least 6 characters");
         }
         if (!/[A-Z]/.test(password)) {
+          setPasswordError("Password must contain at least 1 capital letter");
           throw new Error("Password must contain at least 1 capital letter");
         }
 
         const pwnedCount = await getPwnedPasswordCount(password);
         if (pwnedCount > 0) {
-          throw new Error("This password has appeared in data breaches. Please choose a different password.");
+          setPasswordError("This password has appeared in data breaches. Please choose a different, more secure password.");
+          setLoading(false);
+          return;
         }
 
         const { error } = await supabase.auth.signUp({
@@ -118,11 +124,13 @@ const Auth = () => {
         setMode("login");
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "An error occurred during authentication",
-        variant: "destructive",
-      });
+      if (!passwordError) {
+        toast({
+          title: "Error",
+          description: error.message || "An error occurred during authentication",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -406,11 +414,11 @@ const Auth = () => {
                     type={showPassword ? "text" : "password"}
                     placeholder={mode === "login" ? "Enter your password" : "6+ Characters, 1 Capital letter"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => { setPassword(e.target.value); setPasswordError(null); }}
                     required
                     disabled={loading}
                     minLength={6}
-                    className="h-12 pr-10 bg-background border-border"
+                    className={`h-12 pr-10 bg-background border-border ${passwordError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                   />
                   <button
                     type="button"
@@ -421,6 +429,28 @@ const Auth = () => {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+                
+                {/* Password Error Display */}
+                {passwordError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 p-3 bg-destructive/10 border border-destructive/30 rounded-lg"
+                  >
+                    <div className="flex items-start gap-2">
+                      <ShieldAlert className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-destructive">Password Security Issue</p>
+                        <p className="text-xs text-destructive/80 mt-1">{passwordError}</p>
+                        {passwordError.includes("data breaches") && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            💡 Tip: Use a mix of letters, numbers, and symbols to create a unique password.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             )}
 
