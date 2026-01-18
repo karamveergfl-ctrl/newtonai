@@ -39,10 +39,13 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   const { isLoading, isScriptLoaded, initiatePayment } = useRazorpay(handleSuccess, handleFailure);
 
   const handleClick = async () => {
+    console.log('PaymentButton clicked', { planName, billingCycle, isScriptLoaded, isLoading });
+    
     setIsCheckingAuth(true);
     
     // Check if user is logged in
     const { data: { session } } = await supabase.auth.getSession();
+    console.log('Auth session check:', session ? 'logged in' : 'not logged in');
     
     if (!session) {
       // Redirect to auth with return URL
@@ -52,6 +55,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     }
 
     setIsCheckingAuth(false);
+    console.log('Calling initiatePayment...');
     initiatePayment(planName, billingCycle);
   };
 

@@ -150,14 +150,14 @@ serve(async (req) => {
       .update({ subscription_id: subscription.id })
       .eq('razorpay_order_id', razorpay_order_id);
 
-    // Update user profile with subscription tier and expiry
+    // Update or create user profile with subscription tier and expiry
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .update({
+      .upsert({
+        id: user.id,
         subscription_tier: plan_name,
         subscription_expires_at: periodEnd.toISOString(),
-      })
-      .eq('id', user.id);
+      }, { onConflict: 'id' });
 
     if (profileError) {
       console.error('Failed to update profile:', profileError);
