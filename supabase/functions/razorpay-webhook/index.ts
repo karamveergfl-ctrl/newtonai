@@ -64,6 +64,42 @@ serve(async (req) => {
 
     const payload = JSON.parse(body);
     const event = payload.event;
+    const webhookId = payload.id;
+
+    // Replay attack prevention: Check if webhook already processed
+    if (webhookId) {
+      const { data: existingWebhook } = await supabaseAdmin
+        .from('webhook_events')
+        .select('id')
+        .eq('id', webhookId)
+        .single();
+
+      if (existingWebhook) {
+        console.log(`Duplicate webhook detected: ${webhookId}`);
+        return new Response(
+          JSON.stringify({ received: true, duplicate: true }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Store webhook ID before processing to prevent race conditions
+      const { error: insertError } = await supabaseAdmin
+        .from('webhook_events')
+        .insert({
+          id: webhookId,
+          event_type: event,
+          payload: payload
+        });
+
+      if (insertError) {
+        // If insert fails due to duplicate, another request is processing
+        console.log(`Concurrent webhook processing detected: ${webhookId}`);
+        return new Response(
+          JSON.stringify({ received: true, duplicate: true }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     console.log(`Received webhook event: ${event}`);
 
