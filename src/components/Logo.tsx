@@ -17,7 +17,7 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
   const { icon, text } = sizeMap[size];
 
   return (
-    <Link to="/" className={`flex items-center gap-2 ${className}`}>
+    <Link to="/dashboard" className={`flex items-center gap-2 ${className}`}>
       <div 
         className="rounded-full bg-white p-1.5 ring-2 ring-primary/20 shadow-md shadow-primary/10 overflow-hidden group"
         style={{ width: icon + 12, height: icon + 12 }}
