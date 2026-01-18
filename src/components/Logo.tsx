@@ -2,25 +2,27 @@ import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 
 interface LogoProps {
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   showText?: boolean;
   className?: string;
 }
 
 const sizeMap = {
-  sm: { icon: 36, text: "text-lg" },
-  md: { icon: 48, text: "text-2xl" },
-  lg: { icon: 64, text: "text-3xl" },
+  xs: { icon: 20, text: "text-sm", padding: "p-1" },
+  sm: { icon: 36, text: "text-lg", padding: "p-1.5" },
+  md: { icon: 48, text: "text-2xl", padding: "p-1.5" },
+  lg: { icon: 64, text: "text-3xl", padding: "p-1.5" },
 };
 
 const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
-  const { icon, text } = sizeMap[size];
+  const { icon, text, padding } = sizeMap[size];
+  const containerSize = size === "xs" ? icon + 8 : icon + 12;
 
   return (
     <Link to="/dashboard" className={`flex items-center gap-2 ${className}`}>
       <div 
-        className="rounded-full bg-white p-1.5 ring-2 ring-primary/20 shadow-md shadow-primary/10 overflow-hidden group"
-        style={{ width: icon + 12, height: icon + 12 }}
+        className={`rounded-full bg-white ${padding} ring-2 ring-primary/20 shadow-md shadow-primary/10 overflow-hidden group`}
+        style={{ width: containerSize, height: containerSize }}
       >
         <img
           src={logoImage}
