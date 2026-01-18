@@ -100,7 +100,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
     >
       <SidebarHeader className="p-4">
         <div className="flex items-center justify-between">
-          <Logo size="xs" showText={!isCollapsed} />
+          <Logo size="xs" showText={!isCollapsed} variant={isCollapsed ? "minimal" : "default"} />
           <Button
             variant="ghost"
             size="icon"
