@@ -169,6 +169,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_config: {
+        Row: {
+          created_at: string
+          function_name: string
+          id: string
+          max_requests: number
+          updated_at: string
+          window_minutes: number
+        }
+        Insert: {
+          created_at?: string
+          function_name: string
+          id?: string
+          max_requests?: number
+          updated_at?: string
+          window_minutes?: number
+        }
+        Update: {
+          created_at?: string
+          function_name?: string
+          id?: string
+          max_requests?: number
+          updated_at?: string
+          window_minutes?: number
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           created_at: string
@@ -343,6 +370,27 @@ export type Database = {
           user_id?: string
           video_id?: string
           watch_duration_seconds?: number
+        }
+        Relationships: []
+      }
+      webhook_events: {
+        Row: {
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string
+        }
+        Insert: {
+          event_type: string
+          id: string
+          payload: Json
+          processed_at?: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string
         }
         Relationships: []
       }

@@ -219,8 +219,15 @@ serve(async (req) => {
 
     const { videoId, videoTitle } = await req.json();
     
-    if (!videoId) {
-      throw new Error("videoId is required");
+    // Validate YouTube video ID format (11 characters, alphanumeric + - and _)
+    if (!videoId || !/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid YouTube video ID format',
+          success: false
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     
     console.log(`Fetching transcript for video: ${videoId}`);
