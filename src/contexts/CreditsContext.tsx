@@ -132,27 +132,25 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
     if (!userId) return false;
 
     try {
-      const newBalance = credits - cost;
-      
-      const { error } = await supabase
-        .from('user_credits')
-        .update({ 
-          credits: newBalance,
-          lifetime_spent: credits - newBalance,
-        })
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      // Log transaction
-      await supabase.from('credit_transactions').insert({
-        user_id: userId,
-        amount: -cost,
-        type: 'feature_use',
-        feature_name: feature,
+      // Use atomic RPC function for credit spending
+      const { data, error } = await supabase.rpc('spend_credits', {
+        p_feature_name: feature,
+        p_amount: cost
       });
 
-      setCredits(newBalance);
+      if (error) {
+        console.error('RPC error:', error);
+        return false;
+      }
+
+      const result = data as { success: boolean; balance?: number; error?: string };
+      
+      if (!result.success) {
+        console.error('Spend credits failed:', result.error);
+        return false;
+      }
+
+      setCredits(result.balance ?? credits - cost);
       return true;
     } catch (error) {
       console.error('Error spending credits:', error);
@@ -171,34 +169,33 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
 
     try {
       const reward = adDuration === 30 ? AD_REWARDS['30sec'] : AD_REWARDS['60sec'];
-      const today = new Date().toISOString().split('T')[0];
       
       // Add daily bonus if first ad of the day
       const isFirstAd = adsWatchedToday === 0;
       const totalReward = isFirstAd ? reward + AD_REWARDS.daily_bonus : reward;
-      const newBalance = credits + totalReward;
 
-      const { error } = await supabase
-        .from('user_credits')
-        .update({ 
-          credits: newBalance,
-          lifetime_earned: credits + totalReward,
-          ads_watched_today: adsWatchedToday + 1,
-          last_ad_date: today,
-        })
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      // Log transaction
-      await supabase.from('credit_transactions').insert({
-        user_id: userId,
-        amount: totalReward,
-        type: 'ad_reward',
-        ad_duration: adDuration,
+      // Use atomic RPC function for earning credits
+      const { data, error } = await supabase.rpc('earn_credits', {
+        p_ad_duration: adDuration,
+        p_credits_earned: totalReward
       });
 
-      setCredits(newBalance);
+      if (error) {
+        console.error('RPC error:', error);
+        return false;
+      }
+
+      const result = data as { success: boolean; balance?: number; error?: string };
+      
+      if (!result.success) {
+        if (result.error === 'Daily ad limit reached') {
+          toast.error('Daily ad limit reached');
+        }
+        console.error('Earn credits failed:', result.error);
+        return false;
+      }
+
+      setCredits(result.balance ?? credits + totalReward);
       setAdsWatchedToday(prev => prev + 1);
       
       toast.success(`+${totalReward} Study Credits earned!${isFirstAd ? ' (includes daily bonus!)' : ''}`);

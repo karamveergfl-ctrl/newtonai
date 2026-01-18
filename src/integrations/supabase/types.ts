@@ -408,6 +408,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      earn_credits: {
+        Args: { p_ad_duration: number; p_credits_earned: number }
+        Returns: Json
+      }
+      spend_credits: {
+        Args: { p_amount: number; p_feature_name: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
