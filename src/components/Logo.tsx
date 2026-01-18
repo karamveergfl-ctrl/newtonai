@@ -4,6 +4,7 @@ import logoImage from "@/assets/logo.png";
 interface LogoProps {
   size?: "xs" | "sm" | "md" | "lg";
   showText?: boolean;
+  variant?: "default" | "minimal";
   className?: string;
 }
 
@@ -14,9 +15,24 @@ const sizeMap = {
   lg: { icon: 64, text: "text-3xl", padding: "p-1.5" },
 };
 
-const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
+const Logo = ({ size = "md", showText = true, variant = "default", className = "" }: LogoProps) => {
   const { icon, text, padding } = sizeMap[size];
   const containerSize = size === "xs" ? icon + 8 : icon + 12;
+
+  // Minimal variant - just the icon without decorations
+  if (variant === "minimal") {
+    return (
+      <Link to="/dashboard" className={`flex items-center justify-center ${className}`}>
+        <img
+          src={logoImage}
+          alt="NewtonAI Logo"
+          width={icon}
+          height={icon}
+          className="object-contain"
+        />
+      </Link>
+    );
+  }
 
   return (
     <Link to="/dashboard" className={`flex items-center gap-2 ${className}`}>
