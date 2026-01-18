@@ -240,7 +240,7 @@ const Pricing = () => {
                 style={{ transformStyle: "preserve-3d", perspective: 1000 }}
               >
                 <Card 
-                  className={`relative h-full ${plan.popular ? 'border-primary shadow-lg shadow-primary/20' : ''}`}
+                  className={`relative h-full ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105' : ''}`}
                 >
                   {plan.popular && (
                     <motion.div 
