@@ -12,6 +12,7 @@ interface PaymentButtonProps {
   className?: string;
   variant?: 'default' | 'secondary' | 'outline' | 'ghost';
   onSuccess?: () => void;
+  disabled?: boolean;
 }
 
 export const PaymentButton: React.FC<PaymentButtonProps> = ({
@@ -21,6 +22,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   className,
   variant = 'default',
   onSuccess,
+  disabled = false,
 }) => {
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = React.useState(false);
@@ -53,7 +55,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     initiatePayment(planName, billingCycle);
   };
 
-  const isDisabled = isLoading || isCheckingAuth || !isScriptLoaded;
+  const isDisabled = isLoading || isCheckingAuth || !isScriptLoaded || disabled;
 
   return (
     <Button

@@ -349,21 +349,18 @@ const Pricing = () => {
                         </motion.div>
                       </Link>
                     ) : (
-                      <motion.div
-                        className="w-full"
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
+                      <div className="w-full">
                         <PaymentButton
                           planName={planKey as 'pro' | 'ultra'}
                           billingCycle={isYearly ? 'yearly' : 'monthly'}
-                          className={`w-full ${plan.popular ? 'bg-gradient-to-r from-primary to-purple-600 hover:opacity-90' : ''}`}
+                          className={`w-full transition-transform hover:scale-[1.02] active:scale-[0.98] ${plan.popular ? 'bg-gradient-to-r from-primary to-purple-600 hover:opacity-90' : ''}`}
                           variant={plan.popular ? "default" : "outline"}
                           onSuccess={handlePaymentSuccess}
+                          disabled={isCurrentPlan}
                         >
                           {isCurrentPlan ? "Current Plan" : plan.cta}
                         </PaymentButton>
-                      </motion.div>
+                      </div>
                     )}
                   </CardFooter>
                 </Card>
