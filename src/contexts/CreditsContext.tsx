@@ -125,17 +125,12 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
 
   const spendCredits = useCallback(async (feature: string): Promise<boolean> => {
     if (isPremium) return true;
-    
-    const cost = FEATURE_COSTS[feature] || 0;
-    if (credits < cost) return false;
-
     if (!userId) return false;
 
     try {
-      // Use atomic RPC function for credit spending
+      // Use atomic RPC function - cost is looked up server-side for security
       const { data, error } = await supabase.rpc('spend_credits', {
-        p_feature_name: feature,
-        p_amount: cost
+        p_feature_name: feature
       });
 
       if (error) {
@@ -143,20 +138,24 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      const result = data as { success: boolean; balance?: number; error?: string };
+      const result = data as { success: boolean; balance?: number; cost?: number; error?: string };
       
       if (!result.success) {
+        if (result.error === 'Insufficient credits') {
+          // Sync local state with server
+          await fetchCredits();
+        }
         console.error('Spend credits failed:', result.error);
         return false;
       }
 
-      setCredits(result.balance ?? credits - cost);
+      setCredits(result.balance ?? credits);
       return true;
     } catch (error) {
       console.error('Error spending credits:', error);
       return false;
     }
-  }, [credits, userId, isPremium]);
+  }, [credits, userId, isPremium, fetchCredits]);
 
   const earnCredits = useCallback(async (adDuration: 30 | 60): Promise<boolean> => {
     if (!userId) return false;
