@@ -78,7 +78,12 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     navigate('/payment/failure');
   };
 
-  const { isLoading, isScriptLoaded, initiatePayment } = useRazorpay(handleSuccess, handleFailure);
+  const handleModalClose = () => {
+    // Modal was closed without completing payment - reset UI state
+    onPaymentEnd?.();
+  };
+
+  const { isLoading, isScriptLoaded, initiatePayment } = useRazorpay(handleSuccess, handleFailure, handleModalClose);
 
   const handleClick = async () => {
     console.log('PaymentButton clicked', { planName, billingCycle, isScriptLoaded, isLoading });
