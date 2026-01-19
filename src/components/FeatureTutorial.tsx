@@ -60,6 +60,10 @@ const ArrowIcon = ({ direction }: { direction: "up" | "down" | "left" | "right" 
 };
 
 export function FeatureTutorial() {
+  // Check localStorage synchronously to prevent any flash of tutorial elements
+  const [hasSeenTutorial] = useState(() => {
+    return localStorage.getItem(TUTORIAL_STORAGE_KEY) === "true";
+  });
   const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [targetPosition, setTargetPosition] = useState<TargetPosition | null>(null);
@@ -85,12 +89,17 @@ export function FeatureTutorial() {
   }, [currentStep]);
 
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem(TUTORIAL_STORAGE_KEY);
-    if (!hasSeenTutorial) {
-      const timer = setTimeout(() => setIsVisible(true), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
+    // Early exit if tutorial was already seen
+    if (hasSeenTutorial) return;
+    
+    const timer = setTimeout(() => setIsVisible(true), 1000);
+    return () => clearTimeout(timer);
+  }, [hasSeenTutorial]);
+
+  // Don't render anything if tutorial was already completed
+  if (hasSeenTutorial) {
+    return null;
+  }
 
   useEffect(() => {
     if (isVisible) {
