@@ -36,6 +36,7 @@ import {
   Coins,
   Moon,
   Sun,
+  Podcast,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FEATURE_COSTS } from "@/lib/creditConfig";
@@ -50,6 +51,7 @@ const studyTools = [
   { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer", feature: "summary" },
   { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes", feature: "lecture_notes" },
   { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map", feature: "mind_map" },
+  { id: "podcast", label: "AI Podcast", icon: Podcast, path: "/tools/ai-podcast", feature: "ai_podcast" },
 ];
 
 interface AppSidebarProps {

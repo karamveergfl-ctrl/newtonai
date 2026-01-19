@@ -27,6 +27,7 @@ import AIQuiz from "./pages/tools/AIQuiz";
 import AISummarizer from "./pages/tools/AISummarizer";
 import AILectureNotes from "./pages/tools/AILectureNotes";
 import MindMap from "./pages/tools/MindMap";
+import AIPodcast from "./pages/tools/AIPodcast";
 import CookieConsent from "./components/CookieConsent";
 
 // Payment pages
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/tools/quiz" element={<AIQuiz />} />
             <Route path="/tools/summarizer" element={<AISummarizer />} />
             <Route path="/tools/lecture-notes" element={<AILectureNotes />} />
+            <Route path="/tools/ai-podcast" element={<AIPodcast />} />
             <Route path="/tools/mind-map" element={<MindMap />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

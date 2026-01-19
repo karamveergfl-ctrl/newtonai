@@ -9,6 +9,7 @@ export const FEATURE_COSTS: Record<string, number> = {
   ai_notes: 4,
   lecture_notes: 6,
   watch_video: 2,
+  ai_podcast: 10,
 };
 
 // Credit rewards from ads
@@ -39,4 +40,5 @@ export const FEATURE_NAMES: Record<string, string> = {
   ai_notes: 'AI Notes',
   lecture_notes: 'Lecture Notes',
   watch_video: 'Watch Video',
+  ai_podcast: 'AI Podcast',
 };
