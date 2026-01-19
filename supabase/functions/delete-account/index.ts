@@ -86,12 +86,9 @@ serve(async (req) => {
 
     if (deleteUserError) {
       console.error("Failed to delete auth user:", deleteUserError);
+      console.error("Data deletion errors:", errors);
       return new Response(
-        JSON.stringify({ 
-          error: "Failed to delete account", 
-          details: deleteUserError.message,
-          dataErrors: errors 
-        }),
+        JSON.stringify({ error: "Account deletion failed. Please try again or contact support." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -172,9 +169,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in delete-account:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Account deletion failed" }),
+      JSON.stringify({ error: "Account deletion failed. Please try again or contact support." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

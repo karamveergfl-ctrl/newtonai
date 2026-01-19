@@ -139,7 +139,7 @@ serve(async (req) => {
     if (subscriptionError) {
       console.error('Failed to create subscription:', subscriptionError);
       return new Response(
-        JSON.stringify({ error: 'Failed to create subscription', details: subscriptionError.message }),
+        JSON.stringify({ error: 'Payment processing failed. Please contact support.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -162,7 +162,7 @@ serve(async (req) => {
     if (profileError) {
       console.error('Failed to update profile:', profileError);
       return new Response(
-        JSON.stringify({ error: 'Failed to update profile', details: profileError.message }),
+        JSON.stringify({ error: 'Payment processing failed. Please contact support.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -182,9 +182,8 @@ serve(async (req) => {
 
   } catch (error: unknown) {
     console.error('Error in razorpay-verify-payment:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: message }),
+      JSON.stringify({ error: 'Payment verification failed. Please try again or contact support.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

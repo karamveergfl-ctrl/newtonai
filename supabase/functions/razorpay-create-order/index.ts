@@ -110,7 +110,7 @@ serve(async (req) => {
       const errorText = await razorpayResponse.text();
       console.error('Razorpay order creation failed:', errorText);
       return new Response(
-        JSON.stringify({ error: 'Failed to create order', details: errorText }),
+        JSON.stringify({ error: 'Failed to create order. Please try again.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -148,9 +148,8 @@ serve(async (req) => {
 
   } catch (error: unknown) {
     console.error('Error in razorpay-create-order:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: message }),
+      JSON.stringify({ error: 'Order creation failed. Please try again.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
