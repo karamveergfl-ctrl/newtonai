@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import Logo from "@/components/Logo";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const faqs = [
@@ -50,22 +50,7 @@ const faqs = [
 const FAQ = () => {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/">
-            <Logo size="md" />
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-            <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
-            <Link to="/faq" className="text-foreground font-medium">FAQ</Link>
-          </nav>
-          <Link to="/auth">
-            <Button>Sign In</Button>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">

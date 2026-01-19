@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Brain, Users, Zap, Sparkles, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import Logo from "@/components/Logo";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const values = [
@@ -60,22 +60,7 @@ const About = () => {
         transition={{ duration: 14, repeat: Infinity, ease: "easeInOut", delay: 2 }}
       />
       
-      <header className="border-b relative z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/">
-            <Logo size="md" />
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/about" className="text-foreground font-medium">About</Link>
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-            <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
-            <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
-          </nav>
-          <Link to="/auth">
-            <Button>Sign In</Button>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <main className="relative z-10">
         {/* Hero Section */}
