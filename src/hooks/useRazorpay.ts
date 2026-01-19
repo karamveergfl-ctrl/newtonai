@@ -38,7 +38,7 @@ interface RazorpayResponse {
 interface UseRazorpayReturn {
   isLoading: boolean;
   isScriptLoaded: boolean;
-  initiatePayment: (planName: 'pro' | 'ultra', billingCycle: 'monthly' | 'yearly') => Promise<void>;
+  initiatePayment: (planName: 'pro' | 'ultra', billingCycle: 'monthly' | 'yearly', onProgress?: (progress: number, message: string) => void) => Promise<void>;
 }
 
 export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void): UseRazorpayReturn => {
@@ -74,7 +74,8 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void): Use
 
   const initiatePayment = useCallback(async (
     planName: 'pro' | 'ultra',
-    billingCycle: 'monthly' | 'yearly'
+    billingCycle: 'monthly' | 'yearly',
+    onProgress?: (progress: number, message: string) => void
   ) => {
     if (!isScriptLoaded) {
       toast({
@@ -85,6 +86,7 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void): Use
     }
 
     setIsLoading(true);
+    onProgress?.(20, 'Verifying your account...');
 
     try {
       // Check if user is authenticated
@@ -99,6 +101,8 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void): Use
         return;
       }
 
+      onProgress?.(40, 'Creating secure order...');
+
       // Create order
       const { data: orderData, error: orderError } = await supabase.functions.invoke('razorpay-create-order', {
         body: { plan_name: planName, billing_cycle: billingCycle },
@@ -108,6 +112,8 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void): Use
         console.error('Order creation error:', orderError);
         throw new Error(orderError?.message || 'Failed to create order');
       }
+
+      onProgress?.(70, 'Initializing payment gateway...');
 
       const planLabels = {
         pro: 'Pro Plan',
@@ -172,6 +178,8 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void): Use
           },
         },
       };
+
+      onProgress?.(90, 'Opening payment window...');
 
       const razorpay = new window.Razorpay(options);
       razorpay.on('payment.failed', (response: any) => {
