@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 const plans = [
   {
     name: "Free",
+    inrWeeklyMonthly: "₹0",
+    inrWeeklyYearly: "₹0",
     inrMonthly: "₹0",
     inrYearly: "₹0",
     description: "Perfect for getting started",
@@ -29,9 +31,10 @@ const plans = [
   },
   {
     name: "Pro",
+    inrWeeklyMonthly: "₹175",
+    inrWeeklyYearly: "₹125",
     inrMonthly: "₹699",
     inrYearly: "₹6,499",
-    yearlyPerMonth: "₹542",
     yearlySavings: "Save ₹1,889",
     description: "Best for students",
     features: [
@@ -47,9 +50,10 @@ const plans = [
   },
   {
     name: "Ultra",
+    inrWeeklyMonthly: "₹325",
+    inrWeeklyYearly: "₹231",
     inrMonthly: "₹1,299",
     inrYearly: "₹11,999",
-    yearlyPerMonth: "₹999",
     yearlySavings: "Save ₹3,589",
     description: "For power learners",
     features: [
@@ -336,10 +340,10 @@ const Pricing = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        {plan.name === "Free" ? "₹0" : (isYearly ? plan.yearlyPerMonth : plan.inrMonthly)}
+                        {plan.name === "Free" ? "₹0" : (isYearly ? plan.inrWeeklyYearly : plan.inrWeeklyMonthly)}
                       </motion.span>
                       <span className="text-muted-foreground ml-2">
-                        {plan.name === "Free" ? "/forever" : "/month"}
+                        {plan.name === "Free" ? "/forever" : "/week"}
                       </span>
                     </div>
                     {plan.name !== "Free" && (
@@ -351,7 +355,7 @@ const Pricing = () => {
                         transition={{ duration: 0.3 }}
                       >
                         <p className="text-sm text-muted-foreground">
-                          {isYearly ? 'Billed annually' : 'Billed monthly'} at{' '}
+                          Billed {isYearly ? 'annually' : 'monthly'} at{' '}
                           <span className="font-semibold text-foreground">
                             {isYearly ? plan.inrYearly : plan.inrMonthly}
                           </span>
