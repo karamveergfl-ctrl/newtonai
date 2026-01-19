@@ -41,7 +41,7 @@ interface UseRazorpayReturn {
   initiatePayment: (planName: 'pro' | 'ultra', billingCycle: 'monthly' | 'yearly', onProgress?: (progress: number, message: string) => void) => Promise<void>;
 }
 
-export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void): UseRazorpayReturn => {
+export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void, onModalClose?: () => void): UseRazorpayReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const { toast } = useToast();
@@ -175,6 +175,7 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void): Use
         modal: {
           ondismiss: () => {
             setIsLoading(false);
+            onModalClose?.();
           },
         },
       };
