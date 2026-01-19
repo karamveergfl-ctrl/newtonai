@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { PodcastPlayer } from "@/components/PodcastPlayer";
 import { PodcastRaiseHand } from "@/components/PodcastRaiseHand";
+import { PodcastHistory } from "@/components/PodcastHistory";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -24,6 +25,17 @@ interface PodcastSegment {
 interface PodcastData {
   title: string;
   segments: PodcastSegment[];
+  id?: string;
+}
+
+interface SavedPodcast {
+  id: string;
+  title: string;
+  script: { segments: PodcastSegment[] };
+  audio_segments: PodcastSegment[] | null;
+  duration_seconds: number;
+  created_at: string;
+  source_content: string | null;
 }
 
 type GenerationStep = "idle" | "analyzing" | "scripting" | "voicing" | "complete";
@@ -44,6 +56,7 @@ export default function AIPodcast() {
   const [sourceContent, setSourceContent] = useState("");
   const [isRaiseHandOpen, setIsRaiseHandOpen] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
+  const [historyRefresh, setHistoryRefresh] = useState(0);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
 
   const creditCost = getFeatureCost("ai_podcast");
@@ -125,8 +138,35 @@ export default function AIPodcast() {
         await spendCredits("ai_podcast");
       }
 
+      const podcastTitle = scriptData.title || metadata?.videoTitle || "AI Study Podcast";
+
+      // Save to database
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error: saveError } = await supabase
+            .from("podcasts")
+            .insert([{
+              user_id: user.id,
+              title: podcastTitle,
+              source_content: content.substring(0, 10000),
+              script: JSON.parse(JSON.stringify({ segments: scriptData.segments })),
+              audio_segments: JSON.parse(JSON.stringify(segments)),
+              duration_seconds: segments.length * 15,
+            }]);
+
+          if (saveError) {
+            console.error("Error saving podcast:", saveError);
+          } else {
+            setHistoryRefresh(prev => prev + 1);
+          }
+        }
+      } catch (saveErr) {
+        console.error("Error saving podcast to history:", saveErr);
+      }
+
       setPodcast({
-        title: scriptData.title || metadata?.videoTitle || "AI Study Podcast",
+        title: podcastTitle,
         segments,
       });
 
@@ -160,6 +200,16 @@ export default function AIPodcast() {
     setSourceContent("");
     setGenerationStep("idle");
     setProgress(0);
+  };
+
+  const handleSelectSavedPodcast = (saved: SavedPodcast) => {
+    const segments = saved.audio_segments || saved.script?.segments || [];
+    setPodcast({
+      id: saved.id,
+      title: saved.title,
+      segments: segments as PodcastSegment[],
+    });
+    setSourceContent(saved.source_content || "");
   };
 
   return (
@@ -326,6 +376,13 @@ export default function AIPodcast() {
                   </div>
                 </div>
               </Card>
+
+              <div className="mt-6">
+                <PodcastHistory 
+                  onSelectPodcast={handleSelectSavedPodcast}
+                  refreshTrigger={historyRefresh}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
