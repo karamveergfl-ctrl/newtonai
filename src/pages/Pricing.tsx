@@ -1,7 +1,7 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { PaymentButton } from "@/components/PaymentButton";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const plans = [
   {
@@ -69,6 +70,8 @@ const Pricing = () => {
   const [isYearly, setIsYearly] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [verifyingPlanName, setVerifyingPlanName] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -91,8 +94,13 @@ const Pricing = () => {
     checkAuth();
   }, []);
 
+  const handlePaymentStart = (planName: string) => {
+    setIsVerifyingPayment(true);
+    setVerifyingPlanName(planName);
+  };
+
   const handlePaymentSuccess = async () => {
-    // Refresh the current plan after successful payment
+    // Keep verifying state while refreshing
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       const { data: profile } = await supabase
@@ -105,6 +113,13 @@ const Pricing = () => {
         setCurrentPlan(profile.subscription_tier);
       }
     }
+    setIsVerifyingPayment(false);
+    setVerifyingPlanName(null);
+  };
+
+  const handlePaymentEnd = () => {
+    setIsVerifyingPayment(false);
+    setVerifyingPlanName(null);
   };
 
   return (
@@ -219,6 +234,7 @@ const Pricing = () => {
           {plans.map((plan, index) => {
             const planKey = plan.name.toLowerCase();
             const isCurrentPlan = currentPlan === planKey;
+            const isThisPlanVerifying = isVerifyingPayment && verifyingPlanName === planKey;
             
             return (
               <motion.div
@@ -240,11 +256,55 @@ const Pricing = () => {
                 style={{ transformStyle: "preserve-3d", perspective: 1000 }}
               >
                 <Card 
-                  className={`relative h-full ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105' : ''}`}
+                  className={`relative h-full overflow-hidden ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105' : ''}`}
                 >
+                  {/* Skeleton Overlay for Verifying Payment */}
+                  <AnimatePresence>
+                    {isThisPlanVerifying && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-20 bg-card/95 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+                      >
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="mb-4"
+                        >
+                          <Loader2 className="h-8 w-8 text-primary" />
+                        </motion.div>
+                        <h3 className="text-lg font-semibold mb-2">Processing Payment</h3>
+                        <p className="text-sm text-muted-foreground text-center mb-6">
+                          Please complete your payment in the popup window
+                        </p>
+                        
+                        {/* Skeleton content preview */}
+                        <div className="w-full space-y-3 opacity-50">
+                          <Skeleton className="h-4 w-3/4 mx-auto" />
+                          <Skeleton className="h-4 w-1/2 mx-auto" />
+                          <div className="space-y-2 mt-4">
+                            <Skeleton className="h-3 w-full" />
+                            <Skeleton className="h-3 w-5/6" />
+                            <Skeleton className="h-3 w-4/5" />
+                          </div>
+                        </div>
+                        
+                        <motion.div 
+                          className="mt-6 flex items-center gap-2 text-xs text-muted-foreground"
+                          animate={{ opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        >
+                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                          Waiting for confirmation...
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   {plan.popular && (
                     <motion.div 
-                      className="absolute -top-3 left-1/2 -translate-x-1/2"
+                      className="absolute -top-3 left-1/2 -translate-x-1/2 z-10"
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.6, type: "spring" }}
@@ -256,7 +316,7 @@ const Pricing = () => {
                   )}
                   {isCurrentPlan && (
                     <motion.div 
-                      className="absolute -top-3 right-4"
+                      className="absolute -top-3 right-4 z-10"
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                     >
@@ -350,7 +410,9 @@ const Pricing = () => {
                         className="w-full"
                         variant="default"
                         onSuccess={handlePaymentSuccess}
-                        disabled={isCurrentPlan}
+                        onPaymentStart={() => handlePaymentStart(planKey)}
+                        onPaymentEnd={handlePaymentEnd}
+                        disabled={isCurrentPlan || isVerifyingPayment}
                       >
                         {isCurrentPlan ? "Current Plan" : plan.cta}
                       </PaymentButton>

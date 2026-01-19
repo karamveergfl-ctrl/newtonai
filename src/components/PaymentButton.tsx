@@ -14,6 +14,8 @@ interface PaymentButtonProps {
   className?: string;
   variant?: 'default' | 'secondary' | 'outline' | 'ghost';
   onSuccess?: () => void;
+  onPaymentStart?: () => void;
+  onPaymentEnd?: () => void;
   disabled?: boolean;
 }
 
@@ -24,6 +26,8 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   className,
   variant = 'default',
   onSuccess,
+  onPaymentStart,
+  onPaymentEnd,
   disabled = false,
 }) => {
   const navigate = useNavigate();
@@ -35,11 +39,16 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   const handleProgress = (value: number, message: string) => {
     setProgress(value);
     setStatusMessage(message);
+    // Notify parent when payment gateway opens (progress >= 90)
+    if (value >= 90) {
+      onPaymentStart?.();
+    }
   };
 
   const handleSuccess = () => {
     setShowProgress(false);
     setProgress(0);
+    onPaymentEnd?.();
     onSuccess?.();
     navigate('/payment/success');
   };
@@ -47,6 +56,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   const handleFailure = () => {
     setShowProgress(false);
     setProgress(0);
+    onPaymentEnd?.();
     navigate('/payment/failure');
   };
 
@@ -80,6 +90,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   const handleCancel = () => {
     setShowProgress(false);
     setProgress(0);
+    onPaymentEnd?.();
   };
 
   const isDisabled = isLoading || isCheckingAuth || !isScriptLoaded || disabled;
