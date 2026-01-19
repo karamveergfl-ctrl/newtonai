@@ -260,7 +260,7 @@ const Pricing = () => {
                 style={{ transformStyle: "preserve-3d", perspective: 1000 }}
               >
                 <Card 
-                  className={`relative h-full overflow-hidden ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105' : ''}`}
+                  className={`relative h-full overflow-visible ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105' : ''}`}
                 >
                   {/* Skeleton Overlay for Verifying Payment */}
                   <AnimatePresence>
