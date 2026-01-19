@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRazorpay } from '@/hooks/useRazorpay';
-import { Loader2, Lock, X } from 'lucide-react';
+import { Loader2, Lock, ShieldCheck, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface PaymentButtonProps {
@@ -18,6 +17,12 @@ interface PaymentButtonProps {
   onPaymentEnd?: () => void;
   disabled?: boolean;
 }
+
+const steps = [
+  { icon: ShieldCheck, label: 'Verifying account' },
+  { icon: CreditCard, label: 'Creating order' },
+  { icon: Lock, label: 'Opening payment' },
+];
 
 export const PaymentButton: React.FC<PaymentButtonProps> = ({
   planName,
@@ -33,21 +38,35 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [statusMessage, setStatusMessage] = useState('');
+  const [currentStep, setCurrentStep] = useState(0);
 
-  const handleProgress = (value: number, message: string) => {
-    setProgress(value);
-    setStatusMessage(message);
-    // Notify parent when payment gateway opens (progress >= 90)
+  // Auto-advance animation for visual feedback
+  useEffect(() => {
+    if (!showProgress) {
+      setCurrentStep(0);
+      return;
+    }
+  }, [showProgress]);
+
+  const handleProgress = (value: number, _message: string) => {
+    // Map progress values to steps
+    if (value >= 70) {
+      setCurrentStep(2);
+    } else if (value >= 40) {
+      setCurrentStep(1);
+    } else {
+      setCurrentStep(0);
+    }
+    
+    // Close overlay when payment window opens
     if (value >= 90) {
+      setShowProgress(false);
       onPaymentStart?.();
     }
   };
 
   const handleSuccess = () => {
     setShowProgress(false);
-    setProgress(0);
     onPaymentEnd?.();
     onSuccess?.();
     navigate('/payment/success');
@@ -55,7 +74,6 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
 
   const handleFailure = () => {
     setShowProgress(false);
-    setProgress(0);
     onPaymentEnd?.();
     navigate('/payment/failure');
   };
@@ -66,8 +84,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     console.log('PaymentButton clicked', { planName, billingCycle, isScriptLoaded, isLoading });
     
     setShowProgress(true);
-    setProgress(10);
-    setStatusMessage('Verifying your account...');
+    setCurrentStep(0);
     setIsCheckingAuth(true);
     
     // Check if user is logged in
@@ -75,7 +92,6 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     console.log('Auth session check:', session ? 'logged in' : 'not logged in');
     
     if (!session) {
-      // Redirect to auth with return URL
       setShowProgress(false);
       navigate('/auth?redirect=/pricing');
       setIsCheckingAuth(false);
@@ -85,12 +101,6 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     setIsCheckingAuth(false);
     console.log('Calling initiatePayment...');
     initiatePayment(planName, billingCycle, handleProgress);
-  };
-
-  const handleCancel = () => {
-    setShowProgress(false);
-    setProgress(0);
-    onPaymentEnd?.();
   };
 
   const isDisabled = isLoading || isCheckingAuth || !isScriptLoaded || disabled;
@@ -103,10 +113,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
         className={className}
         variant={variant}
       >
-        {(isLoading || isCheckingAuth) && !showProgress && (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        )}
-        {isLoading && !showProgress ? 'Processing...' : isCheckingAuth && !showProgress ? 'Checking...' : children}
+        {children}
       </Button>
 
       <AnimatePresence>
@@ -115,58 +122,109 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', duration: 0.5 }}
-              className="relative bg-card border border-border rounded-2xl p-8 shadow-2xl w-[90%] max-w-md mx-4"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ type: 'spring', duration: 0.4, bounce: 0.3 }}
+              className="bg-card border border-border rounded-2xl p-8 shadow-2xl w-[90%] max-w-sm mx-4"
             >
-              <button
-                onClick={handleCancel}
-                className="absolute top-4 right-4 p-1 rounded-full hover:bg-muted transition-colors"
-              >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </button>
-
-              <div className="flex flex-col items-center space-y-6">
-                <div className="flex items-center space-x-2 text-primary">
-                  <Lock className="h-5 w-5" />
-                  <span className="font-semibold">Secure Payment</span>
-                </div>
-
-                <div className="w-full space-y-3">
-                  <div className="relative">
-                    <Progress 
-                      value={progress} 
-                      className="h-3 bg-muted"
-                    />
+              <div className="flex flex-col items-center">
+                {/* Animated Logo/Icon */}
+                <motion.div
+                  className="relative mb-6"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                     <motion.div
-                      className="absolute inset-0 h-3 rounded-full bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20"
-                      animate={{ x: ['-100%', '100%'] }}
-                      transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-                      style={{ width: '50%' }}
-                    />
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <motion.p
-                      key={statusMessage}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-muted-foreground"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                     >
-                      {statusMessage}
-                    </motion.p>
-                    <span className="text-sm font-medium text-primary">{Math.round(progress)}%</span>
+                      <Loader2 className="h-8 w-8 text-primary" />
+                    </motion.div>
                   </div>
+                  {/* Pulse ring */}
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-2 border-primary/30"
+                    animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+                  />
+                </motion.div>
+
+                {/* Steps indicator */}
+                <div className="flex items-center justify-center gap-3 mb-6">
+                  {steps.map((step, index) => {
+                    const Icon = step.icon;
+                    const isActive = index === currentStep;
+                    const isComplete = index < currentStep;
+                    
+                    return (
+                      <motion.div
+                        key={step.label}
+                        className="flex flex-col items-center"
+                        initial={false}
+                        animate={{
+                          scale: isActive ? 1.1 : 1,
+                          opacity: isComplete ? 0.5 : 1,
+                        }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <motion.div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                            isActive 
+                              ? 'bg-primary text-primary-foreground' 
+                              : isComplete 
+                                ? 'bg-primary/20 text-primary' 
+                                : 'bg-muted text-muted-foreground'
+                          }`}
+                          animate={isActive ? { 
+                            boxShadow: ['0 0 0 0 rgba(var(--primary), 0)', '0 0 0 8px rgba(var(--primary), 0.1)', '0 0 0 0 rgba(var(--primary), 0)']
+                          } : {}}
+                          transition={{ duration: 1.5, repeat: isActive ? Infinity : 0 }}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </motion.div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
 
-                <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>Please wait, do not close this window</span>
+                {/* Current step label */}
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={currentStep}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-sm font-medium text-foreground mb-2"
+                  >
+                    {steps[currentStep]?.label}...
+                  </motion.p>
+                </AnimatePresence>
+
+                {/* Animated dots */}
+                <div className="flex items-center gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full bg-primary"
+                      animate={{ 
+                        scale: [1, 1.5, 1],
+                        opacity: [0.3, 1, 0.3]
+                      }}
+                      transition={{ 
+                        duration: 1,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
             </motion.div>
