@@ -3,11 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Mail, MapPin, Phone } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Mail, Phone } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import Logo from "@/components/Logo";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,22 +21,7 @@ const Contact = () => {
     (e.target as HTMLFormElement).reset();
   };
   return <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/">
-            <Logo size="md" />
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-            <Link to="/contact" className="text-foreground font-medium">Contact</Link>
-            <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
-          </nav>
-          <Link to="/auth">
-            <Button>Sign In</Button>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">

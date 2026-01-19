@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Sparkles, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import Logo from "@/components/Logo";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
@@ -148,22 +148,7 @@ const Pricing = () => {
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
       />
       
-      <header className="border-b relative z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/">
-            <Logo size="md" />
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
-            <Link to="/pricing" className="text-foreground font-medium">Pricing</Link>
-            <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
-            <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
-          </nav>
-          <Link to={isLoggedIn ? "/dashboard" : "/auth"}>
-            <Button>{isLoggedIn ? "Dashboard" : "Sign In"}</Button>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-16 relative z-10">
         <motion.div 
