@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, ZoomIn, ZoomOut } from "lucide-react";
+import { Network, ZoomIn, ZoomOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
@@ -87,18 +87,18 @@ const MindMap = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-6xl mx-auto space-y-6"
+          className="max-w-6xl mx-auto space-y-4 sm:space-y-6"
         >
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
-              <Sparkles className="h-8 w-8 text-primary" />
+          <div className="text-center mb-4 sm:mb-8">
+            <div className="inline-flex items-center justify-center p-2 sm:p-3 rounded-xl bg-primary/10 mb-3 sm:mb-4">
+              <Network className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-display font-bold tracking-tight">Mind Map</h1>
-            <p className="text-muted-foreground mt-2 font-sans">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">Mind Map</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-2 font-sans px-2 sm:px-0">
               Visualize concepts and relationships from any content
             </p>
           </div>
@@ -116,22 +116,23 @@ const MindMap = () => {
             </Card>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0">
                 <Button
                   variant="outline"
                   onClick={() => setMindMapData(null)}
+                  className="w-full sm:w-auto"
                 >
                   Create New
                 </Button>
                 
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={handleZoomOut}>
+                <div className="flex items-center justify-center gap-2">
+                  <Button variant="outline" size="icon" onClick={handleZoomOut} className="h-9 w-9">
                     <ZoomOut className="h-4 w-4" />
                   </Button>
-                  <span className="text-sm text-muted-foreground w-16 text-center font-sans">
+                  <span className="text-xs sm:text-sm text-muted-foreground w-14 text-center font-sans">
                     {Math.round(zoom * 100)}%
                   </span>
-                  <Button variant="outline" size="icon" onClick={handleZoomIn}>
+                  <Button variant="outline" size="icon" onClick={handleZoomIn} className="h-9 w-9">
                     <ZoomIn className="h-4 w-4" />
                   </Button>
                 </div>
@@ -140,7 +141,7 @@ const MindMap = () => {
               <Card className="overflow-hidden border-border/50 shadow-lg">
                 <CardContent className="p-0">
                   <div 
-                    className="min-h-[600px] overflow-auto"
+                    className="min-h-[400px] sm:min-h-[600px] overflow-auto"
                     style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}
                   >
                     <VisualMindMap 

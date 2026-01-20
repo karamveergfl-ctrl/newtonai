@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileQuestion, Copy, Check, ImageIcon } from "lucide-react";
+import { HelpCircle, Copy, Check, ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
@@ -25,7 +25,6 @@ const HomeworkHelp = () => {
   const { toast } = useToast();
   const { canUse, tryUseFeature, modal } = useFeatureGate("homework_help");
 
-  // Clipboard paste support for images
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
@@ -41,7 +40,7 @@ const HomeworkHelp = () => {
 
             const base64 = await fileToBase64(file);
             setCapturedScreenshot({
-              imageBase64: base64.split(",")[1], // Remove data:image/...;base64, prefix
+              imageBase64: base64.split(",")[1],
               mimeType: file.type,
             });
           }
@@ -62,15 +61,13 @@ const HomeworkHelp = () => {
   };
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
-    // Check if user can use this feature
     const allowed = await tryUseFeature();
     if (!allowed) return;
 
-    // For image uploads, use the visual solver (InlineSolutionPanel)
     if (type === "upload" && metadata?.file?.type.startsWith("image/")) {
       const base64 = await fileToBase64(metadata.file);
       setCapturedScreenshot({
-        imageBase64: base64.split(",")[1], // Remove data:image/...;base64, prefix
+        imageBase64: base64.split(",")[1],
         mimeType: metadata.file.type,
       });
       return;
@@ -159,21 +156,21 @@ const HomeworkHelp = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto space-y-6"
+          className="max-w-4xl mx-auto space-y-4 sm:space-y-6"
         >
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
-              <FileQuestion className="h-8 w-8 text-primary" />
+          <div className="text-center mb-4 sm:mb-8">
+            <div className="inline-flex items-center justify-center p-2 sm:p-3 rounded-xl bg-primary/10 mb-3 sm:mb-4">
+              <HelpCircle className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold">Homework Help</h1>
-            <p className="text-muted-foreground mt-2">
-              Get step-by-step solutions to your homework problems from any format
+            <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">Homework Helper</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-2 font-sans px-2 sm:px-0">
+              Get step-by-step solutions to your homework problems
             </p>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
               <ImageIcon className="h-3 w-3" />
               Tip: Paste an image directly with Ctrl+V / Cmd+V
             </p>
@@ -196,33 +193,30 @@ const HomeworkHelp = () => {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
-              {/* Solution Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <FileQuestion className="h-5 w-5 text-primary" />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                    <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   </div>
-                  <h2 className="text-xl font-bold tracking-tight">Step-by-Step Solution</h2>
+                  <h2 className="text-lg sm:text-xl font-bold tracking-tight">Step-by-Step Solution</h2>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCopy}
-                  className="gap-2"
+                  className="gap-2 w-full sm:w-auto"
                 >
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copied ? "Copied" : "Copy"}
                 </Button>
               </div>
               
-              {/* Solution Content */}
               <StepBySolutionRenderer content={solution} />
             </motion.div>
           )}
         </motion.div>
       </div>
 
-      {/* Visual Solver Panel for Images */}
       <AnimatePresence>
         {capturedScreenshot && (
           <InlineSolutionPanel

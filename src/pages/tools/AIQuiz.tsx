@@ -132,18 +132,18 @@ const AIQuiz = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto space-y-6"
+          className="max-w-4xl mx-auto space-y-4 sm:space-y-6"
         >
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
-              <Brain className="h-8 w-8 text-primary" />
+          <div className="text-center mb-4 sm:mb-8">
+            <div className="inline-flex items-center justify-center p-2 sm:p-3 rounded-xl bg-primary/10 mb-3 sm:mb-4">
+              <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-display font-bold tracking-tight">AI Quiz</h1>
-            <p className="text-muted-foreground mt-2 font-sans">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">AI Quiz</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-2 font-sans px-2 sm:px-0">
               Test your knowledge with AI-generated quizzes from any content
             </p>
           </div>
@@ -166,13 +166,13 @@ const AIQuiz = () => {
             >
               <Card className="text-center border-border/50 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-2xl font-display font-bold">Quiz Complete! 🎉</CardTitle>
+                  <CardTitle className="text-xl sm:text-2xl font-display font-bold">Quiz Complete! 🎉</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="text-6xl font-display font-bold text-primary">
+                <CardContent className="space-y-4 sm:space-y-6">
+                  <div className="text-5xl sm:text-6xl font-display font-bold text-primary">
                     {Math.round((score / questions.length) * 100)}%
                   </div>
-                  <p className="text-lg text-muted-foreground font-sans">
+                  <p className="text-base sm:text-lg text-muted-foreground font-sans">
                     You got {score} out of {questions.length} correct
                   </p>
                   <Button onClick={resetQuiz} className="w-full max-w-xs">
@@ -183,23 +183,23 @@ const AIQuiz = () => {
               </Card>
             </motion.div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground font-sans">
+                <span className="text-xs sm:text-sm text-muted-foreground font-sans">
                   Question {currentIndex + 1} of {questions.length}
                 </span>
-                <span className="text-sm font-medium font-sans">
+                <span className="text-xs sm:text-sm font-medium font-sans">
                   Score: {score}/{currentIndex + (showResult ? 1 : 0)}
                 </span>
               </div>
 
               <Card className="border-border/50 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-lg font-display font-semibold leading-relaxed">
+                <CardHeader className="pb-3 sm:pb-6">
+                  <CardTitle className="text-base sm:text-lg font-display font-semibold leading-relaxed">
                     <MarkdownRenderer content={currentQuestion?.question || ""} />
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2 sm:space-y-3">
                   {currentQuestion?.options.map((option, index) => (
                     <motion.button
                       key={index}
@@ -208,7 +208,7 @@ const AIQuiz = () => {
                       onClick={() => handleAnswerSelect(index)}
                       disabled={showResult}
                       className={cn(
-                        "w-full p-4 rounded-xl border text-left transition-all flex items-center gap-3 font-sans",
+                        "w-full p-3 sm:p-4 rounded-xl border text-left transition-all flex items-center gap-2 sm:gap-3 font-sans text-sm sm:text-base",
                         showResult
                           ? index === currentQuestion.correctIndex
                             ? "border-green-500 bg-green-500/10"
@@ -219,10 +219,10 @@ const AIQuiz = () => {
                       )}
                     >
                       {showResult && index === currentQuestion.correctIndex && (
-                        <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+                        <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 shrink-0" />
                       )}
                       {showResult && selectedAnswer === index && index !== currentQuestion.correctIndex && (
-                        <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+                        <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 shrink-0" />
                       )}
                       <span className="flex-1">
                         <MarkdownRenderer content={option} className="prose-sm" />

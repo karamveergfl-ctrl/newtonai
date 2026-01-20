@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Notebook, Download, Copy, Check, Sparkles } from "lucide-react";
+import { FileText, Download, Copy, Check, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
@@ -101,18 +101,18 @@ const AINotes = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto space-y-6"
+          className="max-w-4xl mx-auto space-y-4 sm:space-y-6"
         >
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
-              <Notebook className="h-8 w-8 text-primary" />
+          <div className="text-center mb-4 sm:mb-8">
+            <div className="inline-flex items-center justify-center p-2 sm:p-3 rounded-xl bg-primary/10 mb-3 sm:mb-4">
+              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
-            <h1 className="text-4xl font-display font-bold tracking-tight">AI Notes</h1>
-            <p className="text-muted-foreground mt-2 text-lg font-body">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">AI Notes</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-2 font-sans px-2 sm:px-0">
               Give any content — textbooks, videos, slides, or recordings — and get clear, organized notes
             </p>
           </div>
@@ -135,26 +135,27 @@ const AINotes = () => {
             >
               <Card className="border-border/50 shadow-lg overflow-hidden">
                 <CardHeader className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-b border-border/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/20">
-                        <Sparkles className="h-5 w-5 text-primary" />
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/20">
+                        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
-                      <h2 className="text-2xl font-display font-bold tracking-tight">Generated Notes</h2>
+                      <h2 className="text-lg sm:text-2xl font-display font-bold tracking-tight">Generated Notes</h2>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto">
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={handleCopy}
-                        className="gap-2"
+                        className="flex-1 sm:flex-none gap-2"
                       >
                         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                         {copied ? "Copied" : "Copy"}
                       </Button>
-                      <Button variant="outline" size="sm" onClick={handleDownload} className="gap-2">
+                      <Button variant="outline" size="sm" onClick={handleDownload} className="flex-1 sm:flex-none gap-2">
                         <Download className="h-4 w-4" />
-                        Download
+                        <span className="hidden sm:inline">Download</span>
+                        <span className="sm:hidden">Save</span>
                       </Button>
                     </div>
                   </div>
