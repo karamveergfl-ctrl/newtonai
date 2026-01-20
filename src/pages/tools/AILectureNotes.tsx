@@ -100,18 +100,18 @@ const AILectureNotes = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto space-y-6"
+          className="max-w-4xl mx-auto space-y-4 sm:space-y-6"
         >
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
-              <Mic className="h-8 w-8 text-primary" />
+          <div className="text-center mb-4 sm:mb-8">
+            <div className="inline-flex items-center justify-center p-2 sm:p-3 rounded-xl bg-primary/10 mb-3 sm:mb-4">
+              <Mic className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-display font-bold tracking-tight">AI Lecture Notes</h1>
-            <p className="text-muted-foreground mt-2 font-sans">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">AI Lecture Notes</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-2 font-sans px-2 sm:px-0">
               Record lectures, upload content, or paste text to get organized notes
             </p>
           </div>
@@ -133,19 +133,20 @@ const AILectureNotes = () => {
               animate={{ opacity: 1, y: 0 }}
             >
               <Card className="border-border/50 shadow-lg overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 bg-muted/30">
-                  <CardTitle className="font-display font-semibold">Lecture Notes</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={handleCopy}>
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 border-b border-border/50 bg-muted/30">
+                  <CardTitle className="font-display font-semibold text-lg sm:text-xl">Lecture Notes</CardTitle>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button variant="ghost" size="sm" onClick={handleCopy} className="flex-1 sm:flex-none">
                       {copied ? (
                         <Check className="h-4 w-4 text-green-500" />
                       ) : (
                         <Copy className="h-4 w-4" />
                       )}
+                      <span className="ml-2 sm:hidden">Copy</span>
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleDownload}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
+                    <Button variant="outline" size="sm" onClick={handleDownload} className="flex-1 sm:flex-none">
+                      <Download className="h-4 w-4 sm:mr-2" />
+                      <span className="ml-2 sm:ml-0">Download</span>
                     </Button>
                   </div>
                 </CardHeader>

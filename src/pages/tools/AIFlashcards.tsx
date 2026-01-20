@@ -106,18 +106,18 @@ const AIFlashcards = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto space-y-6"
+          className="max-w-4xl mx-auto space-y-4 sm:space-y-6"
         >
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 mb-4">
-              <Layers className="h-8 w-8 text-primary" />
+          <div className="text-center mb-4 sm:mb-8">
+            <div className="inline-flex items-center justify-center p-2 sm:p-3 rounded-xl bg-primary/10 mb-3 sm:mb-4">
+              <Layers className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-display font-bold tracking-tight">AI Flashcards</h1>
-            <p className="text-muted-foreground mt-2 font-sans">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">AI Flashcards</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-2 font-sans px-2 sm:px-0">
               Generate flashcards from any content for effective studying
             </p>
           </div>
@@ -134,9 +134,9 @@ const AIFlashcards = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground font-sans">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center justify-between px-2 sm:px-0">
+                <span className="text-xs sm:text-sm text-muted-foreground font-sans">
                   Card {currentIndex + 1} of {flashcards.length}
                 </span>
                 <Button 
@@ -147,7 +147,8 @@ const AIFlashcards = () => {
                   }}
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
-                  New Set
+                  <span className="hidden sm:inline">New Set</span>
+                  <span className="sm:hidden">New</span>
                 </Button>
               </div>
 
@@ -162,14 +163,15 @@ const AIFlashcards = () => {
                 />
               )}
 
-              <div className="flex items-center justify-center gap-4">
-                <Button variant="outline" onClick={goToPrevious}>
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Previous
+              <div className="flex items-center justify-center gap-3 sm:gap-4">
+                <Button variant="outline" onClick={goToPrevious} className="gap-1 sm:gap-2">
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Previous</span>
+                  <span className="sm:hidden">Prev</span>
                 </Button>
-                <Button onClick={goToNext}>
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                <Button onClick={goToNext} className="gap-1 sm:gap-2">
+                  <span>Next</span>
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
