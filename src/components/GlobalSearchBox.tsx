@@ -167,6 +167,21 @@ export const GlobalSearchBox = ({ onTopicSearch, isSearching }: GlobalSearchBoxP
 
   const showDropdown = isFocused && searchHistory.length > 0 && !isSearching && !isListening;
 
+  const topicChips = [
+    { label: "Physics", query: "Newton's laws of motion" },
+    { label: "Math", query: "Calculus fundamentals" },
+    { label: "Biology", query: "Photosynthesis process" },
+    { label: "Chemistry", query: "Chemical bonding" },
+    { label: "History", query: "World War 2" },
+    { label: "Economics", query: "Supply and demand" },
+  ];
+
+  const handleChipClick = (query: string) => {
+    setSearchQuery(query);
+    saveSearchHistory(query);
+    onTopicSearch(query);
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto mb-6" data-tutorial="search-box" ref={containerRef}>
       <div className="flex items-center gap-2 mb-2 text-muted-foreground">
@@ -243,6 +258,20 @@ export const GlobalSearchBox = ({ onTopicSearch, isSearching }: GlobalSearchBoxP
             </ul>
           </div>
         )}
+      </div>
+
+      {/* Quick Topic Chips */}
+      <div className="flex flex-wrap gap-2 mt-3">
+        {topicChips.map((chip) => (
+          <button
+            key={chip.label}
+            onClick={() => handleChipClick(chip.query)}
+            disabled={isSearching}
+            className="px-3 py-1.5 text-xs font-medium rounded-full bg-muted hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20 transition-colors disabled:opacity-50"
+          >
+            {chip.label}
+          </button>
+        ))}
       </div>
     </div>
   );
