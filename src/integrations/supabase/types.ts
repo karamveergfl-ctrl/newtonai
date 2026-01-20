@@ -154,6 +154,7 @@ export type Database = {
           created_at: string | null
           duration_seconds: number | null
           id: string
+          language: string | null
           script: Json
           source_content: string | null
           title: string
@@ -164,6 +165,7 @@ export type Database = {
           created_at?: string | null
           duration_seconds?: number | null
           id?: string
+          language?: string | null
           script: Json
           source_content?: string | null
           title: string
@@ -174,6 +176,7 @@ export type Database = {
           created_at?: string | null
           duration_seconds?: number | null
           id?: string
+          language?: string | null
           script?: Json
           source_content?: string | null
           title?: string

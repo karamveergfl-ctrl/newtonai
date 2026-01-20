@@ -14,6 +14,7 @@ interface PodcastData {
   title: string;
   segments: PodcastSegment[];
   sourceContent?: string;
+  language?: string; // Language code for voice selection
 }
 
 interface PodcastContextType {
@@ -76,6 +77,7 @@ export function PodcastProvider({ children }: PodcastProviderProps) {
 
   const audioQueue = usePodcastAudioQueue({
     segments: (podcast?.segments || []) as AudioSegment[],
+    language: podcast?.language || "en", // Pass language for consistent voice
     onComplete: () => {
       // Optionally close or minimize on complete
     },
