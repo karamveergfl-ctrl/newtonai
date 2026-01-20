@@ -8,7 +8,7 @@ import { PodcastHistory } from "@/components/PodcastHistory";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Podcast, Sparkles, ArrowLeft, Radio, Mic2 } from "lucide-react";
+import { Podcast, Sparkles, ArrowLeft, Radio, Mic2, Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
@@ -45,7 +45,7 @@ const stepMessages: Record<GenerationStep, string> = {
   idle: "",
   analyzing: "Analyzing your content...",
   scripting: "Writing podcast script...",
-  voicing: "Preparing podcast voices...",
+  voicing: "Generating professional voices...",
   complete: "Your podcast is ready!",
 };
 
@@ -58,6 +58,7 @@ export default function AIPodcast() {
   const [isRaiseHandOpen, setIsRaiseHandOpen] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
+  const [voicingProgress, setVoicingProgress] = useState(0);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
 
   const creditCost = getFeatureCost("ai_podcast");
@@ -75,6 +76,7 @@ export default function AIPodcast() {
 
     setIsProcessing(true);
     setProgress(0);
+    setVoicingProgress(0);
     setGenerationStep("analyzing");
 
     let processedContent = content;
@@ -85,7 +87,6 @@ export default function AIPodcast() {
         const file = metadata.file;
         
         if (file.type === "application/pdf") {
-          // Convert PDF to base64 and extract text
           const reader = new FileReader();
           const base64 = await new Promise<string>((resolve) => {
             reader.onload = () => resolve((reader.result as string).split(",")[1]);
@@ -100,7 +101,6 @@ export default function AIPodcast() {
           if (pdfError) throw new Error("Failed to extract text from PDF");
           processedContent = pdfData?.text || "";
         } else if (file.type.startsWith("image/")) {
-          // Use OCR for images
           const reader = new FileReader();
           const base64 = await new Promise<string>((resolve) => {
             reader.onload = () => resolve((reader.result as string).split(",")[1]);
@@ -115,11 +115,9 @@ export default function AIPodcast() {
           if (ocrError) throw new Error("Failed to extract text from image");
           processedContent = ocrData?.text || "";
         } else {
-          // Try to read as text
           processedContent = await file.text();
         }
       } else if (type === "youtube" && metadata?.videoId) {
-        // Fetch YouTube transcript
         const { data: transcriptData, error: transcriptError } = await supabase.functions.invoke(
           "fetch-transcript",
           { body: { videoId: metadata.videoId } }
@@ -128,7 +126,6 @@ export default function AIPodcast() {
         if (transcriptError) throw new Error("Failed to fetch YouTube transcript");
         processedContent = transcriptData?.transcript || "";
       } else if (type === "recording" && content) {
-        // Transcribe audio
         const { data: transcribeData, error: transcribeError } = await supabase.functions.invoke(
           "transcribe-audio",
           { body: { audio: content, mimeType: "audio/webm" } }
@@ -160,16 +157,47 @@ export default function AIPodcast() {
 
       setProgress(40);
 
-      // Step 2: Prepare segments for Web Speech playback (no external TTS)
+      // Step 2: Generate ElevenLabs audio for each segment
       setGenerationStep("voicing");
       
-      const segments: PodcastSegment[] = scriptData.segments.map((segment: any) => ({
+      let segments: PodcastSegment[] = scriptData.segments.map((segment: any) => ({
         speaker: segment.speaker,
         name: segment.name,
         text: segment.text,
         emotion: segment.emotion,
-        fallbackAudio: true, // Use Web Speech API for all segments
+        fallbackAudio: true, // Default to Web Speech fallback
       }));
+
+      // Try to generate ElevenLabs audio
+      try {
+        const { data: ttsData, error: ttsError } = await supabase.functions.invoke(
+          "elevenlabs-podcast-tts",
+          {
+            body: { segments: scriptData.segments },
+          }
+        );
+
+        if (!ttsError && ttsData?.segments) {
+          // Update segments with audio data
+          segments = ttsData.segments.map((seg: any, idx: number) => ({
+            ...segments[idx],
+            audio: seg.audio || null,
+            fallbackAudio: !seg.audio, // Only use fallback if no audio
+          }));
+
+          const successRate = ttsData.stats?.success / ttsData.stats?.total;
+          setVoicingProgress(Math.round(successRate * 100));
+
+          if (ttsData.stats?.failed > 0) {
+            console.log(`${ttsData.stats.failed} segments will use browser voice fallback`);
+          }
+        } else {
+          console.log("ElevenLabs TTS unavailable, using browser voice");
+        }
+      } catch (ttsErr) {
+        console.log("ElevenLabs TTS failed, using browser voice fallback:", ttsErr);
+        // Continue with fallback - segments already have fallbackAudio: true
+      }
 
       setProgress(90);
 
@@ -212,7 +240,13 @@ export default function AIPodcast() {
 
       setGenerationStep("complete");
       setProgress(100);
-      toast.success("Your AI podcast is ready!");
+      
+      const hasElevenLabsAudio = segments.some(s => s.audio);
+      if (hasElevenLabsAudio) {
+        toast.success("Your AI podcast with professional voices is ready!");
+      } else {
+        toast.success("Your AI podcast is ready! Using browser voice synthesis.");
+      }
     } catch (error) {
       console.error("Podcast generation error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to generate podcast");
@@ -269,7 +303,7 @@ export default function AIPodcast() {
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Transform your study materials into an engaging podcast with AI hosts. 
+            Transform your study materials into an engaging podcast with professional AI voices. 
             Raise your hand anytime to ask questions!
           </p>
         </motion.div>
@@ -322,7 +356,7 @@ export default function AIPodcast() {
                   />
                   <div className="absolute inset-2 rounded-full bg-background flex items-center justify-center">
                     {generationStep === "voicing" ? (
-                      <Mic2 className="w-10 h-10 text-primary animate-pulse" />
+                      <Volume2 className="w-10 h-10 text-primary animate-pulse" />
                     ) : generationStep === "scripting" ? (
                       <Sparkles className="w-10 h-10 text-primary animate-pulse" />
                     ) : (
@@ -336,7 +370,9 @@ export default function AIPodcast() {
                     {stepMessages[generationStep]}
                   </h3>
                   <p className="text-muted-foreground text-sm">
-                    This may take a minute...
+                    {generationStep === "voicing" 
+                      ? "Creating professional voice audio with ElevenLabs..."
+                      : "This may take a minute..."}
                   </p>
                 </div>
 
@@ -398,11 +434,11 @@ export default function AIPodcast() {
                   </div>
                   <div className="p-4 rounded-lg bg-secondary/5">
                     <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-secondary/10 flex items-center justify-center">
-                      <Mic2 className="w-5 h-5 text-secondary" />
+                      <Volume2 className="w-5 h-5 text-secondary" />
                     </div>
-                    <h3 className="font-medium">Browser Voice Synthesis</h3>
+                    <h3 className="font-medium">Professional AI Voices</h3>
                     <p className="text-muted-foreground text-xs mt-1">
-                      Natural text-to-speech powered by your browser
+                      Studio-quality voices powered by ElevenLabs
                     </p>
                   </div>
                   <div className="p-4 rounded-lg bg-accent/5">
