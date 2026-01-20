@@ -233,7 +233,13 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         }}
         {...props}
       >
-        <Menu />
+        <Menu 
+          className={cn(
+            "transition-transform duration-300",
+            open ? "rotate-90" : "rotate-0"
+          )}
+          style={{ transitionTimingFunction: "cubic-bezier(0.68, -0.55, 0.265, 1.55)" }}
+        />
         <span className="sr-only">Toggle Sidebar</span>
       </Button>
     );
