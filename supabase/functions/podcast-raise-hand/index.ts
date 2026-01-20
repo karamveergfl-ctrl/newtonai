@@ -130,7 +130,7 @@ JSON shape:
     }
 
     // Generate audio for each segment
-    const audioSegments: Array<{ speaker: string; name: string; text: string; audio?: string }> = [];
+    const audioSegments: Array<{ speaker: string; name: string; text: string; audio?: string; fallbackAudio?: boolean }> = [];
 
     for (const segment of segments) {
       const voiceId = VOICE_IDS[segment.speaker as keyof typeof VOICE_IDS] || VOICE_IDS.host1;
@@ -159,6 +159,11 @@ JSON shape:
       if (!ttsResponse.ok) {
         const t = await ttsResponse.text();
         console.error("ElevenLabs TTS error:", ttsResponse.status, t);
+        // Mark segment for fallback TTS
+        audioSegments.push({
+          ...segment,
+          fallbackAudio: true,
+        });
         continue;
       }
 
@@ -169,11 +174,13 @@ JSON shape:
       });
     }
 
-    if (audioSegments.length === 0) {
-      throw new Error("Failed to generate audio for response");
-    }
+    // Check if all segments need fallback
+    const allFallback = audioSegments.every((s) => s.fallbackAudio && !s.audio);
+    const ttsError = allFallback
+      ? "Voice generation unavailable. Using browser voices as fallback."
+      : undefined;
 
-    return new Response(JSON.stringify({ segments: audioSegments }), {
+    return new Response(JSON.stringify({ segments: audioSegments, ttsError }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

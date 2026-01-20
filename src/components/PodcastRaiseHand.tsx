@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, MicOff, Send, Loader2, X, Volume2 } from "lucide-react";
+import { Mic, MicOff, Send, Loader2, X, Volume2, Volume1 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 
 interface PodcastRaiseHandProps {
   isOpen: boolean;
@@ -21,6 +23,7 @@ interface ResponseSegment {
   name: string;
   text: string;
   audio?: string;
+  fallbackAudio?: boolean;
 }
 
 export function PodcastRaiseHand({
@@ -36,9 +39,11 @@ export function PodcastRaiseHand({
   const [isPlayingResponse, setIsPlayingResponse] = useState(false);
   const [responseSegments, setResponseSegments] = useState<ResponseSegment[]>([]);
   const [currentResponseIndex, setCurrentResponseIndex] = useState(0);
+  const [usingFallback, setUsingFallback] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { speak, cancel: cancelSpeech, isSupported: webSpeechSupported } = useWebSpeechTTS();
 
   const startRecording = async () => {
     try {
@@ -121,6 +126,13 @@ export function PodcastRaiseHand({
       if (error) throw error;
 
       if (data?.segments) {
+        // Check if we need fallback TTS
+        const needsFallback = data.ttsError || data.segments.every((s: ResponseSegment) => !s.audio);
+        if (needsFallback && webSpeechSupported) {
+          setUsingFallback(true);
+          toast.info("Using browser voices as fallback", { duration: 3000 });
+        }
+        
         setResponseSegments(data.segments);
         setCurrentResponseIndex(0);
         setIsPlayingResponse(true);
@@ -139,32 +151,63 @@ export function PodcastRaiseHand({
       setIsProcessing(false);
       setResponseSegments([]);
       setQuestion("");
+      setUsingFallback(false);
       onResponseComplete();
       return;
     }
 
     const segment = segments[index];
-    if (!segment.audio) {
-      playResponseSegment(segments, index + 1);
-      return;
-    }
-
     setCurrentResponseIndex(index);
-    
-    const audioUrl = `data:audio/mpeg;base64,${segment.audio}`;
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
 
-    audio.onended = () => {
+    // If segment has audio, play it
+    if (segment.audio) {
+      const audioUrl = `data:audio/mpeg;base64,${segment.audio}`;
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        playResponseSegment(segments, index + 1);
+      };
+
+      audio.onerror = () => {
+        console.error("Audio playback error, trying fallback");
+        // Try Web Speech fallback on audio error
+        if (webSpeechSupported) {
+          playWithWebSpeech(segment, segments, index);
+        } else {
+          playResponseSegment(segments, index + 1);
+        }
+      };
+
+      await audio.play().catch(console.error);
+    } else if (webSpeechSupported) {
+      // Use Web Speech API fallback
+      await playWithWebSpeech(segment, segments, index);
+    } else {
+      // No audio and no fallback, skip to next
       playResponseSegment(segments, index + 1);
-    };
+    }
+  };
 
-    audio.onerror = () => {
-      console.error("Audio playback error");
+  const playWithWebSpeech = async (
+    segment: ResponseSegment,
+    segments: ResponseSegment[],
+    index: number
+  ) => {
+    try {
+      await speak(segment.text, {
+        speaker: segment.speaker as "host1" | "host2",
+        onEnd: () => {
+          playResponseSegment(segments, index + 1);
+        },
+        onError: () => {
+          playResponseSegment(segments, index + 1);
+        },
+      });
+    } catch (error) {
+      console.error("Web Speech error:", error);
       playResponseSegment(segments, index + 1);
-    };
-
-    await audio.play().catch(console.error);
+    }
   };
 
   useEffect(() => {
@@ -180,10 +223,12 @@ export function PodcastRaiseHand({
     if (audioRef.current) {
       audioRef.current.pause();
     }
+    cancelSpeech();
     setResponseSegments([]);
     setQuestion("");
     setIsPlayingResponse(false);
     setIsProcessing(false);
+    setUsingFallback(false);
     onClose();
   };
 
@@ -207,16 +252,27 @@ export function PodcastRaiseHand({
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-3"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Volume2 className="w-5 h-5 text-primary animate-pulse" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      {usingFallback ? (
+                        <Volume1 className="w-5 h-5 text-primary animate-pulse" />
+                      ) : (
+                        <Volume2 className="w-5 h-5 text-primary animate-pulse" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-primary">
+                        {responseSegments[currentResponseIndex]?.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Speaking...</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-primary">
-                      {responseSegments[currentResponseIndex]?.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Speaking...</p>
-                  </div>
+                  {usingFallback && (
+                    <Badge variant="secondary" className="text-xs">
+                      Browser Voice
+                    </Badge>
+                  )}
                 </div>
                 
                 <Card className="p-3 bg-primary/5">
