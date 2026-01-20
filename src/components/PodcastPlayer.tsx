@@ -60,7 +60,21 @@ export function PodcastPlayer({
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Use refs to track current state for callbacks (avoids stale closures)
+  const isPlayingRef = useRef(isPlaying);
+  const isRaiseHandActiveRef = useRef(isRaiseHandActive);
+  
   const { speak, cancel: cancelSpeech, isSupported: webSpeechSupported } = useWebSpeechTTS();
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    isRaiseHandActiveRef.current = isRaiseHandActive;
+  }, [isRaiseHandActive]);
 
   const currentSeg = segments[currentSegment];
 
@@ -87,12 +101,11 @@ export function PodcastPlayer({
     setCurrentSegment(index);
     setUsingFallback(needsFallback);
 
-    // Cancel any ongoing audio
+    // Stop any ongoing HTML audio (but don't cancel speech here - let speak() handle it internally)
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
-    cancelSpeech();
 
     try {
       if (segment.audio) {
@@ -144,24 +157,19 @@ export function PodcastPlayer({
       await speak(segment.text, {
         speaker: segment.speaker,
         rate: playbackSpeed,
-        onEnd: () => {
-          if (isPlaying && !isRaiseHandActive) {
-            playSegment(index + 1);
-          }
-        },
-        onError: () => {
-          if (isPlaying && !isRaiseHandActive) {
-            playSegment(index + 1);
-          }
-        },
       });
+      // After speech completes successfully, check refs for current state
+      if (isPlayingRef.current && !isRaiseHandActiveRef.current) {
+        setTimeout(() => playSegment(index + 1), 100);
+      }
     } catch (error) {
       console.error("Web Speech error:", error);
-      if (isPlaying && !isRaiseHandActive) {
-        playSegment(index + 1);
+      // Only advance on actual errors
+      if (isPlayingRef.current && !isRaiseHandActiveRef.current) {
+        setTimeout(() => playSegment(index + 1), 100);
       }
     }
-  }, [speak, playbackSpeed, isPlaying, isRaiseHandActive]);
+  }, [speak, playbackSpeed]);
 
   useEffect(() => {
     if (isPlaying && !isRaiseHandActive && !isLoading) {
