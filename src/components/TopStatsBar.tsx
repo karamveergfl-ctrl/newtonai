@@ -4,6 +4,7 @@ import { CreditBalance } from "@/components/CreditBalance";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function TopStatsBar() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export function TopStatsBar() {
       <div className="container mx-auto px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <SidebarTrigger className="md:hidden h-8 w-8" />
             <GamificationBadge />
             <CreditBalance showLabel />
           </div>

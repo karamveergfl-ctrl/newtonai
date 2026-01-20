@@ -36,10 +36,6 @@ export function AppLayout({
         <AppSidebar onToolSelect={onToolSelect} onSignOut={onSignOut} />
         <main className="flex-1 flex flex-col overflow-hidden">
           {showTopStats && <TopStatsBar />}
-          {/* Mobile trigger */}
-          <div className="md:hidden flex items-center h-12 px-4 border-b border-border bg-background">
-            <SidebarTrigger />
-          </div>
           <div className="flex-1 overflow-auto">
             {children}
           </div>
