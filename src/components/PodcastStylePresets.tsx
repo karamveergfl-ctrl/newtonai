@@ -21,8 +21,26 @@ import {
   Sparkles,
   User,
   Settings2,
+  Globe,
 } from "lucide-react";
 import { motion } from "framer-motion";
+
+// Supported languages
+const LANGUAGES = [
+  { code: "en", name: "English", flag: "🇺🇸" },
+  { code: "hi", name: "Hindi (हिन्दी)", flag: "🇮🇳" },
+  { code: "es", name: "Spanish (Español)", flag: "🇪🇸" },
+  { code: "fr", name: "French (Français)", flag: "🇫🇷" },
+  { code: "de", name: "German (Deutsch)", flag: "🇩🇪" },
+  { code: "pt", name: "Portuguese (Português)", flag: "🇧🇷" },
+  { code: "ja", name: "Japanese (日本語)", flag: "🇯🇵" },
+  { code: "zh", name: "Chinese (中文)", flag: "🇨🇳" },
+  { code: "ko", name: "Korean (한국어)", flag: "🇰🇷" },
+  { code: "ar", name: "Arabic (العربية)", flag: "🇸🇦" },
+  { code: "ta", name: "Tamil (தமிழ்)", flag: "🇮🇳" },
+  { code: "te", name: "Telugu (తెలుగు)", flag: "🇮🇳" },
+  { code: "bn", name: "Bengali (বাংলা)", flag: "🇮🇳" },
+];
 
 export interface PodcastStyle {
   id: "casual" | "academic" | "deep-dive" | "interview";
@@ -44,6 +62,7 @@ export interface PodcastSettings {
   tone: "enthusiastic" | "balanced" | "serious";
   depth: number; // 1-5, affects segment count and detail
   customInstructions: string;
+  language: string; // Language code (en, hi, es, etc.)
 }
 
 const PRESETS: PodcastStyle[] = [
@@ -98,6 +117,7 @@ const DEFAULT_SETTINGS: PodcastSettings = {
   tone: "balanced",
   depth: 3,
   customInstructions: "",
+  language: "en",
 };
 
 interface PodcastStylePresetsProps {
@@ -112,7 +132,7 @@ export function PodcastStylePresets({
   onGenerate,
 }: PodcastStylePresetsProps) {
   const [settings, setSettings] = useState<PodcastSettings>(DEFAULT_SETTINGS);
-  const [activeTab, setActiveTab] = useState<"style" | "hosts" | "advanced">("style");
+  const [activeTab, setActiveTab] = useState<"style" | "language" | "hosts" | "advanced">("style");
 
   const selectedPreset = PRESETS.find((p) => p.id === settings.style) || PRESETS[0];
 
@@ -151,8 +171,12 @@ export function PodcastStylePresets({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="style">Style</TabsTrigger>
+            <TabsTrigger value="language" className="gap-1">
+              <Globe className="w-3 h-3" />
+              Language
+            </TabsTrigger>
             <TabsTrigger value="hosts">Hosts</TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
@@ -197,6 +221,46 @@ export function PodcastStylePresets({
                 <span className="text-sm font-medium">Est. Duration</span>
                 <Badge variant="outline">~{estimatedDuration} min</Badge>
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="language" className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label className="text-base">Select Language</Label>
+              <p className="text-sm text-muted-foreground">
+                The podcast will be generated and spoken in the selected language
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {LANGUAGES.map((lang) => (
+                <motion.button
+                  key={lang.code}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setSettings((s) => ({ ...s, language: lang.code }))}
+                  className={`p-3 rounded-lg border-2 text-left transition-all ${
+                    settings.language === lang.code
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{lang.flag}</span>
+                    <span className="font-medium text-sm">{lang.name}</span>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 space-y-2">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">
+                  Selected: <strong>{LANGUAGES.find(l => l.code === settings.language)?.name || "English"}</strong>
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {settings.language !== "en" && "Uses ElevenLabs multilingual voices for natural pronunciation"}
+              </p>
             </div>
           </TabsContent>
 

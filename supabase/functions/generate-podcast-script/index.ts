@@ -14,7 +14,25 @@ interface PodcastSettings {
   tone: "enthusiastic" | "balanced" | "serious";
   depth: number;
   customInstructions: string;
+  language: string;
 }
+
+// Language-specific prompts for script generation
+const LANGUAGE_PROMPTS: Record<string, string> = {
+  en: "Generate the entire podcast script in English.",
+  hi: "Generate the entire podcast script in Hindi (हिन्दी). Use natural conversational Hindi. Keep common technical terms in English where appropriate for clarity. Write in Devanagari script.",
+  es: "Generate the entire podcast script in Spanish (Español). Use natural conversational Spanish appropriate for a general Latin American audience.",
+  fr: "Generate the entire podcast script in French (Français). Use natural conversational French.",
+  de: "Generate the entire podcast script in German (Deutsch). Use natural conversational German.",
+  pt: "Generate the entire podcast script in Portuguese (Português). Use Brazilian Portuguese for broader accessibility.",
+  ja: "Generate the entire podcast script in Japanese (日本語). Use natural conversational Japanese with appropriate formality.",
+  zh: "Generate the entire podcast script in Mandarin Chinese (中文). Use simplified Chinese characters.",
+  ko: "Generate the entire podcast script in Korean (한국어). Use natural conversational Korean.",
+  ar: "Generate the entire podcast script in Arabic (العربية). Use Modern Standard Arabic for accessibility.",
+  ta: "Generate the entire podcast script in Tamil (தமிழ்). Use natural conversational Tamil.",
+  te: "Generate the entire podcast script in Telugu (తెలుగు). Use natural conversational Telugu.",
+  bn: "Generate the entire podcast script in Bengali (বাংলা). Use natural conversational Bengali.",
+};
 
 const STYLE_PROMPTS: Record<string, string> = {
   casual: `Create a friendly, relaxed conversation like two study buddies chatting over coffee. 
@@ -77,14 +95,19 @@ serve(async (req) => {
       tone: settings?.tone || "balanced",
       depth: settings?.depth || 3,
       customInstructions: settings?.customInstructions || "",
+      language: settings?.language || "en",
     };
 
     const stylePrompt = STYLE_PROMPTS[podcastSettings.style] || STYLE_PROMPTS.casual;
     const toneModifier = TONE_MODIFIERS[podcastSettings.tone] || TONE_MODIFIERS.balanced;
     const depthConfig = DEPTH_CONFIGS[podcastSettings.depth] || DEPTH_CONFIGS[3];
+    const languagePrompt = LANGUAGE_PROMPTS[podcastSettings.language] || LANGUAGE_PROMPTS.en;
 
     const systemPrompt = `You are a podcast script writer for an educational podcast called "Study Sessions". 
 You create engaging, conversational dialogues between two hosts.
+
+**LANGUAGE:**
+${languagePrompt}
 
 **PODCAST STYLE: ${podcastSettings.style.toUpperCase()}**
 ${stylePrompt}
@@ -109,6 +132,7 @@ ${podcastSettings.customInstructions ? `**SPECIAL INSTRUCTIONS:**\n${podcastSett
 4. Add interesting facts or real-world applications when relevant
 5. Each segment should be 1-3 sentences for natural speech
 6. Include an intro greeting and a brief outro
+7. THE ENTIRE SCRIPT MUST BE IN THE SPECIFIED LANGUAGE (except technical terms if noted)
 
 **EMOTION HINTS:**
 Add emotion hints that will help with voice synthesis:
@@ -116,10 +140,11 @@ Add emotion hints that will help with voice synthesis:
 
 Return ONLY valid JSON in this exact format:
 {
-  "title": "Episode title based on content",
+  "title": "Episode title based on content (in the specified language)",
+  "language": "${podcastSettings.language}",
   "segments": [
-    {"speaker": "host1", "name": "${podcastSettings.host1Name}", "text": "dialogue text here", "emotion": "enthusiastic"},
-    {"speaker": "host2", "name": "${podcastSettings.host2Name}", "text": "dialogue text here", "emotion": "thoughtful"}
+    {"speaker": "host1", "name": "${podcastSettings.host1Name}", "text": "dialogue text here in the specified language", "emotion": "enthusiastic"},
+    {"speaker": "host2", "name": "${podcastSettings.host2Name}", "text": "dialogue text here in the specified language", "emotion": "thoughtful"}
   ]
 }`;
 
