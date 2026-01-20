@@ -9,11 +9,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { useFeatureGate } from "@/components/FeatureGate";
+import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
   processUploadedFile 
 } from "@/utils/contentProcessing";
+
+interface PendingContent {
+  content: string;
+  type: string;
+  metadata?: { videoId?: string; file?: File; language?: string };
+}
 
 const MindMap = () => {
   const [mindMapData, setMindMapData] = useState<any>(null);
@@ -22,10 +29,24 @@ const MindMap = () => {
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("mind_map");
 
+  // Settings dialog state
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
+
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
     if (!allowed) return;
 
+    // Store pending content and show settings dialog
+    setPendingContent({ content, type, metadata });
+    setShowSettingsDialog(true);
+  };
+
+  const handleConfirmGenerate = async (settings: UniversalGenerationSettings) => {
+    if (!pendingContent) return;
+
+    const { content, type, metadata } = pendingContent;
+    setPendingContent(null);
     setIsGenerating(true);
     setMindMapData(null);
 
@@ -58,6 +79,7 @@ const MindMap = () => {
           body: JSON.stringify({ 
             content: textContent.slice(0, 10000),
             language: metadata?.language || "en",
+            detailLevel: settings.detailLevel,
           }),
         }
       );
@@ -65,7 +87,7 @@ const MindMap = () => {
       if (!response.ok) throw new Error("Failed to generate mind map");
 
       const data = await response.json();
-      setMindMapData(data.mindMap);
+      setMindMapData(data.mindMapData || data.mindMap);
 
       toast({
         title: "Mind Map Ready! 🧠",
@@ -84,6 +106,14 @@ const MindMap = () => {
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.2, 2));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.2, 0.5));
+
+  const getContentTitle = () => {
+    if (!pendingContent) return "";
+    if (pendingContent.type === "youtube") return "YouTube Video";
+    if (pendingContent.type === "recording") return "Audio Recording";
+    if (pendingContent.metadata?.file) return pendingContent.metadata.file.name;
+    return "Text Content";
+  };
 
   return (
     <AppLayout>
@@ -156,6 +186,17 @@ const MindMap = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Settings Dialog */}
+      <UniversalStudySettingsDialog
+        open={showSettingsDialog}
+        onOpenChange={setShowSettingsDialog}
+        type="mindmap"
+        contentTitle={getContentTitle()}
+        contentType={pendingContent?.type as any}
+        onGenerate={handleConfirmGenerate}
+      />
+
       {modal}
     </AppLayout>
   );

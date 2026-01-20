@@ -3,13 +3,14 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { FileText, Download, Copy, Check, Sparkles, Volume2, VolumeX, Pause } from "lucide-react";
+import { FileText, Download, Copy, Check, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
+import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -33,6 +34,12 @@ const stripMarkdown = (text: string): string => {
     .trim();
 };
 
+interface PendingContent {
+  content: string;
+  type: string;
+  metadata?: { videoId?: string; file?: File; language?: string };
+}
+
 const AINotes = () => {
   const [notes, setNotes] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -40,6 +47,10 @@ const AINotes = () => {
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("ai_notes");
   const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
+
+  // Settings dialog state
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
 
   const handleReadAloud = useCallback(async () => {
     if (isSpeaking) {
@@ -78,6 +89,16 @@ const AINotes = () => {
     const allowed = await tryUseFeature();
     if (!allowed) return;
 
+    // Store pending content and show settings dialog
+    setPendingContent({ content, type, metadata });
+    setShowSettingsDialog(true);
+  };
+
+  const handleConfirmGenerate = async (settings: UniversalGenerationSettings) => {
+    if (!pendingContent) return;
+
+    const { content, type, metadata } = pendingContent;
+    setPendingContent(null);
     setIsGenerating(true);
     setNotes("");
     cancel(); // Stop any ongoing speech
@@ -111,6 +132,7 @@ const AINotes = () => {
           body: JSON.stringify({ 
             transcription: textContent.slice(0, 15000),
             language: metadata?.language || "en",
+            detailLevel: settings.detailLevel,
           }),
         }
       );
@@ -150,6 +172,14 @@ const AINotes = () => {
     setCopied(true);
     toast({ title: "Copied to clipboard!" });
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const getContentTitle = () => {
+    if (!pendingContent) return "";
+    if (pendingContent.type === "youtube") return "YouTube Video";
+    if (pendingContent.type === "recording") return "Audio Recording";
+    if (pendingContent.metadata?.file) return pendingContent.metadata.file.name;
+    return "Text Content";
   };
 
   return (
@@ -242,6 +272,17 @@ const AINotes = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Settings Dialog */}
+      <UniversalStudySettingsDialog
+        open={showSettingsDialog}
+        onOpenChange={setShowSettingsDialog}
+        type="notes"
+        contentTitle={getContentTitle()}
+        contentType={pendingContent?.type as any}
+        onGenerate={handleConfirmGenerate}
+      />
+
       {modal}
     </AppLayout>
   );
