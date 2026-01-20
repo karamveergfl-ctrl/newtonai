@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -145,22 +144,20 @@ export const GamificationBadge = () => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="gap-2 h-8 px-2"
+        <button 
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border hover:bg-muted hover:border-primary/30 transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-1">
             <Trophy className="w-4 h-4 text-yellow-500" />
-            <span className="text-xs font-bold">{xp} XP</span>
+            <span className="text-xs font-bold text-foreground">{xp} XP</span>
           </div>
           {streak > 0 && (
             <div className="flex items-center gap-1">
               <Flame className="w-4 h-4 text-orange-500" />
-              <span className="text-xs font-bold">{streak}</span>
+              <span className="text-xs font-bold text-foreground">{streak}</span>
             </div>
           )}
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="p-4 bg-gradient-to-br from-primary/10 to-secondary/10 border-b">
