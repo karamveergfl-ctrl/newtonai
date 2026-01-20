@@ -37,6 +37,7 @@ import {
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { AmbientSoundPicker } from "@/components/AmbientSoundPicker";
 
 export interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -317,6 +318,9 @@ export function PodcastPlayer({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Ambient Sounds Picker */}
+            <AmbientSoundPicker />
             
             <Button
               variant="ghost"
