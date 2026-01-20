@@ -116,7 +116,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
+      <SidebarContent className="px-2 overflow-hidden">
         {/* Home */}
         <SidebarMenu>
           <SidebarMenuItem>
