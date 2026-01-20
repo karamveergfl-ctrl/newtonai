@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -233,10 +233,11 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         }}
         {...props}
       >
-        <Menu className={cn(
-          "transition-transform duration-300 ease-in-out",
-          open && "rotate-90"
-        )} />
+        {open ? (
+          <X className="transition-transform duration-300 ease-in-out rotate-0" />
+        ) : (
+          <Menu className="transition-transform duration-300 ease-in-out rotate-0" />
+        )}
         <span className="sr-only">Toggle Sidebar</span>
       </Button>
     );
