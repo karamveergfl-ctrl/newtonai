@@ -30,6 +30,7 @@ interface Achievement {
 export const GamificationBadge = () => {
   const [xp, setXp] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [isGlowing, setIsGlowing] = useState(false);
   const [stats, setStats] = useState({
     flashcardsCompleted: 0,
     quizzesCompleted: 0,
@@ -66,7 +67,15 @@ export const GamificationBadge = () => {
     // Listen for XP updates
     const handleXpUpdate = () => {
       const newXp = localStorage.getItem('smartreader_xp');
-      if (newXp) setXp(parseInt(newXp, 10));
+      if (newXp) {
+        const newXpValue = parseInt(newXp, 10);
+        if (newXpValue > xp) {
+          // Trigger glow animation when XP increases
+          setIsGlowing(true);
+          setTimeout(() => setIsGlowing(false), 1500);
+        }
+        setXp(newXpValue);
+      }
     };
     
     window.addEventListener('storage', handleXpUpdate);
@@ -145,7 +154,10 @@ export const GamificationBadge = () => {
     <Popover>
       <PopoverTrigger asChild>
         <button 
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border hover:bg-muted hover:border-primary/30 transition-colors cursor-pointer"
+          className={cn(
+            "flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border hover:bg-muted hover:border-primary/30 transition-all duration-300 cursor-pointer",
+            isGlowing && "border-yellow-500/50 shadow-[0_0_12px_hsl(45,100%,50%/0.4)] scale-105"
+          )}
         >
           <div className="flex items-center gap-1">
             <Trophy className="w-4 h-4 text-yellow-500" />
