@@ -73,11 +73,73 @@ export default function AIPodcast() {
     }
 
     setIsProcessing(true);
-    setSourceContent(content);
     setProgress(0);
     setGenerationStep("analyzing");
 
+    let processedContent = content;
+
     try {
+      // If file is uploaded, extract text from it first
+      if (type === "upload" && metadata?.file && !content) {
+        const file = metadata.file;
+        
+        if (file.type === "application/pdf") {
+          // Extract text from PDF
+          const formData = new FormData();
+          formData.append("file", file);
+          
+          const { data: pdfData, error: pdfError } = await supabase.functions.invoke(
+            "extract-pdf-text",
+            { body: formData }
+          );
+          
+          if (pdfError) throw new Error("Failed to extract text from PDF");
+          processedContent = pdfData?.text || "";
+        } else if (file.type.startsWith("image/")) {
+          // Use OCR for images
+          const reader = new FileReader();
+          const base64 = await new Promise<string>((resolve) => {
+            reader.onload = () => resolve((reader.result as string).split(",")[1]);
+            reader.readAsDataURL(file);
+          });
+          
+          const { data: ocrData, error: ocrError } = await supabase.functions.invoke(
+            "ocr-handwriting",
+            { body: { image: base64 } }
+          );
+          
+          if (ocrError) throw new Error("Failed to extract text from image");
+          processedContent = ocrData?.text || "";
+        } else {
+          // Try to read as text
+          processedContent = await file.text();
+        }
+      } else if (type === "youtube" && metadata?.videoId) {
+        // Fetch YouTube transcript
+        const { data: transcriptData, error: transcriptError } = await supabase.functions.invoke(
+          "fetch-transcript",
+          { body: { videoId: metadata.videoId } }
+        );
+        
+        if (transcriptError) throw new Error("Failed to fetch YouTube transcript");
+        processedContent = transcriptData?.transcript || "";
+      } else if (type === "recording" && content) {
+        // Transcribe audio
+        const { data: transcribeData, error: transcribeError } = await supabase.functions.invoke(
+          "transcribe-audio",
+          { body: { audio: content, mimeType: "audio/webm" } }
+        );
+        
+        if (transcribeError) throw new Error("Failed to transcribe audio");
+        processedContent = transcribeData?.text || "";
+      }
+
+      if (!processedContent.trim()) {
+        throw new Error("Could not extract any content. Please try with different input.");
+      }
+
+      setSourceContent(processedContent);
+
       // Step 1: Generate script
       setGenerationStep("scripting");
       setProgress(20);
@@ -85,7 +147,7 @@ export default function AIPodcast() {
       const { data: scriptData, error: scriptError } = await supabase.functions.invoke(
         "generate-podcast-script",
         {
-          body: { content, title: metadata?.videoTitle },
+          body: { content: processedContent, title: metadata?.videoTitle },
         }
       );
 
