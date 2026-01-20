@@ -1,14 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-const VOICE_IDS = {
-  host1: "JBFqnCBsd6RMkjVDRZzb", // George - male (Alex)
-  host2: "EXAVITQu4vr4xnSDxMaL", // Sarah - female
 };
 
 serve(async (req) => {
@@ -27,13 +21,9 @@ serve(async (req) => {
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
-    }
-    if (!ELEVENLABS_API_KEY) {
-      throw new Error("ELEVENLABS_API_KEY is not configured");
     }
 
     // Generate response script using AI
@@ -121,6 +111,7 @@ JSON shape:
           speaker,
           name: speaker === "host2" ? "Sarah" : "Alex",
           text: String(s.text).trim(),
+          fallbackAudio: true, // Use Web Speech API
         };
       });
 
@@ -129,58 +120,10 @@ JSON shape:
       throw new Error("AI returned no usable response segments");
     }
 
-    // Generate audio for each segment
-    const audioSegments: Array<{ speaker: string; name: string; text: string; audio?: string; fallbackAudio?: boolean }> = [];
-
-    for (const segment of segments) {
-      const voiceId = VOICE_IDS[segment.speaker as keyof typeof VOICE_IDS] || VOICE_IDS.host1;
-
-      const ttsResponse = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
-        {
-          method: "POST",
-          headers: {
-            "xi-api-key": ELEVENLABS_API_KEY,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            text: segment.text,
-            model_id: "eleven_multilingual_v2",
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.75,
-              style: 0.4,
-              use_speaker_boost: true,
-            },
-          }),
-        }
-      );
-
-      if (!ttsResponse.ok) {
-        const t = await ttsResponse.text();
-        console.error("ElevenLabs TTS error:", ttsResponse.status, t);
-        // Mark segment for fallback TTS
-        audioSegments.push({
-          ...segment,
-          fallbackAudio: true,
-        });
-        continue;
-      }
-
-      const audioBuffer = await ttsResponse.arrayBuffer();
-      audioSegments.push({
-        ...segment,
-        audio: base64Encode(audioBuffer),
-      });
-    }
-
-    // Check if all segments need fallback
-    const allFallback = audioSegments.every((s) => s.fallbackAudio && !s.audio);
-    const ttsError = allFallback
-      ? "Voice generation unavailable. Using browser voices as fallback."
-      : undefined;
-
-    return new Response(JSON.stringify({ segments: audioSegments, ttsError }), {
+    return new Response(JSON.stringify({ 
+      segments, 
+      ttsError: "Using browser voice synthesis" 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
