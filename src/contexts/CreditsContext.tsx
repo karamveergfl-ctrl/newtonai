@@ -58,7 +58,9 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
         .eq('id', user.id)
         .single();
 
-      if (profile?.subscription_tier === 'premium') {
+      // Check for any paid tier (pro, premium, ultra)
+      const paidTiers = ['pro', 'premium', 'ultra'];
+      if (profile?.subscription_tier && paidTiers.includes(profile.subscription_tier)) {
         setIsPremium(true);
       }
 
