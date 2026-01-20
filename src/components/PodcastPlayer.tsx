@@ -12,7 +12,6 @@ import {
   VolumeX,
   Hand,
   Loader2,
-  User,
   Mic,
   X,
   Maximize2,
@@ -22,8 +21,10 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
+import { usePodcastAudioQueue, AudioSegment } from "@/hooks/usePodcastAudioQueue";
 import { PodcastVoiceSettings } from "@/components/PodcastVoiceSettings";
+import { PodcastSpeakingAvatar } from "@/components/PodcastSpeakingAvatar";
+import { PodcastWaveform } from "@/components/PodcastWaveform";
 
 export interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -49,193 +50,64 @@ export function PodcastPlayer({
   isRaiseHandActive,
   onClose 
 }: PodcastPlayerProps) {
-  const [currentSegment, setCurrentSegment] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [usingFallback, setUsingFallback] = useState(false);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Use refs to track current state for callbacks (avoids stale closures)
-  const isPlayingRef = useRef(isPlaying);
-  const isRaiseHandActiveRef = useRef(isRaiseHandActive);
-  
-  const { speak, cancel: cancelSpeech, isSupported: webSpeechSupported } = useWebSpeechTTS();
+  const transcriptRef = useRef<HTMLDivElement>(null);
 
-  // Keep refs in sync with state
-  useEffect(() => {
-    isPlayingRef.current = isPlaying;
-  }, [isPlaying]);
-
-  useEffect(() => {
-    isRaiseHandActiveRef.current = isRaiseHandActive;
-  }, [isRaiseHandActive]);
-
-  const currentSeg = segments[currentSegment];
-
-  const playSegment = useCallback(async (index: number) => {
-    if (index >= segments.length) {
-      setIsPlaying(false);
-      setUsingFallback(false);
-      return;
-    }
-
-    const segment = segments[index];
-    
-    // Check if segment needs fallback TTS
-    const needsFallback = !segment.audio && (segment.fallbackAudio || webSpeechSupported);
-    
-    if (!segment.audio && !needsFallback) {
-      // Skip to next if no audio and no fallback available
-      setCurrentSegment(index + 1);
-      playSegment(index + 1);
-      return;
-    }
-
-    setIsLoading(true);
-    setCurrentSegment(index);
-    setUsingFallback(needsFallback);
-
-    // Stop any ongoing HTML audio (but don't cancel speech here - let speak() handle it internally)
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-
-    try {
-      if (segment.audio) {
-        // Use ElevenLabs audio
-        const audioUrl = `data:audio/mpeg;base64,${segment.audio}`;
-        const audio = new Audio(audioUrl);
-        audio.volume = isMuted ? 0 : volume;
-        audio.playbackRate = playbackSpeed;
-        audioRef.current = audio;
-
-        audio.onended = () => {
-          if (isPlaying && !isRaiseHandActive) {
-            playSegment(index + 1);
-          }
-        };
-
-        audio.onerror = () => {
-          console.error("Audio playback error, trying fallback");
-          setIsLoading(false);
-          // Try fallback on error
-          if (webSpeechSupported) {
-            playWithWebSpeech(segment, index);
-          }
-        };
-
-        audio.oncanplay = () => {
-          setIsLoading(false);
-          audio.play().catch(console.error);
-        };
-      } else {
-        // Use Web Speech API fallback
-        await playWithWebSpeech(segment, index);
+  // Use the new audio queue hook
+  const {
+    status,
+    currentIndex,
+    isPlaying,
+    progress,
+    toggle,
+    seekToSegment,
+    skipForward,
+    skipBack,
+    setVolume,
+    setPlaybackRate,
+    volume,
+    playbackRate,
+    usingFallback,
+    pause,
+  } = usePodcastAudioQueue({
+    segments: segments as AudioSegment[],
+    onSegmentChange: (index) => {
+      // Auto-scroll transcript to current segment
+      if (transcriptRef.current) {
+        const segmentElement = transcriptRef.current.querySelector(`[data-segment="${index}"]`);
+        if (segmentElement) {
+          segmentElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
       }
-    } catch (error) {
-      console.error("Error playing segment:", error);
-      setIsLoading(false);
-      // Move to next segment on error
-      if (isPlaying && !isRaiseHandActive) {
-        playSegment(index + 1);
-      }
-    }
-  }, [segments, isMuted, volume, playbackSpeed, isPlaying, isRaiseHandActive, webSpeechSupported, cancelSpeech]);
+    },
+    onComplete: () => {
+      console.log("Podcast playback complete");
+    },
+  });
 
-  const playWithWebSpeech = useCallback(async (segment: PodcastSegment, index: number) => {
-    setIsLoading(false);
-    setUsingFallback(true);
-    
-    try {
-      await speak(segment.text, {
-        speaker: segment.speaker,
-        rate: playbackSpeed,
-      });
-      // After speech completes successfully, check refs for current state
-      if (isPlayingRef.current && !isRaiseHandActiveRef.current) {
-        setTimeout(() => playSegment(index + 1), 100);
-      }
-    } catch (error) {
-      console.error("Web Speech error:", error);
-      // Only advance on actual errors
-      if (isPlayingRef.current && !isRaiseHandActiveRef.current) {
-        setTimeout(() => playSegment(index + 1), 100);
-      }
-    }
-  }, [speak, playbackSpeed]);
+  const currentSeg = segments[currentIndex];
+  const isLoading = status === "loading" || status === "buffering";
 
-  useEffect(() => {
-    if (isPlaying && !isRaiseHandActive && !isLoading) {
-      playSegment(currentSegment);
-    } else if (!isPlaying && audioRef.current) {
-      audioRef.current.pause();
-    }
-  }, [isPlaying, isRaiseHandActive]);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume;
-    }
-  }, [volume, isMuted]);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.playbackRate = playbackSpeed;
-    }
-  }, [playbackSpeed]);
-
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, []);
-
-  const togglePlay = () => {
-    if (isPlaying) {
-      setIsPlaying(false);
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      cancelSpeech();
-    } else {
-      setIsPlaying(true);
-    }
-  };
-
-  const skipBack = () => {
-    const newIndex = Math.max(0, currentSegment - 1);
-    setCurrentSegment(newIndex);
-    if (isPlaying) {
-      playSegment(newIndex);
-    }
-  };
-
-  const skipForward = () => {
-    const newIndex = Math.min(segments.length - 1, currentSegment + 1);
-    setCurrentSegment(newIndex);
-    if (isPlaying) {
-      playSegment(newIndex);
-    }
-  };
-
-  const handleRaiseHand = () => {
-    setIsPlaying(false);
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-    cancelSpeech();
+  // Handle raise hand
+  const handleRaiseHand = useCallback(() => {
+    pause();
     onRaiseHand();
-  };
+  }, [pause, onRaiseHand]);
+
+  // Pause when raise hand is active
+  useEffect(() => {
+    if (isRaiseHandActive && isPlaying) {
+      pause();
+    }
+  }, [isRaiseHandActive, isPlaying, pause]);
+
+  // Handle mute
+  useEffect(() => {
+    setVolume(isMuted ? 0 : 1);
+  }, [isMuted, setVolume]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement && containerRef.current) {
@@ -246,8 +118,6 @@ export function PodcastPlayer({
       setIsFullscreen(false);
     }
   };
-
-  const progress = ((currentSegment + 1) / segments.length) * 100;
 
   return (
     <motion.div
@@ -269,13 +139,19 @@ export function PodcastPlayer({
             <div>
               <h2 className="text-xl font-bold text-foreground">{title}</h2>
               <p className="text-sm text-muted-foreground">
-                Segment {currentSegment + 1} of {segments.length}
+                Segment {currentIndex + 1} of {segments.length}
               </p>
             </div>
             {usingFallback && (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Volume1 className="w-3 h-3" />
                 Browser Voice
+              </Badge>
+            )}
+            {status === "buffering" && (
+              <Badge variant="outline" className="gap-1 text-xs">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Buffering...
               </Badge>
             )}
           </div>
@@ -307,76 +183,63 @@ export function PodcastPlayer({
           </div>
         </div>
 
-        {/* Current Speaker Display */}
-        <div className="flex items-center gap-4 mb-6 p-4 bg-card/50 rounded-lg">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentSeg?.speaker}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className={cn(
-                "w-16 h-16 rounded-full flex items-center justify-center",
-                currentSeg?.speaker === "host1" 
-                  ? "bg-primary/20 text-primary" 
-                  : "bg-secondary/20 text-secondary"
-              )}
-            >
-              {isLoading ? (
-                <Loader2 className="w-8 h-8 animate-spin" />
-              ) : (
-                <User className="w-8 h-8" />
-              )}
-            </motion.div>
-          </AnimatePresence>
-          
-          <div className="flex-1">
-            <p className={cn(
-              "font-semibold",
-              currentSeg?.speaker === "host1" ? "text-primary" : "text-secondary"
-            )}>
-              {currentSeg?.name || "Host"}
-            </p>
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={currentSegment}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="text-foreground/80 text-sm line-clamp-3"
-              >
-                {currentSeg?.text}
-              </motion.p>
-            </AnimatePresence>
-          </div>
+        {/* Speaker Avatars - NotebookLM Style */}
+        <div className="flex justify-center items-end gap-12 mb-6">
+          <PodcastSpeakingAvatar
+            speaker="host1"
+            name="Alex"
+            isActive={isPlaying && currentSeg?.speaker === "host1"}
+            isLoading={isLoading && currentSeg?.speaker === "host1"}
+            size="lg"
+          />
+          <PodcastSpeakingAvatar
+            speaker="host2"
+            name="Sarah"
+            isActive={isPlaying && currentSeg?.speaker === "host2"}
+            isLoading={isLoading && currentSeg?.speaker === "host2"}
+            size="lg"
+          />
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-4">
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-primary to-secondary"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.3 }}
-            />
-          </div>
-          <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-            <span>{currentSegment + 1}</span>
-            <span>{segments.length}</span>
-          </div>
+        {/* Current Text Display */}
+        <div className="mb-6 p-4 bg-card/50 rounded-lg min-h-[80px]">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={currentIndex}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-foreground/90 text-center text-lg leading-relaxed"
+            >
+              {currentSeg?.text}
+            </motion.p>
+          </AnimatePresence>
         </div>
+
+        {/* Waveform Progress Bar */}
+        <PodcastWaveform
+          segments={segments}
+          currentSegment={currentIndex}
+          progress={progress}
+          onSeekToSegment={seekToSegment}
+          className="mb-6"
+        />
 
         {/* Controls */}
         <div className="flex items-center justify-center gap-4 mb-4">
-          <Button variant="ghost" size="icon" onClick={skipBack} disabled={currentSegment === 0}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={skipBack} 
+            disabled={currentIndex === 0}
+          >
             <SkipBack className="w-5 h-5" />
           </Button>
           
           <Button
             size="lg"
             className="w-14 h-14 rounded-full bg-primary hover:bg-primary/90"
-            onClick={togglePlay}
+            onClick={toggle}
             disabled={isLoading}
           >
             {isLoading ? (
@@ -392,7 +255,7 @@ export function PodcastPlayer({
             variant="ghost" 
             size="icon" 
             onClick={skipForward}
-            disabled={currentSegment === segments.length - 1}
+            disabled={currentIndex === segments.length - 1}
           >
             <SkipForward className="w-5 h-5" />
           </Button>
@@ -412,7 +275,8 @@ export function PodcastPlayer({
             <Slider
               value={[isMuted ? 0 : volume * 100]}
               onValueChange={([v]) => {
-                setVolume(v / 100);
+                const newVolume = v / 100;
+                setVolume(newVolume);
                 if (v > 0) setIsMuted(false);
               }}
               max={100}
@@ -426,10 +290,10 @@ export function PodcastPlayer({
             {[0.75, 1, 1.25, 1.5].map((speed) => (
               <Button
                 key={speed}
-                variant={playbackSpeed === speed ? "secondary" : "ghost"}
+                variant={playbackRate === speed ? "secondary" : "ghost"}
                 size="sm"
                 className="text-xs px-2"
-                onClick={() => setPlaybackSpeed(speed)}
+                onClick={() => setPlaybackRate(speed)}
               >
                 {speed}x
               </Button>
@@ -459,20 +323,23 @@ export function PodcastPlayer({
         </div>
 
         {/* Transcript Preview */}
-        <div className="mt-6 max-h-48 overflow-y-auto space-y-2">
+        <div ref={transcriptRef} className="mt-6 max-h-48 overflow-y-auto space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Transcript</h3>
           {segments.map((seg, idx) => (
             <motion.div
               key={idx}
+              data-segment={idx}
               className={cn(
                 "p-2 rounded text-sm cursor-pointer transition-colors",
-                idx === currentSegment 
+                idx === currentIndex 
                   ? "bg-primary/10 border-l-2 border-primary" 
                   : "hover:bg-muted/50"
               )}
-              onClick={() => {
-                setCurrentSegment(idx);
-                if (isPlaying) playSegment(idx);
+              onClick={() => seekToSegment(idx)}
+              initial={{ opacity: 0.5 }}
+              animate={{ 
+                opacity: idx === currentIndex ? 1 : 0.7,
+                scale: idx === currentIndex ? 1.01 : 1,
               }}
             >
               <span className={cn(
