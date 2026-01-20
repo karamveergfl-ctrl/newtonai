@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ConfettiCelebration } from "./ConfettiCelebration";
 import { LevelUpModal } from "./LevelUpModal";
+import { WeeklyStreakCalendar } from "./WeeklyStreakCalendar";
 
 interface Achievement {
   id: string;
@@ -38,6 +39,7 @@ export const GamificationBadge = () => {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [newLevel, setNewLevel] = useState(1);
   const prevLevelRef = useRef(1);
+  const [activeDays, setActiveDays] = useState<string[]>([]);
   const [stats, setStats] = useState({
     flashcardsCompleted: 0,
     quizzesCompleted: 0,
@@ -54,10 +56,17 @@ export const GamificationBadge = () => {
     if (savedXp) setXp(parseInt(savedXp, 10));
     if (savedStats) setStats(JSON.parse(savedStats));
     
+    // Load active days
+    const savedActiveDays = localStorage.getItem('smartreader_active_days');
+    if (savedActiveDays) {
+      setActiveDays(JSON.parse(savedActiveDays));
+    }
+    
     // Calculate streak
     const today = new Date().toDateString();
     const yesterday = new Date(Date.now() - 86400000).toDateString();
     
+    // Calculate streak and track active days
     if (lastActive === today) {
       setStreak(parseInt(savedStreak || '0', 10));
     } else if (lastActive === yesterday) {
@@ -69,6 +78,17 @@ export const GamificationBadge = () => {
       setStreak(1);
       localStorage.setItem('smartreader_streak', '1');
       localStorage.setItem('smartreader_last_active', today);
+    }
+    
+    // Update active days - add today if not already present
+    const currentActiveDays = savedActiveDays ? JSON.parse(savedActiveDays) : [];
+    if (!currentActiveDays.includes(today)) {
+      const updatedDays = [...currentActiveDays, today];
+      // Keep only last 30 days to prevent localStorage bloat
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toDateString();
+      const filteredDays = updatedDays.filter((d: string) => new Date(d) >= new Date(thirtyDaysAgo));
+      localStorage.setItem('smartreader_active_days', JSON.stringify(filteredDays));
+      setActiveDays(filteredDays);
     }
 
     // Listen for XP updates
@@ -256,6 +276,11 @@ export const GamificationBadge = () => {
               <p className="text-xs text-muted-foreground">Badges</p>
             </div>
           </div>
+        </div>
+        
+        {/* Weekly Streak Calendar */}
+        <div className="p-4 border-b">
+          <WeeklyStreakCalendar activeDays={activeDays} />
         </div>
         
         <div className="p-4">
