@@ -92,7 +92,34 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("ElevenLabs API error:", response.status, errorText);
-      throw new Error(`ElevenLabs API error: ${response.status}`);
+
+      // ElevenLabs sometimes returns 401 with a JSON body describing quota / abuse flags.
+      let clientStatus = response.status;
+      let clientMessage = `ElevenLabs request failed (${response.status})`;
+
+      try {
+        const parsed = JSON.parse(errorText);
+        const detail = parsed?.detail;
+
+        if (typeof detail?.message === "string" && detail.message.trim()) {
+          clientMessage = detail.message.trim();
+        }
+
+        // Map known failure modes to clearer HTTP statuses
+        if (detail?.status === "quota_exceeded") {
+          clientStatus = 402;
+        }
+        if (detail?.status === "detected_unusual_activity") {
+          clientStatus = 403;
+        }
+      } catch {
+        // Non-JSON response body; keep defaults
+      }
+
+      return new Response(JSON.stringify({ error: clientMessage }), {
+        status: clientStatus,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const audioBuffer = await response.arrayBuffer();
