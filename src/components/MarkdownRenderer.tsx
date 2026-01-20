@@ -6,15 +6,121 @@ import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/pris
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import "katex/dist/katex.min.css";
+import { 
+  Key, 
+  FileText, 
+  List, 
+  Lightbulb, 
+  BookOpen, 
+  Target, 
+  CheckCircle2, 
+  AlertCircle, 
+  HelpCircle, 
+  Sparkles,
+  Brain,
+  Layers,
+  MessageSquare,
+  GraduationCap,
+  Zap,
+  type LucideIcon
+} from "lucide-react";
 
 interface MarkdownRendererProps {
   content: string;
   className?: string;
 }
 
+// Map heading text patterns to icons
+const getHeadingIcon = (text: string): LucideIcon | null => {
+  const lowerText = text.toLowerCase().trim();
+  
+  if (lowerText.includes('key point') || lowerText.includes('keypoint') || lowerText.includes('key takeaway')) {
+    return Key;
+  }
+  if (lowerText.includes('summary') || lowerText.includes('conclusion') || lowerText.includes('recap')) {
+    return FileText;
+  }
+  if (lowerText.includes('detail') || lowerText.includes('explanation') || lowerText.includes('description')) {
+    return List;
+  }
+  if (lowerText.includes('overview') || lowerText.includes('introduction') || lowerText.includes('intro')) {
+    return BookOpen;
+  }
+  if (lowerText.includes('objective') || lowerText.includes('goal') || lowerText.includes('aim')) {
+    return Target;
+  }
+  if (lowerText.includes('solution') || lowerText.includes('answer') || lowerText.includes('result')) {
+    return CheckCircle2;
+  }
+  if (lowerText.includes('important') || lowerText.includes('note') || lowerText.includes('warning') || lowerText.includes('caution')) {
+    return AlertCircle;
+  }
+  if (lowerText.includes('question') || lowerText.includes('faq') || lowerText.includes('ask')) {
+    return HelpCircle;
+  }
+  if (lowerText.includes('tip') || lowerText.includes('hint') || lowerText.includes('suggestion')) {
+    return Lightbulb;
+  }
+  if (lowerText.includes('highlight') || lowerText.includes('feature')) {
+    return Sparkles;
+  }
+  if (lowerText.includes('concept') || lowerText.includes('theory') || lowerText.includes('principle')) {
+    return Brain;
+  }
+  if (lowerText.includes('step') || lowerText.includes('process') || lowerText.includes('procedure')) {
+    return Layers;
+  }
+  if (lowerText.includes('discussion') || lowerText.includes('analysis')) {
+    return MessageSquare;
+  }
+  if (lowerText.includes('learn') || lowerText.includes('study') || lowerText.includes('topic')) {
+    return GraduationCap;
+  }
+  if (lowerText.includes('quick') || lowerText.includes('flash') || lowerText.includes('fast')) {
+    return Zap;
+  }
+  
+  return null;
+};
+
+// Helper to extract text from React children
+const extractText = (children: React.ReactNode): string => {
+  if (typeof children === 'string') return children;
+  if (Array.isArray(children)) {
+    return children.map(extractText).join('');
+  }
+  if (children && typeof children === 'object' && 'props' in children) {
+    return extractText((children as React.ReactElement).props.children);
+  }
+  return '';
+};
+
 export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+
+  const renderHeadingWithIcon = (children: React.ReactNode, Tag: 'h1' | 'h2' | 'h3' | 'h4') => {
+    const text = extractText(children);
+    const Icon = getHeadingIcon(text);
+    
+    const iconSizes = {
+      h1: 'h-6 w-6',
+      h2: 'h-5 w-5',
+      h3: 'h-4 w-4',
+      h4: 'h-4 w-4'
+    };
+    
+    return (
+      <Tag className="flex items-center gap-2.5">
+        {Icon && (
+          <span className="flex-shrink-0 p-1.5 rounded-lg bg-primary/10 text-primary">
+            <Icon className={iconSizes[Tag]} />
+          </span>
+        )}
+        <span>{children}</span>
+      </Tag>
+    );
+  };
 
   return (
     <div
@@ -92,10 +198,16 @@ export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) 
             return <div className="not-prose my-6 rounded-xl overflow-hidden border border-border/50">{children}</div>;
           },
           h1({ children }) {
-            return <h1 className="flex items-center gap-3">{children}</h1>;
+            return renderHeadingWithIcon(children, 'h1');
           },
           h2({ children }) {
-            return <h2 className="flex items-center gap-2">{children}</h2>;
+            return renderHeadingWithIcon(children, 'h2');
+          },
+          h3({ children }) {
+            return renderHeadingWithIcon(children, 'h3');
+          },
+          h4({ children }) {
+            return renderHeadingWithIcon(children, 'h4');
           },
           ul({ children }) {
             return <ul className="space-y-2">{children}</ul>;
