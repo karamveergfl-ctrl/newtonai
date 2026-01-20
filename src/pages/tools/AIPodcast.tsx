@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
@@ -8,11 +8,12 @@ import { PodcastHistory } from "@/components/PodcastHistory";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Podcast, Sparkles, ArrowLeft, Radio, Mic2, Volume2 } from "lucide-react";
+import { Podcast, Sparkles, ArrowLeft, Radio, Volume2, Minimize2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
 import { CreditModal } from "@/components/CreditModal";
+import { usePodcastContext } from "@/contexts/PodcastContext";
 
 interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -21,12 +22,6 @@ interface PodcastSegment {
   emotion?: string;
   audio?: string;
   fallbackAudio?: boolean;
-}
-
-interface PodcastData {
-  title: string;
-  segments: PodcastSegment[];
-  id?: string;
 }
 
 interface SavedPodcast {
@@ -53,15 +48,30 @@ export default function AIPodcast() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [generationStep, setGenerationStep] = useState<GenerationStep>("idle");
   const [progress, setProgress] = useState(0);
-  const [podcast, setPodcast] = useState<PodcastData | null>(null);
   const [sourceContent, setSourceContent] = useState("");
   const [isRaiseHandOpen, setIsRaiseHandOpen] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
-  const [voicingProgress, setVoicingProgress] = useState(0);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
+  
+  // Use global podcast context
+  const { 
+    podcast, 
+    setPodcast, 
+    isMinimized, 
+    setIsMinimized,
+    pause,
+    isPlaying,
+  } = usePodcastContext();
 
   const creditCost = getFeatureCost("ai_podcast");
+
+  // When navigating to this page, un-minimize if podcast is playing
+  useEffect(() => {
+    if (podcast && isMinimized) {
+      setIsMinimized(false);
+    }
+  }, []);
 
   const handleContentReady = async (
     content: string,
@@ -76,7 +86,6 @@ export default function AIPodcast() {
 
     setIsProcessing(true);
     setProgress(0);
-    setVoicingProgress(0);
     setGenerationStep("analyzing");
 
     let processedContent = content;
@@ -185,9 +194,6 @@ export default function AIPodcast() {
             fallbackAudio: !seg.audio, // Only use fallback if no audio
           }));
 
-          const successRate = ttsData.stats?.success / ttsData.stats?.total;
-          setVoicingProgress(Math.round(successRate * 100));
-
           if (ttsData.stats?.failed > 0) {
             console.log(`${ttsData.stats.failed} segments will use browser voice fallback`);
           }
@@ -196,7 +202,6 @@ export default function AIPodcast() {
         }
       } catch (ttsErr) {
         console.log("ElevenLabs TTS failed, using browser voice fallback:", ttsErr);
-        // Continue with fallback - segments already have fallbackAudio: true
       }
 
       setProgress(90);
@@ -233,9 +238,11 @@ export default function AIPodcast() {
         console.error("Error saving podcast to history:", saveErr);
       }
 
+      // Set podcast in global context
       setPodcast({
         title: podcastTitle,
         segments,
+        sourceContent: processedContent,
       });
 
       setGenerationStep("complete");
@@ -257,6 +264,7 @@ export default function AIPodcast() {
   };
 
   const handleRaiseHand = () => {
+    pause();
     setIsRaiseHandOpen(true);
   };
 
@@ -276,12 +284,16 @@ export default function AIPodcast() {
     setProgress(0);
   };
 
+  const handleMinimize = () => {
+    setIsMinimized(true);
+  };
+
   const handleSelectSavedPodcast = (saved: SavedPodcast) => {
     const segments = saved.audio_segments || saved.script?.segments || [];
     setPodcast({
-      id: saved.id,
       title: saved.title,
       segments: segments as PodcastSegment[],
+      sourceContent: saved.source_content || "",
     });
     setSourceContent(saved.source_content || "");
   };
@@ -309,21 +321,31 @@ export default function AIPodcast() {
         </motion.div>
 
         <AnimatePresence mode="wait">
-          {podcast ? (
+          {podcast && !isMinimized ? (
             <motion.div
               key="podcast"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
-              <Button
-                variant="ghost"
-                className="mb-4"
-                onClick={handleBack}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Generate New Podcast
-              </Button>
+              <div className="flex items-center justify-between mb-4">
+                <Button
+                  variant="ghost"
+                  onClick={handleBack}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Generate New Podcast
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleMinimize}
+                  className="gap-2"
+                >
+                  <Minimize2 className="w-4 h-4" />
+                  Minimize
+                </Button>
+              </div>
 
               <PodcastPlayer
                 title={podcast.title}
@@ -406,6 +428,32 @@ export default function AIPodcast() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
+              {/* Show mini indicator if podcast is playing in background */}
+              {podcast && isMinimized && (
+                <Card className="p-4 mb-4 bg-primary/5 border-primary/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                        <Podcast className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">"{podcast.title}" is playing</p>
+                        <p className="text-xs text-muted-foreground">
+                          Click to expand or use mini-player at bottom
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setIsMinimized(false)}
+                    >
+                      Expand
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">Upload Your Study Material</h2>

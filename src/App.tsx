@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CreditsProvider } from "@/contexts/CreditsContext";
+import { PodcastProvider } from "@/contexts/PodcastContext";
+import { PodcastMiniPlayer } from "@/components/PodcastMiniPlayer";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -43,39 +45,42 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/refund" element={<Refund />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/credits" element={<Credits />} />
-            
-            {/* Payment Routes */}
-            <Route path="/payment/success" element={<PaymentSuccess />} />
-            <Route path="/payment/failure" element={<PaymentFailure />} />
-            
-            {/* Tool Routes */}
-            <Route path="/tools/homework-help" element={<HomeworkHelp />} />
-            <Route path="/tools/ai-notes" element={<AINotes />} />
-            <Route path="/tools/flashcards" element={<AIFlashcards />} />
-            <Route path="/tools/quiz" element={<AIQuiz />} />
-            <Route path="/tools/summarizer" element={<AISummarizer />} />
-            <Route path="/tools/lecture-notes" element={<AILectureNotes />} />
-            <Route path="/tools/ai-podcast" element={<AIPodcast />} />
-            <Route path="/tools/mind-map" element={<MindMap />} />
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <CookieConsent />
+          <PodcastProvider>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/refund" element={<Refund />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/credits" element={<Credits />} />
+              
+              {/* Payment Routes */}
+              <Route path="/payment/success" element={<PaymentSuccess />} />
+              <Route path="/payment/failure" element={<PaymentFailure />} />
+              
+              {/* Tool Routes */}
+              <Route path="/tools/homework-help" element={<HomeworkHelp />} />
+              <Route path="/tools/ai-notes" element={<AINotes />} />
+              <Route path="/tools/flashcards" element={<AIFlashcards />} />
+              <Route path="/tools/quiz" element={<AIQuiz />} />
+              <Route path="/tools/summarizer" element={<AISummarizer />} />
+              <Route path="/tools/lecture-notes" element={<AILectureNotes />} />
+              <Route path="/tools/ai-podcast" element={<AIPodcast />} />
+              <Route path="/tools/mind-map" element={<MindMap />} />
+              
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <PodcastMiniPlayer />
+            <CookieConsent />
+          </PodcastProvider>
         </BrowserRouter>
       </TooltipProvider>
     </CreditsProvider>
