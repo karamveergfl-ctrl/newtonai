@@ -332,21 +332,21 @@ export default function AIPodcast() {
 
   return (
     <AppLayout>
-      <div className="container max-w-4xl mx-auto py-8 px-4">
+      <div className="container max-w-4xl mx-auto px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20">
-              <Podcast className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20">
+              <Podcast className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               AI Podcast
             </h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground px-1 sm:px-0">
             Transform your study materials into an engaging podcast with professional AI voices. 
             Raise your hand anytime to ask questions!
           </p>
@@ -360,19 +360,21 @@ export default function AIPodcast() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 mb-4">
                 <Button
                   variant="ghost"
                   onClick={handleBack}
+                  className="justify-start"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Generate New Podcast
+                  <span className="sm:hidden">Back</span>
+                  <span className="hidden sm:inline">Generate New Podcast</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleMinimize}
-                  className="gap-2"
+                  className="gap-2 self-end sm:self-auto"
                 >
                   <Minimize2 className="w-4 h-4" />
                   Minimize
@@ -401,53 +403,53 @@ export default function AIPodcast() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Card className="p-8 text-center space-y-6">
-                <div className="relative mx-auto w-24 h-24">
+              <Card className="p-4 sm:p-8 text-center space-y-4 sm:space-y-6">
+                <div className="relative mx-auto w-16 h-16 sm:w-24 sm:h-24">
                   <motion.div
                     className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/30 to-secondary/30"
                     animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   />
-                  <div className="absolute inset-2 rounded-full bg-background flex items-center justify-center">
+                  <div className="absolute inset-1.5 sm:inset-2 rounded-full bg-background flex items-center justify-center">
                     {generationStep === "voicing" ? (
-                      <Volume2 className="w-10 h-10 text-primary animate-pulse" />
+                      <Volume2 className="w-6 h-6 sm:w-10 sm:h-10 text-primary animate-pulse" />
                     ) : generationStep === "scripting" ? (
-                      <Sparkles className="w-10 h-10 text-primary animate-pulse" />
+                      <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 text-primary animate-pulse" />
                     ) : (
-                      <Radio className="w-10 h-10 text-primary animate-pulse" />
+                      <Radio className="w-6 h-6 sm:w-10 sm:h-10 text-primary animate-pulse" />
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">
                     {stepMessages[generationStep]}
                   </h3>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-xs sm:text-sm">
                     {generationStep === "voicing" 
-                      ? "Creating professional voice audio with ElevenLabs..."
+                      ? "Creating professional voice audio..."
                       : "This may take a minute..."}
                   </p>
                 </div>
 
-                <div className="max-w-md mx-auto">
-                  <Progress value={progress} className="h-2" />
-                  <p className="text-sm text-muted-foreground mt-2">
+                <div className="max-w-md mx-auto px-2">
+                  <Progress value={progress} className="h-1.5 sm:h-2" />
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                     {progress}% complete
                   </p>
                 </div>
 
-                <div className="flex justify-center gap-4 text-sm text-muted-foreground">
+                <div className="flex justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                   <div className={`flex items-center gap-1 ${generationStep === "analyzing" || generationStep === "scripting" || generationStep === "voicing" || generationStep === "complete" ? "text-primary" : ""}`}>
-                    <span className={`w-2 h-2 rounded-full ${generationStep === "analyzing" ? "bg-primary animate-pulse" : progress > 0 ? "bg-primary" : "bg-muted"}`} />
+                    <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${generationStep === "analyzing" ? "bg-primary animate-pulse" : progress > 0 ? "bg-primary" : "bg-muted"}`} />
                     Analyze
                   </div>
                   <div className={`flex items-center gap-1 ${generationStep === "scripting" || generationStep === "voicing" || generationStep === "complete" ? "text-primary" : ""}`}>
-                    <span className={`w-2 h-2 rounded-full ${generationStep === "scripting" ? "bg-primary animate-pulse" : progress > 20 ? "bg-primary" : "bg-muted"}`} />
+                    <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${generationStep === "scripting" ? "bg-primary animate-pulse" : progress > 20 ? "bg-primary" : "bg-muted"}`} />
                     Script
                   </div>
                   <div className={`flex items-center gap-1 ${generationStep === "voicing" || generationStep === "complete" ? "text-primary" : ""}`}>
-                    <span className={`w-2 h-2 rounded-full ${generationStep === "voicing" ? "bg-primary animate-pulse" : progress > 40 ? "bg-primary" : "bg-muted"}`} />
+                    <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${generationStep === "voicing" ? "bg-primary animate-pulse" : progress > 40 ? "bg-primary" : "bg-muted"}`} />
                     Voice
                   </div>
                 </div>

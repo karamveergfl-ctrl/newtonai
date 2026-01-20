@@ -270,49 +270,51 @@ export function PodcastPlayer({
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         "w-full",
-        isFullscreen && "fixed inset-0 z-50 bg-background flex items-center justify-center p-8"
+        isFullscreen && "fixed inset-0 z-50 bg-background flex items-center justify-center p-4 sm:p-8"
       )}
     >
       <Card className={cn(
-        "p-6 bg-gradient-to-br from-primary/5 via-background to-secondary/5 border-primary/20",
+        "p-3 sm:p-6 bg-gradient-to-br from-primary/5 via-background to-secondary/5 border-primary/20",
         isFullscreen && "max-w-4xl w-full"
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">{title}</h2>
-              <p className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base sm:text-xl font-bold text-foreground truncate">{title}</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Segment {currentIndex + 1} of {segments.length}
               </p>
             </div>
-            {usingFallback && (
-              <Badge variant="secondary" className="gap-1 text-xs">
-                <Volume1 className="w-3 h-3" />
-                Browser Voice
-              </Badge>
-            )}
-            {status === "buffering" && (
-              <Badge variant="outline" className="gap-1 text-xs">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Buffering...
-              </Badge>
-            )}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {usingFallback && (
+                <Badge variant="secondary" className="gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                  <Volume1 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                  <span className="hidden sm:inline">Browser Voice</span>
+                </Badge>
+              )}
+              {status === "buffering" && (
+                <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                  <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin" />
+                  <span className="hidden sm:inline">Buffering...</span>
+                </Badge>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 justify-end flex-shrink-0">
             {/* Download Transcript Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" title="Download Transcript">
-                  <Download className="w-4 h-4" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" title="Download Transcript">
+                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={downloadAsTxt} className="gap-2 cursor-pointer">
+                <DropdownMenuItem onClick={downloadAsTxt} className="gap-2 cursor-pointer text-sm">
                   <FileText className="w-4 h-4" />
                   Download as TXT
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={downloadAsPdf} className="gap-2 cursor-pointer">
+                <DropdownMenuItem onClick={downloadAsPdf} className="gap-2 cursor-pointer text-sm">
                   <FileDown className="w-4 h-4" />
                   Download as PDF
                 </DropdownMenuItem>
@@ -325,32 +327,34 @@ export function PodcastPlayer({
             <Button
               variant="ghost"
               size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-9"
               onClick={() => setShowVoiceSettings(true)}
               title="Voice Settings"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-9"
               onClick={toggleFullscreen}
             >
               {isFullscreen ? (
-                <Minimize2 className="w-4 h-4" />
+                <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               ) : (
-                <Maximize2 className="w-4 h-4" />
+                <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               )}
             </Button>
             {onClose && (
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={onClose}>
+                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             )}
           </div>
         </div>
 
         {/* Speaker Avatars - NotebookLM Style */}
-        <div className="flex justify-center items-end gap-12 mb-6">
+        <div className="flex justify-center items-end gap-6 sm:gap-12 mb-4 sm:mb-6">
           <PodcastSpeakingAvatar
             speaker="host1"
             name="Alex"
@@ -368,14 +372,14 @@ export function PodcastPlayer({
         </div>
 
         {/* Current Text Display */}
-        <div className="mb-6 p-4 bg-card/50 rounded-lg min-h-[80px]">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-card/50 rounded-lg min-h-[60px] sm:min-h-[80px]">
           <AnimatePresence mode="wait">
             <motion.p
               key={currentIndex}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="text-foreground/90 text-center text-lg leading-relaxed"
+              className="text-foreground/90 text-center text-sm sm:text-lg leading-relaxed"
             >
               {currentSeg?.text}
             </motion.p>
@@ -388,50 +392,52 @@ export function PodcastPlayer({
           currentSegment={currentIndex}
           progress={progress}
           onSeekToSegment={seekToSegment}
-          className="mb-6"
+          className="mb-4 sm:mb-6"
         />
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="flex items-center justify-center gap-3 sm:gap-4 mb-4">
           <Button 
             variant="ghost" 
-            size="icon" 
+            size="icon"
+            className="h-10 w-10 sm:h-11 sm:w-11"
             onClick={skipBack} 
             disabled={currentIndex === 0}
           >
-            <SkipBack className="w-5 h-5" />
+            <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
           
           <Button
             size="lg"
-            className="w-14 h-14 rounded-full bg-primary hover:bg-primary/90"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary hover:bg-primary/90"
             onClick={toggle}
             disabled={isLoading}
           >
             {isLoading ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
+              <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
             ) : isPlaying ? (
-              <Pause className="w-6 h-6" />
+              <Pause className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : (
-              <Play className="w-6 h-6 ml-1" />
+              <Play className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5" />
             )}
           </Button>
           
           <Button 
             variant="ghost" 
-            size="icon" 
+            size="icon"
+            className="h-10 w-10 sm:h-11 sm:w-11"
             onClick={skipForward}
             disabled={currentIndex === segments.length - 1}
           >
-            <SkipForward className="w-5 h-5" />
+            <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
         </div>
 
         {/* Secondary Controls */}
-        <div className="flex items-center justify-between">
-          {/* Volume */}
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setIsMuted(!isMuted)}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0">
+          {/* Volume - hidden on very small screens */}
+          <div className="hidden sm:flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsMuted(!isMuted)}>
               {isMuted ? (
                 <VolumeX className="w-4 h-4" />
               ) : (
@@ -447,18 +453,18 @@ export function PodcastPlayer({
               }}
               max={100}
               step={1}
-              className="w-24"
+              className="w-20 sm:w-24"
             />
           </div>
 
           {/* Speed */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
             {[0.75, 1, 1.25, 1.5].map((speed) => (
               <Button
                 key={speed}
                 variant={playbackRate === speed ? "secondary" : "ghost"}
                 size="sm"
-                className="text-xs px-2"
+                className="text-[10px] sm:text-xs px-2 sm:px-2.5 h-7 sm:h-8 shrink-0"
                 onClick={() => setPlaybackRate(speed)}
               >
                 {speed}x
@@ -471,7 +477,7 @@ export function PodcastPlayer({
             variant={isRaiseHandActive ? "secondary" : "outline"}
             size="sm"
             onClick={handleRaiseHand}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto h-9 sm:h-8"
             disabled={isRaiseHandActive}
           >
             {isRaiseHandActive ? (
@@ -489,14 +495,14 @@ export function PodcastPlayer({
         </div>
 
         {/* Transcript Preview */}
-        <div ref={transcriptRef} className="mt-6 max-h-48 overflow-y-auto space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Transcript</h3>
+        <div ref={transcriptRef} className="mt-4 sm:mt-6 max-h-32 sm:max-h-48 overflow-y-auto space-y-1.5 sm:space-y-2">
+          <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">Transcript</h3>
           {segments.map((seg, idx) => (
             <motion.div
               key={idx}
               data-segment={idx}
               className={cn(
-                "p-2 rounded text-sm cursor-pointer transition-colors",
+                "p-1.5 sm:p-2 rounded text-xs sm:text-sm cursor-pointer transition-colors",
                 idx === currentIndex 
                   ? "bg-primary/10 border-l-2 border-primary" 
                   : "hover:bg-muted/50"
@@ -509,7 +515,7 @@ export function PodcastPlayer({
               }}
             >
               <span className={cn(
-                "font-medium mr-2",
+                "font-medium mr-1.5 sm:mr-2",
                 seg.speaker === "host1" ? "text-primary" : "text-secondary"
               )}>
                 {seg.name}:
