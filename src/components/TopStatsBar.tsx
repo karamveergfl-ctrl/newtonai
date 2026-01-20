@@ -13,8 +13,11 @@ export function TopStatsBar() {
     <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
       <div className="container mx-auto px-4 py-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Mobile hamburger menu */}
             <SidebarTrigger className="md:hidden h-8 w-8" />
+            {/* Bracket-style separator - mobile only */}
+            <div className="md:hidden h-6 w-[3px] rounded-full bg-primary/20 shadow-[0_0_6px_hsl(var(--primary)/0.3)] animate-pulse" />
             <GamificationBadge />
             <CreditBalance showLabel />
           </div>

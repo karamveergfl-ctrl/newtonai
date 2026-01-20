@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
@@ -31,8 +31,6 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Search,
-  X,
   Coins,
   Moon,
   Sun,
@@ -116,32 +114,6 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             )}
           </Button>
         </div>
-
-        {/* Search Bar */}
-        {!isCollapsed && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 relative"
-          >
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search tools..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-8 h-9 bg-sidebar-accent/50 border-sidebar-border"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </motion.div>
-        )}
       </SidebarHeader>
 
       <SidebarContent className="px-2">
