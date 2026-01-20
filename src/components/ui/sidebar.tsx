@@ -235,13 +235,13 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
       >
         <span className="relative flex items-center justify-center">
           <Menu className={cn(
-            "absolute transition-all duration-300 ease-in-out",
+            "absolute transition-all duration-300",
             open ? "scale-0 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100"
-          )} />
+          )} style={{ transitionTimingFunction: "cubic-bezier(0.68, -0.55, 0.265, 1.55)" }} />
           <X className={cn(
-            "absolute transition-all duration-300 ease-in-out",
+            "absolute transition-all duration-300",
             open ? "scale-100 rotate-0 opacity-100" : "scale-0 -rotate-90 opacity-0"
-          )} />
+          )} style={{ transitionTimingFunction: "cubic-bezier(0.68, -0.55, 0.265, 1.55)" }} />
         </span>
         <span className="sr-only">Toggle Sidebar</span>
       </Button>
