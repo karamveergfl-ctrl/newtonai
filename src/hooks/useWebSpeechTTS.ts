@@ -85,18 +85,24 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
       );
 
       if (speaker === "host1") {
-        // Prefer male voices for Alex (host1)
+        // Prefer male voices for Alex (host1) - expanded patterns
         const maleVoice = englishVoices.find(
           (v) =>
-            /male|guy|david|james|daniel|google uk english male/i.test(v.name) &&
+            /\b(male|guy|david|james|daniel|mark|paul|tom|george|matthew|arthur|henry|alex|aaron|adam|brian|chris|eric|fred|john|kevin|michael|peter|richard|robert|william)\b/i.test(v.name) &&
             !/female/i.test(v.name)
         );
         if (maleVoice) return maleVoice;
+        
+        // If no explicit male voice, find one that doesn't sound female
+        const neutralVoice = englishVoices.find(
+          (v) => !/female|woman|samantha|karen|victoria|fiona|moira|susan|zira|hazel|emma|alice|kate|linda|lisa|mary|nancy|rachel|sarah|tessa/i.test(v.name)
+        );
+        if (neutralVoice) return neutralVoice;
       } else {
-        // Prefer female voices for Sarah (host2)
+        // Prefer female voices for Sarah (host2) - expanded patterns
         const femaleVoice = englishVoices.find(
           (v) =>
-            /female|woman|samantha|karen|victoria|google uk english female/i.test(v.name)
+            /\b(female|woman|samantha|karen|victoria|fiona|moira|susan|zira|hazel|emma|alice|kate|linda|lisa|mary|nancy|rachel|sarah|tessa|amy|catherine|emily|jessica|jennifer|nicole|olivia)\b/i.test(v.name)
         );
         if (femaleVoice) return femaleVoice;
       }
@@ -168,6 +174,11 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
 
         utterance.onerror = (event) => {
           setIsSpeaking(false);
+          // "interrupted" and "canceled" are expected when canceling speech, not real errors
+          if (event.error === "interrupted" || event.error === "canceled") {
+            resolve();
+            return;
+          }
           const error = new Error(`Speech synthesis error: ${event.error}`);
           options.onError?.(error);
           reject(error);
