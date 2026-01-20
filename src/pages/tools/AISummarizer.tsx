@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX } from "lucide-react";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { VideoCardWithTools } from "@/components/VideoCardWithTools";
@@ -20,10 +20,28 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCredits } from "@/hooks/useCredits";
 import { CreditModal } from "@/components/CreditModal";
 import { FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
+import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import {
   processUploadedFile,
   transcribeAudio,
 } from "@/utils/contentProcessing";
+
+// Strip markdown formatting for cleaner TTS
+const stripMarkdown = (text: string): string => {
+  return text
+    .replace(/#{1,6}\s?/g, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+    .replace(/^\s*[-*+]\s/gm, '')
+    .replace(/^\s*\d+\.\s/gm, '')
+    .replace(/^\s*>/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
 
 interface VideoData {
   id: string;
@@ -57,6 +75,7 @@ const AISummarizer = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const { toast } = useToast();
   const { checkCanUse, incrementUsage } = useFeatureUsage();
+  const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
 
   // Video-specific state
   const [videoData, setVideoData] = useState<VideoData | null>(null);
@@ -96,6 +115,39 @@ const AISummarizer = () => {
     getRemainingAds, 
     isPremium 
   } = useCredits();
+
+  const handleReadAloud = useCallback(async () => {
+    if (isSpeaking) {
+      cancel();
+      return;
+    }
+
+    if (!summary) return;
+
+    const cleanText = stripMarkdown(summary);
+    
+    try {
+      await speak(cleanText, {
+        rate: 1.0,
+        pitch: 1.0,
+        onStart: () => {
+          toast({
+            title: "Reading aloud 🔊",
+            description: "Tap again to stop",
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Speech Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        },
+      });
+    } catch (error) {
+      console.error("TTS error:", error);
+    }
+  }, [summary, isSpeaking, speak, cancel, toast]);
 
   // Helper function to check and spend credits
   const trySpendCredits = async (feature: string): Promise<boolean> => {
@@ -776,7 +828,22 @@ const AISummarizer = () => {
                           <CardDescription>{contentTitle}</CardDescription>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
+                        {isSupported && (
+                          <Button 
+                            variant={isSpeaking ? "default" : "outline"} 
+                            size="sm" 
+                            onClick={handleReadAloud}
+                            className={isSpeaking ? 'bg-primary text-primary-foreground' : ''}
+                          >
+                            {isSpeaking ? (
+                              <VolumeX className="h-4 w-4 mr-1" />
+                            ) : (
+                              <Volume2 className="h-4 w-4 mr-1" />
+                            )}
+                            {isSpeaking ? "Stop" : "Listen"}
+                          </Button>
+                        )}
                         <Button variant="outline" size="sm" onClick={handleCopy}>
                           {copied ? (
                             <Check className="h-4 w-4 mr-1" />

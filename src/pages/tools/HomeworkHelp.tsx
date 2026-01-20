@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { HelpCircle, Copy, Check, ImageIcon } from "lucide-react";
+import { HelpCircle, Copy, Check, ImageIcon, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
@@ -10,12 +10,30 @@ import { Button } from "@/components/ui/button";
 import { StepBySolutionRenderer } from "@/components/StepBySolutionRenderer";
 import { InlineSolutionPanel } from "@/components/InlineSolutionPanel";
 import { useFeatureGate } from "@/components/FeatureGate";
+import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
   processUploadedFile,
   fileToBase64
 } from "@/utils/contentProcessing";
+
+// Strip markdown formatting for cleaner TTS
+const stripMarkdown = (text: string): string => {
+  return text
+    .replace(/#{1,6}\s?/g, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+    .replace(/^\s*[-*+]\s/gm, '')
+    .replace(/^\s*\d+\.\s/gm, '')
+    .replace(/^\s*>/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
 
 const HomeworkHelp = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +42,40 @@ const HomeworkHelp = () => {
   const [capturedScreenshot, setCapturedScreenshot] = useState<{ imageBase64: string; mimeType: string } | null>(null);
   const { toast } = useToast();
   const { canUse, tryUseFeature, modal } = useFeatureGate("homework_help");
+  const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
+
+  const handleReadAloud = useCallback(async () => {
+    if (isSpeaking) {
+      cancel();
+      return;
+    }
+
+    if (!solution) return;
+
+    const cleanText = stripMarkdown(solution);
+    
+    try {
+      await speak(cleanText, {
+        rate: 1.0,
+        pitch: 1.0,
+        onStart: () => {
+          toast({
+            title: "Reading aloud 🔊",
+            description: "Tap again to stop",
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Speech Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        },
+      });
+    } catch (error) {
+      console.error("TTS error:", error);
+    }
+  }, [solution, isSpeaking, speak, cancel, toast]);
 
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
@@ -75,6 +127,7 @@ const HomeworkHelp = () => {
 
     setIsLoading(true);
     setSolution("");
+    cancel();
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -200,15 +253,28 @@ const HomeworkHelp = () => {
                   </div>
                   <h2 className="text-lg sm:text-xl font-bold tracking-tight">Step-by-Step Solution</h2>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopy}
-                  className="gap-2 w-full sm:w-auto"
-                >
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {copied ? "Copied" : "Copy"}
-                </Button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  {isSupported && (
+                    <Button
+                      variant={isSpeaking ? "default" : "outline"}
+                      size="sm"
+                      onClick={handleReadAloud}
+                      className={`flex-1 sm:flex-none gap-2 ${isSpeaking ? 'bg-primary text-primary-foreground' : ''}`}
+                    >
+                      {isSpeaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                      <span className="sm:hidden">{isSpeaking ? "Stop" : "Listen"}</span>
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="gap-2 flex-1 sm:flex-none"
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? "Copied" : "Copy"}
+                  </Button>
+                </div>
               </div>
               
               <StepBySolutionRenderer content={solution} />

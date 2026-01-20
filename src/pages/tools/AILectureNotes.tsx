@@ -1,19 +1,37 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, Download, Copy, Check } from "lucide-react";
+import { Mic, Download, Copy, Check, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
+import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
   processUploadedFile 
 } from "@/utils/contentProcessing";
+
+// Strip markdown formatting for cleaner TTS
+const stripMarkdown = (text: string): string => {
+  return text
+    .replace(/#{1,6}\s?/g, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+    .replace(/^\s*[-*+]\s/gm, '')
+    .replace(/^\s*\d+\.\s/gm, '')
+    .replace(/^\s*>/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
 
 const AILectureNotes = () => {
   const [notes, setNotes] = useState("");
@@ -21,6 +39,40 @@ const AILectureNotes = () => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("lecture_notes");
+  const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
+
+  const handleReadAloud = useCallback(async () => {
+    if (isSpeaking) {
+      cancel();
+      return;
+    }
+
+    if (!notes) return;
+
+    const cleanText = stripMarkdown(notes);
+    
+    try {
+      await speak(cleanText, {
+        rate: 1.0,
+        pitch: 1.0,
+        onStart: () => {
+          toast({
+            title: "Reading aloud 🔊",
+            description: "Tap again to stop",
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Speech Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        },
+      });
+    } catch (error) {
+      console.error("TTS error:", error);
+    }
+  }, [notes, isSpeaking, speak, cancel, toast]);
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
@@ -28,6 +80,7 @@ const AILectureNotes = () => {
 
     setIsProcessing(true);
     setNotes("");
+    cancel();
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -135,7 +188,22 @@ const AILectureNotes = () => {
               <Card className="border-border/50 shadow-lg overflow-hidden">
                 <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 border-b border-border/50 bg-muted/30">
                   <CardTitle className="font-display font-semibold text-lg sm:text-xl">Lecture Notes</CardTitle>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                    {isSupported && (
+                      <Button 
+                        variant={isSpeaking ? "default" : "ghost"} 
+                        size="sm" 
+                        onClick={handleReadAloud}
+                        className={`flex-1 sm:flex-none ${isSpeaking ? 'bg-primary text-primary-foreground' : ''}`}
+                      >
+                        {isSpeaking ? (
+                          <VolumeX className="h-4 w-4" />
+                        ) : (
+                          <Volume2 className="h-4 w-4" />
+                        )}
+                        <span className="ml-2 sm:hidden">{isSpeaking ? "Stop" : "Listen"}</span>
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={handleCopy} className="flex-1 sm:flex-none">
                       {copied ? (
                         <Check className="h-4 w-4 text-green-500" />
