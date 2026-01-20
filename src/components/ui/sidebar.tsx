@@ -218,7 +218,7 @@ Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(
   ({ className, onClick, ...props }, ref) => {
-    const { toggleSidebar } = useSidebar();
+    const { toggleSidebar, open } = useSidebar();
 
     return (
       <Button
@@ -233,7 +233,10 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         }}
         {...props}
       >
-        <Menu />
+        <Menu className={cn(
+          "transition-transform duration-300 ease-in-out",
+          open && "rotate-90"
+        )} />
         <span className="sr-only">Toggle Sidebar</span>
       </Button>
     );
