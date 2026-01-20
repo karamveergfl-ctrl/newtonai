@@ -366,97 +366,97 @@ export const VideoCardWithTools = ({
 
         {/* Study Tools Row at Bottom */}
         {hasStudyTools && (
-          <div className="flex items-center gap-1.5 mt-2">
+          <div className="flex items-center gap-3 mt-2">
             {onGenerateQuiz && (
-              <Button
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleToolClick("quiz");
                 }}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 w-8 p-0 rounded-lg bg-muted/50 hover:bg-primary/20",
-                  activeGenerating === "quiz" && "bg-primary/20"
-                )}
+                className="flex flex-col items-center gap-1 group/tool disabled:opacity-50"
                 disabled={isGenerating}
-                title="Generate Quiz"
               >
-                {activeGenerating === "quiz" ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Brain className="w-4 h-4 text-primary" />
-                )}
-              </Button>
+                <div className={cn(
+                  "h-8 w-8 rounded-lg bg-muted/50 hover:bg-primary/20 flex items-center justify-center transition-colors",
+                  activeGenerating === "quiz" && "bg-primary/20"
+                )}>
+                  {activeGenerating === "quiz" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Brain className="w-4 h-4 text-primary" />
+                  )}
+                </div>
+                <span className="text-[10px] text-muted-foreground group-hover/tool:text-primary transition-colors">Quiz</span>
+              </button>
             )}
             
             {onGenerateFlashcards && (
-              <Button
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleToolClick("flashcards");
                 }}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 w-8 p-0 rounded-lg bg-muted/50 hover:bg-secondary/20",
-                  activeGenerating === "flashcards" && "bg-secondary/20"
-                )}
+                className="flex flex-col items-center gap-1 group/tool disabled:opacity-50"
                 disabled={isGenerating}
-                title="Generate Flashcards"
               >
-                {activeGenerating === "flashcards" ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <BookOpen className="w-4 h-4 text-secondary" />
-                )}
-              </Button>
+                <div className={cn(
+                  "h-8 w-8 rounded-lg bg-muted/50 hover:bg-secondary/20 flex items-center justify-center transition-colors",
+                  activeGenerating === "flashcards" && "bg-secondary/20"
+                )}>
+                  {activeGenerating === "flashcards" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <BookOpen className="w-4 h-4 text-secondary" />
+                  )}
+                </div>
+                <span className="text-[10px] text-muted-foreground group-hover/tool:text-secondary transition-colors">Cards</span>
+              </button>
             )}
             
             {onGenerateSummary && (
-              <Button
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleToolClick("summary");
                 }}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 w-8 p-0 rounded-lg bg-muted/50 hover:bg-accent/20",
-                  activeGenerating === "summary" && "bg-accent/20"
-                )}
+                className="flex flex-col items-center gap-1 group/tool disabled:opacity-50"
                 disabled={isGenerating}
-                title="Generate Summary"
               >
-                {activeGenerating === "summary" ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <FileText className="w-4 h-4 text-orange-500" />
-                )}
-              </Button>
+                <div className={cn(
+                  "h-8 w-8 rounded-lg bg-muted/50 hover:bg-orange-500/20 flex items-center justify-center transition-colors",
+                  activeGenerating === "summary" && "bg-orange-500/20"
+                )}>
+                  {activeGenerating === "summary" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <FileText className="w-4 h-4 text-orange-500" />
+                  )}
+                </div>
+                <span className="text-[10px] text-muted-foreground group-hover/tool:text-orange-500 transition-colors">Notes</span>
+              </button>
             )}
             
             {onGenerateMindMap && (
-              <Button
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleToolClick("mindmap");
                 }}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 w-8 p-0 rounded-lg bg-muted/50 hover:bg-primary/20",
-                  activeGenerating === "mindmap" && "bg-primary/20"
-                )}
+                className="flex flex-col items-center gap-1 group/tool disabled:opacity-50"
                 disabled={isGenerating}
-                title="Generate Mind Map"
               >
-                {activeGenerating === "mindmap" ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Network className="w-4 h-4 text-red-500" />
-                )}
-              </Button>
+                <div className={cn(
+                  "h-8 w-8 rounded-lg bg-muted/50 hover:bg-red-500/20 flex items-center justify-center transition-colors",
+                  activeGenerating === "mindmap" && "bg-red-500/20"
+                )}>
+                  {activeGenerating === "mindmap" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Network className="w-4 h-4 text-red-500" />
+                  )}
+                </div>
+                <span className="text-[10px] text-muted-foreground group-hover/tool:text-red-500 transition-colors">Map</span>
+              </button>
             )}
           </div>
         )}
