@@ -14,6 +14,7 @@ export interface AudioSegment {
 
 interface UsePodcastAudioQueueOptions {
   segments: AudioSegment[];
+  language?: string; // Language code for Web Speech fallback
   onSegmentChange?: (index: number) => void;
   onComplete?: () => void;
   onError?: (error: Error) => void;
@@ -43,6 +44,7 @@ const BUFFER_SIZE = 2; // Preload next 2 segments
 
 export function usePodcastAudioQueue({
   segments,
+  language = "en",
   onSegmentChange,
   onComplete,
   onError,
@@ -63,8 +65,14 @@ export function usePodcastAudioQueue({
   const isPlayingRef = useRef(false);
   const currentIndexRef = useRef(0);
   const playbackRateRef = useRef(1);
+  const languageRef = useRef(language);
 
   const { speak, cancel: cancelSpeech, isSupported: webSpeechSupported } = useWebSpeechTTS();
+
+  // Keep language ref in sync
+  useEffect(() => {
+    languageRef.current = language;
+  }, [language]);
 
   // Keep refs in sync
   useEffect(() => {
@@ -150,6 +158,7 @@ export function usePodcastAudioQueue({
       await speak(segment.text, {
         speaker: segment.speaker,
         rate: playbackRateRef.current,
+        language: languageRef.current, // Pass language for correct voice selection
         onStart: () => setStatus("playing"),
         onEnd: () => {
           if (isPlayingRef.current && index < segments.length - 1) {

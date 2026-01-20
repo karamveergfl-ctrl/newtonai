@@ -33,6 +33,7 @@ interface SavedPodcast {
   duration_seconds: number;
   created_at: string;
   source_content: string | null;
+  language?: string; // Language code for voice selection
 }
 
 type GenerationStep = "idle" | "analyzing" | "scripting" | "voicing" | "complete";
@@ -254,6 +255,7 @@ export default function AIPodcast() {
               script: JSON.parse(JSON.stringify({ segments: scriptData.segments })),
               audio_segments: JSON.parse(JSON.stringify(segments)),
               duration_seconds: segments.length * 15,
+              language: settings.language || "en", // Save language for history playback
             }]);
 
           if (saveError) {
@@ -266,11 +268,12 @@ export default function AIPodcast() {
         console.error("Error saving podcast to history:", saveErr);
       }
 
-      // Set podcast in global context
+      // Set podcast in global context with language
       setPodcast({
         title: podcastTitle,
         segments,
         sourceContent: processedContent,
+        language: settings.language || "en", // Include language for consistent voices
       });
 
       setGenerationStep("complete");
@@ -322,6 +325,7 @@ export default function AIPodcast() {
       title: saved.title,
       segments: segments as PodcastSegment[],
       sourceContent: saved.source_content || "",
+      language: saved.language || "en", // Restore language for correct voice playback
     });
     setSourceContent(saved.source_content || "");
   };
