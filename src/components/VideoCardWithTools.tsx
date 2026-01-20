@@ -303,12 +303,12 @@ export const VideoCardWithTools = ({
     );
   }
 
-  // Compact card view - styled like reference image with full-size thumbnails
+  // Compact card view - responsive layout: stack on mobile, horizontal on tablet+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group flex gap-4 p-3">
-      {/* Video Thumbnail - Left side - Full size */}
+    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col sm:flex-row gap-3 p-3">
+      {/* Video Thumbnail - Full width on mobile, fixed width on tablet+ */}
       <div 
-        className="relative w-64 min-w-[256px] aspect-video overflow-hidden bg-black cursor-pointer rounded-lg shrink-0"
+        className="relative w-full sm:w-48 md:w-56 aspect-video overflow-hidden bg-black cursor-pointer rounded-lg shrink-0"
         onClick={() => onVideoClick(video.videoId)}
       >
         <img 
@@ -344,7 +344,7 @@ export const VideoCardWithTools = ({
         <CreditBadge cost={FEATURE_COSTS.watch_video} className="absolute bottom-2 right-2" />
       </div>
 
-      {/* Video Info - Right side */}
+      {/* Video Info - Below on mobile, right side on tablet+ */}
       <div className="flex flex-col justify-between flex-1 min-w-0 py-0.5">
         <div>
           <h3 className="font-semibold text-sm line-clamp-2 mb-1">

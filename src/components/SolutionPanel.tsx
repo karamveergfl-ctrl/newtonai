@@ -349,7 +349,7 @@ export const SolutionPanel = ({
 
   return (
     <div className="h-full flex flex-col bg-card border-l animate-fade-in">
-      <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between z-10">
+      <div className="sticky top-0 bg-card border-b border-border px-3 md:px-4 py-3 flex items-center justify-between z-10">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-lg">
             {isQuestion ? "📝 Detailed Solution" : "💡 Topic Overview"}
@@ -388,7 +388,7 @@ export const SolutionPanel = ({
         </div>
       </div>
       <ScrollArea className="flex-1">
-        <div className="p-6 space-y-4">
+        <div className="p-4 md:p-6 space-y-4">
           {/* Captured Screenshot Display */}
           {capturedImage && (
             <div className="space-y-2">
@@ -454,7 +454,7 @@ export const SolutionPanel = ({
                   </Button>
                 </div>
                 {/* Step Content Card */}
-                <div className="ml-10 rounded-lg bg-muted/40 p-4 border border-border/50">
+                <div className="ml-6 md:ml-10 rounded-lg bg-muted/40 p-3 md:p-4 border border-border/50">
                   <div className="prose prose-sm dark:prose-invert max-w-none
                     [&_.katex-display]:my-4 [&_.katex-display]:py-1
                     [&_.katex]:text-base
@@ -476,7 +476,7 @@ export const SolutionPanel = ({
 
           {/* Action Buttons */}
           {!isStreaming && content && (
-            <div className="flex flex-col gap-3 pt-4">
+            <div className="flex flex-col gap-2 sm:gap-3 pt-4">
               {/* Solve Similar Problem Button */}
               {similarProblem && onSolveSimilar && (
                 <Button

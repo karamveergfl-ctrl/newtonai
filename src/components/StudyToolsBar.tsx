@@ -80,22 +80,22 @@ export const StudyToolsBar = ({
 
   return (
     <>
-      <div className={cn("flex items-center gap-2 p-2 bg-card/50 border-b", className)}>
-        {!className?.includes('border-0') && <span className="text-xs font-medium text-muted-foreground mr-2">Study Tools:</span>}
+      <div className={cn("flex items-center gap-2 p-2 bg-card/50 border-b overflow-x-auto scrollbar-hide", className)}>
+        {!className?.includes('border-0') && <span className="text-xs font-medium text-muted-foreground mr-2 whitespace-nowrap hidden sm:inline">Study Tools:</span>}
         
         <Button
           onClick={handleQuizClick}
           disabled={disabled || isAnyGenerating}
           variant="outline"
           size="sm"
-          className="gap-1.5 h-8"
+          className="gap-1.5 h-8 shrink-0"
         >
           {isGeneratingQuiz ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Brain className="w-4 h-4 text-primary" />
           )}
-          <span className="text-xs">Quiz</span>
+          <span className="text-xs hidden sm:inline">Quiz</span>
           <CreditBadge feature="quiz" />
         </Button>
 
@@ -104,14 +104,14 @@ export const StudyToolsBar = ({
           disabled={disabled || isAnyGenerating}
           variant="outline"
           size="sm"
-          className="gap-1.5 h-8"
+          className="gap-1.5 h-8 shrink-0"
         >
           {isGeneratingFlashcards ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <BookOpen className="w-4 h-4 text-secondary" />
           )}
-          <span className="text-xs">Flashcards</span>
+          <span className="text-xs hidden sm:inline">Flashcards</span>
           <CreditBadge feature="flashcards" />
         </Button>
 
@@ -120,14 +120,14 @@ export const StudyToolsBar = ({
           disabled={disabled || isAnyGenerating}
           variant="outline"
           size="sm"
-          className="gap-1.5 h-8"
+          className="gap-1.5 h-8 shrink-0"
         >
           {isGeneratingSummary ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <FileText className="w-4 h-4 text-accent" />
           )}
-          <span className="text-xs">Summary</span>
+          <span className="text-xs hidden sm:inline">Summary</span>
           <CreditBadge feature="summary" />
         </Button>
 
@@ -136,14 +136,14 @@ export const StudyToolsBar = ({
           disabled={disabled || isAnyGenerating}
           variant="outline"
           size="sm"
-          className="gap-1.5 h-8"
+          className="gap-1.5 h-8 shrink-0"
         >
           {isGeneratingMindMap ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Network className="w-4 h-4 text-primary" />
           )}
-          <span className="text-xs">Mind Map</span>
+          <span className="text-xs hidden sm:inline">Mind Map</span>
           <CreditBadge feature="mind_map" />
         </Button>
 
@@ -153,10 +153,10 @@ export const StudyToolsBar = ({
             disabled={disabled || isAnyGenerating}
             variant="outline"
             size="sm"
-            className="gap-1.5 h-8"
+            className="gap-1.5 h-8 shrink-0"
           >
             <Camera className="w-4 h-4 text-orange-500" />
-            <span className="text-xs">Screenshot</span>
+            <span className="text-xs hidden sm:inline">Screenshot</span>
           </Button>
         )}
       </div>
