@@ -84,13 +84,16 @@ export default function AIPodcast() {
         const file = metadata.file;
         
         if (file.type === "application/pdf") {
-          // Extract text from PDF
-          const formData = new FormData();
-          formData.append("file", file);
+          // Convert PDF to base64 and extract text
+          const reader = new FileReader();
+          const base64 = await new Promise<string>((resolve) => {
+            reader.onload = () => resolve((reader.result as string).split(",")[1]);
+            reader.readAsDataURL(file);
+          });
           
           const { data: pdfData, error: pdfError } = await supabase.functions.invoke(
             "extract-pdf-text",
-            { body: formData }
+            { body: { pdfContent: base64 } }
           );
           
           if (pdfError) throw new Error("Failed to extract text from PDF");
