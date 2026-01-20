@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Podcast, 
@@ -27,6 +26,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -55,8 +57,9 @@ export function PodcastHistory({ onSelectPodcast, refreshTrigger }: PodcastHisto
   const [podcasts, setPodcasts] = useState<SavedPodcast[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
-  const fetchPodcasts = async () => {
+  const fetchPodcasts = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -79,11 +82,27 @@ export function PodcastHistory({ onSelectPodcast, refreshTrigger }: PodcastHisto
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Pull-to-refresh hook
+  const handleRefresh = useCallback(async () => {
+    await fetchPodcasts();
+    toast.success("Podcasts refreshed");
+  }, [fetchPodcasts]);
+
+  const {
+    containerRef,
+    pullDistance,
+    isRefreshing,
+    pullProgress,
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: !isMobile,
+  });
 
   useEffect(() => {
     fetchPodcasts();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, fetchPodcasts]);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -149,7 +168,7 @@ export function PodcastHistory({ onSelectPodcast, refreshTrigger }: PodcastHisto
   }
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 overflow-hidden">
       <div className="flex items-center gap-2 mb-4">
         <History className="w-5 h-5 text-primary" />
         <h3 className="font-semibold">Recent Podcasts</h3>
@@ -158,7 +177,17 @@ export function PodcastHistory({ onSelectPodcast, refreshTrigger }: PodcastHisto
         </span>
       </div>
 
-      <ScrollArea className="h-[300px] pr-2">
+      {/* Pull-to-refresh indicator */}
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        pullProgress={pullProgress}
+      />
+
+      <div 
+        ref={containerRef}
+        className="h-[300px] overflow-y-auto pr-2 -mr-2 overscroll-contain"
+      >
         <AnimatePresence>
           <div className="space-y-2">
             {podcasts.map((podcast, index) => (
@@ -245,7 +274,7 @@ export function PodcastHistory({ onSelectPodcast, refreshTrigger }: PodcastHisto
             ))}
           </div>
         </AnimatePresence>
-      </ScrollArea>
+      </div>
     </Card>
   );
 }
