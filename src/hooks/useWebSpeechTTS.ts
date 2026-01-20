@@ -15,10 +15,28 @@ interface WebSpeechOptions {
   speaker?: "host1" | "host2";
   rate?: number;
   pitch?: number;
+  language?: string;
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (error: Error) => void;
 }
+
+// Language code to BCP 47 language tag mapping
+const LANGUAGE_TAGS: Record<string, string> = {
+  en: "en-US",
+  hi: "hi-IN",
+  es: "es-ES",
+  fr: "fr-FR",
+  de: "de-DE",
+  pt: "pt-BR",
+  ja: "ja-JP",
+  zh: "zh-CN",
+  ko: "ko-KR",
+  ar: "ar-SA",
+  ta: "ta-IN",
+  te: "te-IN",
+  bn: "bn-IN",
+};
 
 interface UseWebSpeechTTSReturn {
   speak: (text: string, options?: WebSpeechOptions) => Promise<void>;
@@ -61,11 +79,60 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
     };
   }, [isSupported]);
 
-  // Select appropriate voice based on speaker (male for host1, female for host2)
+  // Select appropriate voice based on speaker and language
   const selectVoice = useCallback(
-    (speaker: "host1" | "host2"): SpeechSynthesisVoice | null => {
+    (speaker: "host1" | "host2", language: string = "en"): SpeechSynthesisVoice | null => {
       if (voices.length === 0) return null;
 
+      // Get target language tag
+      const langTag = LANGUAGE_TAGS[language] || "en-US";
+      const langPrefix = langTag.split("-")[0];
+
+      // Check for user-configured voice first (only for English)
+      if (language === "en") {
+        const storedSettings = getStoredSettings();
+        if (storedSettings) {
+          const configuredName = speaker === "host1" 
+            ? storedSettings.host1VoiceName 
+            : storedSettings.host2VoiceName;
+          
+          if (configuredName) {
+            const configuredVoice = voices.find((v) => v.name === configuredName);
+            if (configuredVoice) return configuredVoice;
+          }
+        }
+      }
+
+      // For non-English languages, filter by language first
+      const languageVoices = voices.filter(
+        (v) => v.lang.startsWith(langPrefix) || v.lang.toLowerCase().startsWith(langPrefix)
+      );
+
+      // If we have language-specific voices, use them
+      if (languageVoices.length > 0) {
+        if (speaker === "host1") {
+          // Prefer male voices for host1
+          const maleVoice = languageVoices.find(
+            (v) =>
+              /\b(male|guy|david|james|daniel|mark|paul|tom|george|matthew|arthur|henry|alex|adam|brian|chris|eric|john|michael|peter|richard|robert|ravi|amit|arun|krishna|raj|sanjay)\b/i.test(v.name) &&
+              !/female/i.test(v.name)
+          );
+          if (maleVoice) return maleVoice;
+          // Return first voice for host1
+          return languageVoices[0];
+        } else {
+          // Prefer female voices for host2
+          const femaleVoice = languageVoices.find(
+            (v) =>
+              /\b(female|woman|samantha|karen|victoria|fiona|moira|susan|zira|hazel|emma|alice|kate|linda|lisa|mary|nancy|rachel|sarah|tessa|amy|priya|anita|sunita|kavita|meera|lakshmi)\b/i.test(v.name)
+          );
+          if (femaleVoice) return femaleVoice;
+          // Return second voice if available, otherwise first
+          return languageVoices[Math.min(1, languageVoices.length - 1)];
+        }
+      }
+
+      // Fallback to English voice selection if no language-specific voices
       // Check for user-configured voice first
       const storedSettings = getStoredSettings();
       if (storedSettings) {
@@ -129,10 +196,15 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
         const utterance = new SpeechSynthesisUtterance(text);
         utteranceRef.current = utterance;
 
-        // Apply voice based on speaker
-        const selectedVoice = selectVoice(options.speaker || "host1");
+        // Apply voice based on speaker and language
+        const selectedVoice = selectVoice(options.speaker || "host1", options.language);
         if (selectedVoice) {
           utterance.voice = selectedVoice;
+        }
+
+        // Set language for the utterance
+        if (options.language) {
+          utterance.lang = LANGUAGE_TAGS[options.language] || options.language;
         }
 
         // Get stored settings for pitch/rate

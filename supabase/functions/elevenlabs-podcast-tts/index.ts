@@ -6,10 +6,60 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Professional voices for podcast hosts
-const VOICES = {
-  host1: "CwhRBWXzGAHq8TQ4Fs17", // Roger - male, warm, conversational
-  host2: "EXAVITQu4vr4xnSDxMaL", // Sarah - female, clear, engaging
+// Voice mappings by language - using ElevenLabs multilingual voices
+const VOICES_BY_LANGUAGE: Record<string, { host1: string; host2: string }> = {
+  en: {
+    host1: "CwhRBWXzGAHq8TQ4Fs17", // Roger - male, warm, conversational
+    host2: "EXAVITQu4vr4xnSDxMaL", // Sarah - female, clear, engaging
+  },
+  hi: {
+    host1: "onwK4e9ZLuTAKqWW03F9", // Daniel - supports Hindi via multilingual
+    host2: "XrExE9yKIg1WjnnlVkGX", // Matilda - supports Hindi via multilingual
+  },
+  es: {
+    host1: "TX3LPaxmHKxFdv7VOQHJ", // Liam
+    host2: "cgSgspJ2msm6clMCkdW9", // Jessica
+  },
+  fr: {
+    host1: "TX3LPaxmHKxFdv7VOQHJ", // Liam
+    host2: "EXAVITQu4vr4xnSDxMaL", // Sarah
+  },
+  de: {
+    host1: "onwK4e9ZLuTAKqWW03F9", // Daniel
+    host2: "XrExE9yKIg1WjnnlVkGX", // Matilda
+  },
+  pt: {
+    host1: "TX3LPaxmHKxFdv7VOQHJ", // Liam
+    host2: "cgSgspJ2msm6clMCkdW9", // Jessica
+  },
+  ja: {
+    host1: "onwK4e9ZLuTAKqWW03F9", // Daniel
+    host2: "XrExE9yKIg1WjnnlVkGX", // Matilda
+  },
+  zh: {
+    host1: "onwK4e9ZLuTAKqWW03F9", // Daniel
+    host2: "XrExE9yKIg1WjnnlVkGX", // Matilda
+  },
+  ko: {
+    host1: "onwK4e9ZLuTAKqWW03F9", // Daniel
+    host2: "XrExE9yKIg1WjnnlVkGX", // Matilda
+  },
+  ar: {
+    host1: "onwK4e9ZLuTAKqWW03F9", // Daniel
+    host2: "XrExE9yKIg1WjnnlVkGX", // Matilda
+  },
+  ta: {
+    host1: "onwK4e9ZLuTAKqWW03F9", // Daniel
+    host2: "XrExE9yKIg1WjnnlVkGX", // Matilda
+  },
+  te: {
+    host1: "onwK4e9ZLuTAKqWW03F9", // Daniel
+    host2: "XrExE9yKIg1WjnnlVkGX", // Matilda
+  },
+  bn: {
+    host1: "onwK4e9ZLuTAKqWW03F9", // Daniel
+    host2: "XrExE9yKIg1WjnnlVkGX", // Matilda
+  },
 };
 
 interface PodcastSegment {
@@ -22,12 +72,19 @@ interface PodcastSegment {
 interface TTSRequest {
   segments: PodcastSegment[];
   batchSize?: number;
+  language?: string;
+}
+
+// Get model based on language - use multilingual for non-English
+function getModelForLanguage(language: string): string {
+  return language === "en" ? "eleven_turbo_v2_5" : "eleven_multilingual_v2";
 }
 
 async function generateAudioForSegment(
   text: string,
   voiceId: string,
-  apiKey: string
+  apiKey: string,
+  modelId: string
 ): Promise<string> {
   const response = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
@@ -39,7 +96,7 @@ async function generateAudioForSegment(
       },
       body: JSON.stringify({
         text,
-        model_id: "eleven_turbo_v2_5", // Fast, high-quality for real-time
+        model_id: modelId,
         voice_settings: {
           stability: 0.5,
           similarity_boost: 0.75,
@@ -72,7 +129,7 @@ serve(async (req) => {
       throw new Error("ELEVENLABS_API_KEY is not configured");
     }
 
-    const { segments, batchSize = 3 }: TTSRequest = await req.json();
+    const { segments, batchSize = 3, language = "en" }: TTSRequest = await req.json();
 
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return new Response(
@@ -81,7 +138,13 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Generating audio for ${segments.length} segments`);
+    console.log(`Generating audio for ${segments.length} segments in language: ${language}`);
+
+    // Get voice mapping for the language
+    const voices = VOICES_BY_LANGUAGE[language] || VOICES_BY_LANGUAGE.en;
+    const modelId = getModelForLanguage(language);
+
+    console.log(`Using model: ${modelId}, voices: host1=${voices.host1}, host2=${voices.host2}`);
 
     // Process segments in batches to avoid rate limits
     const results: { index: number; audio: string | null; error?: string }[] = [];
@@ -92,11 +155,12 @@ serve(async (req) => {
       const batchPromises = batch.map(async (segment, batchIndex) => {
         const globalIndex = i + batchIndex;
         try {
-          const voiceId = VOICES[segment.speaker];
+          const voiceId = voices[segment.speaker];
           const audio = await generateAudioForSegment(
             segment.text,
             voiceId,
-            ELEVENLABS_API_KEY
+            ELEVENLABS_API_KEY,
+            modelId
           );
           return { index: globalIndex, audio };
         } catch (error) {
