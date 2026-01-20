@@ -233,11 +233,16 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         }}
         {...props}
       >
-        {open ? (
-          <X className="transition-transform duration-300 ease-in-out rotate-0" />
-        ) : (
-          <Menu className="transition-transform duration-300 ease-in-out rotate-0" />
-        )}
+        <span className="relative flex items-center justify-center">
+          <Menu className={cn(
+            "absolute transition-all duration-300 ease-in-out",
+            open ? "scale-0 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100"
+          )} />
+          <X className={cn(
+            "absolute transition-all duration-300 ease-in-out",
+            open ? "scale-100 rotate-0 opacity-100" : "scale-0 -rotate-90 opacity-0"
+          )} />
+        </span>
         <span className="sr-only">Toggle Sidebar</span>
       </Button>
     );
