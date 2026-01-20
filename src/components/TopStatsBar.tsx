@@ -15,6 +15,7 @@ export function TopStatsBar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <SidebarTrigger className="md:hidden h-8 w-8" />
+            <div className="md:hidden h-6 w-[3px] rounded-full bg-border/60" />
             <GamificationBadge />
             <CreditBalance showLabel />
           </div>
