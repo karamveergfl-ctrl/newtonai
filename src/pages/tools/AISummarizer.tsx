@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, Brain, BookOpen, FileText, Network } from "lucide-react";
+import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX } from "lucide-react";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { VideoCardWithTools } from "@/components/VideoCardWithTools";
@@ -15,7 +15,7 @@ import { FlashcardDeck } from "@/components/FlashcardDeck";
 import { QuizMode } from "@/components/QuizMode";
 import { FullScreenStudyTool } from "@/components/FullScreenStudyTool";
 import { VisualMindMap } from "@/components/VisualMindMap";
-import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
+import { VideoGenerationSettings } from "@/components/VideoGenerationSettingsDialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCredits } from "@/hooks/useCredits";
 import { CreditModal } from "@/components/CreditModal";
@@ -67,12 +67,6 @@ interface FlashcardData {
   back: string;
 }
 
-interface PendingContent {
-  content: string;
-  type: "upload" | "recording" | "text";
-  title: string;
-}
-
 const AISummarizer = () => {
   const [summary, setSummary] = useState<string | null>(null);
   const [contentTitle, setContentTitle] = useState<string>("");
@@ -87,12 +81,6 @@ const AISummarizer = () => {
   const [videoData, setVideoData] = useState<VideoData | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
-
-  // Pending content state for non-YouTube content
-  const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
-  const [showStudyToolsSelection, setShowStudyToolsSelection] = useState(false);
-  const [pendingToolType, setPendingToolType] = useState<"quiz" | "flashcards" | "summary" | "mindmap" | null>(null);
-  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
   // Study tools state
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
@@ -292,7 +280,7 @@ const AISummarizer = () => {
       return;
     }
 
-    // For non-YouTube content, process and show study tools selection
+    // For non-YouTube content, generate summary directly
     if (!checkCanUse("summary")) {
       toast({
         title: "Usage limit reached",
@@ -322,31 +310,43 @@ const AISummarizer = () => {
       if (type === "recording") {
         const base64Audio = content.split(",")[1] || content;
         textContent = await transcribeAudio(base64Audio, session.access_token);
-        title = "Audio Recording";
+        title = "Audio Recording Summary";
       } else if (type === "upload" && metadata?.file) {
         textContent = await processUploadedFile(metadata.file, session.access_token);
         title = metadata.file.name.replace(/\.[^/.]+$/, "");
       } else if (type === "text") {
-        title = "Text Content";
+        title = "Text Summary";
       }
 
       if (!textContent?.trim()) {
         throw new Error("No content could be extracted. Please try again with different content.");
       }
 
-      // Store processed content and show study tools selection
-      setPendingContent({
-        content: textContent,
-        type: type as "upload" | "recording" | "text",
-        title,
-      });
-      setShowStudyToolsSelection(true);
-      setContentTitle(title);
+      await incrementUsage("summary");
 
-    } catch (error: any) {
-      console.error("Error processing content:", error);
+      const { data: summaryData, error: summaryError } = await supabase.functions.invoke(
+        "generate-summary",
+        {
+          body: {
+            content: textContent,
+            language: metadata?.language || "en",
+          },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }
+      );
+
+      if (summaryError) throw summaryError;
+
+      setSummary(summaryData.summary);
+      setContentTitle(title);
       toast({
-        title: "Error processing content",
+        title: "Summary generated!",
+        description: "Your content has been summarized successfully.",
+      });
+    } catch (error: any) {
+      console.error("Error generating summary:", error);
+      toast({
+        title: "Error generating summary",
         description: error.message || "Please try again later.",
         variant: "destructive",
       });
@@ -355,229 +355,8 @@ const AISummarizer = () => {
     }
   };
 
-  // Handle tool selection from study tools bar
-  const handleToolSelect = (toolType: "quiz" | "flashcards" | "summary" | "mindmap") => {
-    setPendingToolType(toolType);
-    setShowSettingsDialog(true);
-  };
-
-  // Handle generation after settings confirmation
-  const handleConfirmGenerate = async (settings: UniversalGenerationSettings) => {
-    if (!pendingContent || !pendingToolType) return;
-
-    setShowSettingsDialog(false);
-
-    const featureMap: Record<string, string> = {
-      quiz: "quiz",
-      flashcards: "flashcards",
-      summary: "summary",
-      mindmap: "mind_map",
-    };
-
-    const allowed = await trySpendCredits(featureMap[pendingToolType]);
-    if (!allowed) return;
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to use this feature.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    switch (pendingToolType) {
-      case "quiz":
-        await generateQuizFromContent(pendingContent.content, pendingContent.title, settings, session.access_token);
-        break;
-      case "flashcards":
-        await generateFlashcardsFromContent(pendingContent.content, pendingContent.title, settings, session.access_token);
-        break;
-      case "summary":
-        await generateSummaryFromContent(pendingContent.content, pendingContent.title, settings, session.access_token);
-        break;
-      case "mindmap":
-        await generateMindMapFromContent(pendingContent.content, pendingContent.title, settings, session.access_token);
-        break;
-    }
-
-    setPendingToolType(null);
-  };
-
-  // Generate quiz from non-YouTube content
-  const generateQuizFromContent = async (content: string, title: string, settings: UniversalGenerationSettings, accessToken: string) => {
-    setIsGeneratingQuiz(true);
-    setActiveGenerating("quiz");
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          type: "text",
-          title,
-          content: content.slice(0, 8000),
-          settings: { count: settings.count, difficulty: settings.difficulty },
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to generate quiz");
-      
-      const data = await response.json();
-      setQuizQuestions(data.questions);
-      setQuizTitle(title);
-      setShowStudyToolsSelection(false);
-      toast({
-        title: "Quiz Ready! 🧠",
-        description: `Generated ${data.questions.length} questions`,
-      });
-    } catch (error: any) {
-      console.error("Error generating quiz:", error);
-      toast({
-        title: "Cannot Generate Quiz",
-        description: error.message || "Failed to generate quiz",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingQuiz(false);
-      setActiveGenerating(null);
-    }
-  };
-
-  // Generate flashcards from non-YouTube content
-  const generateFlashcardsFromContent = async (content: string, title: string, settings: UniversalGenerationSettings, accessToken: string) => {
-    setIsGeneratingFlashcards(true);
-    setActiveGenerating("flashcards");
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          type: "text",
-          videoTitle: title,
-          content: content.slice(0, 8000),
-          settings: { count: settings.count, difficulty: settings.difficulty },
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to generate flashcards");
-      
-      const data = await response.json();
-      setFlashcards(data.flashcards);
-      setFlashcardTitle(title);
-      setShowStudyToolsSelection(false);
-      toast({
-        title: "Flashcards Ready! 📚",
-        description: `Generated ${data.flashcards.length} flashcards`,
-      });
-    } catch (error: any) {
-      console.error("Error generating flashcards:", error);
-      toast({
-        title: "Cannot Generate Flashcards",
-        description: error.message || "Failed to generate flashcards",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingFlashcards(false);
-      setActiveGenerating(null);
-    }
-  };
-
-  // Generate summary from non-YouTube content
-  const generateSummaryFromContent = async (content: string, title: string, settings: UniversalGenerationSettings, accessToken: string) => {
-    setShowSummaryScreen(true);
-    setIsGeneratingSummary(true);
-    setActiveGenerating("summary");
-    setContentTitle(title);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          content: content.slice(0, 10000),
-          detailLevel: settings.detailLevel,
-          language: selectedLanguage,
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to generate summary");
-      
-      const data = await response.json();
-      setVideoSummary(data.summary);
-      setShowStudyToolsSelection(false);
-      toast({
-        title: "Summary Ready! 📝",
-        description: "Summary generated successfully",
-      });
-    } catch (error: any) {
-      console.error("Error generating summary:", error);
-      setShowSummaryScreen(false);
-      toast({
-        title: "Cannot Generate Summary",
-        description: error.message || "Failed to generate summary",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingSummary(false);
-      setActiveGenerating(null);
-    }
-  };
-
-  // Generate mind map from non-YouTube content
-  const generateMindMapFromContent = async (content: string, title: string, settings: UniversalGenerationSettings, accessToken: string) => {
-    setShowMindMapScreen(true);
-    setIsGeneratingMindMap(true);
-    setActiveGenerating("mindmap");
-    setMindMapTitle(title);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          content: content.slice(0, 8000),
-          detailLevel: settings.detailLevel,
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to generate mind map");
-      
-      const data = await response.json();
-      if (data.mindMapData) {
-        setMindMapData(data.mindMapData);
-      }
-      setShowStudyToolsSelection(false);
-      toast({
-        title: "Mind Map Ready! 🧠",
-        description: "Mind map generated successfully",
-      });
-    } catch (error: any) {
-      console.error("Error generating mind map:", error);
-      setShowMindMapScreen(false);
-      toast({
-        title: "Cannot Generate Mind Map",
-        description: error.message || "Failed to generate mind map",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingMindMap(false);
-      setActiveGenerating(null);
-    }
-  };
-
   // Video study tool handlers
-  const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string, settings?: UniversalGenerationSettings) => {
+  const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     // Check and spend credits first
     const allowed = await trySpendCredits("flashcards");
     if (!allowed) return;
@@ -636,7 +415,7 @@ const AISummarizer = () => {
     }
   };
 
-  const handleGenerateQuizFromVideo = async (videoId: string, videoTitle: string, settings?: UniversalGenerationSettings) => {
+  const handleGenerateQuizFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     // Check and spend credits first
     const allowed = await trySpendCredits("quiz");
     if (!allowed) return;
@@ -695,7 +474,7 @@ const AISummarizer = () => {
     }
   };
 
-  const handleGenerateSummaryFromVideo = async (videoId: string, videoTitle: string, settings?: UniversalGenerationSettings) => {
+  const handleGenerateSummaryFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     // Check and spend credits first
     const allowed = await trySpendCredits("summary");
     if (!allowed) return;
@@ -755,7 +534,7 @@ const AISummarizer = () => {
     }
   };
 
-  const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string, settings?: UniversalGenerationSettings) => {
+  const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     // Check and spend credits first
     const allowed = await trySpendCredits("mind_map");
     if (!allowed) return;
@@ -825,8 +604,6 @@ const AISummarizer = () => {
     setSummary(null);
     setContentTitle("");
     setVideoError(null);
-    setPendingContent(null);
-    setShowStudyToolsSelection(false);
   };
 
   const handleCloseFlashcards = () => {
@@ -944,7 +721,7 @@ const AISummarizer = () => {
               <Sparkles className="w-10 h-10 text-primary" />
             </div>
             <h3 className="text-lg font-semibold">Generating Mind Map</h3>
-            <p className="text-muted-foreground">Analyzing content...</p>
+            <p className="text-muted-foreground">Analyzing video content...</p>
             <Button variant="outline" onClick={handleCloseMindMap}>
               Cancel
             </Button>
@@ -971,75 +748,8 @@ const AISummarizer = () => {
           </p>
         </motion.div>
 
-        {/* Study Tools Selection for Non-YouTube Content */}
-        {showStudyToolsSelection && pendingContent ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            <Button
-              variant="ghost"
-              onClick={handleBackToInput}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to input
-            </Button>
-
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader className="text-center">
-                <CardTitle className="text-xl">{pendingContent.title}</CardTitle>
-                <CardDescription>
-                  Content processed successfully! Choose a study tool to generate:
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <Button
-                    variant="outline"
-                    className="h-24 flex-col gap-2 hover:bg-primary/10 hover:border-primary transition-all"
-                    onClick={() => handleToolSelect("quiz")}
-                    disabled={isAnyGenerating}
-                  >
-                    <Brain className="h-8 w-8 text-primary" />
-                    <span className="font-medium">Generate Quiz</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    className="h-24 flex-col gap-2 hover:bg-violet-500/10 hover:border-violet-500 transition-all"
-                    onClick={() => handleToolSelect("flashcards")}
-                    disabled={isAnyGenerating}
-                  >
-                    <BookOpen className="h-8 w-8 text-violet-500" />
-                    <span className="font-medium">Generate Flashcards</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    className="h-24 flex-col gap-2 hover:bg-amber-500/10 hover:border-amber-500 transition-all"
-                    onClick={() => handleToolSelect("summary")}
-                    disabled={isAnyGenerating}
-                  >
-                    <FileText className="h-8 w-8 text-amber-500" />
-                    <span className="font-medium">Generate Summary</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    className="h-24 flex-col gap-2 hover:bg-rose-500/10 hover:border-rose-500 transition-all"
-                    onClick={() => handleToolSelect("mindmap")}
-                    disabled={isAnyGenerating}
-                  >
-                    <Network className="h-8 w-8 text-rose-500" />
-                    <span className="font-medium">Generate Mind Map</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ) : videoData ? (
+        {/* Video Card View */}
+        {videoData ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1177,18 +887,6 @@ const AISummarizer = () => {
           canWatchMoreAds={canWatchMoreAds()}
           remainingAds={getRemainingAds()}
         />
-
-        {/* Universal Settings Dialog */}
-        {pendingToolType && (
-          <UniversalStudySettingsDialog
-            open={showSettingsDialog}
-            onOpenChange={setShowSettingsDialog}
-            type={pendingToolType}
-            contentTitle={pendingContent?.title}
-            contentType="text"
-            onGenerate={handleConfirmGenerate}
-          />
-        )}
       </div>
     </AppLayout>
   );

@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "./UniversalStudySettingsDialog";
+import { VideoGenerationSettingsDialog, VideoGenerationSettings } from "./VideoGenerationSettingsDialog";
 import { CreditBadge } from "./CreditBadge";
 import { FEATURE_COSTS } from "@/lib/creditConfig";
 
@@ -24,10 +24,10 @@ interface VideoCardWithToolsProps {
     viewCount?: string;
   };
   onVideoClick: (videoId: string) => void;
-  onGenerateFlashcards?: (videoId: string, videoTitle: string, settings?: UniversalGenerationSettings) => void;
-  onGenerateQuiz?: (videoId: string, videoTitle: string, settings?: UniversalGenerationSettings) => void;
-  onGenerateSummary?: (videoId: string, videoTitle: string, settings?: UniversalGenerationSettings) => void;
-  onGenerateMindMap?: (videoId: string, videoTitle: string, settings?: UniversalGenerationSettings) => void;
+  onGenerateFlashcards?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
+  onGenerateQuiz?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
+  onGenerateSummary?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
+  onGenerateMindMap?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
   isGenerating?: boolean;
   activeGenerating?: "quiz" | "flashcards" | "summary" | "mindmap" | null;
   isLargeView?: boolean;
@@ -95,7 +95,7 @@ export const VideoCardWithTools = ({
     setSettingsDialogOpen(true);
   };
 
-  const handleGenerateWithSettings = (settings: UniversalGenerationSettings) => {
+  const handleGenerateWithSettings = (settings: VideoGenerationSettings) => {
     if (!pendingToolType) return;
     
     switch (pendingToolType) {
@@ -291,12 +291,11 @@ export const VideoCardWithTools = ({
         
         {/* Settings Dialog for Large View */}
         {pendingToolType && (
-          <UniversalStudySettingsDialog
+          <VideoGenerationSettingsDialog
             open={settingsDialogOpen}
             onOpenChange={setSettingsDialogOpen}
             type={pendingToolType}
-            contentTitle={video.title}
-            contentType="video"
+            videoTitle={video.title}
             onGenerate={handleGenerateWithSettings}
           />
         )}
@@ -465,12 +464,11 @@ export const VideoCardWithTools = ({
       
       {/* Settings Dialog for Compact View */}
       {pendingToolType && (
-        <UniversalStudySettingsDialog
+        <VideoGenerationSettingsDialog
           open={settingsDialogOpen}
           onOpenChange={setSettingsDialogOpen}
           type={pendingToolType}
-          contentTitle={video.title}
-          contentType="video"
+          videoTitle={video.title}
           onGenerate={handleGenerateWithSettings}
         />
       )}
