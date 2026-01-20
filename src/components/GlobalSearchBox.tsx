@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, Search, Loader2, MicOff, Youtube } from "lucide-react";
@@ -15,8 +15,15 @@ export const GlobalSearchBox = ({ onTopicSearch, isSearching }: GlobalSearchBoxP
   const [isListening, setIsListening] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = () => {
+    // If empty, focus input to open keyboard on mobile
+    if (searchQuery.trim().length === 0) {
+      inputRef.current?.focus();
+      return;
+    }
+    
     if (searchQuery.trim().length > 2) {
       onTopicSearch(searchQuery);
     } else {
@@ -82,48 +89,42 @@ export const GlobalSearchBox = ({ onTopicSearch, isSearching }: GlobalSearchBoxP
         <Youtube className="w-4 h-4" />
         <span className="text-sm">Search any topic for educational videos</span>
       </div>
-      <div className={`flex gap-2 bg-card/80 backdrop-blur-sm p-3 rounded-xl border shadow-lg ${
-        isMobile ? 'flex-col sm:flex-row' : ''
-      }`}>
+      <div className="flex gap-2 bg-card/80 backdrop-blur-sm p-3 rounded-xl border shadow-lg">
         <Input
+          ref={inputRef}
           type="text"
-          placeholder="Search any topic (e.g., 'Newton's laws', 'photosynthesis', 'calculus')"
+          placeholder={isMobile ? "Search any topic..." : "Search any topic (e.g., 'Newton's laws', 'photosynthesis')"}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          className={`flex-1 border-0 bg-transparent focus-visible:ring-1 text-base ${
-            isMobile ? 'h-12' : 'h-10'
-          }`}
+          className="flex-1 border-0 bg-transparent focus-visible:ring-1 text-base h-10"
           disabled={isSearching || isListening}
         />
-        <div className="flex gap-2 justify-end">
-          <Button
-            onClick={handleSearch}
-            disabled={isSearching || isListening}
-            size={isMobile ? "lg" : "default"}
-            className={`shrink-0 gap-2 ${isMobile ? 'h-12 px-6' : ''}`}
-          >
-            {isSearching ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Search className="w-4 h-4" />
-            )}
-            <span>Search</span>
-          </Button>
-          <Button
-            onClick={handleVoiceSearch}
-            disabled={isSearching}
-            size={isMobile ? "lg" : "icon"}
-            variant={isListening ? "default" : "outline"}
-            className={`shrink-0 ${isMobile ? 'h-12 px-4' : ''} ${isListening ? "animate-pulse" : ""}`}
-          >
-            {isListening ? (
-              <MicOff className="w-4 h-4 text-destructive" />
-            ) : (
-              <Mic className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
+        <Button
+          onClick={handleSearch}
+          disabled={isSearching || isListening}
+          size="icon"
+          className="shrink-0 h-10 w-10"
+        >
+          {isSearching ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Search className="w-4 h-4" />
+          )}
+        </Button>
+        <Button
+          onClick={handleVoiceSearch}
+          disabled={isSearching}
+          size="icon"
+          variant={isListening ? "default" : "outline"}
+          className={`shrink-0 h-10 w-10 ${isListening ? "animate-pulse" : ""}`}
+        >
+          {isListening ? (
+            <MicOff className="w-4 h-4 text-destructive" />
+          ) : (
+            <Mic className="w-4 h-4" />
+          )}
+        </Button>
       </div>
     </div>
   );
