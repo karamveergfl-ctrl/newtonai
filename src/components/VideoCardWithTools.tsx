@@ -377,16 +377,16 @@ export const VideoCardWithTools = ({
                 disabled={isGenerating}
               >
                 <div className={cn(
-                  "h-8 w-8 rounded-lg bg-muted/50 hover:bg-primary/20 flex items-center justify-center transition-colors",
-                  activeGenerating === "quiz" && "bg-primary/20"
+                  "h-8 w-8 rounded-lg bg-primary/10 hover:bg-primary/25 flex items-center justify-center transition-all duration-200 hover:scale-105",
+                  activeGenerating === "quiz" && "bg-primary/30 scale-105"
                 )}>
                   {activeGenerating === "quiz" ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
                   ) : (
                     <Brain className="w-4 h-4 text-primary" />
                   )}
                 </div>
-                <span className="text-[10px] text-muted-foreground group-hover/tool:text-primary transition-colors">Quiz</span>
+                <span className="text-[10px] text-primary/70 group-hover/tool:text-primary font-medium transition-colors">Quiz</span>
               </button>
             )}
             
@@ -400,16 +400,16 @@ export const VideoCardWithTools = ({
                 disabled={isGenerating}
               >
                 <div className={cn(
-                  "h-8 w-8 rounded-lg bg-muted/50 hover:bg-secondary/20 flex items-center justify-center transition-colors",
-                  activeGenerating === "flashcards" && "bg-secondary/20"
+                  "h-8 w-8 rounded-lg bg-violet-500/10 hover:bg-violet-500/25 flex items-center justify-center transition-all duration-200 hover:scale-105",
+                  activeGenerating === "flashcards" && "bg-violet-500/30 scale-105"
                 )}>
                   {activeGenerating === "flashcards" ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-violet-500" />
                   ) : (
-                    <BookOpen className="w-4 h-4 text-secondary" />
+                    <BookOpen className="w-4 h-4 text-violet-500" />
                   )}
                 </div>
-                <span className="text-[10px] text-muted-foreground group-hover/tool:text-secondary transition-colors">Cards</span>
+                <span className="text-[10px] text-violet-500/70 group-hover/tool:text-violet-500 font-medium transition-colors">Cards</span>
               </button>
             )}
             
@@ -423,16 +423,16 @@ export const VideoCardWithTools = ({
                 disabled={isGenerating}
               >
                 <div className={cn(
-                  "h-8 w-8 rounded-lg bg-muted/50 hover:bg-orange-500/20 flex items-center justify-center transition-colors",
-                  activeGenerating === "summary" && "bg-orange-500/20"
+                  "h-8 w-8 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 flex items-center justify-center transition-all duration-200 hover:scale-105",
+                  activeGenerating === "summary" && "bg-amber-500/30 scale-105"
                 )}>
                   {activeGenerating === "summary" ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
                   ) : (
-                    <FileText className="w-4 h-4 text-orange-500" />
+                    <FileText className="w-4 h-4 text-amber-500" />
                   )}
                 </div>
-                <span className="text-[10px] text-muted-foreground group-hover/tool:text-orange-500 transition-colors">Notes</span>
+                <span className="text-[10px] text-amber-500/70 group-hover/tool:text-amber-500 font-medium transition-colors">Notes</span>
               </button>
             )}
             
@@ -446,16 +446,16 @@ export const VideoCardWithTools = ({
                 disabled={isGenerating}
               >
                 <div className={cn(
-                  "h-8 w-8 rounded-lg bg-muted/50 hover:bg-red-500/20 flex items-center justify-center transition-colors",
-                  activeGenerating === "mindmap" && "bg-red-500/20"
+                  "h-8 w-8 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 flex items-center justify-center transition-all duration-200 hover:scale-105",
+                  activeGenerating === "mindmap" && "bg-rose-500/30 scale-105"
                 )}>
                   {activeGenerating === "mindmap" ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-rose-500" />
                   ) : (
-                    <Network className="w-4 h-4 text-red-500" />
+                    <Network className="w-4 h-4 text-rose-500" />
                   )}
                 </div>
-                <span className="text-[10px] text-muted-foreground group-hover/tool:text-red-500 transition-colors">Map</span>
+                <span className="text-[10px] text-rose-500/70 group-hover/tool:text-rose-500 font-medium transition-colors">Map</span>
               </button>
             )}
           </div>
