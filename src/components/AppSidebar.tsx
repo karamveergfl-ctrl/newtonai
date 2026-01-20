@@ -144,7 +144,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         </SidebarMenu>
 
         {/* Study Tools */}
-        <SidebarGroup className="mt-1">
+        <SidebarGroup className="mt-0">
           {!isCollapsed && (
             <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Study Tools
