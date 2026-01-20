@@ -164,33 +164,71 @@ export default function AIPodcast() {
       const segments: PodcastSegment[] = [];
       const totalSegments = scriptData.segments.length;
 
-      for (let i = 0; i < totalSegments; i++) {
-        const segment = scriptData.segments[i];
-        
-        try {
-          const { data: ttsData, error: ttsError } = await supabase.functions.invoke(
-            "elevenlabs-tts",
-            {
-              body: {
-                text: segment.text,
-                speaker: segment.speaker,
-                emotion: segment.emotion,
-              },
-            }
-          );
+      const callElevenLabsTTS = async (s: { text: string; speaker: string; emotion?: string }) => {
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
 
-          if (ttsError) {
-            console.error("TTS error for segment:", i, ttsError);
-            segments.push(segment); // Add without audio
-          } else {
-            segments.push({
-              ...segment,
-              audio: ttsData.audio,
-            });
-          }
+        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            text: s.text,
+            speaker: s.speaker,
+            emotion: s.emotion,
+          }),
+        });
+
+        const payload = await resp.json().catch(() => ({} as any));
+
+        if (!resp.ok) {
+          throw new Error(payload?.error || `Voice generation failed (${resp.status})`);
+        }
+
+        return payload as { audio: string };
+      };
+
+      let ttsStopped = false;
+      let ttsNotified = false;
+
+      for (let i = 0; i < totalSegments; i++) {
+        if (ttsStopped) break;
+
+        const segment = scriptData.segments[i];
+
+        try {
+          const ttsData = await callElevenLabsTTS({
+            text: segment.text,
+            speaker: segment.speaker,
+            emotion: segment.emotion,
+          });
+
+          segments.push({
+            ...segment,
+            audio: ttsData.audio,
+          });
         } catch (error) {
-          console.error("Error generating audio for segment:", i, error);
-          segments.push(segment); // Add without audio
+          const message = error instanceof Error ? error.message : "Voice generation failed";
+          console.error("TTS error for segment:", i, error);
+
+          // Keep the transcript even if audio fails
+          segments.push(segment);
+
+          // For quota / policy blocks, stop further TTS calls and show a clear toast once
+          const shouldStop =
+            /quota|credits remaining|free tier usage disabled|unusual activity/i.test(message);
+
+          if (!ttsNotified) {
+            toast.error(message);
+            ttsNotified = true;
+          }
+
+          if (shouldStop) {
+            ttsStopped = true;
+          }
         }
 
         // Update progress
