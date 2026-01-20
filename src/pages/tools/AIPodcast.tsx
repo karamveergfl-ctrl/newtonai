@@ -20,6 +20,7 @@ interface PodcastSegment {
   text: string;
   emotion?: string;
   audio?: string;
+  fallbackAudio?: boolean;
 }
 
 interface PodcastData {
@@ -44,7 +45,7 @@ const stepMessages: Record<GenerationStep, string> = {
   idle: "",
   analyzing: "Analyzing your content...",
   scripting: "Writing podcast script...",
-  voicing: "Generating voices with ElevenLabs...",
+  voicing: "Preparing podcast voices...",
   complete: "Your podcast is ready!",
 };
 
@@ -159,82 +160,18 @@ export default function AIPodcast() {
 
       setProgress(40);
 
-      // Step 2: Generate audio for each segment
+      // Step 2: Prepare segments for Web Speech playback (no external TTS)
       setGenerationStep("voicing");
-      const segments: PodcastSegment[] = [];
-      const totalSegments = scriptData.segments.length;
+      
+      const segments: PodcastSegment[] = scriptData.segments.map((segment: any) => ({
+        speaker: segment.speaker,
+        name: segment.name,
+        text: segment.text,
+        emotion: segment.emotion,
+        fallbackAudio: true, // Use Web Speech API for all segments
+      }));
 
-      const callElevenLabsTTS = async (s: { text: string; speaker: string; emotion?: string }) => {
-        const { data } = await supabase.auth.getSession();
-        const token = data.session?.access_token;
-
-        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            text: s.text,
-            speaker: s.speaker,
-            emotion: s.emotion,
-          }),
-        });
-
-        const payload = await resp.json().catch(() => ({} as any));
-
-        if (!resp.ok) {
-          throw new Error(payload?.error || `Voice generation failed (${resp.status})`);
-        }
-
-        return payload as { audio: string };
-      };
-
-      let ttsStopped = false;
-      let ttsNotified = false;
-
-      for (let i = 0; i < totalSegments; i++) {
-        if (ttsStopped) break;
-
-        const segment = scriptData.segments[i];
-
-        try {
-          const ttsData = await callElevenLabsTTS({
-            text: segment.text,
-            speaker: segment.speaker,
-            emotion: segment.emotion,
-          });
-
-          segments.push({
-            ...segment,
-            audio: ttsData.audio,
-          });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Voice generation failed";
-          console.error("TTS error for segment:", i, error);
-
-          // Keep the transcript even if audio fails
-          segments.push(segment);
-
-          // For quota / policy blocks, stop further TTS calls and show a clear toast once
-          const shouldStop =
-            /quota|credits remaining|free tier usage disabled|unusual activity/i.test(message);
-
-          if (!ttsNotified) {
-            toast.error(message);
-            ttsNotified = true;
-          }
-
-          if (shouldStop) {
-            ttsStopped = true;
-          }
-        }
-
-        // Update progress
-        const segmentProgress = 40 + ((i + 1) / totalSegments) * 50;
-        setProgress(Math.round(segmentProgress));
-      }
+      setProgress(90);
 
       // Spend credits after successful generation
       if (!isPremium) {
@@ -463,9 +400,9 @@ export default function AIPodcast() {
                     <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-secondary/10 flex items-center justify-center">
                       <Mic2 className="w-5 h-5 text-secondary" />
                     </div>
-                    <h3 className="font-medium">Hyper-Realistic Voices</h3>
+                    <h3 className="font-medium">Browser Voice Synthesis</h3>
                     <p className="text-muted-foreground text-xs mt-1">
-                      Powered by ElevenLabs technology
+                      Natural text-to-speech powered by your browser
                     </p>
                   </div>
                   <div className="p-4 rounded-lg bg-accent/5">
