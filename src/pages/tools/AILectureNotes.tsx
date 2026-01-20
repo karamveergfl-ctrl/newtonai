@@ -6,16 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, Download, Copy, Check, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { EnhancedLectureRecorder } from "@/components/EnhancedLectureRecorder";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
-import { 
-  getYouTubeTranscript, 
-  transcribeAudio, 
-  processUploadedFile 
-} from "@/utils/contentProcessing";
+import { transcribeAudio } from "@/utils/contentProcessing";
 
 // Strip markdown formatting for cleaner TTS
 const stripMarkdown = (text: string): string => {
@@ -36,8 +32,8 @@ const stripMarkdown = (text: string): string => {
 
 interface PendingContent {
   content: string;
-  type: string;
-  metadata?: { videoId?: string; file?: File; language?: string };
+  type: "recording" | "audio";
+  metadata?: { file?: File; language?: string };
 }
 
 const AILectureNotes = () => {
@@ -85,7 +81,11 @@ const AILectureNotes = () => {
     }
   }, [notes, isSpeaking, speak, cancel, toast]);
 
-  const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
+  const handleContentReady = async (
+    content: string, 
+    type: "recording" | "audio", 
+    metadata?: { file?: File; language?: string }
+  ) => {
     const allowed = await tryUseFeature();
     if (!allowed) return;
 
@@ -97,7 +97,7 @@ const AILectureNotes = () => {
   const handleConfirmGenerate = async (settings: UniversalGenerationSettings) => {
     if (!pendingContent) return;
 
-    const { content, type, metadata } = pendingContent;
+    const { content, metadata } = pendingContent;
     setPendingContent(null);
     setIsProcessing(true);
     setNotes("");
@@ -107,18 +107,11 @@ const AILectureNotes = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
 
-      let textContent = content;
-
-      if (type === "youtube" && metadata?.videoId) {
-        textContent = await getYouTubeTranscript(metadata.videoId, session.access_token);
-      } else if (type === "recording") {
-        textContent = await transcribeAudio(content, session.access_token);
-      } else if (type === "upload" && metadata?.file) {
-        textContent = await processUploadedFile(metadata.file, session.access_token);
-      }
+      // Transcribe the audio first
+      const textContent = await transcribeAudio(content, session.access_token);
 
       if (!textContent?.trim()) {
-        throw new Error("No content to process");
+        throw new Error("Could not transcribe audio. Please try again.");
       }
 
       const notesResponse = await fetch(
@@ -175,10 +168,8 @@ const AILectureNotes = () => {
 
   const getContentTitle = () => {
     if (!pendingContent) return "";
-    if (pendingContent.type === "youtube") return "YouTube Video";
-    if (pendingContent.type === "recording") return "Audio Recording";
     if (pendingContent.metadata?.file) return pendingContent.metadata.file.name;
-    return "Text Content";
+    return "Audio Recording";
   };
 
   return (
@@ -195,17 +186,15 @@ const AILectureNotes = () => {
             </div>
             <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">AI Lecture Notes</h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-2 font-sans px-2 sm:px-0">
-              Record lectures, upload content, or paste text to get organized notes
+              Record lectures or upload audio to get organized notes instantly
             </p>
           </div>
 
           <Card className="border-border/50 shadow-lg">
             <CardContent className="pt-6">
-              <ContentInputTabs
+              <EnhancedLectureRecorder
                 onContentReady={handleContentReady}
                 isProcessing={isProcessing}
-                placeholder="Paste your lecture transcript or content here..."
-                supportedFormats="PDF, TXT, Images; Max size: 20MB"
               />
             </CardContent>
           </Card>
@@ -263,7 +252,7 @@ const AILectureNotes = () => {
         onOpenChange={setShowSettingsDialog}
         type="notes"
         contentTitle={getContentTitle()}
-        contentType={pendingContent?.type as any}
+        contentType="recording"
         onGenerate={handleConfirmGenerate}
       />
 
