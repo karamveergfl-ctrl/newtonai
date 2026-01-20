@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { PodcastPlayer } from "@/components/PodcastPlayer";
 import { PodcastRaiseHand } from "@/components/PodcastRaiseHand";
 import { PodcastHistory } from "@/components/PodcastHistory";
+import { PodcastStylePresets, PodcastSettings } from "@/components/PodcastStylePresets";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Podcast, Sparkles, ArrowLeft, Radio, Volume2, Minimize2 } from "lucide-react";
+import { Podcast, Sparkles, ArrowLeft, Radio, Volume2, Minimize2, Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
@@ -51,8 +52,16 @@ export default function AIPodcast() {
   const [sourceContent, setSourceContent] = useState("");
   const [isRaiseHandOpen, setIsRaiseHandOpen] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
+  const [showStylePresets, setShowStylePresets] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
+  
+  // Store pending content for generation after style selection
+  const pendingContentRef = useRef<{
+    content: string;
+    type: "upload" | "recording" | "youtube" | "text";
+    metadata?: { videoId?: string; videoTitle?: string; file?: File; language?: string };
+  } | null>(null);
   
   // Use global podcast context
   const { 
@@ -78,11 +87,23 @@ export default function AIPodcast() {
     type: "upload" | "recording" | "youtube" | "text",
     metadata?: { videoId?: string; videoTitle?: string; file?: File; language?: string }
   ) => {
-    // Check credits
+    // Check credits first
     if (!isPremium && !hasEnoughCredits("ai_podcast")) {
       setShowCreditModal(true);
       return;
     }
+
+    // Store content and show style presets dialog
+    pendingContentRef.current = { content, type, metadata };
+    setShowStylePresets(true);
+  };
+
+  const handleGenerateWithSettings = async (settings: PodcastSettings) => {
+    const pending = pendingContentRef.current;
+    if (!pending) return;
+
+    const { content, type, metadata } = pending;
+    pendingContentRef.current = null;
 
     setIsProcessing(true);
     setProgress(0);
@@ -150,14 +171,18 @@ export default function AIPodcast() {
 
       setSourceContent(processedContent);
 
-      // Step 1: Generate script
+      // Step 1: Generate script with settings
       setGenerationStep("scripting");
       setProgress(20);
 
       const { data: scriptData, error: scriptError } = await supabase.functions.invoke(
         "generate-podcast-script",
         {
-          body: { content: processedContent, title: metadata?.videoTitle },
+          body: { 
+            content: processedContent, 
+            title: metadata?.videoTitle,
+            settings: settings,
+          },
         }
       );
 
@@ -520,6 +545,15 @@ export default function AIPodcast() {
           onWatchAd={earnCredits}
           canWatchMoreAds={canWatchMoreAds()}
           remainingAds={getRemainingAds()}
+        />
+
+        <PodcastStylePresets
+          isOpen={showStylePresets}
+          onClose={() => {
+            setShowStylePresets(false);
+            pendingContentRef.current = null;
+          }}
+          onGenerate={handleGenerateWithSettings}
         />
       </div>
     </AppLayout>

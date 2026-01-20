@@ -5,13 +5,55 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface PodcastSettings {
+  style: "casual" | "academic" | "deep-dive" | "interview";
+  host1Name: string;
+  host1Personality: string;
+  host2Name: string;
+  host2Personality: string;
+  tone: "enthusiastic" | "balanced" | "serious";
+  depth: number;
+  customInstructions: string;
+}
+
+const STYLE_PROMPTS: Record<string, string> = {
+  casual: `Create a friendly, relaxed conversation like two study buddies chatting over coffee. 
+Use casual language, relatable examples, and occasional humor. Keep explanations simple and accessible.`,
+  
+  academic: `Create a structured, formal discussion like a university seminar or lecture series.
+Use precise terminology, cite concepts properly, and maintain an educational tone. 
+Explore topics systematically with clear explanations.`,
+  
+  "deep-dive": `Create a comprehensive, investigative exploration of the topic.
+Dig into nuances, examine multiple perspectives, and provide thorough analysis.
+Don't shy away from complexity - explain it clearly.`,
+  
+  interview: `Create a Q&A format where one host interviews the other as a subject matter expert.
+The interviewer asks insightful, probing questions while the expert provides authoritative answers.
+Include follow-up questions and clarifications.`,
+};
+
+const TONE_MODIFIERS: Record<string, string> = {
+  enthusiastic: "Be energetic, excited about the topic, and use expressive language. Show genuine enthusiasm!",
+  balanced: "Maintain a professional yet approachable tone. Be engaging without being over-the-top.",
+  serious: "Keep a thoughtful, measured tone. Focus on substance and avoid excessive levity.",
+};
+
+const DEPTH_CONFIGS: Record<number, { segments: string; detail: string }> = {
+  1: { segments: "6-8", detail: "Brief overview, hitting only key points" },
+  2: { segments: "8-10", detail: "Summary with main concepts explained" },
+  3: { segments: "10-14", detail: "Standard depth with examples and explanations" },
+  4: { segments: "14-18", detail: "Detailed exploration with nuances and context" },
+  5: { segments: "18-24", detail: "Comprehensive deep-dive with thorough analysis" },
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { content, title } = await req.json();
+    const { content, title, settings } = await req.json();
 
     if (!content) {
       return new Response(
@@ -25,31 +67,61 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are a podcast script writer for an educational podcast called "Study Sessions". You create engaging, conversational dialogues between two hosts:
+    // Use settings or defaults
+    const podcastSettings: PodcastSettings = {
+      style: settings?.style || "casual",
+      host1Name: settings?.host1Name || "Alex",
+      host1Personality: settings?.host1Personality || "Enthusiastic and curious, asks clarifying questions, uses analogies",
+      host2Name: settings?.host2Name || "Sarah",
+      host2Personality: settings?.host2Personality || "Knowledgeable and warm, explains concepts clearly, provides examples",
+      tone: settings?.tone || "balanced",
+      depth: settings?.depth || 3,
+      customInstructions: settings?.customInstructions || "",
+    };
 
-- **Alex** (Host 1): Male host, enthusiastic and curious, asks clarifying questions, uses analogies
-- **Sarah** (Host 2): Female host, knowledgeable and warm, explains concepts clearly, provides examples
+    const stylePrompt = STYLE_PROMPTS[podcastSettings.style] || STYLE_PROMPTS.casual;
+    const toneModifier = TONE_MODIFIERS[podcastSettings.tone] || TONE_MODIFIERS.balanced;
+    const depthConfig = DEPTH_CONFIGS[podcastSettings.depth] || DEPTH_CONFIGS[3];
 
-Guidelines:
-1. Create a natural conversation that explains the content in an engaging way
-2. Include banter, reactions, and transitions between topics
+    const systemPrompt = `You are a podcast script writer for an educational podcast called "Study Sessions". 
+You create engaging, conversational dialogues between two hosts.
+
+**PODCAST STYLE: ${podcastSettings.style.toUpperCase()}**
+${stylePrompt}
+
+**HOSTS:**
+- **${podcastSettings.host1Name}** (Host 1): ${podcastSettings.host1Personality}
+- **${podcastSettings.host2Name}** (Host 2): ${podcastSettings.host2Personality}
+
+**TONE:**
+${toneModifier}
+
+**DEPTH & LENGTH:**
+Create ${depthConfig.segments} segments total.
+${depthConfig.detail}
+
+${podcastSettings.customInstructions ? `**SPECIAL INSTRUCTIONS:**\n${podcastSettings.customInstructions}\n` : ""}
+
+**GUIDELINES:**
+1. Create a natural conversation that explains the content engagingly
+2. Include reactions, transitions, and back-and-forth between hosts
 3. Break down complex concepts into digestible explanations
-4. Add interesting facts or real-world applications
-5. Keep the tone educational but entertaining
-6. Each segment should be 1-3 sentences for natural speech
-7. Total podcast should be 8-15 segments
-8. Include an intro greeting and outro
+4. Add interesting facts or real-world applications when relevant
+5. Each segment should be 1-3 sentences for natural speech
+6. Include an intro greeting and a brief outro
+
+**EMOTION HINTS:**
+Add emotion hints that will help with voice synthesis:
+- enthusiastic, curious, thoughtful, surprised, amused, serious, warm, excited, intrigued, impressed
 
 Return ONLY valid JSON in this exact format:
 {
   "title": "Episode title based on content",
   "segments": [
-    {"speaker": "host1", "name": "Alex", "text": "dialogue text here", "emotion": "enthusiastic"},
-    {"speaker": "host2", "name": "Sarah", "text": "dialogue text here", "emotion": "thoughtful"}
+    {"speaker": "host1", "name": "${podcastSettings.host1Name}", "text": "dialogue text here", "emotion": "enthusiastic"},
+    {"speaker": "host2", "name": "${podcastSettings.host2Name}", "text": "dialogue text here", "emotion": "thoughtful"}
   ]
-}
-
-Emotion options: enthusiastic, curious, thoughtful, surprised, amused, serious, warm, excited`;
+}`;
 
     const userPrompt = `Create an educational podcast script about the following content${title ? ` titled "${title}"` : ''}:\n\n${content.substring(0, 8000)}`;
 
