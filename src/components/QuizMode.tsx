@@ -327,16 +327,22 @@ export const QuizMode = ({
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b bg-card/50">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-lg truncate">{title}</h2>
-            <p className="text-sm text-muted-foreground">
-              Question {currentIndex + 1} of {questions.length}
-            </p>
+      <div className="p-3 md:p-4 border-b bg-card/50">
+        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="flex-1 min-w-0">
+              <h2 className="font-bold text-base sm:text-lg truncate">{title}</h2>
+              <p className="text-sm text-muted-foreground">
+                Question {currentIndex + 1} of {questions.length}
+              </p>
+            </div>
+            <div className="text-right sm:hidden">
+              <p className="text-xs font-medium">Score</p>
+              <p className="text-base font-bold text-primary">{score}/{questions.length}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-medium">Score</p>
               <p className="text-lg font-bold text-primary">{score}/{questions.length}</p>
             </div>
@@ -346,12 +352,14 @@ export const QuizMode = ({
               size="icon" 
               disabled={isDownloading}
               title="Download PDF"
+              className="shrink-0"
             >
               {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             </Button>
-            <Button onClick={onClose} variant="outline" size="sm" className="gap-2">
+            <Button onClick={onClose} variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none">
               <ArrowLeft className="w-4 h-4" />
-              Return to PDF
+              <span className="hidden sm:inline">Return to PDF</span>
+              <span className="sm:hidden">Back</span>
             </Button>
           </div>
         </div>
@@ -361,11 +369,11 @@ export const QuizMode = ({
       </div>
 
       {/* Question */}
-      <div className="flex-1 overflow-auto p-4 bg-muted/30">
-        <div className="max-w-3xl mx-auto space-y-6">
+      <div className="flex-1 overflow-auto p-3 md:p-4 bg-muted/30">
+        <div className="max-w-3xl mx-auto space-y-4 md:space-y-6">
           {/* Question Card */}
-          <div className="bg-card rounded-lg p-6 border shadow-sm">
-            <p className="text-lg md:text-xl font-semibold leading-relaxed">
+          <div className="bg-card rounded-lg p-4 md:p-6 border shadow-sm">
+            <p className="text-base md:text-xl font-semibold leading-relaxed">
               <span className="text-muted-foreground mr-2">Q{currentIndex + 1}.</span>
               <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                 {currentQuestion.question}

@@ -290,37 +290,39 @@ export const FullScreenStudyTool = ({
   };
 
   return (
-    <div className={cn("fixed inset-0 z-50 bg-muted/50 flex flex-col", showVideoSlide && "pr-80")}>
+    <div className={cn("fixed inset-0 z-50 bg-muted/50 flex flex-col", showVideoSlide && "sm:pr-80")}>
       {/* Header */}
-      <div className="p-4 border-b bg-background/80 backdrop-blur-sm flex items-center justify-between sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: nlmColors.blue }}>
+      <div className="p-3 md:p-4 border-b bg-background/80 backdrop-blur-sm flex flex-col sm:flex-row items-start sm:items-center justify-between sticky top-0 z-10 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: nlmColors.blue }}>
             <span className="text-white">{getIcon()}</span>
           </div>
-          <div>
+          <div className="min-w-0">
             <h2 className="font-display font-bold text-lg text-foreground">{getTypeLabel()}</h2>
-            <span className="text-sm text-muted-foreground font-sans">{title}</span>
+            <span className="text-sm text-muted-foreground font-sans truncate block">{title}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             onClick={downloadAsPDF}
             variant="outline"
             size="sm"
             disabled={isDownloading || isLoading}
-            className="gap-2 font-sans"
+            className="gap-2 font-sans flex-1 sm:flex-none"
           >
             {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            Download PDF
+            <span className="hidden sm:inline">Download PDF</span>
+            <span className="sm:hidden">PDF</span>
           </Button>
           <Button 
             onClick={onClose} 
             variant="outline" 
             size="sm" 
-            className="gap-2 font-sans"
+            className="gap-2 font-sans flex-1 sm:flex-none"
           >
             <ArrowLeft className="w-4 h-4" />
-            Return to PDF
+            <span className="hidden sm:inline">Return to PDF</span>
+            <span className="sm:hidden">Back</span>
           </Button>
         </div>
       </div>
@@ -355,7 +357,7 @@ export const FullScreenStudyTool = ({
             </p>
           </div>
         ) : (
-          <div ref={contentRef} className="p-8 bg-muted/30 min-h-full">
+          <div ref={contentRef} className="p-4 md:p-8 bg-muted/30 min-h-full">
             {type === "summary" ? (
               renderStudyGuide()
             ) : (

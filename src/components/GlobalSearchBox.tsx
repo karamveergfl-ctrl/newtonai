@@ -261,13 +261,13 @@ export const GlobalSearchBox = ({ onTopicSearch, isSearching }: GlobalSearchBoxP
       </div>
 
       {/* Quick Topic Chips */}
-      <div className="flex flex-wrap gap-2 mt-3">
+      <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
         {topicChips.map((chip) => (
           <button
             key={chip.label}
             onClick={() => handleChipClick(chip.query)}
             disabled={isSearching}
-            className="px-3 py-1.5 text-xs font-medium rounded-full bg-muted hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20 transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 text-xs font-medium rounded-full bg-muted hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20 transition-colors disabled:opacity-50 whitespace-nowrap shrink-0"
           >
             {chip.label}
           </button>
