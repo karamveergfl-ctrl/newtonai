@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import {
   Popover,
   PopoverContent,
@@ -205,7 +206,19 @@ export const GamificationBadge = () => {
           </div>
           {streak > 0 && (
             <div className="flex items-center gap-1">
-              <Flame className="w-4 h-4 text-orange-500" />
+              <motion.div
+                animate={{ 
+                  y: [0, -2, 0],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                <Flame className="w-4 h-4 text-orange-500" />
+              </motion.div>
               <span className="text-xs font-bold text-foreground">{streak}</span>
             </div>
           )}
