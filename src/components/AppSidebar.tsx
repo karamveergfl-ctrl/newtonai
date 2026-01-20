@@ -98,7 +98,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
       collapsible="icon"
       className="border-r border-sidebar-border bg-sidebar-background"
     >
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-3">
         <div className="flex items-center justify-between">
           <Logo size="sm" showText={!isCollapsed} />
           <Button
@@ -130,7 +130,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate("/dashboard")}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive("/dashboard")
                     ? "bg-primary text-primary-foreground"
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
@@ -168,7 +168,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                           whileTap={{ scale: 0.98 }}
                           onClick={() => navigate(tool.path)}
                           className={cn(
-                            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                             isActive(tool.path)
                               ? "bg-primary text-primary-foreground"
                               : "text-sidebar-foreground hover:bg-sidebar-accent"
@@ -210,15 +210,15 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
-        <div className="space-y-1">
+      <SidebarFooter className="p-3">
+        <div className="space-y-0.5">
           {/* Theme Toggle - styled like other menu buttons */}
           <SidebarMenuButton asChild tooltip="Toggle Theme">
             <motion.button
               whileHover={{ x: 4 }}
               whileTap={{ scale: 0.98 }}
               onClick={toggleTheme}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
             >
               {theme === "light" ? (
                 <Moon className="h-5 w-5 shrink-0" />
@@ -236,7 +236,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate("/credits")}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                 isActive("/credits")
                   ? "bg-primary text-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent"
@@ -254,7 +254,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate("/profile")}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                 isActive("/profile")
                   ? "bg-primary text-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent"
@@ -271,7 +271,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
               whileHover={{ x: 4 }}
               whileTap={{ scale: 0.98 }}
               onClick={onSignOut}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
             >
               <LogOut className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span>Sign Out</span>}
@@ -283,7 +283,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="pt-2"
+              className="pt-1"
             >
               <Button
                 onClick={() => navigate("/pricing")}
