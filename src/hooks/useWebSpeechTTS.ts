@@ -1,5 +1,16 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 
+const STORAGE_KEY = "podcast-voice-settings";
+
+interface VoiceSettings {
+  host1VoiceName: string;
+  host2VoiceName: string;
+  host1Pitch: number;
+  host2Pitch: number;
+  host1Rate: number;
+  host2Rate: number;
+}
+
 interface WebSpeechOptions {
   speaker?: "host1" | "host2";
   rate?: number;
@@ -15,6 +26,15 @@ interface UseWebSpeechTTSReturn {
   isSpeaking: boolean;
   isSupported: boolean;
   voices: SpeechSynthesisVoice[];
+}
+
+function getStoredSettings(): VoiceSettings | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
@@ -46,6 +66,20 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
     (speaker: "host1" | "host2"): SpeechSynthesisVoice | null => {
       if (voices.length === 0) return null;
 
+      // Check for user-configured voice first
+      const storedSettings = getStoredSettings();
+      if (storedSettings) {
+        const configuredName = speaker === "host1" 
+          ? storedSettings.host1VoiceName 
+          : storedSettings.host2VoiceName;
+        
+        if (configuredName) {
+          const configuredVoice = voices.find((v) => v.name === configuredName);
+          if (configuredVoice) return configuredVoice;
+        }
+      }
+
+      // Auto-select based on gender hints
       const englishVoices = voices.filter(
         (v) => v.lang.startsWith("en") || v.lang.startsWith("EN")
       );
@@ -95,9 +129,30 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
           utterance.voice = selectedVoice;
         }
 
-        // Apply rate and pitch
-        utterance.rate = options.rate ?? 1;
-        utterance.pitch = options.pitch ?? (options.speaker === "host2" ? 1.1 : 0.95);
+        // Get stored settings for pitch/rate
+        const storedSettings = getStoredSettings();
+        const speaker = options.speaker || "host1";
+        
+        // Apply rate - use options first, then stored settings, then defaults
+        if (options.rate !== undefined) {
+          utterance.rate = options.rate;
+        } else if (storedSettings) {
+          const storedRate = speaker === "host1" ? storedSettings.host1Rate : storedSettings.host2Rate;
+          utterance.rate = storedRate;
+        } else {
+          utterance.rate = 1;
+        }
+
+        // Apply pitch - use options first, then stored settings, then defaults
+        if (options.pitch !== undefined) {
+          utterance.pitch = options.pitch;
+        } else if (storedSettings) {
+          const storedPitch = speaker === "host1" ? storedSettings.host1Pitch : storedSettings.host2Pitch;
+          utterance.pitch = storedPitch;
+        } else {
+          utterance.pitch = speaker === "host2" ? 1.1 : 0.95;
+        }
+
         utterance.volume = 1;
 
         utterance.onstart = () => {

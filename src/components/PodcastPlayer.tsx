@@ -17,11 +17,13 @@ import {
   X,
   Maximize2,
   Minimize2,
-  Volume1
+  Volume1,
+  Settings
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
+import { PodcastVoiceSettings } from "@/components/PodcastVoiceSettings";
 
 export interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -55,6 +57,7 @@ export function PodcastPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [usingFallback, setUsingFallback] = useState(false);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { speak, cancel: cancelSpeech, isSupported: webSpeechSupported } = useWebSpeechTTS();
@@ -272,6 +275,14 @@ export function PodcastPlayer({
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => setShowVoiceSettings(true)}
+              title="Voice Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={toggleFullscreen}
             >
               {isFullscreen ? (
@@ -466,6 +477,15 @@ export function PodcastPlayer({
             </motion.div>
           ))}
         </div>
+
+        {/* Voice Settings Dialog */}
+        <PodcastVoiceSettings
+          isOpen={showVoiceSettings}
+          onClose={() => setShowVoiceSettings(false)}
+          onSave={() => {
+            // Settings are stored in localStorage and will be used on next playback
+          }}
+        />
       </Card>
     </motion.div>
   );
