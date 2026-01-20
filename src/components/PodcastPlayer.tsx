@@ -17,7 +17,10 @@ import {
   Maximize2,
   Minimize2,
   Volume1,
-  Settings
+  Settings,
+  Download,
+  FileText,
+  FileDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -25,6 +28,15 @@ import { usePodcastAudioQueue, AudioSegment } from "@/hooks/usePodcastAudioQueue
 import { PodcastVoiceSettings } from "@/components/PodcastVoiceSettings";
 import { PodcastSpeakingAvatar } from "@/components/PodcastSpeakingAvatar";
 import { PodcastWaveform } from "@/components/PodcastWaveform";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 export interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -119,6 +131,137 @@ export function PodcastPlayer({
     }
   };
 
+  // Generate transcript text
+  const generateTranscriptText = useCallback(() => {
+    let text = `${title}\n`;
+    text += `${"=".repeat(title.length)}\n\n`;
+    
+    segments.forEach((seg, idx) => {
+      text += `[${seg.name}]:\n${seg.text}\n\n`;
+    });
+    
+    return text;
+  }, [title, segments]);
+
+  // Download as TXT
+  const downloadAsTxt = useCallback(() => {
+    try {
+      const text = generateTranscriptText();
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${title.replace(/[^a-z0-9]/gi, "_")}_transcript.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Transcript downloaded as TXT");
+    } catch (error) {
+      console.error("Error downloading TXT:", error);
+      toast.error("Failed to download transcript");
+    }
+  }, [title, generateTranscriptText]);
+
+  // Download as PDF
+  const downloadAsPdf = useCallback(async () => {
+    try {
+      toast.info("Generating PDF...");
+      
+      // Create a temporary container for rendering
+      const container = document.createElement("div");
+      container.style.cssText = `
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        width: 800px;
+        padding: 40px;
+        background: white;
+        font-family: system-ui, -apple-system, sans-serif;
+      `;
+      
+      // Build the HTML content
+      container.innerHTML = `
+        <div style="margin-bottom: 30px;">
+          <h1 style="font-size: 24px; color: #1a1a1a; margin-bottom: 8px;">${title}</h1>
+          <p style="font-size: 14px; color: #666;">Podcast Transcript • ${segments.length} segments</p>
+        </div>
+        <div style="border-top: 2px solid #e5e5e5; padding-top: 20px;">
+          ${segments.map((seg, idx) => `
+            <div style="margin-bottom: 20px; page-break-inside: avoid;">
+              <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <span style="
+                  display: inline-block;
+                  padding: 4px 12px;
+                  border-radius: 16px;
+                  font-size: 12px;
+                  font-weight: 600;
+                  background: ${seg.speaker === "host1" ? "#e0f2fe" : "#fce7f3"};
+                  color: ${seg.speaker === "host1" ? "#0369a1" : "#be185d"};
+                ">${seg.name}</span>
+              </div>
+              <p style="font-size: 14px; line-height: 1.6; color: #374151; margin: 0;">${seg.text}</p>
+            </div>
+          `).join("")}
+        </div>
+      `;
+      
+      document.body.appendChild(container);
+      
+      // Capture with html2canvas
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+      
+      document.body.removeChild(container);
+      
+      // Create PDF
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 20; // 10mm margins
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 10;
+      let page = 0;
+      
+      // Add pages as needed
+      while (heightLeft > 0) {
+        if (page > 0) {
+          pdf.addPage();
+        }
+        
+        pdf.addImage(
+          imgData,
+          "PNG",
+          10,
+          position - (page * (pdfHeight - 20)),
+          imgWidth,
+          imgHeight
+        );
+        
+        heightLeft -= (pdfHeight - 20);
+        page++;
+      }
+      
+      pdf.save(`${title.replace(/[^a-z0-9]/gi, "_")}_transcript.pdf`);
+      toast.success("Transcript downloaded as PDF");
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error("Failed to generate PDF");
+    }
+  }, [title, segments]);
+
   return (
     <motion.div
       ref={containerRef}
@@ -156,6 +299,25 @@ export function PodcastPlayer({
             )}
           </div>
           <div className="flex items-center gap-2">
+            {/* Download Transcript Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" title="Download Transcript">
+                  <Download className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={downloadAsTxt} className="gap-2 cursor-pointer">
+                  <FileText className="w-4 h-4" />
+                  Download as TXT
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={downloadAsPdf} className="gap-2 cursor-pointer">
+                  <FileDown className="w-4 h-4" />
+                  Download as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Button
               variant="ghost"
               size="icon"
