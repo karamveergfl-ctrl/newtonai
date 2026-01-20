@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Crown, Play, TrendingUp, TrendingDown, Wallet, Loader2, Sparkles } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { useNavigate } from "react-router-dom";
@@ -32,6 +32,17 @@ export function CreditBalance({ className, showLabel = false }: CreditBalancePro
   const navigate = useNavigate();
   const [watchingAd, setWatchingAd] = useState<30 | 60 | null>(null);
   const [open, setOpen] = useState(false);
+  const [isGlowing, setIsGlowing] = useState(false);
+  const prevCreditsRef = useRef(credits);
+
+  // Watch for credit changes and trigger glow
+  useEffect(() => {
+    if (credits > prevCreditsRef.current) {
+      setIsGlowing(true);
+      setTimeout(() => setIsGlowing(false), 1500);
+    }
+    prevCreditsRef.current = credits;
+  }, [credits]);
 
   const handleWatchAd = async (duration: 30 | 60) => {
     setWatchingAd(duration);
@@ -88,7 +99,8 @@ export function CreditBalance({ className, showLabel = false }: CreditBalancePro
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border hover:bg-muted hover:border-primary/30 transition-colors cursor-pointer",
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border hover:bg-muted hover:border-primary/30 transition-all duration-300 cursor-pointer",
+          isGlowing && "border-green-500/50 shadow-[0_0_12px_hsl(142,76%,50%/0.4)] scale-105",
           className
         )}>
           <AnimatedCreditCounter value={credits} showLabel={showLabel} />
