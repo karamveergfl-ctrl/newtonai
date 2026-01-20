@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Popover,
   PopoverContent,
@@ -16,6 +16,8 @@ import {
   Award
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ConfettiCelebration } from "./ConfettiCelebration";
+import { LevelUpModal } from "./LevelUpModal";
 
 interface Achievement {
   id: string;
@@ -31,6 +33,10 @@ export const GamificationBadge = () => {
   const [xp, setXp] = useState(0);
   const [streak, setStreak] = useState(0);
   const [isGlowing, setIsGlowing] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [newLevel, setNewLevel] = useState(1);
+  const prevLevelRef = useRef(1);
   const [stats, setStats] = useState({
     flashcardsCompleted: 0,
     quizzesCompleted: 0,
@@ -69,11 +75,22 @@ export const GamificationBadge = () => {
       const newXp = localStorage.getItem('smartreader_xp');
       if (newXp) {
         const newXpValue = parseInt(newXp, 10);
+        const currentLevel = Math.floor(newXpValue / 100) + 1;
+        
         if (newXpValue > xp) {
           // Trigger glow animation when XP increases
           setIsGlowing(true);
           setTimeout(() => setIsGlowing(false), 1500);
+          
+          // Check for level up
+          if (currentLevel > prevLevelRef.current) {
+            setNewLevel(currentLevel);
+            setShowConfetti(true);
+            setShowLevelUp(true);
+          }
         }
+        
+        prevLevelRef.current = currentLevel;
         setXp(newXpValue);
       }
     };
@@ -85,11 +102,16 @@ export const GamificationBadge = () => {
       window.removeEventListener('storage', handleXpUpdate);
       clearInterval(interval);
     };
-  }, []);
+  }, [xp]);
 
   const level = Math.floor(xp / 100) + 1;
   const xpToNextLevel = 100 - (xp % 100);
   const levelProgress = (xp % 100);
+  
+  // Keep prevLevelRef in sync
+  useEffect(() => {
+    prevLevelRef.current = level;
+  }, [level]);
 
   const achievements: Achievement[] = [
     {
@@ -150,8 +172,26 @@ export const GamificationBadge = () => {
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
+  const handleLevelUpClose = () => {
+    setShowLevelUp(false);
+  };
+
   return (
-    <Popover>
+    <>
+      {/* Confetti celebration */}
+      <ConfettiCelebration 
+        isActive={showConfetti} 
+        onComplete={() => setShowConfetti(false)} 
+      />
+      
+      {/* Level up modal */}
+      <LevelUpModal 
+        isOpen={showLevelUp} 
+        level={newLevel} 
+        onClose={handleLevelUpClose} 
+      />
+      
+      <Popover>
       <PopoverTrigger asChild>
         <button 
           className={cn(
@@ -241,6 +281,7 @@ export const GamificationBadge = () => {
           </div>
         </div>
       </PopoverContent>
-    </Popover>
+      </Popover>
+    </>
   );
 };
