@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Flashcard } from "@/components/Flashcard";
 import { useFeatureGate } from "@/components/FeatureGate";
+import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -21,6 +22,12 @@ interface FlashcardData {
   back: string;
 }
 
+interface PendingContent {
+  content: string;
+  type: string;
+  metadata?: { videoId?: string; file?: File; language?: string };
+}
+
 const AIFlashcards = () => {
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,10 +36,24 @@ const AIFlashcards = () => {
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("flashcards");
 
+  // Settings dialog state
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
+
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
     if (!allowed) return;
 
+    // Store pending content and show settings dialog
+    setPendingContent({ content, type, metadata });
+    setShowSettingsDialog(true);
+  };
+
+  const handleConfirmGenerate = async (settings: UniversalGenerationSettings) => {
+    if (!pendingContent) return;
+    
+    const { content, type, metadata } = pendingContent;
+    setPendingContent(null);
     setIsGenerating(true);
     setFlashcards([]);
 
@@ -66,6 +87,10 @@ const AIFlashcards = () => {
             type: "text",
             content: textContent.slice(0, 8000),
             language: metadata?.language || "en",
+            settings: {
+              count: settings.count,
+              difficulty: settings.difficulty,
+            },
           }),
         }
       );
@@ -103,6 +128,14 @@ const AIFlashcards = () => {
   };
 
   const currentCard = flashcards[currentIndex];
+
+  const getContentTitle = () => {
+    if (!pendingContent) return "";
+    if (pendingContent.type === "youtube") return "YouTube Video";
+    if (pendingContent.type === "recording") return "Audio Recording";
+    if (pendingContent.metadata?.file) return pendingContent.metadata.file.name;
+    return "Text Content";
+  };
 
   return (
     <AppLayout>
@@ -178,6 +211,17 @@ const AIFlashcards = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Settings Dialog */}
+      <UniversalStudySettingsDialog
+        open={showSettingsDialog}
+        onOpenChange={setShowSettingsDialog}
+        type="flashcards"
+        contentTitle={getContentTitle()}
+        contentType={pendingContent?.type as any}
+        onGenerate={handleConfirmGenerate}
+      />
+
       {modal}
     </AppLayout>
   );

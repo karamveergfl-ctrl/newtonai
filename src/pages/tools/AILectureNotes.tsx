@@ -10,6 +10,7 @@ import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
+import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -33,6 +34,12 @@ const stripMarkdown = (text: string): string => {
     .trim();
 };
 
+interface PendingContent {
+  content: string;
+  type: string;
+  metadata?: { videoId?: string; file?: File; language?: string };
+}
+
 const AILectureNotes = () => {
   const [notes, setNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -40,6 +47,10 @@ const AILectureNotes = () => {
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("lecture_notes");
   const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
+
+  // Settings dialog state
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
 
   const handleReadAloud = useCallback(async () => {
     if (isSpeaking) {
@@ -78,6 +89,16 @@ const AILectureNotes = () => {
     const allowed = await tryUseFeature();
     if (!allowed) return;
 
+    // Store pending content and show settings dialog
+    setPendingContent({ content, type, metadata });
+    setShowSettingsDialog(true);
+  };
+
+  const handleConfirmGenerate = async (settings: UniversalGenerationSettings) => {
+    if (!pendingContent) return;
+
+    const { content, type, metadata } = pendingContent;
+    setPendingContent(null);
     setIsProcessing(true);
     setNotes("");
     cancel();
@@ -111,6 +132,7 @@ const AILectureNotes = () => {
           body: JSON.stringify({ 
             transcription: textContent,
             language: metadata?.language || "en",
+            detailLevel: settings.detailLevel,
           }),
         }
       );
@@ -149,6 +171,14 @@ const AILectureNotes = () => {
     await navigator.clipboard.writeText(notes);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const getContentTitle = () => {
+    if (!pendingContent) return "";
+    if (pendingContent.type === "youtube") return "YouTube Video";
+    if (pendingContent.type === "recording") return "Audio Recording";
+    if (pendingContent.metadata?.file) return pendingContent.metadata.file.name;
+    return "Text Content";
   };
 
   return (
@@ -226,6 +256,17 @@ const AILectureNotes = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Settings Dialog */}
+      <UniversalStudySettingsDialog
+        open={showSettingsDialog}
+        onOpenChange={setShowSettingsDialog}
+        type="notes"
+        contentTitle={getContentTitle()}
+        contentType={pendingContent?.type as any}
+        onGenerate={handleConfirmGenerate}
+      />
+
       {modal}
     </AppLayout>
   );
