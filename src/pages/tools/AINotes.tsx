@@ -1,19 +1,37 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { FileText, Download, Copy, Check, Sparkles } from "lucide-react";
+import { FileText, Download, Copy, Check, Sparkles, Volume2, VolumeX, Pause } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
+import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
   processUploadedFile 
 } from "@/utils/contentProcessing";
+
+// Strip markdown formatting for cleaner TTS
+const stripMarkdown = (text: string): string => {
+  return text
+    .replace(/#{1,6}\s?/g, '') // Remove headings
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold
+    .replace(/\*([^*]+)\*/g, '$1') // Italic
+    .replace(/`([^`]+)`/g, '$1') // Inline code
+    .replace(/```[\s\S]*?```/g, '') // Code blocks
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '') // Images
+    .replace(/^\s*[-*+]\s/gm, '') // List markers
+    .replace(/^\s*\d+\.\s/gm, '') // Numbered lists
+    .replace(/^\s*>/gm, '') // Blockquotes
+    .replace(/\n{3,}/g, '\n\n') // Multiple newlines
+    .trim();
+};
 
 const AINotes = () => {
   const [notes, setNotes] = useState("");
@@ -21,6 +39,40 @@ const AINotes = () => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("ai_notes");
+  const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
+
+  const handleReadAloud = useCallback(async () => {
+    if (isSpeaking) {
+      cancel();
+      return;
+    }
+
+    if (!notes) return;
+
+    const cleanText = stripMarkdown(notes);
+    
+    try {
+      await speak(cleanText, {
+        rate: 1.0,
+        pitch: 1.0,
+        onStart: () => {
+          toast({
+            title: "Reading aloud 🔊",
+            description: "Tap again to stop",
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Speech Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        },
+      });
+    } catch (error) {
+      console.error("TTS error:", error);
+    }
+  }, [notes, isSpeaking, speak, cancel, toast]);
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
@@ -28,6 +80,7 @@ const AINotes = () => {
 
     setIsGenerating(true);
     setNotes("");
+    cancel(); // Stop any ongoing speech
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -142,7 +195,28 @@ const AINotes = () => {
                       </div>
                       <h2 className="text-lg sm:text-2xl font-display font-bold tracking-tight">Generated Notes</h2>
                     </div>
-                    <div className="flex gap-2 w-full sm:w-auto">
+                    <div className="flex gap-2 w-full sm:w-auto flex-wrap">
+                      {isSupported && (
+                        <Button 
+                          variant={isSpeaking ? "default" : "outline"}
+                          size="sm" 
+                          onClick={handleReadAloud}
+                          className={`flex-1 sm:flex-none gap-2 ${isSpeaking ? 'bg-primary text-primary-foreground' : ''}`}
+                        >
+                          {isSpeaking ? (
+                            <>
+                              <VolumeX className="h-4 w-4" />
+                              <span className="hidden sm:inline">Stop</span>
+                            </>
+                          ) : (
+                            <>
+                              <Volume2 className="h-4 w-4" />
+                              <span className="hidden sm:inline">Read Aloud</span>
+                              <span className="sm:hidden">Listen</span>
+                            </>
+                          )}
+                        </Button>
+                      )}
                       <Button 
                         variant="outline" 
                         size="sm" 
