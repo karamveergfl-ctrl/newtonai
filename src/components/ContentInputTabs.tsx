@@ -271,29 +271,32 @@ export const ContentInputTabs = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Tab Selector and Language Dropdown */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="inline-flex items-center p-1 rounded-full bg-muted/50 border border-border">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+          <div className="inline-flex items-center p-1 rounded-full bg-muted/50 border border-border whitespace-nowrap min-w-max">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200",
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {showLanguageSelector && (
           <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-            <SelectTrigger className="w-[180px] bg-background">
+            <SelectTrigger className="w-full sm:w-[180px] bg-background">
               <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
@@ -319,11 +322,11 @@ export const ContentInputTabs = ({
         >
           {/* Upload Tab */}
           {activeTab === "upload" && (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div
                 {...getRootProps()}
                 className={cn(
-                  "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200",
+                  "border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-all duration-200",
                   isDragActive
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-primary/50 hover:bg-accent/50"
@@ -331,13 +334,13 @@ export const ContentInputTabs = ({
               >
                 <input {...getInputProps()} />
                 {file ? (
-                  <div className="flex flex-col items-center gap-4">
+                  <div className="flex flex-col items-center gap-3 sm:gap-4">
                     {/* Image Preview */}
                     {imagePreview && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="relative max-w-xs max-h-48 rounded-lg overflow-hidden border border-border shadow-sm"
+                        className="relative max-w-[200px] sm:max-w-xs max-h-40 sm:max-h-48 rounded-lg overflow-hidden border border-border shadow-sm"
                       >
                         <img
                           src={imagePreview}
@@ -348,11 +351,11 @@ export const ContentInputTabs = ({
                     )}
                     
                     {/* File Info */}
-                    <div className="flex items-center justify-center gap-3">
-                      <File className="h-10 w-10 text-primary" />
-                      <div className="text-left">
-                        <p className="font-medium">{file.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2 sm:gap-3">
+                      <File className="h-8 w-8 sm:h-10 sm:w-10 text-primary flex-shrink-0" />
+                      <div className="text-left min-w-0">
+                        <p className="font-medium text-sm sm:text-base truncate max-w-[180px] sm:max-w-none">{file.name}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {(file.size / 1024 / 1024).toFixed(2)} MB
                         </p>
                       </div>
@@ -360,30 +363,30 @@ export const ContentInputTabs = ({
                         variant="ghost"
                         size="icon"
                         onClick={(e) => { e.stopPropagation(); clearFile(); }}
-                        className="ml-2"
+                        className="ml-1 sm:ml-2 h-8 w-8"
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     <div className="flex justify-center gap-2">
-                      <div className="p-2 rounded-lg bg-green-500/10">
-                        <Play className="h-6 w-6 text-green-500" />
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-green-500/10">
+                        <Play className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
                       </div>
-                      <div className="p-2 rounded-lg bg-blue-500/10">
-                        <FileText className="h-6 w-6 text-blue-500" />
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-blue-500/10">
+                        <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
                       </div>
-                      <div className="p-2 rounded-lg bg-red-500/10">
-                        <File className="h-6 w-6 text-red-500" />
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-red-500/10">
+                        <File className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
                       </div>
                     </div>
-                    <p className="font-medium">
-                      {isDragActive ? "Drop the file here" : "Drag and drop your file here to get started"}
+                    <p className="font-medium text-sm sm:text-base">
+                      {isDragActive ? "Drop the file here" : "Drag and drop your file here"}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      Supported Formats: {supportedFormats}
+                    <p className="text-xs sm:text-sm text-muted-foreground px-2">
+                      Supported: {supportedFormats}
                     </p>
                   </div>
                 )}
@@ -412,27 +415,27 @@ export const ContentInputTabs = ({
 
           {/* Recording Tab */}
           {activeTab === "recording" && (
-            <div className="space-y-6">
-              <div className="flex flex-col items-center gap-6 py-8 border-2 border-dashed rounded-xl border-border bg-muted/20">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex flex-col items-center gap-4 sm:gap-6 py-6 sm:py-8 border-2 border-dashed rounded-xl border-border bg-muted/20">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={isRecording ? stopRecording : startRecording}
                   className={cn(
-                    "w-24 h-24 rounded-full flex items-center justify-center transition-colors",
+                    "w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center transition-colors",
                     isRecording
                       ? "bg-destructive text-destructive-foreground"
                       : "bg-primary text-primary-foreground"
                   )}
                 >
                   {isRecording ? (
-                    <Square className="h-10 w-10" />
+                    <Square className="h-8 w-8 sm:h-10 sm:w-10" />
                   ) : (
-                    <Mic className="h-10 w-10" />
+                    <Mic className="h-8 w-8 sm:h-10 sm:w-10" />
                   )}
                 </motion.button>
 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {isRecording ? "Recording... Click to stop" : "Click to start recording"}
                 </p>
 
@@ -440,27 +443,27 @@ export const ContentInputTabs = ({
                   <motion.div
                     animate={{ opacity: [1, 0.5, 1] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="flex items-center gap-2 text-destructive"
+                    className="flex items-center gap-2 text-destructive text-sm"
                   >
-                    <span className="w-3 h-3 rounded-full bg-destructive" />
+                    <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-destructive" />
                     Recording
                   </motion.div>
                 )}
               </div>
 
               {audioUrl && (
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
-                  <Button variant="outline" size="icon" onClick={togglePlayback}>
+                <div className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-muted rounded-lg">
+                  <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0" onClick={togglePlayback}>
                     {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   </Button>
                   <audio
                     ref={audioRef}
                     src={audioUrl}
                     onEnded={() => setIsPlaying(false)}
-                    className="flex-1"
+                    className="flex-1 min-w-0"
                   />
-                  <span className="text-sm text-muted-foreground">Recording ready</span>
-                  <Button variant="ghost" size="icon" onClick={clearAudio}>
+                  <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">Recording ready</span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={clearAudio}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -489,13 +492,13 @@ export const ContentInputTabs = ({
 
           {/* YouTube Tab */}
           {activeTab === "youtube" && (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div className="space-y-3">
                 <Input
                   placeholder="https://youtube.com/watch?v=..."
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
-                  className="h-12"
+                  className="h-11 sm:h-12 text-sm"
                 />
                 
                 {videoId && (
@@ -537,16 +540,16 @@ export const ContentInputTabs = ({
 
           {/* Text Tab */}
           {activeTab === "text" && (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <Textarea
                 placeholder={placeholder}
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
-                rows={8}
-                className="resize-none min-h-[200px]"
+                rows={6}
+                className="resize-none min-h-[150px] sm:min-h-[200px] text-sm"
               />
               
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground">
                 <span>{textContent.length.toLocaleString()} characters</span>
               </div>
 
