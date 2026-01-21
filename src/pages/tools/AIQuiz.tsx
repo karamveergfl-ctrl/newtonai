@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,9 @@ import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
-import { useProcessingState, ProcessingPhase } from "@/hooks/useProcessingState";
+import { useProcessingState } from "@/hooks/useProcessingState";
+import { NewtonFeedback } from "@/components/NewtonFeedback";
+import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -49,6 +51,15 @@ const AIQuiz = () => {
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
+
+  // Error state for confused Newton
+  const [errorState, setErrorState] = useState<"confused" | null>(null);
+
+  // Idle timeout for sleeping Newton (5 minutes)
+  const { isIdle, resetIdle } = useIdleTimeout({ 
+    timeout: 300000,
+    enabled: questions.length > 0 && !quizCompleted
+  });
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
@@ -128,11 +139,16 @@ const AIQuiz = () => {
       }, 1500);
     } catch (error) {
       resetProcessing();
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate quiz. Please try again.",
-        variant: "destructive",
-      });
+      setErrorState("confused");
+      
+      setTimeout(() => {
+        setErrorState(null);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to generate quiz. Please try again.",
+          variant: "destructive",
+        });
+      }, 2000);
     }
   };
 
@@ -320,6 +336,20 @@ const AIQuiz = () => {
         contentType={pendingContent?.type as any}
         onGenerate={handleConfirmGenerate}
       />
+
+      {/* Confused Newton for errors */}
+      <NewtonFeedback 
+        state={errorState} 
+        onDismiss={() => setErrorState(null)}
+      />
+
+      {/* Sleeping Newton for idle state */}
+      {isIdle && questions.length > 0 && !quizCompleted && (
+        <NewtonFeedback 
+          state="sleeping"
+          onDismiss={resetIdle}
+        />
+      )}
 
       {modal}
     </AppLayout>

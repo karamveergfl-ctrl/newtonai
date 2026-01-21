@@ -22,6 +22,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { CreditModal } from "@/components/CreditModal";
 import { FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
+import { NewtonFeedback } from "@/components/NewtonFeedback";
 import {
   processUploadedFile,
   transcribeAudio,
@@ -140,6 +141,9 @@ const AISummarizer = () => {
   // Credit modal state
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [blockedFeature, setBlockedFeature] = useState("");
+
+  // Error state for confused Newton
+  const [errorState, setErrorState] = useState<"confused" | null>(null);
 
   // Format selection state for non-video content
   const [showFormatSelection, setShowFormatSelection] = useState(false);
@@ -420,11 +424,15 @@ const AISummarizer = () => {
       });
     } catch (error: any) {
       console.error("Error generating summary:", error);
-      toast({
-        title: "Error generating summary",
-        description: error.message || "Please try again later.",
-        variant: "destructive",
-      });
+      setErrorState("confused");
+      setTimeout(() => {
+        setErrorState(null);
+        toast({
+          title: "Error generating summary",
+          description: error.message || "Please try again later.",
+          variant: "destructive",
+        });
+      }, 2000);
     } finally {
       setIsLoading(false);
     }
@@ -1067,6 +1075,12 @@ const AISummarizer = () => {
           onWatchAd={earnCredits}
           canWatchMoreAds={canWatchMoreAds()}
           remainingAds={getRemainingAds()}
+        />
+
+        {/* Confused Newton for errors */}
+        <NewtonFeedback 
+          state={errorState} 
+          onDismiss={() => setErrorState(null)}
         />
       </div>
     </AppLayout>
