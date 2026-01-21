@@ -44,6 +44,7 @@ const AINotes = () => {
   const [notes, setNotes] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [contentLanguage, setContentLanguage] = useState("en");
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("ai_notes");
   const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
@@ -66,6 +67,7 @@ const AINotes = () => {
       await speak(cleanText, {
         rate: 1.0,
         pitch: 1.0,
+        language: contentLanguage,
         onStart: () => {
           toast({
             title: "Reading aloud 🔊",
@@ -83,7 +85,7 @@ const AINotes = () => {
     } catch (error) {
       console.error("TTS error:", error);
     }
-  }, [notes, isSpeaking, speak, cancel, toast]);
+  }, [notes, isSpeaking, speak, cancel, toast, contentLanguage]);
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
@@ -98,6 +100,12 @@ const AINotes = () => {
     if (!pendingContent) return;
 
     const { content, type, metadata } = pendingContent;
+    
+    // Store language for TTS
+    if (metadata?.language) {
+      setContentLanguage(metadata.language);
+    }
+    
     setPendingContent(null);
     setIsGenerating(true);
     setNotes("");

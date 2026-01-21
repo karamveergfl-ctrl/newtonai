@@ -155,6 +155,7 @@ const AISummarizer = () => {
       await speak(cleanText, {
         rate: 1.0,
         pitch: 1.0,
+        language: selectedLanguage,
         onStart: () => {
           toast({
             title: "Reading aloud 🔊",
@@ -172,7 +173,7 @@ const AISummarizer = () => {
     } catch (error) {
       console.error("TTS error:", error);
     }
-  }, [summary, isSpeaking, speak, cancel, toast]);
+  }, [summary, isSpeaking, speak, cancel, toast, selectedLanguage]);
 
   // Helper function to check and spend credits
   const trySpendCredits = async (feature: string): Promise<boolean> => {
