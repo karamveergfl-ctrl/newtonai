@@ -9,12 +9,13 @@ import { PodcastStylePresets, PodcastSettings } from "@/components/PodcastStyleP
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Podcast, Sparkles, ArrowLeft, Radio, Volume2, Minimize2, Settings2 } from "lucide-react";
+import { Podcast, Sparkles, ArrowLeft, Radio, Volume2, Minimize2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
 import { CreditModal } from "@/components/CreditModal";
 import { usePodcastContext } from "@/contexts/PodcastContext";
+import { NewtonFeedback } from "@/components/NewtonFeedback";
 
 interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -56,6 +57,9 @@ export default function AIPodcast() {
   const [showStylePresets, setShowStylePresets] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
+  
+  // Error state for confused Newton
+  const [errorState, setErrorState] = useState<"confused" | null>(null);
   
   // Store pending content for generation after style selection
   const pendingContentRef = useRef<{
@@ -287,7 +291,11 @@ export default function AIPodcast() {
       }
     } catch (error) {
       console.error("Podcast generation error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to generate podcast");
+      setErrorState("confused");
+      setTimeout(() => {
+        setErrorState(null);
+        toast.error(error instanceof Error ? error.message : "Failed to generate podcast");
+      }, 2000);
       setGenerationStep("idle");
     } finally {
       setIsProcessing(false);
@@ -563,6 +571,12 @@ export default function AIPodcast() {
             pendingContentRef.current = null;
           }}
           onGenerate={handleGenerateWithSettings}
+        />
+
+        {/* Confused Newton for errors */}
+        <NewtonFeedback 
+          state={errorState} 
+          onDismiss={() => setErrorState(null)}
         />
       </div>
     </AppLayout>

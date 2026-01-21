@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Network, ZoomIn, ZoomOut, GitBranch, Boxes, Clock, ArrowLeft, Sparkles, Star } from "lucide-react";
+import { Network, ZoomIn, ZoomOut, GitBranch, Boxes, Clock, ArrowLeft, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
@@ -11,6 +11,8 @@ import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { useProcessingState } from "@/hooks/useProcessingState";
+import { NewtonFeedback } from "@/components/NewtonFeedback";
+import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { cn } from "@/lib/utils";
 import { 
   getYouTubeTranscript, 
@@ -50,6 +52,15 @@ const MindMap = () => {
   // Use persisted style preferences
   const { preferences, setMindMapStyle } = useTemplatePreferences();
   const selectedStyle = preferences.mindMapStyle;
+
+  // Error state for confused Newton
+  const [errorState, setErrorState] = useState<"confused" | null>(null);
+
+  // Idle timeout for sleeping Newton (5 minutes)
+  const { isIdle, resetIdle } = useIdleTimeout({ 
+    timeout: 300000,
+    enabled: !!mindMapData 
+  });
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
@@ -124,11 +135,16 @@ const MindMap = () => {
       }, 1500);
     } catch (error) {
       resetProcessing();
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate mind map. Please try again.",
-        variant: "destructive",
-      });
+      setErrorState("confused");
+      
+      setTimeout(() => {
+        setErrorState(null);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to generate mind map. Please try again.",
+          variant: "destructive",
+        });
+      }, 2000);
     }
   };
 
@@ -275,6 +291,20 @@ const MindMap = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Confused Newton for errors */}
+      <NewtonFeedback 
+        state={errorState} 
+        onDismiss={() => setErrorState(null)}
+      />
+
+      {/* Sleeping Newton for idle state */}
+      {isIdle && mindMapData && (
+        <NewtonFeedback 
+          state="sleeping"
+          onDismiss={resetIdle}
+        />
+      )}
 
       {modal}
     </AppLayout>

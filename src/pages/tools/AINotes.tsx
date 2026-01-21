@@ -13,6 +13,8 @@ import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { useProcessingState } from "@/hooks/useProcessingState";
+import { NewtonFeedback } from "@/components/NewtonFeedback";
+import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -73,6 +75,15 @@ const AINotes = () => {
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
+
+  // Error state for confused Newton
+  const [errorState, setErrorState] = useState<"confused" | null>(null);
+
+  // Idle timeout for sleeping Newton (5 minutes)
+  const { isIdle, resetIdle } = useIdleTimeout({ 
+    timeout: 300000,
+    enabled: notes.length > 0 
+  });
 
   const handleReadAloud = useCallback(async () => {
     if (isSpeaking) {
@@ -185,11 +196,16 @@ const AINotes = () => {
       }, 1500);
     } catch (error) {
       resetProcessing();
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate notes. Please try again.",
-        variant: "destructive",
-      });
+      setErrorState("confused");
+      
+      setTimeout(() => {
+        setErrorState(null);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to generate notes. Please try again.",
+          variant: "destructive",
+        });
+      }, 2000);
     }
   };
 
@@ -370,6 +386,20 @@ const AINotes = () => {
         contentType={pendingContent?.type as any}
         onGenerate={handleConfirmGenerate}
       />
+
+      {/* Confused Newton for errors */}
+      <NewtonFeedback 
+        state={errorState} 
+        onDismiss={() => setErrorState(null)}
+      />
+
+      {/* Sleeping Newton for idle state */}
+      {isIdle && notes.length > 0 && (
+        <NewtonFeedback 
+          state="sleeping"
+          onDismiss={resetIdle}
+        />
+      )}
 
       {modal}
     </AppLayout>

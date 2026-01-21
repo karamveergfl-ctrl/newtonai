@@ -12,6 +12,8 @@ import { useFeatureGate } from "@/components/FeatureGate";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { useProcessingState } from "@/hooks/useProcessingState";
+import { NewtonFeedback } from "@/components/NewtonFeedback";
+import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -43,6 +45,15 @@ const AIFlashcards = () => {
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
+
+  // Error state for confused Newton
+  const [errorState, setErrorState] = useState<"confused" | null>(null);
+
+  // Idle timeout for sleeping Newton (5 minutes)
+  const { isIdle, resetIdle } = useIdleTimeout({ 
+    timeout: 300000,
+    enabled: flashcards.length > 0 
+  });
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
@@ -121,11 +132,17 @@ const AIFlashcards = () => {
       }, 1500);
     } catch (error) {
       resetProcessing();
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate flashcards. Please try again.",
-        variant: "destructive",
-      });
+      setErrorState("confused");
+      
+      // Show Newton confused for 2 seconds, then show toast
+      setTimeout(() => {
+        setErrorState(null);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to generate flashcards. Please try again.",
+          variant: "destructive",
+        });
+      }, 2000);
     }
   };
 
@@ -243,6 +260,20 @@ const AIFlashcards = () => {
         contentType={pendingContent?.type as any}
         onGenerate={handleConfirmGenerate}
       />
+
+      {/* Confused Newton for errors */}
+      <NewtonFeedback 
+        state={errorState} 
+        onDismiss={() => setErrorState(null)}
+      />
+
+      {/* Sleeping Newton for idle state */}
+      {isIdle && flashcards.length > 0 && (
+        <NewtonFeedback 
+          state="sleeping"
+          onDismiss={resetIdle}
+        />
+      )}
 
       {modal}
     </AppLayout>

@@ -11,6 +11,7 @@ import { StepBySolutionRenderer } from "@/components/StepBySolutionRenderer";
 import { InlineSolutionPanel } from "@/components/InlineSolutionPanel";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
+import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -52,6 +53,9 @@ const HomeworkHelp = () => {
   const { canUse, tryUseFeature, modal } = useFeatureGate("homework_help");
   const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
   const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
+
+  // Error state for confused Newton
+  const [errorState, setErrorState] = useState<"confused" | null>(null);
 
   // Load preferred voice when language changes
   useEffect(() => {
@@ -220,11 +224,15 @@ const HomeworkHelp = () => {
         description: "Your homework has been solved",
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to solve the problem. Please try again.",
-        variant: "destructive",
-      });
+      setErrorState("confused");
+      setTimeout(() => {
+        setErrorState(null);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to solve the problem. Please try again.",
+          variant: "destructive",
+        });
+      }, 2000);
     } finally {
       setIsLoading(false);
     }
@@ -356,6 +364,12 @@ const HomeworkHelp = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Confused Newton for errors */}
+      <NewtonFeedback 
+        state={errorState} 
+        onDismiss={() => setErrorState(null)}
+      />
 
       {modal}
     </AppLayout>

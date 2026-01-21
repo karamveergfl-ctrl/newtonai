@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Sparkles, Star } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LottieNewton } from "@/components/newton/LottieNewton";
 
 interface LevelUpModalProps {
   isOpen: boolean;
@@ -27,27 +28,14 @@ export function LevelUpModal({ isOpen, level, onClose }: LevelUpModalProps) {
             className="bg-gradient-to-br from-card via-card to-primary/10 border border-primary/30 rounded-2xl p-8 shadow-2xl max-w-sm mx-4 text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Animated trophy icon */}
+            {/* Celebrating Newton animation */}
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", damping: 10 }}
-              className="relative mx-auto w-20 h-20 mb-4"
+              className="relative mx-auto w-32 h-32 mb-4"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-yellow-500/30">
-                <Trophy className="w-10 h-10 text-white" />
-              </div>
-              {/* Sparkles around the trophy */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0"
-              >
-                <Sparkles className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 text-yellow-400" />
-                <Star className="absolute top-1/2 -right-2 -translate-y-1/2 w-3 h-3 text-orange-400" fill="currentColor" />
-                <Sparkles className="absolute -bottom-1 left-1/4 w-3 h-3 text-yellow-300" />
-                <Star className="absolute top-1/4 -left-1 w-3 h-3 text-amber-400" fill="currentColor" />
-              </motion.div>
+              <LottieNewton state="celebrating" className="w-full h-full" />
             </motion.div>
 
             {/* Level up text */}
@@ -68,8 +56,7 @@ export function LevelUpModal({ isOpen, level, onClose }: LevelUpModalProps) {
                 transition={{ delay: 0.5, type: "spring", damping: 8 }}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-bold text-xl mb-6"
               >
-                <Trophy className="w-5 h-5" />
-                Level {level}
+                🏆 Level {level}
               </motion.div>
             </motion.div>
 
