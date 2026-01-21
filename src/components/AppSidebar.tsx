@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-
 import { Badge } from "@/components/ui/badge";
+import { SidebarUsageWidget } from "@/components/SidebarUsageWidget";
 import {
   Sidebar,
   SidebarContent,
@@ -21,7 +21,6 @@ import {
 import {
   Home,
   FileQuestion,
-  
   Layers,
   Brain,
   FileText,
@@ -260,6 +259,11 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        {/* Usage Summary Widget */}
+        <SidebarGroup className="mt-auto pt-2 border-t border-sidebar-border">
+          <SidebarUsageWidget isCollapsed={isCollapsed} />
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-3">

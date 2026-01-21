@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { useCredits } from "@/hooks/useCredits";
 import { FEATURE_NAMES } from "@/lib/creditConfig";
+import { UsageDashboard } from "@/components/UsageDashboard";
 import SEOHead from "@/components/SEOHead";
 import { 
   ArrowLeft, 
@@ -590,6 +591,16 @@ const Profile = () => {
               )}
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* Usage Dashboard Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+          className="mb-6"
+        >
+          <UsageDashboard usage={usage} subscription={subscription} />
         </motion.div>
 
         {/* Preference Section */}
