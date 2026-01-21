@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
 const WELCOME_STORAGE_KEY = "newton-ai-welcome-seen";
-const TUTORIAL_STORAGE_KEY = "newton-ai-tutorial-seen";
 
 interface QuickAction {
   icon: React.ReactNode;
@@ -24,29 +23,12 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
 
   useEffect(() => {
     const hasSeenWelcome = localStorage.getItem(WELCOME_STORAGE_KEY);
-    const hasSeenTutorial = localStorage.getItem(TUTORIAL_STORAGE_KEY);
     
-    // Show welcome modal only after tutorial is completed
-    if (!hasSeenWelcome && hasSeenTutorial) {
+    // Show welcome modal for first-time users
+    if (!hasSeenWelcome) {
       const timer = setTimeout(() => setIsVisible(true), 500);
       return () => clearTimeout(timer);
     }
-  }, []);
-
-  // Listen for tutorial completion
-  useEffect(() => {
-    const checkTutorialComplete = () => {
-      const hasSeenWelcome = localStorage.getItem(WELCOME_STORAGE_KEY);
-      const hasSeenTutorial = localStorage.getItem(TUTORIAL_STORAGE_KEY);
-      
-      if (!hasSeenWelcome && hasSeenTutorial) {
-        setTimeout(() => setIsVisible(true), 500);
-      }
-    };
-
-    // Check periodically in case tutorial just completed
-    const interval = setInterval(checkTutorialComplete, 1000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleClose = () => {
