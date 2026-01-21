@@ -6,7 +6,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap } from "lucide-react";
+import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star } from "lucide-react";
+import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { VideoCardWithTools } from "@/components/VideoCardWithTools";
@@ -124,8 +125,11 @@ const AISummarizer = () => {
 
   // Format selection state for non-video content
   const [showFormatSelection, setShowFormatSelection] = useState(false);
-  const [selectedFormat, setSelectedFormat] = useState<SummaryFormat>("concise");
   const [pendingSummaryContent, setPendingSummaryContent] = useState<PendingSummaryContent | null>(null);
+  
+  // Use persisted format preferences
+  const { preferences, setSummaryFormat } = useTemplatePreferences();
+  const selectedFormat = preferences.summaryFormat;
 
   const { 
     credits, 
@@ -885,7 +889,7 @@ const AISummarizer = () => {
                 return (
                   <button
                     key={format.id}
-                    onClick={() => setSelectedFormat(format.id)}
+                    onClick={() => setSummaryFormat(format.id)}
                     className={cn(
                       "p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
                       selectedFormat === format.id

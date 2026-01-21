@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Mic, Download, Copy, Check, Volume2, VolumeX, Pencil, Eye, Highlighter,
-  Upload, Youtube, FileText, Globe, Loader2, ArrowLeft, Sparkles, BookOpen, Clipboard
+  Upload, Youtube, FileText, Globe, Loader2, ArrowLeft, Sparkles, BookOpen, Clipboard, Star
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { LectureRecorder } from "@/components/LectureRecorder";
@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { extractTextFromPDF, extractTextFromImage, getYouTubeTranscript, readTextFile } from "@/utils/contentProcessing";
+import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 
 // Input tab types
 type InputType = "upload" | "recording" | "youtube" | "text";
@@ -139,8 +140,11 @@ const AILectureNotes = () => {
   
   // Template selection state for non-recording tabs
   const [showTemplateSelection, setShowTemplateSelection] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>("lecture");
   const [pendingContent, setPendingContent] = useState<string | null>(null);
+  
+  // Use persisted template preferences
+  const { preferences, setLectureTemplate } = useTemplatePreferences();
+  const selectedTemplate = preferences.lectureTemplate;
   
   const { toast } = useToast();
   const { modal } = useFeatureGate("lecture_notes");
@@ -567,7 +571,7 @@ const AILectureNotes = () => {
                         return (
                           <button
                             key={template.id}
-                            onClick={() => setSelectedTemplate(template.id)}
+                            onClick={() => setLectureTemplate(template.id)}
                             className={cn(
                               "p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
                               selectedTemplate === template.id
