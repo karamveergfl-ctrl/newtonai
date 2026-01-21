@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Footer from "@/components/Footer";
 import { TopStatsBar } from "@/components/TopStatsBar";
+import { useUsageLimitNotifications } from "@/hooks/useUsageLimitNotifications";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,8 @@ export function AppLayout({
   showFooter = true,
   showTopStats = true
 }: AppLayoutProps) {
+  // Show notifications when users are approaching their feature limits
+  useUsageLimitNotifications();
   if (!showSidebar) {
     return (
       <div className="min-h-screen flex flex-col">
