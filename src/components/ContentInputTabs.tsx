@@ -78,6 +78,7 @@ export const ContentInputTabs = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -85,6 +86,7 @@ export const ContentInputTabs = ({
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioInputRef = useRef<HTMLInputElement | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
@@ -226,20 +228,21 @@ export const ContentInputTabs = ({
         break;
 
       case "recording":
-        if (!audioBlob) {
-          toast({ title: "No recording", description: "Please record audio first", variant: "destructive" });
+        if (!audioBlob && !audioFile) {
+          toast({ title: "No audio", description: "Please record or upload audio first", variant: "destructive" });
           return;
         }
         // Convert to base64 for processing
         setIsTranscribing(true);
         try {
+          const audioSource = audioFile || audioBlob;
           const reader = new FileReader();
           const base64 = await new Promise<string>((resolve) => {
             reader.onload = () => {
               const result = (reader.result as string).split(",")[1];
               resolve(result);
             };
-            reader.readAsDataURL(audioBlob);
+            reader.readAsDataURL(audioSource!);
           });
           onContentReady(base64, "recording", { language: selectedLanguage });
         } finally {
@@ -253,9 +256,34 @@ export const ContentInputTabs = ({
     setFile(null);
     setImagePreview(null);
   };
+  
   const clearAudio = () => {
     setAudioBlob(null);
+    setAudioFile(null);
     setAudioUrl(null);
+  };
+
+  const handleAudioFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 25 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Maximum audio file size is 25MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setAudioFile(file);
+    setAudioBlob(null);
+    setAudioUrl(URL.createObjectURL(file));
+    
+    // Reset input value to allow re-uploading same file
+    if (audioInputRef.current) {
+      audioInputRef.current.value = "";
+    }
   };
 
   const videoId = extractVideoId(youtubeUrl);
@@ -265,7 +293,7 @@ export const ContentInputTabs = ({
       case "text": return textContent.trim().length > 0;
       case "upload": return file !== null;
       case "youtube": return extractVideoId(youtubeUrl) !== null;
-      case "recording": return audioBlob !== null;
+      case "recording": return audioBlob !== null || audioFile !== null;
       default: return false;
     }
   };
@@ -421,11 +449,13 @@ export const ContentInputTabs = ({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={isRecording ? stopRecording : startRecording}
+                  disabled={!!audioFile}
                   className={cn(
                     "w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center transition-colors",
                     isRecording
                       ? "bg-destructive text-destructive-foreground"
-                      : "bg-primary text-primary-foreground"
+                      : "bg-primary text-primary-foreground",
+                    audioFile && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   {isRecording ? (
@@ -449,6 +479,41 @@ export const ContentInputTabs = ({
                     Recording
                   </motion.div>
                 )}
+
+                {/* Divider */}
+                {!isRecording && !audioUrl && (
+                  <div className="flex items-center gap-3 w-full max-w-xs px-4">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs text-muted-foreground">or</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                )}
+
+                {/* Upload Audio Button */}
+                {!isRecording && !audioUrl && (
+                  <div className="flex flex-col items-center gap-2">
+                    <input
+                      ref={audioInputRef}
+                      id="audio-upload-input"
+                      type="file"
+                      accept="audio/*,.mp3,.wav,.webm,.m4a,.ogg,.flac"
+                      onChange={handleAudioFileUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => audioInputRef.current?.click()}
+                      className="gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload Audio File
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      MP3, WAV, M4A, WEBM, FLAC • Max 25MB
+                    </p>
+                  </div>
+                )}
               </div>
 
               {audioUrl && (
@@ -460,9 +525,18 @@ export const ContentInputTabs = ({
                     ref={audioRef}
                     src={audioUrl}
                     onEnded={() => setIsPlaying(false)}
-                    className="flex-1 min-w-0"
+                    className="hidden"
                   />
-                  <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">Recording ready</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {audioFile?.name || "Recording ready"}
+                    </p>
+                    {audioFile && (
+                      <p className="text-xs text-muted-foreground">
+                        {(audioFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    )}
+                  </div>
                   <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={clearAudio}>
                     <X className="h-4 w-4" />
                   </Button>
@@ -483,7 +557,7 @@ export const ContentInputTabs = ({
                 ) : (
                   <>
                     <Mic className="h-4 w-4 mr-2" />
-                    Process Recording
+                    Process Audio
                   </>
                 )}
               </Button>
