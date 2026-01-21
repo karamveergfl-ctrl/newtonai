@@ -135,7 +135,6 @@ const Terms = () => {
                 <p>NewtonAI provides the following Services:</p>
                 <ul>
                   <li><strong>AI Homework Help:</strong> AI-powered assistance for solving academic problems and understanding concepts.</li>
-                  <li><strong>AI Notes:</strong> Automatic generation of study notes from text, documents, or topics.</li>
                   <li><strong>AI Flashcards:</strong> Creation of flashcard decks for efficient learning and memorization.</li>
                   <li><strong>AI Quiz:</strong> Generation of practice quizzes to test knowledge retention.</li>
                   <li><strong>PDF Summarizer:</strong> Extraction and summarization of key information from PDF documents.</li>

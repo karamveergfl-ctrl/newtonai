@@ -23,7 +23,7 @@ import Onboarding from "./pages/Onboarding";
 
 // Tool pages
 import HomeworkHelp from "./pages/tools/HomeworkHelp";
-import AINotes from "./pages/tools/AINotes";
+
 import AIFlashcards from "./pages/tools/AIFlashcards";
 import AIQuiz from "./pages/tools/AIQuiz";
 import AISummarizer from "./pages/tools/AISummarizer";
@@ -67,7 +67,7 @@ const App = () => (
               
               {/* Tool Routes */}
               <Route path="/tools/homework-help" element={<HomeworkHelp />} />
-              <Route path="/tools/ai-notes" element={<AINotes />} />
+              
               <Route path="/tools/flashcards" element={<AIFlashcards />} />
               <Route path="/tools/quiz" element={<AIQuiz />} />
               <Route path="/tools/summarizer" element={<AISummarizer />} />
