@@ -32,6 +32,7 @@ import AILectureNotes from "./pages/tools/AILectureNotes";
 import MindMap from "./pages/tools/MindMap";
 import AIPodcast from "./pages/tools/AIPodcast";
 import CookieConsent from "./components/CookieConsent";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 // Payment pages
 import PaymentSuccess from "./pages/payment/Success";
@@ -53,6 +54,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <PodcastProvider>
             <Routes>
               <Route path="/" element={<LandingPage />} />
