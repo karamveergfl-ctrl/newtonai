@@ -182,6 +182,7 @@ const MindMap = () => {
                 phase={phase}
                 message={phase === "thinking" ? "Analyzing your content..." : phase === "writing" ? "Creating mind map..." : "Mind map ready!"}
                 subMessage={phase === "thinking" ? "Understanding the concepts" : phase === "writing" ? "Mapping relationships" : undefined}
+                showProgress={true}
                 variant="card"
               />
             ) : (
