@@ -5,13 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, Download, Copy, Check, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { EnhancedLectureRecorder } from "@/components/EnhancedLectureRecorder";
+import { LectureRecorder } from "@/components/LectureRecorder";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
-import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
-import { transcribeAudio } from "@/utils/contentProcessing";
 
 // Strip markdown formatting for cleaner TTS
 const stripMarkdown = (text: string): string => {
@@ -30,23 +27,13 @@ const stripMarkdown = (text: string): string => {
     .trim();
 };
 
-interface PendingContent {
-  content: string;
-  type: "recording" | "audio";
-  metadata?: { file?: File; language?: string };
-}
-
 const AILectureNotes = () => {
   const [notes, setNotes] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [notesTitle, setNotesTitle] = useState("");
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
-  const { tryUseFeature, modal } = useFeatureGate("lecture_notes");
+  const { modal } = useFeatureGate("lecture_notes");
   const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
-
-  // Settings dialog state
-  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-  const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
 
   const handleReadAloud = useCallback(async () => {
     if (isSpeaking) {
@@ -81,73 +68,9 @@ const AILectureNotes = () => {
     }
   }, [notes, isSpeaking, speak, cancel, toast]);
 
-  const handleContentReady = async (
-    content: string, 
-    type: "recording" | "audio", 
-    metadata?: { file?: File; language?: string }
-  ) => {
-    const allowed = await tryUseFeature();
-    if (!allowed) return;
-
-    // Store pending content and show settings dialog
-    setPendingContent({ content, type, metadata });
-    setShowSettingsDialog(true);
-  };
-
-  const handleConfirmGenerate = async (settings: UniversalGenerationSettings) => {
-    if (!pendingContent) return;
-
-    const { content, metadata } = pendingContent;
-    setPendingContent(null);
-    setIsProcessing(true);
-    setNotes("");
-    cancel();
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Not authenticated");
-
-      // Transcribe the audio first
-      const textContent = await transcribeAudio(content, session.access_token);
-
-      if (!textContent?.trim()) {
-        throw new Error("Could not transcribe audio. Please try again.");
-      }
-
-      const notesResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-lecture-notes`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ 
-            transcription: textContent,
-            language: metadata?.language || "en",
-            detailLevel: settings.detailLevel,
-          }),
-        }
-      );
-
-      if (!notesResponse.ok) throw new Error("Failed to generate notes");
-
-      const data = await notesResponse.json();
-      setNotes(data.notes);
-
-      toast({
-        title: "Notes Generated! 🎤",
-        description: "Your lecture notes are ready",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to process. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleNotesGenerated = (generatedNotes: string, title: string) => {
+    setNotes(generatedNotes);
+    setNotesTitle(title);
   };
 
   const handleDownload = () => {
@@ -155,7 +78,7 @@ const AILectureNotes = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "lecture-notes.md";
+    a.download = `${notesTitle || "lecture-notes"}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -164,12 +87,6 @@ const AILectureNotes = () => {
     await navigator.clipboard.writeText(notes);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const getContentTitle = () => {
-    if (!pendingContent) return "";
-    if (pendingContent.metadata?.file) return pendingContent.metadata.file.name;
-    return "Audio Recording";
   };
 
   return (
@@ -192,10 +109,7 @@ const AILectureNotes = () => {
 
           <Card className="border-border/50 shadow-lg">
             <CardContent className="pt-6">
-              <EnhancedLectureRecorder
-                onContentReady={handleContentReady}
-                isProcessing={isProcessing}
-              />
+              <LectureRecorder onNotesGenerated={handleNotesGenerated} />
             </CardContent>
           </Card>
 
@@ -206,7 +120,9 @@ const AILectureNotes = () => {
             >
               <Card className="border-border/50 shadow-lg overflow-hidden">
                 <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 border-b border-border/50 bg-muted/30">
-                  <CardTitle className="font-display font-semibold text-lg sm:text-xl">Lecture Notes</CardTitle>
+                  <CardTitle className="font-display font-semibold text-lg sm:text-xl">
+                    {notesTitle || "Lecture Notes"}
+                  </CardTitle>
                   <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                     {isSupported && (
                       <Button 
@@ -245,16 +161,6 @@ const AILectureNotes = () => {
           )}
         </motion.div>
       </div>
-
-      {/* Settings Dialog */}
-      <UniversalStudySettingsDialog
-        open={showSettingsDialog}
-        onOpenChange={setShowSettingsDialog}
-        type="notes"
-        contentTitle={getContentTitle()}
-        contentType="recording"
-        onGenerate={handleConfirmGenerate}
-      />
 
       {modal}
     </AppLayout>
