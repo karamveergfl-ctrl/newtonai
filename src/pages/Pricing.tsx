@@ -545,6 +545,22 @@ const Pricing = () => {
             <span className="text-xs">Wallets</span>
           </div>
         </motion.div>
+
+        {/* Enterprise CTA */}
+        <motion.div
+          className="mt-16 text-center p-8 rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border border-primary/20"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.1 }}
+        >
+          <h3 className="text-2xl font-bold mb-2">Need a Custom Solution?</h3>
+          <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+            Get custom API access, bulk licensing, and dedicated support for your educational institution or enterprise.
+          </p>
+          <Button asChild size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            <Link to="/enterprise">Contact Enterprise Sales</Link>
+          </Button>
+        </motion.div>
       </main>
 
       <Footer />
