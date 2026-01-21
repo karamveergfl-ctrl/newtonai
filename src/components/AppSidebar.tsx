@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
@@ -35,11 +35,15 @@ import {
   Moon,
   Sun,
   Podcast,
+  BarChart3,
+  Users,
+  MessageSquare,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FEATURE_COSTS } from "@/lib/creditConfig";
 import { useCredits } from "@/hooks/useCredits";
-import { useEffect } from "react";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 const studyTools = [
   { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz", feature: "quiz" },
@@ -49,6 +53,12 @@ const studyTools = [
   { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes", feature: "lecture_notes" },
   { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer", feature: "summary" },
   { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help", feature: "homework_help" },
+];
+
+const adminTools = [
+  { id: "analytics", label: "Analytics", icon: BarChart3, path: "/admin/analytics" },
+  { id: "users", label: "Users", icon: Users, path: "/admin/users" },
+  { id: "inquiries", label: "Inquiries", icon: MessageSquare, path: "/admin/inquiries" },
 ];
 
 interface AppSidebarProps {
@@ -63,6 +73,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const isCollapsed = state === "collapsed";
   const [searchQuery, setSearchQuery] = useState("");
   const { isPremium } = useCredits();
+  const { isAdmin } = useAdminAccess();
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
@@ -207,6 +218,42 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Admin Section - Only visible to admins */}
+        {isAdmin && (
+          <SidebarGroup className="mt-0">
+            {!isCollapsed && (
+              <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                Admin
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminTools.map((tool) => (
+                  <SidebarMenuItem key={tool.id}>
+                    <SidebarMenuButton asChild tooltip={tool.label}>
+                      <motion.button
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => navigate(tool.path)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActive(tool.path)
+                            ? "bg-primary text-primary-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent"
+                        )}
+                      >
+                        <tool.icon className="h-5 w-5 shrink-0" />
+                        {!isCollapsed && <span>{tool.label}</span>}
+                      </motion.button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-3">

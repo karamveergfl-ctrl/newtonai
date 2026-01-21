@@ -95,3 +95,9 @@ verify_jwt = false
 
 [functions.activate-free-subscription]
 verify_jwt = false
+
+[functions.admin-analytics]
+verify_jwt = false
+
+[functions.admin-users]
+verify_jwt = false
