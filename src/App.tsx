@@ -28,6 +28,8 @@ import Profile from "./pages/Profile";
 import Credits from "./pages/Credits";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 // Tool pages
 import HomeworkHelp from "./pages/tools/HomeworkHelp";
@@ -71,6 +73,8 @@ function AnimatedRoutes() {
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
         <Route path="/credits" element={<PageTransition><Credits /></PageTransition>} />
         <Route path="/enterprise" element={<PageTransition><Enterprise /></PageTransition>} />
+        <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
+        <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
         
         {/* Payment Routes */}
         <Route path="/payment/success" element={<PageTransition><PaymentSuccess /></PageTransition>} />

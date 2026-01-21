@@ -1,9 +1,10 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Helmet } from "react-helmet-async";
+import SEOHead from "@/components/SEOHead";
 
 const faqs = [
   {
@@ -53,6 +54,11 @@ const faqs = [
 ];
 
 const FAQ = () => {
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "FAQ", href: "/faq" },
+  ];
+
   // Generate FAQPage structured data
   const faqSchema = {
     "@context": "https://schema.org",
@@ -69,9 +75,14 @@ const FAQ = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="FAQ"
+        description="Find answers to common questions about NewtonAI - the AI-powered learning platform for students. Learn about pricing, features, and more."
+        canonicalPath="/faq"
+        breadcrumbs={breadcrumbs}
+        keywords="NewtonAI FAQ, AI study tools questions, flashcard generator help"
+      />
       <Helmet>
-        <title>FAQ - NewtonAI | Frequently Asked Questions</title>
-        <meta name="description" content="Find answers to common questions about NewtonAI - the AI-powered learning platform for students." />
         <script type="application/ld+json">
           {JSON.stringify(faqSchema)}
         </script>
