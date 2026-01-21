@@ -1,7 +1,8 @@
 import { memo, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Check } from "lucide-react";
+import { Sparkles, Check, Volume2, VolumeX, Loader2 } from "lucide-react";
 import type { ProcessingPhase } from "@/hooks/useProcessingState";
+import { useNewtonSounds } from "@/hooks/useNewtonSounds";
 import newtonCharacter from "@/assets/newton-character.png";
 
 interface NewtonProcessingAnimationProps {
@@ -21,6 +22,10 @@ interface NewtonProcessingAnimationProps {
   size?: "sm" | "md" | "lg";
   /** Additional className */
   className?: string;
+  /** Enable sound effects (default: true) */
+  enableSounds?: boolean;
+  /** Sound volume multiplier 0-1 (default: 1) */
+  soundVolume?: number;
 }
 
 const sizeClasses = {
@@ -367,8 +372,38 @@ export const NewtonProcessingAnimation = memo(({
   onCompleteAnimationEnd,
   size = "md",
   className = "",
+  enableSounds = true,
+  soundVolume = 1,
 }: NewtonProcessingAnimationProps) => {
   const [hasCompletedPlayed, setHasCompletedPlayed] = useState(false);
+
+  // Sound effects hook
+  const {
+    crossfadeTo,
+    playCompletedSound,
+    stopAllSounds,
+    isMuted,
+    toggleMute,
+    isLoading: isSoundLoading,
+  } = useNewtonSounds({
+    enabled: enableSounds,
+    volume: soundVolume,
+  });
+
+  // Handle sound transitions based on state
+  useEffect(() => {
+    if (!enableSounds) return;
+
+    if (state === "thinking") {
+      crossfadeTo("thinking");
+    } else if (state === "writing") {
+      crossfadeTo("writing");
+    } else if (state === "completed") {
+      playCompletedSound();
+    } else if (state === "idle") {
+      stopAllSounds();
+    }
+  }, [state, enableSounds, crossfadeTo, playCompletedSound, stopAllSounds]);
 
   // Reset completed state when state changes from completed
   useEffect(() => {
@@ -407,6 +442,29 @@ export const NewtonProcessingAnimation = memo(({
             />
           )}
         </AnimatePresence>
+
+        {/* Sound control button */}
+        {enableSounds && state !== "completed" && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={toggleMute}
+            className="absolute -top-2 -right-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-sm hover:bg-background transition-colors z-20"
+            aria-label={isMuted ? "Unmute sounds" : "Mute sounds"}
+            title={isMuted ? "Unmute sounds" : "Mute sounds"}
+          >
+            {isSoundLoading ? (
+              <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+            ) : isMuted ? (
+              <VolumeX className="w-3.5 h-3.5 text-muted-foreground" />
+            ) : (
+              <Volume2 className="w-3.5 h-3.5 text-primary" />
+            )}
+          </motion.button>
+        )}
       </div>
 
       {/* Message text */}
