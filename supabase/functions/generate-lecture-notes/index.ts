@@ -88,64 +88,207 @@ serve(async (req) => {
     };
     const targetLanguage = languageNames[language] || "English";
 
-    // Template-specific prompts
+    // Template-specific prompts - COMPREHENSIVE and DETAILED (not summaries!)
     const templatePrompts: Record<string, string> = {
-      "lecture": `Create a brief summary following this structure:
-## Key Points
-- List 2-3 main points from the content
+      "lecture": `Create COMPREHENSIVE lecture notes following this structure:
 
-## Details
-- Brief elaboration on the key points (1-2 sentences each)
+## 📚 Overview
+Introduce the main topic and explain its importance and context (3-5 sentences minimum).
 
-## Summary
-- A concise 2-3 sentence summary of the entire content`,
+## 🔑 Key Concepts
+For EACH major concept mentioned:
+### Concept: [Name]
+- **Definition**: Clear, complete explanation of what this is
+- **Context**: Why this matters and how it connects to the broader topic
+- **Details**: In-depth elaboration with supporting information
+- **Example**: A practical illustration or real-world application
 
-      "study-guide": `Create a brief study guide following this structure:
-## Summary
-- A concise 2-3 sentence overview
+(Include ALL concepts from the source material, not just 2-3)
 
-## Chapters
-- Break down the content into 2-3 logical sections with brief descriptions
+## 📝 Detailed Notes
+Provide thorough coverage of the content including:
+- Complete explanations of all topics discussed
+- Supporting details and background information
+- Logical connections between different ideas
+- Any formulas, processes, or methodologies mentioned
 
-## Action Items
-- List 2-3 actionable takeaways or things to do`,
+## 📖 Key Terms & Definitions
+Create a comprehensive glossary:
+| Term | Definition |
+|------|------------|
+(List ALL important terminology with clear, complete definitions)
 
-      "research": `Create a brief research summary following this structure:
-## Topics
-- List the main topics covered (2-3 topics)
+## 💡 Examples & Applications
+- Practical examples that reinforce understanding
+- Real-world applications of the concepts
+- How these ideas can be applied
 
-## Review
-- Brief analysis of the content (2-3 sentences)
+## ✅ Key Takeaways
+- List 5-10 essential points for revision
+- Include the most important insights
+- Highlight what students should remember
 
-## Progress
-- Key insights or findings`,
+## 📌 Study Tips
+- Specific suggestions for mastering this material
+- Recommended ways to review and practice
+- Connections to related topics for further study`,
 
-      "project": `Create a brief project work plan following this structure:
-## Summary
-- Brief overview of the content (2-3 sentences)
+      "study-guide": `Create a COMPREHENSIVE study guide following this structure:
 
-## Issue
-- Identify the main problem or challenge discussed
+## 📋 Learning Objectives
+List 5-8 specific things students will understand after studying this material.
 
-## Solution
-- Outline the proposed solution or approach`,
+## 📚 Chapter Breakdown
+Break the content into logical chapters/sections:
+
+### Chapter 1: [Topic Name]
+**Overview**: Detailed introduction to this section
+**Key Points**:
+- Point 1 with full explanation
+- Point 2 with full explanation
+- (continue for all points)
+**Important Details**: Additional context and elaboration
+**Review Questions**: 2-3 questions to test understanding
+
+### Chapter 2: [Topic Name]
+(Continue same structure for all chapters)
+
+## 📖 Complete Glossary
+| Term | Definition | Example |
+|------|------------|---------|
+(Comprehensive list of all terminology)
+
+## 🔗 Concept Connections
+Explain how different concepts relate to each other with a visual or textual map.
+
+## ✍️ Practice Questions
+Include 5-10 questions covering the material:
+1. Question about concept X
+2. Question about concept Y
+(Include answers or hints)
+
+## 📝 Action Items
+- Specific study tasks to complete
+- Exercises to reinforce learning
+- Topics to research further`,
+
+      "research": `Create a COMPREHENSIVE research summary following this structure:
+
+## 📄 Abstract
+A detailed summary of the entire content (150-200 words) covering the main topics, findings, and significance.
+
+## 🎯 Research Topics Covered
+For each topic:
+### Topic 1: [Name]
+- **Scope**: What aspects are covered
+- **Key Findings**: Detailed findings and insights
+- **Methodology**: How information was gathered or conclusions reached
+- **Significance**: Why this matters
+
+### Topic 2: [Name]
+(Continue for all topics)
+
+## 📊 Detailed Analysis
+- In-depth examination of the content
+- Critical evaluation of arguments or claims
+- Strengths and limitations identified
+- Comparisons with related work if applicable
+
+## 💡 Key Insights & Findings
+1. Finding 1 with detailed explanation
+2. Finding 2 with detailed explanation
+(List all significant insights)
+
+## 🔍 Methodology Notes
+- How information was presented or gathered
+- Any frameworks or approaches used
+- Data sources or references mentioned
+
+## 📈 Implications & Applications
+- Practical applications of the findings
+- Impact on the field or related areas
+- Future directions suggested
+
+## 📚 References & Further Reading
+- Topics to explore further
+- Related concepts to investigate
+- Suggested resources if mentioned`,
+
+      "project": `Create a COMPREHENSIVE project work plan following this structure:
+
+## 📋 Executive Summary
+Detailed overview of the project scope and objectives (5-7 sentences).
+
+## 🎯 Problem Analysis
+### Problem Statement
+- Clear, detailed description of the problem or challenge
+- Context and background information
+- Why this problem needs to be addressed
+
+### Root Causes
+- Underlying factors contributing to the problem
+- Analysis of each cause
+
+### Impact Assessment
+- Effects of the problem if left unaddressed
+- Stakeholders affected
+
+## 💡 Proposed Solution
+### Solution Overview
+Comprehensive description of the proposed approach.
+
+### Implementation Steps
+1. **Step 1**: [Description]
+   - Detailed actions required
+   - Resources needed
+   - Expected outcomes
+2. **Step 2**: [Description]
+   (Continue for all steps)
+
+### Technical Requirements
+- Tools, technologies, or resources needed
+- Prerequisites and dependencies
+
+## 📅 Timeline & Milestones
+| Phase | Description | Duration |
+|-------|-------------|----------|
+(Suggested timeline based on the content)
+
+## ✅ Success Metrics
+- How to measure if the solution works
+- Key performance indicators
+- Evaluation criteria
+
+## ⚠️ Risks & Mitigation
+| Risk | Impact | Mitigation Strategy |
+|------|--------|---------------------|
+(Potential challenges and how to address them)
+
+## 📝 Next Steps
+- Immediate actions to take
+- Resources to gather
+- People to involve`,
     };
 
     const selectedTemplatePrompt = templatePrompts[template] || templatePrompts["lecture"];
     const structureInfo = templateStructure?.length > 0 
-      ? `Use these sections: ${templateStructure.join(", ")}` 
+      ? `Consider incorporating these key sections: ${templateStructure.join(", ")}` 
       : "";
 
-    const systemPrompt = `You are a concise summarizer. Your task is to create BRIEF summaries from transcriptions.
+    const systemPrompt = `You are an expert lecture note-taker and educational content creator. Your task is to create COMPREHENSIVE, DETAILED lecture notes that EXPAND upon the source material.
 
-IMPORTANT RULES:
-1. Keep it SHORT - if the input is 5 sentences, output should be about 3 sentences worth of content
-2. Correct any spelling, grammar, and language errors in the transcription
-3. Fix incomplete or unclear sentences
-4. Output MUST be in ${targetLanguage}
-5. Use proper markdown formatting
-6. Do NOT add extra information - only summarize what was actually said
-7. Be concise but capture the essential meaning
+CRITICAL RULES:
+1. EXPAND the content - add context, explanations, definitions, and elaboration
+2. Be THOROUGH - if the input mentions something briefly, explain it more fully
+3. Include DEFINITIONS for all key terms mentioned
+4. Add EXAMPLES to clarify concepts where appropriate
+5. Structure information clearly with proper headings, subheadings, and bullet points
+6. Output MUST be in ${targetLanguage}
+7. Use proper markdown formatting with headers (##, ###), bullet points, bold (**text**), and tables
+8. Make the notes suitable for studying and revision
+9. Add logical CONNECTIONS between ideas
+10. Correct any spelling, grammar, and language errors
+11. The output should be LONGER and MORE DETAILED than the input
 
 ${structureInfo}
 
@@ -161,9 +304,9 @@ ${selectedTemplatePrompt}`;
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Please create a brief summary from this transcription. Remember to be concise and output in ${targetLanguage}:\n\n${transcription}` },
+          { role: "user", content: `Create comprehensive, detailed lecture notes from the following content. Expand on the material, add definitions, examples, and thorough explanations. Output in ${targetLanguage}:\n\n${transcription}` },
         ],
-        max_tokens: 1500,
+        max_tokens: 4000,
       }),
     });
 

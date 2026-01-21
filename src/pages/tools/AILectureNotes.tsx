@@ -25,35 +25,35 @@ import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 type InputType = "upload" | "recording" | "youtube" | "text";
 type TemplateType = "lecture" | "study-guide" | "research" | "project";
 
-// Template definitions (same as LectureRecorder)
+// Template definitions - COMPREHENSIVE note generation (not summaries!)
 const templates: { id: TemplateType; name: string; description: string; icon: React.ElementType; structure: string[] }[] = [
   { 
     id: "lecture", 
     name: "Lecture Notes", 
-    description: "Auto supplement details, include key points and summary",
+    description: "Comprehensive notes with key concepts, definitions, examples, and study tips",
     icon: FileText,
-    structure: ["Key Points", "Details", "Summary"]
+    structure: ["Overview", "Key Concepts", "Detailed Notes", "Key Terms", "Takeaways"]
   },
   { 
     id: "study-guide", 
     name: "Study Guide", 
-    description: "Organized study material with chapters and action items",
+    description: "Detailed study material with chapters, glossary, and practice questions",
     icon: BookOpen,
-    structure: ["Summary", "Chapters", "Action Items"]
+    structure: ["Learning Objectives", "Chapters", "Glossary", "Practice Questions"]
   },
   { 
     id: "research", 
     name: "Research Summary", 
-    description: "Academic research format with topics and review",
+    description: "Academic format with in-depth analysis, findings, and implications",
     icon: BookOpen,
-    structure: ["Topics", "Review", "Progress"]
+    structure: ["Abstract", "Topics", "Analysis", "Insights", "Implications"]
   },
   { 
     id: "project", 
     name: "Project Work Plan", 
-    description: "Problem-solution focused with clear issues",
+    description: "Detailed problem analysis with step-by-step solutions and timeline",
     icon: Clipboard,
-    structure: ["Summary", "Issue", "Solution"]
+    structure: ["Problem Analysis", "Solution", "Timeline", "Success Metrics"]
   },
 ];
 
