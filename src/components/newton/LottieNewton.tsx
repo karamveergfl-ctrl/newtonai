@@ -1,13 +1,16 @@
 import { memo, useEffect, useRef } from "react";
 import Lottie, { LottieRefCurrentProps } from "lottie-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ProcessingState, 
-  animationMap, 
-  isLoopingState 
-} from "./animationConfig";
 
-// Legacy type alias for backward compatibility
+// Import Lottie animations
+import thinkingAnimation from "./lottie/newton-thinking.json";
+import writingAnimation from "./lottie/newton-writing.json";
+import completedAnimation from "./lottie/newton-completed.json";
+import confusedAnimation from "./lottie/newton-confused.json";
+import celebratingAnimation from "./lottie/newton-celebrating.json";
+import sleepingAnimation from "./lottie/newton-sleeping.json";
+
+// Expanded Newton states
 export type NewtonState = 
   | "idle" 
   | "thinking" 
@@ -18,10 +21,7 @@ export type NewtonState =
   | "sleeping";
 
 interface LottieNewtonProps {
-  /** New enum-based state (preferred) */
-  processingState?: ProcessingState;
-  /** Legacy string-based state (for backward compatibility) */
-  state?: NewtonState;
+  state: NewtonState;
   size?: "sm" | "md" | "lg";
   className?: string;
   onComplete?: () => void;
@@ -33,34 +33,25 @@ const sizeClasses = {
   lg: "w-40 h-40 sm:w-52 sm:h-52 md:w-64 md:h-64",
 };
 
-/**
- * Converts legacy NewtonState to ProcessingState
- */
-function legacyStateToProcessingState(state: NewtonState): ProcessingState {
-  switch (state) {
-    case "idle": return ProcessingState.IDLE;
-    case "thinking": return ProcessingState.THINKING;
-    case "writing": return ProcessingState.WRITING;
-    case "completed": return ProcessingState.DONE;
-    case "confused": return ProcessingState.CONFUSED;
-    case "celebrating": return ProcessingState.CELEBRATING;
-    case "sleeping": return ProcessingState.SLEEPING;
-    default: return ProcessingState.IDLE;
-  }
-}
+const animations: Record<Exclude<NewtonState, "idle">, object> = {
+  thinking: thinkingAnimation,
+  writing: writingAnimation,
+  completed: completedAnimation,
+  confused: confusedAnimation,
+  celebrating: celebratingAnimation,
+  sleeping: sleepingAnimation,
+};
+
+// States that should loop vs play once
+const loopingStates: NewtonState[] = ["thinking", "writing", "confused", "sleeping"];
 
 /**
  * Lottie-based Newton Animation Component
  * 
- * Single Lottie player that switches animation data based on state.
- * Uses centralized animationConfig for all state → animation mappings.
- * 
- * Supports both:
- * - New ProcessingState enum (preferred)
- * - Legacy NewtonState strings (backward compatible)
+ * Uses pure vector Lottie animations for smooth 60fps playback.
+ * Supports 6 states: thinking, writing, completed, confused, celebrating, sleeping.
  */
 export const LottieNewton = memo(({
-  processingState,
   state,
   size = "md",
   className = "",
@@ -68,27 +59,22 @@ export const LottieNewton = memo(({
 }: LottieNewtonProps) => {
   const lottieRef = useRef<LottieRefCurrentProps>(null);
 
-  // Determine the actual state to use (prefer new enum over legacy)
-  const activeState: ProcessingState = processingState 
-    ?? (state ? legacyStateToProcessingState(state) : ProcessingState.IDLE);
-
-  // Reset animation to beginning for play-once animations when state changes
   useEffect(() => {
-    if (!isLoopingState(activeState) && lottieRef.current) {
+    if ((state === "completed" || state === "celebrating") && lottieRef.current) {
+      // For play-once animations, start from beginning
       lottieRef.current.goToAndPlay(0);
     }
-  }, [activeState]);
+  }, [state]);
 
-  // Don't render anything for idle state
-  if (activeState === ProcessingState.IDLE) return null;
+  if (state === "idle") return null;
 
-  const animationData = animationMap[activeState];
-  const shouldLoop = isLoopingState(activeState);
+  const animationData = animations[state];
+  const isLoop = loopingStates.includes(state);
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={activeState}
+        key={state}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
@@ -98,9 +84,9 @@ export const LottieNewton = memo(({
         <Lottie
           lottieRef={lottieRef}
           animationData={animationData}
-          loop={shouldLoop}
+          loop={isLoop}
           autoplay={true}
-          onComplete={!shouldLoop ? onComplete : undefined}
+          onComplete={!isLoop ? onComplete : undefined}
           style={{ width: "100%", height: "100%" }}
           rendererSettings={{
             preserveAspectRatio: "xMidYMid slice",
