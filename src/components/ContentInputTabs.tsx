@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Mic, Youtube, FileText, Square, Play, Pause, Loader2, File, X, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAudioWaveform } from "@/hooks/useAudioWaveform";
+import { AudioWaveformVisualizer, StaticWaveformVisualizer } from "@/components/AudioWaveformVisualizer";
 
 const LANGUAGES = [
   { code: "en", name: "English" },
@@ -88,7 +90,16 @@ export const ContentInputTabs = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [playbackProgress, setPlaybackProgress] = useState(0);
   const { toast } = useToast();
+  
+  // Audio waveform visualization
+  const { waveformData, connectToStream, disconnect: disconnectWaveform, isActive: isWaveformActive } = useAudioWaveform({
+    barCount: 24,
+    minBarHeight: 8,
+    maxBarHeight: 80,
+  });
 
   const tabs = [
     { id: "upload" as InputType, label: "Upload", icon: Upload, show: showUpload },
@@ -134,9 +145,13 @@ export const ContentInputTabs = ({
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
+
+      // Connect to waveform visualizer
+      connectToStream(stream);
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
@@ -149,6 +164,7 @@ export const ContentInputTabs = ({
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach((track) => track.stop());
+        disconnectWaveform();
       };
 
       mediaRecorder.start();
@@ -166,6 +182,7 @@ export const ContentInputTabs = ({
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      disconnectWaveform();
     }
   };
 
@@ -179,6 +196,31 @@ export const ContentInputTabs = ({
       setIsPlaying(!isPlaying);
     }
   };
+
+  // Track playback progress
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleTimeUpdate = () => {
+      if (audio.duration) {
+        setPlaybackProgress((audio.currentTime / audio.duration) * 100);
+      }
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setPlaybackProgress(0);
+    };
+
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("ended", handleEnded);
+
+    return () => {
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, [audioUrl]);
 
   // YouTube URL extraction
   const extractVideoId = (url: string): string | null => {
@@ -469,15 +511,23 @@ export const ContentInputTabs = ({
                   {isRecording ? "Recording... Click to stop" : "Click to start recording"}
                 </p>
 
+                {/* Waveform Visualization during recording */}
                 {isRecording && (
-                  <motion.div
-                    animate={{ opacity: [1, 0.5, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="flex items-center gap-2 text-destructive text-sm"
-                  >
-                    <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-destructive" />
-                    Recording
-                  </motion.div>
+                  <div className="w-full max-w-sm">
+                    <AudioWaveformVisualizer
+                      waveformData={waveformData}
+                      isActive={isWaveformActive}
+                      variant="recording"
+                    />
+                    <motion.div
+                      animate={{ opacity: [1, 0.5, 1] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                      className="flex items-center justify-center gap-2 text-destructive text-sm mt-2"
+                    >
+                      <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-destructive" />
+                      Recording
+                    </motion.div>
+                  </div>
                 )}
 
                 {/* Divider */}
@@ -516,30 +566,38 @@ export const ContentInputTabs = ({
                 )}
               </div>
 
+              {/* Audio Preview with Waveform */}
               {audioUrl && (
-                <div className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-muted rounded-lg">
-                  <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0" onClick={togglePlayback}>
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                  </Button>
-                  <audio
-                    ref={audioRef}
-                    src={audioUrl}
-                    onEnded={() => setIsPlaying(false)}
-                    className="hidden"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
-                      {audioFile?.name || "Recording ready"}
-                    </p>
-                    {audioFile && (
-                      <p className="text-xs text-muted-foreground">
-                        {(audioFile.size / 1024 / 1024).toFixed(2)} MB
+                <div className="space-y-3 p-3 sm:p-4 bg-muted rounded-lg">
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0" onClick={togglePlayback}>
+                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    </Button>
+                    <audio
+                      ref={audioRef}
+                      src={audioUrl}
+                      className="hidden"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">
+                        {audioFile?.name || "Recording ready"}
                       </p>
-                    )}
+                      {audioFile && (
+                        <p className="text-xs text-muted-foreground">
+                          {(audioFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      )}
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={clearAudio}>
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={clearAudio}>
-                    <X className="h-4 w-4" />
-                  </Button>
+                  
+                  {/* Playback Waveform */}
+                  <StaticWaveformVisualizer 
+                    progress={isPlaying ? playbackProgress : 0} 
+                    className="w-full"
+                  />
                 </div>
               )}
 
