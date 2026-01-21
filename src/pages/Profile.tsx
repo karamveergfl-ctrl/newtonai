@@ -475,6 +475,7 @@ const Profile = () => {
 
         {/* Credit Balance & History Section */}
         <motion.div
+          id="credit-history-section"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -616,6 +617,7 @@ const Profile = () => {
 
         {/* Preference Section */}
         <motion.div
+          id="language-settings"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
@@ -789,9 +791,37 @@ const Profile = () => {
           <h2 className="text-primary font-semibold mb-3 px-1">Management</h2>
           <Card className="border-0 bg-card/50">
             <CardContent className="p-0 divide-y divide-border/50">
-              <MenuItem icon={History} label="History" onClick={() => {}} />
-              <MenuItem icon={Bell} label="Notifications" onClick={() => {}} />
-              <MenuItem icon={Settings} label="Settings" onClick={() => {}} />
+              <MenuItem 
+                icon={History} 
+                label="History" 
+                onClick={() => {
+                  setShowCreditHistory(!showCreditHistory);
+                  if (!showCreditHistory && transactions.length === 0) {
+                    fetchTransactions();
+                  }
+                  // Scroll to credit history section
+                  setTimeout(() => {
+                    document.getElementById('credit-history-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }} 
+              />
+              <MenuItem 
+                icon={Bell} 
+                label="Notifications" 
+                onClick={() => {
+                  toast({
+                    title: "Notifications",
+                    description: "In-app notifications are enabled. You'll receive updates on new features and offers.",
+                  });
+                }} 
+              />
+              <MenuItem 
+                icon={Settings} 
+                label="Settings" 
+                onClick={() => {
+                  document.getElementById('language-settings')?.scrollIntoView({ behavior: 'smooth' });
+                }} 
+              />
               <RedeemCodeDialog 
                 trigger={
                   <button
