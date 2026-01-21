@@ -56,6 +56,28 @@ serve(async (req) => {
     console.log("Authenticated user:", user.id);
 
     const { imageData, text, stream, language } = await req.json();
+    
+    // Image validation
+    if (imageData) {
+      // Check size limit (10MB for base64, which is ~7.5MB actual image)
+      const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+      if (imageData.length > MAX_IMAGE_SIZE) {
+        return new Response(
+          JSON.stringify({ error: 'Image size exceeds 10MB limit. Please use a smaller image.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Validate base64 image format
+      const validImagePattern = /^data:image\/(png|jpeg|jpg|webp|gif|bmp);base64,/i;
+      if (!validImagePattern.test(imageData)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid image format. Supported formats: PNG, JPEG, WebP, GIF, BMP.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+    
     const hasImage = !!imageData;
     const hasText = !!text?.trim();
     
