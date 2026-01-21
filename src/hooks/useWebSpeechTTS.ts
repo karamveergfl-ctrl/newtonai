@@ -17,10 +17,34 @@ interface WebSpeechOptions {
   rate?: number;
   pitch?: number;
   language?: string;
+  voiceName?: string; // Explicit voice name to use (from dropdown selection)
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (error: Error) => void;
 }
+
+// Prepare text for natural speech with pauses
+const prepareTextForSpeech = (text: string, language: string): string => {
+  let prepared = text;
+  
+  // Add natural pauses after sentences (using ellipsis for speech pause)
+  prepared = prepared.replace(/\. /g, '... ');
+  prepared = prepared.replace(/! /g, '!... ');
+  prepared = prepared.replace(/\? /g, '?... ');
+  
+  // Add pauses after commas for smoother reading in non-English languages
+  if (language !== 'en') {
+    prepared = prepared.replace(/,\s+/g, ', ... ');
+  }
+  
+  // Add pause before colons for better pacing
+  prepared = prepared.replace(/:\s+/g, ': ... ');
+  
+  // Add pause after semicolons
+  prepared = prepared.replace(/;\s+/g, '; ... ');
+  
+  return prepared;
+};
 
 // Language code to BCP 47 language tag mapping
 const LANGUAGE_TAGS: Record<string, string> = {
@@ -174,44 +198,52 @@ const VOICE_PATTERNS: Record<string, { male: RegExp; female: RegExp }> = {
   },
 };
 
-// Quality indicators - prefer these voices
-const QUALITY_INDICATORS = /\b(neural|natural|premium|enhanced|wavenet|online|remote)\b/i;
+// Quality indicators - prefer these voices (extended with Indian voice names)
+const QUALITY_INDICATORS = /\b(neural|natural|premium|enhanced|wavenet|online|remote|lekha|aditi|swara|heera)\b/i;
 
-// Natural speech parameters per language - tuned for human-like reading
+// Known female voice patterns - extended for better female voice detection across all languages
+const FEMALE_VOICE_NAMES = /\b(lekha|aditi|priya|swara|female|woman|raveena|kajal|suman|veena|meera|ananya|divya|kavya|shreya|nisha|pallavi|sunita|varsha|rekha|geeta|jyoti|nandini|lakshmi|sarita|shobha|heera|kalpana|chhaya|zira|hazel|samantha|karen|moira|tessa|fiona|victoria|susan|allison|ava|joana|paulina|monica|lucia|amelie|celine|aurelie|sara|anna|petra|katja|yuna|kyoko|nanami|tingting|xiaoxiao|xiaoyi|zhiyu|yelda|elif|zeynep|filiz|vani|deepa|anjali|pooja|neha|ria|tanishaa|bondita|aishwarya|sakhi|aarohi|dhwani|nishtha|sapna|sobhana|subhasini|priyom|harleen)\b/i;
+
+// Natural speech parameters per language - tuned for smooth, warm female voice reading
+// Slower rates for regional languages = better word-by-word pronunciation
 const LANGUAGE_SPEECH_PARAMS: Record<string, { rate: number; pitch: number }> = {
-  // Indian Languages - slightly slower for clarity
-  hi: { rate: 0.92, pitch: 1.0 },   // Hindi
-  mr: { rate: 0.90, pitch: 1.0 },   // Marathi
-  ta: { rate: 0.92, pitch: 1.02 },  // Tamil - slightly higher pitch
-  te: { rate: 0.91, pitch: 1.0 },   // Telugu
-  bn: { rate: 0.90, pitch: 1.0 },   // Bengali
-  gu: { rate: 0.91, pitch: 1.0 },   // Gujarati
-  kn: { rate: 0.91, pitch: 1.0 },   // Kannada
-  ml: { rate: 0.88, pitch: 1.0 },   // Malayalam - slower for complex words
-  pa: { rate: 0.92, pitch: 1.0 },   // Punjabi
-  or: { rate: 0.90, pitch: 1.0 },   // Odia
-  as: { rate: 0.90, pitch: 1.0 },   // Assamese
+  // Indian Languages - slower for clear word-by-word pronunciation, warmer pitch
+  hi: { rate: 0.88, pitch: 1.02 },   // Hindi - warm female-friendly
+  mr: { rate: 0.85, pitch: 1.02 },   // Marathi - slower for clarity
+  gu: { rate: 0.85, pitch: 1.02 },   // Gujarati - slower for clarity  
+  ta: { rate: 0.86, pitch: 1.02 },   // Tamil
+  te: { rate: 0.86, pitch: 1.02 },   // Telugu
+  bn: { rate: 0.85, pitch: 1.02 },   // Bengali
+  kn: { rate: 0.86, pitch: 1.02 },   // Kannada
+  ml: { rate: 0.82, pitch: 1.02 },   // Malayalam - slowest for complex words
+  pa: { rate: 0.87, pitch: 1.02 },   // Punjabi
+  or: { rate: 0.85, pitch: 1.02 },   // Odia
+  as: { rate: 0.85, pitch: 1.02 },   // Assamese
+  ks: { rate: 0.85, pitch: 1.02 },   // Kashmiri
   // European Languages
-  es: { rate: 0.95, pitch: 1.0 },   // Spanish
-  fr: { rate: 0.93, pitch: 1.0 },   // French - elegant pace
-  de: { rate: 0.94, pitch: 0.98 },  // German - clear pronunciation
-  it: { rate: 0.95, pitch: 1.0 },   // Italian
-  pt: { rate: 0.94, pitch: 1.0 },   // Portuguese
-  ru: { rate: 0.92, pitch: 0.98 },  // Russian
-  nl: { rate: 0.94, pitch: 1.0 },   // Dutch
-  pl: { rate: 0.93, pitch: 1.0 },   // Polish
-  // Asian Languages
-  ja: { rate: 0.88, pitch: 1.0 },   // Japanese - slower for clarity
-  zh: { rate: 0.85, pitch: 1.0 },   // Chinese - slower for tones
-  ko: { rate: 0.90, pitch: 1.0 },   // Korean
-  vi: { rate: 0.90, pitch: 1.0 },   // Vietnamese
-  th: { rate: 0.88, pitch: 1.0 },   // Thai
-  id: { rate: 0.92, pitch: 1.0 },   // Indonesian
+  en: { rate: 0.92, pitch: 1.02 },   // English - natural default
+  es: { rate: 0.90, pitch: 1.02 },   // Spanish
+  fr: { rate: 0.88, pitch: 1.02 },   // French - elegant pace
+  de: { rate: 0.88, pitch: 1.0 },    // German - clear pronunciation
+  it: { rate: 0.90, pitch: 1.02 },   // Italian
+  pt: { rate: 0.90, pitch: 1.02 },   // Portuguese
+  ru: { rate: 0.88, pitch: 1.0 },    // Russian
+  nl: { rate: 0.90, pitch: 1.02 },   // Dutch
+  pl: { rate: 0.88, pitch: 1.02 },   // Polish
+  // Asian Languages - slower for tonal/complex languages
+  ja: { rate: 0.85, pitch: 1.02 },   // Japanese
+  zh: { rate: 0.84, pitch: 1.02 },   // Chinese - slower for tones
+  ko: { rate: 0.86, pitch: 1.02 },   // Korean
+  vi: { rate: 0.86, pitch: 1.02 },   // Vietnamese
+  th: { rate: 0.84, pitch: 1.02 },   // Thai
+  id: { rate: 0.88, pitch: 1.02 },   // Indonesian
+  ms: { rate: 0.88, pitch: 1.02 },   // Malay
   // Middle Eastern
-  ar: { rate: 0.88, pitch: 0.98 },  // Arabic - measured pace
-  tr: { rate: 0.92, pitch: 1.0 },   // Turkish
-  // English - natural default
-  en: { rate: 0.95, pitch: 1.0 },
+  ar: { rate: 0.85, pitch: 1.02 },   // Arabic
+  fa: { rate: 0.86, pitch: 1.02 },   // Persian
+  ur: { rate: 0.86, pitch: 1.02 },   // Urdu
+  he: { rate: 0.88, pitch: 1.02 },   // Hebrew
+  tr: { rate: 0.88, pitch: 1.02 },   // Turkish
 };
 
 interface UseWebSpeechTTSReturn {
@@ -395,22 +427,35 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
         // Cancel any ongoing speech
         speechSynthesis.cancel();
 
-        const utterance = new SpeechSynthesisUtterance(text);
+        const langPrefix = (options.language || "en").split("-")[0].toLowerCase();
+        
+        // Prepare text with natural pauses for smoother reading
+        const preparedText = prepareTextForSpeech(text, langPrefix);
+        const utterance = new SpeechSynthesisUtterance(preparedText);
         utteranceRef.current = utterance;
 
-        // Check for manually selected preferred voice first
-        const langPrefix = (options.language || "en").split("-")[0].toLowerCase();
-        const preferredVoiceName = getCachedVoice("preferred", langPrefix);
+        // Voice selection priority:
+        // 1. Explicit voiceName from options (from dropdown)
+        // 2. User's cached preferred voice
+        // 3. Automatic female voice selection (default to host2 for female voice)
         let selectedVoice: SpeechSynthesisVoice | null = null;
 
-        if (preferredVoiceName) {
-          // Use user's manually selected voice
-          selectedVoice = voices.find((v) => v.name === preferredVoiceName) || null;
+        // Priority 1: Explicit voiceName passed from dropdown
+        if (options.voiceName) {
+          selectedVoice = voices.find((v) => v.name === options.voiceName) || null;
         }
 
+        // Priority 2: Check for manually selected preferred voice in cache
         if (!selectedVoice) {
-          // Fall back to automatic voice selection
-          selectedVoice = selectVoice(options.speaker || "host1", options.language);
+          const preferredVoiceName = getCachedVoice("preferred", langPrefix);
+          if (preferredVoiceName) {
+            selectedVoice = voices.find((v) => v.name === preferredVoiceName) || null;
+          }
+        }
+
+        // Priority 3: Auto-select - default to female voice (host2) like Hindi "Lekha"
+        if (!selectedVoice) {
+          selectedVoice = selectVoice(options.speaker || "host2", options.language);
         }
 
         if (selectedVoice) {
