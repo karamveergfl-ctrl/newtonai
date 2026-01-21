@@ -8,7 +8,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
+
 const Contact = () => {
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Contact", href: "/contact" },
+  ];
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -21,6 +27,13 @@ const Contact = () => {
     (e.target as HTMLFormElement).reset();
   };
   return <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Contact"
+        description="Get in touch with the NewtonAI team. We're here to help with questions about our AI study tools, pricing, or technical support."
+        canonicalPath="/contact"
+        breadcrumbs={breadcrumbs}
+        keywords="contact NewtonAI, support, help, customer service"
+      />
       <Header />
 
       <main className="container mx-auto px-4 py-16">

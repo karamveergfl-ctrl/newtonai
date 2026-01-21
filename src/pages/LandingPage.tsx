@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import CTASection from "@/components/CTASection";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
+import SEOHead from "@/components/SEOHead";
 import { 
   BookOpen, 
   Brain, 
@@ -58,8 +59,17 @@ const benefits = [
 ];
 
 const LandingPage = () => {
+  const breadcrumbs = [{ name: "Home", href: "/" }];
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEOHead
+        title="Home"
+        description="Transform any document, video, or lecture into flashcards, quizzes, summaries, and mind maps. Your personal AI study assistant for smarter learning."
+        canonicalPath="/"
+        breadcrumbs={breadcrumbs}
+        keywords="AI study assistant, flashcards, quiz generator, PDF summarizer, mind maps, student tools"
+      />
       <Header transparent />
       
       {/* Hero Section */}

@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
+import SEOHead from "@/components/SEOHead";
 
 const values = [
   {
@@ -31,8 +32,21 @@ const values = [
 ];
 
 const About = () => {
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "About", href: "/about" },
+  ];
+
   return (
     <div className="min-h-screen bg-background overflow-hidden">
+      <SEOHead
+        title="About"
+        description="Learn about NewtonAI's mission to revolutionize education through AI-powered study tools. We make learning accessible, efficient, and effective for everyone."
+        canonicalPath="/about"
+        breadcrumbs={breadcrumbs}
+        keywords="about NewtonAI, AI education, study tools, learning platform"
+      />
+      
       {/* Optimized floating gradient blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <OptimizedBackgroundBlobs variant="hero" />

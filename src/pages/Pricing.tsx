@@ -5,6 +5,7 @@ import { Check, Sparkles, Loader2, Gift, X, Infinity as InfinityIcon } from "luc
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { PaymentButton } from "@/components/PaymentButton";
@@ -95,6 +96,11 @@ const plans = [
 ];
 
 const Pricing = () => {
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Pricing", href: "/pricing" },
+  ];
+
   const [isYearly, setIsYearly] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -153,6 +159,14 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
+      <SEOHead
+        title="Pricing"
+        description="Choose the perfect NewtonAI plan for your learning needs. Free, Pro, and Ultra plans with AI flashcards, quizzes, summaries, and more."
+        canonicalPath="/pricing"
+        breadcrumbs={breadcrumbs}
+        keywords="NewtonAI pricing, student discount, AI study tools pricing, flashcard generator cost"
+      />
+      
       {/* Floating gradient blobs */}
       <motion.div
         className="fixed top-20 -left-32 w-96 h-96 rounded-full bg-gradient-to-br from-primary/20 to-secondary/10 blur-3xl pointer-events-none"
