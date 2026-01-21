@@ -20,12 +20,44 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: "complete-guide-to-ai-flashcards",
+    title: "Complete Guide to AI Flashcards: Master Any Subject",
+    description: "Learn how to use AI-powered flashcards to maximize retention and study any subject more effectively with spaced repetition.",
+    category: "AI Tools",
+    readTime: "8 min read",
+    publishedDate: "2026-01-20",
+  },
+  {
+    slug: "how-to-create-mind-maps-from-pdfs",
+    title: "How to Create Mind Maps from PDFs Automatically",
+    description: "Transform dense PDF documents into visual mind maps instantly using AI. Perfect for textbooks, research papers, and study notes.",
+    category: "AI Tools",
+    readTime: "6 min read",
+    publishedDate: "2026-01-18",
+  },
+  {
+    slug: "mastering-ai-quizzes-for-exam-prep",
+    title: "Mastering AI Quizzes for Exam Preparation",
+    description: "Discover how AI-generated quizzes can help you identify knowledge gaps and ace your exams with targeted practice.",
+    category: "Study Tips",
+    readTime: "7 min read",
+    publishedDate: "2026-01-16",
+  },
+  {
     slug: "how-to-study-smarter-using-ai",
     title: "How to Study Smarter Using AI",
     description: "Discover how artificial intelligence can transform your study habits and help you learn more effectively in less time.",
     category: "Study Tips",
     readTime: "5 min read",
     publishedDate: "2026-01-15",
+  },
+  {
+    slug: "ai-podcast-study-guide",
+    title: "Turn Your Notes Into AI Podcasts for Learning on the Go",
+    description: "Learn how to convert study materials into engaging AI-generated podcasts. Perfect for auditory learners and busy students.",
+    category: "AI Tools",
+    readTime: "5 min read",
+    publishedDate: "2026-01-12",
   },
   {
     slug: "pdf-vs-video-learning-which-is-better",

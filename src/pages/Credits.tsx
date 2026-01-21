@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   ArrowRight
 } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -82,8 +83,20 @@ export default function Credits() {
     );
   }
 
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Credits", href: "/credits" },
+  ];
+
   return (
     <AppLayout showFooter={false}>
+      <SEOHead
+        title="Study Credits"
+        description="Earn and manage your NewtonAI study credits. Watch videos to earn credits or upgrade to premium for unlimited access."
+        canonicalPath="/credits"
+        breadcrumbs={breadcrumbs}
+        noIndex={true}
+      />
       <div className="container max-w-4xl py-8 px-4 space-y-8">
         {/* Header */}
         <motion.div

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { useCredits } from "@/hooks/useCredits";
 import { FEATURE_NAMES } from "@/lib/creditConfig";
+import SEOHead from "@/components/SEOHead";
 import { 
   ArrowLeft, 
   Save, 
@@ -313,8 +314,20 @@ const Profile = () => {
     );
   }
 
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Profile", href: "/profile" },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Profile"
+        description="Manage your NewtonAI profile, view usage statistics, and track your study credits."
+        canonicalPath="/profile"
+        breadcrumbs={breadcrumbs}
+        noIndex={true}
+      />
       <div className="max-w-md mx-auto px-4 py-8">
         {/* Header */}
         <motion.div 
