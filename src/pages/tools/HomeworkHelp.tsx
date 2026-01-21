@@ -39,6 +39,7 @@ const HomeworkHelp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [solution, setSolution] = useState("");
   const [copied, setCopied] = useState(false);
+  const [contentLanguage, setContentLanguage] = useState("en");
   const [capturedScreenshot, setCapturedScreenshot] = useState<{ imageBase64: string; mimeType: string } | null>(null);
   const { toast } = useToast();
   const { canUse, tryUseFeature, modal } = useFeatureGate("homework_help");
@@ -58,6 +59,7 @@ const HomeworkHelp = () => {
       await speak(cleanText, {
         rate: 1.0,
         pitch: 1.0,
+        language: contentLanguage,
         onStart: () => {
           toast({
             title: "Reading aloud 🔊",
@@ -75,7 +77,7 @@ const HomeworkHelp = () => {
     } catch (error) {
       console.error("TTS error:", error);
     }
-  }, [solution, isSpeaking, speak, cancel, toast]);
+  }, [solution, isSpeaking, speak, cancel, toast, contentLanguage]);
 
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
@@ -115,6 +117,11 @@ const HomeworkHelp = () => {
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
     if (!allowed) return;
+
+    // Store language for TTS
+    if (metadata?.language) {
+      setContentLanguage(metadata.language);
+    }
 
     if (type === "upload" && metadata?.file?.type.startsWith("image/")) {
       const base64 = await fileToBase64(metadata.file);

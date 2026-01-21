@@ -189,10 +189,14 @@ const AILectureNotes = () => {
 
     const cleanText = stripMarkdown(notes);
     
+    // Extract language code (e.g., "en-US" → "en", "hi-IN" → "hi")
+    const langCode = selectedLanguage.split("-")[0];
+    
     try {
       await speak(cleanText, {
         rate: 1.0,
         pitch: 1.0,
+        language: langCode,
         onStart: () => {
           toast({
             title: "Reading aloud 🔊",
@@ -210,7 +214,7 @@ const AILectureNotes = () => {
     } catch (error) {
       console.error("TTS error:", error);
     }
-  }, [notes, isSpeaking, speak, cancel, toast]);
+  }, [notes, isSpeaking, speak, cancel, toast, selectedLanguage]);
 
   const handleNotesGenerated = (generatedNotes: string, title: string) => {
     setNotes(generatedNotes);
