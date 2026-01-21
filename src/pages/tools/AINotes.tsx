@@ -258,6 +258,7 @@ const AINotes = () => {
               phase={phase}
               message={phase === "thinking" ? "Analyzing your content..." : phase === "writing" ? "Generating notes..." : "Notes ready!"}
               subMessage={phase === "thinking" ? "Understanding the material" : phase === "writing" ? "Organizing key concepts" : undefined}
+              showProgress={true}
               variant="card"
             />
           ) : (

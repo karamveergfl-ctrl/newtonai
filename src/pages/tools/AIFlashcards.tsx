@@ -191,6 +191,7 @@ const AIFlashcards = () => {
                 phase={phase}
                 message={phase === "thinking" ? "Analyzing your content..." : phase === "writing" ? "Creating flashcards..." : "Flashcards ready!"}
                 subMessage={phase === "thinking" ? "Understanding the material" : phase === "writing" ? "Crafting memorable cards" : undefined}
+                showProgress={true}
                 variant="card"
               />
             ) : (

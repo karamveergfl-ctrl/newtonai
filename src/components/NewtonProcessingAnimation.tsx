@@ -1,21 +1,9 @@
 import { memo, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Volume2, VolumeX, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 import type { ProcessingPhase } from "@/hooks/useProcessingState";
-import { useNewtonSounds } from "@/hooks/useNewtonSounds";
 import { useNewtonPoses } from "@/hooks/useNewtonPoses";
 import newtonCharacter from "@/assets/newton-character.png";
-import {
-  ANIMATION_CONFIG,
-  PencilOverlay,
-  WritingPencilOverlay,
-  EyesBlinkOverlay,
-  FloatingDotsOverlay,
-  PaperSheetsOverlay,
-  ThinkingLightbulbOverlay,
-  CompletedLightbulbOverlay,
-  SuccessSparklesOverlay,
-} from "@/components/newton/NewtonOverlays";
 
 interface NewtonProcessingAnimationProps {
   /** Current animation state */
@@ -34,10 +22,6 @@ interface NewtonProcessingAnimationProps {
   size?: "sm" | "md" | "lg";
   /** Additional className */
   className?: string;
-  /** Enable sound effects (default: true) */
-  enableSounds?: boolean;
-  /** Sound volume multiplier 0-1 (default: 1) */
-  soundVolume?: number;
 }
 
 const sizeClasses = {
@@ -49,7 +33,7 @@ const sizeClasses = {
 // Easy Ease equivalent
 const EASY_EASE: [number, number, number, number] = [0.42, 0, 0.58, 1];
 
-// Thinking Animation - Newton with head bob, pencil wiggle, eye blink, floating dots
+// Thinking Animation - Newton with smooth head bob and glowing aura
 const ThinkingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; poseImage: string }) => (
   <motion.div
     className={`relative ${sizeClass} flex items-center justify-center`}
@@ -60,25 +44,25 @@ const ThinkingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; p
   >
     {/* Glowing aura behind Newton */}
     <motion.div
-      className="absolute inset-0 rounded-full bg-gradient-radial from-amber-200/40 via-amber-100/20 to-transparent dark:from-amber-500/20 dark:via-amber-400/10"
+      className="absolute inset-0 rounded-full bg-gradient-radial from-primary/30 via-primary/10 to-transparent"
       animate={{ 
         scale: [1, 1.15, 1],
-        opacity: [0.5, 0.8, 0.5]
+        opacity: [0.4, 0.7, 0.4]
       }}
       transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
     />
     
-    {/* Newton character with precise head bob - Y: 0 → -4 → 0 → +4 → 0 */}
+    {/* Newton character with smooth head bob */}
     <motion.div
       className="relative z-10"
       animate={{ 
-        y: ANIMATION_CONFIG.thinking.headBob.values,
+        y: [0, -6, 0, 3, 0],
       }}
       transition={{ 
-        duration: ANIMATION_CONFIG.thinking.duration,
+        duration: 2,
         repeat: Infinity,
         ease: EASY_EASE,
-        times: ANIMATION_CONFIG.thinking.headBob.times,
+        times: [0, 0.25, 0.5, 0.75, 1],
       }}
     >
       <img 
@@ -88,16 +72,12 @@ const ThinkingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; p
         draggable={false}
       />
     </motion.div>
-    
-    {/* SVG Overlays */}
-    <ThinkingLightbulbOverlay />
-    <FloatingDotsOverlay />
   </motion.div>
 ));
 
 ThinkingAnimation.displayName = "ThinkingAnimation";
 
-// Writing Animation - Newton with pencil motion, arm rotation, paper sheets
+// Writing Animation - Newton with subtle movement and glowing effect
 const WritingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; poseImage: string }) => (
   <motion.div
     className={`relative ${sizeClass} flex items-center justify-center`}
@@ -106,28 +86,28 @@ const WritingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; po
     exit={{ opacity: 0, scale: 0.8 }}
     transition={{ duration: 0.4, ease: "easeOut" }}
   >
-    {/* Writing surface effect */}
+    {/* Active working glow */}
     <motion.div
-      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 h-3 rounded-full bg-gradient-to-r from-transparent via-primary/20 to-transparent"
+      className="absolute inset-0 rounded-full bg-gradient-radial from-secondary/30 via-secondary/10 to-transparent"
       animate={{ 
-        scaleX: [0.8, 1, 0.8],
-        opacity: [0.3, 0.6, 0.3]
+        scale: [1, 1.1, 1],
+        opacity: [0.5, 0.8, 0.5]
       }}
-      transition={{ duration: 0.8, repeat: Infinity }}
+      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
     />
     
-    {/* Newton character with head bob + arm rotation effect */}
+    {/* Newton character with subtle movement */}
     <motion.div
       className="relative z-10"
       animate={{ 
-        y: ANIMATION_CONFIG.thinking.headBob.values, // Reuse head bob
-        rotate: [0, 1, 0, -1, 0] // Subtle body movement
+        y: [0, -4, 0, 2, 0],
+        rotate: [0, 0.5, 0, -0.5, 0]
       }}
       transition={{ 
-        duration: ANIMATION_CONFIG.writing.duration,
+        duration: 1.8,
         repeat: Infinity,
         ease: EASY_EASE,
-        times: ANIMATION_CONFIG.thinking.headBob.times,
+        times: [0, 0.25, 0.5, 0.75, 1],
       }}
     >
       <img 
@@ -137,37 +117,12 @@ const WritingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; po
         draggable={false}
       />
     </motion.div>
-    
-    {/* SVG Overlays */}
-    <WritingPencilOverlay />
-    <PaperSheetsOverlay />
-    
-    {/* Flying text lines effect */}
-    <motion.div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col gap-1 w-3/4 z-20">
-      {[0, 1, 2].map((i) => (
-        <motion.div
-          key={i}
-          className="h-0.5 bg-gradient-to-r from-primary/40 to-transparent rounded-full"
-          initial={{ scaleX: 0, originX: 0 }}
-          animate={{ 
-            scaleX: [0, 1, 1, 0],
-            opacity: [0, 0.6, 0.6, 0]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            delay: i * 0.3,
-            times: [0, 0.3, 0.7, 1],
-          }}
-        />
-      ))}
-    </motion.div>
   </motion.div>
 ));
 
 WritingAnimation.displayName = "WritingAnimation";
 
-// Completed Animation - Newton with thumbs up, lightbulb pop, success sparkles
+// Completed Animation - Newton with success effects
 const CompletedAnimation = memo(({ 
   sizeClass,
   poseImage,
@@ -199,7 +154,7 @@ const CompletedAnimation = memo(({
     
     {/* Secondary ring */}
     <motion.div
-      className="absolute inset-0 rounded-full border-2 border-amber-400/40"
+      className="absolute inset-0 rounded-full border-2 border-primary/40"
       initial={{ scale: 0.9, opacity: 1 }}
       animate={{ scale: 1.8, opacity: 0 }}
       transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
@@ -249,10 +204,6 @@ const CompletedAnimation = memo(({
       </motion.div>
     </motion.div>
     
-    {/* SVG Overlays */}
-    <CompletedLightbulbOverlay />
-    <SuccessSparklesOverlay />
-    
     {/* Confetti-like particles */}
     {[0, 1, 2, 3, 4, 5].map((i) => (
       <motion.div
@@ -288,8 +239,8 @@ CompletedAnimation.displayName = "CompletedAnimation";
  * Newton Processing Animation Component
  * 
  * Displays the Newton character with animated states for processing tasks:
- * - thinking: Gentle bobbing with pulsing lightbulb effect
- * - writing: Active pencil motion with particle effects
+ * - thinking: Gentle bobbing with glowing aura
+ * - writing: Active movement with working glow
  * - completed: Celebratory bounce with success burst
  */
 export const NewtonProcessingAnimation = memo(({
@@ -297,12 +248,10 @@ export const NewtonProcessingAnimation = memo(({
   message,
   subMessage,
   progress,
-  showProgress = false,
+  showProgress = true,
   onCompleteAnimationEnd,
   size = "md",
   className = "",
-  enableSounds = true,
-  soundVolume = 1,
 }: NewtonProcessingAnimationProps) => {
   const [hasCompletedPlayed, setHasCompletedPlayed] = useState(false);
 
@@ -311,34 +260,6 @@ export const NewtonProcessingAnimation = memo(({
     enabled: true,
     fallbackImage: newtonCharacter
   });
-
-  // Sound effects hook
-  const {
-    crossfadeTo,
-    playCompletedSound,
-    stopAllSounds,
-    isMuted,
-    toggleMute,
-    isLoading: isSoundLoading,
-  } = useNewtonSounds({
-    enabled: enableSounds,
-    volume: soundVolume,
-  });
-
-  // Handle sound transitions based on state
-  useEffect(() => {
-    if (!enableSounds) return;
-
-    if (state === "thinking") {
-      crossfadeTo("thinking");
-    } else if (state === "writing") {
-      crossfadeTo("writing");
-    } else if (state === "completed") {
-      playCompletedSound();
-    } else if (state === "idle") {
-      stopAllSounds();
-    }
-  }, [state, enableSounds, crossfadeTo, playCompletedSound, stopAllSounds]);
 
   // Reset completed state when state changes from completed
   useEffect(() => {
@@ -379,29 +300,6 @@ export const NewtonProcessingAnimation = memo(({
             />
           )}
         </AnimatePresence>
-
-        {/* Sound control button */}
-        {enableSounds && state !== "completed" && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleMute}
-            className="absolute -top-2 -right-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-sm hover:bg-background transition-colors z-20"
-            aria-label={isMuted ? "Unmute sounds" : "Mute sounds"}
-            title={isMuted ? "Unmute sounds" : "Mute sounds"}
-          >
-            {isSoundLoading ? (
-              <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
-            ) : isMuted ? (
-              <VolumeX className="w-3.5 h-3.5 text-muted-foreground" />
-            ) : (
-              <Volume2 className="w-3.5 h-3.5 text-primary" />
-            )}
-          </motion.button>
-        )}
       </div>
 
       {/* Message text */}
@@ -427,7 +325,7 @@ export const NewtonProcessingAnimation = memo(({
         )}
       </AnimatePresence>
 
-      {/* Optional progress bar */}
+      {/* Progress bar */}
       {showProgress && typeof progress === "number" && (
         <motion.div
           initial={{ opacity: 0, width: 0 }}

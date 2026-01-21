@@ -216,6 +216,7 @@ const AIQuiz = () => {
                 phase={phase}
                 message={phase === "thinking" ? "Analyzing your content..." : phase === "writing" ? "Creating quiz questions..." : "Quiz ready!"}
                 subMessage={phase === "thinking" ? "Understanding the material" : phase === "writing" ? "Crafting challenging questions" : undefined}
+                showProgress={true}
                 variant="card"
               />
             ) : (
