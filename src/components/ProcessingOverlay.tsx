@@ -2,22 +2,29 @@ import { memo, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Volume2, VolumeX, Loader2 } from "lucide-react";
-import { NewtonProcessingAnimation } from "./NewtonProcessingAnimation";
+import { LottieNewton } from "./newton/LottieNewton";
 import { useNewtonSounds } from "@/hooks/useNewtonSounds";
+import { 
+  ProcessingState, 
+  stateMessages, 
+  stateToPhase 
+} from "@/components/newton/animationConfig";
 import type { ProcessingPhase } from "@/hooks/useProcessingState";
 
-// State-specific messages
-export const PROCESSING_MESSAGES: Record<ProcessingPhase, { message: string; subMessage?: string }> = {
+// Re-export for backward compatibility
+export const PROCESSING_MESSAGES = {
   idle: { message: "" },
-  thinking: { message: "Newton is thinking...", subMessage: "Analyzing your content" },
-  writing: { message: "Writing your results...", subMessage: "Almost there" },
-  completed: { message: "All done!", subMessage: "Here are your results" },
+  thinking: stateMessages[ProcessingState.THINKING],
+  writing: stateMessages[ProcessingState.WRITING],
+  completed: stateMessages[ProcessingState.DONE],
 };
 
 interface ProcessingOverlayProps {
   /** Whether to show the overlay */
   isVisible: boolean;
-  /** Current processing phase */
+  /** Current processing state (new enum, preferred) */
+  processingState?: ProcessingState;
+  /** Current processing phase (legacy, for backward compatibility) */
   phase?: ProcessingPhase;
   /** Custom message to display (overrides default) */
   message?: string;
@@ -42,13 +49,29 @@ interface ProcessingOverlayProps {
 }
 
 /**
+ * Converts legacy ProcessingPhase to ProcessingState
+ */
+function phaseToState(phase: ProcessingPhase): ProcessingState {
+  switch (phase) {
+    case "idle": return ProcessingState.IDLE;
+    case "thinking": return ProcessingState.THINKING;
+    case "writing": return ProcessingState.WRITING;
+    case "completed": return ProcessingState.DONE;
+    default: return ProcessingState.IDLE;
+  }
+}
+
+/**
  * Processing Overlay Component
  * 
  * Provides a reusable loading/processing UI with smooth Lottie animations.
  * Can be used as a full-screen overlay, card, or inline element.
+ * 
+ * Now uses unified LottieNewton component internally.
  */
 export const ProcessingOverlay = memo(({
   isVisible,
+  processingState,
   phase = "thinking",
   message,
   subMessage,
@@ -61,7 +84,9 @@ export const ProcessingOverlay = memo(({
   enableSounds = true,
   soundVolume = 1,
 }: ProcessingOverlayProps) => {
-  const [internalPhase, setInternalPhase] = useState<ProcessingPhase>(phase);
+  // Determine the active state (prefer new enum over legacy phase)
+  const activeState: ProcessingState = processingState ?? phaseToState(phase);
+  const [internalState, setInternalState] = useState<ProcessingState>(activeState);
 
   // Sound effects hook
   const {
@@ -76,46 +101,62 @@ export const ProcessingOverlay = memo(({
     volume: soundVolume,
   });
 
-  // Sync internal phase with prop
+  // Sync internal state with props
   useEffect(() => {
-    setInternalPhase(phase);
-  }, [phase]);
+    setInternalState(activeState);
+  }, [activeState]);
 
   // Handle sound transitions based on state
   useEffect(() => {
     if (!enableSounds) return;
 
-    if (internalPhase === "thinking") {
-      crossfadeTo("thinking");
-    } else if (internalPhase === "writing") {
-      crossfadeTo("writing");
-    } else if (internalPhase === "completed") {
-      playCompletedSound();
-    } else if (internalPhase === "idle") {
-      stopAllSounds();
+    switch (internalState) {
+      case ProcessingState.THINKING:
+      case ProcessingState.ANALYZING:
+        crossfadeTo("thinking");
+        break;
+      case ProcessingState.WRITING:
+      case ProcessingState.SUMMARIZING:
+        crossfadeTo("writing");
+        break;
+      case ProcessingState.DONE:
+      case ProcessingState.CELEBRATING:
+        playCompletedSound();
+        break;
+      case ProcessingState.IDLE:
+        stopAllSounds();
+        break;
+      default:
+        // Error, confused, sleeping - no specific sounds
+        stopAllSounds();
     }
-  }, [internalPhase, enableSounds, crossfadeTo, playCompletedSound, stopAllSounds]);
+  }, [internalState, enableSounds, crossfadeTo, playCompletedSound, stopAllSounds]);
 
-  // Get default messages for the phase
-  const defaultMessages = PROCESSING_MESSAGES[internalPhase];
+  // Get messages for the current state
+  const defaultMessages = stateMessages[internalState];
   const displayMessage = message || defaultMessages.message;
   const displaySubMessage = subMessage || defaultMessages.subMessage;
 
-  if (!isVisible && internalPhase === "idle") return null;
+  // Determine if sound control should be visible
+  const showSoundControl = enableSounds && 
+    internalState !== ProcessingState.DONE && 
+    internalState !== ProcessingState.IDLE &&
+    internalState !== ProcessingState.CELEBRATING;
+
+  if (!isVisible && internalState === ProcessingState.IDLE) return null;
 
   const content = (
     <div className="flex flex-col items-center justify-center gap-4">
       {/* Lottie Animation with sound control */}
       <div className="relative">
-        <NewtonProcessingAnimation
-          state={internalPhase}
+        <LottieNewton
+          processingState={internalState}
           size={size}
-          onCompleteAnimationEnd={onCompleteEnd}
-          enableSounds={false}
+          onComplete={onCompleteEnd}
         />
 
         {/* Sound control button */}
-        {enableSounds && internalPhase !== "completed" && internalPhase !== "idle" && (
+        {showSoundControl && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}

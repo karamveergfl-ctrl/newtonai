@@ -10,85 +10,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { toast } from "@/hooks/use-toast";
+import { 
+  ProcessingState, 
+  animationMap, 
+  animationMeta, 
+  isLoopingState,
+  type AnimationMeta 
+} from "@/components/newton/animationConfig";
 
-// Import all Lottie animations
-import thinkingAnimation from "@/components/newton/lottie/newton-thinking.json";
-import writingAnimation from "@/components/newton/lottie/newton-writing.json";
-import completedAnimation from "@/components/newton/lottie/newton-completed.json";
-import confusedAnimation from "@/components/newton/lottie/newton-confused.json";
-import celebratingAnimation from "@/components/newton/lottie/newton-celebrating.json";
-import sleepingAnimation from "@/components/newton/lottie/newton-sleeping.json";
-
-type NewtonState = "thinking" | "writing" | "completed" | "confused" | "celebrating" | "sleeping";
-
-interface AnimationInfo {
-  label: string;
-  duration: string;
-  frames: number;
-  loops: boolean;
-  useCase: string;
-  description: string;
-  animation: object;
-}
-
-const ANIMATION_INFO: Record<NewtonState, AnimationInfo> = {
-  thinking: {
-    label: "Thinking",
-    duration: "2s",
-    frames: 120,
-    loops: true,
-    useCase: "Processing content, API calls in progress",
-    description: "Head bob with floating thought dots and pulsing lightbulb",
-    animation: thinkingAnimation,
-  },
-  writing: {
-    label: "Writing",
-    duration: "2s",
-    frames: 120,
-    loops: true,
-    useCase: "Generating results, creating content",
-    description: "Pencil motion with paper sheets appearing",
-    animation: writingAnimation,
-  },
-  completed: {
-    label: "Completed",
-    duration: "1.2s",
-    frames: 72,
-    loops: false,
-    useCase: "Success states, task completion",
-    description: "Bounce entry with thumbs up and sparkles",
-    animation: completedAnimation,
-  },
-  confused: {
-    label: "Confused",
-    duration: "2s",
-    frames: 120,
-    loops: true,
-    useCase: "Error states, validation failures",
-    description: "Head tilt with floating question marks",
-    animation: confusedAnimation,
-  },
-  celebrating: {
-    label: "Celebrating",
-    duration: "1.5s",
-    frames: 90,
-    loops: false,
-    useCase: "Level-ups, achievements, streaks",
-    description: "Jumping motion with arms raised and confetti",
-    animation: celebratingAnimation,
-  },
-  sleeping: {
-    label: "Sleeping",
-    duration: "3s",
-    frames: 180,
-    loops: true,
-    useCase: "Idle timeout, inactivity detection",
-    description: "Closed eyes with gentle breathing and floating ZZZ",
-    animation: sleepingAnimation,
-  },
-};
-
-const STATES: NewtonState[] = ["thinking", "writing", "completed", "confused", "celebrating", "sleeping"];
+// Primary display states (unique animations only, excluding IDLE)
+const PRIMARY_STATES: ProcessingState[] = [
+  ProcessingState.THINKING,
+  ProcessingState.WRITING,
+  ProcessingState.DONE,
+  ProcessingState.CONFUSED,
+  ProcessingState.CELEBRATING,
+  ProcessingState.SLEEPING,
+];
 
 const sizeClasses = {
   sm: "w-24 h-24",
@@ -98,12 +36,12 @@ const sizeClasses = {
 
 // Separate component to handle individual animation refs properly
 interface AnimationCardProps {
-  state: NewtonState;
-  info: AnimationInfo;
+  state: ProcessingState;
+  info: AnimationMeta;
   isSelected: boolean;
   isPlaying: boolean;
   globalSize: "sm" | "md" | "lg";
-  copiedState: NewtonState | null;
+  copiedState: ProcessingState | null;
   onSelect: () => void;
   onTogglePlay: () => void;
   onRestart: () => void;
@@ -130,6 +68,9 @@ function AnimationCard({
     registerRef(lottieRef.current);
   }, [registerRef]);
 
+  const animationData = animationMap[state];
+  const loops = isLoopingState(state);
+
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -142,8 +83,8 @@ function AnimationCard({
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">{info.label}</CardTitle>
-            <Badge variant={info.loops ? "secondary" : "outline"}>
-              {info.loops ? "Loop" : "Play Once"}
+            <Badge variant={loops ? "secondary" : "outline"}>
+              {loops ? "Loop" : "Play Once"}
             </Badge>
           </div>
         </CardHeader>
@@ -153,8 +94,8 @@ function AnimationCard({
             <div className={sizeClasses[globalSize]}>
               <Lottie
                 lottieRef={lottieRef}
-                animationData={info.animation}
-                loop={info.loops}
+                animationData={animationData}
+                loop={loops}
                 autoplay={true}
                 style={{ width: "100%", height: "100%" }}
               />
@@ -198,15 +139,15 @@ function AnimationCard({
 
 export default function NewtonPreview() {
   const lottieRefs = useRef<Record<string, LottieRefCurrentProps | null>>({});
-  const [playingStates, setPlayingStates] = useState<Record<NewtonState, boolean>>(
-    () => STATES.reduce((acc, state) => ({ ...acc, [state]: true }), {} as Record<NewtonState, boolean>)
+  const [playingStates, setPlayingStates] = useState<Record<ProcessingState, boolean>>(
+    () => PRIMARY_STATES.reduce((acc, state) => ({ ...acc, [state]: true }), {} as Record<ProcessingState, boolean>)
   );
   const [globalSize, setGlobalSize] = useState<"sm" | "md" | "lg">("md");
   const [globalSpeed, setGlobalSpeed] = useState(1);
-  const [selectedState, setSelectedState] = useState<NewtonState>("thinking");
-  const [copiedState, setCopiedState] = useState<NewtonState | null>(null);
+  const [selectedState, setSelectedState] = useState<ProcessingState>(ProcessingState.THINKING);
+  const [copiedState, setCopiedState] = useState<ProcessingState | null>(null);
 
-  const togglePlay = useCallback((state: NewtonState) => {
+  const togglePlay = useCallback((state: ProcessingState) => {
     const ref = lottieRefs.current[state];
     if (ref) {
       if (playingStates[state]) {
@@ -218,7 +159,7 @@ export default function NewtonPreview() {
     }
   }, [playingStates]);
 
-  const restartAnimation = useCallback((state: NewtonState) => {
+  const restartAnimation = useCallback((state: ProcessingState) => {
     const ref = lottieRefs.current[state];
     if (ref) {
       ref.goToAndPlay(0);
@@ -227,36 +168,36 @@ export default function NewtonPreview() {
   }, []);
 
   const playAll = useCallback(() => {
-    STATES.forEach(state => {
+    PRIMARY_STATES.forEach(state => {
       lottieRefs.current[state]?.play();
     });
-    setPlayingStates(STATES.reduce((acc, state) => ({ ...acc, [state]: true }), {} as Record<NewtonState, boolean>));
+    setPlayingStates(PRIMARY_STATES.reduce((acc, state) => ({ ...acc, [state]: true }), {} as Record<ProcessingState, boolean>));
   }, []);
 
   const stopAll = useCallback(() => {
-    STATES.forEach(state => {
+    PRIMARY_STATES.forEach(state => {
       lottieRefs.current[state]?.pause();
     });
-    setPlayingStates(STATES.reduce((acc, state) => ({ ...acc, [state]: false }), {} as Record<NewtonState, boolean>));
+    setPlayingStates(PRIMARY_STATES.reduce((acc, state) => ({ ...acc, [state]: false }), {} as Record<ProcessingState, boolean>));
   }, []);
 
   const handleSpeedChange = useCallback((value: number[]) => {
     const speed = value[0];
     setGlobalSpeed(speed);
-    STATES.forEach(state => {
+    PRIMARY_STATES.forEach(state => {
       lottieRefs.current[state]?.setSpeed(speed);
     });
   }, []);
 
-  const copyCodeSnippet = useCallback((state: NewtonState) => {
-    const code = `<LottieNewton state="${state}" size="md" />`;
+  const copyCodeSnippet = useCallback((state: ProcessingState) => {
+    const code = `<LottieNewton processingState={ProcessingState.${state}} size="md" />`;
     navigator.clipboard.writeText(code);
     setCopiedState(state);
     toast({ title: "Copied!", description: "Code snippet copied to clipboard" });
     setTimeout(() => setCopiedState(null), 2000);
   }, []);
 
-  const selectedInfo = ANIMATION_INFO[selectedState];
+  const selectedInfo = animationMeta[selectedState];
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -269,7 +210,12 @@ export default function NewtonPreview() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <h1 className="text-2xl md:text-3xl font-bold">Newton Animation Preview</h1>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Newton Animation Preview</h1>
+              <p className="text-sm text-muted-foreground">
+                Testing all {PRIMARY_STATES.length} Lottie states • Using centralized animationConfig
+              </p>
+            </div>
           </div>
           <ThemeToggle />
         </div>
@@ -310,11 +256,11 @@ export default function NewtonPreview() {
 
         {/* Animation Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {STATES.map((state) => (
+          {PRIMARY_STATES.map((state) => (
             <AnimationCard
               key={state}
               state={state}
-              info={ANIMATION_INFO[state]}
+              info={animationMeta[state]}
               isSelected={selectedState === state}
               isPlaying={playingStates[state]}
               globalSize={globalSize}
@@ -333,8 +279,11 @@ export default function NewtonPreview() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span>Selected: {selectedInfo.label}</span>
-              <Badge variant={selectedInfo.loops ? "secondary" : "outline"}>
-                {selectedInfo.loops ? "Looping" : "Play Once"}
+              <Badge variant="outline" className="font-mono text-xs">
+                ProcessingState.{selectedState}
+              </Badge>
+              <Badge variant={isLoopingState(selectedState) ? "secondary" : "outline"}>
+                {isLoopingState(selectedState) ? "Looping" : "Play Once"}
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -344,7 +293,7 @@ export default function NewtonPreview() {
                 <h4 className="font-medium mb-1">Technical Specs</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• Duration: {selectedInfo.duration} ({selectedInfo.frames} frames @ 60fps)</li>
-                  <li>• Loop: {selectedInfo.loops ? "Yes" : "No (plays once)"}</li>
+                  <li>• Loop: {isLoopingState(selectedState) ? "Yes" : "No (plays once)"}</li>
                 </ul>
               </div>
               <div>
@@ -358,18 +307,38 @@ export default function NewtonPreview() {
               <p className="text-sm text-muted-foreground">{selectedInfo.description}</p>
             </div>
 
+            {/* State Aliases */}
+            {(selectedState === ProcessingState.THINKING || selectedState === ProcessingState.WRITING) && (
+              <div>
+                <h4 className="font-medium mb-1">Also used by</h4>
+                <div className="flex gap-2">
+                  {selectedState === ProcessingState.THINKING && (
+                    <Badge variant="outline" className="font-mono text-xs">ProcessingState.ANALYZING</Badge>
+                  )}
+                  {selectedState === ProcessingState.WRITING && (
+                    <Badge variant="outline" className="font-mono text-xs">ProcessingState.SUMMARIZING</Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div>
               <h4 className="font-medium mb-2">Code Example</h4>
-              <div className="bg-muted rounded-lg p-3 font-mono text-sm flex items-center justify-between">
-                <code>{`<LottieNewton state="${selectedState}" size="md" />`}</code>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyCodeSnippet(selectedState)}
-                >
-                  {copiedState === selectedState ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
+              <div className="bg-muted rounded-lg p-3 font-mono text-sm">
+                <pre className="overflow-x-auto">{`import { LottieNewton } from "@/components/newton/LottieNewton";
+import { ProcessingState } from "@/components/newton/animationConfig";
+
+<LottieNewton processingState={ProcessingState.${selectedState}} size="md" />`}</pre>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2"
+                onClick={() => copyCodeSnippet(selectedState)}
+              >
+                {copiedState === selectedState ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                Copy snippet
+              </Button>
             </div>
           </CardContent>
         </Card>
