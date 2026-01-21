@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.elevenlabs-podcast-tts]
 verify_jwt = false
+
+[functions.elevenlabs-sfx]
+verify_jwt = false

@@ -25,6 +25,10 @@ interface ProcessingOverlayProps {
   onCompleteEnd?: () => void;
   /** Additional className */
   className?: string;
+  /** Enable sound effects (default: true) */
+  enableSounds?: boolean;
+  /** Sound volume multiplier 0-1 (default: 1) */
+  soundVolume?: number;
 }
 
 /**
@@ -44,6 +48,8 @@ export const ProcessingOverlay = memo(({
   variant = "card",
   onCompleteEnd,
   className = "",
+  enableSounds = true,
+  soundVolume = 1,
 }: ProcessingOverlayProps) => {
   const [internalPhase, setInternalPhase] = useState<ProcessingPhase>(phase);
 
@@ -68,6 +74,8 @@ export const ProcessingOverlay = memo(({
       showProgress={showProgress}
       size={size}
       onCompleteAnimationEnd={onCompleteEnd}
+      enableSounds={enableSounds}
+      soundVolume={soundVolume}
     />
   );
 
