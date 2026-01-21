@@ -153,8 +153,6 @@ const AISummarizer = () => {
     
     try {
       await speak(cleanText, {
-        rate: 1.0,
-        pitch: 1.0,
         language: selectedLanguage,
         onStart: () => {
           toast({
