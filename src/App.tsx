@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { HelmetProvider } from "react-helmet-async";
 import { CreditsProvider } from "@/contexts/CreditsContext";
 import { PodcastProvider } from "@/contexts/PodcastContext";
 import { PodcastMiniPlayer } from "@/components/PodcastMiniPlayer";
@@ -98,22 +99,24 @@ function AnimatedRoutes() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <CreditsProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <PodcastProvider>
-            <AnimatedRoutes />
-            <PodcastMiniPlayer />
-            <CookieConsent />
-          </PodcastProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </CreditsProvider>
-  </QueryClientProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <CreditsProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <PodcastProvider>
+              <AnimatedRoutes />
+              <PodcastMiniPlayer />
+              <CookieConsent />
+            </PodcastProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CreditsProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
