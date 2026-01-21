@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.admin-redeem-codes]
 verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false

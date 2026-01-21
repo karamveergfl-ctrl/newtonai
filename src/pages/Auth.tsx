@@ -113,13 +113,24 @@ const Auth = () => {
           return;
         }
 
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/dashboard` },
         });
 
         if (error) throw error;
+
+        // Send welcome email in background (don't block signup)
+        if (data.user) {
+          supabase.functions.invoke('send-welcome-email', {
+            body: { email, name: '' }
+          }).catch(err => console.error('Failed to send welcome email:', err));
+          
+          // Set flag for welcome modal
+          localStorage.setItem('newtonai_new_signup', 'true');
+        }
+
         toast({ title: "Account created!", description: "You can now log in with your credentials." });
         setMode("login");
       }
