@@ -50,7 +50,7 @@ serve(async (req) => {
       );
     }
 
-    const { content, selectedText, detailLevel = "standard" } = await req.json();
+    const { content, selectedText, detailLevel = "standard", format = "concise" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -62,62 +62,132 @@ serve(async (req) => {
       throw new Error("No content provided");
     }
 
-    console.log(`Generating ${detailLevel} study guide for ${textToSummarize.length} characters`);
+    console.log(`Generating ${format} summary with ${detailLevel} detail for ${textToSummarize.length} characters`);
 
-    const detailGuide = {
-      brief: "Create a concise study guide with 2-3 key points per section.",
-      standard: "Create a balanced study guide with 4-5 key points per section.",
-      detailed: "Create a comprehensive study guide with 6-8 key points per section, including examples."
-    };
+    // Format-specific prompts
+    const formatPrompts: Record<string, string> = {
+      "concise": `You are an expert summarizer. Create a CONCISE summary that captures the essence of the content.
 
-    const systemPrompt = `You are an expert study guide creator following Google NotebookLM's format exactly.
+## Overview
+[1-2 sentences introducing the main topic]
 
-Create a comprehensive study guide with these EXACT sections in this order:
+## Key Points
+- **Point 1**: Brief, essential takeaway
+- **Point 2**: Second key insight
+- **Point 3**: Third important point
+[3-5 bullet points maximum]
+
+## Summary
+[2-3 sentences summarizing the entire content]
+
+RULES:
+- Be brief and to the point
+- Focus only on the most essential information
+- Use clear, simple language`,
+
+      "detailed": `You are an expert study guide creator. Create a DETAILED analysis with comprehensive coverage.
 
 ## Overview
 [2-3 sentences introducing the topic and its importance]
 
 ## Key Topics
-- **Topic 1**: Clear, concise explanation
-- **Topic 2**: Clear, concise explanation
-[Continue for 4-6 major topics]
+- **Topic 1**: Detailed explanation with context
+- **Topic 2**: In-depth coverage with examples
+[Continue for 5-8 major topics]
 
 ## Key Terms & Definitions
 | Term | Definition |
 |------|------------|
-| Term 1 | Clear, precise definition |
-| Term 2 | Clear, precise definition |
-[Include 6-10 important terms in table format]
+| Term 1 | Comprehensive definition with context |
+| Term 2 | Detailed explanation |
+[Include 8-12 important terms]
 
-## Quick Review
-1. **Question:** [Specific quiz-style question about the content]
-   **Answer:** [Concise, accurate answer]
-
-2. **Question:** [Another question]
-   **Answer:** [Answer]
-[Include 4-6 questions with answers]
-
-## Essay Prompts
-1. [Thought-provoking question requiring analysis]
-2. [Another deeper thinking question]
-[Include 2-3 essay prompts]
+## Analysis
+- In-depth examination of main concepts
+- Connections between ideas
+- Implications and applications
 
 ## Key Takeaways
-- Most important point to remember
-- Second key takeaway
-- Third key takeaway
-[Include 4-6 bullet points]
+- Detailed summary point 1
+- Comprehensive takeaway 2
+- Important conclusion 3
+[Include 5-8 bullet points]
 
-Detail level: ${detailLevel.toUpperCase()}
-${detailGuide[detailLevel as keyof typeof detailGuide]}
+RULES:
+- Be thorough and comprehensive
+- Include examples where relevant
+- Explain relationships between concepts`,
 
-FORMATTING RULES:
-- Use proper markdown with ## for section headers
-- Use tables for Key Terms (| Term | Definition | format)
-- Use numbered lists for Quick Review questions
-- Use bullet points with **bold** for emphasis
-- Keep language clear, educational, and professional
-- Do NOT include any introduction or conclusion outside these sections`;
+      "bullet-points": `You are a skilled note-taker. Create an easy-to-scan BULLET POINT summary.
+
+## Main Topic
+- Core concept or theme
+
+## Key Points
+• First major point
+  - Supporting detail
+  - Additional context
+• Second major point
+  - Supporting detail
+• Third major point
+  - Supporting detail
+[Continue for all major points]
+
+## Quick Facts
+- Fact 1
+- Fact 2
+- Fact 3
+
+## Action Items / Takeaways
+□ First takeaway
+□ Second takeaway
+□ Third takeaway
+
+RULES:
+- Use bullet points exclusively
+- Keep each point brief (under 15 words)
+- Use indentation for hierarchy
+- Make it scannable at a glance`,
+
+      "academic": `You are an academic writer. Create a FORMAL, scholarly summary.
+
+## Abstract
+[Formal 3-4 sentence overview of the content and its significance]
+
+## Introduction
+[Context and background, significance of the topic]
+
+## Main Themes
+### Theme 1
+[Formal analysis with supporting evidence]
+
+### Theme 2
+[Scholarly examination of the concept]
+
+### Theme 3
+[Academic discussion of implications]
+
+## Key Concepts & Terminology
+| Concept | Definition | Significance |
+|---------|------------|--------------|
+| Term 1 | Formal definition | Why it matters |
+| Term 2 | Academic explanation | Relevance |
+
+## Conclusions
+[Formal summary of findings and implications]
+
+## Further Considerations
+- Areas for deeper exploration
+- Related topics to investigate
+
+RULES:
+- Use formal, academic language
+- Maintain objective tone
+- Include scholarly structure
+- Reference key concepts formally`
+    };
+
+    const systemPrompt = formatPrompts[format] || formatPrompts["concise"];
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
