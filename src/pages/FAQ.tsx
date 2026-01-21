@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     question: "What are the differences between Free, Pro, and Ultra plans?",
-    answer: "Free plan has basic limits for all features. Pro plan offers 90 quizzes/flashcards/mind maps per month, 20 lecture notes/summaries, 15 podcasts, 900 minutes of transcription, and unlimited homework help & AI chat. Ultra plan provides unlimited access to all features plus team collaboration and API access."
+    answer: "Free plan has basic limits for all features. Pro plan offers 90 quizzes/flashcards/mind maps per month, 20 lecture notes/summaries, 15 podcasts, 900 minutes of transcription, and unlimited homework help & AI chat. Ultra plan provides unlimited access to all features plus team collaboration and dedicated support."
   },
   {
     question: "What file formats are supported?",

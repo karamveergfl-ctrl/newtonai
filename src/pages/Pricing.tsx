@@ -87,7 +87,6 @@ const plans = [
       "Unlimited live transcription",
       "Unlimited homework help & AI chat",
       "Team collaboration",
-      "API access",
       "Dedicated support",
     ],
     cta: "Subscribe Now",
