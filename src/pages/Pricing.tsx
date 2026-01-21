@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Sparkles, Loader2, Gift, X, Infinity as InfinityIcon } from "lucide-react";
+import { Check, Sparkles, Loader2, Gift, X, Infinity as InfinityIcon, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -15,7 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RedeemCodeDialog } from "@/components/RedeemCodeDialog";
 import { useRedeemCode } from "@/hooks/useRedeemCode";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { detectCurrency, DISPLAY_PRICING, CurrencyCode, CURRENCY_NAMES } from "@/lib/currencyUtils";
+import { detectCurrency, DISPLAY_PRICING, CurrencyCode, CURRENCY_NAMES, CURRENCY_SYMBOLS } from "@/lib/currencyUtils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Feature comparison data for the table
 const featureLimits = [
@@ -255,33 +256,54 @@ const Pricing = () => {
             Choose the plan that fits your learning needs. Upgrade or downgrade anytime.
           </motion.p>
           
-          {/* Billing Toggle */}
+          {/* Billing Toggle and Currency Selector */}
           <motion.div 
-            className="flex items-center justify-center gap-4"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            <span className={`text-sm font-medium ${!isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
-              Monthly
-            </span>
-            <Switch
-              checked={isYearly}
-              onCheckedChange={setIsYearly}
-            />
-            <span className={`text-sm font-medium ${isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
-              Yearly
-            </span>
-            {isYearly && (
-              <motion.span 
-                className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: "spring" }}
-              >
-                Best Value
-              </motion.span>
-            )}
+            <div className="flex items-center gap-4">
+              <span className={`text-sm font-medium ${!isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Monthly
+              </span>
+              <Switch
+                checked={isYearly}
+                onCheckedChange={setIsYearly}
+              />
+              <span className={`text-sm font-medium ${isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Yearly
+              </span>
+              {isYearly && (
+                <motion.span 
+                  className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: "spring" }}
+                >
+                  Best Value
+                </motion.span>
+              )}
+            </div>
+            
+            {/* Currency Selector */}
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <Select value={currency} onValueChange={(value: CurrencyCode) => setCurrency(value)}>
+                <SelectTrigger className="w-[130px] h-9 text-sm bg-background">
+                  <SelectValue>
+                    {CURRENCY_SYMBOLS[currency]} {currency}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {(Object.keys(CURRENCY_NAMES) as CurrencyCode[]).map((code) => (
+                    <SelectItem key={code} value={code}>
+                      {CURRENCY_SYMBOLS[code]} {code} - {CURRENCY_NAMES[code]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </motion.div>
 
           {/* Redeem Code Section */}
