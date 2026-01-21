@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Layers, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
@@ -171,8 +172,21 @@ const AIFlashcards = () => {
     return "Text Content";
   };
 
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Tools", href: "/tools" },
+    { name: "AI Flashcards", href: "/tools/flashcards" },
+  ];
+
   return (
     <AppLayout>
+      <SEOHead
+        title="AI Flashcards"
+        description="Generate AI-powered flashcards from any content for effective studying. Upload PDFs, paste text, or use YouTube videos to create study cards."
+        canonicalPath="/tools/flashcards"
+        breadcrumbs={breadcrumbs}
+        keywords="AI flashcards, study cards, spaced repetition, flashcard generator, study tools"
+      />
       <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

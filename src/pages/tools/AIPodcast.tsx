@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Podcast, Sparkles, ArrowLeft, Radio, Volume2, Minimize2 } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
@@ -340,9 +341,21 @@ export default function AIPodcast() {
     });
     setSourceContent(saved.source_content || "");
   };
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Tools", href: "/tools" },
+    { name: "AI Podcast", href: "/tools/podcast" },
+  ];
 
   return (
     <AppLayout>
+      <SEOHead
+        title="AI Podcast"
+        description="Transform your study materials into engaging podcasts with professional AI voices. Listen and learn on the go with interactive Q&A."
+        canonicalPath="/tools/podcast"
+        breadcrumbs={breadcrumbs}
+        keywords="AI podcast, study podcast, audio learning, text to speech, educational podcast"
+      />
       <div className="container max-w-4xl mx-auto px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
