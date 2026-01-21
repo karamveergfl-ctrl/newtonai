@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
+import { ProcessingOverlay } from "@/components/ProcessingOverlay";
+import { useProcessingState, ProcessingPhase } from "@/hooks/useProcessingState";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -37,10 +39,12 @@ const AIQuiz = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("quiz");
+
+  // Processing animation state
+  const { phase, isProcessing: isGenerating, startThinking, startWriting, complete, reset: resetProcessing } = useProcessingState();
 
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -60,7 +64,7 @@ const AIQuiz = () => {
 
     const { content, type, metadata } = pendingContent;
     setPendingContent(null);
-    setIsGenerating(true);
+    startThinking(); // Start thinking animation
     setQuestions([]);
     setScore(0);
     setCurrentIndex(0);
@@ -83,6 +87,9 @@ const AIQuiz = () => {
       if (!textContent?.trim()) {
         throw new Error("No content to process");
       }
+
+      // Switch to writing phase when API call starts
+      startWriting();
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`,
@@ -107,20 +114,25 @@ const AIQuiz = () => {
       if (!response.ok) throw new Error("Failed to generate quiz");
 
       const data = await response.json();
-      setQuestions(data.questions);
-
-      toast({
-        title: "Quiz Ready! 🧠",
-        description: `Generated ${data.questions.length} questions`,
-      });
+      
+      // Trigger completed animation
+      complete();
+      
+      // Wait for animation to finish, then show results
+      setTimeout(() => {
+        setQuestions(data.questions);
+        toast({
+          title: "Quiz Ready! 🧠",
+          description: `Generated ${data.questions.length} questions`,
+        });
+      }, 1500);
     } catch (error) {
+      resetProcessing();
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to generate quiz. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -182,16 +194,26 @@ const AIQuiz = () => {
           </div>
 
           {questions.length === 0 ? (
-            <Card className="border-border/50 shadow-lg">
-              <CardContent className="pt-6">
-                <ContentInputTabs
-                  onContentReady={handleContentReady}
-                  isProcessing={isGenerating}
-                  placeholder="Paste your study content here..."
-                  supportedFormats="PDF, TXT, Images; Max size: 20MB"
-                />
-              </CardContent>
-            </Card>
+            isGenerating ? (
+              <ProcessingOverlay
+                isVisible={isGenerating}
+                phase={phase}
+                message={phase === "thinking" ? "Analyzing your content..." : phase === "writing" ? "Creating quiz questions..." : "Quiz ready!"}
+                subMessage={phase === "thinking" ? "Understanding the material" : phase === "writing" ? "Crafting challenging questions" : undefined}
+                variant="card"
+              />
+            ) : (
+              <Card className="border-border/50 shadow-lg">
+                <CardContent className="pt-6">
+                  <ContentInputTabs
+                    onContentReady={handleContentReady}
+                    isProcessing={isGenerating}
+                    placeholder="Paste your study content here..."
+                    supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                  />
+                </CardContent>
+              </Card>
+            )
           ) : quizCompleted ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}

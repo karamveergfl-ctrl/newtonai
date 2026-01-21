@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { useFeatureGate } from "@/components/FeatureGate";
+import { ProcessingOverlay } from "@/components/ProcessingOverlay";
+import { useProcessingState } from "@/hooks/useProcessingState";
 import { cn } from "@/lib/utils";
 import { 
   getYouTubeTranscript, 
@@ -34,10 +36,12 @@ interface PendingContent {
 
 const MindMap = () => {
   const [mindMapData, setMindMapData] = useState<any>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [zoom, setZoom] = useState(1);
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("mind_map");
+
+  // Processing animation state
+  const { phase, isProcessing: isGenerating, startThinking, startWriting, complete, reset: resetProcessing } = useProcessingState();
 
   // Style selection state
   const [showStyleSelection, setShowStyleSelection] = useState(false);
@@ -62,7 +66,7 @@ const MindMap = () => {
     const { content, type, metadata } = pendingContent;
     setShowStyleSelection(false);
     setPendingContent(null);
-    setIsGenerating(true);
+    startThinking(); // Start thinking animation
     setMindMapData(null);
 
     try {
@@ -82,6 +86,9 @@ const MindMap = () => {
       if (!textContent?.trim()) {
         throw new Error("No content to process");
       }
+
+      // Switch to writing phase when API call starts
+      startWriting();
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`,
@@ -103,20 +110,25 @@ const MindMap = () => {
       if (!response.ok) throw new Error("Failed to generate mind map");
 
       const data = await response.json();
-      setMindMapData(data.mindMapData || data.mindMap);
-
-      toast({
-        title: "Mind Map Ready! 🧠",
-        description: `Generated ${selectedStyle} mind map`,
-      });
+      
+      // Trigger completed animation
+      complete();
+      
+      // Wait for animation to finish, then show results
+      setTimeout(() => {
+        setMindMapData(data.mindMapData || data.mindMap);
+        toast({
+          title: "Mind Map Ready! 🧠",
+          description: `Generated ${selectedStyle} mind map`,
+        });
+      }, 1500);
     } catch (error) {
+      resetProcessing();
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to generate mind map. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -148,9 +160,18 @@ const MindMap = () => {
           </div>
 
           {!mindMapData ? (
-            <Card className="border-border/50 shadow-lg">
-              <CardContent className="pt-6">
-                {showStyleSelection ? (
+            isGenerating ? (
+              <ProcessingOverlay
+                isVisible={isGenerating}
+                phase={phase}
+                message={phase === "thinking" ? "Analyzing your content..." : phase === "writing" ? "Creating mind map..." : "Mind map ready!"}
+                subMessage={phase === "thinking" ? "Understanding the concepts" : phase === "writing" ? "Mapping relationships" : undefined}
+                variant="card"
+              />
+            ) : (
+              <Card className="border-border/50 shadow-lg">
+                <CardContent className="pt-6">
+                  {showStyleSelection ? (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -211,6 +232,7 @@ const MindMap = () => {
                 )}
               </CardContent>
             </Card>
+            )
           ) : (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0">
