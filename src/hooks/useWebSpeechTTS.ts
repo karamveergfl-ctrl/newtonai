@@ -3,6 +3,25 @@ import { useCallback, useRef, useState, useEffect } from "react";
 const STORAGE_KEY = "podcast-voice-settings";
 const VOICE_CACHE_KEY = "tts-voice-cache";
 
+// Known authentic Indian voices by provider - prioritize these for authentic Indian sound
+const INDIAN_VOICE_PRIORITY: Record<string, string[]> = {
+  hi: ["Heera", "Hemant", "Kalpana", "Lekha", "Swara", "Aditi", "Ravi", "Sapna", "Neerja"],
+  mr: ["Aishwarya", "Sakhi", "Nachiket", "Aarohi"],
+  gu: ["Dhwani", "Nishtha", "Niranjan"],
+  ta: ["Valluvar", "Pallavi", "Vani", "Shruti"],
+  te: ["Chitra", "Mohan", "Shruti", "Shruthi"],
+  bn: ["Tanishaa", "Bashkar", "Bondita"],
+  kn: ["Sapna", "Gagan"],
+  ml: ["Sobhana", "Midhun"],
+  pa: ["Harleen", "Harjinder"],
+  or: ["Subhadra", "Subhasini"],
+  as: ["Pahi", "Priyom"],
+};
+
+// Devanagari script languages that need special punctuation handling
+const DEVANAGARI_LANGUAGES = ['hi', 'mr', 'sa', 'ne', 'kok'];
+const INDIC_LANGUAGES = ['hi', 'mr', 'gu', 'bn', 'pa', 'or', 'as', 'ta', 'te', 'kn', 'ml'];
+
 interface VoiceSettings {
   host1VoiceName: string;
   host2VoiceName: string;
@@ -41,6 +60,14 @@ const prepareTextForSpeech = (text: string, language: string): string => {
   
   // Add pauses around dashes for natural reading
   prepared = prepared.replace(/[-–—]\s*/g, ' ... ');
+  
+  // For Devanagari languages, handle Indian punctuation (purna viram)
+  if (DEVANAGARI_LANGUAGES.includes(language)) {
+    // Pause after purna viram (full stop) ।
+    prepared = prepared.replace(/।\s*/g, '। ... ');
+    // Pause after double danda ॥
+    prepared = prepared.replace(/॥\s*/g, '॥ ... ');
+  }
   
   return prepared;
 };
@@ -285,21 +312,39 @@ function getCachedVoice(speaker: string, language: string): string | null {
   }
 }
 
-// Sort voices by quality - prefer neural/natural female voices (like Hindi "Lekha")
-function sortByQuality(voiceList: SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {
+// Sort voices by quality with Indian voice priority - prefer authentic Indian voices first
+function sortByQuality(voiceList: SpeechSynthesisVoice[], language?: string): SpeechSynthesisVoice[] {
+  const langPrefix = language?.split('-')[0] || '';
+  const priorityList = INDIAN_VOICE_PRIORITY[langPrefix] || [];
+  
   return [...voiceList].sort((a, b) => {
+    // FIRST priority: Check if voice is in Indian priority list (authentic Indian voices)
+    if (priorityList.length > 0) {
+      const aInPriority = priorityList.some(name => a.name.toLowerCase().includes(name.toLowerCase()));
+      const bInPriority = priorityList.some(name => b.name.toLowerCase().includes(name.toLowerCase()));
+      if (aInPriority && !bInPriority) return -1;
+      if (!aInPriority && bInPriority) return 1;
+    }
+    
+    // SECOND priority: Prefer -IN region voices for Indian languages (authentic accent)
+    if (INDIC_LANGUAGES.includes(langPrefix)) {
+      const aIsIndian = a.lang.endsWith('-IN');
+      const bIsIndian = b.lang.endsWith('-IN');
+      if (aIsIndian && !bIsIndian) return -1;
+      if (!aIsIndian && bIsIndian) return 1;
+    }
+    
+    // Third priority: quality indicators (neural, natural, premium)
     const aHasQuality = QUALITY_INDICATORS.test(a.name);
     const bHasQuality = QUALITY_INDICATORS.test(b.name);
-
-    // First priority: quality indicators (neural, natural, premium)
     if (aHasQuality && !bHasQuality) return -1;
     if (!aHasQuality && bHasQuality) return 1;
 
-    // Second priority: online/remote voices (much more natural sounding)
+    // Fourth priority: online/remote voices (much more natural sounding)
     if (!a.localService && b.localService) return -1;
     if (a.localService && !b.localService) return 1;
 
-    // Third priority: female voices (like Hindi "Lekha")
+    // Fifth priority: female voices (like Hindi "Lekha")
     const aIsFemale = FEMALE_VOICE_NAMES.test(a.name);
     const bIsFemale = FEMALE_VOICE_NAMES.test(b.name);
     if (aIsFemale && !bIsFemale) return -1;
@@ -385,9 +430,18 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
         // Last resort: use any available voice
         languageVoices = voices;
       }
+      
+      // For Indian languages, prefer -IN region voices for authentic accent
+      if (INDIC_LANGUAGES.includes(langPrefix)) {
+        const indianRegionVoices = languageVoices.filter(v => v.lang.endsWith('-IN'));
+        if (indianRegionVoices.length > 0) {
+          languageVoices = indianRegionVoices;
+          console.log(`Using ${indianRegionVoices.length} authentic Indian region voices for ${language}`);
+        }
+      }
 
-      // Sort by quality first
-      const sortedVoices = sortByQuality(languageVoices);
+      // Sort by quality with language-aware Indian voice priority
+      const sortedVoices = sortByQuality(languageVoices, language);
 
       // Get language-specific patterns or use default
       const patterns = VOICE_PATTERNS[langPrefix] || VOICE_PATTERNS.default;
@@ -480,16 +534,19 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
         const langCode = options.language || "en";
         const langParams = LANGUAGE_SPEECH_PARAMS[langCode] || LANGUAGE_SPEECH_PARAMS.en;
 
+        // Add slight random variation for more human-like reading (±2%)
+        const rateVariation = (Math.random() * 0.04 - 0.02);
+        
         // Apply rate - use options first, then language defaults, then stored settings
         if (options.rate !== undefined) {
-          utterance.rate = options.rate;
+          utterance.rate = options.rate + rateVariation;
         } else if (storedSettings && options.language === "en") {
           // Only use stored podcast settings for English
           const storedRate = speaker === "host1" ? storedSettings.host1Rate : storedSettings.host2Rate;
-          utterance.rate = storedRate;
+          utterance.rate = storedRate + rateVariation;
         } else {
-          // Use language-tuned natural rate
-          utterance.rate = langParams.rate;
+          // Use language-tuned natural rate with slight variation
+          utterance.rate = langParams.rate + rateVariation;
         }
 
         // Apply pitch - use options first, then language defaults, then stored settings
@@ -502,6 +559,9 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
           // Use language-tuned natural pitch
           utterance.pitch = langParams.pitch;
         }
+        
+        console.log(`TTS params for ${langCode}: rate=${utterance.rate.toFixed(3)}, pitch=${utterance.pitch}`);
+        
 
         utterance.volume = 1;
 
