@@ -130,6 +130,103 @@ serve(async (req) => {
       // Continue anyway, subscription is already active
     }
 
+    // Fetch code details for notification check
+    const { data: codeData } = await supabaseAdmin
+      .from('redeem_codes')
+      .select('code, discount_percent, current_uses, max_uses')
+      .eq('id', redeem_code_id)
+      .single();
+
+    // Send notifications for high-value or near-limit codes
+    if (codeData) {
+      const isHighValue = codeData.discount_percent === 100;
+      const isNearLimit = codeData.max_uses && codeData.current_uses >= codeData.max_uses * 0.8;
+      const isAlmostDepleted = codeData.max_uses && (codeData.max_uses - codeData.current_uses) <= 5;
+
+      if (isHighValue || isNearLimit || isAlmostDepleted) {
+        // Create admin notification
+        let notifTitle: string;
+        let notifMessage: string;
+        
+        if (isHighValue) {
+          notifTitle = `🎉 100% Code Redeemed: ${codeData.code}`;
+          notifMessage = `Free subscription activated for user ${user.email || user.id}. Usage: ${codeData.current_uses}/${codeData.max_uses || '∞'}`;
+        } else {
+          const percentUsed = codeData.max_uses ? Math.round((codeData.current_uses / codeData.max_uses) * 100) : 0;
+          notifTitle = `⚠️ Code Nearing Limit: ${codeData.code}`;
+          notifMessage = `${percentUsed}% used (${codeData.current_uses}/${codeData.max_uses}). Only ${codeData.max_uses! - codeData.current_uses} uses remaining.`;
+        }
+
+        await supabaseAdmin
+          .from('admin_notifications')
+          .insert({
+            type: 'code_redemption',
+            title: notifTitle,
+            message: notifMessage,
+            metadata: {
+              code_id: redeem_code_id,
+              code: codeData.code,
+              discount_percent: codeData.discount_percent,
+              current_uses: codeData.current_uses,
+              max_uses: codeData.max_uses,
+              user_email: user.email,
+              is_high_value: isHighValue,
+            },
+          });
+
+        // Send email notification
+        const resendApiKey = Deno.env.get('RESEND_API_KEY');
+        if (resendApiKey) {
+          const emailSubject = isHighValue
+            ? `🎉 High-Value Code Redeemed: ${codeData.code}`
+            : `⚠️ Code Nearing Limit: ${codeData.code} (${Math.round((codeData.current_uses / codeData.max_uses!) * 100)}% used)`;
+
+          const emailHtml = isHighValue
+            ? `
+              <h2>High-Value Code Redeemed</h2>
+              <p>A 100% discount code was just used:</p>
+              <ul>
+                <li><strong>Code:</strong> ${codeData.code}</li>
+                <li><strong>User:</strong> ${user.email || 'Unknown'}</li>
+                <li><strong>Usage:</strong> ${codeData.current_uses}/${codeData.max_uses || '∞'}</li>
+                <li><strong>Plan:</strong> ${plan_name} (${billing_cycle})</li>
+              </ul>
+              <p>This code grants full premium access without payment.</p>
+            `
+            : `
+              <h2>Code Almost Depleted</h2>
+              <p>A redeem code is running low on uses:</p>
+              <ul>
+                <li><strong>Code:</strong> ${codeData.code}</li>
+                <li><strong>Discount:</strong> ${codeData.discount_percent}%</li>
+                <li><strong>Usage:</strong> ${codeData.current_uses}/${codeData.max_uses}</li>
+                <li><strong>Remaining:</strong> ${codeData.max_uses! - codeData.current_uses} uses</li>
+              </ul>
+              <p>Consider creating a replacement code if you want to continue offering this discount.</p>
+            `;
+
+          try {
+            await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${resendApiKey}`,
+              },
+              body: JSON.stringify({
+                from: 'NewtonAI Alerts <onboarding@resend.dev>',
+                to: ['admin@newtonai.site'],
+                subject: emailSubject,
+                html: emailHtml,
+              }),
+            });
+            console.log('Admin email notification sent');
+          } catch (emailError) {
+            console.error('Failed to send email notification:', emailError);
+          }
+        }
+      }
+    }
+
     // Update user's profile with subscription tier
     const { error: profileError } = await supabaseAdmin
       .from('profiles')

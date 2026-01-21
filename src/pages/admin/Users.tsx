@@ -35,7 +35,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NotificationBell } from "@/components/admin/NotificationBell";
-import { formatDistanceToNow } from "date-fns";
+import { ExportButton } from "@/components/admin/ExportButton";
+import { formatDistanceToNow, format } from "date-fns";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -208,6 +209,15 @@ export default function AdminUsers() {
 
   const totalPages = Math.ceil(total / pageSize);
 
+  // Export columns for CSV
+  const exportColumns = [
+    { key: "full_name", header: "Name", formatter: (v: unknown) => (v as string) || "N/A" },
+    { key: "email", header: "Email" },
+    { key: "subscription_tier", header: "Tier" },
+    { key: "roles", header: "Roles", formatter: (v: unknown) => (v as string[])?.join(", ") || "" },
+    { key: "created_at", header: "Joined", formatter: (v: unknown) => format(new Date(v as string), "yyyy-MM-dd") },
+  ];
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -227,17 +237,25 @@ export default function AdminUsers() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>All Users ({total})</CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name..."
-                    value={search}
-                    onChange={(e) => {
-                      setSearch(e.target.value);
-                      setPage(1);
-                    }}
-                    className="pl-9"
+                <div className="flex items-center gap-3">
+                  <ExportButton
+                    data={users as unknown as Record<string, unknown>[]}
+                    columns={exportColumns}
+                    filename="users"
+                    disabled={loading}
                   />
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name..."
+                      value={search}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        setPage(1);
+                      }}
+                      className="pl-9"
+                    />
+                  </div>
                 </div>
               </div>
             </CardHeader>

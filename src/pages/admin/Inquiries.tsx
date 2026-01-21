@@ -37,6 +37,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NotificationBell } from "@/components/admin/NotificationBell";
+import { ExportButton } from "@/components/admin/ExportButton";
 import { formatDistanceToNow, format } from "date-fns";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -129,6 +130,19 @@ export default function AdminInquiries() {
   const contactedCount = inquiries.filter((i) => i.status === "contacted").length;
   const closedCount = inquiries.filter((i) => i.status === "closed").length;
 
+  // Export columns for CSV
+  const exportColumns = [
+    { key: "first_name", header: "First Name" },
+    { key: "last_name", header: "Last Name" },
+    { key: "email", header: "Email" },
+    { key: "company", header: "Company" },
+    { key: "job_title", header: "Job Title" },
+    { key: "team_size", header: "Team Size" },
+    { key: "use_case", header: "Use Case" },
+    { key: "status", header: "Status" },
+    { key: "created_at", header: "Received", formatter: (v: unknown) => format(new Date(v as string), "yyyy-MM-dd") },
+  ];
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -183,10 +197,18 @@ export default function AdminInquiries() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                All Inquiries ({inquiries.length})
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  All Inquiries ({inquiries.length})
+                </CardTitle>
+                <ExportButton
+                  data={inquiries as unknown as Record<string, unknown>[]}
+                  columns={exportColumns}
+                  filename="enterprise-inquiries"
+                  disabled={loading}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (

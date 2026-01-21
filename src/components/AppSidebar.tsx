@@ -39,6 +39,7 @@ import {
   Users,
   MessageSquare,
   Shield,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FEATURE_COSTS } from "@/lib/creditConfig";
@@ -59,6 +60,7 @@ const adminTools = [
   { id: "analytics", label: "Analytics", icon: BarChart3, path: "/admin/analytics" },
   { id: "users", label: "Users", icon: Users, path: "/admin/users" },
   { id: "inquiries", label: "Inquiries", icon: MessageSquare, path: "/admin/inquiries" },
+  { id: "redeem-codes", label: "Redeem Codes", icon: Gift, path: "/admin/redeem-codes" },
 ];
 
 interface AppSidebarProps {
