@@ -30,6 +30,7 @@ import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Tools from "./pages/Tools";
 
 // Tool pages
 import HomeworkHelp from "./pages/tools/HomeworkHelp";
@@ -81,6 +82,7 @@ function AnimatedRoutes() {
         <Route path="/payment/failure" element={<PageTransition><PaymentFailure /></PageTransition>} />
         
         {/* Tool Routes */}
+        <Route path="/tools" element={<PageTransition><Tools /></PageTransition>} />
         <Route path="/tools/homework-help" element={<PageTransition><HomeworkHelp /></PageTransition>} />
         <Route path="/tools/flashcards" element={<PageTransition><AIFlashcards /></PageTransition>} />
         <Route path="/tools/quiz" element={<PageTransition><AIQuiz /></PageTransition>} />

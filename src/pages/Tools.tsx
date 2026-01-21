@@ -1,0 +1,284 @@
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Helmet } from "react-helmet-async";
+import { 
+  Brain, 
+  FileText, 
+  HelpCircle, 
+  Lightbulb, 
+  Map, 
+  Mic, 
+  Sparkles,
+  ArrowRight,
+  CheckCircle
+} from "lucide-react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
+import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
+
+const tools = [
+  {
+    id: "quiz",
+    name: "AI Quiz Generator",
+    description: "Create personalized quizzes from any document, video, or lecture. Test your knowledge with AI-generated questions.",
+    icon: Brain,
+    href: "/tools/quiz",
+    color: "text-teal-500",
+    bgColor: "bg-teal-500/10",
+    features: ["Multiple choice questions", "Instant feedback", "Progress tracking"],
+    limits: { free: "3/month", pro: "90/month", ultra: "Unlimited" }
+  },
+  {
+    id: "flashcards",
+    name: "AI Flashcards",
+    description: "Generate smart flashcards automatically from your study materials. Master concepts with spaced repetition.",
+    icon: Lightbulb,
+    href: "/tools/flashcards",
+    color: "text-violet-500",
+    bgColor: "bg-violet-500/10",
+    features: ["Auto-generated cards", "Flip animations", "Study mode"],
+    limits: { free: "3/month", pro: "90/month", ultra: "Unlimited" }
+  },
+  {
+    id: "podcast",
+    name: "AI Podcast",
+    description: "Transform your notes into engaging audio podcasts. Learn on the go with AI-generated discussions.",
+    icon: Mic,
+    href: "/tools/ai-podcast",
+    color: "text-rose-500",
+    bgColor: "bg-rose-500/10",
+    features: ["Two-host format", "Natural voices", "Raise hand Q&A"],
+    limits: { free: "1/month", pro: "15/month", ultra: "Unlimited" }
+  },
+  {
+    id: "mind-map",
+    name: "Mind Map Generator",
+    description: "Visualize complex topics with auto-generated mind maps. See connections between concepts instantly.",
+    icon: Map,
+    href: "/tools/mind-map",
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-500/10",
+    features: ["Interactive diagrams", "Zoom & pan", "Multiple layouts"],
+    limits: { free: "3/month", pro: "90/month", ultra: "Unlimited" }
+  },
+  {
+    id: "lecture-notes",
+    name: "AI Lecture Notes",
+    description: "Convert lectures, videos, and recordings into structured study notes. Never miss important details.",
+    icon: FileText,
+    href: "/tools/lecture-notes",
+    color: "text-amber-500",
+    bgColor: "bg-amber-500/10",
+    features: ["Multiple templates", "Highlight mode", "Text-to-speech"],
+    limits: { free: "2/month", pro: "20/month", ultra: "Unlimited" }
+  },
+  {
+    id: "summarizer",
+    name: "AI Summarizer",
+    description: "Extract key insights from lengthy PDFs and documents. Get concise summaries in seconds.",
+    icon: Sparkles,
+    href: "/tools/summarizer",
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
+    features: ["Multiple formats", "Key points extraction", "Download as PDF"],
+    limits: { free: "2/month", pro: "20/month", ultra: "Unlimited" }
+  },
+  {
+    id: "homework-help",
+    name: "Homework Help",
+    description: "Get step-by-step solutions to any problem. Upload a photo and receive detailed explanations.",
+    icon: HelpCircle,
+    href: "/tools/homework-help",
+    color: "text-indigo-500",
+    bgColor: "bg-indigo-500/10",
+    features: ["Step-by-step solutions", "Image upload", "Multiple subjects"],
+    limits: { free: "5/day", pro: "Unlimited", ultra: "Unlimited" }
+  },
+];
+
+const Tools = () => {
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Tools", href: "/tools" },
+  ];
+
+  // Generate ItemList structured data for tools
+  const toolsSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "NewtonAI Study Tools",
+    "description": "AI-powered study tools to help you learn faster and study smarter",
+    "numberOfItems": tools.length,
+    "itemListElement": tools.map((tool, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "SoftwareApplication",
+        "name": tool.name,
+        "description": tool.description,
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web",
+        "url": `https://newtonai.lovable.app${tool.href}`,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    }))
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <SEOHead
+        title="AI Study Tools"
+        description="Explore NewtonAI's suite of AI-powered study tools: Quiz Generator, Flashcards, Podcast Creator, Mind Maps, Lecture Notes, Summarizer, and Homework Help."
+        canonicalPath="/tools"
+        breadcrumbs={breadcrumbs}
+        keywords="AI study tools, quiz generator, flashcard maker, mind map generator, lecture notes, PDF summarizer, homework help"
+      />
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify(toolsSchema)}
+        </script>
+      </Helmet>
+      
+      <Header />
+
+      {/* Hero Section */}
+      <section className="relative py-16 overflow-hidden">
+        <OptimizedBackgroundBlobs variant="hero" />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-12"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20"
+            >
+              <Sparkles className="w-4 h-4" />
+              7 Powerful AI Tools
+            </motion.div>
+            
+            <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">
+              AI-Powered Study Tools
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+              Transform any content into flashcards, quizzes, summaries, podcasts, and more. 
+              Study smarter with tools designed for modern learners.
+            </p>
+            
+            <div className="flex flex-wrap justify-center gap-4">
+              <Button asChild size="lg">
+                <Link to="/auth">
+                  Get Started Free
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link to="/pricing">View Pricing</Link>
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Tools Grid */}
+      <section className="container mx-auto px-4 pb-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tools.map((tool, index) => (
+            <motion.div
+              key={tool.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+            >
+              <Link to={tool.href}>
+                <Card className="h-full group cursor-pointer hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className={`w-12 h-12 rounded-lg ${tool.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                        <tool.icon className={`w-6 h-6 ${tool.color}`} />
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        Free: {tool.limits.free}
+                      </Badge>
+                    </div>
+                    <CardTitle className="group-hover:text-primary transition-colors">
+                      {tool.name}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {tool.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {tool.features.map((feature) => (
+                        <li key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Pro: {tool.limits.pro}</span>
+                        <span>Ultra: {tool.limits.ultra}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-primary text-primary-foreground py-16">
+        <div className="container mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="font-display text-3xl font-bold mb-4">
+              Ready to Transform Your Study Habits?
+            </h2>
+            <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto">
+              Join thousands of students using AI to study smarter. Start free today.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Button asChild size="lg" variant="secondary">
+                <Link to="/auth">
+                  Start Learning Free
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="bg-transparent border-primary-foreground/30 hover:bg-primary-foreground/10">
+                <Link to="/pricing">Compare Plans</Link>
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default Tools;
