@@ -1,15 +1,27 @@
 import { memo, useEffect, useRef } from "react";
 import Lottie, { LottieRefCurrentProps } from "lottie-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { ProcessingPhase } from "@/hooks/useProcessingState";
 
 // Import Lottie animations
 import thinkingAnimation from "./lottie/newton-thinking.json";
 import writingAnimation from "./lottie/newton-writing.json";
 import completedAnimation from "./lottie/newton-completed.json";
+import confusedAnimation from "./lottie/newton-confused.json";
+import celebratingAnimation from "./lottie/newton-celebrating.json";
+import sleepingAnimation from "./lottie/newton-sleeping.json";
+
+// Expanded Newton states
+export type NewtonState = 
+  | "idle" 
+  | "thinking" 
+  | "writing" 
+  | "completed"
+  | "confused"
+  | "celebrating"
+  | "sleeping";
 
 interface LottieNewtonProps {
-  state: ProcessingPhase;
+  state: NewtonState;
   size?: "sm" | "md" | "lg";
   className?: string;
   onComplete?: () => void;
@@ -21,17 +33,23 @@ const sizeClasses = {
   lg: "w-40 h-40 sm:w-52 sm:h-52 md:w-64 md:h-64",
 };
 
-const animations = {
+const animations: Record<Exclude<NewtonState, "idle">, object> = {
   thinking: thinkingAnimation,
   writing: writingAnimation,
   completed: completedAnimation,
+  confused: confusedAnimation,
+  celebrating: celebratingAnimation,
+  sleeping: sleepingAnimation,
 };
+
+// States that should loop vs play once
+const loopingStates: NewtonState[] = ["thinking", "writing", "confused", "sleeping"];
 
 /**
  * Lottie-based Newton Animation Component
  * 
  * Uses pure vector Lottie animations for smooth 60fps playback.
- * Each animation has separate layers for Head, Eyes, Mouth, Arms, etc.
+ * Supports 6 states: thinking, writing, completed, confused, celebrating, sleeping.
  */
 export const LottieNewton = memo(({
   state,
@@ -42,8 +60,8 @@ export const LottieNewton = memo(({
   const lottieRef = useRef<LottieRefCurrentProps>(null);
 
   useEffect(() => {
-    if (state === "completed" && lottieRef.current) {
-      // For completed, play once then trigger callback
+    if ((state === "completed" || state === "celebrating") && lottieRef.current) {
+      // For play-once animations, start from beginning
       lottieRef.current.goToAndPlay(0);
     }
   }, [state]);
@@ -51,7 +69,7 @@ export const LottieNewton = memo(({
   if (state === "idle") return null;
 
   const animationData = animations[state];
-  const isLoop = state !== "completed";
+  const isLoop = loopingStates.includes(state);
 
   return (
     <AnimatePresence mode="wait">
@@ -68,7 +86,7 @@ export const LottieNewton = memo(({
           animationData={animationData}
           loop={isLoop}
           autoplay={true}
-          onComplete={state === "completed" ? onComplete : undefined}
+          onComplete={!isLoop ? onComplete : undefined}
           style={{ width: "100%", height: "100%" }}
           rendererSettings={{
             preserveAspectRatio: "xMidYMid slice",
