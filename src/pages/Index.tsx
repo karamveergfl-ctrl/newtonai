@@ -5,6 +5,7 @@ import { UploadZone } from "@/components/UploadZone";
 import { LectureRecorder } from "@/components/LectureRecorder";
 
 import { WelcomeModal } from "@/components/WelcomeModal";
+import { NewUserWelcomeModal } from "@/components/NewUserWelcomeModal";
 import { PDFReader } from "@/components/PDFReader";
 import { ImageViewer } from "@/components/ImageViewer";
 import { VideoPanel } from "@/components/VideoPanel";
@@ -121,6 +122,39 @@ const Index = () => {
   // Credit modal state
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [blockedFeature, setBlockedFeature] = useState("");
+  
+  // New user welcome modal state
+  const [showNewUserWelcome, setShowNewUserWelcome] = useState(false);
+  const [newUserName, setNewUserName] = useState<string | undefined>();
+  
+  // Check for new signup on mount
+  useEffect(() => {
+    const isNewSignup = localStorage.getItem('newtonai_new_signup');
+    if (isNewSignup === 'true') {
+      // Delay slightly to let the page load first
+      const timer = setTimeout(() => {
+        setShowNewUserWelcome(true);
+        localStorage.removeItem('newtonai_new_signup');
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+  
+  // Fetch user name for welcome modal
+  useEffect(() => {
+    if (session?.user?.id) {
+      supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', session.user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.full_name) {
+            setNewUserName(data.full_name);
+          }
+        });
+    }
+  }, [session?.user?.id]);
 
   // Lecture notes state
   const [lectureNotes, setLectureNotes] = useState("");
@@ -1946,6 +1980,13 @@ const Index = () => {
             onWatchAd={earnCredits}
             canWatchMoreAds={canWatchMoreAds()}
             remainingAds={getRemainingAds()}
+          />
+          
+          {/* New User Welcome Modal */}
+          <NewUserWelcomeModal
+            isOpen={showNewUserWelcome}
+            onClose={() => setShowNewUserWelcome(false)}
+            userName={newUserName}
           />
         </div>
       </div>
