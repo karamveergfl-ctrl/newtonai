@@ -8,6 +8,7 @@ import {
   Mic, Download, Copy, Check, Volume2, VolumeX, Pencil, Eye, Highlighter,
   Upload, Youtube, FileText, Globe, Loader2, ArrowLeft, Sparkles, BookOpen, Clipboard, Star, ChevronDown
 } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -480,9 +481,21 @@ const AILectureNotes = () => {
     { id: "youtube" as InputType, label: "Youtube", icon: Youtube },
     { id: "text" as InputType, label: "Text", icon: FileText },
   ];
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Tools", href: "/tools" },
+    { name: "AI Lecture Notes", href: "/tools/lecture-notes" },
+  ];
 
   return (
     <AppLayout>
+      <SEOHead
+        title="AI Lecture Notes"
+        description="Transform lectures into organized notes instantly. Record audio, upload files, or paste content to generate comprehensive study notes with AI."
+        canonicalPath="/tools/lecture-notes"
+        breadcrumbs={breadcrumbs}
+        keywords="lecture notes, AI note taking, transcription, study notes, audio to notes"
+      />
       <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

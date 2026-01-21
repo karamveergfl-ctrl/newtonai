@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, CheckCircle, XCircle, RotateCcw } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -196,8 +197,21 @@ const AIQuiz = () => {
     return "Text Content";
   };
 
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Tools", href: "/tools" },
+    { name: "AI Quiz", href: "/tools/quiz" },
+  ];
+
   return (
     <AppLayout>
+      <SEOHead
+        title="AI Quiz Generator"
+        description="Test your knowledge with AI-generated quizzes from any content. Get instant feedback and explanations for each question."
+        canonicalPath="/tools/quiz"
+        breadcrumbs={breadcrumbs}
+        keywords="AI quiz, quiz generator, test yourself, study quiz, practice questions"
+      />
       <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

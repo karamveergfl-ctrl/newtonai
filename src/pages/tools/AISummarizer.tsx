@@ -7,6 +7,7 @@ import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star, ChevronDown } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
@@ -819,8 +820,21 @@ const AISummarizer = () => {
     );
   }
 
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Tools", href: "/tools" },
+    { name: "AI Summarizer", href: "/tools/summarizer" },
+  ];
+
   return (
     <AppLayout>
+      <SEOHead
+        title="AI Summarizer"
+        description="Get AI-powered summaries, flashcards, quizzes, and mind maps from PDFs, YouTube videos, audio recordings, or text content."
+        canonicalPath="/tools/summarizer"
+        breadcrumbs={breadcrumbs}
+        keywords="AI summarizer, text summarization, PDF summary, YouTube summary, study tools"
+      />
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

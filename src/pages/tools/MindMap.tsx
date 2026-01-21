@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Network, ZoomIn, ZoomOut, GitBranch, Boxes, Clock, ArrowLeft, Sparkles } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
@@ -162,8 +163,21 @@ const MindMap = () => {
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.2, 0.5));
 
 
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Tools", href: "/tools" },
+    { name: "Mind Map", href: "/tools/mindmap" },
+  ];
+
   return (
     <AppLayout>
+      <SEOHead
+        title="AI Mind Map Generator"
+        description="Visualize concepts and relationships from any content with AI-generated mind maps. Choose from radial, tree, cluster, or timeline layouts."
+        canonicalPath="/tools/mindmap"
+        breadcrumbs={breadcrumbs}
+        keywords="mind map generator, concept mapping, visual learning, study visualization, AI mind maps"
+      />
       <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

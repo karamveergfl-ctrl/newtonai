@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle, Copy, Check, ImageIcon, Volume2, VolumeX, ChevronDown, Star } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
@@ -238,8 +239,21 @@ const HomeworkHelp = () => {
     }
   };
 
+  const breadcrumbs = [
+    { name: "Home", href: "/" },
+    { name: "Tools", href: "/tools" },
+    { name: "Homework Help", href: "/tools/homework-help" },
+  ];
+
   return (
     <AppLayout>
+      <SEOHead
+        title="Homework Helper"
+        description="Get step-by-step solutions to your homework problems with AI. Upload images, PDFs, or type your questions for instant help."
+        canonicalPath="/tools/homework-help"
+        breadcrumbs={breadcrumbs}
+        keywords="homework help, AI tutor, step-by-step solutions, math help, problem solver"
+      />
       <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
