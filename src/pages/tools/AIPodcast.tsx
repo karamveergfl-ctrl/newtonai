@@ -13,6 +13,7 @@ import { Podcast, Sparkles, ArrowLeft, Radio, Volume2, Minimize2 } from "lucide-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
+import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { CreditModal } from "@/components/CreditModal";
 import { usePodcastContext } from "@/contexts/PodcastContext";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
@@ -57,6 +58,7 @@ export default function AIPodcast() {
   const [showStylePresets, setShowStylePresets] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
+  const { incrementUsage } = useFeatureUsage();
   
   // Error state for confused Newton
   const [errorState, setErrorState] = useState<"confused" | null>(null);
@@ -239,10 +241,11 @@ export default function AIPodcast() {
 
       setProgress(90);
 
-      // Spend credits after successful generation
+      // Spend credits and track usage after successful generation
       if (!isPremium) {
         await spendCredits("ai_podcast");
       }
+      await incrementUsage('ai_podcast');
 
       const podcastTitle = scriptData.title || metadata?.videoTitle || "AI Study Podcast";
 

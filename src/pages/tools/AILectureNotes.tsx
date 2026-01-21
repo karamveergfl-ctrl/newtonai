@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LectureRecorder } from "@/components/LectureRecorder";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
+import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { cn } from "@/lib/utils";
 import { useDropzone } from "react-dropzone";
@@ -154,6 +155,7 @@ const AILectureNotes = () => {
   
   const { toast } = useToast();
   const { modal } = useFeatureGate("lecture_notes");
+  const { incrementUsage } = useFeatureUsage();
   const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
   const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
 
@@ -320,6 +322,9 @@ const AILectureNotes = () => {
       if (notesError || !notesData?.notes) {
         throw new Error(notesError?.message || "Failed to generate notes");
       }
+
+      // Track usage
+      await incrementUsage('lecture_notes');
 
       setProgress(100);
       toast({

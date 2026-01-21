@@ -18,29 +18,48 @@ export interface SubscriptionInfo {
 
 // Free tier limits
 const FREE_LIMITS: Record<string, { limit: number; unit: "per_day" | "per_month" | "minutes_per_month" }> = {
+  educational_videos: { limit: 20, unit: "per_month" },
   homework_help: { limit: 5, unit: "per_day" },
   ai_chat: { limit: 3, unit: "per_day" },
   flashcards: { limit: 3, unit: "per_month" },
   quiz: { limit: 3, unit: "per_month" },
-  summary: { limit: 5, unit: "per_month" },
-  lecture_notes: { limit: 3, unit: "per_month" },
+  summary: { limit: 2, unit: "per_month" },
+  lecture_notes: { limit: 2, unit: "per_month" },
   lecture_transcription: { limit: 20, unit: "minutes_per_month" },
   mind_map: { limit: 3, unit: "per_month" },
+  ai_podcast: { limit: 1, unit: "per_month" },
 };
 
-// Pro tier - unlimited for most features
+// Pro tier - specific limits for most features
 const PRO_LIMITS: Record<string, { limit: number; unit: "per_day" | "per_month" | "minutes_per_month" }> = {
+  educational_videos: { limit: -1, unit: "per_month" }, // Unlimited
+  homework_help: { limit: -1, unit: "per_day" }, // Unlimited
+  ai_chat: { limit: -1, unit: "per_day" }, // Unlimited
+  flashcards: { limit: 30, unit: "per_month" },
+  quiz: { limit: 30, unit: "per_month" },
+  summary: { limit: 20, unit: "per_month" },
+  lecture_notes: { limit: 20, unit: "per_month" },
+  lecture_transcription: { limit: 200, unit: "minutes_per_month" },
+  mind_map: { limit: 30, unit: "per_month" },
+  ai_podcast: { limit: 15, unit: "per_month" },
+};
+
+// Ultra tier - everything unlimited
+const ULTRA_LIMITS: Record<string, { limit: number; unit: "per_day" | "per_month" | "minutes_per_month" }> = {
+  educational_videos: { limit: -1, unit: "per_month" },
   homework_help: { limit: -1, unit: "per_day" },
   ai_chat: { limit: -1, unit: "per_day" },
   flashcards: { limit: -1, unit: "per_month" },
   quiz: { limit: -1, unit: "per_month" },
   summary: { limit: -1, unit: "per_month" },
   lecture_notes: { limit: -1, unit: "per_month" },
-  lecture_transcription: { limit: 120, unit: "minutes_per_month" },
+  lecture_transcription: { limit: -1, unit: "minutes_per_month" },
   mind_map: { limit: -1, unit: "per_month" },
+  ai_podcast: { limit: -1, unit: "per_month" },
 };
 
 export const FEATURE_LABELS: Record<string, { label: string; icon: string }> = {
+  educational_videos: { label: "Educational Videos", icon: "🎬" },
   homework_help: { label: "Homework Help", icon: "📝" },
   ai_chat: { label: "AI Chat", icon: "💬" },
   flashcards: { label: "AI Flashcards", icon: "🃏" },
@@ -49,6 +68,7 @@ export const FEATURE_LABELS: Record<string, { label: string; icon: string }> = {
   lecture_notes: { label: "Lecture Notes", icon: "🎤" },
   lecture_transcription: { label: "Live Transcription", icon: "🎙️" },
   mind_map: { label: "Mind Map", icon: "🧠" },
+  ai_podcast: { label: "AI Podcast", icon: "🎙️" },
 };
 
 export function useFeatureUsage() {
@@ -90,7 +110,7 @@ export function useFeatureUsage() {
       .eq("user_id", session.user.id)
       .gte("period_start", monthStart);
 
-    const limits = tier === "pro" || tier === "ultra" ? PRO_LIMITS : FREE_LIMITS;
+    const limits = tier === "ultra" ? ULTRA_LIMITS : tier === "pro" ? PRO_LIMITS : FREE_LIMITS;
     
     const usageList: FeatureLimit[] = Object.entries(limits).map(([name, config]) => {
       const featureUsage = usageData?.find((u) => u.feature_name === name);
@@ -117,11 +137,12 @@ export function useFeatureUsage() {
   }, [fetchUsage]);
 
   const checkCanUse = useCallback((featureName: string): boolean => {
-    if (subscription.tier === "pro" || subscription.tier === "ultra") return true;
+    // Only Ultra tier gets unlimited everything
+    if (subscription.tier === "ultra") return true;
     
     const feature = usage.find((u) => u.name === featureName);
     if (!feature) return true;
-    if (feature.limit === -1) return true;
+    if (feature.limit === -1) return true; // This specific feature is unlimited
     
     return feature.used < feature.limit;
   }, [usage, subscription]);
