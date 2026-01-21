@@ -42,13 +42,13 @@ import { useCredits } from "@/hooks/useCredits";
 import { useEffect } from "react";
 
 const studyTools = [
-  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help", feature: "homework_help" },
-  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards", feature: "flashcards" },
   { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz", feature: "quiz" },
-  { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer", feature: "summary" },
-  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes", feature: "lecture_notes" },
-  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map", feature: "mind_map" },
+  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards", feature: "flashcards" },
   { id: "podcast", label: "AI Podcast", icon: Podcast, path: "/tools/ai-podcast", feature: "ai_podcast" },
+  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map", feature: "mind_map" },
+  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes", feature: "lecture_notes" },
+  { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer", feature: "summary" },
+  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help", feature: "homework_help" },
 ];
 
 interface AppSidebarProps {
