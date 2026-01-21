@@ -267,6 +267,7 @@ export type Database = {
           id: string
           language_preference: string | null
           onboarding_completed: boolean | null
+          preferred_currency: string | null
           referral_source: string | null
           study_goals: string[] | null
           subjects: string[] | null
@@ -281,6 +282,7 @@ export type Database = {
           id: string
           language_preference?: string | null
           onboarding_completed?: boolean | null
+          preferred_currency?: string | null
           referral_source?: string | null
           study_goals?: string[] | null
           subjects?: string[] | null
@@ -295,6 +297,7 @@ export type Database = {
           id?: string
           language_preference?: string | null
           onboarding_completed?: boolean | null
+          preferred_currency?: string | null
           referral_source?: string | null
           study_goals?: string[] | null
           subjects?: string[] | null
