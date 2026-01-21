@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Network, ZoomIn, ZoomOut, GitBranch, Boxes, Clock, ArrowLeft, Sparkles } from "lucide-react";
+import { Network, ZoomIn, ZoomOut, GitBranch, Boxes, Clock, ArrowLeft, Sparkles, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
@@ -15,6 +15,7 @@ import {
   transcribeAudio, 
   processUploadedFile 
 } from "@/utils/contentProcessing";
+import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 
 type MindMapStyle = "radial" | "tree" | "cluster" | "timeline";
 
@@ -40,8 +41,11 @@ const MindMap = () => {
 
   // Style selection state
   const [showStyleSelection, setShowStyleSelection] = useState(false);
-  const [selectedStyle, setSelectedStyle] = useState<MindMapStyle>("radial");
   const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
+  
+  // Use persisted style preferences
+  const { preferences, setMindMapStyle } = useTemplatePreferences();
+  const selectedStyle = preferences.mindMapStyle;
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
@@ -166,7 +170,7 @@ const MindMap = () => {
                         return (
                           <button
                             key={style.id}
-                            onClick={() => setSelectedStyle(style.id)}
+                            onClick={() => setMindMapStyle(style.id)}
                             className={cn(
                               "p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
                               selectedStyle === style.id
