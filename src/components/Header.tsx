@@ -9,11 +9,11 @@ import { Menu, X } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Home" },
+  { href: "/tools", label: "Tools" },
   { href: "/pricing", label: "Pricing" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
   { href: "/faq", label: "FAQ" },
-  { href: "/contact", label: "Contact" },
 ];
 
 interface HeaderProps {
