@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Volume2, VolumeX, Loader2 } from "lucide-react";
-import { LottieNewton } from "@/components/newton/LottieNewton";
+import { NewtonProcessingAnimation } from "./NewtonProcessingAnimation";
 import { useNewtonSounds } from "@/hooks/useNewtonSounds";
 import type { ProcessingPhase } from "@/hooks/useProcessingState";
 
@@ -107,10 +107,11 @@ export const ProcessingOverlay = memo(({
     <div className="flex flex-col items-center justify-center gap-4">
       {/* Lottie Animation with sound control */}
       <div className="relative">
-        <LottieNewton
+        <NewtonProcessingAnimation
           state={internalPhase}
           size={size}
-          onComplete={onCompleteEnd}
+          onCompleteAnimationEnd={onCompleteEnd}
+          enableSounds={false}
         />
 
         {/* Sound control button */}
