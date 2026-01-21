@@ -20,15 +20,29 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <motion.div
-        className="relative flex-shrink-0 group"
+        className="relative flex-shrink-0"
         style={{ width: icon, height: icon }}
         whileHover={{ scale: 1.05 }}
         transition={{ duration: 0.2 }}
       >
-        {/* Glowing ring */}
-        <div 
-          className="absolute inset-0 rounded-full bg-gradient-to-r from-primary via-secondary to-primary opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300 group-hover:animate-pulse"
+        {/* Color-cycling glowing ring */}
+        <motion.div 
+          className="absolute inset-0 rounded-full blur-md"
           style={{ margin: -4 }}
+          animate={{
+            background: [
+              "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))",
+              "linear-gradient(180deg, hsl(var(--secondary)), hsl(280, 80%, 60%))",
+              "linear-gradient(270deg, hsl(280, 80%, 60%), hsl(340, 80%, 60%))",
+              "linear-gradient(360deg, hsl(340, 80%, 60%), hsl(var(--primary)))",
+            ],
+            opacity: [0.6, 0.8, 0.6],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "linear",
+          }}
         />
         {/* Logo container */}
         <div
