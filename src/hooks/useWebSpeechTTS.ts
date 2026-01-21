@@ -177,6 +177,43 @@ const VOICE_PATTERNS: Record<string, { male: RegExp; female: RegExp }> = {
 // Quality indicators - prefer these voices
 const QUALITY_INDICATORS = /\b(neural|natural|premium|enhanced|wavenet|online|remote)\b/i;
 
+// Natural speech parameters per language - tuned for human-like reading
+const LANGUAGE_SPEECH_PARAMS: Record<string, { rate: number; pitch: number }> = {
+  // Indian Languages - slightly slower for clarity
+  hi: { rate: 0.92, pitch: 1.0 },   // Hindi
+  mr: { rate: 0.90, pitch: 1.0 },   // Marathi
+  ta: { rate: 0.92, pitch: 1.02 },  // Tamil - slightly higher pitch
+  te: { rate: 0.91, pitch: 1.0 },   // Telugu
+  bn: { rate: 0.90, pitch: 1.0 },   // Bengali
+  gu: { rate: 0.91, pitch: 1.0 },   // Gujarati
+  kn: { rate: 0.91, pitch: 1.0 },   // Kannada
+  ml: { rate: 0.88, pitch: 1.0 },   // Malayalam - slower for complex words
+  pa: { rate: 0.92, pitch: 1.0 },   // Punjabi
+  or: { rate: 0.90, pitch: 1.0 },   // Odia
+  as: { rate: 0.90, pitch: 1.0 },   // Assamese
+  // European Languages
+  es: { rate: 0.95, pitch: 1.0 },   // Spanish
+  fr: { rate: 0.93, pitch: 1.0 },   // French - elegant pace
+  de: { rate: 0.94, pitch: 0.98 },  // German - clear pronunciation
+  it: { rate: 0.95, pitch: 1.0 },   // Italian
+  pt: { rate: 0.94, pitch: 1.0 },   // Portuguese
+  ru: { rate: 0.92, pitch: 0.98 },  // Russian
+  nl: { rate: 0.94, pitch: 1.0 },   // Dutch
+  pl: { rate: 0.93, pitch: 1.0 },   // Polish
+  // Asian Languages
+  ja: { rate: 0.88, pitch: 1.0 },   // Japanese - slower for clarity
+  zh: { rate: 0.85, pitch: 1.0 },   // Chinese - slower for tones
+  ko: { rate: 0.90, pitch: 1.0 },   // Korean
+  vi: { rate: 0.90, pitch: 1.0 },   // Vietnamese
+  th: { rate: 0.88, pitch: 1.0 },   // Thai
+  id: { rate: 0.92, pitch: 1.0 },   // Indonesian
+  // Middle Eastern
+  ar: { rate: 0.88, pitch: 0.98 },  // Arabic - measured pace
+  tr: { rate: 0.92, pitch: 1.0 },   // Turkish
+  // English - natural default
+  en: { rate: 0.95, pitch: 1.0 },
+};
+
 interface UseWebSpeechTTSReturn {
   speak: (text: string, options?: WebSpeechOptions) => Promise<void>;
   cancel: () => void;
@@ -373,24 +410,31 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
         const storedSettings = getStoredSettings();
         const speaker = options.speaker || "host1";
 
-        // Apply rate - use options first, then stored settings, then defaults
+        // Get language-specific natural speech parameters
+        const langCode = options.language || "en";
+        const langParams = LANGUAGE_SPEECH_PARAMS[langCode] || LANGUAGE_SPEECH_PARAMS.en;
+
+        // Apply rate - use options first, then language defaults, then stored settings
         if (options.rate !== undefined) {
           utterance.rate = options.rate;
-        } else if (storedSettings) {
+        } else if (storedSettings && options.language === "en") {
+          // Only use stored podcast settings for English
           const storedRate = speaker === "host1" ? storedSettings.host1Rate : storedSettings.host2Rate;
           utterance.rate = storedRate;
         } else {
-          utterance.rate = 1;
+          // Use language-tuned natural rate
+          utterance.rate = langParams.rate;
         }
 
-        // Apply pitch - use options first, then stored settings, then defaults
+        // Apply pitch - use options first, then language defaults, then stored settings
         if (options.pitch !== undefined) {
           utterance.pitch = options.pitch;
-        } else if (storedSettings) {
+        } else if (storedSettings && options.language === "en") {
           const storedPitch = speaker === "host1" ? storedSettings.host1Pitch : storedSettings.host2Pitch;
           utterance.pitch = storedPitch;
         } else {
-          utterance.pitch = speaker === "host2" ? 1.1 : 0.95;
+          // Use language-tuned natural pitch
+          utterance.pitch = langParams.pitch;
         }
 
         utterance.volume = 1;
