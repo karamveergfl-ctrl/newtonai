@@ -10,8 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { useFeatureGate } from "@/components/FeatureGate";
-import { useFeatureUsage } from "@/hooks/useFeatureUsage";
+import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { useProcessingState } from "@/hooks/useProcessingState";
@@ -45,8 +45,9 @@ const AIQuiz = () => {
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const { toast } = useToast();
-  const { tryUseFeature, modal } = useFeatureGate("quiz");
-  const { incrementUsage } = useFeatureUsage();
+  
+  // Use feature limit gate instead of credit gate
+  const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("quiz");
 
   // Processing animation state
   const { phase, isProcessing: isGenerating, startThinking, startWriting, complete, reset: resetProcessing } = useProcessingState();
@@ -129,8 +130,8 @@ const AIQuiz = () => {
 
       const data = await response.json();
       
-      // Track usage
-      await incrementUsage('quiz');
+      // Track usage after successful generation
+      await confirmUsage();
       
       // Trigger completed animation
       complete();
@@ -371,7 +372,17 @@ const AIQuiz = () => {
         />
       )}
 
-      {modal}
+      {/* Usage Limit Modal */}
+      <UsageLimitModal
+        open={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        featureName={getFeatureDisplayName("quiz")}
+        currentUsage={feature?.used || 0}
+        limit={feature?.limit || 0}
+        unit={feature?.unit}
+        tier={subscription.tier}
+        proLimit={90}
+      />
     </AppLayout>
   );
 };

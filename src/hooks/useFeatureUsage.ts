@@ -100,19 +100,29 @@ export function useFeatureUsage() {
 
     setSubscription({ tier, expiresAt, isActive });
 
-    // Fetch current usage
+    // Fetch current usage - need both daily and monthly data
     const today = new Date().toISOString().split("T")[0];
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
 
-    const { data: usageData } = await supabase
+    // Fetch monthly usage
+    const { data: monthlyUsageData } = await supabase
       .from("feature_usage")
       .select("*")
       .eq("user_id", session.user.id)
-      .gte("period_start", monthStart);
+      .eq("period_start", monthStart);
+
+    // Fetch daily usage for per_day features
+    const { data: dailyUsageData } = await supabase
+      .from("feature_usage")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .eq("period_start", today);
 
     const limits = tier === "ultra" ? ULTRA_LIMITS : tier === "pro" ? PRO_LIMITS : FREE_LIMITS;
     
     const usageList: FeatureLimit[] = Object.entries(limits).map(([name, config]) => {
+      // Use daily data for per_day features, monthly for others
+      const usageData = config.unit === "per_day" ? dailyUsageData : monthlyUsageData;
       const featureUsage = usageData?.find((u) => u.feature_name === name);
       const used = config.unit === "minutes_per_month" 
         ? (featureUsage?.usage_minutes || 0)
@@ -153,6 +163,11 @@ export function useFeatureUsage() {
     const today = new Date().toISOString().split("T")[0];
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
 
+    // Determine the correct period based on feature type
+    const limits = FREE_LIMITS; // Just to check the unit type
+    const featureConfig = limits[featureName];
+    const periodStart = featureConfig?.unit === "per_day" ? today : monthStart;
+
     // Use upsert to increment usage
     const { error } = await supabase
       .from("feature_usage")
@@ -160,7 +175,7 @@ export function useFeatureUsage() {
         {
           user_id: userId,
           feature_name: featureName,
-          period_start: monthStart,
+          period_start: periodStart,
           usage_count: minutes ? 0 : 1,
           usage_minutes: minutes || 0,
         },
@@ -176,7 +191,7 @@ export function useFeatureUsage() {
         .select("*")
         .eq("user_id", userId)
         .eq("feature_name", featureName)
-        .eq("period_start", monthStart)
+        .eq("period_start", periodStart)
         .single();
 
       if (existing) {

@@ -9,8 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Flashcard } from "@/components/Flashcard";
-import { useFeatureGate } from "@/components/FeatureGate";
-import { useFeatureUsage } from "@/hooks/useFeatureUsage";
+import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { useProcessingState } from "@/hooks/useProcessingState";
@@ -39,8 +39,9 @@ const AIFlashcards = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const { toast } = useToast();
-  const { tryUseFeature, modal } = useFeatureGate("flashcards");
-  const { incrementUsage } = useFeatureUsage();
+  
+  // Use feature limit gate instead of credit gate
+  const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("flashcards");
 
   // Processing animation state
   const { phase, isProcessing: isGenerating, startThinking, startWriting, complete, reset: resetProcessing } = useProcessingState();
@@ -120,8 +121,8 @@ const AIFlashcards = () => {
 
       const data = await response.json();
       
-      // Track usage
-      await incrementUsage('flashcards');
+      // Track usage after successful generation
+      await confirmUsage();
       
       // Trigger completed animation
       complete();
@@ -295,7 +296,17 @@ const AIFlashcards = () => {
         />
       )}
 
-      {modal}
+      {/* Usage Limit Modal */}
+      <UsageLimitModal
+        open={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        featureName={getFeatureDisplayName("flashcards")}
+        currentUsage={feature?.used || 0}
+        limit={feature?.limit || 0}
+        unit={feature?.unit}
+        tier={subscription.tier}
+        proLimit={90}
+      />
     </AppLayout>
   );
 };

@@ -10,6 +10,8 @@ import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, Vol
 import SEOHead from "@/components/SEOHead";
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { VideoCardWithTools } from "@/components/VideoCardWithTools";
 import { VideoPlayer } from "@/components/VideoPlayer";
@@ -99,7 +101,8 @@ const AISummarizer = () => {
   const [copied, setCopied] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { checkCanUse, incrementUsage } = useFeatureUsage();
+  const { incrementUsage } = useFeatureUsage();
+  const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("summary");
   const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
 
   // Video-specific state
@@ -328,15 +331,9 @@ const AISummarizer = () => {
       return;
     }
 
-    // For non-YouTube content, extract content first then show format selection
-    if (!checkCanUse("summary")) {
-      toast({
-        title: "Usage limit reached",
-        description: "You've reached your monthly summarizer limit. Upgrade to continue.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // For non-YouTube content, check feature limits first
+    const allowed = await tryUseFeature();
+    if (!allowed) return;
 
     setIsLoading(true);
     setSummary(null);
@@ -400,7 +397,7 @@ const AISummarizer = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
 
-      await incrementUsage("summary");
+      await confirmUsage();
 
       const { data: summaryData, error: summaryError } = await supabase.functions.invoke(
         "generate-summary",
@@ -1095,6 +1092,18 @@ const AISummarizer = () => {
         <NewtonFeedback 
           state={errorState} 
           onDismiss={() => setErrorState(null)}
+        />
+
+        {/* Usage Limit Modal */}
+        <UsageLimitModal
+          open={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
+          featureName={getFeatureDisplayName("summary")}
+          currentUsage={feature?.used || 0}
+          limit={feature?.limit || 0}
+          unit={feature?.unit}
+          tier={subscription.tier}
+          proLimit={20}
         />
       </div>
     </AppLayout>

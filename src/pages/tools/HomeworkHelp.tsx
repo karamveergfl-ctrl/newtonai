@@ -10,7 +10,8 @@ import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Button } from "@/components/ui/button";
 import { StepBySolutionRenderer } from "@/components/StepBySolutionRenderer";
 import { InlineSolutionPanel } from "@/components/InlineSolutionPanel";
-import { useFeatureGate } from "@/components/FeatureGate";
+import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { 
@@ -51,7 +52,9 @@ const HomeworkHelp = () => {
   const [contentLanguage, setContentLanguage] = useState("en");
   const [capturedScreenshot, setCapturedScreenshot] = useState<{ imageBase64: string; mimeType: string } | null>(null);
   const { toast } = useToast();
-  const { canUse, tryUseFeature, modal } = useFeatureGate("homework_help");
+  
+  // Use feature limit gate instead of credit gate
+  const { canUse, tryUseFeature, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("homework_help");
   const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
   const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
 
@@ -385,7 +388,16 @@ const HomeworkHelp = () => {
         onDismiss={() => setErrorState(null)}
       />
 
-      {modal}
+      {/* Usage Limit Modal */}
+      <UsageLimitModal
+        open={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        featureName={getFeatureDisplayName("homework_help")}
+        currentUsage={feature?.used || 0}
+        limit={feature?.limit || 0}
+        unit={feature?.unit}
+        tier={subscription.tier}
+      />
     </AppLayout>
   );
 };

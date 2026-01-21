@@ -18,7 +18,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { LectureRecorder } from "@/components/LectureRecorder";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { useFeatureGate } from "@/components/FeatureGate";
+import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { cn } from "@/lib/utils";
@@ -155,7 +156,7 @@ const AILectureNotes = () => {
   const selectedTemplate = preferences.lectureTemplate;
   
   const { toast } = useToast();
-  const { modal } = useFeatureGate("lecture_notes");
+  const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("lecture_notes");
   const { incrementUsage } = useFeatureUsage();
   const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
   const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
@@ -325,7 +326,7 @@ const AILectureNotes = () => {
       }
 
       // Track usage
-      await incrementUsage('lecture_notes');
+      await confirmUsage();
 
       setProgress(100);
       toast({
@@ -972,7 +973,17 @@ const AILectureNotes = () => {
         </motion.div>
       </div>
 
-      {modal}
+      {/* Usage Limit Modal */}
+      <UsageLimitModal
+        open={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        featureName={getFeatureDisplayName("lecture_notes")}
+        currentUsage={feature?.used || 0}
+        limit={feature?.limit || 0}
+        unit={feature?.unit}
+        tier={subscription.tier}
+        proLimit={20}
+      />
     </AppLayout>
   );
 };

@@ -14,7 +14,8 @@ import SEOHead from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
-import { useFeatureUsage } from "@/hooks/useFeatureUsage";
+import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { CreditModal } from "@/components/CreditModal";
 import { usePodcastContext } from "@/contexts/PodcastContext";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
@@ -59,7 +60,7 @@ export default function AIPodcast() {
   const [showStylePresets, setShowStylePresets] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
-  const { incrementUsage } = useFeatureUsage();
+  const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("ai_podcast");
   
   // Error state for confused Newton
   const [errorState, setErrorState] = useState<"confused" | null>(null);
@@ -95,11 +96,9 @@ export default function AIPodcast() {
     type: "upload" | "recording" | "youtube" | "text",
     metadata?: { videoId?: string; videoTitle?: string; file?: File; language?: string }
   ) => {
-    // Check credits first
-    if (!isPremium && !hasEnoughCredits("ai_podcast")) {
-      setShowCreditModal(true);
-      return;
-    }
+    // Check feature limits first
+    const allowed = await tryUseFeature();
+    if (!allowed) return;
 
     // Store content and show style presets dialog
     pendingContentRef.current = { content, type, metadata };
@@ -242,11 +241,11 @@ export default function AIPodcast() {
 
       setProgress(90);
 
-      // Spend credits and track usage after successful generation
+      // Track usage after successful generation (credits are optional on top of limits)
+      await confirmUsage();
       if (!isPremium) {
         await spendCredits("ai_podcast");
       }
-      await incrementUsage('ai_podcast');
 
       const podcastTitle = scriptData.title || metadata?.videoTitle || "AI Study Podcast";
 
@@ -593,6 +592,18 @@ export default function AIPodcast() {
         <NewtonFeedback 
           state={errorState} 
           onDismiss={() => setErrorState(null)}
+        />
+
+        {/* Usage Limit Modal */}
+        <UsageLimitModal
+          open={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
+          featureName={getFeatureDisplayName("ai_podcast")}
+          currentUsage={feature?.used || 0}
+          limit={feature?.limit || 0}
+          unit={feature?.unit}
+          tier={subscription.tier}
+          proLimit={15}
         />
       </div>
     </AppLayout>
