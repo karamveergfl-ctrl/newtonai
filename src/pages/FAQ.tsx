@@ -50,6 +50,26 @@ const faqs = [
   {
     question: "Can I share my study materials with classmates?",
     answer: "Team collaboration features are available on our Ultra plan. You can create study groups, share flashcard decks, and collaborate on study materials with your classmates."
+  },
+  {
+    question: "What are promotional codes and how do they work?",
+    answer: "Promotional codes are special discount codes that can reduce subscription costs. You can apply a code during checkout by clicking 'Have a promo code?' on the pricing page. Codes may have usage limits, expiration dates, and other restrictions. Each code can only be used once per account."
+  },
+  {
+    question: "What are 100% discount codes?",
+    answer: "100% discount codes are special promotional codes that grant full premium access without payment. These codes are typically offered during special campaigns, to early adopters, or through partnerships. They provide the same features as paid subscriptions but are subject to promotional terms and may be revoked for policy violations."
+  },
+  {
+    question: "Can I cancel my premium access obtained through a promotional code?",
+    answer: "Yes, you can downgrade to the free tier at any time from your Profile settings. However, since no payment was made for promotional access, no refunds or compensation apply. Your premium features will remain active until you choose to downgrade or until the promotional period ends."
+  },
+  {
+    question: "Are there any restrictions on promotional code usage?",
+    answer: "Yes. Promotional codes are subject to: (1) Usage limits - codes may have maximum redemption counts; (2) Expiration dates - codes are valid for specific time periods; (3) First-payment restriction - 100% codes typically apply only to your first subscription; (4) Non-transferable - codes cannot be sold or shared; (5) One per account - each user can only use a specific code once."
+  },
+  {
+    question: "Can NewtonAI revoke my promotional premium access?",
+    answer: "Yes. NewtonAI reserves the right to terminate promotional access if: you violate the Terms of Service, the code was obtained fraudulently, or the promotional campaign ends. We'll notify you before making any changes to your access."
   }
 ];
 

@@ -174,9 +174,10 @@ serve(async (req) => {
             },
           });
 
-        // Send email notification
+        // Send email notifications
         const resendApiKey = Deno.env.get('RESEND_API_KEY');
         if (resendApiKey) {
+          // Admin notification email
           const emailSubject = isHighValue
             ? `🎉 High-Value Code Redeemed: ${codeData.code}`
             : `⚠️ Code Nearing Limit: ${codeData.code} (${Math.round((codeData.current_uses / codeData.max_uses!) * 100)}% used)`;
@@ -221,7 +222,115 @@ serve(async (req) => {
             });
             console.log('Admin email notification sent');
           } catch (emailError) {
-            console.error('Failed to send email notification:', emailError);
+            console.error('Failed to send admin email notification:', emailError);
+          }
+
+          // Send welcome email to the user who redeemed the 100% code
+          if (isHighValue && user.email) {
+            try {
+              const formattedPlanName = plan_name.charAt(0).toUpperCase() + plan_name.slice(1);
+              const formattedBillingCycle = billing_cycle.charAt(0).toUpperCase() + billing_cycle.slice(1);
+              const formattedExpiryDate = periodEnd.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              });
+
+              const welcomeEmailHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <style>
+                    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #8b5cf6; }
+                    .logo { font-size: 28px; font-weight: bold; color: #8b5cf6; }
+                    .content { padding: 30px 0; }
+                    .highlight-box { background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color: white; padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0; }
+                    .terms-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+                    .terms-title { font-weight: 600; color: #1e293b; margin-bottom: 10px; }
+                    .terms-list { margin: 0; padding-left: 20px; color: #64748b; }
+                    .terms-list li { margin-bottom: 8px; }
+                    .cta-button { display: inline-block; background: #8b5cf6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+                    .footer { text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px; }
+                    .footer a { color: #8b5cf6; text-decoration: none; }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <div class="header">
+                      <div class="logo">🎓 NewtonAI</div>
+                    </div>
+                    
+                    <div class="content">
+                      <h1 style="color: #1e293b; text-align: center;">Welcome to Premium! 🎉</h1>
+                      
+                      <p>Congratulations! Your promotional code <strong>${codeData.code}</strong> has been successfully applied.</p>
+                      
+                      <div class="highlight-box">
+                        <h2 style="margin: 0 0 10px 0;">Your Plan Details</h2>
+                        <p style="margin: 0; font-size: 24px; font-weight: bold;">${formattedPlanName} Plan</p>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9;">${formattedBillingCycle} billing • Valid until ${formattedExpiryDate}</p>
+                      </div>
+                      
+                      <p>You now have access to all premium features including:</p>
+                      <ul>
+                        <li>✨ Unlimited AI-powered flashcards, quizzes, and mind maps</li>
+                        <li>🎙️ AI Podcasts from your study materials</li>
+                        <li>📝 Comprehensive lecture notes and summaries</li>
+                        <li>🎯 Unlimited homework help and AI chat</li>
+                        <li>⏱️ Extended transcription minutes</li>
+                      </ul>
+                      
+                      <div class="terms-box">
+                        <div class="terms-title">📋 Promotional Access Terms</div>
+                        <ul class="terms-list">
+                          <li>Your premium access was granted through a 100% discount promotional code</li>
+                          <li>This access provides the same features as paid premium subscriptions</li>
+                          <li>You may downgrade to the free tier at any time from your Profile settings</li>
+                          <li>No refunds or compensation apply as no payment was made</li>
+                          <li>Access may be revoked for violation of our <a href="https://newtonai.lovable.app/terms" style="color: #8b5cf6;">Terms of Service</a></li>
+                          <li>Promotional access is subject to the campaign's duration and terms</li>
+                        </ul>
+                      </div>
+                      
+                      <div style="text-align: center;">
+                        <a href="https://newtonai.lovable.app/tools" class="cta-button">Start Learning Now →</a>
+                      </div>
+                      
+                      <p>Have questions? Check our <a href="https://newtonai.lovable.app/faq" style="color: #8b5cf6;">FAQ</a> or <a href="https://newtonai.lovable.app/contact" style="color: #8b5cf6;">contact support</a>.</p>
+                    </div>
+                    
+                    <div class="footer">
+                      <p>© ${new Date().getFullYear()} NewtonAI. All rights reserved.</p>
+                      <p>
+                        <a href="https://newtonai.lovable.app/terms">Terms of Service</a> • 
+                        <a href="https://newtonai.lovable.app/privacy">Privacy Policy</a> • 
+                        <a href="https://newtonai.lovable.app/refund">Refund Policy</a>
+                      </p>
+                    </div>
+                  </div>
+                </body>
+                </html>
+              `;
+
+              await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${resendApiKey}`,
+                },
+                body: JSON.stringify({
+                  from: 'NewtonAI <onboarding@resend.dev>',
+                  to: [user.email],
+                  subject: '🎉 Welcome to NewtonAI Premium! Your Access is Now Active',
+                  html: welcomeEmailHtml,
+                }),
+              });
+              console.log('User welcome email sent to:', user.email);
+            } catch (userEmailError) {
+              console.error('Failed to send user welcome email:', userEmailError);
+            }
           }
         }
       }
