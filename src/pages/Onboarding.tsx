@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Logo from "@/components/Logo";
+import SEOHead from "@/components/SEOHead";
 import { 
   GraduationCap, 
   BookOpen, 
@@ -248,6 +249,12 @@ const Onboarding = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex flex-col overflow-hidden">
+      <SEOHead
+        title="Onboarding"
+        description="Personalize your NewtonAI learning experience. Set up your profile, select subjects, and define your study goals."
+        canonicalPath="/onboarding"
+        noIndex={true}
+      />
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <motion.div

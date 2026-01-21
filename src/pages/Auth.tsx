@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Eye, EyeOff, BookOpen, Brain, Layers, FileText, Sparkles, AlertTriangle, ShieldAlert } from "lucide-react";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 
 const sha1UpperHex = async (value: string) => {
   const data = new TextEncoder().encode(value);
@@ -169,6 +170,13 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEOHead
+        title={mode === "login" ? "Sign In" : mode === "forgot-password" ? "Reset Password" : "Sign Up"}
+        description="Sign up or log in to NewtonAI. Access AI-powered flashcards, quizzes, summaries, and study tools to boost your learning."
+        canonicalPath="/auth"
+        noIndex={true}
+        keywords="sign up, login, create account, NewtonAI account, student login"
+      />
       <div className="flex-1 flex">
         {/* Left Panel - Illustration */}
         <motion.div

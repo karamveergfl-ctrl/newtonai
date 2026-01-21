@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 import {
   Accordion,
   AccordionContent,
@@ -10,9 +11,21 @@ import {
 } from "@/components/ui/accordion";
 import { AlertCircle, CheckCircle2, XCircle, Clock, Mail } from "lucide-react";
 
+const breadcrumbs = [
+  { name: "Home", href: "/" },
+  { name: "Refund Policy", href: "/refund" },
+];
+
 const Refund = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Refund Policy"
+        description="NewtonAI's refund policy explained. 14-day money-back guarantee, pro-rata refunds for annual plans, and how to request a refund."
+        canonicalPath="/refund"
+        breadcrumbs={breadcrumbs}
+        keywords="refund policy, money back guarantee, subscription refund, NewtonAI refunds, cancellation policy"
+      />
       {/* Header */}
       <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import SEOHead from "@/components/SEOHead";
 import {
   Accordion,
   AccordionContent,
@@ -8,9 +9,21 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+const breadcrumbs = [
+  { name: "Home", href: "/" },
+  { name: "Privacy Policy", href: "/privacy" },
+];
+
 const Privacy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Privacy Policy"
+        description="Learn how NewtonAI collects, uses, and protects your personal data. Our privacy policy covers data security, GDPR compliance, and your rights."
+        canonicalPath="/privacy"
+        breadcrumbs={breadcrumbs}
+        keywords="privacy policy, data protection, GDPR, personal data, NewtonAI privacy"
+      />
       <Header />
 
       {/* Main Content */}
