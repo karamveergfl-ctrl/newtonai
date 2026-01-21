@@ -1,16 +1,27 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Download, Copy, Check, Volume2, VolumeX, Pencil, Eye, Highlighter } from "lucide-react";
+import { 
+  Mic, Download, Copy, Check, Volume2, VolumeX, Pencil, Eye, Highlighter,
+  Upload, Youtube, FileText, Globe, Loader2
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { LectureRecorder } from "@/components/LectureRecorder";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { cn } from "@/lib/utils";
+import { useDropzone } from "react-dropzone";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { extractTextFromPDF, extractTextFromImage, getYouTubeTranscript, readTextFile } from "@/utils/contentProcessing";
+
+// Input tab types
+type InputType = "upload" | "recording" | "youtube" | "text";
 
 // Highlight colors for marking text
 const HIGHLIGHT_COLORS = [
@@ -19,6 +30,21 @@ const HIGHLIGHT_COLORS = [
   { name: "Blue", class: "bg-blue-300/50 dark:bg-blue-500/30" },
   { name: "Pink", class: "bg-pink-300/50 dark:bg-pink-500/30" },
   { name: "Orange", class: "bg-orange-300/50 dark:bg-orange-500/30" },
+];
+
+const languages = [
+  { code: "en-US", name: "English" },
+  { code: "es-ES", name: "Spanish" },
+  { code: "fr-FR", name: "French" },
+  { code: "de-DE", name: "German" },
+  { code: "it-IT", name: "Italian" },
+  { code: "pt-BR", name: "Portuguese" },
+  { code: "zh-CN", name: "Chinese" },
+  { code: "ja-JP", name: "Japanese" },
+  { code: "ko-KR", name: "Korean" },
+  { code: "ar-SA", name: "Arabic" },
+  { code: "hi-IN", name: "Hindi" },
+  { code: "ru-RU", name: "Russian" },
 ];
 
 // Strip markdown formatting for cleaner TTS
@@ -40,7 +66,25 @@ const stripMarkdown = (text: string): string => {
     .trim();
 };
 
+// Extract YouTube video ID
+const extractVideoId = (url: string): string | null => {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/shorts\/([^&\n?#]+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+};
+
 const AILectureNotes = () => {
+  // Tab state
+  const [activeTab, setActiveTab] = useState<InputType>("recording");
+  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
+  
+  // Notes state
   const [notes, setNotes] = useState("");
   const [notesTitle, setNotesTitle] = useState("");
   const [copied, setCopied] = useState(false);
@@ -49,6 +93,17 @@ const AILectureNotes = () => {
   const [isHighlightMode, setIsHighlightMode] = useState(false);
   const [selectedHighlightColor, setSelectedHighlightColor] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
+  
+  // Processing state
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState("");
+  const [progress, setProgress] = useState(0);
+  
+  // Input state for non-recording tabs
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [textContent, setTextContent] = useState("");
+  
   const { toast } = useToast();
   const { modal } = useFeatureGate("lecture_notes");
   const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
@@ -57,6 +112,30 @@ const AILectureNotes = () => {
   useEffect(() => {
     setEditedNotes(notes);
   }, [notes]);
+
+  // File dropzone
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      "application/pdf": [".pdf"],
+      "text/plain": [".txt"],
+      "image/*": [".png", ".jpg", ".jpeg", ".webp"],
+    },
+    maxSize: 25 * 1024 * 1024,
+    maxFiles: 1,
+    onDrop: (acceptedFiles) => {
+      if (acceptedFiles.length > 0) {
+        setUploadedFile(acceptedFiles[0]);
+      }
+    },
+    onDropRejected: (rejections) => {
+      const error = rejections[0]?.errors[0];
+      toast({
+        title: "Upload failed",
+        description: error?.message || "Invalid file",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleReadAloud = useCallback(async () => {
     if (isSpeaking) {
@@ -98,6 +177,89 @@ const AILectureNotes = () => {
     setIsHighlightMode(false);
   };
 
+  // Process content from Upload/YouTube/Text tabs
+  const handleProcessContent = async () => {
+    setIsProcessing(true);
+    setProgress(0);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Please sign in to continue");
+      }
+
+      let content = "";
+      
+      if (activeTab === "upload" && uploadedFile) {
+        setProcessingStep("Extracting text from file...");
+        setProgress(20);
+        
+        if (uploadedFile.type === "application/pdf") {
+          content = await extractTextFromPDF(uploadedFile, session.access_token);
+        } else if (uploadedFile.type.startsWith("image/")) {
+          content = await extractTextFromImage(uploadedFile, session.access_token);
+        } else {
+          content = await readTextFile(uploadedFile);
+        }
+      } else if (activeTab === "youtube") {
+        setProcessingStep("Fetching video transcript...");
+        setProgress(20);
+        
+        const videoId = extractVideoId(youtubeUrl);
+        if (!videoId) {
+          throw new Error("Invalid YouTube URL");
+        }
+        content = await getYouTubeTranscript(videoId, session.access_token);
+      } else if (activeTab === "text") {
+        content = textContent;
+      }
+
+      if (!content || content.length < 20) {
+        throw new Error("Not enough content to generate notes");
+      }
+
+      setProcessingStep("Generating notes...");
+      setProgress(50);
+
+      const { data: notesData, error: notesError } = await supabase.functions.invoke("generate-lecture-notes", {
+        body: {
+          transcription: content,
+          template: "lecture",
+          templateStructure: ["Key Points", "Details", "Summary"],
+          language: selectedLanguage,
+        },
+      });
+
+      if (notesError || !notesData?.notes) {
+        throw new Error(notesError?.message || "Failed to generate notes");
+      }
+
+      setProgress(100);
+      toast({
+        title: "Notes generated!",
+        description: "Your lecture notes are ready",
+      });
+      
+      handleNotesGenerated(notesData.notes, notesData.title || "Lecture Notes");
+      
+      // Reset input state
+      setUploadedFile(null);
+      setYoutubeUrl("");
+      setTextContent("");
+    } catch (error) {
+      console.error("Processing failed:", error);
+      toast({
+        title: "Processing failed",
+        description: error instanceof Error ? error.message : "Could not generate notes",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+      setProcessingStep("");
+      setProgress(0);
+    }
+  };
+
   const handleDownload = () => {
     const blob = new Blob([notes], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
@@ -120,7 +282,6 @@ const AILectureNotes = () => {
 
   const handleToggleEdit = () => {
     if (isEditing) {
-      // Save changes
       setNotes(editedNotes);
       toast({
         title: "Changes saved ✓",
@@ -155,10 +316,8 @@ const AILectureNotes = () => {
 
     const range = selection.getRangeAt(0);
     
-    // Check if selection is within our content
     if (!contentRef.current.contains(range.commonAncestorContainer)) return;
 
-    // Create highlight mark
     const mark = document.createElement("mark");
     mark.className = cn(
       HIGHLIGHT_COLORS[selectedHighlightColor].class,
@@ -174,7 +333,6 @@ const AILectureNotes = () => {
         description: `Marked with ${HIGHLIGHT_COLORS[selectedHighlightColor].name}`,
       });
     } catch (e) {
-      // Can't surround if selection spans multiple elements
       toast({
         title: "Can't highlight",
         description: "Try selecting text within a single paragraph",
@@ -183,7 +341,6 @@ const AILectureNotes = () => {
     }
   }, [isHighlightMode, selectedHighlightColor, toast]);
 
-  // Add mouseup listener for highlighting
   useEffect(() => {
     if (isHighlightMode) {
       document.addEventListener("mouseup", handleTextSelection);
@@ -211,6 +368,20 @@ const AILectureNotes = () => {
     });
   };
 
+  const isReadyToProcess = () => {
+    if (activeTab === "upload") return !!uploadedFile;
+    if (activeTab === "youtube") return !!extractVideoId(youtubeUrl);
+    if (activeTab === "text") return textContent.length >= 20;
+    return false;
+  };
+
+  const tabs = [
+    { id: "upload" as InputType, label: "Upload", icon: Upload },
+    { id: "recording" as InputType, label: "Recording", icon: Mic },
+    { id: "youtube" as InputType, label: "Youtube", icon: Youtube },
+    { id: "text" as InputType, label: "Text", icon: FileText },
+  ];
+
   return (
     <AppLayout>
       <div className="min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
@@ -225,13 +396,219 @@ const AILectureNotes = () => {
             </div>
             <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">AI Lecture Notes</h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-2 font-sans px-2 sm:px-0">
-              Record lectures or upload audio to get organized notes instantly
+              Record lectures, upload files, or paste content to get organized notes instantly
             </p>
           </div>
 
           <Card className="border-border/50 shadow-lg">
             <CardContent className="pt-6">
-              <LectureRecorder onNotesGenerated={handleNotesGenerated} />
+              {/* Tab Bar */}
+              <div className="flex items-center justify-between gap-2 mb-6 flex-wrap">
+                <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all",
+                        activeTab === tab.id
+                          ? "bg-background shadow-sm text-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                      )}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      <span className="hidden sm:inline">{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {activeTab !== "recording" && (
+                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <SelectTrigger className="w-[140px] bg-card/80">
+                      <Globe className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languages.map((lang) => (
+                        <SelectItem key={lang.code} value={lang.code}>
+                          {lang.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              {/* Tab Content */}
+              <AnimatePresence mode="wait">
+                {activeTab === "recording" ? (
+                  <motion.div
+                    key="recording"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <LectureRecorder onNotesGenerated={handleNotesGenerated} />
+                  </motion.div>
+                ) : isProcessing ? (
+                  <motion.div
+                    key="processing"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center justify-center py-16 space-y-4"
+                  >
+                    <Loader2 className="w-16 h-16 text-primary animate-spin" />
+                    <div className="text-center">
+                      <p className="text-lg font-semibold text-foreground mb-2">
+                        {processingStep}
+                      </p>
+                      <div className="w-64 h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {progress}% complete
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : activeTab === "upload" ? (
+                  <motion.div
+                    key="upload"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <div
+                      {...getRootProps()}
+                      className={cn(
+                        "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all min-h-[200px] flex flex-col items-center justify-center",
+                        isDragActive
+                          ? "border-primary bg-primary/5"
+                          : uploadedFile
+                          ? "border-green-500 bg-green-500/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <input {...getInputProps()} />
+                      {uploadedFile ? (
+                        <div className="space-y-2">
+                          <div className="w-12 h-12 mx-auto rounded-full bg-green-500/10 flex items-center justify-center">
+                            <Check className="w-6 h-6 text-green-500" />
+                          </div>
+                          <p className="font-medium text-foreground">{uploadedFile.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUploadedFile(null);
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                            <Upload className="w-6 h-6 text-primary" />
+                          </div>
+                          <p className="font-medium text-foreground">
+                            {isDragActive ? "Drop file here" : "Drag & drop or click to upload"}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Supports PDF, TXT, and images • Max 25MB
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button
+                      className="w-full mt-4"
+                      disabled={!uploadedFile}
+                      onClick={handleProcessContent}
+                    >
+                      Generate Notes
+                    </Button>
+                  </motion.div>
+                ) : activeTab === "youtube" ? (
+                  <motion.div
+                    key="youtube"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-4"
+                  >
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">YouTube URL</label>
+                      <Input
+                        type="url"
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        value={youtubeUrl}
+                        onChange={(e) => setYoutubeUrl(e.target.value)}
+                        className="bg-card"
+                      />
+                    </div>
+
+                    {extractVideoId(youtubeUrl) && (
+                      <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${extractVideoId(youtubeUrl)}`}
+                          className="w-full h-full"
+                          allowFullScreen
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        />
+                      </div>
+                    )}
+
+                    <Button
+                      className="w-full"
+                      disabled={!extractVideoId(youtubeUrl)}
+                      onClick={handleProcessContent}
+                    >
+                      Generate Notes from Video
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="text"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-4"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-foreground">
+                          Paste your content
+                        </label>
+                        <span className="text-xs text-muted-foreground">
+                          {textContent.length} characters
+                        </span>
+                      </div>
+                      <Textarea
+                        placeholder="Paste lecture transcript, article, or any text content here..."
+                        value={textContent}
+                        onChange={(e) => setTextContent(e.target.value)}
+                        className="min-h-[200px] bg-card resize-y"
+                      />
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      disabled={textContent.length < 20}
+                      onClick={handleProcessContent}
+                    >
+                      Generate Notes
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </CardContent>
           </Card>
 
@@ -247,7 +624,6 @@ const AILectureNotes = () => {
                       {notesTitle || "Lecture Notes"}
                     </CardTitle>
                     <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-                      {/* Edit/View Toggle */}
                       <Button 
                         variant={isEditing ? "default" : "ghost"} 
                         size="sm" 
@@ -265,7 +641,6 @@ const AILectureNotes = () => {
                         <span className="ml-2 sm:hidden">{isEditing ? "Preview" : "Edit"}</span>
                       </Button>
 
-                      {/* Highlight Toggle */}
                       <Button 
                         variant={isHighlightMode ? "default" : "ghost"} 
                         size="sm" 
@@ -314,7 +689,6 @@ const AILectureNotes = () => {
                     </div>
                   </div>
 
-                  {/* Highlight Color Picker */}
                   {isHighlightMode && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
