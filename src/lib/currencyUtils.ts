@@ -24,6 +24,28 @@ export const CURRENCY_NAMES: Record<CurrencyCode, string> = {
   SGD: 'Singapore Dollar',
 };
 
+export const CURRENCY_FLAGS: Record<CurrencyCode, string> = {
+  INR: '🇮🇳',
+  USD: '🇺🇸',
+  EUR: '🇪🇺',
+  GBP: '🇬🇧',
+  PLN: '🇵🇱',
+  AUD: '🇦🇺',
+  CAD: '🇨🇦',
+  SGD: '🇸🇬',
+};
+
+export const CURRENCY_SHORT_NAMES: Record<CurrencyCode, string> = {
+  INR: 'India',
+  USD: 'United States',
+  EUR: 'Europe',
+  GBP: 'United Kingdom',
+  PLN: 'Poland',
+  AUD: 'Australia',
+  CAD: 'Canada',
+  SGD: 'Singapore',
+};
+
 // Pricing in smallest currency units (paise for INR, cents for USD, etc.)
 // Razorpay requires amounts in smallest currency unit
 export const PRICING = {

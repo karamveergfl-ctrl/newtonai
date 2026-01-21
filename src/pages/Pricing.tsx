@@ -1,22 +1,24 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Sparkles, Loader2, Gift, X, Infinity as InfinityIcon, Globe } from "lucide-react";
+import { Sparkles, Gift, X, Infinity as InfinityIcon, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
-import { PaymentButton } from "@/components/PaymentButton";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { RedeemCodeDialog } from "@/components/RedeemCodeDialog";
 import { useRedeemCode } from "@/hooks/useRedeemCode";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { detectCurrency, DISPLAY_PRICING, CurrencyCode, CURRENCY_NAMES, CURRENCY_SYMBOLS } from "@/lib/currencyUtils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { detectCurrency, CurrencyCode, CURRENCY_NAMES, CURRENCY_SYMBOLS, CURRENCY_FLAGS } from "@/lib/currencyUtils";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { PricingCard } from "@/components/pricing/PricingCard";
 
 // Feature comparison data for the table
 const featureLimits = [
@@ -66,6 +68,30 @@ const planFeatures = {
   ],
 };
 
+const plans = [
+  {
+    name: "Free",
+    description: "Perfect for getting started",
+    features: planFeatures.free,
+    cta: "Get Started",
+    popular: false,
+  },
+  {
+    name: "Pro",
+    description: "Best for students",
+    features: planFeatures.pro,
+    cta: "Subscribe Now",
+    popular: true,
+  },
+  {
+    name: "Ultra",
+    description: "For power learners",
+    features: planFeatures.ultra,
+    cta: "Go Ultra",
+    popular: false,
+  },
+];
+
 const Pricing = () => {
   const breadcrumbs = [
     { name: "Home", href: "/" },
@@ -78,8 +104,8 @@ const Pricing = () => {
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [verifyingPlanName, setVerifyingPlanName] = useState<string | null>(null);
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const { redeemCode, applyCode, clearCode, calculateDiscountedAmount } = useRedeemCode();
+  const [isAutoDetected, setIsAutoDetected] = useState(true);
+  const { redeemCode, applyCode, clearCode } = useRedeemCode();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -87,8 +113,6 @@ const Pricing = () => {
       setIsLoggedIn(!!session);
       
       if (session) {
-        setUserEmail(session.user.email || null);
-        // Detect currency based on user's email
         setCurrency(detectCurrency(session.user.email));
         
         const { data: profile } = await supabase
@@ -101,7 +125,6 @@ const Pricing = () => {
           setCurrentPlan(profile.subscription_tier);
         }
       } else {
-        // For non-logged in users, detect from browser locale
         setCurrency(detectCurrency(null));
       }
     };
@@ -109,22 +132,12 @@ const Pricing = () => {
     checkAuth();
   }, []);
 
-  // Get display prices based on detected currency
-  const getPrice = (plan: 'pro' | 'ultra', type: 'weeklyMonthly' | 'weeklyYearly' | 'monthly' | 'yearly') => {
-    return DISPLAY_PRICING[plan][type][currency];
-  };
-
-  const getSavings = (plan: 'pro' | 'ultra') => {
-    return DISPLAY_PRICING[plan].yearlySavings[currency];
-  };
-
   const handlePaymentStart = (planName: string) => {
     setIsVerifyingPayment(true);
     setVerifyingPlanName(planName);
   };
 
   const handlePaymentSuccess = async () => {
-    // Keep verifying state while refreshing
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       const { data: profile } = await supabase
@@ -146,44 +159,10 @@ const Pricing = () => {
     setVerifyingPlanName(null);
   };
 
-  // Build plans array dynamically based on currency
-  const plans = [
-    {
-      name: "Free",
-      weeklyPrice: currency === 'INR' ? '₹0' : '$0',
-      monthlyPrice: currency === 'INR' ? '₹0' : '$0',
-      yearlyPrice: currency === 'INR' ? '₹0' : '$0',
-      description: "Perfect for getting started",
-      features: planFeatures.free,
-      cta: "Get Started",
-      popular: false,
-    },
-    {
-      name: "Pro",
-      weeklyPriceMonthly: getPrice('pro', 'weeklyMonthly'),
-      weeklyPriceYearly: getPrice('pro', 'weeklyYearly'),
-      monthlyPrice: getPrice('pro', 'monthly'),
-      yearlyPrice: getPrice('pro', 'yearly'),
-      yearlySavings: getSavings('pro'),
-      description: "Best for students",
-      features: planFeatures.pro,
-      cta: "Subscribe Now",
-      popular: true,
-    },
-    {
-      name: "Ultra",
-      weeklyPriceMonthly: getPrice('ultra', 'weeklyMonthly'),
-      weeklyPriceYearly: getPrice('ultra', 'weeklyYearly'),
-      monthlyPrice: getPrice('ultra', 'monthly'),
-      yearlyPrice: getPrice('ultra', 'yearly'),
-      yearlySavings: getSavings('ultra'),
-      description: "For power learners",
-      features: planFeatures.ultra,
-      cta: "Subscribe Now",
-      popular: false,
-    },
-  ];
-
+  const handleCurrencyChange = (newCurrency: CurrencyCode) => {
+    setCurrency(newCurrency);
+    setIsAutoDetected(false);
+  };
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
@@ -217,9 +196,10 @@ const Pricing = () => {
       
       <Header />
 
-      <main className="container mx-auto px-4 py-16 relative z-10">
+      <main className="container mx-auto px-4 py-12 sm:py-16 relative z-10">
+        {/* Header Section */}
         <motion.div 
-          className="text-center mb-12"
+          className="text-center mb-10"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
@@ -240,7 +220,7 @@ const Pricing = () => {
           </motion.div>
           
           <motion.h1 
-            className="text-4xl font-bold mb-4"
+            className="text-3xl sm:text-4xl font-bold mb-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -248,296 +228,142 @@ const Pricing = () => {
             Simple, Transparent Pricing
           </motion.h1>
           <motion.p 
-            className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
+            className="text-lg text-muted-foreground max-w-2xl mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
             Choose the plan that fits your learning needs. Upgrade or downgrade anytime.
           </motion.p>
-          
-          {/* Billing Toggle and Currency Selector */}
-          <motion.div 
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <div className="flex items-center gap-4">
-              <span className={`text-sm font-medium ${!isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Monthly
-              </span>
-              <Switch
-                checked={isYearly}
-                onCheckedChange={setIsYearly}
-              />
-              <span className={`text-sm font-medium ${isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Yearly
-              </span>
-              {isYearly && (
-                <motion.span 
-                  className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "spring" }}
-                >
-                  Best Value
-                </motion.span>
-              )}
-            </div>
-            
-            {/* Currency Selector */}
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 text-muted-foreground" />
-              <Select value={currency} onValueChange={(value: CurrencyCode) => setCurrency(value)}>
-                <SelectTrigger className="w-[130px] h-9 text-sm bg-background">
-                  <SelectValue>
-                    {CURRENCY_SYMBOLS[currency]} {currency}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  {(Object.keys(CURRENCY_NAMES) as CurrencyCode[]).map((code) => (
-                    <SelectItem key={code} value={code}>
-                      {CURRENCY_SYMBOLS[code]} {code} - {CURRENCY_NAMES[code]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </motion.div>
-
-          {/* Redeem Code Section */}
-          <motion.div
-            className="flex items-center justify-center gap-3 mt-6"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-          >
-            {redeemCode.isValidated ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20"
-              >
-                <Gift className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                  {redeemCode.discountPercent}% discount applied!
-                </span>
-                <button
-                  onClick={clearCode}
-                  className="ml-1 p-1 rounded-full hover:bg-green-500/20 transition-colors"
-                >
-                  <X className="h-3 w-3 text-green-600 dark:text-green-400" />
-                </button>
-              </motion.div>
-            ) : (
-              <RedeemCodeDialog
-                trigger={
-                  <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
-                    <Gift className="h-4 w-4" />
-                    Have a promo code?
-                  </button>
-                }
-                onCodeRedeemed={(codeId, discountPercent) => {
-                  applyCode(codeId, discountPercent);
-                }}
-              />
-            )}
-          </motion.div>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        {/* Controls Row */}
+        <motion.div 
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          {/* Billing Toggle */}
+          <div className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-muted/50 border border-border">
+            <span className={`text-sm font-medium transition-colors ${!isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Monthly
+            </span>
+            <Switch
+              checked={isYearly}
+              onCheckedChange={setIsYearly}
+              className="data-[state=checked]:bg-primary"
+            />
+            <span className={`text-sm font-medium transition-colors ${isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
+              Yearly
+            </span>
+            {isYearly && (
+              <motion.span 
+                className="bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold px-2 py-0.5 rounded-full"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring" }}
+              >
+                Save 25%
+              </motion.span>
+            )}
+          </div>
+          
+          {/* Currency Selector */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-muted/50 border border-border hover:bg-muted/80 transition-colors text-sm">
+                <span className="text-base">{CURRENCY_FLAGS[currency]}</span>
+                <span className="font-medium">{CURRENCY_SYMBOLS[currency]} {currency}</span>
+                {isAutoDetected && (
+                  <span className="text-xs text-muted-foreground">(auto)</span>
+                )}
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-56 bg-popover">
+              {(Object.keys(CURRENCY_NAMES) as CurrencyCode[]).map((code) => (
+                <DropdownMenuItem 
+                  key={code} 
+                  onClick={() => handleCurrencyChange(code)}
+                  className={`flex items-center gap-3 cursor-pointer ${currency === code ? 'bg-primary/10' : ''}`}
+                >
+                  <span className="text-lg">{CURRENCY_FLAGS[code]}</span>
+                  <div className="flex-1">
+                    <span className="font-medium">{CURRENCY_SYMBOLS[code]} {code}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{CURRENCY_NAMES[code]}</span>
+                  </div>
+                  {currency === code && (
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </motion.div>
+
+        {/* Redeem Code Section */}
+        <motion.div
+          className="flex items-center justify-center gap-3 mb-10"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        >
+          {redeemCode.isValidated ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20"
+            >
+              <Gift className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                {redeemCode.discountPercent}% discount applied!
+              </span>
+              <button
+                onClick={clearCode}
+                className="ml-1 p-1 rounded-full hover:bg-green-500/20 transition-colors"
+              >
+                <X className="h-3 w-3 text-green-600 dark:text-green-400" />
+              </button>
+            </motion.div>
+          ) : (
+            <RedeemCodeDialog
+              trigger={
+                <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                  <Gift className="h-4 w-4" />
+                  Have a promo code?
+                </button>
+              }
+              onCodeRedeemed={(codeId, discountPercent) => {
+                applyCode(codeId, discountPercent);
+              }}
+            />
+          )}
+        </motion.div>
+
+        {/* Pricing Cards */}
+        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
           {plans.map((plan, index) => {
             const planKey = plan.name.toLowerCase();
             const isCurrentPlan = currentPlan === planKey;
             const isThisPlanVerifying = isVerifyingPayment && verifyingPlanName === planKey;
             
             return (
-              <motion.div
+              <PricingCard
                 key={plan.name}
-                initial={{ opacity: 0, y: 50, rotateX: -10 }}
-                animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                transition={{ 
-                  duration: 0.6, 
-                  delay: 0.2 + index * 0.15,
-                  type: "spring",
-                  stiffness: 100
-                }}
-                whileHover={{ 
-                  y: -10, 
-                  scale: plan.popular ? 1.02 : 1.05,
-                  rotateX: 5,
-                  rotateY: index === 0 ? -5 : index === 2 ? 5 : 0,
-                }}
-                style={{ transformStyle: "preserve-3d", perspective: 1000 }}
-              >
-                <Card 
-                  className={`relative h-full overflow-visible ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105' : ''}`}
-                >
-                  {/* Skeleton Overlay for Verifying Payment */}
-                  <AnimatePresence>
-                    {isThisPlanVerifying && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-20 bg-card/95 backdrop-blur-sm flex flex-col items-center justify-center p-6"
-                      >
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="mb-4"
-                        >
-                          <Loader2 className="h-8 w-8 text-primary" />
-                        </motion.div>
-                        <h3 className="text-lg font-semibold mb-2">Processing Payment</h3>
-                        <p className="text-sm text-muted-foreground text-center mb-6">
-                          Please complete your payment in the popup window
-                        </p>
-                        
-                        {/* Skeleton content preview */}
-                        <div className="w-full space-y-3 opacity-50">
-                          <Skeleton className="h-4 w-3/4 mx-auto" />
-                          <Skeleton className="h-4 w-1/2 mx-auto" />
-                          <div className="space-y-2 mt-4">
-                            <Skeleton className="h-3 w-full" />
-                            <Skeleton className="h-3 w-5/6" />
-                            <Skeleton className="h-3 w-4/5" />
-                          </div>
-                        </div>
-                        
-                        <motion.div 
-                          className="mt-6 flex items-center gap-2 text-xs text-muted-foreground"
-                          animate={{ opacity: [0.5, 1, 0.5] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                          Waiting for confirmation...
-                        </motion.div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {plan.popular && (
-                    <motion.div 
-                      className="absolute -top-3 left-1/2 -translate-x-1/2 z-10"
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.6, type: "spring" }}
-                    >
-                      <span className="bg-primary text-primary-foreground text-sm font-medium px-3 py-1 rounded-full">
-                        Most Popular
-                      </span>
-                    </motion.div>
-                  )}
-                  {isCurrentPlan && (
-                    <motion.div 
-                      className="absolute -top-3 right-4 z-10"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                    >
-                      <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20">
-                        Current Plan
-                      </Badge>
-                    </motion.div>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
-                    <div className="mt-4">
-                      <motion.span 
-                        className="text-4xl font-bold"
-                        key={`${isYearly}-${currency}`}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        {plan.name === "Free" ? plan.weeklyPrice : (isYearly ? plan.weeklyPriceYearly : plan.weeklyPriceMonthly)}
-                      </motion.span>
-                      <span className="text-muted-foreground ml-2">
-                        {plan.name === "Free" ? "/forever" : "/week"}
-                      </span>
-                    </div>
-                    {plan.name !== "Free" && (
-                      <motion.div 
-                        className="mt-2 space-y-1"
-                        key={`${isYearly}-note-${currency}`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <p className="text-sm text-muted-foreground">
-                          Billed {isYearly ? 'annually' : 'monthly'} at{' '}
-                          <span className="font-semibold text-foreground">
-                            {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
-                          </span>
-                          {isYearly ? '/year' : '/month'}
-                        </p>
-                        {isYearly && plan.yearlySavings && (
-                          <motion.span 
-                            className="inline-block bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold px-2 py-1 rounded-full"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ type: "spring" }}
-                          >
-                            {plan.yearlySavings}
-                          </motion.span>
-                        )}
-                      </motion.div>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-3">
-                      {plan.features.map((feature, featureIndex) => (
-                        <motion.li 
-                          key={feature} 
-                          className="flex items-center gap-2"
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.4 + index * 0.1 + featureIndex * 0.05 }}
-                        >
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.5 + index * 0.1 + featureIndex * 0.05, type: "spring" }}
-                          >
-                            <Check className="h-5 w-5 text-primary" />
-                          </motion.div>
-                          <span>{feature}</span>
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    {plan.name === "Free" ? (
-                      <Link to="/auth" className="w-full">
-                        <Button 
-                          className="w-full" 
-                          variant="outline"
-                          disabled={isCurrentPlan}
-                        >
-                          {isCurrentPlan ? "Current Plan" : plan.cta}
-                        </Button>
-                      </Link>
-                    ) : (
-                      <PaymentButton
-                        planName={planKey as 'pro' | 'ultra'}
-                        billingCycle={isYearly ? 'yearly' : 'monthly'}
-                        className="w-full"
-                        variant="default"
-                        onSuccess={handlePaymentSuccess}
-                        onPaymentStart={() => handlePaymentStart(planKey)}
-                        onPaymentEnd={handlePaymentEnd}
-                        disabled={isCurrentPlan || isVerifyingPayment}
-                        discountPercent={redeemCode.discountPercent}
-                        redeemCodeId={redeemCode.codeId}
-                      >
-                        {isCurrentPlan ? "Current Plan" : plan.cta}
-                      </PaymentButton>
-                    )}
-                  </CardFooter>
-                </Card>
-              </motion.div>
+                plan={plan}
+                index={index}
+                isYearly={isYearly}
+                currency={currency}
+                isCurrentPlan={isCurrentPlan}
+                isVerifying={isThisPlanVerifying}
+                onPaymentStart={() => handlePaymentStart(planKey)}
+                onPaymentEnd={handlePaymentEnd}
+                onPaymentSuccess={handlePaymentSuccess}
+                discountPercent={redeemCode.discountPercent}
+                redeemCodeId={redeemCode.codeId}
+                disabled={isVerifyingPayment}
+              />
             );
           })}
         </div>
@@ -559,7 +385,7 @@ const Pricing = () => {
                   <TableHead className="font-semibold">Feature</TableHead>
                   <TableHead className="text-center font-semibold">Free</TableHead>
                   <TableHead className="text-center font-semibold text-primary">Pro</TableHead>
-                  <TableHead className="text-center font-semibold">Ultra</TableHead>
+                  <TableHead className="text-center font-semibold text-amber-500">Ultra</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -577,7 +403,7 @@ const Pricing = () => {
                       )}
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
+                      <span className="inline-flex items-center gap-1 text-amber-500 font-medium">
                         <InfinityIcon className="h-4 w-4" /> Unlimited
                       </span>
                     </TableCell>
@@ -595,9 +421,12 @@ const Pricing = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.0 }}
         >
-          <p className="text-sm text-muted-foreground mb-2">
-            Prices shown in {CURRENCY_NAMES[currency]} ({currency})
-          </p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border mb-4">
+            <span className="text-lg">{CURRENCY_FLAGS[currency]}</span>
+            <span className="text-sm text-muted-foreground">
+              Prices shown in {CURRENCY_NAMES[currency]} ({currency})
+            </span>
+          </div>
           <p className="text-sm text-muted-foreground mb-4">
             Secure payments powered by Razorpay
           </p>
