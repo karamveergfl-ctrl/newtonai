@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CurrencyCode, detectCurrency } from '@/lib/currencyUtils';
 
 declare global {
   interface Window {
@@ -43,7 +44,8 @@ interface UseRazorpayReturn {
     billingCycle: 'monthly' | 'yearly', 
     onProgress?: (progress: number, message: string) => void,
     discountPercent?: number,
-    redeemCodeId?: string | null
+    redeemCodeId?: string | null,
+    currency?: CurrencyCode
   ) => Promise<void>;
 }
 
@@ -83,7 +85,8 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void, onMo
     billingCycle: 'monthly' | 'yearly',
     onProgress?: (progress: number, message: string) => void,
     discountPercent: number = 0,
-    redeemCodeId: string | null = null
+    redeemCodeId: string | null = null,
+    currency?: CurrencyCode
   ) => {
     if (!isScriptLoaded) {
       toast({
@@ -111,13 +114,17 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void, onMo
 
       onProgress?.(40, 'Creating secure order...');
 
-      // Create order with discount info
+      // Detect currency from user's email if not provided
+      const detectedCurrency = currency || detectCurrency(session.user.email);
+
+      // Create order with discount info and currency
       const { data: orderData, error: orderError } = await supabase.functions.invoke('razorpay-create-order', {
         body: { 
           plan_name: planName, 
           billing_cycle: billingCycle,
           discount_percent: discountPercent,
           redeem_code_id: redeemCodeId,
+          currency: detectedCurrency,
         },
       });
 

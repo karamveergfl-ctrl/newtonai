@@ -6,17 +6,57 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Pricing in paise (1 INR = 100 paise)
-const PRICING = {
+type CurrencyCode = 'INR' | 'USD' | 'EUR' | 'GBP' | 'PLN' | 'AUD' | 'CAD' | 'SGD';
+
+// Pricing in smallest currency units (paise for INR, cents for USD, etc.)
+const PRICING: Record<string, Record<string, Record<CurrencyCode, number>>> = {
   pro: {
-    monthly: 69900,    // Rs 699
-    yearly: 649900,    // Rs 6,499
+    monthly: {
+      INR: 69900,    // ₹699
+      USD: 849,      // $8.49
+      EUR: 799,      // €7.99
+      GBP: 699,      // £6.99
+      PLN: 3500,     // zł35
+      AUD: 1299,     // A$12.99
+      CAD: 1149,     // C$11.49
+      SGD: 1149,     // S$11.49
+    },
+    yearly: {
+      INR: 649900,   // ₹6,499
+      USD: 7800,     // $78
+      EUR: 7400,     // €74
+      GBP: 6400,     // £64
+      PLN: 32000,    // zł320
+      AUD: 11900,    // A$119
+      CAD: 10500,    // C$105
+      SGD: 10500,    // S$105
+    },
   },
   ultra: {
-    monthly: 129900,   // Rs 1,299
-    yearly: 1199900,   // Rs 11,999
+    monthly: {
+      INR: 129900,   // ₹1,299
+      USD: 1599,     // $15.99
+      EUR: 1499,     // €14.99
+      GBP: 1299,     // £12.99
+      PLN: 6500,     // zł65
+      AUD: 2399,     // A$23.99
+      CAD: 2149,     // C$21.49
+      SGD: 2149,     // S$21.49
+    },
+    yearly: {
+      INR: 1199900,  // ₹11,999
+      USD: 14500,    // $145
+      EUR: 13500,    // €135
+      GBP: 11800,    // £118
+      PLN: 59000,    // zł590
+      AUD: 21900,    // A$219
+      CAD: 19500,    // C$195
+      SGD: 19500,    // S$195
+    },
   },
 };
+
+const SUPPORTED_CURRENCIES: CurrencyCode[] = ['INR', 'USD', 'EUR', 'GBP', 'PLN', 'AUD', 'CAD', 'SGD'];
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -57,7 +97,7 @@ serve(async (req) => {
       );
     }
 
-    const { plan_name, billing_cycle, discount_percent, redeem_code_id } = await req.json();
+    const { plan_name, billing_cycle, discount_percent, redeem_code_id, currency } = await req.json();
 
     // Validate inputs
     if (!plan_name || !billing_cycle) {
@@ -81,7 +121,11 @@ serve(async (req) => {
       );
     }
 
-    let amount = PRICING[plan_name as keyof typeof PRICING][billing_cycle as 'monthly' | 'yearly'];
+    // Validate and default currency
+    const selectedCurrency: CurrencyCode = SUPPORTED_CURRENCIES.includes(currency) ? currency : 'INR';
+
+    // Get base amount from server-side pricing (ignores any client-provided amount)
+    let amount = PRICING[plan_name][billing_cycle][selectedCurrency];
     
     // Apply discount if provided (validate discount percent is between 0-100)
     const validDiscount = typeof discount_percent === 'number' && discount_percent >= 0 && discount_percent <= 100 
@@ -91,15 +135,15 @@ serve(async (req) => {
     if (validDiscount > 0) {
       const discountAmount = Math.round((amount * validDiscount) / 100);
       amount = amount - discountAmount;
-      console.log(`Applying ${validDiscount}% discount: ${discountAmount} paise off, new amount: ${amount}`);
+      console.log(`Applying ${validDiscount}% discount: ${discountAmount} off, new amount: ${amount} ${selectedCurrency}`);
     }
 
-    console.log(`Creating order for user ${user.id}: ${plan_name} ${billing_cycle} - ${amount} paise`);
+    console.log(`Creating order for user ${user.id}: ${plan_name} ${billing_cycle} - ${amount} ${selectedCurrency}`);
 
     // Create Razorpay order
     const orderData = {
       amount: amount,
-      currency: 'INR',
+      currency: selectedCurrency,
       receipt: `order_${Date.now()}`,
       notes: {
         user_id: user.id,
@@ -138,7 +182,7 @@ serve(async (req) => {
         user_id: user.id,
         razorpay_order_id: order.id,
         amount: amount,
-        currency: 'INR',
+        currency: selectedCurrency,
         status: 'created',
       });
 
@@ -151,7 +195,7 @@ serve(async (req) => {
       JSON.stringify({
         order_id: order.id,
         amount: amount,
-        currency: 'INR',
+        currency: selectedCurrency,
         key_id: razorpayKeyId,
         plan_name: plan_name,
         billing_cycle: billing_cycle,

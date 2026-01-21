@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RedeemCodeDialog } from "@/components/RedeemCodeDialog";
 import { useRedeemCode } from "@/hooks/useRedeemCode";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { detectCurrency, DISPLAY_PRICING, CurrencyCode, CURRENCY_NAMES } from "@/lib/currencyUtils";
 
 // Feature comparison data for the table
 const featureLimits = [
@@ -30,70 +31,39 @@ const featureLimits = [
   { name: "AI Chat", free: "3/day", pro: "Unlimited", ultra: "Unlimited" },
 ];
 
-const plans = [
-  {
-    name: "Free",
-    inrWeeklyMonthly: "₹0",
-    inrWeeklyYearly: "₹0",
-    inrMonthly: "₹0",
-    inrYearly: "₹0",
-    description: "Perfect for getting started",
-    features: [
-      "20 educational videos/month",
-      "3 flashcards, quizzes, mind maps/month",
-      "2 lecture notes & summaries/month",
-      "1 AI podcast/month",
-      "20 min transcription/month",
-      "5 homework help/day",
-      "3 AI chat messages/day",
-    ],
-    cta: "Get Started",
-    popular: false,
-  },
-  {
-    name: "Pro",
-    inrWeeklyMonthly: "₹175",
-    inrWeeklyYearly: "₹125",
-    inrMonthly: "₹699",
-    inrYearly: "₹6,499",
-    yearlySavings: "Save ₹1,889",
-    description: "Best for students",
-    features: [
-      "Unlimited educational videos",
-      "90 flashcards, quizzes, mind maps/month",
-      "20 lecture notes & summaries/month",
-      "15 AI podcasts/month",
-      "900 min live transcription/month",
-      "Unlimited homework help",
-      "Unlimited AI chat",
-      "Priority support",
-    ],
-    cta: "Subscribe Now",
-    popular: true,
-  },
-  {
-    name: "Ultra",
-    inrWeeklyMonthly: "₹325",
-    inrWeeklyYearly: "₹231",
-    inrMonthly: "₹1,299",
-    inrYearly: "₹11,999",
-    yearlySavings: "Save ₹3,589",
-    description: "For power learners",
-    features: [
-      "Everything unlimited",
-      "Unlimited flashcards & quizzes",
-      "Unlimited mind maps",
-      "Unlimited lecture notes & summaries",
-      "Unlimited AI podcasts",
-      "Unlimited live transcription",
-      "Unlimited homework help & AI chat",
-      "Team collaboration",
-      "Dedicated support",
-    ],
-    cta: "Subscribe Now",
-    popular: false,
-  },
-];
+// Static feature list (currency-independent)
+const planFeatures = {
+  free: [
+    "20 educational videos/month",
+    "3 flashcards, quizzes, mind maps/month",
+    "2 lecture notes & summaries/month",
+    "1 AI podcast/month",
+    "20 min transcription/month",
+    "5 homework help/day",
+    "3 AI chat messages/day",
+  ],
+  pro: [
+    "Unlimited educational videos",
+    "90 flashcards, quizzes, mind maps/month",
+    "20 lecture notes & summaries/month",
+    "15 AI podcasts/month",
+    "900 min live transcription/month",
+    "Unlimited homework help",
+    "Unlimited AI chat",
+    "Priority support",
+  ],
+  ultra: [
+    "Everything unlimited",
+    "Unlimited flashcards & quizzes",
+    "Unlimited mind maps",
+    "Unlimited lecture notes & summaries",
+    "Unlimited AI podcasts",
+    "Unlimited live transcription",
+    "Unlimited homework help & AI chat",
+    "Team collaboration",
+    "Dedicated support",
+  ],
+};
 
 const Pricing = () => {
   const breadcrumbs = [
@@ -106,6 +76,8 @@ const Pricing = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [verifyingPlanName, setVerifyingPlanName] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<CurrencyCode>('USD');
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const { redeemCode, applyCode, clearCode, calculateDiscountedAmount } = useRedeemCode();
 
   useEffect(() => {
@@ -114,6 +86,10 @@ const Pricing = () => {
       setIsLoggedIn(!!session);
       
       if (session) {
+        setUserEmail(session.user.email || null);
+        // Detect currency based on user's email
+        setCurrency(detectCurrency(session.user.email));
+        
         const { data: profile } = await supabase
           .from('profiles')
           .select('subscription_tier')
@@ -123,11 +99,23 @@ const Pricing = () => {
         if (profile) {
           setCurrentPlan(profile.subscription_tier);
         }
+      } else {
+        // For non-logged in users, detect from browser locale
+        setCurrency(detectCurrency(null));
       }
     };
     
     checkAuth();
   }, []);
+
+  // Get display prices based on detected currency
+  const getPrice = (plan: 'pro' | 'ultra', type: 'weeklyMonthly' | 'weeklyYearly' | 'monthly' | 'yearly') => {
+    return DISPLAY_PRICING[plan][type][currency];
+  };
+
+  const getSavings = (plan: 'pro' | 'ultra') => {
+    return DISPLAY_PRICING[plan].yearlySavings[currency];
+  };
 
   const handlePaymentStart = (planName: string) => {
     setIsVerifyingPayment(true);
@@ -156,6 +144,45 @@ const Pricing = () => {
     setIsVerifyingPayment(false);
     setVerifyingPlanName(null);
   };
+
+  // Build plans array dynamically based on currency
+  const plans = [
+    {
+      name: "Free",
+      weeklyPrice: currency === 'INR' ? '₹0' : '$0',
+      monthlyPrice: currency === 'INR' ? '₹0' : '$0',
+      yearlyPrice: currency === 'INR' ? '₹0' : '$0',
+      description: "Perfect for getting started",
+      features: planFeatures.free,
+      cta: "Get Started",
+      popular: false,
+    },
+    {
+      name: "Pro",
+      weeklyPriceMonthly: getPrice('pro', 'weeklyMonthly'),
+      weeklyPriceYearly: getPrice('pro', 'weeklyYearly'),
+      monthlyPrice: getPrice('pro', 'monthly'),
+      yearlyPrice: getPrice('pro', 'yearly'),
+      yearlySavings: getSavings('pro'),
+      description: "Best for students",
+      features: planFeatures.pro,
+      cta: "Subscribe Now",
+      popular: true,
+    },
+    {
+      name: "Ultra",
+      weeklyPriceMonthly: getPrice('ultra', 'weeklyMonthly'),
+      weeklyPriceYearly: getPrice('ultra', 'weeklyYearly'),
+      monthlyPrice: getPrice('ultra', 'monthly'),
+      yearlyPrice: getPrice('ultra', 'yearly'),
+      yearlySavings: getSavings('ultra'),
+      description: "For power learners",
+      features: planFeatures.ultra,
+      cta: "Subscribe Now",
+      popular: false,
+    },
+  ];
+
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
@@ -398,12 +425,12 @@ const Pricing = () => {
                     <div className="mt-4">
                       <motion.span 
                         className="text-4xl font-bold"
-                        key={isYearly ? 'yearly' : 'monthly'}
+                        key={`${isYearly}-${currency}`}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        {plan.name === "Free" ? "₹0" : (isYearly ? plan.inrWeeklyYearly : plan.inrWeeklyMonthly)}
+                        {plan.name === "Free" ? plan.weeklyPrice : (isYearly ? plan.weeklyPriceYearly : plan.weeklyPriceMonthly)}
                       </motion.span>
                       <span className="text-muted-foreground ml-2">
                         {plan.name === "Free" ? "/forever" : "/week"}
@@ -412,7 +439,7 @@ const Pricing = () => {
                     {plan.name !== "Free" && (
                       <motion.div 
                         className="mt-2 space-y-1"
-                        key={isYearly ? 'yearly-note' : 'monthly-note'}
+                        key={`${isYearly}-note-${currency}`}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}
@@ -420,7 +447,7 @@ const Pricing = () => {
                         <p className="text-sm text-muted-foreground">
                           Billed {isYearly ? 'annually' : 'monthly'} at{' '}
                           <span className="font-semibold text-foreground">
-                            {isYearly ? plan.inrYearly : plan.inrMonthly}
+                            {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                           </span>
                           {isYearly ? '/year' : '/month'}
                         </p>
@@ -539,13 +566,16 @@ const Pricing = () => {
           </div>
         </motion.div>
 
-        {/* Payment Methods Info */}
+        {/* Currency & Payment Info */}
         <motion.div
           className="mt-16 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.0 }}
         >
+          <p className="text-sm text-muted-foreground mb-2">
+            Prices shown in {CURRENCY_NAMES[currency]} ({currency})
+          </p>
           <p className="text-sm text-muted-foreground mb-4">
             Secure payments powered by Razorpay
           </p>

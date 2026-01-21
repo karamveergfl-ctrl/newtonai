@@ -5,6 +5,7 @@ import { Loader2, Lock, ShieldCheck, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
+import { detectCurrency, CurrencyCode } from '@/lib/currencyUtils';
 
 interface PaymentButtonProps {
   planName: 'pro' | 'ultra';
@@ -138,8 +139,11 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       return;
     }
 
-    console.log('Calling initiatePayment...', { discountPercent, redeemCodeId });
-    initiatePayment(planName, billingCycle, handleProgress, discountPercent, redeemCodeId ?? undefined);
+    // Detect currency from user's email
+    const detectedCurrency = detectCurrency(session.user.email);
+
+    console.log('Calling initiatePayment...', { discountPercent, redeemCodeId, currency: detectedCurrency });
+    initiatePayment(planName, billingCycle, handleProgress, discountPercent, redeemCodeId ?? undefined, detectedCurrency);
   };
 
   const isDisabled = isLoading || isCheckingAuth || !isScriptLoaded || disabled;
