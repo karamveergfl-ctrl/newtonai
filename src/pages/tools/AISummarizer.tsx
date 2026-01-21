@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX } from "lucide-react";
+import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap } from "lucide-react";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { VideoCardWithTools } from "@/components/VideoCardWithTools";
@@ -25,6 +25,22 @@ import {
   processUploadedFile,
   transcribeAudio,
 } from "@/utils/contentProcessing";
+import { cn } from "@/lib/utils";
+
+type SummaryFormat = "concise" | "detailed" | "bullet-points" | "academic";
+
+const summaryFormats: { id: SummaryFormat; name: string; description: string; icon: React.ElementType }[] = [
+  { id: "concise", name: "Concise Summary", description: "Brief overview of key points", icon: Zap },
+  { id: "detailed", name: "Detailed Analysis", description: "In-depth coverage with examples", icon: FileText },
+  { id: "bullet-points", name: "Bullet Points", description: "Easy-to-scan list format", icon: List },
+  { id: "academic", name: "Academic Style", description: "Formal structure with citations", icon: GraduationCap },
+];
+
+interface PendingSummaryContent {
+  textContent: string;
+  title: string;
+  language: string;
+}
 
 // Strip markdown formatting for cleaner TTS
 const stripMarkdown = (text: string): string => {
@@ -105,6 +121,11 @@ const AISummarizer = () => {
   // Credit modal state
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [blockedFeature, setBlockedFeature] = useState("");
+
+  // Format selection state for non-video content
+  const [showFormatSelection, setShowFormatSelection] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState<SummaryFormat>("concise");
+  const [pendingSummaryContent, setPendingSummaryContent] = useState<PendingSummaryContent | null>(null);
 
   const { 
     credits, 
@@ -280,7 +301,7 @@ const AISummarizer = () => {
       return;
     }
 
-    // For non-YouTube content, generate summary directly
+    // For non-YouTube content, extract content first then show format selection
     if (!checkCanUse("summary")) {
       toast({
         title: "Usage limit reached",
@@ -322,14 +343,45 @@ const AISummarizer = () => {
         throw new Error("No content could be extracted. Please try again with different content.");
       }
 
+      // Store content and show format selection
+      setPendingSummaryContent({
+        textContent,
+        title,
+        language: metadata?.language || "en",
+      });
+      setShowFormatSelection(true);
+    } catch (error: any) {
+      console.error("Error extracting content:", error);
+      toast({
+        title: "Error extracting content",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Generate summary with selected format
+  const handleGenerateWithFormat = async () => {
+    if (!pendingSummaryContent) return;
+
+    setShowFormatSelection(false);
+    setIsLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
       await incrementUsage("summary");
 
       const { data: summaryData, error: summaryError } = await supabase.functions.invoke(
         "generate-summary",
         {
           body: {
-            content: textContent,
-            language: metadata?.language || "en",
+            content: pendingSummaryContent.textContent,
+            language: pendingSummaryContent.language,
+            format: selectedFormat,
           },
           headers: { Authorization: `Bearer ${session.access_token}` },
         }
@@ -338,10 +390,11 @@ const AISummarizer = () => {
       if (summaryError) throw summaryError;
 
       setSummary(summaryData.summary);
-      setContentTitle(title);
+      setContentTitle(pendingSummaryContent.title);
+      setPendingSummaryContent(null);
       toast({
         title: "Summary generated!",
-        description: "Your content has been summarized successfully.",
+        description: `Your ${summaryFormats.find(f => f.id === selectedFormat)?.name} is ready.`,
       });
     } catch (error: any) {
       console.error("Error generating summary:", error);
@@ -353,6 +406,11 @@ const AISummarizer = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBackFromFormatSelection = () => {
+    setShowFormatSelection(false);
+    setPendingSummaryContent(null);
   };
 
   // Video study tool handlers
@@ -798,6 +856,65 @@ const AISummarizer = () => {
             <p className="text-center text-sm text-muted-foreground mt-4">
               Select a study tool above to generate content from this video
             </p>
+          </motion.div>
+        ) : showFormatSelection ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={handleBackFromFormatSelection}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h3 className="text-lg font-semibold">Choose Summary Format</h3>
+            </div>
+            
+            {/* Content preview */}
+            {pendingSummaryContent && (
+              <div className="bg-muted/50 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1">Content</p>
+                <p className="text-sm font-medium line-clamp-2">{pendingSummaryContent.title}</p>
+              </div>
+            )}
+            
+            {/* 2x2 Grid of Format Cards */}
+            <div className="grid grid-cols-2 gap-3">
+              {summaryFormats.map((format) => {
+                const FormatIcon = format.icon;
+                return (
+                  <button
+                    key={format.id}
+                    onClick={() => setSelectedFormat(format.id)}
+                    className={cn(
+                      "p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
+                      selectedFormat === format.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={cn(
+                        "p-2 rounded-lg",
+                        selectedFormat === format.id ? "bg-primary/20" : "bg-muted"
+                      )}>
+                        <FormatIcon className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm">{format.name}</h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">{format.description}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Generate Button */}
+            <Button onClick={handleGenerateWithFormat} className="w-full gap-2" disabled={isLoading}>
+              <Sparkles className="h-4 w-4" />
+              Generate {summaryFormats.find(f => f.id === selectedFormat)?.name}
+            </Button>
           </motion.div>
         ) : (
           <>

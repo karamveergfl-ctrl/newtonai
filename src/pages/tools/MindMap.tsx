@@ -3,18 +3,27 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Network, ZoomIn, ZoomOut } from "lucide-react";
+import { Network, ZoomIn, ZoomOut, GitBranch, Boxes, Clock, ArrowLeft, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { useFeatureGate } from "@/components/FeatureGate";
-import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
+import { cn } from "@/lib/utils";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
   processUploadedFile 
 } from "@/utils/contentProcessing";
+
+type MindMapStyle = "radial" | "tree" | "cluster" | "timeline";
+
+const mindMapStyles: { id: MindMapStyle; name: string; description: string; icon: React.ElementType }[] = [
+  { id: "radial", name: "Radial", description: "Central topic with branching concepts", icon: Network },
+  { id: "tree", name: "Hierarchical", description: "Top-down tree structure", icon: GitBranch },
+  { id: "cluster", name: "Cluster", description: "Grouped related concepts", icon: Boxes },
+  { id: "timeline", name: "Timeline", description: "Sequential flow of ideas", icon: Clock },
+];
 
 interface PendingContent {
   content: string;
@@ -29,23 +38,25 @@ const MindMap = () => {
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("mind_map");
 
-  // Settings dialog state
-  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  // Style selection state
+  const [showStyleSelection, setShowStyleSelection] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<MindMapStyle>("radial");
   const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
     const allowed = await tryUseFeature();
     if (!allowed) return;
 
-    // Store pending content and show settings dialog
+    // Store pending content and show style selection
     setPendingContent({ content, type, metadata });
-    setShowSettingsDialog(true);
+    setShowStyleSelection(true);
   };
 
-  const handleConfirmGenerate = async (settings: UniversalGenerationSettings) => {
+  const handleConfirmGenerate = async () => {
     if (!pendingContent) return;
 
     const { content, type, metadata } = pendingContent;
+    setShowStyleSelection(false);
     setPendingContent(null);
     setIsGenerating(true);
     setMindMapData(null);
@@ -79,7 +90,8 @@ const MindMap = () => {
           body: JSON.stringify({ 
             content: textContent.slice(0, 10000),
             language: metadata?.language || "en",
-            detailLevel: settings.detailLevel,
+            structure: selectedStyle,
+            detailLevel: "standard",
           }),
         }
       );
@@ -91,7 +103,7 @@ const MindMap = () => {
 
       toast({
         title: "Mind Map Ready! 🧠",
-        description: "Your visual mind map has been generated",
+        description: `Generated ${selectedStyle} mind map`,
       });
     } catch (error) {
       toast({
@@ -104,16 +116,14 @@ const MindMap = () => {
     }
   };
 
+  const handleBackFromStyleSelection = () => {
+    setShowStyleSelection(false);
+    setPendingContent(null);
+  };
+
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.2, 2));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.2, 0.5));
 
-  const getContentTitle = () => {
-    if (!pendingContent) return "";
-    if (pendingContent.type === "youtube") return "YouTube Video";
-    if (pendingContent.type === "recording") return "Audio Recording";
-    if (pendingContent.metadata?.file) return pendingContent.metadata.file.name;
-    return "Text Content";
-  };
 
   return (
     <AppLayout>
@@ -136,12 +146,65 @@ const MindMap = () => {
           {!mindMapData ? (
             <Card className="border-border/50 shadow-lg">
               <CardContent className="pt-6">
-                <ContentInputTabs
-                  onContentReady={handleContentReady}
-                  isProcessing={isGenerating}
-                  placeholder="Paste your study content here (lecture notes, concepts, topics)..."
-                  supportedFormats="PDF, TXT, Images; Max size: 20MB"
-                />
+                {showStyleSelection ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" onClick={handleBackFromStyleSelection}>
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      <h3 className="text-lg font-semibold">Choose Mind Map Style</h3>
+                    </div>
+                    
+                    {/* 2x2 Grid of Style Cards */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {mindMapStyles.map((style) => {
+                        const StyleIcon = style.icon;
+                        return (
+                          <button
+                            key={style.id}
+                            onClick={() => setSelectedStyle(style.id)}
+                            className={cn(
+                              "p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
+                              selectedStyle === style.id
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50"
+                            )}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={cn(
+                                "p-2 rounded-lg",
+                                selectedStyle === style.id ? "bg-primary/20" : "bg-muted"
+                              )}>
+                                <StyleIcon className="h-4 w-4 text-primary" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-sm">{style.name}</h4>
+                                <p className="text-xs text-muted-foreground mt-0.5">{style.description}</p>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Generate Button */}
+                    <Button onClick={handleConfirmGenerate} className="w-full gap-2" disabled={isGenerating}>
+                      <Sparkles className="h-4 w-4" />
+                      Generate {mindMapStyles.find(s => s.id === selectedStyle)?.name} Mind Map
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <ContentInputTabs
+                    onContentReady={handleContentReady}
+                    isProcessing={isGenerating}
+                    placeholder="Paste your study content here (lecture notes, concepts, topics)..."
+                    supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                  />
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -186,16 +249,6 @@ const MindMap = () => {
           )}
         </motion.div>
       </div>
-
-      {/* Settings Dialog */}
-      <UniversalStudySettingsDialog
-        open={showSettingsDialog}
-        onOpenChange={setShowSettingsDialog}
-        type="mindmap"
-        contentTitle={getContentTitle()}
-        contentType={pendingContent?.type as any}
-        onGenerate={handleConfirmGenerate}
-      />
 
       {modal}
     </AppLayout>

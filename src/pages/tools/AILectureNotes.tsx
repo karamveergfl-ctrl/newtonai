@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Mic, Download, Copy, Check, Volume2, VolumeX, Pencil, Eye, Highlighter,
-  Upload, Youtube, FileText, Globe, Loader2
+  Upload, Youtube, FileText, Globe, Loader2, ArrowLeft, Sparkles, BookOpen, Clipboard
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { LectureRecorder } from "@/components/LectureRecorder";
@@ -22,6 +22,39 @@ import { extractTextFromPDF, extractTextFromImage, getYouTubeTranscript, readTex
 
 // Input tab types
 type InputType = "upload" | "recording" | "youtube" | "text";
+type TemplateType = "lecture" | "study-guide" | "research" | "project";
+
+// Template definitions (same as LectureRecorder)
+const templates: { id: TemplateType; name: string; description: string; icon: React.ElementType; structure: string[] }[] = [
+  { 
+    id: "lecture", 
+    name: "Lecture Notes", 
+    description: "Auto supplement details, include key points and summary",
+    icon: FileText,
+    structure: ["Key Points", "Details", "Summary"]
+  },
+  { 
+    id: "study-guide", 
+    name: "Study Guide", 
+    description: "Organized study material with chapters and action items",
+    icon: BookOpen,
+    structure: ["Summary", "Chapters", "Action Items"]
+  },
+  { 
+    id: "research", 
+    name: "Research Summary", 
+    description: "Academic research format with topics and review",
+    icon: BookOpen,
+    structure: ["Topics", "Review", "Progress"]
+  },
+  { 
+    id: "project", 
+    name: "Project Work Plan", 
+    description: "Problem-solution focused with clear issues",
+    icon: Clipboard,
+    structure: ["Summary", "Issue", "Solution"]
+  },
+];
 
 // Highlight colors for marking text
 const HIGHLIGHT_COLORS = [
@@ -104,6 +137,11 @@ const AILectureNotes = () => {
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [textContent, setTextContent] = useState("");
   
+  // Template selection state for non-recording tabs
+  const [showTemplateSelection, setShowTemplateSelection] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>("lecture");
+  const [pendingContent, setPendingContent] = useState<string | null>(null);
+  
   const { toast } = useToast();
   const { modal } = useFeatureGate("lecture_notes");
   const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
@@ -177,8 +215,8 @@ const AILectureNotes = () => {
     setIsHighlightMode(false);
   };
 
-  // Process content from Upload/YouTube/Text tabs
-  const handleProcessContent = async () => {
+  // Extract content from Upload/YouTube/Text tabs and show template selection
+  const handleExtractContent = async () => {
     setIsProcessing(true);
     setProgress(0);
     
@@ -218,14 +256,40 @@ const AILectureNotes = () => {
         throw new Error("Not enough content to generate notes");
       }
 
-      setProcessingStep("Generating notes...");
-      setProgress(50);
+      setProgress(100);
+      // Store content and show template selection
+      setPendingContent(content);
+      setShowTemplateSelection(true);
+    } catch (error) {
+      console.error("Extraction failed:", error);
+      toast({
+        title: "Extraction failed",
+        description: error instanceof Error ? error.message : "Could not extract content",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+      setProcessingStep("");
+      setProgress(0);
+    }
+  };
 
+  // Generate notes with selected template
+  const handleGenerateWithTemplate = async () => {
+    if (!pendingContent) return;
+    
+    setIsProcessing(true);
+    setProgress(50);
+    setProcessingStep("Generating notes...");
+    
+    try {
+      const template = templates.find(t => t.id === selectedTemplate);
+      
       const { data: notesData, error: notesError } = await supabase.functions.invoke("generate-lecture-notes", {
         body: {
-          transcription: content,
-          template: "lecture",
-          templateStructure: ["Key Points", "Details", "Summary"],
+          transcription: pendingContent,
+          template: selectedTemplate,
+          templateStructure: template?.structure || ["Key Points", "Details", "Summary"],
           language: selectedLanguage,
         },
       });
@@ -237,19 +301,21 @@ const AILectureNotes = () => {
       setProgress(100);
       toast({
         title: "Notes generated!",
-        description: "Your lecture notes are ready",
+        description: `Your ${template?.name || "notes"} are ready`,
       });
       
-      handleNotesGenerated(notesData.notes, notesData.title || "Lecture Notes");
+      handleNotesGenerated(notesData.notes, notesData.title || template?.name || "Lecture Notes");
       
-      // Reset input state
+      // Reset state
       setUploadedFile(null);
       setYoutubeUrl("");
       setTextContent("");
+      setShowTemplateSelection(false);
+      setPendingContent(null);
     } catch (error) {
-      console.error("Processing failed:", error);
+      console.error("Generation failed:", error);
       toast({
-        title: "Processing failed",
+        title: "Generation failed",
         description: error instanceof Error ? error.message : "Could not generate notes",
         variant: "destructive",
       });
@@ -258,6 +324,11 @@ const AILectureNotes = () => {
       setProcessingStep("");
       setProgress(0);
     }
+  };
+
+  const handleBackFromTemplateSelection = () => {
+    setShowTemplateSelection(false);
+    setPendingContent(null);
   };
 
   const handleDownload = () => {
@@ -474,6 +545,76 @@ const AILectureNotes = () => {
                       </p>
                     </div>
                   </motion.div>
+                ) : showTemplateSelection ? (
+                  <motion.div
+                    key="template-selection"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" onClick={handleBackFromTemplateSelection}>
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      <h3 className="text-lg font-semibold">Select a template to summarize</h3>
+                    </div>
+                    
+                    {/* 2x2 Grid of Template Cards */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {templates.map((template) => {
+                        const TemplateIcon = template.icon;
+                        return (
+                          <button
+                            key={template.id}
+                            onClick={() => setSelectedTemplate(template.id)}
+                            className={cn(
+                              "p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
+                              selectedTemplate === template.id
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50"
+                            )}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={cn(
+                                "p-2 rounded-lg",
+                                selectedTemplate === template.id ? "bg-primary/20" : "bg-muted"
+                              )}>
+                                <TemplateIcon className="h-4 w-4 text-primary" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-sm">{template.name}</h4>
+                                <p className="text-xs text-muted-foreground mt-0.5">{template.description}</p>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Language Selector */}
+                    <div className="flex items-center gap-3">
+                      <Globe className="w-4 h-4 text-muted-foreground" />
+                      <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                        <SelectTrigger className="flex-1 bg-card/80">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {languages.map((lang) => (
+                            <SelectItem key={lang.code} value={lang.code}>
+                              {lang.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {/* Generate Button */}
+                    <Button onClick={handleGenerateWithTemplate} className="w-full gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Generate {templates.find(t => t.id === selectedTemplate)?.name}
+                    </Button>
+                  </motion.div>
                 ) : activeTab === "upload" ? (
                   <motion.div
                     key="upload"
@@ -531,9 +672,9 @@ const AILectureNotes = () => {
                     <Button
                       className="w-full mt-4"
                       disabled={!uploadedFile}
-                      onClick={handleProcessContent}
+                      onClick={handleExtractContent}
                     >
-                      Generate Notes
+                      Continue
                     </Button>
                   </motion.div>
                 ) : activeTab === "youtube" ? (
@@ -569,9 +710,9 @@ const AILectureNotes = () => {
                     <Button
                       className="w-full"
                       disabled={!extractVideoId(youtubeUrl)}
-                      onClick={handleProcessContent}
+                      onClick={handleExtractContent}
                     >
-                      Generate Notes from Video
+                      Continue
                     </Button>
                   </motion.div>
                 ) : (
@@ -602,9 +743,9 @@ const AILectureNotes = () => {
                     <Button
                       className="w-full"
                       disabled={textContent.length < 20}
-                      onClick={handleProcessContent}
+                      onClick={handleExtractContent}
                     >
-                      Generate Notes
+                      Continue
                     </Button>
                   </motion.div>
                 )}
