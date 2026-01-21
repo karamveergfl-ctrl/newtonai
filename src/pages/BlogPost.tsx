@@ -10,6 +10,285 @@ import { blogPosts, BlogPost as BlogPostType } from "./Blog";
 
 // Blog post content - in a real app, this would come from a CMS
 const blogContent: Record<string, { content: string }> = {
+  "complete-guide-to-ai-flashcards": {
+    content: `
+## What Are AI Flashcards?
+
+AI flashcards are automatically generated study cards created by artificial intelligence from your learning materials. Unlike traditional flashcards that require hours of manual creation, AI analyzes your content and extracts the most important concepts, definitions, and relationships.
+
+## Why AI Flashcards Work
+
+### The Science of Spaced Repetition
+
+Flashcards leverage spaced repetition, a learning technique where information is reviewed at increasing intervals. Research shows this method can improve retention by up to 200% compared to traditional studying.
+
+### Active Recall Benefits
+
+When you use flashcards, you're practicing active recall—actively stimulating your memory rather than passively reading. This strengthens neural pathways and improves long-term retention.
+
+## How to Create AI Flashcards with NewtonAI
+
+### Step 1: Upload Your Content
+
+You can create flashcards from:
+- **PDFs** - Textbooks, lecture slides, research papers
+- **YouTube videos** - Educational content with transcripts
+- **Audio recordings** - Lecture recordings
+- **Text** - Notes, articles, or any written content
+
+### Step 2: Customize Your Settings
+
+Choose:
+- Number of flashcards (5-50)
+- Difficulty level (easy, medium, hard)
+- Language preference
+
+### Step 3: Review and Study
+
+Your AI-generated flashcards are ready instantly. Flip through them, mark difficult ones, and track your progress.
+
+## Best Practices for Flashcard Success
+
+1. **Study in short sessions** - 15-20 minute sessions are more effective than hour-long cramming
+2. **Review before bed** - Sleep consolidates memories
+3. **Mix up the order** - Avoid memorizing sequence rather than content
+4. **Say answers out loud** - Verbalization improves recall
+5. **Focus on difficult cards** - Spend more time on challenging concepts
+
+## When to Use AI Flashcards
+
+- **Vocabulary learning** - Languages, technical terms, medical terminology
+- **Concept definitions** - Science, history, economics
+- **Formula memorization** - Math, physics, chemistry
+- **Exam preparation** - Quick review of key facts
+
+[Create your AI flashcards now](/tools/flashcards)
+    `,
+  },
+  "how-to-create-mind-maps-from-pdfs": {
+    content: `
+## The Challenge of Dense PDFs
+
+Textbooks and research papers are often overwhelming. Pages of dense text make it hard to see the big picture and understand how concepts connect. That's where AI-powered mind maps come in.
+
+## What is a Mind Map?
+
+A mind map is a visual diagram that starts with a central topic and branches out to related subtopics. It mirrors how our brains naturally organize information—through associations and connections.
+
+## Benefits of Converting PDFs to Mind Maps
+
+### Visual Overview
+
+Instead of flipping through dozens of pages, a single mind map shows you:
+- The main topic and its key components
+- Relationships between concepts
+- Hierarchy of ideas from general to specific
+
+### Better Understanding
+
+Visual representation helps you:
+- Identify patterns and connections
+- See how details fit into the bigger picture
+- Understand complex relationships at a glance
+
+### Efficient Review
+
+Before exams, reviewing a mind map takes minutes instead of hours of re-reading.
+
+## How to Create Mind Maps from PDFs with NewtonAI
+
+### Step 1: Upload Your PDF
+
+Simply drag and drop your PDF file. NewtonAI accepts textbooks, lecture notes, research papers, and any educational document.
+
+### Step 2: Choose Your Layout
+
+Select from four mind map styles:
+- **Radial** - Central topic with branching concepts
+- **Hierarchical** - Top-down tree structure
+- **Cluster** - Grouped related concepts
+- **Timeline** - Sequential flow of ideas
+
+### Step 3: Explore Your Mind Map
+
+Your interactive mind map is generated in seconds. Zoom in, expand branches, and explore connections between concepts.
+
+## Tips for Effective Mind Map Learning
+
+1. **Start with the overview** - Understand the big picture first
+2. **Explore branches** - Dive deeper into areas you need to study
+3. **Add your notes** - Annotate the mind map with your own insights
+4. **Use for revision** - Quick review before tests
+5. **Combine with flashcards** - Generate flashcards from the same content
+
+## Perfect For
+
+- **Textbook chapters** - Visualize complex academic content
+- **Research papers** - Understand methodology and findings
+- **Lecture notes** - Organize class content visually
+- **Study guides** - Create comprehensive topic overviews
+
+[Create a mind map from your PDF](/tools/mindmap)
+    `,
+  },
+  "mastering-ai-quizzes-for-exam-prep": {
+    content: `
+## Why Quizzes Beat Passive Reading
+
+Research consistently shows that testing yourself is one of the most effective study strategies. Known as the "testing effect," retrieval practice strengthens memory more than re-reading or highlighting.
+
+## The Problem with Traditional Quizzes
+
+Creating your own practice questions is:
+- Time-consuming
+- Limited to what you already know
+- Often too easy or too hard
+
+## How AI Quizzes Solve These Problems
+
+### Automatic Question Generation
+
+AI analyzes your study materials and creates relevant, challenging questions covering all key topics—not just the ones you'd think to ask about.
+
+### Adaptive Difficulty
+
+AI quizzes can adjust to your knowledge level, focusing on areas where you need the most practice.
+
+### Immediate Feedback
+
+Each answer includes an explanation, helping you understand not just what's correct, but why.
+
+## Using AI Quizzes for Exam Prep
+
+### Phase 1: Initial Assessment
+
+Before studying, take a quiz to identify knowledge gaps. This tells you where to focus your study time.
+
+### Phase 2: Active Learning
+
+After studying each topic, take targeted quizzes to reinforce learning through active recall.
+
+### Phase 3: Pre-Exam Review
+
+Use comprehensive quizzes to simulate exam conditions and build confidence.
+
+## How to Create AI Quizzes with NewtonAI
+
+### Step 1: Upload Your Study Material
+
+Works with:
+- Course notes and PDFs
+- YouTube lecture videos
+- Audio recordings
+- Any text content
+
+### Step 2: Configure Your Quiz
+
+Choose:
+- Number of questions
+- Difficulty level
+- Multiple choice or mixed formats
+
+### Step 3: Take the Quiz
+
+Answer questions, get instant feedback, and see your score with detailed explanations.
+
+## Quiz-Taking Strategies
+
+1. **Don't peek at answers** - Struggle first to strengthen memory
+2. **Read explanations carefully** - Even for correct answers
+3. **Retake failed quizzes** - Until you master the material
+4. **Space your practice** - Quiz yourself over multiple days
+5. **Focus on weak areas** - Spend extra time on difficult topics
+
+## Track Your Progress
+
+NewtonAI tracks your quiz performance, helping you see improvement over time and identify persistent weak spots.
+
+[Start practicing with AI quizzes](/tools/quiz)
+    `,
+  },
+  "ai-podcast-study-guide": {
+    content: `
+## Learning on the Go
+
+Modern students are busy. Between classes, commutes, and activities, finding dedicated study time is challenging. AI podcasts let you transform any study material into audio content you can learn from anywhere.
+
+## What Are AI Study Podcasts?
+
+AI podcasts take your notes, PDFs, or videos and convert them into engaging audio discussions between two AI hosts. Unlike text-to-speech, these podcasts feature natural conversation, explanations, and even humor.
+
+## Benefits of Podcast Learning
+
+### Multitasking Friendly
+
+Listen while:
+- Commuting to school
+- Exercising
+- Doing chores
+- Taking a walk
+
+### Auditory Learning
+
+Some students learn better by listening. Podcasts cater to auditory learners who struggle with dense reading.
+
+### Engaging Format
+
+The conversational format makes dry topics more interesting and easier to follow.
+
+### Repetition Made Easy
+
+Listen to the same podcast multiple times without the tedium of re-reading.
+
+## How to Create AI Podcasts with NewtonAI
+
+### Step 1: Upload Your Content
+
+Provide:
+- PDF notes or textbooks
+- YouTube video links
+- Audio recordings
+- Text content
+
+### Step 2: Customize Your Podcast
+
+Choose:
+- Speaking style (casual, academic, energetic)
+- Language
+- Host voices
+
+### Step 3: Listen and Learn
+
+Your podcast is generated with professional AI voices. Play, pause, and interact anytime.
+
+## Interactive Features
+
+### Raise Your Hand
+
+Have a question while listening? Use the "Raise Hand" feature to pause and ask the AI hosts for clarification.
+
+### Multiple Voices
+
+Dual-host format keeps content engaging and helps distinguish between different concepts or viewpoints.
+
+## Best Use Cases
+
+- **Lecture review** - Convert class notes to podcasts
+- **Textbook chapters** - Make reading assignments listenable
+- **Exam prep** - Review key topics during commute
+- **Language learning** - Practice listening comprehension
+
+## Tips for Podcast Learning
+
+1. **Active listening** - Take mental notes as you listen
+2. **Pause to reflect** - Stop and think about key points
+3. **Use raise hand** - Ask questions when confused
+4. **Combine methods** - Use with flashcards and quizzes
+5. **Review multiple times** - Repetition reinforces learning
+
+[Create your study podcast](/tools/podcast)
+    `,
+  },
   "how-to-study-smarter-using-ai": {
     content: `
 ## Introduction
@@ -230,7 +509,7 @@ NewtonAI can automatically generate mind maps from your study materials:
 
 This saves hours of manual work while still giving you a visual overview of the material.
 
-[Create a mind map now](/tools/mind-map)
+[Create a mind map now](/tools/mindmap)
     `,
   },
 };
