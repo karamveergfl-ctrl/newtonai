@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Helmet } from "react-helmet-async";
 
 const faqs = [
   {
@@ -52,8 +53,29 @@ const faqs = [
 ];
 
 const FAQ = () => {
+  // Generate FAQPage structured data
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>FAQ - NewtonAI | Frequently Asked Questions</title>
+        <meta name="description" content="Find answers to common questions about NewtonAI - the AI-powered learning platform for students." />
+        <script type="application/ld+json">
+          {JSON.stringify(faqSchema)}
+        </script>
+      </Helmet>
       <Header />
 
       <main className="container mx-auto px-4 py-16">
