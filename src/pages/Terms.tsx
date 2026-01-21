@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 import {
   Accordion,
   AccordionContent,
@@ -9,9 +10,21 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+const breadcrumbs = [
+  { name: "Home", href: "/" },
+  { name: "Terms of Service", href: "/terms" },
+];
+
 const Terms = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Terms of Service"
+        description="Read NewtonAI's Terms of Service. Understand your rights and obligations when using our AI-powered study tools, subscriptions, and services."
+        canonicalPath="/terms"
+        breadcrumbs={breadcrumbs}
+        keywords="terms of service, user agreement, NewtonAI terms, legal terms, subscription terms"
+      />
       {/* Header */}
       <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
