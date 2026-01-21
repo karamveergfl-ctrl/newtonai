@@ -1,10 +1,21 @@
 import { memo, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Check, Volume2, VolumeX, Loader2 } from "lucide-react";
+import { Check, Volume2, VolumeX, Loader2 } from "lucide-react";
 import type { ProcessingPhase } from "@/hooks/useProcessingState";
 import { useNewtonSounds } from "@/hooks/useNewtonSounds";
 import { useNewtonPoses } from "@/hooks/useNewtonPoses";
 import newtonCharacter from "@/assets/newton-character.png";
+import {
+  ANIMATION_CONFIG,
+  PencilOverlay,
+  WritingPencilOverlay,
+  EyesBlinkOverlay,
+  FloatingDotsOverlay,
+  PaperSheetsOverlay,
+  ThinkingLightbulbOverlay,
+  CompletedLightbulbOverlay,
+  SuccessSparklesOverlay,
+} from "@/components/newton/NewtonOverlays";
 
 interface NewtonProcessingAnimationProps {
   /** Current animation state */
@@ -35,7 +46,10 @@ const sizeClasses = {
   lg: "w-40 h-40 sm:w-52 sm:h-52 md:w-64 md:h-64",
 };
 
-// Thinking Animation - Newton with pulsing lightbulb and gentle bob
+// Easy Ease equivalent
+const EASY_EASE: [number, number, number, number] = [0.42, 0, 0.58, 1];
+
+// Thinking Animation - Newton with head bob, pencil wiggle, eye blink, floating dots
 const ThinkingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; poseImage: string }) => (
   <motion.div
     className={`relative ${sizeClass} flex items-center justify-center`}
@@ -54,17 +68,17 @@ const ThinkingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; p
       transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
     />
     
-    {/* Newton character with gentle bobbing */}
+    {/* Newton character with precise head bob - Y: 0 → -4 → 0 → +4 → 0 */}
     <motion.div
       className="relative z-10"
       animate={{ 
-        y: [0, -8, 0],
-        rotate: [0, 2, 0, -2, 0]
+        y: ANIMATION_CONFIG.thinking.headBob.values,
       }}
       transition={{ 
-        duration: 3,
+        duration: ANIMATION_CONFIG.thinking.duration,
         repeat: Infinity,
-        ease: "easeInOut"
+        ease: EASY_EASE,
+        times: ANIMATION_CONFIG.thinking.headBob.times,
       }}
     >
       <img 
@@ -75,49 +89,15 @@ const ThinkingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; p
       />
     </motion.div>
     
-    {/* Animated lightbulb glow effect */}
-    <motion.div
-      className="absolute top-0 right-2 sm:right-4"
-      animate={{ 
-        scale: [1, 1.2, 1],
-        opacity: [0.7, 1, 0.7],
-      }}
-      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-    >
-      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-yellow-300 to-amber-400 blur-sm" />
-    </motion.div>
-    
-    {/* Floating thought sparkles */}
-    {[0, 1, 2].map((i) => (
-      <motion.div
-        key={i}
-        className="absolute"
-        style={{ 
-          top: `${10 + i * 15}%`,
-          right: `${5 + i * 8}%`
-        }}
-        animate={{ 
-          y: [0, -12, 0],
-          x: [0, 5, 0],
-          opacity: [0.4, 1, 0.4],
-          scale: [0.8, 1.1, 0.8]
-        }}
-        transition={{ 
-          duration: 2 + i * 0.3,
-          repeat: Infinity,
-          delay: i * 0.4,
-          ease: "easeInOut"
-        }}
-      >
-        <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-500 drop-shadow-lg" />
-      </motion.div>
-    ))}
+    {/* SVG Overlays */}
+    <ThinkingLightbulbOverlay />
+    <FloatingDotsOverlay />
   </motion.div>
 ));
 
 ThinkingAnimation.displayName = "ThinkingAnimation";
 
-// Writing Animation - Newton with active pencil motion
+// Writing Animation - Newton with pencil motion, arm rotation, paper sheets
 const WritingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; poseImage: string }) => (
   <motion.div
     className={`relative ${sizeClass} flex items-center justify-center`}
@@ -136,17 +116,18 @@ const WritingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; po
       transition={{ duration: 0.8, repeat: Infinity }}
     />
     
-    {/* Newton character with writing motion */}
+    {/* Newton character with head bob + arm rotation effect */}
     <motion.div
       className="relative z-10"
       animate={{ 
-        x: [0, 3, -2, 3, 0],
-        rotate: [0, 1, -1, 1, 0]
+        y: ANIMATION_CONFIG.thinking.headBob.values, // Reuse head bob
+        rotate: [0, 1, 0, -1, 0] // Subtle body movement
       }}
       transition={{ 
-        duration: 0.8,
+        duration: ANIMATION_CONFIG.writing.duration,
         repeat: Infinity,
-        ease: "easeInOut"
+        ease: EASY_EASE,
+        times: ANIMATION_CONFIG.thinking.headBob.times,
       }}
     >
       <img 
@@ -157,32 +138,12 @@ const WritingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; po
       />
     </motion.div>
     
-    {/* Pencil stroke particles */}
-    {[0, 1, 2, 3].map((i) => (
-      <motion.div
-        key={i}
-        className="absolute left-1/3"
-        style={{ bottom: `${20 + i * 5}%` }}
-        initial={{ opacity: 0, x: 0 }}
-        animate={{ 
-          opacity: [0, 1, 0],
-          x: [0, 30 + i * 10],
-          y: [0, -10 - i * 5],
-          scale: [0.5, 1, 0.3]
-        }}
-        transition={{ 
-          duration: 1.2,
-          repeat: Infinity,
-          delay: i * 0.2,
-          ease: "easeOut"
-        }}
-      >
-        <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-      </motion.div>
-    ))}
+    {/* SVG Overlays */}
+    <WritingPencilOverlay />
+    <PaperSheetsOverlay />
     
     {/* Flying text lines effect */}
-    <motion.div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col gap-1 w-3/4">
+    <motion.div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col gap-1 w-3/4 z-20">
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
@@ -201,25 +162,12 @@ const WritingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; po
         />
       ))}
     </motion.div>
-    
-    {/* Sparkle accents */}
-    <motion.div
-      className="absolute top-2 right-4"
-      animate={{ 
-        rotate: [0, 180, 360],
-        scale: [0.8, 1, 0.8],
-        opacity: [0.5, 1, 0.5]
-      }}
-      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-    >
-      <Sparkles className="w-4 h-4 text-primary" />
-    </motion.div>
   </motion.div>
 ));
 
 WritingAnimation.displayName = "WritingAnimation";
 
-// Completed Animation - Newton with celebratory thumbs up effect
+// Completed Animation - Newton with thumbs up, lightbulb pop, success sparkles
 const CompletedAnimation = memo(({ 
   sizeClass,
   poseImage,
@@ -301,37 +249,15 @@ const CompletedAnimation = memo(({
       </motion.div>
     </motion.div>
     
-    {/* Celebration sparkles radiating outward */}
-    {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-      <motion.div
-        key={i}
-        className="absolute"
-        style={{
-          left: "50%",
-          top: "50%",
-        }}
-        initial={{ scale: 0, opacity: 0, x: 0, y: 0 }}
-        animate={{ 
-          scale: [0, 1.2, 0],
-          opacity: [0, 1, 0],
-          x: Math.cos((i / 8) * Math.PI * 2) * 60,
-          y: Math.sin((i / 8) * Math.PI * 2) * 60,
-        }}
-        transition={{ 
-          duration: 0.8,
-          delay: 0.2 + i * 0.05,
-          ease: "easeOut"
-        }}
-      >
-        <Sparkles className={`w-4 h-4 ${i % 2 === 0 ? 'text-amber-500' : 'text-green-500'}`} />
-      </motion.div>
-    ))}
+    {/* SVG Overlays */}
+    <CompletedLightbulbOverlay />
+    <SuccessSparklesOverlay />
     
     {/* Confetti-like particles */}
     {[0, 1, 2, 3, 4, 5].map((i) => (
       <motion.div
         key={`confetti-${i}`}
-        className="absolute left-1/2 top-1/2"
+        className="absolute left-1/2 top-1/2 z-30"
         initial={{ scale: 0, x: 0, y: 0, rotate: 0 }}
         animate={{ 
           scale: [0, 1, 0.5],
