@@ -1,10 +1,9 @@
-import { motion } from "framer-motion";
+import { memo } from "react";
 
 interface GradientBlobProps {
   className?: string;
   color?: "primary" | "secondary" | "accent";
   size?: "sm" | "md" | "lg" | "xl";
-  delay?: number;
 }
 
 const sizeClasses = {
@@ -20,20 +19,19 @@ const colorClasses = {
   accent: "bg-accent/30",
 };
 
-export const GradientBlob = ({
+export const GradientBlob = memo(({
   className = "",
   color = "primary",
   size = "md",
-  delay = 0,
 }: GradientBlobProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 1, delay }}
-      className={`absolute rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob ${sizeClasses[size]} ${colorClasses[color]} ${className}`}
+    <div
+      className={`absolute rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob-slow motion-reduce:animate-none gpu-accelerated ${sizeClasses[size]} ${colorClasses[color]} ${className}`}
+      aria-hidden="true"
     />
   );
-};
+});
+
+GradientBlob.displayName = "GradientBlob";
 
 export default GradientBlob;
