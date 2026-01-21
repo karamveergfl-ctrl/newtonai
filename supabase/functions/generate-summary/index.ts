@@ -7,6 +7,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const languageNames: Record<string, string> = {
+  "en": "English", "hi": "Hindi", "es": "Spanish", "fr": "French",
+  "de": "German", "zh": "Chinese", "ja": "Japanese", "ko": "Korean",
+  "ar": "Arabic", "pt": "Portuguese", "ru": "Russian", "it": "Italian",
+  "bn": "Bengali", "ta": "Tamil", "te": "Telugu", "mr": "Marathi",
+  "gu": "Gujarati", "kn": "Kannada", "ml": "Malayalam", "pa": "Punjabi"
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -50,7 +58,7 @@ serve(async (req) => {
       );
     }
 
-    const { content, selectedText, detailLevel = "standard", format = "concise" } = await req.json();
+    const { content, selectedText, detailLevel = "standard", format = "concise", language = "en" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -62,11 +70,14 @@ serve(async (req) => {
       throw new Error("No content provided");
     }
 
-    console.log(`Generating ${format} summary with ${detailLevel} detail for ${textToSummarize.length} characters`);
+    const targetLanguage = languageNames[language] || "English";
+    console.log(`Generating ${format} summary with ${detailLevel} detail in ${targetLanguage} for ${textToSummarize.length} characters`);
 
-    // Format-specific prompts
+    // Format-specific prompts with language instruction
     const formatPrompts: Record<string, string> = {
       "concise": `You are an expert summarizer. Create a CONCISE summary that captures the essence of the content.
+
+CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All headings, bullet points, and text must be written in ${targetLanguage}.
 
 ## Overview
 [1-2 sentences introducing the main topic]
@@ -83,9 +94,12 @@ serve(async (req) => {
 RULES:
 - Be brief and to the point
 - Focus only on the most essential information
-- Use clear, simple language`,
+- Use clear, simple language
+- Write everything in ${targetLanguage}`,
 
       "detailed": `You are an expert study guide creator. Create a DETAILED analysis with comprehensive coverage.
+
+CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All headings, terms, definitions, and text must be written in ${targetLanguage}.
 
 ## Overview
 [2-3 sentences introducing the topic and its importance]
@@ -116,9 +130,12 @@ RULES:
 RULES:
 - Be thorough and comprehensive
 - Include examples where relevant
-- Explain relationships between concepts`,
+- Explain relationships between concepts
+- Write everything in ${targetLanguage}`,
 
       "bullet-points": `You are a skilled note-taker. Create an easy-to-scan BULLET POINT summary.
+
+CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All points and text must be written in ${targetLanguage}.
 
 ## Main Topic
 - Core concept or theme
@@ -147,9 +164,12 @@ RULES:
 - Use bullet points exclusively
 - Keep each point brief (under 15 words)
 - Use indentation for hierarchy
-- Make it scannable at a glance`,
+- Make it scannable at a glance
+- Write everything in ${targetLanguage}`,
 
       "academic": `You are an academic writer. Create a FORMAL, scholarly summary.
+
+CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All sections, terms, and text must be written in ${targetLanguage}.
 
 ## Abstract
 [Formal 3-4 sentence overview of the content and its significance]
@@ -184,7 +204,8 @@ RULES:
 - Use formal, academic language
 - Maintain objective tone
 - Include scholarly structure
-- Reference key concepts formally`
+- Reference key concepts formally
+- Write everything in ${targetLanguage}`
     };
 
     const systemPrompt = formatPrompts[format] || formatPrompts["concise"];
@@ -199,7 +220,7 @@ RULES:
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Create a study guide for this content:\n\n${textToSummarize.slice(0, 10000)}` }
+          { role: "user", content: `Create a study guide in ${targetLanguage} for this content:\n\n${textToSummarize.slice(0, 10000)}` }
         ],
       }),
     });

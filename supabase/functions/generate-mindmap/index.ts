@@ -7,6 +7,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const languageNames: Record<string, string> = {
+  "en": "English", "hi": "Hindi", "es": "Spanish", "fr": "French",
+  "de": "German", "zh": "Chinese", "ja": "Japanese", "ko": "Korean",
+  "ar": "Arabic", "pt": "Portuguese", "ru": "Russian", "it": "Italian",
+  "bn": "Bengali", "ta": "Tamil", "te": "Telugu", "mr": "Marathi",
+  "gu": "Gujarati", "kn": "Kannada", "ml": "Malayalam", "pa": "Punjabi"
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -55,7 +63,7 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { content, selectedText, structure = "horizontal", detailLevel = "standard" } = await req.json();
+    const { content, selectedText, structure = "horizontal", detailLevel = "standard", language = "en" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -68,37 +76,40 @@ serve(async (req) => {
       throw new Error("No content provided");
     }
 
-    console.log(`Generating ${detailLevel} mind map for ${textToMap.length} characters`);
+    const targetLanguage = languageNames[language] || "English";
+    console.log(`Generating ${detailLevel} mind map in ${targetLanguage} for ${textToMap.length} characters`);
 
     const systemPrompt = `You are an expert at creating educational mind maps following Google NotebookLM's clean, organized style.
+
+CRITICAL: Generate ALL text labels and definitions in ${targetLanguage}. Every node's "text" and "definition" fields must be written in ${targetLanguage}.
 
 Create a hierarchical mind map that is:
 - Well-balanced with 5-6 main branches
 - Each main branch has 2-4 sub-nodes
 - Each sub-node can have 1-3 leaf nodes
-- Uses SHORT, CLEAR labels (2-5 words max per node)
-- INCLUDES a definition/explanation for EVERY node
+- Uses SHORT, CLEAR labels (2-5 words max per node) in ${targetLanguage}
+- INCLUDES a definition/explanation for EVERY node in ${targetLanguage}
 
 Return ONLY valid JSON with this structure:
 {
   "id": "root",
-  "text": "Main Topic (2-4 words)",
-  "definition": "A comprehensive 1-2 sentence definition explaining this topic",
+  "text": "Main Topic in ${targetLanguage} (2-4 words)",
+  "definition": "A comprehensive 1-2 sentence definition in ${targetLanguage}",
   "children": [
     {
       "id": "b1",
-      "text": "Branch 1 Label",
-      "definition": "Clear explanation of this branch concept in 1-2 sentences",
+      "text": "Branch 1 Label in ${targetLanguage}",
+      "definition": "Clear explanation in ${targetLanguage}",
       "children": [
         {
           "id": "b1_s1",
-          "text": "Sub-topic",
-          "definition": "Brief explanation of this sub-topic",
+          "text": "Sub-topic in ${targetLanguage}",
+          "definition": "Brief explanation in ${targetLanguage}",
           "children": [
             { 
               "id": "b1_s1_l1", 
-              "text": "Detail point",
-              "definition": "Explanation of this detail"
+              "text": "Detail point in ${targetLanguage}",
+              "definition": "Explanation in ${targetLanguage}"
             }
           ]
         }
@@ -109,20 +120,21 @@ Return ONLY valid JSON with this structure:
 
 CRITICAL RULES:
 - EXACTLY 5-6 main branches for balance
-- Each node text: 2-5 words MAXIMUM
-- EVERY node MUST have a "definition" field with a helpful 1-2 sentence explanation
-- Use action words and clear nouns
+- Each node text: 2-5 words MAXIMUM in ${targetLanguage}
+- EVERY node MUST have a "definition" field with a helpful 1-2 sentence explanation in ${targetLanguage}
+- Use action words and clear nouns in ${targetLanguage}
 - Create logical groupings
 - Include key concepts, definitions, relationships
-- Make definitions educational, clear, and informative
+- Make definitions educational, clear, and informative in ${targetLanguage}
 - Use unique IDs (b1, b1_s1, b1_s1_l1 pattern)
-- Return ONLY the JSON, no markdown or explanation`;
+- Return ONLY the JSON, no markdown or explanation
+- ALL TEXT MUST BE IN ${targetLanguage}`;
 
-    const userPrompt = `Create a balanced, educational mind map for this content:
+    const userPrompt = `Create a balanced, educational mind map in ${targetLanguage} for this content:
 
 ${textToMap.slice(0, 6000)}
 
-Return ONLY the JSON object.`;
+Return ONLY the JSON object with all text in ${targetLanguage}.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

@@ -7,6 +7,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const languageNames: Record<string, string> = {
+  "en": "English", "hi": "Hindi", "es": "Spanish", "fr": "French",
+  "de": "German", "zh": "Chinese", "ja": "Japanese", "ko": "Korean",
+  "ar": "Arabic", "pt": "Portuguese", "ru": "Russian", "it": "Italian",
+  "bn": "Bengali", "ta": "Tamil", "te": "Telugu", "mr": "Marathi",
+  "gu": "Gujarati", "kn": "Kannada", "ml": "Malayalam", "pa": "Punjabi"
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -56,7 +64,7 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { content, type, videoTitle, settings } = await req.json();
+    const { content, type, videoTitle, settings, language = "en" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -66,8 +74,9 @@ serve(async (req) => {
     // Extract settings with defaults
     const count = settings?.count || 10;
     const difficulty = settings?.difficulty || "medium";
+    const targetLanguage = languageNames[language] || "English";
 
-    console.log(`Generating ${count} ${difficulty} flashcards for ${type}: ${videoTitle || 'content'}`);
+    console.log(`Generating ${count} ${difficulty} flashcards in ${targetLanguage} for ${type}: ${videoTitle || 'content'}`);
 
     const difficultyGuide = {
       easy: "Focus on basic definitions and simple facts. Cards should be straightforward to memorize.",
@@ -76,7 +85,10 @@ serve(async (req) => {
     };
 
     let systemPrompt = `You are an expert educator that creates effective flashcards for studying.
-CRITICAL: You MUST respond with ONLY a valid JSON array. No explanations, no markdown, no extra text.
+
+CRITICAL: Generate ALL flashcards in ${targetLanguage}. Both the front (question) and back (answer) of EVERY card must be written in ${targetLanguage}.
+
+You MUST respond with ONLY a valid JSON array. No explanations, no markdown, no extra text.
 Each flashcard should have a clear question on the front and a concise answer on the back.
 For math, use simple notation like x^2, sqrt(x), etc. Avoid LaTeX backslashes.
 
@@ -91,30 +103,36 @@ ${difficultyGuide[difficulty as keyof typeof difficultyGuide]}`;
 Content/Transcript:
 ${content?.slice(0, 6000) || ''}
 
-Generate exactly ${count} flashcards at ${difficulty} difficulty. Each flashcard should:
-- Have a clear, focused question
-- Have a concise but complete answer (use LaTeX for math: $formula$)
+Generate exactly ${count} flashcards at ${difficulty} difficulty IN ${targetLanguage}.
+Both the front (question) and back (answer) must be written in ${targetLanguage}.
+
+Each flashcard should:
+- Have a clear, focused question in ${targetLanguage}
+- Have a concise but complete answer in ${targetLanguage} (use LaTeX for math: $formula$)
 - Cover key concepts, definitions, formulas, or facts
 
 Return ONLY a JSON array with this exact format:
 [
-  {"front": "Question here?", "back": "Answer here"},
-  {"front": "Question here?", "back": "Answer here"}
+  {"front": "Question in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"},
+  {"front": "Question in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"}
 ]`;
     } else if (type === 'pdf' || type === 'image') {
       userPrompt = `Based on this content:
       
 ${content?.slice(0, 6000) || ''}
 
-Generate exactly ${count} flashcards at ${difficulty} difficulty covering the main concepts. Each flashcard should:
-- Have a clear, focused question
-- Have a concise but complete answer (use LaTeX for math: $formula$)
+Generate exactly ${count} flashcards at ${difficulty} difficulty IN ${targetLanguage}.
+Both the front (question) and back (answer) must be written in ${targetLanguage}.
+
+Each flashcard should:
+- Have a clear, focused question in ${targetLanguage}
+- Have a concise but complete answer in ${targetLanguage} (use LaTeX for math: $formula$)
 - Cover key concepts, definitions, formulas, or facts
 
 Return ONLY a JSON array with this exact format:
 [
-  {"front": "Question here?", "back": "Answer here"},
-  {"front": "Question here?", "back": "Answer here"}
+  {"front": "Question in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"},
+  {"front": "Question in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"}
 ]`;
     }
 
