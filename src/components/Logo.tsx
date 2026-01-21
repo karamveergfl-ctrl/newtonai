@@ -19,12 +19,9 @@ const Logo = ({ size = "md", showText = true, className = "", animate = true }: 
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <motion.img
-        src={logoImage}
-        alt="NewtonAI Logo"
-        width={icon}
-        height={icon}
-        className="object-contain"
+      <motion.div
+        className="rounded-full overflow-hidden flex-shrink-0"
+        style={{ width: icon, height: icon }}
         animate={animate ? {
           scale: [1, 1.1, 1],
           rotate: [0, 360],
@@ -42,7 +39,13 @@ const Logo = ({ size = "md", showText = true, className = "", animate = true }: 
           },
         }}
         whileHover={{ scale: 1.2 }}
-      />
+      >
+        <img
+          src={logoImage}
+          alt="NewtonAI Logo"
+          className="w-full h-full object-cover"
+        />
+      </motion.div>
       {showText && (
         <span className={`font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent ${text}`}>
           NewtonAI
