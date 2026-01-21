@@ -3,11 +3,16 @@ import { useState, useEffect } from "react";
 export type LectureTemplate = "lecture" | "study-guide" | "research" | "project";
 export type MindMapStyle = "radial" | "tree" | "cluster" | "timeline";
 export type SummaryFormat = "concise" | "detailed" | "bullet-points" | "academic";
+export type LanguageCode = 
+  | "en" | "es" | "fr" | "de" | "it" | "pt" | "zh" | "ja" | "ko" 
+  | "ar" | "hi" | "ru" | "nl" | "pl" | "tr" | "vi" | "th" | "id"
+  | "bn" | "ta" | "te" | "mr" | "gu" | "kn" | "ml" | "pa";
 
 interface TemplatePreferences {
   lectureTemplate: LectureTemplate;
   mindMapStyle: MindMapStyle;
   summaryFormat: SummaryFormat;
+  language: LanguageCode;
 }
 
 const STORAGE_KEY = "study-tool-preferences";
@@ -16,6 +21,7 @@ const defaultPreferences: TemplatePreferences = {
   lectureTemplate: "lecture",
   mindMapStyle: "radial",
   summaryFormat: "concise",
+  language: "en",
 };
 
 export const useTemplatePreferences = () => {
@@ -58,5 +64,6 @@ export const useTemplatePreferences = () => {
     setLectureTemplate: (value: LectureTemplate) => updatePreference("lectureTemplate", value),
     setMindMapStyle: (value: MindMapStyle) => updatePreference("mindMapStyle", value),
     setSummaryFormat: (value: SummaryFormat) => updatePreference("summaryFormat", value),
+    setLanguage: (value: LanguageCode) => updatePreference("language", value),
   };
 };

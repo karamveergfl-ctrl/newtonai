@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Mic, Youtube, FileText, Square, Play, Pause, Loader2, File, X, Globe } from "lucide-react";
+import { Upload, Mic, Youtube, FileText, Square, Play, Pause, Loader2, File, X, Globe, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useAudioWaveform } from "@/hooks/useAudioWaveform";
 import { AudioWaveformVisualizer, StaticWaveformVisualizer } from "@/components/AudioWaveformVisualizer";
+import { useTemplatePreferences, type LanguageCode } from "@/hooks/useTemplatePreferences";
 
 const LANGUAGES = [
   { code: "en", name: "English" },
@@ -36,6 +37,14 @@ const LANGUAGES = [
   { code: "vi", name: "Vietnamese" },
   { code: "th", name: "Thai" },
   { code: "id", name: "Indonesian" },
+  { code: "bn", name: "Bengali" },
+  { code: "ta", name: "Tamil" },
+  { code: "te", name: "Telugu" },
+  { code: "mr", name: "Marathi" },
+  { code: "gu", name: "Gujarati" },
+  { code: "kn", name: "Kannada" },
+  { code: "ml", name: "Malayalam" },
+  { code: "pa", name: "Punjabi" },
 ];
 
 type InputType = "upload" | "recording" | "youtube" | "text";
@@ -71,8 +80,11 @@ export const ContentInputTabs = ({
   showUpload = true,
   showText = true,
   showLanguageSelector = true,
-  defaultLanguage = "en",
+  defaultLanguage,
 }: ContentInputTabsProps) => {
+  // Use saved language preference
+  const { preferences, isLoaded: prefsLoaded, setLanguage: saveLanguage } = useTemplatePreferences();
+  
   const [activeTab, setActiveTab] = useState<InputType>("upload");
   const [textContent, setTextContent] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -84,7 +96,20 @@ export const ContentInputTabs = ({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState(defaultLanguage);
+  const [selectedLanguage, setSelectedLanguage] = useState(defaultLanguage || "en");
+  
+  // Sync with saved preference once loaded
+  useEffect(() => {
+    if (prefsLoaded && !defaultLanguage) {
+      setSelectedLanguage(preferences.language);
+    }
+  }, [prefsLoaded, preferences.language, defaultLanguage]);
+
+  // Save language preference when changed
+  const handleLanguageChange = (lang: string) => {
+    setSelectedLanguage(lang);
+    saveLanguage(lang as LanguageCode);
+  };
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -365,7 +390,7 @@ export const ContentInputTabs = ({
         </div>
 
         {showLanguageSelector && (
-          <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+          <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
             <SelectTrigger className="w-full sm:w-[180px] bg-background">
               <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
               <SelectValue placeholder="Select language" />
@@ -373,7 +398,12 @@ export const ContentInputTabs = ({
             <SelectContent>
               {LANGUAGES.map((lang) => (
                 <SelectItem key={lang.code} value={lang.code}>
-                  {lang.name}
+                  <div className="flex items-center gap-2">
+                    {lang.name}
+                    {lang.code === preferences.language && (
+                      <Check className="h-3 w-3 text-primary" />
+                    )}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
