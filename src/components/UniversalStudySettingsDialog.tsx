@@ -24,7 +24,7 @@ export interface UniversalGenerationSettings {
 interface UniversalStudySettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  type: "quiz" | "flashcards" | "summary" | "mindmap" | "notes";
+  type: "quiz" | "flashcards" | "summary" | "mindmap";
   contentTitle?: string;
   contentType?: "video" | "pdf" | "text" | "image" | "recording";
   totalPages?: number;
@@ -72,18 +72,6 @@ const typeConfig = {
     icon: Network,
     label: "Mind Map",
     description: "Create a visual mind map of concepts",
-    color: "text-primary",
-    countLabel: "",
-    countMin: 0,
-    countMax: 0,
-    countDefault: 0,
-    showDifficulty: false,
-    showDetailLevel: true,
-  },
-  notes: {
-    icon: Sparkles,
-    label: "AI Notes",
-    description: "Generate organized notes from your content",
     color: "text-primary",
     countLabel: "",
     countMin: 0,

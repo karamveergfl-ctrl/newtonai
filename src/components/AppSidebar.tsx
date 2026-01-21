@@ -21,7 +21,7 @@ import {
 import {
   Home,
   FileQuestion,
-  Notebook,
+  
   Layers,
   Brain,
   FileText,
@@ -43,7 +43,6 @@ import { useEffect } from "react";
 
 const studyTools = [
   { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help", feature: "homework_help" },
-  { id: "notes", label: "AI Notes", icon: Notebook, path: "/tools/ai-notes", feature: "ai_notes" },
   { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards", feature: "flashcards" },
   { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz", feature: "quiz" },
   { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer", feature: "summary" },

@@ -20,7 +20,6 @@ export interface SubscriptionInfo {
 const FREE_LIMITS: Record<string, { limit: number; unit: "per_day" | "per_month" | "minutes_per_month" }> = {
   homework_help: { limit: 5, unit: "per_day" },
   ai_chat: { limit: 3, unit: "per_day" },
-  ai_notes: { limit: 3, unit: "per_month" },
   flashcards: { limit: 3, unit: "per_month" },
   quiz: { limit: 3, unit: "per_month" },
   summary: { limit: 5, unit: "per_month" },
@@ -33,7 +32,6 @@ const FREE_LIMITS: Record<string, { limit: number; unit: "per_day" | "per_month"
 const PRO_LIMITS: Record<string, { limit: number; unit: "per_day" | "per_month" | "minutes_per_month" }> = {
   homework_help: { limit: -1, unit: "per_day" },
   ai_chat: { limit: -1, unit: "per_day" },
-  ai_notes: { limit: -1, unit: "per_month" },
   flashcards: { limit: -1, unit: "per_month" },
   quiz: { limit: -1, unit: "per_month" },
   summary: { limit: -1, unit: "per_month" },
@@ -45,7 +43,6 @@ const PRO_LIMITS: Record<string, { limit: number; unit: "per_day" | "per_month" 
 export const FEATURE_LABELS: Record<string, { label: string; icon: string }> = {
   homework_help: { label: "Homework Help", icon: "📝" },
   ai_chat: { label: "AI Chat", icon: "💬" },
-  ai_notes: { label: "AI Notes", icon: "📒" },
   flashcards: { label: "AI Flashcards", icon: "🃏" },
   quiz: { label: "AI Quiz", icon: "❓" },
   summary: { label: "Summarizer", icon: "📄" },
