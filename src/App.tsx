@@ -42,6 +42,7 @@ import { AdminRoute } from "./components/AdminRoute";
 import AdminAnalytics from "./pages/admin/Analytics";
 import AdminUsers from "./pages/admin/Users";
 import AdminInquiries from "./pages/admin/Inquiries";
+import AdminRedeemCodes from "./pages/admin/RedeemCodes";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ const App = () => (
               <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
               <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
               <Route path="/admin/inquiries" element={<AdminRoute><AdminInquiries /></AdminRoute>} />
+              <Route path="/admin/redeem-codes" element={<AdminRoute><AdminRedeemCodes /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

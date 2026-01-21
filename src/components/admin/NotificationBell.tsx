@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, UserPlus, CreditCard, Building2, Check } from "lucide-react";
+import { Bell, UserPlus, CreditCard, Building2, Check, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -109,6 +109,8 @@ export function NotificationBell() {
         return <CreditCard className="h-4 w-4 text-green-500" />;
       case "enterprise_inquiry":
         return <Building2 className="h-4 w-4 text-purple-500" />;
+      case "code_redemption":
+        return <Gift className="h-4 w-4 text-orange-500" />;
       default:
         return <Bell className="h-4 w-4" />;
     }
