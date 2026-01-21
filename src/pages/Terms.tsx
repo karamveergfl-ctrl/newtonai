@@ -54,7 +54,7 @@ const Terms = () => {
         <div className="space-y-8">
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold font-display">Terms of Service</h1>
-            <p className="text-muted-foreground">Last updated: January 6, 2026</p>
+            <p className="text-muted-foreground">Last updated: January 21, 2026</p>
           </div>
 
           {/* Table of Contents */}
@@ -66,6 +66,7 @@ const Terms = () => {
               <li><a href="#services" className="hover:text-foreground transition-colors">Description of Services</a></li>
               <li><a href="#accounts" className="hover:text-foreground transition-colors">User Accounts and Obligations</a></li>
               <li><a href="#subscriptions" className="hover:text-foreground transition-colors">Subscriptions and Pricing</a></li>
+              <li className="ml-4 text-xs"><a href="#promotional-codes" className="hover:text-foreground transition-colors">→ Promotional Codes</a></li>
               <li><a href="#acceptable-use" className="hover:text-foreground transition-colors">Acceptable Use Policy</a></li>
               <li><a href="#intellectual-property" className="hover:text-foreground transition-colors">Intellectual Property Rights</a></li>
               <li><a href="#refunds" className="hover:text-foreground transition-colors">Refunds and Cancellations</a></li>
@@ -244,6 +245,33 @@ const Terms = () => {
                   We reserve the right to change subscription prices. Price changes will be communicated at 
                   least 30 days before taking effect and will apply at the next renewal period.
                 </p>
+                
+                <h4 id="promotional-codes" className="scroll-mt-20">5.6 Promotional and Redeem Codes</h4>
+                <p>
+                  NewtonAI may offer promotional codes or redeem codes that provide discounts on subscription plans, 
+                  including codes that provide up to 100% discount (free premium access). These codes are subject to the following terms:
+                </p>
+                <ul>
+                  <li>Codes may have usage limits, expiration dates, and eligibility restrictions;</li>
+                  <li>100% discount codes are typically restricted to first-time payments only;</li>
+                  <li>Codes cannot be combined with other promotional offers unless explicitly stated;</li>
+                  <li>Codes are non-transferable and may not be sold or exchanged;</li>
+                  <li>NewtonAI reserves the right to cancel, modify, or expire any promotional code at any time;</li>
+                  <li>Misuse or fraudulent acquisition of promotional codes may result in account suspension.</li>
+                </ul>
+                
+                <h4>5.7 Free Premium Access via Promotional Codes</h4>
+                <p>
+                  Premium access obtained through 100% discount promotional codes grants the same features and benefits 
+                  as paid premium subscriptions. However, such access is subject to these additional terms:
+                </p>
+                <ul>
+                  <li>Free premium access is provided at NewtonAI's discretion and may be revoked at any time;</li>
+                  <li>Access may be terminated for violation of these Terms of Service;</li>
+                  <li>Access may be terminated if the promotional code was obtained through fraudulent means;</li>
+                  <li>Access is subject to the promotional campaign's duration and terms;</li>
+                  <li>NewtonAI may convert free premium access to paid subscription at the end of promotional periods.</li>
+                </ul>
               </AccordionContent>
             </AccordionItem>
 
@@ -392,7 +420,31 @@ const Terms = () => {
                   you will retain access to premium features until the end of your current billing period.
                 </p>
                 
-                <h4>8.3 Chargebacks</h4>
+                <h4>8.3 How to Cancel Premium Subscriptions</h4>
+                <p>
+                  Users may cancel their premium subscription at any time from their Profile or Account Settings page:
+                </p>
+                <ul>
+                  <li>Navigate to your <Link to="/profile" className="text-primary hover:underline">Profile page</Link> and locate the "Subscription Management" section;</li>
+                  <li>Click the "Cancel Subscription" button and confirm your decision;</li>
+                  <li>Premium features will remain accessible until the end of your current billing period;</li>
+                  <li>No partial refunds are issued for the remaining days in your billing period;</li>
+                  <li>Your account will automatically revert to the free tier when the billing period ends.</li>
+                </ul>
+                
+                <h4>8.4 Cancellation of Promotional Premium Access</h4>
+                <p>
+                  Premium access obtained via 100% discount promotional codes is subject to the following cancellation terms:
+                </p>
+                <ul>
+                  <li>NewtonAI reserves the right to terminate promotional premium access at any time;</li>
+                  <li>Users may voluntarily downgrade to the free tier at any time from their Profile settings;</li>
+                  <li>No refunds or compensation apply as no payment was made for promotional access;</li>
+                  <li>Promotional access may be terminated for violation of Terms of Service;</li>
+                  <li>Upon termination, account reverts to free tier with standard feature limitations.</li>
+                </ul>
+                
+                <h4>8.5 Chargebacks</h4>
                 <p>
                   If you file a chargeback or dispute with your payment provider, we reserve the right to 
                   suspend your Account immediately and may be entitled to recover any associated fees and costs.

@@ -55,7 +55,7 @@ const Refund = () => {
         <div className="space-y-8">
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold font-display">Refund Policy</h1>
-            <p className="text-muted-foreground">Last updated: January 6, 2026</p>
+            <p className="text-muted-foreground">Last updated: January 21, 2026</p>
           </div>
 
           {/* Quick Summary Cards */}
@@ -270,6 +270,17 @@ const Refund = () => {
                   <div className="flex items-start gap-3">
                     <XCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                     <div>
+                      <h5 className="font-medium">Promotional/Free Subscriptions</h5>
+                      <p className="text-sm text-muted-foreground">
+                        Premium access obtained through 100% discount promotional codes or free campaigns 
+                        is not eligible for refunds as no payment was made.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <XCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                    <div>
                       <h5 className="font-medium">Requests Outside Eligibility Window</h5>
                       <p className="text-sm text-muted-foreground">
                         Refund requests submitted after the 14-day window (except for annual plan 
@@ -314,6 +325,18 @@ const Refund = () => {
                   You can reactivate your subscription at any time. If you reactivate within 30 days of 
                   cancellation, your previous settings and data will be preserved.
                 </p>
+                
+                <h4>5.5 Promotional/Free Premium Access</h4>
+                <p>
+                  If you obtained premium access through a 100% discount promotional code, the following terms apply:
+                </p>
+                <ul>
+                  <li>Promotional premium access is not eligible for refunds as no payment was made;</li>
+                  <li>You may voluntarily downgrade to the free tier at any time from your <Link to="/profile" className="text-primary hover:underline">Profile settings</Link>;</li>
+                  <li>No compensation or credits will be provided upon cancellation of promotional access;</li>
+                  <li>NewtonAI reserves the right to terminate promotional access for policy violations;</li>
+                  <li>Upon termination, your account will revert to the free tier with standard limitations.</li>
+                </ul>
               </AccordionContent>
             </AccordionItem>
 
