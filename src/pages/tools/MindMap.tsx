@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { useFeatureGate } from "@/components/FeatureGate";
+import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { useProcessingState } from "@/hooks/useProcessingState";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
@@ -41,6 +42,7 @@ const MindMap = () => {
   const [zoom, setZoom] = useState(1);
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("mind_map");
+  const { incrementUsage } = useFeatureUsage();
 
   // Processing animation state
   const { phase, isProcessing: isGenerating, startThinking, startWriting, complete, reset: resetProcessing } = useProcessingState();
@@ -121,6 +123,9 @@ const MindMap = () => {
       if (!response.ok) throw new Error("Failed to generate mind map");
 
       const data = await response.json();
+      
+      // Track usage
+      await incrementUsage('mind_map');
       
       // Trigger completed animation
       complete();

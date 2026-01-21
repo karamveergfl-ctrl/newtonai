@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AudioRecorder, blobToBase64 } from "@/utils/audioRecorder";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useFeatureUsage } from "@/hooks/useFeatureUsage";
+
 interface LectureRecorderProps {
   onNotesGenerated: (notes: string, title: string) => void;
 }
@@ -124,6 +126,7 @@ export const LectureRecorder = ({
   const {
     toast
   } = useToast();
+  const { incrementUsage } = useFeatureUsage();
 
   // Format elapsed time as MM:SS
   const formatTime = (seconds: number) => {
@@ -248,6 +251,13 @@ export const LectureRecorder = ({
         }
       }
       setIsRecording(false);
+      
+      // Track transcription minutes
+      const recordingMinutes = Math.ceil(elapsedTime / 60);
+      if (recordingMinutes > 0) {
+        await incrementUsage('lecture_transcription', recordingMinutes);
+      }
+      
       const audioBlob = await audioRecorderRef.current.stop();
       const fullTranscript = (finalTranscript + liveTranscript).trim();
       if (fullTranscript.length > 50) {

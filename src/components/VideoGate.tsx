@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useCredits } from "@/hooks/useCredits";
+import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { CreditModal } from "@/components/CreditModal";
 import { FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
 import {
@@ -23,6 +24,7 @@ interface VideoGateProps {
 
 export function VideoGate({ videoId, videoTitle, onUnlock, children }: VideoGateProps) {
   const { credits, isPremium, hasEnoughCredits, spendCredits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
+  const { incrementUsage } = useFeatureUsage();
   const [showConfirm, setShowConfirm] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
 
@@ -30,6 +32,7 @@ export function VideoGate({ videoId, videoTitle, onUnlock, children }: VideoGate
 
   const handleClick = useCallback(() => {
     if (isPremium) {
+      incrementUsage('educational_videos');
       onUnlock();
       return;
     }
@@ -39,11 +42,12 @@ export function VideoGate({ videoId, videoTitle, onUnlock, children }: VideoGate
     } else {
       setShowCreditModal(true);
     }
-  }, [isPremium, hasEnoughCredits, onUnlock]);
+  }, [isPremium, hasEnoughCredits, onUnlock, incrementUsage]);
 
   const handleConfirm = async () => {
     const success = await spendCredits('watch_video');
     if (success) {
+      await incrementUsage('educational_videos');
       setShowConfirm(false);
       onUnlock();
     }
