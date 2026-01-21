@@ -10,6 +10,8 @@ import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Flashcard } from "@/components/Flashcard";
 import { useFeatureGate } from "@/components/FeatureGate";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
+import { ProcessingOverlay } from "@/components/ProcessingOverlay";
+import { useProcessingState } from "@/hooks/useProcessingState";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -32,9 +34,11 @@ const AIFlashcards = () => {
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("flashcards");
+
+  // Processing animation state
+  const { phase, isProcessing: isGenerating, startThinking, startWriting, complete, reset: resetProcessing } = useProcessingState();
 
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -54,7 +58,7 @@ const AIFlashcards = () => {
     
     const { content, type, metadata } = pendingContent;
     setPendingContent(null);
-    setIsGenerating(true);
+    startThinking(); // Start thinking animation
     setFlashcards([]);
 
     try {
@@ -74,6 +78,9 @@ const AIFlashcards = () => {
       if (!textContent?.trim()) {
         throw new Error("No content to process");
       }
+
+      // Switch to writing phase when API call starts
+      startWriting();
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`,
@@ -98,22 +105,27 @@ const AIFlashcards = () => {
       if (!response.ok) throw new Error("Failed to generate flashcards");
 
       const data = await response.json();
-      setFlashcards(data.flashcards);
-      setCurrentIndex(0);
-      setIsFlipped(false);
-
-      toast({
-        title: "Flashcards Ready! 📚",
-        description: `Generated ${data.flashcards.length} flashcards`,
-      });
+      
+      // Trigger completed animation
+      complete();
+      
+      // Wait for animation to finish, then show results
+      setTimeout(() => {
+        setFlashcards(data.flashcards);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        toast({
+          title: "Flashcards Ready! 📚",
+          description: `Generated ${data.flashcards.length} flashcards`,
+        });
+      }, 1500);
     } catch (error) {
+      resetProcessing();
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to generate flashcards. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -156,16 +168,26 @@ const AIFlashcards = () => {
           </div>
 
           {flashcards.length === 0 ? (
-            <Card className="border-border/50 shadow-lg">
-              <CardContent className="pt-6">
-                <ContentInputTabs
-                  onContentReady={handleContentReady}
-                  isProcessing={isGenerating}
-                  placeholder="Paste your study content here (lecture notes, textbook excerpts, etc.)..."
-                  supportedFormats="PDF, TXT, Images; Max size: 20MB"
-                />
-              </CardContent>
-            </Card>
+            isGenerating ? (
+              <ProcessingOverlay
+                isVisible={isGenerating}
+                phase={phase}
+                message={phase === "thinking" ? "Analyzing your content..." : phase === "writing" ? "Creating flashcards..." : "Flashcards ready!"}
+                subMessage={phase === "thinking" ? "Understanding the material" : phase === "writing" ? "Crafting memorable cards" : undefined}
+                variant="card"
+              />
+            ) : (
+              <Card className="border-border/50 shadow-lg">
+                <CardContent className="pt-6">
+                  <ContentInputTabs
+                    onContentReady={handleContentReady}
+                    isProcessing={isGenerating}
+                    placeholder="Paste your study content here (lecture notes, textbook excerpts, etc.)..."
+                    supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                  />
+                </CardContent>
+              </Card>
+            )
           ) : (
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between px-2 sm:px-0">
