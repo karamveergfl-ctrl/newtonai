@@ -56,7 +56,10 @@ serve(async (req) => {
     const userName = profile?.full_name || "User";
 
     // Delete user data from all tables (order matters due to potential dependencies)
+    // Include ALL user-related tables for complete cleanup
     const tablesToClean = [
+      { table: "podcasts", column: "user_id" },
+      { table: "redeemed_codes", column: "user_id" },
       { table: "credit_transactions", column: "user_id" },
       { table: "user_credits", column: "user_id" },
       { table: "feature_usage", column: "user_id" },
@@ -64,6 +67,7 @@ serve(async (req) => {
       { table: "search_history", column: "user_id" },
       { table: "study_sessions", column: "user_id" },
       { table: "video_watch_time", column: "user_id" },
+      // Note: subscriptions and payments are kept for financial records (immutable)
       { table: "profiles", column: "id" },
     ];
 
@@ -130,6 +134,8 @@ serve(async (req) => {
                         <li>Search history</li>
                         <li>Study sessions</li>
                         <li>Video watch history</li>
+                        <li>Saved podcasts</li>
+                        <li>Redeemed codes history</li>
                       </ul>
                     </div>
                     <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">

@@ -78,7 +78,10 @@ verify_jwt = false
 [functions.generate-podcast-script]
 verify_jwt = false
 
-[functions.elevenlabs-tts]
+[functions.elevenlabs-ambient]
+verify_jwt = false
+
+[functions.send-enterprise-inquiry]
 verify_jwt = false
 
 [functions.podcast-raise-hand]

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,42 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Rate limiting
+    const { data: allowed, error: rateLimitError } = await supabase.rpc("check_rate_limit", {
+      p_user_id: user.id,
+      p_function_name: "elevenlabs-ambient",
+    });
+
+    if (rateLimitError || !allowed) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { prompt, duration } = await req.json();
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 
@@ -34,7 +71,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           text: prompt,
-          duration_seconds: duration || 22, // Max duration for looping
+          duration_seconds: duration || 22,
           prompt_influence: 0.3,
         }),
       }
@@ -48,12 +85,7 @@ serve(async (req) => {
 
     const audioBuffer = await response.arrayBuffer();
     
-    // Convert to base64 for easier handling on client
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(audioBuffer).slice(0, 50000))
-    );
-    
-    // For larger files, use chunks
+    // Convert to base64 using chunks for larger files
     const uint8Array = new Uint8Array(audioBuffer);
     let binary = "";
     const chunkSize = 32768;
