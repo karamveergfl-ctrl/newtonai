@@ -35,12 +35,12 @@ const PRO_LIMITS: Record<string, { limit: number; unit: "per_day" | "per_month" 
   educational_videos: { limit: -1, unit: "per_month" }, // Unlimited
   homework_help: { limit: -1, unit: "per_day" }, // Unlimited
   ai_chat: { limit: -1, unit: "per_day" }, // Unlimited
-  flashcards: { limit: 30, unit: "per_month" },
-  quiz: { limit: 30, unit: "per_month" },
+  flashcards: { limit: 90, unit: "per_month" },
+  quiz: { limit: 90, unit: "per_month" },
   summary: { limit: 20, unit: "per_month" },
   lecture_notes: { limit: 20, unit: "per_month" },
-  lecture_transcription: { limit: 200, unit: "minutes_per_month" },
-  mind_map: { limit: 30, unit: "per_month" },
+  lecture_transcription: { limit: 900, unit: "minutes_per_month" },
+  mind_map: { limit: 90, unit: "per_month" },
   ai_podcast: { limit: 15, unit: "per_month" },
 };
 
