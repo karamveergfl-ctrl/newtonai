@@ -37,6 +37,12 @@ import CookieConsent from "./components/CookieConsent";
 import PaymentSuccess from "./pages/payment/Success";
 import PaymentFailure from "./pages/payment/Failure";
 
+// Admin pages
+import { AdminRoute } from "./components/AdminRoute";
+import AdminAnalytics from "./pages/admin/Analytics";
+import AdminUsers from "./pages/admin/Users";
+import AdminInquiries from "./pages/admin/Inquiries";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -76,6 +82,11 @@ const App = () => (
               <Route path="/tools/lecture-notes" element={<AILectureNotes />} />
               <Route path="/tools/ai-podcast" element={<AIPodcast />} />
               <Route path="/tools/mind-map" element={<MindMap />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+              <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+              <Route path="/admin/inquiries" element={<AdminRoute><AdminInquiries /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

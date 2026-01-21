@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           ad_duration: number | null
@@ -41,6 +71,51 @@ export type Database = {
           id?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      enterprise_inquiries: {
+        Row: {
+          company: string
+          created_at: string | null
+          email: string
+          first_name: string
+          id: string
+          job_title: string
+          last_name: string
+          message: string | null
+          status: string | null
+          team_size: string
+          updated_at: string | null
+          use_case: string
+        }
+        Insert: {
+          company: string
+          created_at?: string | null
+          email: string
+          first_name: string
+          id?: string
+          job_title: string
+          last_name: string
+          message?: string | null
+          status?: string | null
+          team_size: string
+          updated_at?: string | null
+          use_case: string
+        }
+        Update: {
+          company?: string
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          job_title?: string
+          last_name?: string
+          message?: string | null
+          status?: string | null
+          team_size?: string
+          updated_at?: string | null
+          use_case?: string
         }
         Relationships: []
       }
@@ -493,6 +568,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_watch_time: {
         Row: {
           created_at: string
@@ -560,13 +656,20 @@ export type Database = {
         Args: { p_ad_duration: number; p_credits_earned: number }
         Returns: Json
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       spend_credits:
         | { Args: { p_feature_name: string }; Returns: Json }
         | { Args: { p_amount: number; p_feature_name: string }; Returns: Json }
       validate_redeem_code: { Args: { p_code: string }; Returns: Json }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -693,6 +796,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
