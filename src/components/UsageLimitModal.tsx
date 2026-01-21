@@ -1,8 +1,9 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Sparkles, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { FeatureShowcase } from "./FeatureShowcase";
 
 interface UsageLimitModalProps {
   open: boolean;
@@ -17,7 +18,7 @@ export function UsageLimitModal({ open, onClose, featureName, currentUsage, limi
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <motion.div
             initial={{ scale: 0 }}
@@ -37,6 +38,9 @@ export function UsageLimitModal({ open, onClose, featureName, currentUsage, limi
             <p className="text-2xl font-bold text-foreground">{currentUsage}/{limit}</p>
             <p className="text-sm text-muted-foreground">Uses consumed</p>
           </div>
+
+          {/* Feature showcase */}
+          <FeatureShowcase className="my-4" />
 
           <div className="space-y-2">
             <Button 
