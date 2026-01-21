@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star } from "lucide-react";
+import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star, ChevronDown } from "lucide-react";
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
@@ -27,6 +27,12 @@ import {
   transcribeAudio,
 } from "@/utils/contentProcessing";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type SummaryFormat = "concise" | "detailed" | "bullet-points" | "academic";
 
@@ -92,12 +98,24 @@ const AISummarizer = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const { toast } = useToast();
   const { checkCanUse, incrementUsage } = useFeatureUsage();
-  const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
+  const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
 
   // Video-specific state
   const [videoData, setVideoData] = useState<VideoData | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
+  
+  // Voice selection state - must be after selectedLanguage
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
+
+  // Load preferred voice when language changes
+  useEffect(() => {
+    const preferred = getPreferredVoice(selectedLanguage);
+    setSelectedVoiceName(preferred);
+  }, [selectedLanguage, getPreferredVoice, voices]);
+
+  // Get voices for current language
+  const availableVoices = getVoicesForLanguage(selectedLanguage);
 
   // Study tools state
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
@@ -950,19 +968,61 @@ const AISummarizer = () => {
                       </div>
                       <div className="flex gap-2 flex-wrap">
                         {isSupported && (
-                          <Button 
-                            variant={isSpeaking ? "default" : "outline"} 
-                            size="sm" 
-                            onClick={handleReadAloud}
-                            className={isSpeaking ? 'bg-primary text-primary-foreground' : ''}
-                          >
-                            {isSpeaking ? (
-                              <VolumeX className="h-4 w-4 mr-1" />
-                            ) : (
-                              <Volume2 className="h-4 w-4 mr-1" />
-                            )}
-                            {isSpeaking ? "Stop" : "Listen"}
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button 
+                              variant={isSpeaking ? "default" : "outline"} 
+                              size="sm" 
+                              onClick={handleReadAloud}
+                              className={cn(
+                                "rounded-r-none",
+                                isSpeaking && 'bg-primary text-primary-foreground'
+                              )}
+                            >
+                              {isSpeaking ? (
+                                <VolumeX className="h-4 w-4 mr-1" />
+                              ) : (
+                                <Volume2 className="h-4 w-4 mr-1" />
+                              )}
+                              {isSpeaking ? "Stop" : "Listen"}
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="rounded-l-none border-l-0 px-2"
+                                >
+                                  <ChevronDown className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="max-h-[300px] overflow-y-auto bg-popover z-50">
+                                {availableVoices.length === 0 ? (
+                                  <DropdownMenuItem disabled>No voices available</DropdownMenuItem>
+                                ) : (
+                                  availableVoices.map((voice) => (
+                                    <DropdownMenuItem
+                                      key={voice.name}
+                                      onClick={() => {
+                                        setSelectedVoiceName(voice.name);
+                                        setPreferredVoice(voice.name, selectedLanguage);
+                                      }}
+                                      className={cn(
+                                        "cursor-pointer",
+                                        selectedVoiceName === voice.name && "bg-accent"
+                                      )}
+                                    >
+                                      <span className="truncate max-w-[200px]">
+                                        {voice.name.replace(/^(Microsoft|Google|Apple)\s+/i, "")}
+                                      </span>
+                                      {/neural|natural|premium|enhanced|wavenet/i.test(voice.name) && (
+                                        <Star className="h-3 w-3 ml-1 text-primary shrink-0" />
+                                      )}
+                                    </DropdownMenuItem>
+                                  ))
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         )}
                         <Button variant="outline" size="sm" onClick={handleCopy}>
                           {copied ? (

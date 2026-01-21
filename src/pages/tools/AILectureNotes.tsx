@@ -6,8 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Mic, Download, Copy, Check, Volume2, VolumeX, Pencil, Eye, Highlighter,
-  Upload, Youtube, FileText, Globe, Loader2, ArrowLeft, Sparkles, BookOpen, Clipboard, Star
+  Upload, Youtube, FileText, Globe, Loader2, ArrowLeft, Sparkles, BookOpen, Clipboard, Star, ChevronDown
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { LectureRecorder } from "@/components/LectureRecorder";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
@@ -148,8 +154,18 @@ const AILectureNotes = () => {
   
   const { toast } = useToast();
   const { modal } = useFeatureGate("lecture_notes");
-  const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
+  const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
 
+  // Load preferred voice when language changes
+  useEffect(() => {
+    const langCode = selectedLanguage.split("-")[0];
+    const preferred = getPreferredVoice(langCode);
+    setSelectedVoiceName(preferred);
+  }, [selectedLanguage, getPreferredVoice, voices]);
+
+  // Get voices for current language
+  const availableVoices = getVoicesForLanguage(selectedLanguage.split("-")[0]);
   // Sync edited notes when notes change
   useEffect(() => {
     setEditedNotes(notes);
@@ -803,23 +819,63 @@ const AILectureNotes = () => {
                       </Button>
 
                       {isSupported && (
-                        <Button 
-                          variant={isSpeaking ? "default" : "ghost"} 
-                          size="sm" 
-                          onClick={handleReadAloud}
-                          disabled={isEditing}
-                          className={cn(
-                            "flex-1 sm:flex-none",
-                            isSpeaking && "bg-primary text-primary-foreground"
-                          )}
-                        >
-                          {isSpeaking ? (
-                            <VolumeX className="h-4 w-4" />
-                          ) : (
-                            <Volume2 className="h-4 w-4" />
-                          )}
-                          <span className="ml-2 sm:hidden">{isSpeaking ? "Stop" : "Listen"}</span>
-                        </Button>
+                        <div className="flex items-center gap-0">
+                          <Button 
+                            variant={isSpeaking ? "default" : "ghost"} 
+                            size="sm" 
+                            onClick={handleReadAloud}
+                            disabled={isEditing}
+                            className={cn(
+                              "flex-1 sm:flex-none rounded-r-none",
+                              isSpeaking && "bg-primary text-primary-foreground"
+                            )}
+                          >
+                            {isSpeaking ? (
+                              <VolumeX className="h-4 w-4" />
+                            ) : (
+                              <Volume2 className="h-4 w-4" />
+                            )}
+                            <span className="ml-2 sm:hidden">{isSpeaking ? "Stop" : "Listen"}</span>
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="rounded-l-none px-2"
+                                disabled={isEditing}
+                              >
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="max-h-[300px] overflow-y-auto bg-popover z-50">
+                              {availableVoices.length === 0 ? (
+                                <DropdownMenuItem disabled>No voices available</DropdownMenuItem>
+                              ) : (
+                                availableVoices.map((voice) => (
+                                  <DropdownMenuItem
+                                    key={voice.name}
+                                    onClick={() => {
+                                      setSelectedVoiceName(voice.name);
+                                      setPreferredVoice(voice.name, selectedLanguage.split("-")[0]);
+                                    }}
+                                    className={cn(
+                                      "cursor-pointer",
+                                      selectedVoiceName === voice.name && "bg-accent"
+                                    )}
+                                  >
+                                    <span className="truncate max-w-[200px]">
+                                      {voice.name.replace(/^(Microsoft|Google|Apple)\s+/i, "")}
+                                    </span>
+                                    {/neural|natural|premium|enhanced|wavenet/i.test(voice.name) && (
+                                      <Star className="h-3 w-3 ml-1 text-primary shrink-0" />
+                                    )}
+                                  </DropdownMenuItem>
+                                ))
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       )}
                       <Button variant="ghost" size="sm" onClick={handleCopy} className="flex-1 sm:flex-none">
                         {copied ? (
