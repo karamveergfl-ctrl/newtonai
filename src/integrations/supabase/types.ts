@@ -652,6 +652,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_old_webhook_events: { Args: never; Returns: number }
       earn_credits: {
         Args: { p_ad_duration: number; p_credits_earned: number }
         Returns: Json
