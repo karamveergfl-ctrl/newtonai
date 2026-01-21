@@ -20,12 +20,12 @@ const features = [
   {
     icon: Brain,
     title: "AI-Powered Flashcards",
-    description: "Generate smart flashcards from any document or video in seconds."
+    description: "Generate smart flashcards from any document. Up to 90/month on Pro!"
   },
   {
     icon: FileText,
     title: "PDF Summarizer",
-    description: "Extract key insights from lengthy PDFs with AI summarization."
+    description: "Extract key insights from lengthy PDFs. 20 summaries/month on Pro."
   },
   {
     icon: Video,
@@ -35,17 +35,17 @@ const features = [
   {
     icon: BookOpen,
     title: "AI Quiz Generator",
-    description: "Create personalized quizzes to test your knowledge."
+    description: "Create personalized quizzes. Free gets 3/month, Pro gets 90!"
   },
   {
     icon: Sparkles,
     title: "Mind Maps",
-    description: "Visualize complex topics with auto-generated mind maps."
+    description: "Visualize complex topics with auto-generated mind maps. 90/month on Pro."
   },
   {
     icon: Zap,
     title: "Homework Help",
-    description: "Get step-by-step solutions to your toughest problems."
+    description: "Get step-by-step solutions. Unlimited on Pro & Ultra plans!"
   }
 ];
 

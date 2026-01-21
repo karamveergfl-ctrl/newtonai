@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 const faqs = [
   {
     question: "What is NewtonAI?",
-    answer: "NewtonAI is an AI-powered learning platform that helps students study more effectively. Upload your PDFs, lecture notes, or textbooks, and our AI will generate flashcards, quizzes, summaries, and mind maps to help you learn faster."
+    answer: "NewtonAI is an AI-powered learning platform that helps students study more effectively. Upload your PDFs, lecture notes, or textbooks, and our AI will generate flashcards, quizzes, summaries, mind maps, and podcasts to help you learn faster."
   },
   {
     question: "How does the AI flashcard generation work?",
@@ -15,7 +15,11 @@ const faqs = [
   },
   {
     question: "Can I use NewtonAI for free?",
-    answer: "Yes! Our Free plan allows you to upload up to 5 PDFs per month and access basic features. For unlimited uploads and advanced features like AI tutoring and mind maps, check out our Pro and Ultra plans."
+    answer: "Yes! Our Free plan includes 20 educational videos/month, 3 flashcards/quizzes/mind maps each, 2 lecture notes & summaries, 1 AI podcast, 20 minutes of live transcription, 5 homework help questions per day, and 3 AI chat messages per day. For higher limits and unlimited features, check out our Pro and Ultra plans."
+  },
+  {
+    question: "What are the differences between Free, Pro, and Ultra plans?",
+    answer: "Free plan has basic limits for all features. Pro plan offers 90 quizzes/flashcards/mind maps per month, 20 lecture notes/summaries, 15 podcasts, 900 minutes of transcription, and unlimited homework help & AI chat. Ultra plan provides unlimited access to all features plus team collaboration and API access."
   },
   {
     question: "What file formats are supported?",
