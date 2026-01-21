@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UploadZone } from "@/components/UploadZone";
 import { LectureRecorder } from "@/components/LectureRecorder";
-import { FeatureTutorial } from "@/components/FeatureTutorial";
+
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { PDFReader } from "@/components/PDFReader";
 import { ImageViewer } from "@/components/ImageViewer";
@@ -1778,7 +1778,7 @@ const Index = () => {
   };
 
   return <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
-        <FeatureTutorial />
+        
         <WelcomeModal onUploadClick={triggerUploadClick} onRecordClick={triggerRecordClick} />
         <div className="flex-1 bg-gradient-to-br from-background via-background to-primary/5 overflow-auto">
           <div className="max-w-4xl mx-auto px-6 py-8">
