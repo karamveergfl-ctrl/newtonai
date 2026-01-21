@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Check, Volume2, VolumeX, Loader2 } from "lucide-react";
 import type { ProcessingPhase } from "@/hooks/useProcessingState";
 import { useNewtonSounds } from "@/hooks/useNewtonSounds";
+import { useNewtonPoses } from "@/hooks/useNewtonPoses";
 import newtonCharacter from "@/assets/newton-character.png";
 
 interface NewtonProcessingAnimationProps {
@@ -35,7 +36,7 @@ const sizeClasses = {
 };
 
 // Thinking Animation - Newton with pulsing lightbulb and gentle bob
-const ThinkingAnimation = memo(({ sizeClass }: { sizeClass: string }) => (
+const ThinkingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; poseImage: string }) => (
   <motion.div
     className={`relative ${sizeClass} flex items-center justify-center`}
     initial={{ opacity: 0, scale: 0.8 }}
@@ -67,7 +68,7 @@ const ThinkingAnimation = memo(({ sizeClass }: { sizeClass: string }) => (
       }}
     >
       <img 
-        src={newtonCharacter} 
+        src={poseImage} 
         alt="Newton thinking"
         className="w-full h-full object-contain drop-shadow-xl"
         draggable={false}
@@ -117,7 +118,7 @@ const ThinkingAnimation = memo(({ sizeClass }: { sizeClass: string }) => (
 ThinkingAnimation.displayName = "ThinkingAnimation";
 
 // Writing Animation - Newton with active pencil motion
-const WritingAnimation = memo(({ sizeClass }: { sizeClass: string }) => (
+const WritingAnimation = memo(({ sizeClass, poseImage }: { sizeClass: string; poseImage: string }) => (
   <motion.div
     className={`relative ${sizeClass} flex items-center justify-center`}
     initial={{ opacity: 0, scale: 0.8 }}
@@ -149,7 +150,7 @@ const WritingAnimation = memo(({ sizeClass }: { sizeClass: string }) => (
       }}
     >
       <img 
-        src={newtonCharacter} 
+        src={poseImage} 
         alt="Newton writing"
         className="w-full h-full object-contain drop-shadow-xl"
         draggable={false}
@@ -221,9 +222,11 @@ WritingAnimation.displayName = "WritingAnimation";
 // Completed Animation - Newton with celebratory thumbs up effect
 const CompletedAnimation = memo(({ 
   sizeClass,
+  poseImage,
   onAnimationEnd 
 }: { 
   sizeClass: string;
+  poseImage: string;
   onAnimationEnd?: () => void;
 }) => (
   <motion.div
@@ -276,7 +279,7 @@ const CompletedAnimation = memo(({
       }}
     >
       <img 
-        src={newtonCharacter} 
+        src={poseImage} 
         alt="Newton completed"
         className="w-full h-full object-contain drop-shadow-2xl"
         draggable={false}
@@ -377,6 +380,12 @@ export const NewtonProcessingAnimation = memo(({
 }: NewtonProcessingAnimationProps) => {
   const [hasCompletedPlayed, setHasCompletedPlayed] = useState(false);
 
+  // Pose images hook - uses AI-generated poses with fallback to default
+  const { getPoseImage } = useNewtonPoses({
+    enabled: true,
+    fallbackImage: newtonCharacter
+  });
+
   // Sound effects hook
   const {
     crossfadeTo,
@@ -422,6 +431,7 @@ export const NewtonProcessingAnimation = memo(({
   if (state === "idle") return null;
 
   const sizeClass = sizeClasses[size];
+  const currentPoseImage = getPoseImage(state);
 
   return (
     <div className={`flex flex-col items-center justify-center gap-4 ${className}`}>
@@ -429,15 +439,16 @@ export const NewtonProcessingAnimation = memo(({
       <div className="relative">
         <AnimatePresence mode="wait">
           {state === "thinking" && (
-            <ThinkingAnimation key="thinking" sizeClass={sizeClass} />
+            <ThinkingAnimation key="thinking" sizeClass={sizeClass} poseImage={currentPoseImage} />
           )}
           {state === "writing" && (
-            <WritingAnimation key="writing" sizeClass={sizeClass} />
+            <WritingAnimation key="writing" sizeClass={sizeClass} poseImage={currentPoseImage} />
           )}
           {state === "completed" && (
             <CompletedAnimation 
               key="completed" 
               sizeClass={sizeClass}
+              poseImage={currentPoseImage}
               onAnimationEnd={handleCompleteEnd}
             />
           )}
