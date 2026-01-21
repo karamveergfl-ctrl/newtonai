@@ -10,6 +10,7 @@ import { detectCurrency, CurrencyCode } from '@/lib/currencyUtils';
 interface PaymentButtonProps {
   planName: 'pro' | 'ultra';
   billingCycle: 'monthly' | 'yearly';
+  currency?: CurrencyCode;
   children: React.ReactNode;
   className?: string;
   variant?: 'default' | 'secondary' | 'outline' | 'ghost';
@@ -30,6 +31,7 @@ const steps = [
 export const PaymentButton: React.FC<PaymentButtonProps> = ({
   planName,
   billingCycle,
+  currency: currencyProp,
   children,
   className,
   variant = 'default',
@@ -139,11 +141,11 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       return;
     }
 
-    // Detect currency from user's email
-    const detectedCurrency = detectCurrency(session.user.email);
+    // Use passed currency prop, fallback to auto-detection only if not provided
+    const finalCurrency = currencyProp || detectCurrency(session.user.email);
 
-    console.log('Calling initiatePayment...', { discountPercent, redeemCodeId, currency: detectedCurrency });
-    initiatePayment(planName, billingCycle, handleProgress, discountPercent, redeemCodeId ?? undefined, detectedCurrency);
+    console.log('Calling initiatePayment...', { discountPercent, redeemCodeId, currency: finalCurrency });
+    initiatePayment(planName, billingCycle, handleProgress, discountPercent, redeemCodeId ?? undefined, finalCurrency);
   };
 
   const isDisabled = isLoading || isCheckingAuth || !isScriptLoaded || disabled;
