@@ -14,21 +14,33 @@ const sizeMap = {
   lg: { icon: 64, text: "text-3xl" },
 };
 
-const Logo = ({ size = "md", showText = true, className = "", animate = true }: LogoProps) => {
+const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
   const { icon, text } = sizeMap[size];
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div
-        className="rounded-full overflow-hidden flex-shrink-0 shadow-md border border-white/10"
+      <motion.div
+        className="relative flex-shrink-0 group"
         style={{ width: icon, height: icon }}
+        whileHover={{ scale: 1.05 }}
+        transition={{ duration: 0.2 }}
       >
-        <img
-          src={logoImage}
-          alt="NewtonAI Logo"
-          className="w-full h-full object-cover scale-125"
+        {/* Glowing ring */}
+        <div 
+          className="absolute inset-0 rounded-full bg-gradient-to-r from-primary via-secondary to-primary opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300 group-hover:animate-pulse"
+          style={{ margin: -4 }}
         />
-      </div>
+        {/* Logo container */}
+        <div
+          className="relative rounded-full overflow-hidden shadow-md border border-white/10 w-full h-full"
+        >
+          <img
+            src={logoImage}
+            alt="NewtonAI Logo"
+            className="w-full h-full object-cover scale-125"
+          />
+        </div>
+      </motion.div>
       {showText && (
         <span className={`font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent ${text}`}>
           NewtonAI
