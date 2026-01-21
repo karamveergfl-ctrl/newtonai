@@ -211,6 +211,7 @@ const AILectureNotes = () => {
     try {
       await speak(cleanText, {
         language: langCode,
+        voiceName: selectedVoiceName || undefined,
         onStart: () => {
           toast({
             title: "Reading aloud 🔊",

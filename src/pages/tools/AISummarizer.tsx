@@ -172,6 +172,7 @@ const AISummarizer = () => {
     try {
       await speak(cleanText, {
         language: selectedLanguage,
+        voiceName: selectedVoiceName || undefined,
         onStart: () => {
           toast({
             title: "Reading aloud 🔊",

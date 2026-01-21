@@ -83,6 +83,7 @@ const AINotes = () => {
     try {
       await speak(cleanText, {
         language: contentLanguage,
+        voiceName: selectedVoiceName || undefined,
         onStart: () => {
           toast({
             title: "Reading aloud 🔊",
