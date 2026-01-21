@@ -108,6 +108,36 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     }
 
     setIsCheckingAuth(false);
+
+    // Handle 100% discount - bypass Razorpay and activate subscription directly
+    if (discountPercent === 100 && redeemCodeId) {
+      console.log('100% discount detected, activating free subscription...');
+      setCurrentStep(1);
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('activate-free-subscription', {
+          body: {
+            plan_name: planName,
+            billing_cycle: billingCycle,
+            redeem_code_id: redeemCodeId,
+          },
+        });
+
+        if (error || !data?.success) {
+          console.error('Free subscription activation failed:', error || data);
+          handleFailure();
+          return;
+        }
+
+        console.log('Free subscription activated successfully:', data);
+        handleSuccess();
+      } catch (err) {
+        console.error('Error activating free subscription:', err);
+        handleFailure();
+      }
+      return;
+    }
+
     console.log('Calling initiatePayment...', { discountPercent, redeemCodeId });
     initiatePayment(planName, billingCycle, handleProgress, discountPercent, redeemCodeId ?? undefined);
   };
