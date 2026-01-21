@@ -31,7 +31,7 @@ const Privacy = () => {
         <div className="space-y-8">
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold font-display">Privacy Policy</h1>
-            <p className="text-muted-foreground">Last updated: January 6, 2026</p>
+            <p className="text-muted-foreground">Last updated: January 21, 2026</p>
           </div>
 
           {/* Table of Contents */}
@@ -117,6 +117,7 @@ const Privacy = () => {
                   <li><strong>Make Payments:</strong> Billing information, payment method details (processed securely by our payment providers).</li>
                   <li><strong>Contact Us:</strong> Information included in your communications, including support requests and feedback.</li>
                   <li><strong>Participate in Surveys:</strong> Responses to optional surveys or research studies.</li>
+                  <li><strong>Redeem Promotional Codes:</strong> Records of redeemed promotional codes, including code identifiers, redemption timestamps, and applied discounts.</li>
                 </ul>
 
                 <h4>3.2 Information Collected Automatically</h4>
@@ -196,7 +197,9 @@ const Privacy = () => {
                   <li>Create and manage your account;</li>
                   <li>Process subscription payments and billing;</li>
                   <li>Send transactional communications (confirmations, receipts);</li>
-                  <li>Provide customer support.</li>
+                  <li>Provide customer support;</li>
+                  <li>Track promotional code usage to prevent fraud and abuse;</li>
+                  <li>Manage promotional campaign eligibility and enforce code restrictions.</li>
                 </ul>
 
                 <h4>5.3 Communications</h4>
