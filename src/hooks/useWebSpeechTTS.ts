@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 
 const STORAGE_KEY = "podcast-voice-settings";
+const VOICE_CACHE_KEY = "tts-voice-cache";
 
 interface VoiceSettings {
   host1VoiceName: string;
@@ -44,7 +45,137 @@ const LANGUAGE_TAGS: Record<string, string> = {
   or: "or-IN",
   as: "as-IN",
   ks: "ks-IN",
+  ru: "ru-RU",
+  it: "it-IT",
+  nl: "nl-NL",
+  pl: "pl-PL",
+  tr: "tr-TR",
+  vi: "vi-VN",
+  th: "th-TH",
+  id: "id-ID",
 };
+
+// Extended voice patterns for different languages - used for gender detection
+const VOICE_PATTERNS: Record<string, { male: RegExp; female: RegExp }> = {
+  // English
+  en: {
+    male: /\b(david|james|daniel|mark|paul|tom|george|matthew|arthur|henry|alex|aaron|adam|brian|chris|eric|fred|john|kevin|michael|peter|richard|robert|william|guy|male)\b/i,
+    female: /\b(samantha|karen|victoria|fiona|moira|susan|zira|hazel|emma|alice|kate|linda|lisa|mary|nancy|rachel|sarah|tessa|amy|catherine|emily|jessica|jennifer|nicole|olivia|female|woman)\b/i,
+  },
+  // Hindi
+  hi: {
+    male: /\b(ravi|amit|arun|krishna|raj|sanjay|hemant|madhur|prabhat|arvind|vijay|prakash|suresh|mahesh|kiran|male)\b/i,
+    female: /\b(lekha|aditi|neerja|swara|priya|anita|sunita|kavita|meera|lakshmi|sneha|divya|anjali|pooja|neha|female)\b/i,
+  },
+  // Tamil
+  ta: {
+    male: /\b(kumar|rajan|murali|prakash|vijay|ganesh|valluvar|muthu|male)\b/i,
+    female: /\b(vani|veena|priya|lakshmi|devi|meena|pallavi|female)\b/i,
+  },
+  // Telugu
+  te: {
+    male: /\b(ravi|krishna|vijay|prasad|venkat|mohan|male)\b/i,
+    female: /\b(lakshmi|priya|devi|swathi|madhavi|shruti|female)\b/i,
+  },
+  // Bengali
+  bn: {
+    male: /\b(tanmoy|arnab|raj|amit|bashkar|male)\b/i,
+    female: /\b(tanishaa|ria|priya|anjali|bondita|female)\b/i,
+  },
+  // Marathi
+  mr: {
+    male: /\b(aaditya|rahul|amit|nachiket|male)\b/i,
+    female: /\b(aishwarya|sakhi|priya|aarohi|female)\b/i,
+  },
+  // Gujarati
+  gu: {
+    male: /\b(dhruv|ketan|jay|niranjan|male)\b/i,
+    female: /\b(dhwani|nishtha|priya|hemant|female)\b/i,
+  },
+  // Kannada
+  kn: {
+    male: /\b(suresh|ramesh|prakash|gagan|male)\b/i,
+    female: /\b(sapna|gagan|priya|female)\b/i,
+  },
+  // Malayalam
+  ml: {
+    male: /\b(midhun|sreejith|arun|male)\b/i,
+    female: /\b(sobhana|anjali|priya|female)\b/i,
+  },
+  // Punjabi
+  pa: {
+    male: /\b(harjinder|amardeep|singh|male)\b/i,
+    female: /\b(harleen|amarjeet|kaur|female)\b/i,
+  },
+  // Odia
+  or: {
+    male: /\b(manoranjan|subrat|male)\b/i,
+    female: /\b(subhasini|sukanya|female)\b/i,
+  },
+  // Assamese
+  as: {
+    male: /\b(bishnu|male)\b/i,
+    female: /\b(priyom|female)\b/i,
+  },
+  // Spanish
+  es: {
+    male: /\b(jorge|diego|pablo|carlos|andres|miguel|juan|antonio|enrique|male)\b/i,
+    female: /\b(lucia|elena|isabela|carmen|rosa|maria|ana|sofia|laura|monica|female)\b/i,
+  },
+  // French
+  fr: {
+    male: /\b(thomas|henri|pierre|jean|louis|nicolas|mathieu|olivier|male)\b/i,
+    female: /\b(aurelie|amelie|marie|sophie|camille|chloe|lea|manon|julie|nathalie|female)\b/i,
+  },
+  // German
+  de: {
+    male: /\b(stefan|hans|markus|michael|andreas|thomas|florian|jan|conrad|male)\b/i,
+    female: /\b(vicki|anna|marlene|petra|sabine|katja|julia|claudia|female)\b/i,
+  },
+  // Japanese
+  ja: {
+    male: /\b(kenji|takumi|haruki|ichiro|keita|ryu|shota|yuki|male)\b/i,
+    female: /\b(nanami|haruka|mizuki|yui|sakura|mio|aoi|rin|ayaka|female)\b/i,
+  },
+  // Korean
+  ko: {
+    male: /\b(seojun|minho|jiho|hyun|jongsu|dongwook|male)\b/i,
+    female: /\b(soyeon|yuna|jieun|minji|heami|sunhi|female)\b/i,
+  },
+  // Chinese
+  zh: {
+    male: /\b(yunyang|yunxi|xiaoming|wei|chen|long|male)\b/i,
+    female: /\b(xiaoxiao|xiaoyi|xiaohan|huihui|yaoyao|yunzhi|mei|ling|female)\b/i,
+  },
+  // Arabic
+  ar: {
+    male: /\b(naayf|hamdan|omar|ahmed|mohammad|ali|male)\b/i,
+    female: /\b(fatima|hala|salma|layla|amina|yasmin|zariyah|female)\b/i,
+  },
+  // Portuguese
+  pt: {
+    male: /\b(antonio|nicolau|duarte|heitor|julio|male)\b/i,
+    female: /\b(fernanda|raquel|francisca|ines|camila|beatriz|female)\b/i,
+  },
+  // Russian
+  ru: {
+    male: /\b(dmitry|pavel|maxim|ivan|aleksei|nikolai|mikhail|male)\b/i,
+    female: /\b(svetlana|dariya|ekaterina|olga|tatiana|irina|maria|female)\b/i,
+  },
+  // Italian
+  it: {
+    male: /\b(diego|benigno|luca|marco|andrea|giuseppe|francesco|male)\b/i,
+    female: /\b(elsa|isabella|francesca|giulia|alessia|chiara|paola|female)\b/i,
+  },
+  // Default fallback
+  default: {
+    male: /\b(male|man|guy)\b/i,
+    female: /\b(female|woman|girl)\b/i,
+  },
+};
+
+// Quality indicators - prefer these voices
+const QUALITY_INDICATORS = /\b(neural|natural|premium|enhanced|wavenet|online|remote)\b/i;
 
 interface UseWebSpeechTTSReturn {
   speak: (text: string, options?: WebSpeechOptions) => Promise<void>;
@@ -61,6 +192,44 @@ function getStoredSettings(): VoiceSettings | null {
   } catch {
     return null;
   }
+}
+
+// Cache voice selection for consistency
+function cacheVoiceSelection(voiceName: string, speaker: string, language: string): void {
+  try {
+    const cache = JSON.parse(localStorage.getItem(VOICE_CACHE_KEY) || "{}");
+    cache[`${language}-${speaker}`] = voiceName;
+    localStorage.setItem(VOICE_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function getCachedVoice(speaker: string, language: string): string | null {
+  try {
+    const cache = JSON.parse(localStorage.getItem(VOICE_CACHE_KEY) || "{}");
+    return cache[`${language}-${speaker}`] || null;
+  } catch {
+    return null;
+  }
+}
+
+// Sort voices by quality - prefer neural/natural voices
+function sortByQuality(voiceList: SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {
+  return [...voiceList].sort((a, b) => {
+    const aHasQuality = QUALITY_INDICATORS.test(a.name);
+    const bHasQuality = QUALITY_INDICATORS.test(b.name);
+
+    // Prefer voices with quality indicators
+    if (aHasQuality && !bHasQuality) return -1;
+    if (!aHasQuality && bHasQuality) return 1;
+
+    // Prefer remote/online voices (often higher quality on mobile)
+    if (!a.localService && b.localService) return -1;
+    if (a.localService && !b.localService) return 1;
+
+    return 0;
+  });
 }
 
 export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
@@ -93,99 +262,84 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
       if (voices.length === 0) return null;
 
       // Get target language tag
-      const langTag = LANGUAGE_TAGS[language] || "en-US";
-      const langPrefix = langTag.split("-")[0];
+      const langTag = LANGUAGE_TAGS[language] || language;
+      const langPrefix = langTag.split("-")[0].toLowerCase();
 
-      // Check for user-configured voice first (only for English)
+      // Check for cached voice first
+      const cachedVoiceName = getCachedVoice(speaker, language);
+      if (cachedVoiceName) {
+        const cachedVoice = voices.find((v) => v.name === cachedVoiceName);
+        if (cachedVoice) return cachedVoice;
+      }
+
+      // Check for user-configured voice (only for English in podcast settings)
       if (language === "en") {
         const storedSettings = getStoredSettings();
         if (storedSettings) {
-          const configuredName = speaker === "host1" 
-            ? storedSettings.host1VoiceName 
-            : storedSettings.host2VoiceName;
-          
+          const configuredName =
+            speaker === "host1" ? storedSettings.host1VoiceName : storedSettings.host2VoiceName;
+
           if (configuredName) {
             const configuredVoice = voices.find((v) => v.name === configuredName);
-            if (configuredVoice) return configuredVoice;
+            if (configuredVoice) {
+              cacheVoiceSelection(configuredVoice.name, speaker, language);
+              return configuredVoice;
+            }
           }
         }
       }
 
-      // For non-English languages, filter by language first
-      const languageVoices = voices.filter(
-        (v) => v.lang.startsWith(langPrefix) || v.lang.toLowerCase().startsWith(langPrefix)
-      );
+      // Filter voices by language - try multiple matching strategies
+      let languageVoices = voices.filter((v) => {
+        const voiceLang = v.lang.toLowerCase();
+        return (
+          voiceLang.startsWith(langPrefix) ||
+          voiceLang === langTag.toLowerCase() ||
+          voiceLang.split("-")[0] === langPrefix
+        );
+      });
 
-      // If we have language-specific voices, use them
-      if (languageVoices.length > 0) {
-        if (speaker === "host1") {
-          // Prefer male voices for host1
-          const maleVoice = languageVoices.find(
-            (v) =>
-              /\b(male|guy|david|james|daniel|mark|paul|tom|george|matthew|arthur|henry|alex|adam|brian|chris|eric|john|michael|peter|richard|robert|ravi|amit|arun|krishna|raj|sanjay)\b/i.test(v.name) &&
-              !/female/i.test(v.name)
-          );
-          if (maleVoice) return maleVoice;
-          // Return first voice for host1
-          return languageVoices[0];
-        } else {
-          // Prefer female voices for host2
-          const femaleVoice = languageVoices.find(
-            (v) =>
-              /\b(female|woman|samantha|karen|victoria|fiona|moira|susan|zira|hazel|emma|alice|kate|linda|lisa|mary|nancy|rachel|sarah|tessa|amy|priya|anita|sunita|kavita|meera|lakshmi)\b/i.test(v.name)
-          );
-          if (femaleVoice) return femaleVoice;
-          // Return second voice if available, otherwise first
-          return languageVoices[Math.min(1, languageVoices.length - 1)];
+      // If no voices found for this language, log and fall back to English
+      if (languageVoices.length === 0) {
+        console.warn(`No voices found for language: ${language} (${langPrefix}), falling back to English`);
+        if (language !== "en") {
+          return selectVoice(speaker, "en");
         }
+        // Last resort: use any available voice
+        languageVoices = voices;
       }
 
-      // Fallback to English voice selection if no language-specific voices
-      // Check for user-configured voice first
-      const storedSettings = getStoredSettings();
-      if (storedSettings) {
-        const configuredName = speaker === "host1" 
-          ? storedSettings.host1VoiceName 
-          : storedSettings.host2VoiceName;
-        
-        if (configuredName) {
-          const configuredVoice = voices.find((v) => v.name === configuredName);
-          if (configuredVoice) return configuredVoice;
-        }
-      }
+      // Sort by quality first
+      const sortedVoices = sortByQuality(languageVoices);
 
-      // Auto-select based on gender hints
-      const englishVoices = voices.filter(
-        (v) => v.lang.startsWith("en") || v.lang.startsWith("EN")
-      );
+      // Get language-specific patterns or use default
+      const patterns = VOICE_PATTERNS[langPrefix] || VOICE_PATTERNS.default;
+
+      // Try to find gender-appropriate voice
+      let selectedVoice: SpeechSynthesisVoice | null = null;
 
       if (speaker === "host1") {
-        // Prefer male voices for Alex (host1) - expanded patterns
-        const maleVoice = englishVoices.find(
-          (v) =>
-            /\b(male|guy|david|james|daniel|mark|paul|tom|george|matthew|arthur|henry|alex|aaron|adam|brian|chris|eric|fred|john|kevin|michael|peter|richard|robert|william)\b/i.test(v.name) &&
-            !/female/i.test(v.name)
-        );
-        if (maleVoice) return maleVoice;
-        
-        // If no explicit male voice, find one that doesn't sound female
-        const neutralVoice = englishVoices.find(
-          (v) => !/female|woman|samantha|karen|victoria|fiona|moira|susan|zira|hazel|emma|alice|kate|linda|lisa|mary|nancy|rachel|sarah|tessa/i.test(v.name)
-        );
-        if (neutralVoice) return neutralVoice;
+        // Prefer male voices for host1
+        selectedVoice =
+          sortedVoices.find((v) => patterns.male.test(v.name) && !patterns.female.test(v.name)) ||
+          null;
       } else {
-        // Prefer female voices for Sarah (host2) - expanded patterns
-        const femaleVoice = englishVoices.find(
-          (v) =>
-            /\b(female|woman|samantha|karen|victoria|fiona|moira|susan|zira|hazel|emma|alice|kate|linda|lisa|mary|nancy|rachel|sarah|tessa|amy|catherine|emily|jessica|jennifer|nicole|olivia)\b/i.test(v.name)
-        );
-        if (femaleVoice) return femaleVoice;
+        // Prefer female voices for host2
+        selectedVoice = sortedVoices.find((v) => patterns.female.test(v.name)) || null;
       }
 
-      // Fallback: alternate between first two English voices or any voice
-      const fallbackVoices = englishVoices.length > 0 ? englishVoices : voices;
-      const index = speaker === "host1" ? 0 : Math.min(1, fallbackVoices.length - 1);
-      return fallbackVoices[index] || null;
+      // If no gender match found, pick based on position in sorted list
+      if (!selectedVoice) {
+        const index = speaker === "host1" ? 0 : Math.min(1, sortedVoices.length - 1);
+        selectedVoice = sortedVoices[index] || null;
+      }
+
+      // Cache the selection for consistency
+      if (selectedVoice) {
+        cacheVoiceSelection(selectedVoice.name, speaker, language);
+      }
+
+      return selectedVoice;
     },
     [voices]
   );
@@ -208,17 +362,17 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
         const selectedVoice = selectVoice(options.speaker || "host1", options.language);
         if (selectedVoice) {
           utterance.voice = selectedVoice;
-        }
-
-        // Set language for the utterance
-        if (options.language) {
+          // Also set the lang to match the voice for better pronunciation
+          utterance.lang = selectedVoice.lang;
+        } else if (options.language) {
+          // Set language even if no voice found
           utterance.lang = LANGUAGE_TAGS[options.language] || options.language;
         }
 
         // Get stored settings for pitch/rate
         const storedSettings = getStoredSettings();
         const speaker = options.speaker || "host1";
-        
+
         // Apply rate - use options first, then stored settings, then defaults
         if (options.rate !== undefined) {
           utterance.rate = options.rate;
