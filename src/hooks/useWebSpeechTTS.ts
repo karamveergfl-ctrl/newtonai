@@ -36,6 +36,14 @@ const LANGUAGE_TAGS: Record<string, string> = {
   ta: "ta-IN",
   te: "te-IN",
   bn: "bn-IN",
+  mr: "mr-IN",
+  gu: "gu-IN",
+  kn: "kn-IN",
+  ml: "ml-IN",
+  pa: "pa-IN",
+  or: "or-IN",
+  as: "as-IN",
+  ks: "ks-IN",
 };
 
 interface UseWebSpeechTTSReturn {

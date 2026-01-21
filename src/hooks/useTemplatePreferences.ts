@@ -6,7 +6,8 @@ export type SummaryFormat = "concise" | "detailed" | "bullet-points" | "academic
 export type LanguageCode = 
   | "en" | "es" | "fr" | "de" | "it" | "pt" | "zh" | "ja" | "ko" 
   | "ar" | "hi" | "ru" | "nl" | "pl" | "tr" | "vi" | "th" | "id"
-  | "bn" | "ta" | "te" | "mr" | "gu" | "kn" | "ml" | "pa";
+  | "bn" | "ta" | "te" | "mr" | "gu" | "kn" | "ml" | "pa"
+  | "or" | "as" | "ks";
 
 interface TemplatePreferences {
   lectureTemplate: LectureTemplate;
