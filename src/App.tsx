@@ -20,6 +20,7 @@ import Refund from "./pages/Refund";
 import Profile from "./pages/Profile";
 import Credits from "./pages/Credits";
 import Onboarding from "./pages/Onboarding";
+import NewtonPreview from "./pages/NewtonPreview";
 
 // Tool pages
 import HomeworkHelp from "./pages/tools/HomeworkHelp";
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/refund" element={<Refund />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/credits" element={<Credits />} />
+              <Route path="/newton-preview" element={<NewtonPreview />} />
               
               {/* Payment Routes */}
               <Route path="/payment/success" element={<PaymentSuccess />} />
