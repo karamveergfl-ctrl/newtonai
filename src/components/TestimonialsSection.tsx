@@ -2,13 +2,13 @@ import { motion } from "framer-motion";
 import { SectionHeader } from "./SectionHeader";
 import { StarRating } from "./StarRating";
 import { Users, FileText, Brain, Clock } from "lucide-react";
+import { OptimizedBackgroundBlobs } from "./OptimizedBackgroundBlobs";
 
 interface Testimonial {
   id: string;
   content: string;
   author: string;
   role: string;
-  avatar?: string;
   rating: number;
 }
 
@@ -77,94 +77,34 @@ const testimonials: Testimonial[] = [
   },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 40, rotateX: -10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    rotateX: 0,
-    transition: {
-      duration: 0.6,
-      type: "spring" as const,
-      stiffness: 100,
-    },
-  },
-};
-
-const statVariants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.5,
-      type: "spring" as const,
-      stiffness: 150,
-    },
-  },
-};
-
 export const TestimonialsSection = () => {
   return (
     <section className="py-24 px-4 bg-muted/30 relative overflow-hidden">
-      {/* Background decorations */}
-      <motion.div
-        className="absolute top-20 -left-20 w-72 h-72 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl"
-        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute bottom-20 -right-20 w-80 h-80 rounded-full bg-gradient-to-bl from-secondary/10 to-transparent blur-3xl"
-        animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-      />
+      {/* Optimized background decorations */}
+      <OptimizedBackgroundBlobs variant="section" />
 
       <div className="container mx-auto relative z-10">
         {/* Stats Section */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20"
-        >
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
           {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
-              variants={statVariants}
-              whileHover={{ scale: 1.05, y: -5 }}
-              className="bg-card/80 backdrop-blur-sm rounded-2xl p-6 border border-border/50 text-center group cursor-default"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.4, delay: index * 0.08 }}
+              className="bg-card/80 backdrop-blur-sm rounded-2xl p-6 border border-border/50 text-center group cursor-default hover:shadow-lg hover:-translate-y-1 transition-all duration-200 gpu-accelerated"
             >
-              <motion.div
-                className={`w-12 h-12 mx-auto mb-4 rounded-xl bg-background flex items-center justify-center ${stat.color}`}
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.6 }}
-              >
+              <div className={`w-12 h-12 mx-auto mb-4 rounded-xl bg-background flex items-center justify-center ${stat.color}`}>
                 <stat.icon className="w-6 h-6" />
-              </motion.div>
-              <motion.div
-                className="text-3xl md:text-4xl font-bold text-foreground mb-1"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 + index * 0.1 }}
-              >
+              </div>
+              <div className="text-3xl md:text-4xl font-bold text-foreground mb-1">
                 {stat.value}
-              </motion.div>
+              </div>
               <div className="text-sm text-muted-foreground">{stat.label}</div>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
 
         <SectionHeader
           label="Testimonials"
@@ -172,35 +112,21 @@ export const TestimonialsSection = () => {
           description="See what our community has to say about their learning experience"
         />
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={testimonial.id}
-              variants={cardVariants}
-              whileHover={{ 
-                y: -8, 
-                rotateX: 5,
-                rotateY: index % 2 === 0 ? 3 : -3,
-                boxShadow: "0 20px 40px -15px hsl(var(--primary) / 0.15)"
-              }}
-              style={{ transformStyle: "preserve-3d", perspective: 1000 }}
-              className="bg-card rounded-2xl p-6 shadow-sm border border-border/50 hover:border-primary/30 transition-colors duration-300 group"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5, delay: index * 0.05 }}
+              className="bg-card rounded-2xl p-6 shadow-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group gpu-accelerated"
             >
               <div className="flex items-center justify-between mb-4">
                 <StarRating rating={testimonial.rating} size="md" />
-                <motion.div
-                  className="text-2xl opacity-20 group-hover:opacity-40 transition-opacity"
-                  initial={{ rotate: 0 }}
-                  whileHover={{ rotate: 15, scale: 1.2 }}
-                >
+                <span className="text-2xl opacity-20 group-hover:opacity-40 transition-opacity">
                   "
-                </motion.div>
+                </span>
               </div>
 
               <blockquote className="mb-6">
@@ -210,13 +136,9 @@ export const TestimonialsSection = () => {
               </blockquote>
 
               <div className="flex items-center gap-3 pt-4 border-t border-border/50">
-                <motion.div 
-                  className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground font-semibold text-lg"
-                  whileHover={{ scale: 1.1, rotate: 10 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground font-semibold text-lg">
                   {testimonial.author.charAt(0)}
-                </motion.div>
+                </div>
                 <div>
                   <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
                     {testimonial.author}
@@ -228,29 +150,25 @@ export const TestimonialsSection = () => {
               </div>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Trust badges */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
           className="mt-16 text-center"
         >
           <p className="text-muted-foreground text-sm mb-4">Trusted by students from</p>
           <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
-            {["Stanford", "MIT", "Harvard", "Oxford", "Berkeley"].map((school, index) => (
-              <motion.span
+            {["Stanford", "MIT", "Harvard", "Oxford", "Berkeley"].map((school) => (
+              <span
                 key={school}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.6 + index * 0.1 }}
                 className="text-lg font-semibold text-muted-foreground"
               >
                 {school}
-              </motion.span>
+              </span>
             ))}
           </div>
         </motion.div>

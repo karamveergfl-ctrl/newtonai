@@ -28,13 +28,11 @@ export const CTASection = ({
         color="primary"
         size="xl"
         className="top-0 -right-40 opacity-20"
-        delay={0}
       />
       <GradientBlob
         color="secondary"
         size="lg"
         className="-bottom-20 -left-20 opacity-20"
-        delay={0.2}
       />
 
       <div className="container mx-auto relative z-10">
