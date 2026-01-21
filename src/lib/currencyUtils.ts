@@ -225,6 +225,46 @@ const TLD_TO_CURRENCY: Record<string, CurrencyCode> = {
   'us': 'USD',
 };
 
+// Map timezone to currency (most reliable for location detection)
+const TIMEZONE_TO_CURRENCY: Record<string, CurrencyCode> = {
+  // India
+  'Asia/Kolkata': 'INR',
+  'Asia/Calcutta': 'INR',
+  // Poland
+  'Europe/Warsaw': 'PLN',
+  // UK
+  'Europe/London': 'GBP',
+  // US
+  'America/New_York': 'USD',
+  'America/Los_Angeles': 'USD',
+  'America/Chicago': 'USD',
+  'America/Denver': 'USD',
+  'America/Phoenix': 'USD',
+  'Pacific/Honolulu': 'USD',
+  // Europe (EUR)
+  'Europe/Berlin': 'EUR',
+  'Europe/Paris': 'EUR',
+  'Europe/Rome': 'EUR',
+  'Europe/Madrid': 'EUR',
+  'Europe/Amsterdam': 'EUR',
+  'Europe/Brussels': 'EUR',
+  'Europe/Vienna': 'EUR',
+  'Europe/Dublin': 'EUR',
+  'Europe/Lisbon': 'EUR',
+  'Europe/Helsinki': 'EUR',
+  // Australia
+  'Australia/Sydney': 'AUD',
+  'Australia/Melbourne': 'AUD',
+  'Australia/Brisbane': 'AUD',
+  'Australia/Perth': 'AUD',
+  // Canada
+  'America/Toronto': 'CAD',
+  'America/Vancouver': 'CAD',
+  'America/Montreal': 'CAD',
+  // Singapore
+  'Asia/Singapore': 'SGD',
+};
+
 // Map browser locale to currency
 const LOCALE_TO_CURRENCY: Record<string, CurrencyCode> = {
   'en-IN': 'INR',
@@ -287,16 +327,34 @@ export function getCurrencyFromLocale(): CurrencyCode {
 }
 
 /**
- * Detect currency based on email (if available) or browser locale
+ * Detect currency from browser timezone (most reliable for location)
+ */
+export function getCurrencyFromTimezone(): CurrencyCode | null {
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return TIMEZONE_TO_CURRENCY[timezone] || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Detect currency based on email, timezone, and browser locale (in priority order)
  */
 export function detectCurrency(email?: string | null): CurrencyCode {
-  // First try email-based detection
+  // Priority 1: Email TLD (e.g., .in → INR, .pl → PLN)
   const emailCurrency = getCurrencyFromEmail(email);
   if (emailCurrency) {
     return emailCurrency;
   }
   
-  // Fall back to browser locale
+  // Priority 2: Timezone (most reliable for generic email domains like gmail.com)
+  const timezoneCurrency = getCurrencyFromTimezone();
+  if (timezoneCurrency) {
+    return timezoneCurrency;
+  }
+  
+  // Priority 3: Browser locale
   return getCurrencyFromLocale();
 }
 

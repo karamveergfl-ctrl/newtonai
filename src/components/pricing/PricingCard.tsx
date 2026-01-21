@@ -267,6 +267,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
             <PaymentButton
               planName={planKey as 'pro' | 'ultra'}
               billingCycle={isYearly ? 'yearly' : 'monthly'}
+              currency={currency}
               className={`w-full h-11 font-medium ${planKey === 'ultra' ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : ''}`}
               variant="default"
               onSuccess={onPaymentSuccess}

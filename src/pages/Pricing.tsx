@@ -112,9 +112,18 @@ const Pricing = () => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsLoggedIn(!!session);
       
-      if (session) {
+      // Check for saved currency preference in localStorage first
+      const savedCurrency = localStorage.getItem('preferred_currency') as CurrencyCode | null;
+      if (savedCurrency && CURRENCY_NAMES[savedCurrency]) {
+        setCurrency(savedCurrency);
+        setIsAutoDetected(false);
+      } else if (session) {
         setCurrency(detectCurrency(session.user.email));
-        
+      } else {
+        setCurrency(detectCurrency(null));
+      }
+      
+      if (session) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('subscription_tier')
@@ -124,8 +133,6 @@ const Pricing = () => {
         if (profile) {
           setCurrentPlan(profile.subscription_tier);
         }
-      } else {
-        setCurrency(detectCurrency(null));
       }
     };
     
@@ -162,6 +169,7 @@ const Pricing = () => {
   const handleCurrencyChange = (newCurrency: CurrencyCode) => {
     setCurrency(newCurrency);
     setIsAutoDetected(false);
+    localStorage.setItem('preferred_currency', newCurrency);
   };
 
   return (
