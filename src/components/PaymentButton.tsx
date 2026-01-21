@@ -16,6 +16,8 @@ interface PaymentButtonProps {
   onPaymentStart?: () => void;
   onPaymentEnd?: () => void;
   disabled?: boolean;
+  discountPercent?: number;
+  redeemCodeId?: string | null;
 }
 
 const steps = [
@@ -34,6 +36,8 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   onPaymentStart,
   onPaymentEnd,
   disabled = false,
+  discountPercent = 0,
+  redeemCodeId = null,
 }) => {
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
@@ -104,8 +108,8 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     }
 
     setIsCheckingAuth(false);
-    console.log('Calling initiatePayment...');
-    initiatePayment(planName, billingCycle, handleProgress);
+    console.log('Calling initiatePayment...', { discountPercent, redeemCodeId });
+    initiatePayment(planName, billingCycle, handleProgress, discountPercent, redeemCodeId ?? undefined);
   };
 
   const isDisabled = isLoading || isCheckingAuth || !isScriptLoaded || disabled;

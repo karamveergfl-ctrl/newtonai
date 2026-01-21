@@ -34,6 +34,7 @@ import {
   XCircle
 } from "lucide-react";
 import { DeleteAccountDialog } from "@/components/DeleteAccountDialog";
+import { RedeemCodeDialog } from "@/components/RedeemCodeDialog";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -756,7 +757,25 @@ const Profile = () => {
               <MenuItem icon={History} label="History" onClick={() => {}} />
               <MenuItem icon={Bell} label="Notifications" onClick={() => {}} />
               <MenuItem icon={Settings} label="Settings" onClick={() => {}} />
-              <MenuItem icon={Gift} label="Redeem Code" onClick={() => {}} />
+              <RedeemCodeDialog 
+                trigger={
+                  <button
+                    className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Gift className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-sm font-medium">Redeem Code</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                }
+                onCodeRedeemed={() => {
+                  toast({
+                    title: "Code Saved!",
+                    description: "Your discount will be applied at checkout.",
+                  });
+                }}
+              />
               {subscription.tier === "free" && (
                 <MenuItem icon={CreditCard} label="Subscribe to Pro" onClick={() => navigate("/pricing")} />
               )}

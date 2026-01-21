@@ -57,7 +57,7 @@ serve(async (req) => {
       );
     }
 
-    const { plan_name, billing_cycle } = await req.json();
+    const { plan_name, billing_cycle, discount_percent, redeem_code_id } = await req.json();
 
     // Validate inputs
     if (!plan_name || !billing_cycle) {
@@ -81,7 +81,18 @@ serve(async (req) => {
       );
     }
 
-    const amount = PRICING[plan_name as keyof typeof PRICING][billing_cycle as 'monthly' | 'yearly'];
+    let amount = PRICING[plan_name as keyof typeof PRICING][billing_cycle as 'monthly' | 'yearly'];
+    
+    // Apply discount if provided (validate discount percent is between 0-100)
+    const validDiscount = typeof discount_percent === 'number' && discount_percent >= 0 && discount_percent <= 100 
+      ? discount_percent 
+      : 0;
+    
+    if (validDiscount > 0) {
+      const discountAmount = Math.round((amount * validDiscount) / 100);
+      amount = amount - discountAmount;
+      console.log(`Applying ${validDiscount}% discount: ${discountAmount} paise off, new amount: ${amount}`);
+    }
 
     console.log(`Creating order for user ${user.id}: ${plan_name} ${billing_cycle} - ${amount} paise`);
 
@@ -94,6 +105,8 @@ serve(async (req) => {
         user_id: user.id,
         plan_name: plan_name,
         billing_cycle: billing_cycle,
+        discount_percent: validDiscount.toString(),
+        redeem_code_id: redeem_code_id || '',
       },
     };
 
