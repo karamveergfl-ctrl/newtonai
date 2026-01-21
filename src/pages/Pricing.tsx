@@ -112,26 +112,39 @@ const Pricing = () => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsLoggedIn(!!session);
       
-      // Check for saved currency preference in localStorage first
-      const savedCurrency = localStorage.getItem('preferred_currency') as CurrencyCode | null;
-      if (savedCurrency && CURRENCY_NAMES[savedCurrency]) {
-        setCurrency(savedCurrency);
-        setIsAutoDetected(false);
-      } else if (session) {
-        setCurrency(detectCurrency(session.user.email));
-      } else {
-        setCurrency(detectCurrency(null));
-      }
-      
       if (session) {
+        // Fetch profile including preferred_currency
         const { data: profile } = await supabase
           .from('profiles')
-          .select('subscription_tier')
+          .select('subscription_tier, preferred_currency')
           .eq('id', session.user.id)
           .single();
         
         if (profile) {
           setCurrentPlan(profile.subscription_tier);
+          
+          // Priority: Supabase profile > localStorage > auto-detect
+          if (profile.preferred_currency && CURRENCY_NAMES[profile.preferred_currency as CurrencyCode]) {
+            setCurrency(profile.preferred_currency as CurrencyCode);
+            setIsAutoDetected(false);
+          } else {
+            const savedCurrency = localStorage.getItem('preferred_currency') as CurrencyCode | null;
+            if (savedCurrency && CURRENCY_NAMES[savedCurrency]) {
+              setCurrency(savedCurrency);
+              setIsAutoDetected(false);
+            } else {
+              setCurrency(detectCurrency(session.user.email));
+            }
+          }
+        }
+      } else {
+        // Not logged in - use localStorage or auto-detect
+        const savedCurrency = localStorage.getItem('preferred_currency') as CurrencyCode | null;
+        if (savedCurrency && CURRENCY_NAMES[savedCurrency]) {
+          setCurrency(savedCurrency);
+          setIsAutoDetected(false);
+        } else {
+          setCurrency(detectCurrency(null));
         }
       }
     };
@@ -166,10 +179,19 @@ const Pricing = () => {
     setVerifyingPlanName(null);
   };
 
-  const handleCurrencyChange = (newCurrency: CurrencyCode) => {
+  const handleCurrencyChange = async (newCurrency: CurrencyCode) => {
     setCurrency(newCurrency);
     setIsAutoDetected(false);
     localStorage.setItem('preferred_currency', newCurrency);
+    
+    // Sync to Supabase profile if logged in
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await supabase
+        .from('profiles')
+        .update({ preferred_currency: newCurrency })
+        .eq('id', session.user.id);
+    }
   };
 
   return (
