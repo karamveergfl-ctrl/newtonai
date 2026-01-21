@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Crown, Coins, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AD_REWARDS } from "@/lib/creditConfig";
+import { FeatureShowcase } from "./FeatureShowcase";
 
 interface CreditModalProps {
   open: boolean;
@@ -47,7 +48,7 @@ export function CreditModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Coins className="w-5 h-5 text-yellow-500" />
@@ -132,6 +133,9 @@ export function CreditModal({
             </div>
           </div>
 
+          {/* Compact feature showcase */}
+          <FeatureShowcase compact className="my-2" />
+
           <Button
             className="w-full gap-2"
             onClick={() => {
@@ -141,7 +145,6 @@ export function CreditModal({
           >
             <Crown className="w-4 h-4" />
             Upgrade to Premium
-            <span className="text-xs opacity-80">Unlimited credits, no ads</span>
           </Button>
         </div>
       </DialogContent>
