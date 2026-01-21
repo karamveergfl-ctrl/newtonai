@@ -38,7 +38,13 @@ interface RazorpayResponse {
 interface UseRazorpayReturn {
   isLoading: boolean;
   isScriptLoaded: boolean;
-  initiatePayment: (planName: 'pro' | 'ultra', billingCycle: 'monthly' | 'yearly', onProgress?: (progress: number, message: string) => void) => Promise<void>;
+  initiatePayment: (
+    planName: 'pro' | 'ultra', 
+    billingCycle: 'monthly' | 'yearly', 
+    onProgress?: (progress: number, message: string) => void,
+    discountPercent?: number,
+    redeemCodeId?: string | null
+  ) => Promise<void>;
 }
 
 export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void, onModalClose?: () => void): UseRazorpayReturn => {
@@ -75,7 +81,9 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void, onMo
   const initiatePayment = useCallback(async (
     planName: 'pro' | 'ultra',
     billingCycle: 'monthly' | 'yearly',
-    onProgress?: (progress: number, message: string) => void
+    onProgress?: (progress: number, message: string) => void,
+    discountPercent: number = 0,
+    redeemCodeId: string | null = null
   ) => {
     if (!isScriptLoaded) {
       toast({
@@ -103,9 +111,14 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void, onMo
 
       onProgress?.(40, 'Creating secure order...');
 
-      // Create order
+      // Create order with discount info
       const { data: orderData, error: orderError } = await supabase.functions.invoke('razorpay-create-order', {
-        body: { plan_name: planName, billing_cycle: billingCycle },
+        body: { 
+          plan_name: planName, 
+          billing_cycle: billingCycle,
+          discount_percent: discountPercent,
+          redeem_code_id: redeemCodeId,
+        },
       });
 
       if (orderError || !orderData) {
@@ -203,7 +216,7 @@ export const useRazorpay = (onSuccess?: () => void, onFailure?: () => void, onMo
     } finally {
       setIsLoading(false);
     }
-  }, [isScriptLoaded, toast, onSuccess, onFailure]);
+  }, [isScriptLoaded, toast, onSuccess, onFailure, onModalClose]);
 
   return {
     isLoading,

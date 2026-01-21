@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Sparkles, Loader2 } from "lucide-react";
+import { Check, Sparkles, Loader2, Gift, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,6 +11,8 @@ import { PaymentButton } from "@/components/PaymentButton";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RedeemCodeDialog } from "@/components/RedeemCodeDialog";
+import { useRedeemCode } from "@/hooks/useRedeemCode";
 
 const plans = [
   {
@@ -76,6 +78,7 @@ const Pricing = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [verifyingPlanName, setVerifyingPlanName] = useState<string | null>(null);
+  const { redeemCode, applyCode, clearCode, calculateDiscountedAmount } = useRedeemCode();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -215,6 +218,45 @@ const Pricing = () => {
               >
                 Best Value
               </motion.span>
+            )}
+          </motion.div>
+
+          {/* Redeem Code Section */}
+          <motion.div
+            className="flex items-center justify-center gap-3 mt-6"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            {redeemCode.isValidated ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20"
+              >
+                <Gift className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                  {redeemCode.discountPercent}% discount applied!
+                </span>
+                <button
+                  onClick={clearCode}
+                  className="ml-1 p-1 rounded-full hover:bg-green-500/20 transition-colors"
+                >
+                  <X className="h-3 w-3 text-green-600 dark:text-green-400" />
+                </button>
+              </motion.div>
+            ) : (
+              <RedeemCodeDialog
+                trigger={
+                  <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                    <Gift className="h-4 w-4" />
+                    Have a promo code?
+                  </button>
+                }
+                onCodeRedeemed={(codeId, discountPercent) => {
+                  applyCode(codeId, discountPercent);
+                }}
+              />
             )}
           </motion.div>
         </motion.div>
@@ -402,6 +444,8 @@ const Pricing = () => {
                         onPaymentStart={() => handlePaymentStart(planKey)}
                         onPaymentEnd={handlePaymentEnd}
                         disabled={isCurrentPlan || isVerifyingPayment}
+                        discountPercent={redeemCode.discountPercent}
+                        redeemCodeId={redeemCode.codeId}
                       >
                         {isCurrentPlan ? "Current Plan" : plan.cta}
                       </PaymentButton>

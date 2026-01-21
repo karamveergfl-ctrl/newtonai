@@ -283,6 +283,90 @@ export type Database = {
         }
         Relationships: []
       }
+      redeem_codes: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number
+          description: string | null
+          discount_percent: number
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number
+          description?: string | null
+          discount_percent: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number
+          description?: string | null
+          discount_percent?: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      redeemed_codes: {
+        Row: {
+          applied_to_payment_id: string | null
+          code_id: string
+          discount_percent: number
+          id: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          applied_to_payment_id?: string | null
+          code_id: string
+          discount_percent: number
+          id?: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          applied_to_payment_id?: string | null
+          code_id?: string
+          discount_percent?: number
+          id?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redeemed_codes_applied_to_payment_id_fkey"
+            columns: ["applied_to_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redeemed_codes_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "redeem_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       search_history: {
         Row: {
           created_at: string
@@ -459,6 +543,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_redeem_code: {
+        Args: { p_code_id: string; p_payment_id: string }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           p_function_name: string
@@ -475,6 +563,7 @@ export type Database = {
       spend_credits:
         | { Args: { p_feature_name: string }; Returns: Json }
         | { Args: { p_amount: number; p_feature_name: string }; Returns: Json }
+      validate_redeem_code: { Args: { p_code: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
