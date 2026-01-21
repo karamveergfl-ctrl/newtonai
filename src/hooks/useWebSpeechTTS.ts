@@ -23,25 +23,24 @@ interface WebSpeechOptions {
   onError?: (error: Error) => void;
 }
 
-// Prepare text for natural speech with pauses
+// Prepare text for natural speech with pauses - makes it sound human-like
 const prepareTextForSpeech = (text: string, language: string): string => {
   let prepared = text;
   
-  // Add natural pauses after sentences (using ellipsis for speech pause)
-  prepared = prepared.replace(/\. /g, '... ');
-  prepared = prepared.replace(/! /g, '!... ');
-  prepared = prepared.replace(/\? /g, '?... ');
+  // Add longer pauses after sentences for human-like pacing (like Hindi voice)
+  prepared = prepared.replace(/\. /g, '. ... ');
+  prepared = prepared.replace(/! /g, '! ... ');
+  prepared = prepared.replace(/\? /g, '? ... ');
   
-  // Add pauses after commas for smoother reading in non-English languages
-  if (language !== 'en') {
-    prepared = prepared.replace(/,\s+/g, ', ... ');
-  }
+  // Add pauses after commas for smoother word-by-word reading (all languages)
+  prepared = prepared.replace(/,\s+/g, ', ... ');
   
-  // Add pause before colons for better pacing
+  // Add pause after colons and semicolons for better pacing
   prepared = prepared.replace(/:\s+/g, ': ... ');
-  
-  // Add pause after semicolons
   prepared = prepared.replace(/;\s+/g, '; ... ');
+  
+  // Add pauses around dashes for natural reading
+  prepared = prepared.replace(/[-–—]\s*/g, ' ... ');
   
   return prepared;
 };
@@ -204,46 +203,46 @@ const QUALITY_INDICATORS = /\b(neural|natural|premium|enhanced|wavenet|online|re
 // Known female voice patterns - extended for better female voice detection across all languages
 const FEMALE_VOICE_NAMES = /\b(lekha|aditi|priya|swara|female|woman|raveena|kajal|suman|veena|meera|ananya|divya|kavya|shreya|nisha|pallavi|sunita|varsha|rekha|geeta|jyoti|nandini|lakshmi|sarita|shobha|heera|kalpana|chhaya|zira|hazel|samantha|karen|moira|tessa|fiona|victoria|susan|allison|ava|joana|paulina|monica|lucia|amelie|celine|aurelie|sara|anna|petra|katja|yuna|kyoko|nanami|tingting|xiaoxiao|xiaoyi|zhiyu|yelda|elif|zeynep|filiz|vani|deepa|anjali|pooja|neha|ria|tanishaa|bondita|aishwarya|sakhi|aarohi|dhwani|nishtha|sapna|sobhana|subhasini|priyom|harleen)\b/i;
 
-// Natural speech parameters per language - tuned for smooth, warm female voice reading
-// Slower rates for regional languages = better word-by-word pronunciation
+// Natural speech parameters - ALL LANGUAGES use Hindi-like natural reading style
+// Same slow rate (0.85) and warm pitch (1.03) for human-like female voice across all languages
 const LANGUAGE_SPEECH_PARAMS: Record<string, { rate: number; pitch: number }> = {
-  // Indian Languages - slower for clear word-by-word pronunciation, warmer pitch
-  hi: { rate: 0.88, pitch: 1.02 },   // Hindi - warm female-friendly
-  mr: { rate: 0.85, pitch: 1.02 },   // Marathi - slower for clarity
-  gu: { rate: 0.85, pitch: 1.02 },   // Gujarati - slower for clarity  
-  ta: { rate: 0.86, pitch: 1.02 },   // Tamil
-  te: { rate: 0.86, pitch: 1.02 },   // Telugu
-  bn: { rate: 0.85, pitch: 1.02 },   // Bengali
-  kn: { rate: 0.86, pitch: 1.02 },   // Kannada
-  ml: { rate: 0.82, pitch: 1.02 },   // Malayalam - slowest for complex words
-  pa: { rate: 0.87, pitch: 1.02 },   // Punjabi
-  or: { rate: 0.85, pitch: 1.02 },   // Odia
-  as: { rate: 0.85, pitch: 1.02 },   // Assamese
-  ks: { rate: 0.85, pitch: 1.02 },   // Kashmiri
-  // European Languages
-  en: { rate: 0.92, pitch: 1.02 },   // English - natural default
-  es: { rate: 0.90, pitch: 1.02 },   // Spanish
-  fr: { rate: 0.88, pitch: 1.02 },   // French - elegant pace
-  de: { rate: 0.88, pitch: 1.0 },    // German - clear pronunciation
-  it: { rate: 0.90, pitch: 1.02 },   // Italian
-  pt: { rate: 0.90, pitch: 1.02 },   // Portuguese
-  ru: { rate: 0.88, pitch: 1.0 },    // Russian
-  nl: { rate: 0.90, pitch: 1.02 },   // Dutch
-  pl: { rate: 0.88, pitch: 1.02 },   // Polish
-  // Asian Languages - slower for tonal/complex languages
-  ja: { rate: 0.85, pitch: 1.02 },   // Japanese
-  zh: { rate: 0.84, pitch: 1.02 },   // Chinese - slower for tones
-  ko: { rate: 0.86, pitch: 1.02 },   // Korean
-  vi: { rate: 0.86, pitch: 1.02 },   // Vietnamese
-  th: { rate: 0.84, pitch: 1.02 },   // Thai
-  id: { rate: 0.88, pitch: 1.02 },   // Indonesian
-  ms: { rate: 0.88, pitch: 1.02 },   // Malay
-  // Middle Eastern
-  ar: { rate: 0.85, pitch: 1.02 },   // Arabic
-  fa: { rate: 0.86, pitch: 1.02 },   // Persian
-  ur: { rate: 0.86, pitch: 1.02 },   // Urdu
-  he: { rate: 0.88, pitch: 1.02 },   // Hebrew
-  tr: { rate: 0.88, pitch: 1.02 },   // Turkish
+  // Indian Languages - Hindi baseline applied to all
+  hi: { rate: 0.85, pitch: 1.03 },   // Hindi - baseline (perfect voice)
+  mr: { rate: 0.85, pitch: 1.03 },   // Marathi - same as Hindi
+  gu: { rate: 0.85, pitch: 1.03 },   // Gujarati - same as Hindi
+  ta: { rate: 0.85, pitch: 1.03 },   // Tamil - same as Hindi
+  te: { rate: 0.85, pitch: 1.03 },   // Telugu - same as Hindi
+  bn: { rate: 0.85, pitch: 1.03 },   // Bengali - same as Hindi
+  kn: { rate: 0.85, pitch: 1.03 },   // Kannada - same as Hindi
+  ml: { rate: 0.82, pitch: 1.03 },   // Malayalam - slightly slower for longer words
+  pa: { rate: 0.85, pitch: 1.03 },   // Punjabi - same as Hindi
+  or: { rate: 0.85, pitch: 1.03 },   // Odia - same as Hindi
+  as: { rate: 0.85, pitch: 1.03 },   // Assamese - same as Hindi
+  ks: { rate: 0.85, pitch: 1.03 },   // Kashmiri - same as Hindi
+  // European Languages - same natural style as Hindi
+  en: { rate: 0.88, pitch: 1.03 },   // English - slightly faster but same warmth
+  es: { rate: 0.85, pitch: 1.03 },   // Spanish - same as Hindi
+  fr: { rate: 0.85, pitch: 1.03 },   // French - same as Hindi
+  de: { rate: 0.85, pitch: 1.03 },   // German - same as Hindi
+  it: { rate: 0.85, pitch: 1.03 },   // Italian - same as Hindi
+  pt: { rate: 0.85, pitch: 1.03 },   // Portuguese - same as Hindi
+  ru: { rate: 0.85, pitch: 1.03 },   // Russian - same as Hindi
+  nl: { rate: 0.85, pitch: 1.03 },   // Dutch - same as Hindi
+  pl: { rate: 0.85, pitch: 1.03 },   // Polish - same as Hindi
+  // Asian Languages - same natural style as Hindi
+  ja: { rate: 0.85, pitch: 1.03 },   // Japanese - same as Hindi
+  zh: { rate: 0.85, pitch: 1.03 },   // Chinese - same as Hindi
+  ko: { rate: 0.85, pitch: 1.03 },   // Korean - same as Hindi
+  vi: { rate: 0.85, pitch: 1.03 },   // Vietnamese - same as Hindi
+  th: { rate: 0.85, pitch: 1.03 },   // Thai - same as Hindi
+  id: { rate: 0.85, pitch: 1.03 },   // Indonesian - same as Hindi
+  ms: { rate: 0.85, pitch: 1.03 },   // Malay - same as Hindi
+  // Middle Eastern - same natural style as Hindi
+  ar: { rate: 0.85, pitch: 1.03 },   // Arabic - same as Hindi
+  fa: { rate: 0.85, pitch: 1.03 },   // Persian - same as Hindi
+  ur: { rate: 0.85, pitch: 1.03 },   // Urdu - same as Hindi
+  he: { rate: 0.85, pitch: 1.03 },   // Hebrew - same as Hindi
+  tr: { rate: 0.85, pitch: 1.03 },   // Turkish - same as Hindi
 };
 
 interface UseWebSpeechTTSReturn {
@@ -286,19 +285,25 @@ function getCachedVoice(speaker: string, language: string): string | null {
   }
 }
 
-// Sort voices by quality - prefer neural/natural voices
+// Sort voices by quality - prefer neural/natural female voices (like Hindi "Lekha")
 function sortByQuality(voiceList: SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {
   return [...voiceList].sort((a, b) => {
     const aHasQuality = QUALITY_INDICATORS.test(a.name);
     const bHasQuality = QUALITY_INDICATORS.test(b.name);
 
-    // Prefer voices with quality indicators
+    // First priority: quality indicators (neural, natural, premium)
     if (aHasQuality && !bHasQuality) return -1;
     if (!aHasQuality && bHasQuality) return 1;
 
-    // Prefer remote/online voices (often higher quality on mobile)
+    // Second priority: online/remote voices (much more natural sounding)
     if (!a.localService && b.localService) return -1;
     if (a.localService && !b.localService) return 1;
+
+    // Third priority: female voices (like Hindi "Lekha")
+    const aIsFemale = FEMALE_VOICE_NAMES.test(a.name);
+    const bIsFemale = FEMALE_VOICE_NAMES.test(b.name);
+    if (aIsFemale && !bIsFemale) return -1;
+    if (!aIsFemale && bIsFemale) return 1;
 
     return 0;
   });
