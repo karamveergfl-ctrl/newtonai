@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Sparkles, Loader2, Gift, X } from "lucide-react";
+import { Check, Sparkles, Loader2, Gift, X, Infinity as InfinityIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -13,6 +13,21 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RedeemCodeDialog } from "@/components/RedeemCodeDialog";
 import { useRedeemCode } from "@/hooks/useRedeemCode";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+// Feature comparison data for the table
+const featureLimits = [
+  { name: "Educational Videos", free: "20/mo", pro: "Unlimited", ultra: "Unlimited" },
+  { name: "AI Flashcards", free: "3/mo", pro: "90/mo", ultra: "Unlimited" },
+  { name: "AI Quizzes", free: "3/mo", pro: "90/mo", ultra: "Unlimited" },
+  { name: "Mind Maps", free: "3/mo", pro: "90/mo", ultra: "Unlimited" },
+  { name: "Lecture Notes", free: "2/mo", pro: "20/mo", ultra: "Unlimited" },
+  { name: "AI Summary", free: "2/mo", pro: "20/mo", ultra: "Unlimited" },
+  { name: "AI Podcast", free: "1/mo", pro: "15/mo", ultra: "Unlimited" },
+  { name: "Live Transcription", free: "20 min/mo", pro: "900 min/mo", ultra: "Unlimited" },
+  { name: "Homework Help", free: "5/day", pro: "Unlimited", ultra: "Unlimited" },
+  { name: "AI Chat", free: "3/day", pro: "Unlimited", ultra: "Unlimited" },
+];
 
 const plans = [
   {
@@ -23,10 +38,13 @@ const plans = [
     inrYearly: "₹0",
     description: "Perfect for getting started",
     features: [
-      "5 PDF uploads per month",
-      "Basic flashcard generation",
-      "Limited quiz mode",
-      "Community support",
+      "20 educational videos/month",
+      "3 flashcards, quizzes, mind maps/month",
+      "2 lecture notes & summaries/month",
+      "1 AI podcast/month",
+      "20 min transcription/month",
+      "5 homework help/day",
+      "3 AI chat messages/day",
     ],
     cta: "Get Started",
     popular: false,
@@ -40,11 +58,13 @@ const plans = [
     yearlySavings: "Save ₹1,889",
     description: "Best for students",
     features: [
-      "Unlimited PDF uploads",
-      "90 AI flashcards/month",
-      "90 quizzes/month",
-      "90 mind maps/month",
-      "900 min live transcription",
+      "Unlimited educational videos",
+      "90 flashcards, quizzes, mind maps/month",
+      "20 lecture notes & summaries/month",
+      "15 AI podcasts/month",
+      "900 min live transcription/month",
+      "Unlimited homework help",
+      "Unlimited AI chat",
       "Priority support",
     ],
     cta: "Subscribe Now",
@@ -59,10 +79,13 @@ const plans = [
     yearlySavings: "Save ₹3,589",
     description: "For power learners",
     features: [
-      "Everything in Pro",
-      "AI tutoring chat",
-      "Handwriting OCR",
-      "Lecture recording & notes",
+      "Everything unlimited",
+      "Unlimited flashcards & quizzes",
+      "Unlimited mind maps",
+      "Unlimited lecture notes & summaries",
+      "Unlimited AI podcasts",
+      "Unlimited live transcription",
+      "Unlimited homework help & AI chat",
       "Team collaboration",
       "API access",
       "Dedicated support",
@@ -457,12 +480,58 @@ const Pricing = () => {
           })}
         </div>
 
+        {/* Feature Comparison Table */}
+        <motion.div
+          className="mt-20 max-w-4xl mx-auto"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9, duration: 0.6 }}
+        >
+          <h2 className="text-2xl font-bold text-center mb-8">
+            Complete Feature Comparison
+          </h2>
+          <div className="rounded-xl border border-border overflow-hidden bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="font-semibold">Feature</TableHead>
+                  <TableHead className="text-center font-semibold">Free</TableHead>
+                  <TableHead className="text-center font-semibold text-primary">Pro</TableHead>
+                  <TableHead className="text-center font-semibold">Ultra</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {featureLimits.map((feature, index) => (
+                  <TableRow key={feature.name} className={index % 2 === 0 ? "bg-muted/20" : ""}>
+                    <TableCell className="font-medium">{feature.name}</TableCell>
+                    <TableCell className="text-center text-muted-foreground">{feature.free}</TableCell>
+                    <TableCell className="text-center">
+                      {feature.pro === "Unlimited" ? (
+                        <span className="inline-flex items-center gap-1 text-primary font-medium">
+                          <InfinityIcon className="h-4 w-4" /> Unlimited
+                        </span>
+                      ) : (
+                        <span className="text-foreground font-medium">{feature.pro}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
+                        <InfinityIcon className="h-4 w-4" /> Unlimited
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </motion.div>
+
         {/* Payment Methods Info */}
         <motion.div
           className="mt-16 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 1.0 }}
         >
           <p className="text-sm text-muted-foreground mb-4">
             Secure payments powered by Razorpay

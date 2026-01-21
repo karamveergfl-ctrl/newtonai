@@ -200,6 +200,12 @@ const Terms = () => {
                   We offer various subscription plans with different features and pricing. Details of current 
                   plans are available on our <Link to="/pricing" className="text-primary hover:underline">Pricing page</Link>.
                 </p>
+                <p>
+                  Subscription plans include tiered access to features. Free users receive limited monthly 
+                  quotas for each feature (e.g., 3 quizzes/month, 20 min transcription). Pro and Ultra subscribers 
+                  receive increased or unlimited access. Current limits are displayed on our Pricing page and 
+                  may be updated periodically.
+                </p>
                 
                 <h4>5.2 Billing</h4>
                 <p>
@@ -210,7 +216,7 @@ const Terms = () => {
                 
                 <h4>5.3 Payment Currency</h4>
                 <p>
-                  Payments are processed in USD, EUR, GBP, or your local currency as supported. Currency 
+                  Payments are processed in INR (Indian Rupees) or your local currency as supported. Currency 
                   conversion rates are determined by our payment processor.
                 </p>
                 

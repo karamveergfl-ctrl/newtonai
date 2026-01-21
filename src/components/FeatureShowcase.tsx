@@ -13,7 +13,11 @@ import {
   Youtube,
   Image,
   CreditCard,
-  Target
+  Target,
+  HelpCircle,
+  CheckCircle,
+  Headphones,
+  Radio
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +53,7 @@ const featureCategories: FeatureCategory[] = [
     ]
   },
   {
-    title: "AI Note",
+    title: "AI Lecture Notes",
     features: [
       { icon: FileText, label: "Live lecture notes", colorClass: "text-orange-400", bgClass: "bg-orange-400/10" },
       { icon: FileCheck, label: "PDF document summary", colorClass: "text-pink-500", bgClass: "bg-pink-500/10" },
@@ -62,6 +66,20 @@ const featureCategories: FeatureCategory[] = [
     features: [
       { icon: CreditCard, label: "Vocabulary memorization cards", colorClass: "text-purple-500", bgClass: "bg-purple-500/10" },
       { icon: Target, label: "Concept definition cards", colorClass: "text-pink-500", bgClass: "bg-pink-500/10" },
+    ]
+  },
+  {
+    title: "AI Quiz",
+    features: [
+      { icon: HelpCircle, label: "Auto-generated questions", colorClass: "text-blue-500", bgClass: "bg-blue-500/10" },
+      { icon: CheckCircle, label: "Instant feedback", colorClass: "text-green-500", bgClass: "bg-green-500/10" },
+    ]
+  },
+  {
+    title: "AI Podcast",
+    features: [
+      { icon: Headphones, label: "Listen while you learn", colorClass: "text-purple-500", bgClass: "bg-purple-500/10" },
+      { icon: Radio, label: "Convert notes to audio", colorClass: "text-pink-500", bgClass: "bg-pink-500/10" },
     ]
   },
 ];
