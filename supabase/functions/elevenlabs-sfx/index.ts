@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
@@ -9,27 +10,59 @@ const corsHeaders = {
 
 interface SFXRequest {
   prompt: string;
-  duration?: number; // Duration in seconds (0.5-22)
-  promptInfluence?: number; // 0-1, how closely to follow prompt
+  duration?: number;
+  promptInfluence?: number;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Rate limiting
+    const { data: allowed, error: rateLimitError } = await supabase.rpc("check_rate_limit", {
+      p_user_id: user.id,
+      p_function_name: "elevenlabs-sfx",
+    });
+
+    if (rateLimitError || !allowed) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 
     if (!ELEVENLABS_API_KEY) {
       console.error("ELEVENLABS_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "ElevenLabs API key not configured" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -38,10 +71,7 @@ serve(async (req) => {
     if (!prompt) {
       return new Response(
         JSON.stringify({ error: "Prompt is required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -57,7 +87,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           text: prompt,
-          duration_seconds: Math.min(Math.max(duration, 0.5), 22), // Clamp to valid range
+          duration_seconds: Math.min(Math.max(duration, 0.5), 22),
           prompt_influence: Math.min(Math.max(promptInfluence, 0), 1),
         }),
       }
@@ -71,14 +101,10 @@ serve(async (req) => {
           error: "Failed to generate sound effect",
           details: errorText 
         }),
-        {
-          status: response.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get the audio as array buffer and convert to base64
     const audioBuffer = await response.arrayBuffer();
     const base64Audio = base64Encode(audioBuffer);
 
@@ -90,19 +116,14 @@ serve(async (req) => {
         duration,
         prompt,
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error generating SFX:", error);
     const errorMessage = error instanceof Error ? error.message : "Internal server error";
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
