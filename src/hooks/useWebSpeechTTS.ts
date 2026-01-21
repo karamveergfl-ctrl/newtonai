@@ -220,6 +220,9 @@ interface UseWebSpeechTTSReturn {
   isSpeaking: boolean;
   isSupported: boolean;
   voices: SpeechSynthesisVoice[];
+  getVoicesForLanguage: (language: string) => SpeechSynthesisVoice[];
+  setPreferredVoice: (voiceName: string, language: string) => void;
+  getPreferredVoice: (language: string) => string | null;
 }
 
 function getStoredSettings(): VoiceSettings | null {
@@ -395,8 +398,21 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
         const utterance = new SpeechSynthesisUtterance(text);
         utteranceRef.current = utterance;
 
-        // Apply voice based on speaker and language
-        const selectedVoice = selectVoice(options.speaker || "host1", options.language);
+        // Check for manually selected preferred voice first
+        const langPrefix = (options.language || "en").split("-")[0].toLowerCase();
+        const preferredVoiceName = getCachedVoice("preferred", langPrefix);
+        let selectedVoice: SpeechSynthesisVoice | null = null;
+
+        if (preferredVoiceName) {
+          // Use user's manually selected voice
+          selectedVoice = voices.find((v) => v.name === preferredVoiceName) || null;
+        }
+
+        if (!selectedVoice) {
+          // Fall back to automatic voice selection
+          selectedVoice = selectVoice(options.speaker || "host1", options.language);
+        }
+
         if (selectedVoice) {
           utterance.voice = selectedVoice;
           // Also set the lang to match the voice for better pronunciation
@@ -475,11 +491,58 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
     }
   }, [isSupported]);
 
+  // Get voices filtered by language
+  const getVoicesForLanguage = useCallback(
+    (language: string): SpeechSynthesisVoice[] => {
+      const langPrefix = language.split("-")[0].toLowerCase();
+      
+      // Filter voices by language
+      let filtered = voices.filter((v) =>
+        v.lang.toLowerCase().startsWith(langPrefix)
+      );
+
+      // If no voices for this language, return all voices
+      if (filtered.length === 0) {
+        filtered = voices;
+      }
+
+      // Sort: prioritize neural/premium voices, then alphabetically
+      return filtered.sort((a, b) => {
+        const qualityA = QUALITY_INDICATORS.test(a.name) ? 0 : 1;
+        const qualityB = QUALITY_INDICATORS.test(b.name) ? 0 : 1;
+        if (qualityA !== qualityB) return qualityA - qualityB;
+        return a.name.localeCompare(b.name);
+      });
+    },
+    [voices]
+  );
+
+  // Set preferred voice for a language
+  const setPreferredVoice = useCallback(
+    (voiceName: string, language: string): void => {
+      const langPrefix = language.split("-")[0].toLowerCase();
+      cacheVoiceSelection(voiceName, "preferred", langPrefix);
+    },
+    []
+  );
+
+  // Get preferred voice for a language
+  const getPreferredVoice = useCallback(
+    (language: string): string | null => {
+      const langPrefix = language.split("-")[0].toLowerCase();
+      return getCachedVoice("preferred", langPrefix);
+    },
+    []
+  );
+
   return {
     speak,
     cancel,
     isSpeaking,
     isSupported,
     voices,
+    getVoicesForLanguage,
+    setPreferredVoice,
+    getPreferredVoice,
   };
 }

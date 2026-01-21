@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { FileText, Download, Copy, Check, Sparkles, Volume2, VolumeX } from "lucide-react";
+import { FileText, Download, Copy, Check, Sparkles, Volume2, VolumeX, ChevronDown, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
@@ -16,6 +16,13 @@ import {
   transcribeAudio, 
   processUploadedFile 
 } from "@/utils/contentProcessing";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Strip markdown formatting for cleaner TTS
 const stripMarkdown = (text: string): string => {
@@ -47,7 +54,17 @@ const AINotes = () => {
   const [contentLanguage, setContentLanguage] = useState("en");
   const { toast } = useToast();
   const { tryUseFeature, modal } = useFeatureGate("ai_notes");
-  const { speak, cancel, isSpeaking, isSupported } = useWebSpeechTTS();
+  const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
+
+  // Load preferred voice when language changes
+  useEffect(() => {
+    const preferred = getPreferredVoice(contentLanguage);
+    setSelectedVoiceName(preferred);
+  }, [contentLanguage, getPreferredVoice, voices]);
+
+  // Get voices for current language
+  const availableVoices = getVoicesForLanguage(contentLanguage);
 
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -233,25 +250,67 @@ const AINotes = () => {
                     </div>
                     <div className="flex gap-2 w-full sm:w-auto flex-wrap">
                       {isSupported && (
-                        <Button 
-                          variant={isSpeaking ? "default" : "outline"}
-                          size="sm" 
-                          onClick={handleReadAloud}
-                          className={`flex-1 sm:flex-none gap-2 ${isSpeaking ? 'bg-primary text-primary-foreground' : ''}`}
-                        >
-                          {isSpeaking ? (
-                            <>
-                              <VolumeX className="h-4 w-4" />
-                              <span className="hidden sm:inline">Stop</span>
-                            </>
-                          ) : (
-                            <>
-                              <Volume2 className="h-4 w-4" />
-                              <span className="hidden sm:inline">Read Aloud</span>
-                              <span className="sm:hidden">Listen</span>
-                            </>
-                          )}
-                        </Button>
+                        <div className="flex items-center gap-0">
+                          <Button 
+                            variant={isSpeaking ? "default" : "outline"}
+                            size="sm" 
+                            onClick={handleReadAloud}
+                            className={cn(
+                              "flex-1 sm:flex-none gap-2 rounded-r-none",
+                              isSpeaking && 'bg-primary text-primary-foreground'
+                            )}
+                          >
+                            {isSpeaking ? (
+                              <>
+                                <VolumeX className="h-4 w-4" />
+                                <span className="hidden sm:inline">Stop</span>
+                              </>
+                            ) : (
+                              <>
+                                <Volume2 className="h-4 w-4" />
+                                <span className="hidden sm:inline">Read Aloud</span>
+                                <span className="sm:hidden">Listen</span>
+                              </>
+                            )}
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="rounded-l-none border-l-0 px-2"
+                              >
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="max-h-[300px] overflow-y-auto bg-popover z-50">
+                              {availableVoices.length === 0 ? (
+                                <DropdownMenuItem disabled>No voices available</DropdownMenuItem>
+                              ) : (
+                                availableVoices.map((voice) => (
+                                  <DropdownMenuItem
+                                    key={voice.name}
+                                    onClick={() => {
+                                      setSelectedVoiceName(voice.name);
+                                      setPreferredVoice(voice.name, contentLanguage);
+                                    }}
+                                    className={cn(
+                                      "cursor-pointer",
+                                      selectedVoiceName === voice.name && "bg-accent"
+                                    )}
+                                  >
+                                    <span className="truncate max-w-[200px]">
+                                      {voice.name.replace(/^(Microsoft|Google|Apple)\s+/i, "")}
+                                    </span>
+                                    {/neural|natural|premium|enhanced|wavenet/i.test(voice.name) && (
+                                      <Star className="h-3 w-3 ml-1 text-primary shrink-0" />
+                                    )}
+                                  </DropdownMenuItem>
+                                ))
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       )}
                       <Button 
                         variant="outline" 
