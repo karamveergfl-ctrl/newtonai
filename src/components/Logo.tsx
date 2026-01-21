@@ -1,9 +1,11 @@
 import logoImage from "@/assets/logo.png";
+import { motion } from "framer-motion";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
   className?: string;
+  animate?: boolean;
 }
 
 const sizeMap = {
@@ -12,17 +14,34 @@ const sizeMap = {
   lg: { icon: 64, text: "text-3xl" },
 };
 
-const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
+const Logo = ({ size = "md", showText = true, className = "", animate = true }: LogoProps) => {
   const { icon, text } = sizeMap[size];
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <img
+      <motion.img
         src={logoImage}
         alt="NewtonAI Logo"
         width={icon}
         height={icon}
         className="object-contain"
+        animate={animate ? {
+          scale: [1, 1.1, 1],
+          rotate: [0, 360],
+        } : undefined}
+        transition={{
+          scale: {
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          },
+          rotate: {
+            duration: 8,
+            repeat: Infinity,
+            ease: "linear",
+          },
+        }}
+        whileHover={{ scale: 1.2 }}
       />
       {showText && (
         <span className={`font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent ${text}`}>
