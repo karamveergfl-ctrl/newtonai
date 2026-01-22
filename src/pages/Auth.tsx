@@ -192,12 +192,25 @@ const Auth = () => {
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="hidden lg:flex lg:w-1/2 bg-[hsl(222,47%,11%)] relative overflow-hidden items-center justify-center p-8"
+          className="hidden lg:flex lg:w-1/2 bg-[hsl(222,47%,11%)] relative overflow-hidden flex-col items-center justify-center p-8 pt-12"
         >
           {/* Background gradient effects */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10 pointer-events-none" />
           <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
+          
+          {/* Logo and Tagline Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="relative z-10 text-center mb-8"
+          >
+            <Logo size="lg" />
+            <p className="mt-4 text-slate-300 text-base max-w-md mx-auto leading-relaxed">
+              Transform your learning with AI-powered study tools. Create flashcards, quizzes, and summaries in seconds.
+            </p>
+          </motion.div>
           
           {/* Floating Tools Showcase - without CTA button */}
           <div className="relative z-10 w-full max-w-xl">
