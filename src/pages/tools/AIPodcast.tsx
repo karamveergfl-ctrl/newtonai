@@ -209,7 +209,7 @@ export default function AIPodcast() {
         fallbackAudio: true, // Default to Web Speech fallback
       }));
 
-      // Try to generate ElevenLabs audio with language support
+      // Try to generate ElevenLabs audio with language and custom voices support
       try {
         const { data: ttsData, error: ttsError } = await supabase.functions.invoke(
           "elevenlabs-podcast-tts",
@@ -217,6 +217,8 @@ export default function AIPodcast() {
             body: { 
               segments: scriptData.segments,
               language: settings.language || "en",
+              host1VoiceId: settings.host1VoiceId,
+              host2VoiceId: settings.host2VoiceId,
             },
           }
         );

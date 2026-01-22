@@ -74,6 +74,8 @@ interface TTSRequest {
   segments: PodcastSegment[];
   batchSize?: number;
   language?: string;
+  host1VoiceId?: string; // Custom voice ID for host1
+  host2VoiceId?: string; // Custom voice ID for host2
 }
 
 // Get model based on language - use multilingual for non-English
@@ -166,7 +168,7 @@ serve(async (req) => {
       throw new Error("ELEVENLABS_API_KEY is not configured");
     }
 
-    const { segments, batchSize = 3, language = "en" }: TTSRequest = await req.json();
+    const { segments, batchSize = 3, language = "en", host1VoiceId, host2VoiceId }: TTSRequest = await req.json();
 
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return new Response(
@@ -177,8 +179,15 @@ serve(async (req) => {
 
     console.log(`Generating audio for ${segments.length} segments in language: ${language}`);
 
-    // Get voice mapping for the language
-    const voices = VOICES_BY_LANGUAGE[language] || VOICES_BY_LANGUAGE.en;
+    // Get voice mapping for the language (fallback defaults)
+    const defaultVoices = VOICES_BY_LANGUAGE[language] || VOICES_BY_LANGUAGE.en;
+    
+    // Use custom voice IDs if provided, otherwise use language defaults
+    const voices = {
+      host1: host1VoiceId || defaultVoices.host1,
+      host2: host2VoiceId || defaultVoices.host2,
+    };
+    
     const modelId = getModelForLanguage(language);
 
     console.log(`Using model: ${modelId}, voices: host1=${voices.host1}, host2=${voices.host2}`);
