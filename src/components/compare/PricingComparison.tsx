@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { competitors, newtonFeatures, CompetitorKey } from "@/pages/compare/competitorData";
+import { useCurrency } from "@/hooks/useCurrency";
+import { DISPLAY_PRICING, COMPETITOR_PRICING, CURRENCY_FLAGS } from "@/lib/currencyUtils";
 
 interface PricingComparisonProps {
   competitor: CompetitorKey;
@@ -12,7 +14,19 @@ interface PricingComparisonProps {
 
 const PricingComparison = ({ competitor }: PricingComparisonProps) => {
   const competitorData = competitors[competitor];
-  const savings = ((competitorData.pricePerMonth - newtonFeatures.pricePerMonth) / competitorData.pricePerMonth * 100).toFixed(0);
+  const { currency } = useCurrency();
+  
+  // Get localized pricing
+  const newtonMonthly = DISPLAY_PRICING.pro.monthly[currency];
+  const newtonYearly = DISPLAY_PRICING.pro.yearly[currency];
+  const competitorPricing = COMPETITOR_PRICING[competitor]?.[currency];
+  const competitorMonthly = competitorPricing?.monthly || competitorData.monthlyPrice;
+  const competitorYearly = competitorPricing?.yearly || competitorData.yearlyPrice;
+  
+  // Calculate savings
+  const newtonPriceValue = parseFloat(newtonMonthly.replace(/[^0-9.]/g, ''));
+  const competitorPriceValue = competitorPricing?.monthlyValue || competitorData.pricePerMonth;
+  const savings = ((competitorPriceValue - newtonPriceValue) / competitorPriceValue * 100).toFixed(0);
 
   return (
     <section className="py-16 bg-muted/30">
@@ -51,11 +65,14 @@ const PricingComparison = ({ competitor }: PricingComparisonProps) => {
                   <CardTitle className="text-2xl">NewtonAI Pro</CardTitle>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-primary">{newtonFeatures.monthlyPrice}</span>
+                  <span className="text-4xl font-bold text-primary">{newtonMonthly}</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Or {newtonFeatures.yearlyPrice}/year (save 24%)
+                  Or {newtonYearly}/year (save 24%)
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {CURRENCY_FLAGS[currency]} Prices in {currency}
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -100,11 +117,11 @@ const PricingComparison = ({ competitor }: PricingComparisonProps) => {
                   <CardTitle className="text-2xl text-muted-foreground">{competitorData.name}</CardTitle>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-muted-foreground">{competitorData.monthlyPrice}</span>
+                  <span className="text-4xl font-bold text-muted-foreground">{competitorMonthly}</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Or {competitorData.yearlyPrice}/year
+                  Or {competitorYearly}/year
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
