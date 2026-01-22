@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import { usePodcastPreferences } from "@/hooks/usePodcastPreferences";
 
 // Supported languages
 const LANGUAGES = [
@@ -158,38 +160,58 @@ const DEFAULT_SETTINGS: PodcastSettings = {
   language: "en",
 };
 
-// Load saved voice preferences from localStorage
-const getSavedVoicePreferences = (): { host1VoiceId: string; host2VoiceId: string } | null => {
-  try {
-    const saved = localStorage.getItem("podcast_voice_preferences");
-    return saved ? JSON.parse(saved) : null;
-  } catch {
-    return null;
-  }
-};
-
-const saveVoicePreferences = (host1VoiceId: string, host2VoiceId: string) => {
-  localStorage.setItem("podcast_voice_preferences", JSON.stringify({ host1VoiceId, host2VoiceId }));
-};
-
 interface PodcastStylePresetsProps {
   isOpen: boolean;
   onClose: () => void;
   onGenerate: (settings: PodcastSettings) => void;
+  isFirstTimeSetup?: boolean;
 }
 
 export function PodcastStylePresets({
   isOpen,
   onClose,
   onGenerate,
+  isFirstTimeSetup = false,
 }: PodcastStylePresetsProps) {
+  const { preferences, savePreferences, markSetupComplete, isLoaded } = usePodcastPreferences();
+  
+  // Initialize settings from saved preferences
   const [settings, setSettings] = useState<PodcastSettings>(() => {
-    const savedVoices = getSavedVoicePreferences();
-    if (savedVoices) {
-      return { ...DEFAULT_SETTINGS, ...savedVoices };
-    }
-    return DEFAULT_SETTINGS;
+    const preset = PRESETS.find((p) => p.id === preferences.style) || PRESETS[0];
+    return {
+      style: preferences.style,
+      host1Name: preferences.host1Name,
+      host1Personality: preset.host1Personality,
+      host1VoiceId: preferences.host1VoiceId,
+      host2Name: preferences.host2Name,
+      host2Personality: preset.host2Personality,
+      host2VoiceId: preferences.host2VoiceId,
+      tone: preferences.tone,
+      depth: preferences.depth,
+      customInstructions: "",
+      language: preferences.language,
+    };
   });
+
+  // Update settings when preferences load
+  useEffect(() => {
+    if (isLoaded) {
+      const preset = PRESETS.find((p) => p.id === preferences.style) || PRESETS[0];
+      setSettings((s) => ({
+        ...s,
+        style: preferences.style,
+        host1Name: preferences.host1Name,
+        host1VoiceId: preferences.host1VoiceId,
+        host2Name: preferences.host2Name,
+        host2VoiceId: preferences.host2VoiceId,
+        tone: preferences.tone,
+        depth: preferences.depth,
+        language: preferences.language,
+        host1Personality: preset.host1Personality,
+        host2Personality: preset.host2Personality,
+      }));
+    }
+  }, [isLoaded, preferences]);
   const [activeTab, setActiveTab] = useState<"style" | "language" | "voices" | "hosts" | "advanced">("style");
 
   const selectedPreset = PRESETS.find((p) => p.id === settings.style) || PRESETS[0];
@@ -207,8 +229,18 @@ export function PodcastStylePresets({
   };
 
   const handleGenerate = () => {
-    // Save voice preferences for next time
-    saveVoicePreferences(settings.host1VoiceId, settings.host2VoiceId);
+    // Save all preferences for next time
+    savePreferences({
+      style: settings.style,
+      host1Name: settings.host1Name,
+      host1VoiceId: settings.host1VoiceId,
+      host2Name: settings.host2Name,
+      host2VoiceId: settings.host2VoiceId,
+      tone: settings.tone,
+      depth: settings.depth,
+      language: settings.language,
+    });
+    markSetupComplete();
     onGenerate(settings);
     onClose();
   };
@@ -229,6 +261,22 @@ export function PodcastStylePresets({
             Choose a style and customize how your podcast sounds
           </DialogDescription>
         </DialogHeader>
+
+        {isFirstTimeSetup && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4"
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <h3 className="font-medium">Welcome to AI Podcast!</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Let's set up your preferences. These will be saved as your defaults for future podcasts.
+            </p>
+          </motion.div>
+        )}
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mt-4">
           <TabsList className="grid w-full grid-cols-5">
@@ -572,18 +620,26 @@ export function PodcastStylePresets({
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-between items-center mt-6 pt-4 border-t">
-          <div className="text-sm text-muted-foreground">
-            Est. ~{estimatedDuration} min podcast
+        <div className="flex flex-col gap-2 mt-6 pt-4 border-t">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              Est. ~{estimatedDuration} min podcast
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button onClick={handleGenerate} className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                {isFirstTimeSetup ? "Save & Generate" : "Generate Podcast"}
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button onClick={handleGenerate} className="gap-2">
-              <Sparkles className="w-4 h-4" />
-              Generate Podcast
-            </Button>
+          <div className="text-xs text-muted-foreground text-center">
+            Change these anytime in{" "}
+            <Link to="/profile?tab=settings" className="text-primary hover:underline">
+              Profile Settings
+            </Link>
           </div>
         </div>
       </DialogContent>
