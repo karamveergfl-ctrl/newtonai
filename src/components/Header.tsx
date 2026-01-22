@@ -72,7 +72,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
                 >
                   {link.label}
                   {link.badge && (
-                    <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary">
+                    <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary animate-pulse">
                       {link.badge}
                     </span>
                   )}
@@ -134,7 +134,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
                 >
                   {link.label}
                   {link.badge && (
-                    <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary">
+                    <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary animate-pulse">
                       {link.badge}
                     </span>
                   )}
