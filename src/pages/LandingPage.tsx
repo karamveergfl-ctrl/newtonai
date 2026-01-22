@@ -7,6 +7,7 @@ import { TestimonialsSection } from "@/components/TestimonialsSection";
 import CTASection from "@/components/CTASection";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
 import SEOHead from "@/components/SEOHead";
+import { FloatingToolsShowcase } from "@/components/FloatingToolsShowcase";
 import { 
   BookOpen, 
   Brain, 
@@ -119,7 +120,7 @@ const LandingPage = () => {
             </motion.p>
             
             <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.6 }}
@@ -134,6 +135,9 @@ const LandingPage = () => {
                 <Link to="/pricing">View Pricing</Link>
               </Button>
             </motion.div>
+
+            {/* Floating Tools Showcase */}
+            <FloatingToolsShowcase />
           </motion.div>
         </div>
       </section>
