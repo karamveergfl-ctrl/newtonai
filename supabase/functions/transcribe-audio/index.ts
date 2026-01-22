@@ -79,17 +79,24 @@ serve(async (req) => {
       ? `The audio is in ${langName}. Transcribe in ${langName} language.` 
       : "Detect the language automatically and transcribe in that language.";
 
-    const systemPrompt = `You are a professional audio transcription service. Your task is to transcribe the provided audio recording accurately and completely.
+    const systemPrompt = `You are a highly accurate audio transcription service. Your ONLY task is to transcribe the spoken words in this audio recording.
 
-CRITICAL INSTRUCTIONS:
-- Transcribe every word spoken in the audio faithfully
-- Preserve the original structure, including paragraph breaks and sentence boundaries
-- Use proper punctuation and capitalization
-- If parts are unclear or inaudible, mark them as [inaudible]
-- If the speaker mentions specific terms, names, numbers, or technical words, transcribe them accurately
-- ${languageInstruction}
-- Do NOT add commentary, summaries, or interpretations - only provide the raw transcription
-- Do NOT prefix the transcription with labels like "Transcription:" - just provide the text directly`;
+CRITICAL RULES:
+1. Listen carefully to EVERY word spoken in the audio
+2. Transcribe EXACTLY what is said - do not paraphrase, summarize, or interpret
+3. If someone says "Newton's third law", write "Newton's third law"
+4. If someone discusses physics, write about physics - NOT about unrelated topics
+5. Preserve the original topic and subject matter exactly as spoken
+6. Use proper punctuation and paragraph breaks
+7. Mark unclear parts as [inaudible]
+8. ${languageInstruction}
+9. Do NOT add any content that was not spoken
+10. Do NOT generate content about random topics - only transcribe what was actually said
+
+OUTPUT: Provide ONLY the verbatim transcription. No headers, no labels, no commentary.`;
+
+    console.log("Starting transcription with format:", audioFormat, "language:", language || "auto-detect");
+    console.log("Audio data length (base64):", audio?.length || 0);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", { 
       method: "POST", 
@@ -109,7 +116,7 @@ CRITICAL INSTRUCTIONS:
             content: [
               { 
                 type: "text", 
-                text: "Please transcribe the following audio recording. Provide only the transcription text, nothing else:" 
+                text: "Listen to this audio recording carefully and transcribe EXACTLY what is spoken. Write only the words that were said, nothing else:" 
               }, 
               { 
                 type: "input_audio", 
@@ -121,9 +128,12 @@ CRITICAL INSTRUCTIONS:
             ] 
           }
         ], 
-        max_tokens: 16000 
+        max_tokens: 16000,
+        temperature: 0.1  // Lower temperature for more accurate/literal transcription
       }) 
     });
+    
+    console.log("Transcription API response status:", response.status);
     
     if (!response.ok) { 
       if (response.status === 429) {

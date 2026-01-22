@@ -472,32 +472,50 @@ export const QuizMode = ({
 
       {/* Footer */}
       <div className="p-4 border-t bg-card/50">
-        <div className="max-w-2xl mx-auto flex justify-end">
-          {!showResult ? (
-            <Button
-              onClick={handleSubmit}
-              disabled={selectedAnswer === null}
-              size="lg"
-              className="gap-2"
-            >
-              Submit Answer
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              size="lg"
-              className="gap-2 bg-gradient-to-r from-primary to-secondary"
-            >
-              {currentIndex < questions.length - 1 ? (
-                <>
-                  Next Question
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              ) : (
-                "See Results"
-              )}
-            </Button>
-          )}
+        <div className="max-w-2xl mx-auto flex justify-between items-center">
+          {/* Skip Button - always visible before showing result */}
+          <div>
+            {!showResult && (
+              <Button
+                onClick={handleSkip}
+                variant="ghost"
+                size="lg"
+                className="gap-2 text-muted-foreground hover:text-foreground"
+              >
+                <SkipForward className="w-4 h-4" />
+                Skip
+              </Button>
+            )}
+          </div>
+          
+          {/* Submit / Next Button */}
+          <div>
+            {!showResult ? (
+              <Button
+                onClick={handleSubmit}
+                disabled={selectedAnswer === null}
+                size="lg"
+                className="gap-2"
+              >
+                Submit Answer
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNext}
+                size="lg"
+                className="gap-2 bg-gradient-to-r from-primary to-secondary"
+              >
+                {currentIndex < questions.length - 1 ? (
+                  <>
+                    Next Question
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                ) : (
+                  "See Results"
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
