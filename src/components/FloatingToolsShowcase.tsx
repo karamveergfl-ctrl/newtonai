@@ -353,6 +353,9 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
           transition={{ delay: 1.5, duration: 0.6 }}
           className="flex flex-col items-center gap-3 mt-8 relative z-30"
         >
+          <p className="text-sm text-muted-foreground">
+            Currently viewing: <span className="text-primary font-medium">{currentTool.description}</span>
+          </p>
           <Button 
             asChild 
             size="lg" 
