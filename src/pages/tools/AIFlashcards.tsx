@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Layers, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Layers, RotateCcw, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +37,7 @@ interface PendingContent {
 }
 
 const AIFlashcards = () => {
+  const navigate = useNavigate();
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -204,7 +206,15 @@ const AIFlashcards = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto space-y-4 sm:space-y-6"
         >
-          <div className="text-center mb-4 sm:mb-8">
+          <div className="relative text-center mb-4 sm:mb-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/tools")}
+              className="absolute right-0 top-0 h-9 w-9 rounded-full hover:bg-muted"
+            >
+              <X className="h-5 w-5" />
+            </Button>
             <div className="inline-flex items-center justify-center p-2 sm:p-3 rounded-xl bg-primary/10 mb-3 sm:mb-4">
               <Layers className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>

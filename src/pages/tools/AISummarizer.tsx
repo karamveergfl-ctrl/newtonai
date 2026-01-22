@@ -6,7 +6,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star, ChevronDown } from "lucide-react";
+import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star, ChevronDown, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
@@ -97,6 +98,7 @@ interface FlashcardData {
 }
 
 const AISummarizer = () => {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState<string | null>(null);
   const [contentTitle, setContentTitle] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -931,8 +933,16 @@ const AISummarizer = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 relative"
         >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/tools")}
+            className="absolute right-0 top-0 h-9 w-9 rounded-full hover:bg-muted"
+          >
+            <X className="h-5 w-5" />
+          </Button>
           <div className="flex items-center gap-3 mb-2">
             <Sparkles className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold">AI Summarizer</h1>

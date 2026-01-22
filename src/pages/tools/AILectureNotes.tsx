@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Mic, Download, Copy, Check, Volume2, VolumeX, Pencil, Eye, Highlighter,
-  Upload, Youtube, FileText, Globe, Loader2, ArrowLeft, Sparkles, BookOpen, Clipboard, Star, ChevronDown
+  Upload, Youtube, FileText, Globe, Loader2, ArrowLeft, Sparkles, BookOpen, Clipboard, Star, ChevronDown, X
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import {
   DropdownMenu,
@@ -123,6 +124,7 @@ const extractVideoId = (url: string): string | null => {
 };
 
 const AILectureNotes = () => {
+  const navigate = useNavigate();
   // Tab state
   const [activeTab, setActiveTab] = useState<InputType>("recording");
   const [selectedLanguage, setSelectedLanguage] = useState("en-US");
@@ -503,7 +505,15 @@ const AILectureNotes = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto space-y-4 sm:space-y-6"
         >
-          <div className="text-center mb-4 sm:mb-8">
+          <div className="relative text-center mb-4 sm:mb-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/tools")}
+              className="absolute right-0 top-0 h-9 w-9 rounded-full hover:bg-muted"
+            >
+              <X className="h-5 w-5" />
+            </Button>
             <div className="inline-flex items-center justify-center p-2 sm:p-3 rounded-xl bg-primary/10 mb-3 sm:mb-4">
               <Mic className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
