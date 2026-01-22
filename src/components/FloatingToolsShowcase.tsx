@@ -353,19 +353,19 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
           transition={{ delay: 1.5, duration: 0.6 }}
           className="flex flex-col items-center gap-3 mt-8 relative z-30"
         >
-          <p className="text-sm text-muted-foreground">
-            Currently viewing: <span className="text-primary font-medium">{currentTool.description}</span>
-          </p>
-          <Button 
-            asChild 
-            size="lg" 
-            className="group shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
-          >
-            <Link to={currentTool.route}>
-              Try {currentTool.label} Now
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </Button>
+        <Button 
+          asChild 
+          size="lg" 
+          className="group shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+        >
+          <Link to={currentTool.route}>
+            Try {currentTool.label} Now
+            <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </Button>
+        <p className="text-sm text-muted-foreground">
+          Currently viewing: <span className="text-primary font-medium">{currentTool.description}</span>
+        </p>
         </motion.div>
       )}
     </div>
