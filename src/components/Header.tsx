@@ -10,7 +10,7 @@ import { Menu, X } from "lucide-react";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/tools", label: "Tools" },
-  { href: "/compare", label: "Compare" },
+  { href: "/compare", label: "Compare", badge: "NEW" },
   { href: "/pricing", label: "Pricing" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
@@ -64,13 +64,18 @@ export const Header = ({ transparent = false }: HeaderProps) => {
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                     location.pathname === link.href
                       ? "text-primary bg-primary/10"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
                   {link.label}
+                  {link.badge && (
+                    <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary">
+                      {link.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
             </nav>
@@ -121,13 +126,18 @@ export const Header = ({ transparent = false }: HeaderProps) => {
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                     location.pathname === link.href
                       ? "text-primary bg-primary/10"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
                   {link.label}
+                  {link.badge && (
+                    <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary">
+                      {link.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
               <div className="h-px bg-border my-2" />
