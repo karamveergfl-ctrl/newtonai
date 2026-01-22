@@ -1,6 +1,7 @@
+import { memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { User, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface PodcastSpeakingAvatarProps {
   speaker: "host1" | "host2";
@@ -10,56 +11,153 @@ interface PodcastSpeakingAvatarProps {
   size?: "sm" | "md" | "lg";
 }
 
-// Sound bars animation component
-function SoundBars({ active, color }: { active: boolean; color: string }) {
-  const bars = [1, 2, 3, 4, 5];
+// Character face with gradient background - like NotebookLM style
+const CharacterFace = memo(function CharacterFace({ 
+  speaker, 
+  isActive,
+  size 
+}: { 
+  speaker: "host1" | "host2"; 
+  isActive: boolean;
+  size: "sm" | "md" | "lg";
+}) {
+  const isHost1 = speaker === "host1";
+  
+  const sizes = {
+    sm: { container: "w-12 h-12", svg: 40 },
+    md: { container: "w-16 h-16", svg: 54 },
+    lg: { container: "w-24 h-24", svg: 80 },
+  };
+
+  return (
+    <div 
+      className={cn(
+        "relative rounded-full flex items-center justify-center overflow-hidden",
+        sizes[size].container,
+        // Gradient backgrounds matching the reference image
+        isHost1 
+          ? "bg-gradient-to-br from-teal-400 via-cyan-500 to-emerald-600" 
+          : "bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600"
+      )}
+    >
+      {/* Character SVG */}
+      <svg 
+        viewBox="0 0 24 24" 
+        width={sizes[size].svg * 0.6} 
+        height={sizes[size].svg * 0.6}
+        className="text-white/95"
+      >
+        {/* Head */}
+        <circle cx="12" cy="8" r="5.5" fill="currentColor" />
+        
+        {/* Body/shoulders */}
+        <path 
+          d="M3 21 Q3 14 12 14 Q21 14 21 21" 
+          fill="currentColor"
+          opacity="0.85"
+        />
+        
+        {/* Face features - eyes */}
+        <circle cx="10" cy="7" r="0.8" fill={isHost1 ? "#0d9488" : "#4f46e5"} />
+        <circle cx="14" cy="7" r="0.8" fill={isHost1 ? "#0d9488" : "#4f46e5"} />
+        
+        {/* Animated mouth when speaking */}
+        <motion.ellipse
+          cx="12"
+          cy="10"
+          rx="1.8"
+          fill={isHost1 ? "#0d9488" : "#4f46e5"}
+          initial={{ ry: 0.5 }}
+          animate={isActive 
+            ? { ry: [1, 2.5, 1.5, 3, 1] } 
+            : { ry: 0.5 }
+          }
+          transition={isActive 
+            ? { duration: 0.25, repeat: Infinity, ease: "easeInOut" as const } 
+            : { duration: 0.1 }
+          }
+        />
+      </svg>
+    </div>
+  );
+});
+
+// Sound wave dots animation - simpler and more performant
+const SoundWaveDots = memo(function SoundWaveDots({ 
+  active, 
+  color 
+}: { 
+  active: boolean; 
+  color: string;
+}) {
+  // Fixed heights to avoid random calculations on each render
+  const dotHeights = useMemo(() => [8, 14, 10, 16, 8], []);
+  
+  if (!active) {
+    return (
+      <div className="flex items-end justify-center gap-1 h-6">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className={cn("w-1 rounded-full", color)}
+            style={{ height: 4 }}
+          />
+        ))}
+      </div>
+    );
+  }
   
   return (
-    <div className="flex items-end justify-center gap-0.5 h-8">
-      {bars.map((bar) => (
+    <div className="flex items-end justify-center gap-1 h-6">
+      {dotHeights.map((height, i) => (
         <motion.div
-          key={bar}
+          key={i}
           className={cn("w-1 rounded-full", color)}
-          initial={{ height: 4 }}
-          animate={active ? {
-            height: [4, 12 + Math.random() * 16, 8, 20 + Math.random() * 12, 4],
-          } : { height: 4 }}
+          animate={{
+            height: [4, height, 6, height * 0.8, 4],
+          }}
           transition={{
-            duration: 0.5 + Math.random() * 0.3,
-            repeat: active ? Infinity : 0,
+            duration: 0.5,
+            repeat: Infinity,
             repeatType: "reverse",
-            delay: bar * 0.1,
+            delay: i * 0.08,
             ease: "easeInOut",
           }}
         />
       ))}
     </div>
   );
-}
+});
 
-// Pulsing ring animation
-function PulsingRing({ active, color }: { active: boolean; color: string }) {
+// Pulsing ring animation - optimized with CSS instead of JS
+const PulsingRing = memo(function PulsingRing({ 
+  active, 
+  color 
+}: { 
+  active: boolean; 
+  color: string;
+}) {
   if (!active) return null;
   
   return (
     <>
       <motion.div
         className={cn("absolute inset-0 rounded-full", color)}
-        initial={{ scale: 1, opacity: 0.5 }}
-        animate={{ scale: 1.4, opacity: 0 }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+        initial={{ scale: 1, opacity: 0.4 }}
+        animate={{ scale: 1.3, opacity: 0 }}
+        transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut" }}
       />
       <motion.div
         className={cn("absolute inset-0 rounded-full", color)}
-        initial={{ scale: 1, opacity: 0.3 }}
-        animate={{ scale: 1.2, opacity: 0 }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
+        initial={{ scale: 1, opacity: 0.25 }}
+        animate={{ scale: 1.15, opacity: 0 }}
+        transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut", delay: 0.4 }}
       />
     </>
   );
-}
+});
 
-export function PodcastSpeakingAvatar({
+export const PodcastSpeakingAvatar = memo(function PodcastSpeakingAvatar({
   speaker,
   name,
   isActive,
@@ -74,16 +172,9 @@ export function PodcastSpeakingAvatar({
     lg: "w-24 h-24",
   };
   
-  const iconSizes = {
-    sm: "w-5 h-5",
-    md: "w-8 h-8",
-    lg: "w-12 h-12",
-  };
-  
-  const bgColor = isHost1 ? "bg-primary/20" : "bg-secondary/20";
-  const textColor = isHost1 ? "text-primary" : "text-secondary";
-  const ringColor = isHost1 ? "bg-primary/30" : "bg-secondary/30";
-  const barColor = isHost1 ? "bg-primary" : "bg-secondary";
+  const ringColor = isHost1 ? "bg-teal-500/30" : "bg-indigo-500/30";
+  const barColor = isHost1 ? "bg-teal-500" : "bg-indigo-500";
+  const textColor = isHost1 ? "text-teal-600 dark:text-teal-400" : "text-indigo-600 dark:text-indigo-400";
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -91,39 +182,46 @@ export function PodcastSpeakingAvatar({
         <PulsingRing active={isActive && !isLoading} color={ringColor} />
         
         <AnimatePresence mode="wait">
-          <motion.div
-            key={speaker}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className={cn(
-              "relative rounded-full flex items-center justify-center z-10",
-              sizeClasses[size],
-              bgColor,
-              textColor,
-              isActive && "ring-2 ring-offset-2 ring-offset-background",
-              isActive && (isHost1 ? "ring-primary" : "ring-secondary")
-            )}
-          >
-            {isLoading ? (
-              <Loader2 className={cn(iconSizes[size], "animate-spin")} />
-            ) : (
-              <motion.div
-                animate={isActive ? { scale: [1, 1.05, 1] } : {}}
-                transition={{ duration: 0.5, repeat: isActive ? Infinity : 0 }}
-              >
-                <User className={iconSizes[size]} />
-              </motion.div>
-            )}
-          </motion.div>
+          {isLoading ? (
+            <motion.div
+              key="loading"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className={cn(
+                "relative rounded-full flex items-center justify-center z-10",
+                sizeClasses[size],
+                isHost1 
+                  ? "bg-gradient-to-br from-teal-400 to-cyan-500" 
+                  : "bg-gradient-to-br from-blue-400 to-indigo-500"
+              )}
+            >
+              <Loader2 className="w-6 h-6 text-white animate-spin" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key={speaker}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className={cn(
+                "relative z-10",
+                isActive && "ring-2 ring-offset-2 ring-offset-background rounded-full",
+                isActive && (isHost1 ? "ring-teal-500" : "ring-indigo-500")
+              )}
+            >
+              <CharacterFace speaker={speaker} isActive={isActive} size={size} />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
       
-      {/* Sound bars below avatar */}
+      {/* Sound wave dots below avatar */}
       {size !== "sm" && (
-        <div className="h-8">
-          <SoundBars active={isActive && !isLoading} color={barColor} />
+        <div className="h-6">
+          <SoundWaveDots active={isActive && !isLoading} color={barColor} />
         </div>
       )}
       
@@ -135,9 +233,10 @@ export function PodcastSpeakingAvatar({
           isActive && "font-bold"
         )}
         animate={isActive ? { scale: 1.05 } : { scale: 1 }}
+        transition={{ duration: 0.15 }}
       >
         {name}
       </motion.p>
     </div>
   );
-}
+});

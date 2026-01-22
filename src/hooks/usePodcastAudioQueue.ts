@@ -87,7 +87,7 @@ export function usePodcastAudioQueue({
     playbackRateRef.current = playbackRate;
   }, [playbackRate]);
 
-  // Preload segment audio
+  // Preload segment audio with validation and timeout
   const preloadSegment = useCallback(async (index: number): Promise<HTMLAudioElement | null> => {
     if (index >= segments.length || index < 0) return null;
     
@@ -98,8 +98,9 @@ export function usePodcastAudioQueue({
 
     const segment = segments[index];
     
-    // If no audio data, will use Web Speech fallback
-    if (!segment.audio) {
+    // Validate audio data - must be base64 string with reasonable length
+    if (!segment.audio || typeof segment.audio !== 'string' || segment.audio.length < 100) {
+      console.log(`Segment ${index}: No valid audio data, will use fallback`);
       return null;
     }
 
@@ -109,15 +110,26 @@ export function usePodcastAudioQueue({
       audio.volume = volume;
       audio.playbackRate = playbackRate;
       
+      // Add timeout to prevent hanging on invalid audio
       await new Promise<void>((resolve, reject) => {
-        audio.oncanplaythrough = () => resolve();
-        audio.onerror = () => reject(new Error("Failed to load audio"));
+        const timeout = setTimeout(() => {
+          reject(new Error("Audio load timeout"));
+        }, 5000);
+        
+        audio.oncanplaythrough = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
+        audio.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error("Failed to load audio"));
+        };
         audio.load();
       });
 
       bufferRef.current.set(index, audio);
       
-      // Limit buffer size
+      // Limit buffer size - clean up old segments
       if (bufferRef.current.size > BUFFER_SIZE + 2) {
         const keysToRemove = Array.from(bufferRef.current.keys())
           .filter(k => k < index - 1)
@@ -133,7 +145,7 @@ export function usePodcastAudioQueue({
 
       return audio;
     } catch (error) {
-      console.error(`Failed to preload segment ${index}:`, error);
+      console.warn(`Segment ${index} audio failed to load, will use fallback:`, error);
       return null;
     }
   }, [segments, volume, playbackRate]);
