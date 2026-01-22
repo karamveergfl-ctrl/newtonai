@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Coffee,
   GraduationCap,
@@ -22,8 +23,12 @@ import {
   User,
   Settings2,
   Globe,
+  Mic,
+  Volume2,
+  Check,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 // Supported languages
 const LANGUAGES = [
@@ -42,6 +47,35 @@ const LANGUAGES = [
   { code: "bn", name: "Bengali (বাংলা)", flag: "🇮🇳" },
 ];
 
+// ElevenLabs voice options
+export interface VoiceOption {
+  id: string;
+  name: string;
+  description: string;
+  gender: "male" | "female";
+  accent?: string;
+  preview?: string;
+}
+
+export const VOICE_OPTIONS: VoiceOption[] = [
+  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", description: "Warm, conversational male voice", gender: "male", accent: "American" },
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", description: "Clear, engaging female voice", gender: "female", accent: "American" },
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", description: "Professional female narrator", gender: "female", accent: "American" },
+  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie", description: "Friendly, casual male voice", gender: "male", accent: "British" },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", description: "Authoritative British male", gender: "male", accent: "British" },
+  { id: "N2lVS1w4EtoT3dr4eOWO", name: "Callum", description: "Energetic young male", gender: "male", accent: "American" },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", description: "Smooth, professional male", gender: "male", accent: "American" },
+  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice", description: "Warm, friendly female", gender: "female", accent: "British" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", description: "Clear, articulate female", gender: "female", accent: "American" },
+  { id: "bIHbv24MWmeRgasZH58o", name: "Will", description: "Deep, resonant male voice", gender: "male", accent: "American" },
+  { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica", description: "Expressive female voice", gender: "female", accent: "American" },
+  { id: "cjVigY5qzO86Huf0OWal", name: "Eric", description: "Mature, trustworthy male", gender: "male", accent: "American" },
+  { id: "iP95p4xoKVk53GoZ742B", name: "Chris", description: "Casual, relatable male", gender: "male", accent: "American" },
+  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", description: "Deep, authoritative male", gender: "male", accent: "American" },
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", description: "Versatile multilingual male", gender: "male", accent: "British" },
+  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", description: "Bright, cheerful female", gender: "female", accent: "British" },
+];
+
 export interface PodcastStyle {
   id: "casual" | "academic" | "deep-dive" | "interview";
   name: string;
@@ -57,8 +91,10 @@ export interface PodcastSettings {
   style: PodcastStyle["id"];
   host1Name: string;
   host1Personality: string;
+  host1VoiceId: string;
   host2Name: string;
   host2Personality: string;
+  host2VoiceId: string;
   tone: "enthusiastic" | "balanced" | "serious";
   depth: number; // 1-5, affects segment count and detail
   customInstructions: string;
@@ -112,12 +148,28 @@ const DEFAULT_SETTINGS: PodcastSettings = {
   style: "casual",
   host1Name: "Alex",
   host1Personality: PRESETS[0].host1Personality,
+  host1VoiceId: "CwhRBWXzGAHq8TQ4Fs17", // Roger
   host2Name: "Sarah",
   host2Personality: PRESETS[0].host2Personality,
+  host2VoiceId: "EXAVITQu4vr4xnSDxMaL", // Sarah
   tone: "balanced",
   depth: 3,
   customInstructions: "",
   language: "en",
+};
+
+// Load saved voice preferences from localStorage
+const getSavedVoicePreferences = (): { host1VoiceId: string; host2VoiceId: string } | null => {
+  try {
+    const saved = localStorage.getItem("podcast_voice_preferences");
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveVoicePreferences = (host1VoiceId: string, host2VoiceId: string) => {
+  localStorage.setItem("podcast_voice_preferences", JSON.stringify({ host1VoiceId, host2VoiceId }));
 };
 
 interface PodcastStylePresetsProps {
@@ -131,8 +183,14 @@ export function PodcastStylePresets({
   onClose,
   onGenerate,
 }: PodcastStylePresetsProps) {
-  const [settings, setSettings] = useState<PodcastSettings>(DEFAULT_SETTINGS);
-  const [activeTab, setActiveTab] = useState<"style" | "language" | "hosts" | "advanced">("style");
+  const [settings, setSettings] = useState<PodcastSettings>(() => {
+    const savedVoices = getSavedVoicePreferences();
+    if (savedVoices) {
+      return { ...DEFAULT_SETTINGS, ...savedVoices };
+    }
+    return DEFAULT_SETTINGS;
+  });
+  const [activeTab, setActiveTab] = useState<"style" | "language" | "voices" | "hosts" | "advanced">("style");
 
   const selectedPreset = PRESETS.find((p) => p.id === settings.style) || PRESETS[0];
 
@@ -149,6 +207,8 @@ export function PodcastStylePresets({
   };
 
   const handleGenerate = () => {
+    // Save voice preferences for next time
+    saveVoicePreferences(settings.host1VoiceId, settings.host2VoiceId);
     onGenerate(settings);
     onClose();
   };
@@ -171,11 +231,15 @@ export function PodcastStylePresets({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="style">Style</TabsTrigger>
             <TabsTrigger value="language" className="gap-1">
-              <Globe className="w-3 h-3" />
+              <Globe className="w-3 h-3 hidden sm:inline" />
               Language
+            </TabsTrigger>
+            <TabsTrigger value="voices" className="gap-1">
+              <Mic className="w-3 h-3 hidden sm:inline" />
+              Voices
             </TabsTrigger>
             <TabsTrigger value="hosts">Hosts</TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
@@ -261,6 +325,102 @@ export function PodcastStylePresets({
               <p className="text-xs text-muted-foreground">
                 {settings.language !== "en" && "Uses ElevenLabs multilingual voices for natural pronunciation"}
               </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="voices" className="space-y-6 mt-4">
+            {/* Host 1 Voice */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
+                  <Volume2 className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <Label className="font-medium">{settings.host1Name}'s Voice</Label>
+                  <p className="text-xs text-muted-foreground">Select a voice personality for Host 1</p>
+                </div>
+              </div>
+              <ScrollArea className="h-48 rounded-lg border p-2">
+                <div className="space-y-1">
+                  {VOICE_OPTIONS.map((voice) => (
+                    <button
+                      key={voice.id}
+                      onClick={() => setSettings((s) => ({ ...s, host1VoiceId: voice.id }))}
+                      className={cn(
+                        "w-full flex items-center justify-between p-2.5 rounded-md text-left transition-all",
+                        settings.host1VoiceId === voice.id
+                          ? "bg-teal-500/10 border border-teal-500/30"
+                          : "hover:bg-muted/50"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium",
+                          voice.gender === "male" ? "bg-blue-500/20 text-blue-600" : "bg-pink-500/20 text-pink-600"
+                        )}>
+                          {voice.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">{voice.name}</div>
+                          <div className="text-xs text-muted-foreground">{voice.description}</div>
+                        </div>
+                      </div>
+                      {settings.host1VoiceId === voice.id && (
+                        <Check className="w-4 h-4 text-teal-500 shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* Host 2 Voice */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
+                  <Volume2 className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <Label className="font-medium">{settings.host2Name}'s Voice</Label>
+                  <p className="text-xs text-muted-foreground">Select a voice personality for Host 2</p>
+                </div>
+              </div>
+              <ScrollArea className="h-48 rounded-lg border p-2">
+                <div className="space-y-1">
+                  {VOICE_OPTIONS.map((voice) => (
+                    <button
+                      key={voice.id}
+                      onClick={() => setSettings((s) => ({ ...s, host2VoiceId: voice.id }))}
+                      className={cn(
+                        "w-full flex items-center justify-between p-2.5 rounded-md text-left transition-all",
+                        settings.host2VoiceId === voice.id
+                          ? "bg-indigo-500/10 border border-indigo-500/30"
+                          : "hover:bg-muted/50"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium",
+                          voice.gender === "male" ? "bg-blue-500/20 text-blue-600" : "bg-pink-500/20 text-pink-600"
+                        )}>
+                          {voice.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">{voice.name}</div>
+                          <div className="text-xs text-muted-foreground">{voice.description}</div>
+                        </div>
+                      </div>
+                      {settings.host2VoiceId === voice.id && (
+                        <Check className="w-4 h-4 text-indigo-500 shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+
+            <div className="p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+              <p>💡 Tip: Choose contrasting voices (different genders or accents) for a more engaging conversation.</p>
             </div>
           </TabsContent>
 
