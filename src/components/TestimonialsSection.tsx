@@ -161,11 +161,11 @@ export const TestimonialsSection = () => {
           className="mt-16 text-center"
         >
           <p className="text-muted-foreground text-sm mb-4">Trusted by students from</p>
-          <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
-            {["Stanford", "MIT", "Harvard", "Oxford", "Berkeley"].map((school) => (
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 opacity-60">
+            {["Stanford", "MIT", "Harvard", "Oxford", "Berkeley", "IIT", "IIM", "AIIMS"].map((school) => (
               <span
                 key={school}
-                className="text-lg font-semibold text-muted-foreground"
+                className="text-base md:text-lg font-semibold text-muted-foreground"
               >
                 {school}
               </span>

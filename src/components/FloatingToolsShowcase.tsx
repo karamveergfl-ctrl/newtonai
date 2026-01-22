@@ -317,9 +317,9 @@ export const FloatingToolsShowcase = () => {
                 ))}
               </div>
               
-              {/* Newton character at bottom */}
+              {/* Newton character at bottom - using writing state (no lightbulb overlay) */}
               <div className="absolute bottom-3 right-3 w-16 h-20 md:w-20 md:h-24">
-                <LottieNewton state="thinking" size="sm" />
+                <LottieNewton state="writing" size="sm" />
               </div>
             </div>
           </div>
