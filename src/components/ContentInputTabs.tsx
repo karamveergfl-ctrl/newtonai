@@ -373,20 +373,20 @@ export const ContentInputTabs = ({
       {/* Tab Selector and Language Dropdown */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
         <div className="overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
-          <div className="inline-flex items-center p-1 rounded-full bg-muted/50 border border-border whitespace-nowrap min-w-max">
+          <div className="inline-flex items-center p-1.5 rounded-2xl bg-muted/50 border border-border whitespace-nowrap min-w-max gap-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200",
+                  "flex flex-col items-center justify-center gap-1 px-3 sm:px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200 min-w-[52px] sm:min-w-[60px]",
                   activeTab === tab.id
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 )}
               >
-                <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span>{tab.label}</span>
+                <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-[10px] sm:text-xs">{tab.label}</span>
               </button>
             ))}
           </div>
