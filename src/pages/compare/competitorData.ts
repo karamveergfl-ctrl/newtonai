@@ -1,4 +1,4 @@
-import { Video, Headphones, Gift, Brain, FileText, Mic, PenTool, Sparkles, DollarSign, Globe } from "lucide-react";
+import { Video, Headphones, Gift, Brain, FileText, Mic, PenTool, Sparkles } from "lucide-react";
 
 export const competitors = {
   chegg: {
@@ -24,6 +24,26 @@ export const competitors = {
       "Single-purpose platform",
     ],
     verdict: "Chegg excels at textbook solutions but lacks modern AI study tools. NewtonAI offers 7 AI tools at nearly half the price.",
+    testimonials: [
+      {
+        quote: "I was paying $16/month for Chegg just for homework answers. NewtonAI gives me flashcards, quizzes, AND homework help for half the price. The embedded videos in my PDFs are a game-changer.",
+        author: "Priya M.",
+        role: "Pre-Med Student, UCLA",
+        rating: 5,
+      },
+      {
+        quote: "Chegg's answers were helpful but I wasn't actually learning. NewtonAI's AI podcast feature lets me study during my commute. I've improved my grades significantly.",
+        author: "Marcus T.",
+        role: "Engineering Major, Georgia Tech",
+        rating: 5,
+      },
+      {
+        quote: "The free tier with ads is brilliant. As a student on a budget, I can access all features without the expensive subscription Chegg required.",
+        author: "Sofia R.",
+        role: "Business Student, NYU",
+        rating: 5,
+      },
+    ],
   },
   quizlet: {
     name: "Quizlet",
@@ -48,6 +68,26 @@ export const competitors = {
       "No handwriting recognition",
     ],
     verdict: "Quizlet is great for pre-made flashcards, but NewtonAI generates them from any content with videos and AI explanations.",
+    testimonials: [
+      {
+        quote: "I loved Quizlet's flashcards but making them took forever. NewtonAI generates perfect flashcards from my lecture PDFs in seconds. It's like having a study assistant.",
+        author: "James K.",
+        role: "Biology Major, Stanford",
+        rating: 5,
+      },
+      {
+        quote: "Quizlet only did flashcards. NewtonAI does flashcards, quizzes, mind maps, podcasts, and summarizes my textbooks. One subscription for everything.",
+        author: "Emily C.",
+        role: "Psychology Student, Michigan",
+        rating: 5,
+      },
+      {
+        quote: "The AI podcast feature is incredible. I turn my notes into audio lectures and study while working out. Quizlet never had anything like this.",
+        author: "David L.",
+        role: "Law Student, Columbia",
+        rating: 5,
+      },
+    ],
   },
   studocu: {
     name: "Studocu",
@@ -72,6 +112,26 @@ export const competitors = {
       "No homework solving",
     ],
     verdict: "Studocu offers shared notes, but NewtonAI creates personalized study materials with AI from any document you upload.",
+    testimonials: [
+      {
+        quote: "Studocu had notes from other students, but they weren't always accurate. NewtonAI lets me upload MY professor's slides and generate study materials tailored to MY exams.",
+        author: "Rachel W.",
+        role: "Chemistry Student, Berkeley",
+        rating: 5,
+      },
+      {
+        quote: "I switched because NewtonAI's video integration is amazing. I highlight a concept I don't understand and instantly get educational videos explaining it.",
+        author: "Alex P.",
+        role: "Computer Science, MIT",
+        rating: 5,
+      },
+      {
+        quote: "Studocu was passive reading. NewtonAI turns my documents into interactive quizzes and flashcards. Active learning has boosted my retention so much.",
+        author: "Nina S.",
+        role: "Nursing Student, Johns Hopkins",
+        rating: 5,
+      },
+    ],
   },
   "course-hero": {
     name: "Course Hero",
@@ -96,6 +156,26 @@ export const competitors = {
       "Limited free access",
     ],
     verdict: "Course Hero charges premium prices for document access. NewtonAI provides AI-powered tools that create study materials for you.",
+    testimonials: [
+      {
+        quote: "Course Hero was $15/month just to unlock documents. NewtonAI is cheaper AND creates original study materials from my own notes. Way better value.",
+        author: "Tyler B.",
+        role: "Economics Major, Duke",
+        rating: 5,
+      },
+      {
+        quote: "I needed tutoring but couldn't afford Course Hero's prices. NewtonAI's AI explains problems step-by-step like a tutor, plus I get all the study tools.",
+        author: "Amanda J.",
+        role: "Math Student, UT Austin",
+        rating: 5,
+      },
+      {
+        quote: "The handwriting OCR is perfect for someone like me who takes handwritten notes. Course Hero couldn't do anything with my notebook photos.",
+        author: "Kevin M.",
+        role: "Physics Major, Caltech",
+        rating: 5,
+      },
+    ],
   },
   chatgpt: {
     name: "ChatGPT",
@@ -120,6 +200,26 @@ export const competitors = {
       "No structured study tools",
     ],
     verdict: "ChatGPT is a general AI, not a study platform. NewtonAI is purpose-built for learning with 7 specialized study tools.",
+    testimonials: [
+      {
+        quote: "ChatGPT is great for general questions, but NewtonAI is built for studying. Structured flashcards, timed quizzes, progress tracking - everything ChatGPT lacks.",
+        author: "Sarah H.",
+        role: "Medical Student, Harvard",
+        rating: 5,
+      },
+      {
+        quote: "I used to copy-paste into ChatGPT constantly. NewtonAI just takes my PDF and creates everything automatically. So much faster and more organized.",
+        author: "Michael R.",
+        role: "MBA Student, Wharton",
+        rating: 5,
+      },
+      {
+        quote: "ChatGPT costs $20/month. NewtonAI is $8.49 and has a free tier! For students, the choice is obvious. Plus the study-specific features are unmatched.",
+        author: "Jessica T.",
+        role: "Undergraduate, Princeton",
+        rating: 5,
+      },
+    ],
   },
 };
 

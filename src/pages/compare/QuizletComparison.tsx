@@ -5,6 +5,7 @@ import CompareHero from "@/components/compare/CompareHero";
 import ComparisonTable from "@/components/compare/ComparisonTable";
 import PricingComparison from "@/components/compare/PricingComparison";
 import UniqueFeatures from "@/components/compare/UniqueFeatures";
+import CompetitorTestimonials from "@/components/compare/CompetitorTestimonials";
 import { CTASection } from "@/components/CTASection";
 
 const QuizletComparison = () => {
@@ -34,6 +35,8 @@ const QuizletComparison = () => {
         </section>
 
         <PricingComparison competitor="quizlet" />
+
+        <CompetitorTestimonials competitor="quizlet" />
 
         <UniqueFeatures />
 
