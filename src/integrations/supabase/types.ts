@@ -739,6 +739,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_usage_limit_warning: {
+        Args: {
+          p_current_usage: number
+          p_feature_name: string
+          p_max_limit: number
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       cleanup_old_webhook_events: { Args: never; Returns: number }
       earn_credits: {
         Args: { p_ad_duration: number; p_credits_earned: number }
