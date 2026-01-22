@@ -83,6 +83,15 @@ const LandingPage = () => {
         <HeroParticles iconCount={14} dotCount={25} />
         
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
+        
+        {/* Subtle dot matrix pattern */}
+        <div 
+          className="absolute inset-0 pointer-events-none opacity-[0.08]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px)',
+            backgroundSize: '24px 24px'
+          }}
+        />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
