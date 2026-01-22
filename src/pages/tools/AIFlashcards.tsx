@@ -21,6 +21,7 @@ import {
   transcribeAudio, 
   processUploadedFile 
 } from "@/utils/contentProcessing";
+import { logGeneration } from "@/hooks/useGenerationHistory";
 
 interface FlashcardData {
   id: string;
@@ -123,6 +124,15 @@ const AIFlashcards = () => {
       
       // Track usage after successful generation
       await confirmUsage();
+      
+      // Log generation to history
+      await logGeneration({
+        tool_name: 'flashcards',
+        title: `${data.flashcards.length} Flashcards`,
+        source_type: type,
+        source_preview: textContent.slice(0, 200),
+        result_preview: { cardCount: data.flashcards.length },
+      });
       
       // Trigger completed animation
       complete();
