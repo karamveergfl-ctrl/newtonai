@@ -26,6 +26,8 @@ import { CreditModal } from "@/components/CreditModal";
 import { FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
+import { ProcessingOverlay } from "@/components/ProcessingOverlay";
+import { useProcessingState } from "@/hooks/useProcessingState";
 import {
   processUploadedFile,
   transcribeAudio,
@@ -148,6 +150,23 @@ const AISummarizer = () => {
 
   // Error state for confused Newton
   const [errorState, setErrorState] = useState<"confused" | null>(null);
+
+  // Processing state for Newton animation
+  const {
+    phase: processingPhase,
+    isProcessing,
+    startThinking,
+    startWriting,
+    complete: completeProcessing,
+    reset: resetProcessing,
+  } = useProcessingState({ completedAnimationDuration: 1500 });
+  
+  // Pending result to show after animation completes
+  const [pendingResult, setPendingResult] = useState<{
+    type: "flashcards" | "quiz" | "summary" | "mindmap";
+    data: any;
+    title: string;
+  } | null>(null);
 
   // Format selection state for non-video content
   const [showFormatSelection, setShowFormatSelection] = useState(false);
@@ -447,9 +466,12 @@ const AISummarizer = () => {
     const allowed = await trySpendCredits("flashcards");
     if (!allowed) return;
     
+    // Start Newton thinking animation
+    startThinking();
     setIsGeneratingFlashcards(true);
     setActiveGenerating("flashcards");
     setVideoError(null);
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
@@ -462,6 +484,9 @@ const AISummarizer = () => {
           description: "This video has limited captions. Results are based on video topic.",
         });
       }
+
+      // Switch to writing phase
+      startWriting();
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`, {
         method: "POST",
@@ -480,21 +505,29 @@ const AISummarizer = () => {
       if (!response.ok) throw new Error("Failed to generate flashcards");
       
       const data = await response.json();
-      setFlashcards(data.flashcards);
-      setFlashcardTitle(videoTitle);
-      toast({
-        title: "Flashcards Ready! 📚",
-        description: `Generated ${data.flashcards.length} flashcards from video`,
+      
+      // Store pending result and trigger completion animation
+      setPendingResult({
+        type: "flashcards",
+        data: data.flashcards,
+        title: videoTitle,
       });
+      completeProcessing();
+      
     } catch (error: any) {
       console.error("Error generating flashcards:", error);
+      resetProcessing();
       const errorMessage = error.message || "Failed to generate flashcards";
       setVideoError(errorMessage);
-      toast({
-        title: "Cannot Generate Flashcards",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      setErrorState("confused");
+      setTimeout(() => {
+        setErrorState(null);
+        toast({
+          title: "Cannot Generate Flashcards",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }, 2000);
     } finally {
       setIsGeneratingFlashcards(false);
       setActiveGenerating(null);
@@ -506,9 +539,12 @@ const AISummarizer = () => {
     const allowed = await trySpendCredits("quiz");
     if (!allowed) return;
     
+    // Start Newton thinking animation
+    startThinking();
     setIsGeneratingQuiz(true);
     setActiveGenerating("quiz");
     setVideoError(null);
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
@@ -521,6 +557,9 @@ const AISummarizer = () => {
           description: "This video has limited captions. Results are based on video topic.",
         });
       }
+
+      // Switch to writing phase
+      startWriting();
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`, {
         method: "POST",
@@ -539,21 +578,29 @@ const AISummarizer = () => {
       if (!response.ok) throw new Error("Failed to generate quiz");
       
       const data = await response.json();
-      setQuizQuestions(data.questions);
-      setQuizTitle(videoTitle);
-      toast({
-        title: "Quiz Ready! 🧠",
-        description: `Generated ${data.questions.length} questions from video`,
+      
+      // Store pending result and trigger completion animation
+      setPendingResult({
+        type: "quiz",
+        data: data.questions,
+        title: videoTitle,
       });
+      completeProcessing();
+      
     } catch (error: any) {
       console.error("Error generating quiz:", error);
+      resetProcessing();
       const errorMessage = error.message || "Failed to generate quiz";
       setVideoError(errorMessage);
-      toast({
-        title: "Cannot Generate Quiz",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      setErrorState("confused");
+      setTimeout(() => {
+        setErrorState(null);
+        toast({
+          title: "Cannot Generate Quiz",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }, 2000);
     } finally {
       setIsGeneratingQuiz(false);
       setActiveGenerating(null);
@@ -565,11 +612,13 @@ const AISummarizer = () => {
     const allowed = await trySpendCredits("summary");
     if (!allowed) return;
     
-    setShowSummaryScreen(true);
+    // Start Newton thinking animation
+    startThinking();
     setIsGeneratingSummary(true);
     setActiveGenerating("summary");
     setVideoError(null);
     setContentTitle(videoTitle);
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
@@ -582,6 +631,9 @@ const AISummarizer = () => {
           description: "This video has limited captions. Results are based on video topic.",
         });
       }
+
+      // Switch to writing phase
+      startWriting();
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`, {
         method: "POST",
@@ -599,21 +651,29 @@ const AISummarizer = () => {
       if (!response.ok) throw new Error("Failed to generate summary");
       
       const data = await response.json();
-      setVideoSummary(data.summary);
-      toast({
-        title: "Summary Ready! 📝",
-        description: "Video summary generated successfully",
+      
+      // Store pending result and trigger completion animation
+      setPendingResult({
+        type: "summary",
+        data: data.summary,
+        title: videoTitle,
       });
+      completeProcessing();
+      
     } catch (error: any) {
       console.error("Error generating summary:", error);
-      setShowSummaryScreen(false);
+      resetProcessing();
       const errorMessage = error.message || "Failed to generate summary";
       setVideoError(errorMessage);
-      toast({
-        title: "Cannot Generate Summary",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      setErrorState("confused");
+      setTimeout(() => {
+        setErrorState(null);
+        toast({
+          title: "Cannot Generate Summary",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }, 2000);
     } finally {
       setIsGeneratingSummary(false);
       setActiveGenerating(null);
@@ -625,11 +685,13 @@ const AISummarizer = () => {
     const allowed = await trySpendCredits("mind_map");
     if (!allowed) return;
     
-    setShowMindMapScreen(true);
+    // Start Newton thinking animation
+    startThinking();
     setIsGeneratingMindMap(true);
     setActiveGenerating("mindmap");
     setMindMapTitle(videoTitle);
     setVideoError(null);
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
@@ -642,6 +704,9 @@ const AISummarizer = () => {
           description: "This video has limited captions. Results are based on video topic.",
         });
       }
+
+      // Switch to writing phase
+      startWriting();
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`, {
         method: "POST",
@@ -658,23 +723,29 @@ const AISummarizer = () => {
       if (!response.ok) throw new Error("Failed to generate mind map");
       
       const data = await response.json();
-      if (data.mindMapData) {
-        setMindMapData(data.mindMapData);
-      }
-      toast({
-        title: "Mind Map Ready! 🧠",
-        description: "Video mind map generated successfully",
+      
+      // Store pending result and trigger completion animation
+      setPendingResult({
+        type: "mindmap",
+        data: data.mindMapData,
+        title: videoTitle,
       });
+      completeProcessing();
+      
     } catch (error: any) {
       console.error("Error generating mind map:", error);
-      setShowMindMapScreen(false);
+      resetProcessing();
       const errorMessage = error.message || "Failed to generate mind map";
       setVideoError(errorMessage);
-      toast({
-        title: "Cannot Generate Mind Map",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      setErrorState("confused");
+      setTimeout(() => {
+        setErrorState(null);
+        toast({
+          title: "Cannot Generate Mind Map",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }, 2000);
     } finally {
       setIsGeneratingMindMap(false);
       setActiveGenerating(null);
@@ -742,6 +813,50 @@ const AISummarizer = () => {
 
   const isAnyGenerating = isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap;
 
+  // Effect to show results after Newton animation completes
+  useEffect(() => {
+    if (processingPhase === "idle" && pendingResult) {
+      const { type, data, title } = pendingResult;
+      
+      switch (type) {
+        case "flashcards":
+          setFlashcards(data);
+          setFlashcardTitle(title);
+          toast({
+            title: "Flashcards Ready! 📚",
+            description: `Generated ${data.length} flashcards from video`,
+          });
+          break;
+        case "quiz":
+          setQuizQuestions(data);
+          setQuizTitle(title);
+          toast({
+            title: "Quiz Ready! 🧠",
+            description: `Generated ${data.length} questions from video`,
+          });
+          break;
+        case "summary":
+          setVideoSummary(data);
+          setShowSummaryScreen(true);
+          toast({
+            title: "Summary Ready! 📝",
+            description: "Video summary generated successfully",
+          });
+          break;
+        case "mindmap":
+          setMindMapData(data);
+          setShowMindMapScreen(true);
+          toast({
+            title: "Mind Map Ready! 🧠",
+            description: "Video mind map generated successfully",
+          });
+          break;
+      }
+      
+      setPendingResult(null);
+    }
+  }, [processingPhase, pendingResult, toast]);
+
   // Render flashcards view
   if (flashcards.length > 0) {
     return (
@@ -793,26 +908,6 @@ const AISummarizer = () => {
           title={mindMapTitle}
           onClose={handleCloseMindMap}
         />
-      </AppLayout>
-    );
-  }
-
-  // Show loading state for mind map generation
-  if (showMindMapScreen && isGeneratingMindMap) {
-    return (
-      <AppLayout>
-        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto animate-pulse">
-              <Sparkles className="w-10 h-10 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold">Generating Mind Map</h3>
-            <p className="text-muted-foreground">Analyzing video content...</p>
-            <Button variant="outline" onClick={handleCloseMindMap}>
-              Cancel
-            </Button>
-          </div>
-        </div>
       </AppLayout>
     );
   }
@@ -1092,6 +1187,25 @@ const AISummarizer = () => {
         <NewtonFeedback 
           state={errorState} 
           onDismiss={() => setErrorState(null)}
+        />
+
+        {/* Newton Processing Overlay for Video Tools */}
+        <ProcessingOverlay
+          isVisible={isProcessing}
+          phase={processingPhase}
+          message={
+            processingPhase === "thinking" ? "Analyzing video content..." :
+            processingPhase === "writing" ? "Generating study materials..." :
+            processingPhase === "completed" ? "All done!" :
+            undefined
+          }
+          subMessage={
+            processingPhase === "thinking" ? "Fetching video transcript" :
+            processingPhase === "writing" ? "Almost there" :
+            processingPhase === "completed" ? "Here are your results" :
+            undefined
+          }
+          variant="overlay"
         />
 
         {/* Usage Limit Modal */}
