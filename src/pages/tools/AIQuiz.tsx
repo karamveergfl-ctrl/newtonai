@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, CheckCircle, XCircle, RotateCcw } from "lucide-react";
+import { Brain, CheckCircle, XCircle, RotateCcw, SkipForward } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +45,7 @@ const AIQuiz = () => {
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [skippedQuestions, setSkippedQuestions] = useState<Set<number>>(new Set());
   const { toast } = useToast();
   
   // Use feature limit gate instead of credit gate
@@ -134,6 +135,15 @@ const AIQuiz = () => {
       // Track usage after successful generation
       await confirmUsage();
       
+      // Log generation to history
+      await logGeneration({
+        tool_name: 'quiz',
+        title: `${data.questions.length} Quiz Questions`,
+        source_type: type,
+        source_preview: textContent.slice(0, 200),
+        result_preview: { questionCount: data.questions.length, difficulty: settings.difficulty },
+      });
+
       // Trigger completed animation
       complete();
       
@@ -170,6 +180,12 @@ const AIQuiz = () => {
     }
   };
 
+  const handleSkip = () => {
+    setSkippedQuestions(prev => new Set(prev).add(currentIndex));
+    setShowResult(true);
+    setSelectedAnswer(null); // No answer selected
+  };
+
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -187,6 +203,7 @@ const AIQuiz = () => {
     setShowResult(false);
     setScore(0);
     setQuizCompleted(false);
+    setSkippedQuestions(new Set());
   };
 
   const currentQuestion = questions[currentIndex];
@@ -267,6 +284,11 @@ const AIQuiz = () => {
                   </div>
                   <p className="text-base sm:text-lg text-muted-foreground font-sans">
                     You got {score} out of {questions.length} correct
+                    {skippedQuestions.size > 0 && (
+                      <span className="block text-sm mt-1">
+                        ({skippedQuestions.size} skipped)
+                      </span>
+                    )}
                   </p>
                   <Button onClick={resetQuiz} className="w-full max-w-xs">
                     <RotateCcw className="h-4 w-4 mr-2" />
@@ -325,6 +347,18 @@ const AIQuiz = () => {
                 </CardContent>
               </Card>
 
+              {/* Skip Button - only show when answer not yet submitted */}
+              {!showResult && (
+                <Button 
+                  onClick={handleSkip} 
+                  variant="outline" 
+                  className="w-full gap-2"
+                >
+                  <SkipForward className="h-4 w-4" />
+                  Skip Question
+                </Button>
+              )}
+
               {showResult && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -332,6 +366,11 @@ const AIQuiz = () => {
                 >
                   <Card className="bg-muted/50 border-border/50">
                     <CardContent className="pt-4">
+                      {skippedQuestions.has(currentIndex) ? (
+                        <p className="text-sm font-sans text-amber-600 dark:text-amber-400 mb-2">
+                          Question skipped
+                        </p>
+                      ) : null}
                       <p className="text-sm font-sans">
                         <span className="font-semibold text-foreground">Explanation: </span>
                       </p>
