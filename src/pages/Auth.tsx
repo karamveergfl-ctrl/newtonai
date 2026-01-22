@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Eye, EyeOff, AlertTriangle, ShieldAlert } from "lucide-react";
+import { Loader2, Mail, Eye, EyeOff, AlertTriangle, ShieldAlert, BookOpen, Brain, Layers, Mic } from "lucide-react";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
@@ -235,14 +235,38 @@ const Auth = () => {
         className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 lg:p-12"
       >
         <div className="w-full max-w-md">
-          {/* Mobile Logo */}
+          {/* Mobile Logo & Tagline */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="lg:hidden flex justify-center mb-8"
+            className="lg:hidden text-center mb-8"
           >
             <Logo size="lg" />
+            <p className="mt-3 text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
+              Transform your learning with AI-powered study tools.
+            </p>
+            
+            {/* Mobile Tool Badges */}
+            <div className="flex gap-2 justify-center flex-wrap mt-4 px-2">
+              {[
+                { icon: BookOpen, label: "Notes", color: "from-teal-500/20 to-teal-500/5" },
+                { icon: Brain, label: "Quiz", color: "from-purple-500/20 to-purple-500/5" },
+                { icon: Layers, label: "Flashcards", color: "from-blue-500/20 to-blue-500/5" },
+                { icon: Mic, label: "Podcast", color: "from-amber-500/20 to-amber-500/5" },
+              ].map((tool) => {
+                const IconComponent = tool.icon;
+                return (
+                  <span 
+                    key={tool.label}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r ${tool.color} border border-border/50 text-foreground flex items-center gap-1.5`}
+                  >
+                    <IconComponent className="w-3 h-3" />
+                    {tool.label}
+                  </span>
+                );
+              })}
+            </div>
           </motion.div>
 
           {/* Form Header */}
