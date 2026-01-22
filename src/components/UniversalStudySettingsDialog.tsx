@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Brain, BookOpen, FileText, Network, Sparkles } from "lucide-react";
+import { Brain, BookOpen, FileText, Network, Circle, GitBranch, Boxes, Clock, Zap, List, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface UniversalGenerationSettings {
@@ -19,6 +19,8 @@ export interface UniversalGenerationSettings {
   count: number;
   difficulty: "easy" | "medium" | "hard";
   detailLevel: "brief" | "standard" | "detailed";
+  mindMapStyle?: "radial" | "tree" | "cluster" | "timeline";
+  summaryFormat?: "concise" | "detailed" | "bullet-points" | "academic";
 }
 
 interface UniversalStudySettingsDialogProps {
@@ -30,6 +32,23 @@ interface UniversalStudySettingsDialogProps {
   totalPages?: number;
   onGenerate: (settings: UniversalGenerationSettings) => void;
 }
+
+type MindMapStyle = "radial" | "tree" | "cluster" | "timeline";
+type SummaryFormat = "concise" | "detailed" | "bullet-points" | "academic";
+
+const mindMapStyles: { id: MindMapStyle; name: string; description: string; icon: React.ElementType }[] = [
+  { id: "radial", name: "Radial", description: "Central topic with radiating branches", icon: Circle },
+  { id: "tree", name: "Tree", description: "Hierarchical top-down structure", icon: GitBranch },
+  { id: "cluster", name: "Cluster", description: "Grouped concepts by category", icon: Boxes },
+  { id: "timeline", name: "Timeline", description: "Sequential flow of events", icon: Clock },
+];
+
+const summaryFormats: { id: SummaryFormat; name: string; description: string; icon: React.ElementType }[] = [
+  { id: "concise", name: "Concise Summary", description: "Brief overview of key points", icon: Zap },
+  { id: "detailed", name: "Detailed Analysis", description: "In-depth coverage with examples", icon: FileText },
+  { id: "bullet-points", name: "Bullet Points", description: "Easy-to-scan list format", icon: List },
+  { id: "academic", name: "Academic Style", description: "Formal structure with citations", icon: GraduationCap },
+];
 
 const typeConfig = {
   quiz: {
@@ -78,7 +97,7 @@ const typeConfig = {
     countMax: 0,
     countDefault: 0,
     showDifficulty: false,
-    showDetailLevel: true,
+    showDetailLevel: false,
   },
 };
 
@@ -101,12 +120,16 @@ export const UniversalStudySettingsDialog = ({
   const [count, setCount] = useState(config.countDefault);
   const [difficulty, setDifficulty] = useState(1); // 0=easy, 1=medium, 2=hard
   const [detailLevel, setDetailLevel] = useState(1); // 0=brief, 1=standard, 2=detailed
+  const [mindMapStyle, setMindMapStyle] = useState<MindMapStyle>("radial");
+  const [summaryFormat, setSummaryFormat] = useState<SummaryFormat>("concise");
 
   const handleGenerate = () => {
     const settings: UniversalGenerationSettings = {
       count,
       difficulty: ["easy", "medium", "hard"][difficulty] as "easy" | "medium" | "hard",
       detailLevel: ["brief", "standard", "detailed"][detailLevel] as "brief" | "standard" | "detailed",
+      mindMapStyle: type === "mindmap" ? mindMapStyle : undefined,
+      summaryFormat: type === "summary" ? summaryFormat : undefined,
     };
 
     if (totalPages > 1) {
@@ -190,6 +213,82 @@ export const UniversalStudySettingsDialog = ({
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{config.countMin}</span>
                 <span>{config.countMax}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Summary Format Selection - Only for Summary */}
+          {type === "summary" && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Summary Format</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {summaryFormats.map((format) => {
+                  const FormatIcon = format.icon;
+                  return (
+                    <button
+                      key={format.id}
+                      type="button"
+                      onClick={() => setSummaryFormat(format.id)}
+                      className={cn(
+                        "p-3 rounded-xl border-2 text-left transition-all hover:shadow-md",
+                        summaryFormat === format.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className={cn(
+                          "p-1.5 rounded-lg",
+                          summaryFormat === format.id ? "bg-primary/20" : "bg-muted"
+                        )}>
+                          <FormatIcon className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-sm">{format.name}</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">{format.description}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Mind Map Style Selection - Only for Mind Map */}
+          {type === "mindmap" && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Mind Map Style</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {mindMapStyles.map((style) => {
+                  const StyleIcon = style.icon;
+                  return (
+                    <button
+                      key={style.id}
+                      type="button"
+                      onClick={() => setMindMapStyle(style.id)}
+                      className={cn(
+                        "p-3 rounded-xl border-2 text-left transition-all hover:shadow-md",
+                        mindMapStyle === style.id
+                          ? "border-rose-500 bg-rose-500/5"
+                          : "border-border hover:border-rose-500/50"
+                      )}
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className={cn(
+                          "p-1.5 rounded-lg",
+                          mindMapStyle === style.id ? "bg-rose-500/20" : "bg-muted"
+                        )}>
+                          <StyleIcon className="h-4 w-4 text-rose-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-sm">{style.name}</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">{style.description}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
