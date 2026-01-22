@@ -22,6 +22,7 @@ import {
   transcribeAudio, 
   processUploadedFile 
 } from "@/utils/contentProcessing";
+import { logGeneration } from "@/hooks/useGenerationHistory";
 
 interface QuizQuestion {
   id: string;

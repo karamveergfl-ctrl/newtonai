@@ -176,6 +176,42 @@ export type Database = {
         }
         Relationships: []
       }
+      generation_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          result_preview: Json | null
+          source_preview: string | null
+          source_type: string | null
+          title: string | null
+          tool_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          result_preview?: Json | null
+          source_preview?: string | null
+          source_type?: string | null
+          title?: string | null
+          tool_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          result_preview?: Json | null
+          source_preview?: string | null
+          source_type?: string | null
+          title?: string | null
+          tool_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -261,8 +297,11 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
           created_at: string
           education_level: string | null
+          email_notifications: boolean | null
           full_name: string | null
           id: string
           language_preference: string | null
@@ -273,11 +312,16 @@ export type Database = {
           subjects: string[] | null
           subscription_expires_at: string | null
           subscription_tier: string
+          theme_preference: string | null
+          timezone: string | null
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           education_level?: string | null
+          email_notifications?: boolean | null
           full_name?: string | null
           id: string
           language_preference?: string | null
@@ -288,11 +332,16 @@ export type Database = {
           subjects?: string[] | null
           subscription_expires_at?: string | null
           subscription_tier?: string
+          theme_preference?: string | null
+          timezone?: string | null
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           education_level?: string | null
+          email_notifications?: boolean | null
           full_name?: string | null
           id?: string
           language_preference?: string | null
@@ -303,6 +352,8 @@ export type Database = {
           subjects?: string[] | null
           subscription_expires_at?: string | null
           subscription_tier?: string
+          theme_preference?: string | null
+          timezone?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -567,6 +618,39 @@ export type Database = {
           lifetime_earned?: number
           lifetime_spent?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          title?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
