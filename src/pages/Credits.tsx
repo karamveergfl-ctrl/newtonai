@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
@@ -21,8 +21,9 @@ import { Badge } from "@/components/ui/badge";
 import { AppLayout } from "@/components/AppLayout";
 import { AnimatedCreditCounter } from "@/components/AnimatedCreditCounter";
 import { useCredits } from "@/hooks/useCredits";
-import { AD_REWARDS, DAILY_AD_LIMITS, FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
+import { AD_REWARDS, DAILY_AD_LIMITS, FEATURE_COSTS as FALLBACK_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
 
 declare global {
   interface Window {
@@ -44,6 +45,29 @@ export default function Credits() {
   
   const [watchingAd, setWatchingAd] = useState<30 | 60 | null>(null);
   const adInitialized = useRef(false);
+  const [featureCosts, setFeatureCosts] = useState<Record<string, number>>(FALLBACK_COSTS);
+
+  // Fetch feature costs from database
+  const fetchFeatureCosts = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('feature_costs')
+        .select('feature_name, cost');
+      
+      if (!error && data && data.length > 0) {
+        const costsMap = Object.fromEntries(
+          data.map(f => [f.feature_name, f.cost])
+        );
+        setFeatureCosts(prev => ({ ...prev, ...costsMap }));
+      }
+    } catch (error) {
+      console.error('Error fetching feature costs:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFeatureCosts();
+  }, [fetchFeatureCosts]);
 
   // Initialize Google AdSense ads
   useEffect(() => {
@@ -301,7 +325,7 @@ export default function Credits() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-3 sm:grid-cols-2">
-                {Object.entries(FEATURE_COSTS).map(([feature, cost]) => (
+                {Object.entries(featureCosts).map(([feature, cost]) => (
                   <div 
                     key={feature}
                     className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
