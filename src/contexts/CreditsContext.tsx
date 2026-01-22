@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { FEATURE_COSTS, AD_REWARDS, DAILY_AD_LIMITS, SIGNUP_BONUS } from '@/lib/creditConfig';
+import { FEATURE_COSTS as FALLBACK_COSTS, AD_REWARDS, DAILY_AD_LIMITS, SIGNUP_BONUS } from '@/lib/creditConfig';
 import { toast } from 'sonner';
 
 interface CreditsContextType {
@@ -24,7 +24,7 @@ const defaultContextValue: CreditsContextType = {
   isPremium: false,
   adsWatchedToday: 0,
   hasEnoughCredits: () => false,
-  getFeatureCost: (feature: string) => FEATURE_COSTS[feature] || 0,
+  getFeatureCost: (feature: string) => FALLBACK_COSTS[feature] || 0,
   spendCredits: async () => false,
   earnCredits: async () => false,
   canWatchMoreAds: () => false,
@@ -40,6 +40,27 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
+  const [featureCosts, setFeatureCosts] = useState<Record<string, number>>(FALLBACK_COSTS);
+
+  // Fetch feature costs from server - runs once on mount
+  const fetchFeatureCosts = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('feature_costs')
+        .select('feature_name, cost');
+      
+      if (!error && data && data.length > 0) {
+        const costsMap = Object.fromEntries(
+          data.map(f => [f.feature_name, f.cost])
+        );
+        // Merge with fallback to ensure all features are covered
+        setFeatureCosts(prev => ({ ...prev, ...costsMap }));
+      }
+    } catch (error) {
+      console.error('Error fetching feature costs:', error);
+      // Keep using fallback costs
+    }
+  }, []);
 
   const fetchCredits = useCallback(async () => {
     try {
@@ -112,18 +133,19 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    fetchFeatureCosts();
     fetchCredits();
-  }, [fetchCredits]);
+  }, [fetchCredits, fetchFeatureCosts]);
 
   const hasEnoughCredits = useCallback((feature: string): boolean => {
     if (isPremium) return true;
-    const cost = FEATURE_COSTS[feature] || 0;
+    const cost = featureCosts[feature] || 0;
     return credits >= cost;
-  }, [credits, isPremium]);
+  }, [credits, isPremium, featureCosts]);
 
   const getFeatureCost = useCallback((feature: string): number => {
-    return FEATURE_COSTS[feature] || 0;
-  }, []);
+    return featureCosts[feature] || 0;
+  }, [featureCosts]);
 
   const spendCredits = useCallback(async (feature: string): Promise<boolean> => {
     if (isPremium) return true;
