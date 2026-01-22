@@ -753,6 +753,7 @@ export type Database = {
         Args: { p_ad_duration: number; p_credits_earned: number }
         Returns: Json
       }
+      end_study_session: { Args: { p_session_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -760,9 +761,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      record_generation: {
+        Args: {
+          p_metadata?: Json
+          p_result_preview?: Json
+          p_source_preview?: string
+          p_source_type?: string
+          p_title?: string
+          p_tool_name: string
+        }
+        Returns: Json
+      }
+      record_video_watch_time: {
+        Args: { p_duration_seconds: number; p_video_id: string }
+        Returns: Json
+      }
       spend_credits:
         | { Args: { p_feature_name: string }; Returns: Json }
         | { Args: { p_amount: number; p_feature_name: string }; Returns: Json }
+      start_study_session: { Args: { p_pdf_name: string }; Returns: Json }
+      track_feature_usage: {
+        Args: { p_feature_name: string; p_usage_minutes?: number }
+        Returns: Json
+      }
       validate_redeem_code: { Args: { p_code: string }; Returns: Json }
     }
     Enums: {
