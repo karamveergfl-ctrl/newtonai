@@ -79,6 +79,15 @@ interface TTSRequest {
 }
 
 // Get model based on language - use multilingual for non-English
+// Clean emotion tags from text before sending to TTS
+function cleanTextForSpeech(text: string): string {
+  return text
+    .replace(/\s*\([a-zA-Z]+\)\s*$/g, '')     // End: " (enthusiastic)"
+    .replace(/\s*\([a-zA-Z]+\)\s*/g, ' ')     // Middle: "(curious) "
+    .replace(/\s+/g, ' ')                      // Normalize whitespace
+    .trim();
+}
+
 function getModelForLanguage(language: string): string {
   return language === "en" ? "eleven_turbo_v2_5" : "eleven_multilingual_v2";
 }
@@ -202,8 +211,9 @@ serve(async (req) => {
         const globalIndex = i + batchIndex;
         try {
           const voiceId = voices[segment.speaker];
+          const cleanedText = cleanTextForSpeech(segment.text);
           const audio = await generateAudioForSegment(
-            segment.text,
+            cleanedText,
             voiceId,
             ELEVENLABS_API_KEY,
             modelId
