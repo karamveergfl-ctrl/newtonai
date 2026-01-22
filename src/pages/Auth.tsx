@@ -68,12 +68,29 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    const checkOnboardingAndRedirect = async (session: any) => {
+      if (!session) return;
+      
+      // Check if user has completed onboarding
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("id", session.user.id)
+        .single();
+      
+      if (profile?.onboarding_completed) {
+        navigate("/dashboard");
+      } else {
+        navigate("/onboarding");
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) navigate("/dashboard");
+      if (session) checkOnboardingAndRedirect(session);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/dashboard");
+      if (session) checkOnboardingAndRedirect(session);
     });
 
     return () => subscription.unsubscribe();
@@ -154,7 +171,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/onboarding`,
         },
       });
       if (error) throw error;

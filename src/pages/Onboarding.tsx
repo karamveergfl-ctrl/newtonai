@@ -1,14 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import SEOHead from "@/components/SEOHead";
+import { useTheme } from "next-themes";
 import { 
   GraduationCap, 
   BookOpen, 
@@ -18,7 +21,13 @@ import {
   ChevronLeft,
   Check,
   Sparkles,
-  MessageCircleQuestion
+  MessageCircleQuestion,
+  Camera,
+  Sun,
+  Moon,
+  Monitor,
+  Globe,
+  Loader2
 } from "lucide-react";
 
 const educationLevels = [
@@ -61,6 +70,25 @@ const referralSources = [
   { id: "whatsapp", label: "WhatsApp", icon: "💬", description: "Shared via WhatsApp" },
   { id: "friend", label: "Friend or Classmate", icon: "👥", description: "Someone recommended it" },
   { id: "other", label: "Other", icon: "✨", description: "Something else" },
+];
+
+const themeOptions = [
+  { id: "light", label: "Light", icon: Sun, description: "Bright and clean" },
+  { id: "dark", label: "Dark", icon: Moon, description: "Easy on the eyes" },
+  { id: "system", label: "System", icon: Monitor, description: "Match your device" },
+];
+
+const languageOptions = [
+  { id: "en", label: "English", flag: "🇺🇸" },
+  { id: "es", label: "Español", flag: "🇪🇸" },
+  { id: "fr", label: "Français", flag: "🇫🇷" },
+  { id: "de", label: "Deutsch", flag: "🇩🇪" },
+  { id: "hi", label: "हिंदी", flag: "🇮🇳" },
+  { id: "zh", label: "中文", flag: "🇨🇳" },
+  { id: "ja", label: "日本語", flag: "🇯🇵" },
+  { id: "pt", label: "Português", flag: "🇧🇷" },
+  { id: "ar", label: "العربية", flag: "🇸🇦" },
+  { id: "ko", label: "한국어", flag: "🇰🇷" },
 ];
 
 const slideVariants = {
@@ -125,18 +153,25 @@ const checkmarkVariants = {
 
 const Onboarding = () => {
   const navigate = useNavigate();
+  const { setTheme } = useTheme();
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     educationLevel: "",
     subjects: [] as string[],
     studyGoals: [] as string[],
     referralSource: "",
+    // Step 6 fields
+    themePreference: "system",
+    languagePreference: "en",
+    avatarUrl: null as string | null,
   });
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const progress = (step / totalSteps) * 100;
 
   useEffect(() => {
@@ -152,17 +187,61 @@ const Onboarding = () => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("onboarding_completed, full_name")
+      .select("onboarding_completed, full_name, avatar_url")
       .eq("id", session.user.id)
       .single();
 
     if (profile?.onboarding_completed) {
-      navigate("/");
+      navigate("/dashboard");
       return;
     }
 
     if (profile?.full_name) {
       setFormData(prev => ({ ...prev, fullName: profile.full_name || "" }));
+    }
+    if (profile?.avatar_url) {
+      setFormData(prev => ({ ...prev, avatarUrl: profile.avatar_url }));
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be less than 2MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${session.user.id}/avatar.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      setFormData(prev => ({ ...prev, avatarUrl: publicUrl }));
+      toast.success('Avatar uploaded!');
+    } catch (error) {
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -181,6 +260,10 @@ const Onboarding = () => {
     }
     if (step === 4 && formData.studyGoals.length === 0) {
       toast.error("Please select at least one study goal");
+      return;
+    }
+    if (step === 5 && !formData.referralSource) {
+      toast.error("Please select how you heard about us");
       return;
     }
     setDirection(1);
@@ -211,11 +294,6 @@ const Onboarding = () => {
   };
 
   const handleComplete = async () => {
-    if (!formData.referralSource) {
-      toast.error("Please select how you heard about us");
-      return;
-    }
-
     setIsLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -223,6 +301,9 @@ const Onboarding = () => {
         navigate("/auth");
         return;
       }
+
+      // Apply theme preference immediately
+      setTheme(formData.themePreference);
 
       const { error } = await supabase
         .from("profiles")
@@ -232,19 +313,34 @@ const Onboarding = () => {
           subjects: formData.subjects,
           study_goals: formData.studyGoals,
           referral_source: formData.referralSource,
+          theme_preference: formData.themePreference,
+          language_preference: formData.languagePreference,
+          avatar_url: formData.avatarUrl,
           onboarding_completed: true,
         })
         .eq("id", session.user.id);
 
       if (error) throw error;
 
+      // Set flag for welcome modal on dashboard
+      localStorage.setItem('newtonai_new_signup', 'true');
+      
       toast.success("Welcome to NewtonAI! 🎉");
-      navigate("/");
+      navigate("/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Failed to save profile");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'U';
   };
 
   return (
@@ -751,8 +847,157 @@ const Onboarding = () => {
                         <ChevronLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                         Back
                       </Button>
+                      <Button onClick={handleNext} className="flex-1 h-12 group">
+                        Continue
+                        <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 6: Profile Customization (Optional) */}
+            {step === 6 && (
+              <motion.div
+                key="step6"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Card className="border-0 shadow-xl backdrop-blur-sm bg-card/95">
+                  <CardHeader className="text-center pb-2">
+                    <motion.div 
+                      className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4"
+                      variants={iconVariants}
+                      initial="initial"
+                      animate="animate"
+                    >
+                      <Sparkles className="w-8 h-8 text-primary" />
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <CardTitle className="text-2xl md:text-3xl">Customize Your Experience</CardTitle>
+                      <CardDescription className="text-base mt-2">
+                        Optional — You can always change these later
+                      </CardDescription>
+                    </motion.div>
+                  </CardHeader>
+                  <CardContent className="pt-6 space-y-6">
+                    {/* Avatar Upload */}
+                    <motion.div 
+                      className="flex flex-col items-center gap-3"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <div className="relative group">
+                        <Avatar className="h-24 w-24 border-2 border-border">
+                          <AvatarImage src={formData.avatarUrl || undefined} />
+                          <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                            {getInitials(formData.fullName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          className="hidden"
+                        />
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full shadow-md"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingAvatar}
+                        >
+                          {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Add a profile photo</span>
+                    </motion.div>
+
+                    {/* Theme Selection */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <Label className="text-sm font-medium mb-3 block">Theme Preference</Label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {themeOptions.map((theme) => (
+                          <button
+                            key={theme.id}
+                            onClick={() => setFormData(prev => ({ ...prev, themePreference: theme.id }))}
+                            className={`p-3 rounded-xl border-2 text-center transition-all hover:border-primary/50 ${
+                              formData.themePreference === theme.id
+                                ? "border-primary bg-primary/5"
+                                : "border-border"
+                            }`}
+                          >
+                            <theme.icon className="w-5 h-5 mx-auto mb-1" />
+                            <span className="text-sm font-medium">{theme.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+
+                    {/* Language Selection */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <Label className="text-sm font-medium mb-3 flex items-center gap-2">
+                        <Globe className="w-4 h-4" />
+                        AI Response Language
+                      </Label>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 max-h-[150px] overflow-y-auto p-1">
+                        {languageOptions.map((lang) => (
+                          <button
+                            key={lang.id}
+                            onClick={() => setFormData(prev => ({ ...prev, languagePreference: lang.id }))}
+                            className={`p-2 rounded-lg border-2 text-center transition-all hover:border-primary/50 ${
+                              formData.languagePreference === lang.id
+                                ? "border-primary bg-primary/5"
+                                : "border-border"
+                            }`}
+                          >
+                            <span className="text-lg">{lang.flag}</span>
+                            <span className="text-xs block truncate">{lang.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+
+                    {/* Navigation Buttons */}
+                    <motion.div 
+                      className="flex gap-3 pt-4"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 }}
+                    >
+                      <Button variant="outline" onClick={handleBack} className="h-12 group">
+                        <ChevronLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                        Back
+                      </Button>
                       <Button 
-                        onClick={handleComplete} 
+                        variant="ghost"
+                        onClick={handleComplete}
+                        className="h-12"
+                        disabled={isLoading}
+                      >
+                        Skip
+                      </Button>
+                      <Button 
+                        onClick={handleComplete}
                         className="flex-1 h-12 group relative overflow-hidden"
                         disabled={isLoading}
                       >

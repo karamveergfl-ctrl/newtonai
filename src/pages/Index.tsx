@@ -194,6 +194,25 @@ const Index = () => {
     return success;
   };
   const navigate = useNavigate();
+  
+  // Check onboarding status and redirect if not completed
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (session?.user?.id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("id", session.user.id)
+          .single();
+        
+        if (!profile?.onboarding_completed) {
+          navigate("/onboarding");
+        }
+      }
+    };
+    checkOnboardingStatus();
+  }, [session?.user?.id, navigate]);
+  
   useEffect(() => {
     // Set up auth state listener
     const {
