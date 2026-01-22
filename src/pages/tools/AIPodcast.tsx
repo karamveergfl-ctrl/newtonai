@@ -9,7 +9,8 @@ import { PodcastStylePresets, PodcastSettings } from "@/components/PodcastStyleP
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Podcast, Sparkles, ArrowLeft, Radio, Volume2, Minimize2 } from "lucide-react";
+import { Podcast, Sparkles, ArrowLeft, Radio, Volume2, Minimize2, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -52,6 +53,7 @@ const stepMessages: Record<GenerationStep, string> = {
 };
 
 export default function AIPodcast() {
+  const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [generationStep, setGenerationStep] = useState<GenerationStep>("idle");
   const [progress, setProgress] = useState(0);
@@ -362,8 +364,16 @@ export default function AIPodcast() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 sm:mb-8"
+          className="mb-6 sm:mb-8 relative"
         >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/tools")}
+            className="absolute right-0 top-0 h-9 w-9 rounded-full hover:bg-muted"
+          >
+            <X className="h-5 w-5" />
+          </Button>
           <div className="flex items-center gap-2 sm:gap-3 mb-2">
             <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20">
               <Podcast className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
