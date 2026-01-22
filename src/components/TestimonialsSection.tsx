@@ -152,7 +152,7 @@ export const TestimonialsSection = () => {
           ))}
         </div>
 
-        {/* Trust badges */}
+        {/* Trust badges - Animated University Logos */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -160,15 +160,39 @@ export const TestimonialsSection = () => {
           transition={{ delay: 0.3, duration: 0.5 }}
           className="mt-16 text-center"
         >
-          <p className="text-muted-foreground text-sm mb-4">Trusted by students from</p>
-          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 opacity-60">
-            {["Stanford", "MIT", "Harvard", "Oxford", "Berkeley", "IIT", "IIM", "AIIMS"].map((school) => (
-              <span
-                key={school}
-                className="text-base md:text-lg font-semibold text-muted-foreground"
+          <p className="text-muted-foreground text-sm mb-6">Trusted by students from</p>
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
+            {[
+              { name: "Stanford", shortName: "S", color: "from-red-600 to-red-800" },
+              { name: "MIT", shortName: "MIT", color: "from-red-700 to-gray-800" },
+              { name: "Harvard", shortName: "H", color: "from-red-800 to-red-950" },
+              { name: "Oxford", shortName: "Ox", color: "from-blue-700 to-blue-900" },
+              { name: "Berkeley", shortName: "Cal", color: "from-blue-600 to-amber-500" },
+              { name: "IIT", shortName: "IIT", color: "from-blue-600 to-blue-800" },
+              { name: "IIM", shortName: "IIM", color: "from-emerald-600 to-emerald-800" },
+              { name: "AIIMS", shortName: "A", color: "from-teal-500 to-teal-700" },
+            ].map((uni, index) => (
+              <motion.div
+                key={uni.name}
+                initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                whileHover={{ scale: 1.08, y: -2 }}
+                viewport={{ once: true }}
+                transition={{ 
+                  duration: 0.4, 
+                  delay: index * 0.08,
+                  type: "spring",
+                  stiffness: 200
+                }}
+                className="group cursor-default"
               >
-                {school}
-              </span>
+                <div className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-gradient-to-r ${uni.color} shadow-lg shadow-black/20 border border-white/10 transition-all duration-300 group-hover:shadow-xl group-hover:shadow-primary/20`}>
+                  <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-[10px] md:text-xs font-bold text-white">{uni.shortName}</span>
+                  </div>
+                  <span className="text-xs md:text-sm font-semibold text-white">{uni.name}</span>
+                </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>

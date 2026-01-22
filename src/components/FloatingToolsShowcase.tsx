@@ -220,7 +220,7 @@ export const FloatingToolsShowcase = () => {
   return (
     <div ref={containerRef} className="relative w-full max-w-xl mx-auto">
       {/* Main showcase container */}
-      <div className="relative h-[360px] md:h-[420px]">
+      <div className="relative h-[380px] md:h-[440px]">
         {/* Layered ambient glow effects */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-1/4 left-1/4 w-48 h-48 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -346,7 +346,7 @@ export const FloatingToolsShowcase = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.5, duration: 0.6 }}
-        className="flex flex-col items-center gap-3 mt-8"
+        className="flex flex-col items-center gap-3 mt-8 relative z-30"
       >
         <p className="text-sm text-muted-foreground">
           Currently viewing: <span className="text-primary font-medium">{currentTool.description}</span>
