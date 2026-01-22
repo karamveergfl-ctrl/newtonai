@@ -8,6 +8,7 @@ import CTASection from "@/components/CTASection";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
 import SEOHead from "@/components/SEOHead";
 import { FloatingToolsShowcase } from "@/components/FloatingToolsShowcase";
+import { HeroParticles } from "@/components/HeroParticles";
 import { 
   BookOpen, 
   Brain, 
@@ -74,9 +75,12 @@ const LandingPage = () => {
       <Header transparent />
       
       {/* Hero Section */}
-      <section className="relative pt-20 pb-32 overflow-hidden">
+      <section className="relative pt-20 pb-24 overflow-hidden">
         {/* Optimized Background Blobs */}
         <OptimizedBackgroundBlobs variant="hero" />
+        
+        {/* Floating particle effects */}
+        <HeroParticles iconCount={14} dotCount={25} />
         
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
         <div className="container mx-auto px-4 relative z-10">
@@ -119,24 +123,7 @@ const LandingPage = () => {
               Your personal AI study assistant.
             </motion.p>
             
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.6 }}
-            >
-              <Button asChild size="lg" className="text-lg px-8 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-shadow">
-                <Link to="/auth">
-                  Get Started Free
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="text-lg px-8">
-                <Link to="/pricing">View Pricing</Link>
-              </Button>
-            </motion.div>
-
-            {/* Floating Tools Showcase */}
+            {/* Floating Tools Showcase - now includes its own CTA */}
             <FloatingToolsShowcase />
           </motion.div>
         </div>
