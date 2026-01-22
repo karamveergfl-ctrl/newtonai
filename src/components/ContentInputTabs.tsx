@@ -371,46 +371,50 @@ export const ContentInputTabs = ({
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Tab Selector and Language Dropdown */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
-          <div className="inline-flex items-center p-1.5 rounded-2xl bg-muted/50 border border-border whitespace-nowrap min-w-max gap-1">
+      <div className="flex flex-col gap-4">
+        {/* Horizontal Tab Bar */}
+        <div className="flex items-center justify-center">
+          <div className="inline-flex items-center p-1.5 rounded-2xl bg-muted/30 border border-border gap-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 px-3 sm:px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200 min-w-[52px] sm:min-w-[60px]",
+                  "flex flex-col items-center justify-center gap-1.5 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs font-medium transition-all duration-200 min-w-[70px] sm:min-w-[90px]",
                   activeTab === tab.id
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
-                <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-[10px] sm:text-xs">{tab.label}</span>
+                <tab.icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                <span className="text-[11px] sm:text-xs font-medium">{tab.label}</span>
               </button>
             ))}
           </div>
         </div>
 
+        {/* Language Selector - Centered */}
         {showLanguageSelector && (
-          <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-background">
-              <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Select language" />
-            </SelectTrigger>
-            <SelectContent>
-              {LANGUAGES.map((lang) => (
-                <SelectItem key={lang.code} value={lang.code}>
-                  <div className="flex items-center gap-2">
-                    {lang.name}
-                    {lang.code === preferences.language && (
-                      <Check className="h-3 w-3 text-primary" />
-                    )}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex justify-center">
+            <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
+              <SelectTrigger className="w-[180px] sm:w-[200px] bg-background border-border">
+                <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.code} value={lang.code}>
+                    <div className="flex items-center gap-2">
+                      {lang.name}
+                      {lang.code === preferences.language && (
+                        <Check className="h-3 w-3 text-primary" />
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
       </div>
 
