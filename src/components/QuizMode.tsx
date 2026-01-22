@@ -12,7 +12,8 @@ import {
   Download,
   Loader2,
   Brain,
-  ArrowLeft
+  ArrowLeft,
+  SkipForward
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -55,6 +56,7 @@ export const QuizMode = ({
   const [isComplete, setIsComplete] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [skippedQuestions, setSkippedQuestions] = useState<Set<number>>(new Set());
   const contentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -160,6 +162,15 @@ export const QuizMode = ({
     setShowResult(true);
   };
 
+  const handleSkip = () => {
+    setSkippedQuestions(prev => new Set(prev).add(currentIndex));
+    const newAnswers = [...answers];
+    newAnswers[currentIndex] = -1; // Mark as skipped
+    setAnswers(newAnswers);
+    setShowResult(true);
+    setSelectedAnswer(null);
+  };
+
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -181,6 +192,7 @@ export const QuizMode = ({
     setScore(0);
     setAnswers(new Array(questions.length).fill(null));
     setIsComplete(false);
+    setSkippedQuestions(new Set());
   };
 
   const finalScore = score + (showResult && isCorrect ? 1 : 0);
@@ -300,6 +312,11 @@ export const QuizMode = ({
             </p>
             <p className="text-muted-foreground">
               {percentage}% correct
+              {skippedQuestions.size > 0 && (
+                <span className="block text-sm mt-1">
+                  ({skippedQuestions.size} skipped)
+                </span>
+              )}
             </p>
           </div>
 
@@ -438,6 +455,11 @@ export const QuizMode = ({
           {/* Correct Answer & Explanation - Always shown after submit */}
           {showResult && (
             <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800 animate-fade-in">
+              {skippedQuestions.has(currentIndex) && (
+                <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-2">
+                  Question skipped
+                </p>
+              )}
               <p className="text-sm text-muted-foreground italic">
                 <span className="font-medium text-foreground">✓ Correct Answer: {String.fromCharCode(65 + currentQuestion.correctIndex)}</span>
                 {" — "}
