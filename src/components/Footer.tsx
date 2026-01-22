@@ -16,7 +16,7 @@ const Footer = () => {
 
       <div className="container mx-auto px-4 py-16 relative z-10">
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-10 mb-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <motion.div
@@ -74,12 +74,42 @@ const Footer = () => {
             </ul>
           </motion.div>
 
-          {/* Company */}
+          {/* Compare */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <h3 className="font-display font-semibold text-foreground mb-4">
+              Compare
+            </h3>
+            <ul className="space-y-3">
+              {[
+                { to: "/compare/chegg", label: "vs Chegg" },
+                { to: "/compare/quizlet", label: "vs Quizlet" },
+                { to: "/compare/studocu", label: "vs Studocu" },
+                { to: "/compare/course-hero", label: "vs Course Hero" },
+                { to: "/compare/chatgpt", label: "vs ChatGPT" },
+              ].map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-muted-foreground hover:text-primary transition-colors text-sm link-underline"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {/* Company */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
           >
             <h3 className="font-display font-semibold text-foreground mb-4">
               Company
@@ -108,7 +138,7 @@ const Footer = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
           >
             <h3 className="font-display font-semibold text-foreground mb-4">
               Legal
