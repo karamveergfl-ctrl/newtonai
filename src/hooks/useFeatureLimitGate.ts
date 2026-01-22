@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useFeatureUsage, FEATURE_LABELS, FeatureLimit } from "@/hooks/useFeatureUsage";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface UseFeatureLimitGateReturn {
   canUse: boolean;
@@ -22,6 +23,30 @@ export function useFeatureLimitGate(featureName: string): UseFeatureLimitGateRet
 
   const feature = usage.find((u) => u.name === featureName);
 
+  // Check if usage is approaching limit and trigger warning notification
+  const checkUsageLimitWarning = useCallback(async () => {
+    if (!feature || subscription.tier === "ultra") return;
+    
+    const currentUsage = feature.used;
+    const maxLimit = feature.limit;
+    
+    // Only check for non-unlimited features
+    if (maxLimit > 0) {
+      try {
+        // Type assertion needed until types regenerate
+        await (supabase.rpc as any)('check_usage_limit_warning', {
+          p_user_id: (await supabase.auth.getUser()).data.user?.id,
+          p_feature_name: featureName,
+          p_current_usage: currentUsage,
+          p_max_limit: maxLimit
+        });
+      } catch (error) {
+        // Silently fail - notification is non-critical
+        console.debug('Usage warning check failed:', error);
+      }
+    }
+  }, [feature, featureName, subscription.tier]);
+
   const tryUseFeature = useCallback(async (): Promise<boolean> => {
     // Ultra users get unlimited everything
     if (subscription.tier === "ultra") return true;
@@ -41,8 +66,15 @@ export function useFeatureLimitGate(featureName: string): UseFeatureLimitGateRet
   const confirmUsage = useCallback(async (minutes?: number): Promise<boolean> => {
     // Ultra users don't need to track (but we still track for analytics)
     // Pro users with unlimited features still track
-    return await incrementUsage(featureName, minutes);
-  }, [incrementUsage, featureName]);
+    const result = await incrementUsage(featureName, minutes);
+    
+    // Check and trigger usage limit warning after incrementing
+    if (result) {
+      checkUsageLimitWarning();
+    }
+    
+    return result;
+  }, [incrementUsage, featureName, checkUsageLimitWarning]);
 
   return {
     canUse: checkCanUse(featureName),
