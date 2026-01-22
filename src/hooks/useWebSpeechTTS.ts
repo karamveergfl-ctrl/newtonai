@@ -358,16 +358,27 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const isMountedRef = useRef(true);
 
   const isSupported = typeof window !== "undefined" && "speechSynthesis" in window;
+
+  // Track mounted state to prevent state updates after unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Load voices (they load asynchronously in some browsers)
   useEffect(() => {
     if (!isSupported) return;
 
     const loadVoices = () => {
-      const availableVoices = speechSynthesis.getVoices();
-      setVoices(availableVoices);
+      if (isMountedRef.current) {
+        const availableVoices = speechSynthesis.getVoices();
+        setVoices(availableVoices);
+      }
     };
 
     loadVoices();
@@ -566,18 +577,24 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
         utterance.volume = 1;
 
         utterance.onstart = () => {
-          setIsSpeaking(true);
+          if (isMountedRef.current) {
+            setIsSpeaking(true);
+          }
           options.onStart?.();
         };
 
         utterance.onend = () => {
-          setIsSpeaking(false);
+          if (isMountedRef.current) {
+            setIsSpeaking(false);
+          }
           options.onEnd?.();
           resolve();
         };
 
         utterance.onerror = (event) => {
-          setIsSpeaking(false);
+          if (isMountedRef.current) {
+            setIsSpeaking(false);
+          }
           // "interrupted" and "canceled" are expected when canceling speech, not real errors
           if (event.error === "interrupted" || event.error === "canceled") {
             resolve();
@@ -597,7 +614,9 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
   const cancel = useCallback(() => {
     if (isSupported) {
       speechSynthesis.cancel();
-      setIsSpeaking(false);
+      if (isMountedRef.current) {
+        setIsSpeaking(false);
+      }
     }
   }, [isSupported]);
 
