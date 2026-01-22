@@ -201,10 +201,11 @@ const Compare = () => {
                 <tbody>
                   {[
                     { feature: "Videos in PDF", newton: true, values: [false, false, false, false, false, false, false] },
-                    { feature: "AI Flashcards", newton: true, values: [false, "Limited", false, false, "Manual", true, true] },
-                    { feature: "AI Podcast", newton: true, values: [false, false, false, false, false, false, false] },
-                    { feature: "Free Tier", newton: true, values: [false, "Limited", "Limited", false, "Limited", "Limited", "Limited"] },
+                    { feature: "AI Flashcards", newton: true, values: [true, true, true, false, true, true, true] },
+                    { feature: "AI Podcast/Audio", newton: true, values: [false, false, false, false, false, false, true] },
                     { feature: "Handwriting OCR", newton: true, values: [false, false, false, false, false, false, false] },
+                    { feature: "Mind Map", newton: true, values: [false, false, false, false, "Manual", false, false] },
+                    { feature: "Free Tier (Ads)", newton: true, values: [false, "Limited", "Limited", false, "Limited", "Limited", "Limited"] },
                   ].map((row, i) => (
                     <tr key={row.feature} className={i % 2 === 0 ? "bg-muted/30" : ""}>
                       <td className="p-4 font-medium">{row.feature}</td>

@@ -47,35 +47,35 @@ const ChatGPTComparison = () => {
             </h2>
             <div className="prose prose-lg dark:prose-invert">
               <p>
-                ChatGPT is an incredible general-purpose AI, but it wasn't designed for studying. NewtonAI is built from the ground up for students. Here's why that matters:
+                ChatGPT now has Study Mode with Socratic tutoring and flashcard quizzes, but it's still a general-purpose AI. NewtonAI is built from the ground up for students. Here's why that matters:
               </p>
-              <h3>1. Structured Study Tools</h3>
+              <h3>1. Videos Embedded in Your PDF Reader</h3>
               <p>
-                ChatGPT gives you text responses. NewtonAI gives you structured flashcard decks with spaced repetition, graded quizzes with explanations, visual mind maps, and organized summaries – all in purpose-built interfaces.
+                NewtonAI's unique feature lets you search any topic and watch educational videos directly inside your PDF reader. ChatGPT has no document reader or video integration.
               </p>
-              <h3>2. Document-First Workflow</h3>
+              <h3>2. AI Podcast Generation</h3>
+              <p>
+                Transform any content into an engaging audio podcast with multiple voice styles. ChatGPT can generate text scripts but cannot produce actual audio content.
+              </p>
+              <h3>3. Automatic Mind Maps</h3>
+              <p>
+                NewtonAI creates visual mind maps automatically from your content. In ChatGPT, you'd need to manually prompt and format this yourself.
+              </p>
+              <h3>4. Handwriting OCR</h3>
+              <p>
+                Take photos of your handwritten notes and convert them to digital text. ChatGPT doesn't have this feature.
+              </p>
+              <h3>5. Document-First Workflow</h3>
               <p>
                 Copy-pasting content into ChatGPT is tedious. NewtonAI accepts PDF uploads, YouTube links, voice recordings, and images directly. Upload once, generate all study materials automatically.
               </p>
-              <h3>3. Integrated PDF Reader with Videos</h3>
+              <h3>6. Progress Tracking</h3>
               <p>
-                NewtonAI's PDF reader lets you highlight text and instantly find related educational videos. You can't do this in ChatGPT – it has no document reader or video search integration.
+                NewtonAI tracks your study sessions, quiz scores, flashcard progress, and learning streaks. ChatGPT's Study Mode doesn't have learning analytics or progress metrics.
               </p>
-              <h3>4. Progress Tracking</h3>
+              <h3>7. Less Than Half the Price</h3>
               <p>
-                NewtonAI tracks your study sessions, quiz scores, flashcard progress, and learning streaks. ChatGPT conversations are ephemeral with no learning analytics or progress metrics.
-              </p>
-              <h3>5. AI Podcasts</h3>
-              <p>
-                Transform any content into an engaging audio podcast with multiple voice styles. ChatGPT can generate text scripts but cannot produce actual audio content for passive learning.
-              </p>
-              <h3>6. Lower Price, More Features</h3>
-              <p>
-                ChatGPT Plus costs $20/month. NewtonAI Pro costs $8.49/month and includes purpose-built study tools that would take multiple prompts and manual formatting in ChatGPT.
-              </p>
-              <h3>7. Free Tier</h3>
-              <p>
-                While ChatGPT's free tier has rate limits during peak hours, NewtonAI's free tier lets you earn unlimited credits through optional video ads. Study anytime without hitting usage walls.
+                ChatGPT Plus costs $20/month. NewtonAI Pro costs $8.49/month and includes unique features like video-in-PDF, podcasts, and handwriting OCR that ChatGPT doesn't have.
               </p>
             </div>
           </div>

@@ -45,23 +45,27 @@ const StudyxComparison = () => {
             </h2>
             <div className="prose prose-lg dark:prose-invert">
               <p>
-                While Studyx offers AI homework help at a competitive price, NewtonAI provides unique features that make studying more effective and engaging.
+                Studyx offers solid AI homework help with a video summarizer and PDF tools at a competitive price. Here's where NewtonAI provides additional value:
               </p>
-              <h3>1. Videos Embedded in Your PDF Reader</h3>
+              <h3>1. Videos Embedded IN Your PDF Reader</h3>
               <p>
-                NewtonAI's unique feature lets you search any topic and watch educational videos directly inside your PDF reader. Studyx doesn't have any video integration.
+                While Studyx has a separate video summarizer, NewtonAI embeds videos directly inside your PDF reader. Search any topic and watch educational videos without switching tabs or apps.
               </p>
               <h3>2. AI Podcast Generation</h3>
               <p>
-                Transform any document into an engaging audio podcast for learning on the go. Study during your commute or workout - something Studyx can't offer.
+                Transform any document into an engaging audio podcast for learning on the go. Study during your commute or workout – something Studyx can't offer.
               </p>
-              <h3>3. Generous Free Tier</h3>
+              <h3>3. Mind Map Generator</h3>
               <p>
-                NewtonAI offers a complete free tier with video ads, giving students full access without payment. Studyx limits free users to just 5 questions per day.
+                NewtonAI automatically creates visual mind maps from your content to help you understand relationships between concepts. Studyx doesn't have this feature.
               </p>
               <h3>4. Handwriting OCR</h3>
               <p>
                 Take photos of your handwritten notes and convert them to digital text instantly. NewtonAI's Google Lens-style OCR is a feature Studyx doesn't have.
+              </p>
+              <h3>5. Ad-Supported Free Tier</h3>
+              <p>
+                NewtonAI offers a complete free tier with video ads, giving students full access without payment. Studyx has more limited free access.
               </p>
             </div>
           </div>
