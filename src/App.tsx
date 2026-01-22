@@ -41,6 +41,13 @@ import AILectureNotes from "./pages/tools/AILectureNotes";
 import MindMap from "./pages/tools/MindMap";
 import AIPodcast from "./pages/tools/AIPodcast";
 
+// Compare pages
+import CheggComparison from "./pages/compare/CheggComparison";
+import QuizletComparison from "./pages/compare/QuizletComparison";
+import StudocuComparison from "./pages/compare/StudocuComparison";
+import CourseHeroComparison from "./pages/compare/CourseHeroComparison";
+import ChatGPTComparison from "./pages/compare/ChatGPTComparison";
+
 // Payment pages
 import PaymentSuccess from "./pages/payment/Success";
 import PaymentFailure from "./pages/payment/Failure";
@@ -90,6 +97,13 @@ function AnimatedRoutes() {
         <Route path="/tools/lecture-notes" element={<PageTransition><AILectureNotes /></PageTransition>} />
         <Route path="/tools/ai-podcast" element={<PageTransition><AIPodcast /></PageTransition>} />
         <Route path="/tools/mind-map" element={<PageTransition><MindMap /></PageTransition>} />
+        
+        {/* Compare Routes */}
+        <Route path="/compare/chegg" element={<PageTransition><CheggComparison /></PageTransition>} />
+        <Route path="/compare/quizlet" element={<PageTransition><QuizletComparison /></PageTransition>} />
+        <Route path="/compare/studocu" element={<PageTransition><StudocuComparison /></PageTransition>} />
+        <Route path="/compare/course-hero" element={<PageTransition><CourseHeroComparison /></PageTransition>} />
+        <Route path="/compare/chatgpt" element={<PageTransition><ChatGPTComparison /></PageTransition>} />
         
         {/* Admin Routes */}
         <Route path="/admin/analytics" element={<PageTransition><AdminRoute><AdminAnalytics /></AdminRoute></PageTransition>} />
