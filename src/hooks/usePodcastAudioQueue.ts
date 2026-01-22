@@ -41,6 +41,7 @@ interface UsePodcastAudioQueueReturn {
 }
 
 const BUFFER_SIZE = 2; // Preload next 2 segments
+const SEGMENT_TRANSITION_DELAY = 50; // ms delay between segments for clean transitions
 
 export function usePodcastAudioQueue({
   segments,
@@ -66,6 +67,10 @@ export function usePodcastAudioQueue({
   const currentIndexRef = useRef(0);
   const playbackRateRef = useRef(1);
   const languageRef = useRef(language);
+  
+  // Mutex and segment tracking to prevent race conditions
+  const playingLockRef = useRef<boolean>(false);
+  const currentSegmentIdRef = useRef<number>(0);
 
   const { speak, cancel: cancelSpeech, isSupported: webSpeechSupported } = useWebSpeechTTS();
 
@@ -86,6 +91,33 @@ export function usePodcastAudioQueue({
   useEffect(() => {
     playbackRateRef.current = playbackRate;
   }, [playbackRate]);
+
+  // Cleanup function to properly stop all audio and clear handlers
+  const stopAllAudio = useCallback(() => {
+    // Cancel any web speech
+    cancelSpeech();
+    
+    // Stop current audio element and clear its handlers
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.onended = null;
+      audioRef.current.ontimeupdate = null;
+      audioRef.current.onerror = null;
+      audioRef.current = null;
+    }
+    
+    // Clear event handlers on all buffered audio (but keep them cached)
+    bufferRef.current.forEach((audio) => {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.onended = null;
+      audio.ontimeupdate = null;
+      audio.onerror = null;
+    });
+    
+    playingLockRef.current = false;
+  }, [cancelSpeech]);
 
   // Preload segment audio with validation and timeout
   const preloadSegment = useCallback(async (index: number): Promise<HTMLAudioElement | null> => {
@@ -137,6 +169,10 @@ export function usePodcastAudioQueue({
         keysToRemove.forEach(k => {
           const oldAudio = bufferRef.current.get(k);
           if (oldAudio) {
+            oldAudio.pause();
+            oldAudio.onended = null;
+            oldAudio.ontimeupdate = null;
+            oldAudio.onerror = null;
             oldAudio.src = "";
             bufferRef.current.delete(k);
           }
@@ -162,7 +198,7 @@ export function usePodcastAudioQueue({
   }, [segments, preloadSegment]);
 
   // Play with Web Speech fallback
-  const playWithWebSpeech = useCallback(async (segment: AudioSegment, index: number) => {
+  const playWithWebSpeech = useCallback(async (segment: AudioSegment, index: number, segmentId: number) => {
     setUsingFallback(true);
     setStatus("playing");
     
@@ -170,11 +206,19 @@ export function usePodcastAudioQueue({
       await speak(segment.text, {
         speaker: segment.speaker,
         rate: playbackRateRef.current,
-        language: languageRef.current, // Pass language for correct voice selection
+        language: languageRef.current,
         onStart: () => setStatus("playing"),
         onEnd: () => {
+          // Validate this is still the current segment
+          if (segmentId !== currentSegmentIdRef.current) return;
+          
+          playingLockRef.current = false;
           if (isPlayingRef.current && index < segments.length - 1) {
-            playSegment(index + 1);
+            setTimeout(() => {
+              if (isPlayingRef.current && segmentId === currentSegmentIdRef.current) {
+                playSegment(index + 1);
+              }
+            }, SEGMENT_TRANSITION_DELAY);
           } else if (index >= segments.length - 1) {
             setIsPlaying(false);
             setStatus("idle");
@@ -183,7 +227,9 @@ export function usePodcastAudioQueue({
         },
         onError: (error) => {
           console.error("Web Speech error:", error);
-          // Continue to next segment on error
+          if (segmentId !== currentSegmentIdRef.current) return;
+          
+          playingLockRef.current = false;
           if (isPlayingRef.current && index < segments.length - 1) {
             playSegment(index + 1);
           }
@@ -191,6 +237,9 @@ export function usePodcastAudioQueue({
       });
     } catch (error) {
       console.error("Web Speech playback error:", error);
+      if (segmentId !== currentSegmentIdRef.current) return;
+      
+      playingLockRef.current = false;
       if (isPlayingRef.current && index < segments.length - 1) {
         playSegment(index + 1);
       }
@@ -200,18 +249,26 @@ export function usePodcastAudioQueue({
   // Main play segment function
   const playSegment = useCallback(async (index: number) => {
     if (index >= segments.length) {
+      playingLockRef.current = false;
       setIsPlaying(false);
       setStatus("idle");
       onComplete?.();
       return;
     }
 
-    // Cancel any ongoing playback
-    cancelSpeech();
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    // Increment segment ID to invalidate any pending old playback
+    const segmentId = ++currentSegmentIdRef.current;
+    
+    // Stop any ongoing playback first
+    stopAllAudio();
+    
+    // Check if this call is still valid after cleanup
+    if (segmentId !== currentSegmentIdRef.current) {
+      return;
     }
+    
+    // Acquire lock
+    playingLockRef.current = true;
 
     setCurrentIndex(index);
     onSegmentChange?.(index);
@@ -230,10 +287,19 @@ export function usePodcastAudioQueue({
       setStatus("playing");
       
       audioRef.current = preloadedAudio;
+      preloadedAudio.currentTime = 0;
       preloadedAudio.volume = volume;
       preloadedAudio.playbackRate = playbackRateRef.current;
       
+      // Clear old handlers before setting new ones
+      preloadedAudio.onended = null;
+      preloadedAudio.ontimeupdate = null;
+      preloadedAudio.onerror = null;
+      
       preloadedAudio.ontimeupdate = () => {
+        // Validate segment is still current
+        if (segmentId !== currentSegmentIdRef.current) return;
+        
         setCurrentTime(preloadedAudio.currentTime);
         setDuration(preloadedAudio.duration || 0);
         if (preloadedAudio.duration) {
@@ -242,15 +308,27 @@ export function usePodcastAudioQueue({
       };
 
       preloadedAudio.onended = () => {
+        // Validate this is still the current segment
+        if (segmentId !== currentSegmentIdRef.current) return;
+        
+        playingLockRef.current = false;
         if (isPlayingRef.current) {
-          playSegment(index + 1);
+          // Small delay for clean transition
+          setTimeout(() => {
+            if (isPlayingRef.current && segmentId === currentSegmentIdRef.current) {
+              playSegment(index + 1);
+            }
+          }, SEGMENT_TRANSITION_DELAY);
         }
       };
 
       preloadedAudio.onerror = () => {
+        if (segmentId !== currentSegmentIdRef.current) return;
+        
         console.error("Audio playback error, using fallback");
+        playingLockRef.current = false;
         if (webSpeechSupported) {
-          playWithWebSpeech(segment, index);
+          playWithWebSpeech(segment, index, segmentId);
         } else if (isPlayingRef.current) {
           playSegment(index + 1);
         }
@@ -259,9 +337,12 @@ export function usePodcastAudioQueue({
       try {
         await preloadedAudio.play();
       } catch (error) {
+        if (segmentId !== currentSegmentIdRef.current) return;
+        
         console.error("Failed to play audio:", error);
+        playingLockRef.current = false;
         if (webSpeechSupported) {
-          playWithWebSpeech(segment, index);
+          playWithWebSpeech(segment, index, segmentId);
         }
       }
     } else if (segment.audio) {
@@ -269,12 +350,23 @@ export function usePodcastAudioQueue({
       setStatus("buffering");
       const audio = await preloadSegment(index);
       
+      // Check if still valid after async operation
+      if (segmentId !== currentSegmentIdRef.current) return;
+      
       if (audio && isPlayingRef.current) {
         audioRef.current = audio;
+        audio.currentTime = 0;
         audio.volume = volume;
         audio.playbackRate = playbackRateRef.current;
         
+        // Clear old handlers
+        audio.onended = null;
+        audio.ontimeupdate = null;
+        audio.onerror = null;
+        
         audio.ontimeupdate = () => {
+          if (segmentId !== currentSegmentIdRef.current) return;
+          
           setCurrentTime(audio.currentTime);
           setDuration(audio.duration || 0);
           if (audio.duration) {
@@ -283,8 +375,15 @@ export function usePodcastAudioQueue({
         };
 
         audio.onended = () => {
+          if (segmentId !== currentSegmentIdRef.current) return;
+          
+          playingLockRef.current = false;
           if (isPlayingRef.current) {
-            playSegment(index + 1);
+            setTimeout(() => {
+              if (isPlayingRef.current && segmentId === currentSegmentIdRef.current) {
+                playSegment(index + 1);
+              }
+            }, SEGMENT_TRANSITION_DELAY);
           }
         };
 
@@ -292,25 +391,29 @@ export function usePodcastAudioQueue({
         try {
           await audio.play();
         } catch (error) {
+          if (segmentId !== currentSegmentIdRef.current) return;
+          
           console.error("Failed to play audio:", error);
+          playingLockRef.current = false;
           if (webSpeechSupported) {
-            playWithWebSpeech(segment, index);
+            playWithWebSpeech(segment, index, segmentId);
           }
         }
       } else if (webSpeechSupported) {
-        playWithWebSpeech(segment, index);
+        playWithWebSpeech(segment, index, segmentId);
       }
     } else if (webSpeechSupported || segment.fallbackAudio) {
       // Use Web Speech fallback
-      playWithWebSpeech(segment, index);
+      playWithWebSpeech(segment, index, segmentId);
     } else {
       // Skip segment if no audio available
       console.warn(`No audio available for segment ${index}, skipping`);
+      playingLockRef.current = false;
       if (isPlayingRef.current) {
         playSegment(index + 1);
       }
     }
-  }, [segments, volume, onSegmentChange, onComplete, preloadUpcoming, preloadSegment, cancelSpeech, webSpeechSupported, playWithWebSpeech]);
+  }, [segments, volume, onSegmentChange, onComplete, preloadUpcoming, preloadSegment, stopAllAudio, webSpeechSupported, playWithWebSpeech]);
 
   // Control functions
   const play = useCallback(() => {
@@ -344,13 +447,10 @@ export function usePodcastAudioQueue({
     const clampedIndex = Math.max(0, Math.min(index, segments.length - 1));
     setCurrentIndex(clampedIndex);
     if (isPlaying) {
-      cancelSpeech();
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      stopAllAudio();
       playSegment(clampedIndex);
     }
-  }, [segments.length, isPlaying, cancelSpeech, playSegment]);
+  }, [segments.length, isPlaying, stopAllAudio, playSegment]);
 
   const skipForward = useCallback(() => {
     seekToSegment(currentIndexRef.current + 1);
@@ -378,18 +478,15 @@ export function usePodcastAudioQueue({
   useEffect(() => {
     return () => {
       abortControllerRef.current?.abort();
-      cancelSpeech();
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-      }
+      stopAllAudio();
       bufferRef.current.forEach(audio => {
-        audio.pause();
         audio.src = "";
       });
       bufferRef.current.clear();
+      currentSegmentIdRef.current = 0;
+      playingLockRef.current = false;
     };
-  }, [cancelSpeech]);
+  }, [stopAllAudio]);
 
   // Preload first few segments on mount
   useEffect(() => {
