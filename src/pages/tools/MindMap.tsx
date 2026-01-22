@@ -93,7 +93,7 @@ const MindMap = () => {
       if (type === "youtube" && metadata?.videoId) {
         textContent = await getYouTubeTranscript(metadata.videoId, session.access_token);
       } else if (type === "recording") {
-        textContent = await transcribeAudio(content, session.access_token);
+        textContent = await transcribeAudio(content, session.access_token, undefined, metadata?.language);
       } else if (type === "upload" && metadata?.file) {
         textContent = await processUploadedFile(metadata.file, session.access_token);
       }

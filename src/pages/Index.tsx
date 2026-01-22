@@ -1895,7 +1895,20 @@ const Index = () => {
     recordButton?.click();
   };
 
-  return <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
+  return <>
+      {/* Newton Processing Overlay - Top Level */}
+      {isVideoProcessing && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <ProcessingOverlay
+            isVisible={isVideoProcessing}
+            phase={videoProcessingPhase}
+            message={videoProcessingMessage}
+            variant="card"
+          />
+        </div>
+      )}
+      
+      <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
         
         <WelcomeModal onUploadClick={triggerUploadClick} onRecordClick={triggerRecordClick} />
         <div className="flex-1 bg-gradient-to-br from-background via-background to-primary/5 overflow-auto">
@@ -1948,19 +1961,25 @@ const Index = () => {
           setVideoMindMap("");
         }} showVideoSlide={showVideosPanel} /> : null)}
 
-          {/* Newton Processing Overlay for Video Tools */}
-          {isVideoProcessing && (
-            <ProcessingOverlay
-              isVisible={isVideoProcessing}
-              phase={videoProcessingPhase}
-              message={videoProcessingMessage}
-              variant="overlay"
-            />
-          )}
+          {/* Empty - ProcessingOverlay moved to top level */}
         </div>
-      </AppLayout>;
+      </AppLayout>
+    </>;
   }
-  return <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
+  return <>
+    {/* Newton Processing Overlay - Top Level */}
+    {isVideoProcessing && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <ProcessingOverlay
+          isVisible={isVideoProcessing}
+          phase={videoProcessingPhase}
+          message={videoProcessingMessage}
+          variant="card"
+        />
+      </div>
+    )}
+    
+    <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
       <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
         {/* Compact Header */}
         <div className="p-2 md:p-3 border-b bg-card/50 backdrop-blur-sm">
@@ -2064,15 +2083,7 @@ const Index = () => {
           setVideoMindMap("");
         }} showVideoSlide={showVideosPanel} /> : null)}
 
-          {/* Newton Processing Overlay for Video Tools */}
-          {isVideoProcessing && (
-            <ProcessingOverlay
-              isVisible={isVideoProcessing}
-              phase={videoProcessingPhase}
-              message={videoProcessingMessage}
-              variant="overlay"
-            />
-          )}
+          {/* Empty - ProcessingOverlay moved to top level */}
 
           {/* Credit Modal */}
           <CreditModal
@@ -2094,6 +2105,7 @@ const Index = () => {
           />
         </div>
       </div>
-    </AppLayout>;
+    </AppLayout>
+  </>;
 };
 export default Index;

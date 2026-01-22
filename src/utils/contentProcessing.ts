@@ -112,7 +112,8 @@ export const getYouTubeTranscript = async (
 export const transcribeAudio = async (
   audioBase64: string,
   accessToken: string,
-  mimeType?: string
+  mimeType?: string,
+  language?: string
 ): Promise<string> => {
   const response = await fetch(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
@@ -122,7 +123,7 @@ export const transcribeAudio = async (
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ audio: audioBase64, mimeType }),
+      body: JSON.stringify({ audio: audioBase64, mimeType, language }),
     }
   );
 
