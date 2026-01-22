@@ -12,9 +12,15 @@ export interface AudioSegment {
   fallbackAudio?: boolean;
 }
 
+interface BufferedAudioData {
+  audio: HTMLAudioElement;
+  speaker: "host1" | "host2";
+  hash: string;
+}
+
 interface UsePodcastAudioQueueOptions {
   segments: AudioSegment[];
-  language?: string; // Language code for Web Speech fallback
+  language?: string;
   onSegmentChange?: (index: number) => void;
   onComplete?: () => void;
   onError?: (error: Error) => void;
@@ -40,8 +46,13 @@ interface UsePodcastAudioQueueReturn {
   usingFallback: boolean;
 }
 
-const BUFFER_SIZE = 2; // Preload next 2 segments
-const SEGMENT_TRANSITION_DELAY = 50; // ms delay between segments for clean transitions
+const BUFFER_SIZE = 2;
+const SEGMENT_TRANSITION_DELAY = 50;
+
+// Generate unique hash for segment to validate correct audio
+const getSegmentHash = (segment: AudioSegment, index: number): string => {
+  return `${index}-${segment.speaker}-${segment.text.substring(0, 30)}`;
+};
 
 export function usePodcastAudioQueue({
   segments,
@@ -61,12 +72,13 @@ export function usePodcastAudioQueue({
   const [usingFallback, setUsingFallback] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const bufferRef = useRef<Map<number, HTMLAudioElement>>(new Map());
+  const bufferRef = useRef<Map<number, BufferedAudioData>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
   const isPlayingRef = useRef(false);
   const currentIndexRef = useRef(0);
   const playbackRateRef = useRef(1);
   const languageRef = useRef(language);
+  const segmentsRef = useRef(segments);
   
   // Mutex and segment tracking to prevent race conditions
   const playingLockRef = useRef<boolean>(false);
@@ -79,7 +91,6 @@ export function usePodcastAudioQueue({
     languageRef.current = language;
   }, [language]);
 
-  // Keep refs in sync
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
@@ -92,12 +103,31 @@ export function usePodcastAudioQueue({
     playbackRateRef.current = playbackRate;
   }, [playbackRate]);
 
+  // Clear buffer when segments change to prevent stale/mismatched audio
+  useEffect(() => {
+    const prevSegments = segmentsRef.current;
+    segmentsRef.current = segments;
+    
+    // If segments array changed, clear everything
+    if (prevSegments !== segments) {
+      console.log("Segments changed, clearing audio buffer");
+      bufferRef.current.forEach(({ audio }) => {
+        audio.pause();
+        audio.onended = null;
+        audio.ontimeupdate = null;
+        audio.onerror = null;
+        audio.src = "";
+      });
+      bufferRef.current.clear();
+      currentSegmentIdRef.current = 0;
+      playingLockRef.current = false;
+    }
+  }, [segments]);
+
   // Cleanup function to properly stop all audio and clear handlers
   const stopAllAudio = useCallback(() => {
-    // Cancel any web speech
     cancelSpeech();
     
-    // Stop current audio element and clear its handlers
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -107,8 +137,8 @@ export function usePodcastAudioQueue({
       audioRef.current = null;
     }
     
-    // Clear event handlers on all buffered audio (but keep them cached)
-    bufferRef.current.forEach((audio) => {
+    // Clear event handlers on all buffered audio
+    bufferRef.current.forEach(({ audio }) => {
       audio.pause();
       audio.currentTime = 0;
       audio.onended = null;
@@ -119,18 +149,28 @@ export function usePodcastAudioQueue({
     playingLockRef.current = false;
   }, [cancelSpeech]);
 
-  // Preload segment audio with validation and timeout
-  const preloadSegment = useCallback(async (index: number): Promise<HTMLAudioElement | null> => {
+  // Preload segment audio with speaker validation
+  const preloadSegment = useCallback(async (index: number): Promise<BufferedAudioData | null> => {
     if (index >= segments.length || index < 0) return null;
     
-    // Check if already buffered
-    if (bufferRef.current.has(index)) {
-      return bufferRef.current.get(index)!;
+    const segment = segments[index];
+    const expectedHash = getSegmentHash(segment, index);
+    
+    // Check if already buffered with correct speaker
+    const cached = bufferRef.current.get(index);
+    if (cached) {
+      // Validate speaker matches
+      if (cached.speaker === segment.speaker && cached.hash === expectedHash) {
+        return cached;
+      } else {
+        // Mismatch! Clear this entry
+        console.warn(`Speaker mismatch at segment ${index}: cached ${cached.speaker} vs expected ${segment.speaker}`);
+        cached.audio.pause();
+        cached.audio.src = "";
+        bufferRef.current.delete(index);
+      }
     }
 
-    const segment = segments[index];
-    
-    // Validate audio data - must be base64 string with reasonable length
     if (!segment.audio || typeof segment.audio !== 'string' || segment.audio.length < 100) {
       console.log(`Segment ${index}: No valid audio data, will use fallback`);
       return null;
@@ -142,7 +182,6 @@ export function usePodcastAudioQueue({
       audio.volume = volume;
       audio.playbackRate = playbackRate;
       
-      // Add timeout to prevent hanging on invalid audio
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
           reject(new Error("Audio load timeout"));
@@ -159,38 +198,47 @@ export function usePodcastAudioQueue({
         audio.load();
       });
 
-      bufferRef.current.set(index, audio);
+      const bufferedData: BufferedAudioData = {
+        audio,
+        speaker: segment.speaker,
+        hash: expectedHash,
+      };
       
-      // Limit buffer size - clean up old segments
+      bufferRef.current.set(index, bufferedData);
+      
+      // Limit buffer size
       if (bufferRef.current.size > BUFFER_SIZE + 2) {
         const keysToRemove = Array.from(bufferRef.current.keys())
           .filter(k => k < index - 1)
           .slice(0, bufferRef.current.size - BUFFER_SIZE);
         keysToRemove.forEach(k => {
-          const oldAudio = bufferRef.current.get(k);
-          if (oldAudio) {
-            oldAudio.pause();
-            oldAudio.onended = null;
-            oldAudio.ontimeupdate = null;
-            oldAudio.onerror = null;
-            oldAudio.src = "";
+          const oldData = bufferRef.current.get(k);
+          if (oldData) {
+            oldData.audio.pause();
+            oldData.audio.onended = null;
+            oldData.audio.ontimeupdate = null;
+            oldData.audio.onerror = null;
+            oldData.audio.src = "";
             bufferRef.current.delete(k);
           }
         });
       }
 
-      return audio;
+      return bufferedData;
     } catch (error) {
-      console.warn(`Segment ${index} audio failed to load, will use fallback:`, error);
+      console.warn(`Segment ${index} audio failed to load:`, error);
       return null;
     }
   }, [segments, volume, playbackRate]);
 
   // Preload upcoming segments
   const preloadUpcoming = useCallback(async (fromIndex: number) => {
-    const preloadPromises: Promise<HTMLAudioElement | null>[] = [];
+    const preloadPromises: Promise<BufferedAudioData | null>[] = [];
     for (let i = fromIndex; i < Math.min(fromIndex + BUFFER_SIZE, segments.length); i++) {
-      if (!bufferRef.current.has(i) && segments[i].audio) {
+      const segment = segments[i];
+      const cached = bufferRef.current.get(i);
+      // Only preload if not cached or speaker mismatch
+      if (segment.audio && (!cached || cached.speaker !== segment.speaker)) {
         preloadPromises.push(preloadSegment(i));
       }
     }
@@ -209,7 +257,6 @@ export function usePodcastAudioQueue({
         language: languageRef.current,
         onStart: () => setStatus("playing"),
         onEnd: () => {
-          // Validate this is still the current segment
           if (segmentId !== currentSegmentIdRef.current) return;
           
           playingLockRef.current = false;
@@ -262,27 +309,32 @@ export function usePodcastAudioQueue({
     // Stop any ongoing playback first
     stopAllAudio();
     
-    // Check if this call is still valid after cleanup
     if (segmentId !== currentSegmentIdRef.current) {
       return;
     }
     
-    // Acquire lock
     playingLockRef.current = true;
 
     setCurrentIndex(index);
     onSegmentChange?.(index);
 
     const segment = segments[index];
+    const expectedHash = getSegmentHash(segment, index);
 
     // Start preloading upcoming segments
     preloadUpcoming(index + 1);
 
-    // Try to use preloaded audio
-    const preloadedAudio = bufferRef.current.get(index);
+    // Try to use preloaded audio with speaker validation
+    const bufferedData = bufferRef.current.get(index);
     
-    if (segment.audio && preloadedAudio) {
-      // Use ElevenLabs audio
+    // Validate buffered audio matches expected speaker
+    const isValidBuffer = bufferedData && 
+      bufferedData.speaker === segment.speaker && 
+      bufferedData.hash === expectedHash;
+    
+    if (segment.audio && isValidBuffer) {
+      const preloadedAudio = bufferedData.audio;
+      
       setUsingFallback(false);
       setStatus("playing");
       
@@ -291,13 +343,12 @@ export function usePodcastAudioQueue({
       preloadedAudio.volume = volume;
       preloadedAudio.playbackRate = playbackRateRef.current;
       
-      // Clear old handlers before setting new ones
+      // Clear old handlers
       preloadedAudio.onended = null;
       preloadedAudio.ontimeupdate = null;
       preloadedAudio.onerror = null;
       
       preloadedAudio.ontimeupdate = () => {
-        // Validate segment is still current
         if (segmentId !== currentSegmentIdRef.current) return;
         
         setCurrentTime(preloadedAudio.currentTime);
@@ -308,12 +359,10 @@ export function usePodcastAudioQueue({
       };
 
       preloadedAudio.onended = () => {
-        // Validate this is still the current segment
         if (segmentId !== currentSegmentIdRef.current) return;
         
         playingLockRef.current = false;
         if (isPlayingRef.current) {
-          // Small delay for clean transition
           setTimeout(() => {
             if (isPlayingRef.current && segmentId === currentSegmentIdRef.current) {
               playSegment(index + 1);
@@ -346,20 +395,28 @@ export function usePodcastAudioQueue({
         }
       }
     } else if (segment.audio) {
-      // Audio exists but not preloaded, load it now
+      // Audio exists but not preloaded or speaker mismatch, load it now
       setStatus("buffering");
-      const audio = await preloadSegment(index);
       
-      // Check if still valid after async operation
+      // Clear any mismatched buffer
+      if (bufferedData && !isValidBuffer) {
+        console.warn(`Clearing mismatched buffer for segment ${index}`);
+        bufferedData.audio.pause();
+        bufferedData.audio.src = "";
+        bufferRef.current.delete(index);
+      }
+      
+      const loadedData = await preloadSegment(index);
+      
       if (segmentId !== currentSegmentIdRef.current) return;
       
-      if (audio && isPlayingRef.current) {
+      if (loadedData && isPlayingRef.current) {
+        const audio = loadedData.audio;
         audioRef.current = audio;
         audio.currentTime = 0;
         audio.volume = volume;
         audio.playbackRate = playbackRateRef.current;
         
-        // Clear old handlers
         audio.onended = null;
         audio.ontimeupdate = null;
         audio.onerror = null;
@@ -403,10 +460,8 @@ export function usePodcastAudioQueue({
         playWithWebSpeech(segment, index, segmentId);
       }
     } else if (webSpeechSupported || segment.fallbackAudio) {
-      // Use Web Speech fallback
       playWithWebSpeech(segment, index, segmentId);
     } else {
-      // Skip segment if no audio available
       console.warn(`No audio available for segment ${index}, skipping`);
       playingLockRef.current = false;
       if (isPlayingRef.current) {
@@ -479,7 +534,7 @@ export function usePodcastAudioQueue({
     return () => {
       abortControllerRef.current?.abort();
       stopAllAudio();
-      bufferRef.current.forEach(audio => {
+      bufferRef.current.forEach(({ audio }) => {
         audio.src = "";
       });
       bufferRef.current.clear();
