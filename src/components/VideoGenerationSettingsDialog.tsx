@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Brain, BookOpen, FileText, Network, Zap, List, GraduationCap } from "lucide-react";
+import { Brain, BookOpen, FileText, Network, Zap, List, GraduationCap, Circle, GitBranch, Boxes, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface VideoGenerationSettingsDialogProps {
@@ -19,15 +19,24 @@ export interface VideoGenerationSettings {
   difficulty: "easy" | "medium" | "hard";
   detailLevel?: "brief" | "standard" | "detailed";
   summaryFormat?: "concise" | "detailed" | "bullet-points" | "academic";
+  mindMapStyle?: "radial" | "tree" | "cluster" | "timeline";
 }
 
 type SummaryFormat = "concise" | "detailed" | "bullet-points" | "academic";
+type MindMapStyle = "radial" | "tree" | "cluster" | "timeline";
 
 const summaryFormats: { id: SummaryFormat; name: string; description: string; icon: React.ElementType }[] = [
   { id: "concise", name: "Concise Summary", description: "Brief overview of key points", icon: Zap },
   { id: "detailed", name: "Detailed Analysis", description: "In-depth coverage with examples", icon: FileText },
   { id: "bullet-points", name: "Bullet Points", description: "Easy-to-scan list format", icon: List },
   { id: "academic", name: "Academic Style", description: "Formal structure with citations", icon: GraduationCap },
+];
+
+const mindMapStyles: { id: MindMapStyle; name: string; description: string; icon: React.ElementType }[] = [
+  { id: "radial", name: "Radial", description: "Central topic with radiating branches", icon: Circle },
+  { id: "tree", name: "Tree", description: "Hierarchical top-down structure", icon: GitBranch },
+  { id: "cluster", name: "Cluster", description: "Grouped concepts by category", icon: Boxes },
+  { id: "timeline", name: "Timeline", description: "Sequential flow of events", icon: Clock },
 ];
 
 const difficultyLabels = {
@@ -95,20 +104,22 @@ export const VideoGenerationSettingsDialog = ({
   const [difficulty, setDifficulty] = useState(2);
   const [detailLevel, setDetailLevel] = useState(2);
   const [summaryFormat, setSummaryFormat] = useState<SummaryFormat>("concise");
+  const [mindMapStyle, setMindMapStyle] = useState<MindMapStyle>("radial");
 
   const handleGenerate = () => {
     onGenerate({
       count,
       difficulty: difficulty === 1 ? "easy" : difficulty === 2 ? "medium" : "hard",
       detailLevel: detailLevel === 1 ? "brief" : detailLevel === 2 ? "standard" : "detailed",
-      summaryFormat: type === "summary" ? summaryFormat : undefined
+      summaryFormat: type === "summary" ? summaryFormat : undefined,
+      mindMapStyle: type === "mindmap" ? mindMapStyle : undefined
     });
     onOpenChange(false);
   };
 
   const showCountSlider = type === "quiz" || type === "flashcards";
   const showDifficultySlider = type === "quiz" || type === "flashcards";
-  const showDetailSlider = type === "summary" || type === "mindmap";
+  const showDetailSlider = type === "summary";
 
   const maxCount = type === "quiz" ? 30 : 50;
   const minCount = 5;
@@ -169,7 +180,43 @@ export const VideoGenerationSettingsDialog = ({
             </div>
           )}
 
-          {/* Number of Items - Only for Quiz and Flashcards */}
+          {/* Mind Map Style Selection - Only for Mind Map */}
+          {type === "mindmap" && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Mind Map Style</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {mindMapStyles.map((style) => {
+                  const StyleIcon = style.icon;
+                  return (
+                    <button
+                      key={style.id}
+                      type="button"
+                      onClick={() => setMindMapStyle(style.id)}
+                      className={cn(
+                        "p-3 rounded-xl border-2 text-left transition-all hover:shadow-md",
+                        mindMapStyle === style.id
+                          ? "border-rose-500 bg-rose-500/5"
+                          : "border-border hover:border-rose-500/50"
+                      )}
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className={cn(
+                          "p-1.5 rounded-lg",
+                          mindMapStyle === style.id ? "bg-rose-500/20" : "bg-muted"
+                        )}>
+                          <StyleIcon className="h-4 w-4 text-rose-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-sm">{style.name}</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">{style.description}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {showCountSlider && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
