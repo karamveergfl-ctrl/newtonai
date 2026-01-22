@@ -221,6 +221,94 @@ export const competitors = {
       },
     ],
   },
+  studyx: {
+    name: "Studyx",
+    slug: "studyx",
+    tagline: "AI homework helper and study platform",
+    logo: "📖",
+    monthlyPrice: "$7.99",
+    yearlyPrice: "$95.99",
+    pricePerMonth: 7.99,
+    strengths: [
+      "AI-powered homework help",
+      "75M+ community answers",
+      "Math solver tool",
+      "Multiple AI study tools",
+    ],
+    weaknesses: [
+      "No video integration in PDF reader",
+      "No AI podcast generation",
+      "No handwriting OCR",
+      "Variable answer quality",
+      "No free tier without limits",
+      "Relies on community answers",
+    ],
+    verdict: "Studyx offers affordable AI homework help but lacks NewtonAI's unique video integration, podcast generation, and comprehensive free tier.",
+    testimonials: [
+      {
+        quote: "Studyx was okay for quick answers, but NewtonAI's embedded videos in my PDFs help me actually understand the concepts. Plus the AI podcast feature is incredible for commuting.",
+        author: "Ryan K.",
+        role: "Engineering Student, Purdue",
+        rating: 5,
+      },
+      {
+        quote: "I switched from Studyx because NewtonAI creates study materials from my OWN notes. The mind maps and flashcards are perfectly tailored to my exams.",
+        author: "Lisa M.",
+        role: "Pre-Med Student, Boston University",
+        rating: 5,
+      },
+      {
+        quote: "The free tier on NewtonAI is a game-changer. I can access all features without paying, which Studyx doesn't offer.",
+        author: "Carlos R.",
+        role: "Business Major, USC",
+        rating: 5,
+      },
+    ],
+  },
+  studyfetch: {
+    name: "StudyFetch",
+    slug: "studyfetch",
+    tagline: "AI-powered study sets and tutoring",
+    logo: "⚡",
+    monthlyPrice: "$19",
+    yearlyPrice: "$228",
+    pricePerMonth: 19,
+    strengths: [
+      "Spark.E AI tutor",
+      "Live lecture transcription",
+      "Essay grading feature",
+      "Explainer video creation",
+    ],
+    weaknesses: [
+      "Expensive subscription ($19/mo)",
+      "No video integration in PDF",
+      "No AI podcast generation",
+      "No handwriting OCR",
+      "No generous free tier",
+      "Limited input formats",
+    ],
+    verdict: "StudyFetch has a good AI tutor but costs more than double NewtonAI while lacking video integration, podcasts, and a true free tier.",
+    testimonials: [
+      {
+        quote: "StudyFetch was $19/month and didn't even have videos in the PDF reader. NewtonAI gives me that plus podcasts, flashcards, and quizzes for half the price!",
+        author: "Hannah T.",
+        role: "Nursing Student, Ohio State",
+        rating: 5,
+      },
+      {
+        quote: "I loved StudyFetch's AI tutor but couldn't justify the cost. NewtonAI's homework help with step-by-step solutions is just as good and way cheaper.",
+        author: "Derek W.",
+        role: "Computer Science, Georgia Tech",
+        rating: 5,
+      },
+      {
+        quote: "The AI podcast feature on NewtonAI is something StudyFetch doesn't have. I turn my lecture notes into audio and study during my workouts.",
+        author: "Maya S.",
+        role: "Law Student, NYU",
+        rating: 5,
+      },
+    ],
+  },
 };
 
 export const newtonFeatures = {
@@ -274,17 +362,17 @@ export const newtonFeatures = {
 };
 
 export const featureComparison = [
-  { feature: "Videos in PDF Reader", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false },
-  { feature: "AI Flashcard Generation", newton: true, chegg: false, quizlet: "Limited", studocu: false, "course-hero": false, chatgpt: "Manual" },
-  { feature: "AI Quiz Generator", newton: true, chegg: false, quizlet: true, studocu: false, "course-hero": false, chatgpt: "Manual" },
-  { feature: "AI Podcast Creation", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false },
-  { feature: "Mind Map Generator", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: "Manual" },
-  { feature: "AI Homework Help", newton: true, chegg: true, quizlet: false, studocu: false, "course-hero": true, chatgpt: true },
-  { feature: "PDF Reader", newton: true, chegg: false, quizlet: false, studocu: true, "course-hero": true, chatgpt: false },
-  { feature: "Voice Transcription", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: true },
-  { feature: "Handwriting OCR", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false },
-  { feature: "Free Tier", newton: "Yes (with ads)", chegg: false, quizlet: "Limited", studocu: "Limited", "course-hero": false, chatgpt: "Limited" },
-  { feature: "Starting Price", newton: "$8.49/mo", chegg: "$15.95/mo", quizlet: "$7.99/mo", studocu: "$9.99/mo", "course-hero": "$14.95/mo", chatgpt: "$20/mo" },
+  { feature: "Videos in PDF Reader", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false, studyx: false, studyfetch: false },
+  { feature: "AI Flashcard Generation", newton: true, chegg: false, quizlet: "Limited", studocu: false, "course-hero": false, chatgpt: "Manual", studyx: true, studyfetch: true },
+  { feature: "AI Quiz Generator", newton: true, chegg: false, quizlet: true, studocu: false, "course-hero": false, chatgpt: "Manual", studyx: true, studyfetch: true },
+  { feature: "AI Podcast Creation", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false, studyx: false, studyfetch: false },
+  { feature: "Mind Map Generator", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: "Manual", studyx: false, studyfetch: false },
+  { feature: "AI Homework Help", newton: true, chegg: true, quizlet: false, studocu: false, "course-hero": true, chatgpt: true, studyx: true, studyfetch: true },
+  { feature: "PDF Reader", newton: true, chegg: false, quizlet: false, studocu: true, "course-hero": true, chatgpt: false, studyx: true, studyfetch: true },
+  { feature: "Voice Transcription", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: true, studyx: false, studyfetch: true },
+  { feature: "Handwriting OCR", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false, studyx: false, studyfetch: false },
+  { feature: "Free Tier", newton: "Yes (with ads)", chegg: false, quizlet: "Limited", studocu: "Limited", "course-hero": false, chatgpt: "Limited", studyx: "Limited", studyfetch: "Limited" },
+  { feature: "Starting Price", newton: "$8.49/mo", chegg: "$15.95/mo", quizlet: "$7.99/mo", studocu: "$9.99/mo", "course-hero": "$14.95/mo", chatgpt: "$20/mo", studyx: "$7.99/mo", studyfetch: "$19/mo" },
 ];
 
 export type CompetitorKey = keyof typeof competitors;

@@ -48,6 +48,8 @@ import QuizletComparison from "./pages/compare/QuizletComparison";
 import StudocuComparison from "./pages/compare/StudocuComparison";
 import CourseHeroComparison from "./pages/compare/CourseHeroComparison";
 import ChatGPTComparison from "./pages/compare/ChatGPTComparison";
+import StudyxComparison from "./pages/compare/StudyxComparison";
+import StudyFetchComparison from "./pages/compare/StudyFetchComparison";
 
 // Payment pages
 import PaymentSuccess from "./pages/payment/Success";
@@ -106,6 +108,8 @@ function AnimatedRoutes() {
         <Route path="/compare/studocu" element={<PageTransition><StudocuComparison /></PageTransition>} />
         <Route path="/compare/course-hero" element={<PageTransition><CourseHeroComparison /></PageTransition>} />
         <Route path="/compare/chatgpt" element={<PageTransition><ChatGPTComparison /></PageTransition>} />
+        <Route path="/compare/studyx" element={<PageTransition><StudyxComparison /></PageTransition>} />
+        <Route path="/compare/studyfetch" element={<PageTransition><StudyFetchComparison /></PageTransition>} />
         
         {/* Admin Routes */}
         <Route path="/admin/analytics" element={<PageTransition><AdminRoute><AdminAnalytics /></AdminRoute></PageTransition>} />
