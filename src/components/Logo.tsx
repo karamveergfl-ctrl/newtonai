@@ -25,23 +25,12 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
         whileHover={{ scale: 1.05 }}
         transition={{ duration: 0.2 }}
       >
-        {/* Color-cycling glowing ring */}
-        <motion.div 
-          className="absolute inset-0 rounded-full blur-md"
-          style={{ margin: -4 }}
-          animate={{
-            background: [
-              "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))",
-              "linear-gradient(180deg, hsl(var(--secondary)), hsl(280, 80%, 60%))",
-              "linear-gradient(270deg, hsl(280, 80%, 60%), hsl(340, 80%, 60%))",
-              "linear-gradient(360deg, hsl(340, 80%, 60%), hsl(var(--primary)))",
-            ],
-            opacity: [0.6, 0.8, 0.6],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "linear",
+        {/* Static glowing ring - constant primary color */}
+        <div 
+          className="absolute inset-0 rounded-full blur-md opacity-70"
+          style={{ 
+            margin: -4,
+            background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))"
           }}
         />
         {/* Logo container */}

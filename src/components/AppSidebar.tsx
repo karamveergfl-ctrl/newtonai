@@ -110,8 +110,11 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
       className="border-r border-sidebar-border bg-sidebar-background"
     >
       <SidebarHeader className="p-3">
-        <div className="flex items-center justify-between">
-          <Logo size="sm" showText={!isCollapsed} />
+        <div className={cn(
+          "flex items-center",
+          isCollapsed ? "justify-center" : "justify-between"
+        )}>
+          {!isCollapsed && <Logo size="sm" showText={true} />}
           <Button
             variant="ghost"
             size="icon"
@@ -139,17 +142,20 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                   tooltip="Home"
                 >
                   <motion.button
-                    whileHover={{ x: 4 }}
+                    whileHover={{ x: isCollapsed ? 0 : 4 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate("/dashboard")}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                      isCollapsed 
+                        ? "justify-center p-2.5 gap-0" 
+                        : "gap-3 px-3 py-2",
                       isActive("/dashboard")
                         ? "bg-primary text-primary-foreground"
                         : "text-sidebar-foreground hover:bg-sidebar-accent"
                     )}
                   >
-                    <Home className="h-5 w-5 shrink-0" />
+                    <Home className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                     {!isCollapsed && <span>Home</span>}
                   </motion.button>
                 </SidebarMenuButton>
@@ -179,17 +185,20 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip={tool.label}>
                         <motion.button
-                          whileHover={{ x: 4 }}
+                          whileHover={{ x: isCollapsed ? 0 : 4 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => navigate(tool.path)}
                           className={cn(
-                            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                            "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                            isCollapsed 
+                              ? "justify-center p-2.5 gap-0" 
+                              : "gap-3 px-3 py-2",
                             isActive(tool.path)
                               ? "bg-primary text-primary-foreground"
                               : "text-sidebar-foreground hover:bg-sidebar-accent"
                           )}
                         >
-                          <tool.icon className="h-5 w-5 shrink-0" />
+                          <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                           {!isCollapsed && (
                             <>
                               <span className="flex-1">{tool.label}</span>
@@ -239,17 +248,20 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                   <SidebarMenuItem key={tool.id}>
                     <SidebarMenuButton asChild tooltip={tool.label}>
                       <motion.button
-                        whileHover={{ x: 4 }}
+                        whileHover={{ x: isCollapsed ? 0 : 4 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => navigate(tool.path)}
                         className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                          isCollapsed 
+                            ? "justify-center p-2.5 gap-0" 
+                            : "gap-3 px-3 py-2",
                           isActive(tool.path)
                             ? "bg-primary text-primary-foreground"
                             : "text-sidebar-foreground hover:bg-sidebar-accent"
                         )}
                       >
-                        <tool.icon className="h-5 w-5 shrink-0" />
+                        <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                         {!isCollapsed && <span>{tool.label}</span>}
                       </motion.button>
                     </SidebarMenuButton>
