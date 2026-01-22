@@ -59,21 +59,21 @@ const timezones = [
   { value: 'Australia/Sydney', label: 'Sydney' },
 ];
 
+type ProfileType = {
+  id: string;
+  full_name: string | null;
+  bio: string | null;
+  language_preference: string | null;
+  timezone: string | null;
+  email_notifications: boolean | null;
+  theme_preference: string | null;
+};
+
 interface SettingsPanelProps {
-  profile: {
-    id: string;
-    full_name: string | null;
-    bio: string | null;
-    language_preference: string | null;
-    timezone: string | null;
-    email_notifications: boolean | null;
-    theme_preference: string | null;
-  };
+  profile: ProfileType;
   email: string;
   onProfileUpdate: (updates: Partial<ProfileType>) => void;
 }
-
-type ProfileType = SettingsPanelProps['profile'];
 
 export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanelProps) {
   const { setTheme, theme } = useTheme();
