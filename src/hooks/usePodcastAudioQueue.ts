@@ -245,13 +245,23 @@ export function usePodcastAudioQueue({
     await Promise.all(preloadPromises);
   }, [segments, preloadSegment]);
 
+  // Clean emotion tags from text before TTS
+  const cleanTextForSpeech = useCallback((text: string): string => {
+    return text
+      .replace(/\s*\([a-zA-Z]+\)\s*$/g, '')     // End: " (enthusiastic)"
+      .replace(/\s*\([a-zA-Z]+\)\s*/g, ' ')     // Middle: "(curious) "
+      .replace(/\s+/g, ' ')                      // Normalize whitespace
+      .trim();
+  }, []);
+
   // Play with Web Speech fallback
   const playWithWebSpeech = useCallback(async (segment: AudioSegment, index: number, segmentId: number) => {
     setUsingFallback(true);
     setStatus("playing");
     
     try {
-      await speak(segment.text, {
+      const cleanedText = cleanTextForSpeech(segment.text);
+      await speak(cleanedText, {
         speaker: segment.speaker,
         rate: playbackRateRef.current,
         language: languageRef.current,

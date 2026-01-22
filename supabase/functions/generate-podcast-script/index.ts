@@ -170,9 +170,12 @@ ${podcastSettings.customInstructions ? `**SPECIAL INSTRUCTIONS:**\n${podcastSett
 5. Each segment should be 1-3 sentences for natural speech
 6. Include an intro greeting and a brief outro
 7. THE ENTIRE SCRIPT MUST BE IN THE SPECIFIED LANGUAGE (except technical terms if noted)
+8. CRITICAL: The "text" field must contain ONLY spoken dialogue. Do NOT include emotion annotations like (enthusiastic) or (curious) in the text. Emotions go ONLY in the separate "emotion" field.
+   WRONG: "text": "Welcome everyone! (enthusiastic)"
+   CORRECT: "text": "Welcome everyone!", "emotion": "enthusiastic"
 
 **EMOTION HINTS:**
-Add emotion hints that will help with voice synthesis:
+Add emotion hints in the "emotion" field ONLY (never in "text"):
 - enthusiastic, curious, thoughtful, surprised, amused, serious, warm, excited, intrigued, impressed
 
 Return ONLY valid JSON in this exact format:
