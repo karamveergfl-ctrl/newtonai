@@ -19,6 +19,7 @@ import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { CreditModal } from "@/components/CreditModal";
 import { usePodcastContext } from "@/contexts/PodcastContext";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
+import { usePodcastPreferences } from "@/hooks/usePodcastPreferences";
 
 interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -61,7 +62,7 @@ export default function AIPodcast() {
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("ai_podcast");
-  
+  const { hasCompletedSetup } = usePodcastPreferences();
   // Error state for confused Newton
   const [errorState, setErrorState] = useState<"confused" | null>(null);
   
@@ -589,6 +590,7 @@ export default function AIPodcast() {
             pendingContentRef.current = null;
           }}
           onGenerate={handleGenerateWithSettings}
+          isFirstTimeSetup={!hasCompletedSetup}
         />
 
         {/* Confused Newton for errors */}

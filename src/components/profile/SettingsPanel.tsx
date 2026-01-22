@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { useTheme } from 'next-themes';
 import { Link, useNavigate } from 'react-router-dom';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
+import { PodcastSettingsSection } from '@/components/profile/PodcastSettingsSection';
 import {
   Dialog,
   DialogContent,
@@ -407,6 +408,9 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
           </div>
         </CardContent>
       </Card>
+
+      {/* Podcast Settings Section */}
+      <PodcastSettingsSection />
 
       {/* Connected Accounts Section */}
       <Card>
