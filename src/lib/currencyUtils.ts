@@ -2,6 +2,80 @@
 
 export type CurrencyCode = 'INR' | 'USD' | 'EUR' | 'GBP' | 'PLN' | 'AUD' | 'CAD' | 'SGD';
 
+// Competitor pricing in multiple currencies (approximate conversions based on current rates)
+export const COMPETITOR_PRICING: Record<string, Record<CurrencyCode, { monthly: string; yearly: string; monthlyValue: number }>> = {
+  chegg: {
+    INR: { monthly: '₹1,330', yearly: '₹7,980', monthlyValue: 1330 },
+    USD: { monthly: '$15.95', yearly: '$95.40', monthlyValue: 15.95 },
+    EUR: { monthly: '€14.99', yearly: '€89.94', monthlyValue: 14.99 },
+    GBP: { monthly: '£12.99', yearly: '£77.94', monthlyValue: 12.99 },
+    PLN: { monthly: 'zł65', yearly: 'zł390', monthlyValue: 65 },
+    AUD: { monthly: 'A$24.99', yearly: 'A$149.94', monthlyValue: 24.99 },
+    CAD: { monthly: 'C$21.99', yearly: 'C$131.94', monthlyValue: 21.99 },
+    SGD: { monthly: 'S$21.99', yearly: 'S$131.94', monthlyValue: 21.99 },
+  },
+  quizlet: {
+    INR: { monthly: '₹665', yearly: '₹2,999', monthlyValue: 665 },
+    USD: { monthly: '$7.99', yearly: '$35.99', monthlyValue: 7.99 },
+    EUR: { monthly: '€7.49', yearly: '€33.99', monthlyValue: 7.49 },
+    GBP: { monthly: '£6.49', yearly: '£28.99', monthlyValue: 6.49 },
+    PLN: { monthly: 'zł33', yearly: 'zł149', monthlyValue: 33 },
+    AUD: { monthly: 'A$12.49', yearly: 'A$54.99', monthlyValue: 12.49 },
+    CAD: { monthly: 'C$10.99', yearly: 'C$48.99', monthlyValue: 10.99 },
+    SGD: { monthly: 'S$10.99', yearly: 'S$48.99', monthlyValue: 10.99 },
+  },
+  studocu: {
+    INR: { monthly: '₹830', yearly: '₹3,990', monthlyValue: 830 },
+    USD: { monthly: '$9.99', yearly: '$47.88', monthlyValue: 9.99 },
+    EUR: { monthly: '€9.49', yearly: '€45.99', monthlyValue: 9.49 },
+    GBP: { monthly: '£7.99', yearly: '£38.99', monthlyValue: 7.99 },
+    PLN: { monthly: 'zł40', yearly: 'zł195', monthlyValue: 40 },
+    AUD: { monthly: 'A$15.49', yearly: 'A$74.99', monthlyValue: 15.49 },
+    CAD: { monthly: 'C$13.49', yearly: 'C$64.99', monthlyValue: 13.49 },
+    SGD: { monthly: 'S$13.49', yearly: 'S$64.99', monthlyValue: 13.49 },
+  },
+  'course-hero': {
+    INR: { monthly: '₹1,245', yearly: '₹7,470', monthlyValue: 1245 },
+    USD: { monthly: '$14.95', yearly: '$89.70', monthlyValue: 14.95 },
+    EUR: { monthly: '€13.99', yearly: '€83.94', monthlyValue: 13.99 },
+    GBP: { monthly: '£11.99', yearly: '£71.94', monthlyValue: 11.99 },
+    PLN: { monthly: 'zł60', yearly: 'zł360', monthlyValue: 60 },
+    AUD: { monthly: 'A$22.99', yearly: 'A$137.94', monthlyValue: 22.99 },
+    CAD: { monthly: 'C$19.99', yearly: 'C$119.94', monthlyValue: 19.99 },
+    SGD: { monthly: 'S$19.99', yearly: 'S$119.94', monthlyValue: 19.99 },
+  },
+  chatgpt: {
+    INR: { monthly: '₹1,660', yearly: '₹19,920', monthlyValue: 1660 },
+    USD: { monthly: '$20', yearly: '$240', monthlyValue: 20 },
+    EUR: { monthly: '€18.99', yearly: '€227.88', monthlyValue: 18.99 },
+    GBP: { monthly: '£16.99', yearly: '£203.88', monthlyValue: 16.99 },
+    PLN: { monthly: 'zł85', yearly: 'zł1,020', monthlyValue: 85 },
+    AUD: { monthly: 'A$30.99', yearly: 'A$371.88', monthlyValue: 30.99 },
+    CAD: { monthly: 'C$26.99', yearly: 'C$323.88', monthlyValue: 26.99 },
+    SGD: { monthly: 'S$26.99', yearly: 'S$323.88', monthlyValue: 26.99 },
+  },
+  studyx: {
+    INR: { monthly: '₹665', yearly: '₹7,990', monthlyValue: 665 },
+    USD: { monthly: '$7.99', yearly: '$95.99', monthlyValue: 7.99 },
+    EUR: { monthly: '€7.49', yearly: '€89.99', monthlyValue: 7.49 },
+    GBP: { monthly: '£6.49', yearly: '£77.99', monthlyValue: 6.49 },
+    PLN: { monthly: 'zł33', yearly: 'zł395', monthlyValue: 33 },
+    AUD: { monthly: 'A$12.49', yearly: 'A$149.99', monthlyValue: 12.49 },
+    CAD: { monthly: 'C$10.99', yearly: 'C$129.99', monthlyValue: 10.99 },
+    SGD: { monthly: 'S$10.99', yearly: 'S$129.99', monthlyValue: 10.99 },
+  },
+  studyfetch: {
+    INR: { monthly: '₹1,580', yearly: '₹18,960', monthlyValue: 1580 },
+    USD: { monthly: '$19', yearly: '$228', monthlyValue: 19 },
+    EUR: { monthly: '€17.99', yearly: '€215.88', monthlyValue: 17.99 },
+    GBP: { monthly: '£15.49', yearly: '£185.88', monthlyValue: 15.49 },
+    PLN: { monthly: 'zł78', yearly: 'zł936', monthlyValue: 78 },
+    AUD: { monthly: 'A$29.49', yearly: 'A$353.88', monthlyValue: 29.49 },
+    CAD: { monthly: 'C$25.49', yearly: 'C$305.88', monthlyValue: 25.49 },
+    SGD: { monthly: 'S$25.49', yearly: 'S$305.88', monthlyValue: 25.49 },
+  },
+};
+
 export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
   INR: '₹',
   USD: '$',

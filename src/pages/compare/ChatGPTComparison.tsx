@@ -6,6 +6,7 @@ import ComparisonTable from "@/components/compare/ComparisonTable";
 import PricingComparison from "@/components/compare/PricingComparison";
 import UniqueFeatures from "@/components/compare/UniqueFeatures";
 import CompetitorTestimonials from "@/components/compare/CompetitorTestimonials";
+import FeatureParitySection from "@/components/compare/FeatureParitySection";
 import { CTASection } from "@/components/CTASection";
 
 const ChatGPTComparison = () => {
@@ -33,6 +34,8 @@ const ChatGPTComparison = () => {
           </h2>
           <ComparisonTable competitor="chatgpt" />
         </section>
+
+        <FeatureParitySection competitor="chatgpt" />
 
         <PricingComparison competitor="chatgpt" />
 

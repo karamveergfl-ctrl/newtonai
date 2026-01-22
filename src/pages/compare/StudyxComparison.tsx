@@ -6,6 +6,7 @@ import ComparisonTable from "@/components/compare/ComparisonTable";
 import PricingComparison from "@/components/compare/PricingComparison";
 import UniqueFeatures from "@/components/compare/UniqueFeatures";
 import CompetitorTestimonials from "@/components/compare/CompetitorTestimonials";
+import FeatureParitySection from "@/components/compare/FeatureParitySection";
 import { CTASection } from "@/components/CTASection";
 
 const StudyxComparison = () => {
@@ -33,6 +34,8 @@ const StudyxComparison = () => {
           </h2>
           <ComparisonTable competitor="studyx" />
         </section>
+
+        <FeatureParitySection competitor="studyx" />
 
         <PricingComparison competitor="studyx" />
         <CompetitorTestimonials competitor="studyx" />

@@ -9,9 +9,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GradientBlob } from "@/components/GradientBlob";
 import { competitors, newtonFeatures } from "./competitorData";
+import { useCurrency } from "@/hooks/useCurrency";
+import { DISPLAY_PRICING, COMPETITOR_PRICING, CURRENCY_FLAGS, CurrencyCode } from "@/lib/currencyUtils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Compare = () => {
   const competitorList = Object.values(competitors);
+  const { currency, setCurrency } = useCurrency();
+  const newtonMonthlyPrice = DISPLAY_PRICING.pro.monthly[currency];
+  const currencyOptions = Object.keys(CURRENCY_FLAGS) as CurrencyCode[];
+
+  // Calculate Newton price value for savings calculation
+  const newtonPriceValue = parseFloat(DISPLAY_PRICING.pro.monthly[currency].replace(/[^0-9.]/g, ''));
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,7 +90,7 @@ const Compare = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto text-center">
               {[
                 { label: "AI Study Tools", value: "7" },
-                { label: "Starting Price", value: newtonFeatures.monthlyPrice + "/mo" },
+                { label: "Starting Price", value: newtonMonthlyPrice + "/mo" },
                 { label: "Free Tier", value: "Yes ✓" },
                 { label: "Videos in PDF", value: "Yes ✓" },
               ].map((stat) => (
@@ -84,6 +99,24 @@ const Compare = () => {
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
                 </div>
               ))}
+            </div>
+            {/* Currency Selector */}
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <span className="text-sm text-muted-foreground">Currency:</span>
+              <Select value={currency} onValueChange={(val) => setCurrency(val as CurrencyCode)}>
+                <SelectTrigger className="w-[130px] h-8">
+                  <SelectValue>
+                    {CURRENCY_FLAGS[currency]} {currency}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {currencyOptions.map((code) => (
+                    <SelectItem key={code} value={code}>
+                      {CURRENCY_FLAGS[code]} {code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </section>
@@ -107,7 +140,10 @@ const Compare = () => {
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {competitorList.map((comp, index) => {
-                const savings = ((comp.pricePerMonth - newtonFeatures.pricePerMonth) / comp.pricePerMonth * 100).toFixed(0);
+                const competitorPricing = COMPETITOR_PRICING[comp.slug]?.[currency];
+                const competitorPriceValue = competitorPricing?.monthlyValue || comp.pricePerMonth;
+                const savings = ((competitorPriceValue - newtonPriceValue) / competitorPriceValue * 100).toFixed(0);
+                const competitorMonthlyDisplay = competitorPricing?.monthly || comp.monthlyPrice;
                 
                 return (
                   <motion.div
@@ -138,7 +174,7 @@ const Compare = () => {
                               Save {savings}%
                             </Badge>
                             <span className="text-sm text-muted-foreground line-through">
-                              {comp.monthlyPrice}/mo
+                              {competitorMonthlyDisplay}/mo
                             </span>
                           </div>
 
@@ -227,12 +263,15 @@ const Compare = () => {
                   ))}
                   <tr className="border-t">
                     <td className="p-4 font-medium">Price</td>
-                    <td className="p-4 text-center font-bold text-primary">{newtonFeatures.monthlyPrice}/mo</td>
-                    {competitorList.map((comp) => (
-                      <td key={comp.slug} className="p-4 text-center text-muted-foreground">
-                        {comp.monthlyPrice}/mo
-                      </td>
-                    ))}
+                    <td className="p-4 text-center font-bold text-primary">{newtonMonthlyPrice}/mo</td>
+                    {competitorList.map((comp) => {
+                      const competitorPricing = COMPETITOR_PRICING[comp.slug]?.[currency];
+                      return (
+                        <td key={comp.slug} className="p-4 text-center text-muted-foreground">
+                          {competitorPricing?.monthly || comp.monthlyPrice}/mo
+                        </td>
+                      );
+                    })}
                   </tr>
                 </tbody>
               </table>

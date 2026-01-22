@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { GradientBlob } from "@/components/GradientBlob";
 import { competitors, newtonFeatures, CompetitorKey } from "@/pages/compare/competitorData";
+import { useCurrency } from "@/hooks/useCurrency";
+import { DISPLAY_PRICING, COMPETITOR_PRICING } from "@/lib/currencyUtils";
 
 interface CompareHeroProps {
   competitor: CompetitorKey;
@@ -12,7 +14,17 @@ interface CompareHeroProps {
 
 const CompareHero = ({ competitor }: CompareHeroProps) => {
   const competitorData = competitors[competitor];
-  const savings = ((competitorData.pricePerMonth - newtonFeatures.pricePerMonth) / competitorData.pricePerMonth * 100).toFixed(0);
+  const { currency } = useCurrency();
+  
+  // Get localized pricing
+  const newtonMonthly = DISPLAY_PRICING.pro.monthly[currency];
+  const competitorPricing = COMPETITOR_PRICING[competitor]?.[currency];
+  const competitorMonthly = competitorPricing?.monthly || competitorData.monthlyPrice;
+  
+  // Calculate savings in user's currency
+  const newtonPriceValue = parseFloat(newtonMonthly.replace(/[^0-9.]/g, ''));
+  const competitorPriceValue = competitorPricing?.monthlyValue || competitorData.pricePerMonth;
+  const savings = ((competitorPriceValue - newtonPriceValue) / competitorPriceValue * 100).toFixed(0);
 
   return (
     <section className="relative py-20 overflow-hidden">
@@ -56,7 +68,7 @@ const CompareHero = ({ competitor }: CompareHeroProps) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
             {[
               { label: "AI Tools", newton: "7", competitor: "1-2" },
-              { label: "Price/mo", newton: newtonFeatures.monthlyPrice, competitor: competitorData.monthlyPrice },
+              { label: "Price/mo", newton: newtonMonthly, competitor: competitorMonthly },
               { label: "Free Tier", newton: "Yes ✓", competitor: "No ✗" },
               { label: "Video in PDF", newton: "Yes ✓", competitor: "No ✗" },
             ].map((stat) => (
