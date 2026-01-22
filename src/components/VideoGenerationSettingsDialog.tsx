@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Brain, BookOpen, FileText, Network } from "lucide-react";
+import { Brain, BookOpen, FileText, Network, Zap, List, GraduationCap } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface VideoGenerationSettingsDialogProps {
   open: boolean;
@@ -17,7 +18,17 @@ export interface VideoGenerationSettings {
   count: number;
   difficulty: "easy" | "medium" | "hard";
   detailLevel?: "brief" | "standard" | "detailed";
+  summaryFormat?: "concise" | "detailed" | "bullet-points" | "academic";
 }
+
+type SummaryFormat = "concise" | "detailed" | "bullet-points" | "academic";
+
+const summaryFormats: { id: SummaryFormat; name: string; description: string; icon: React.ElementType }[] = [
+  { id: "concise", name: "Concise Summary", description: "Brief overview of key points", icon: Zap },
+  { id: "detailed", name: "Detailed Analysis", description: "In-depth coverage with examples", icon: FileText },
+  { id: "bullet-points", name: "Bullet Points", description: "Easy-to-scan list format", icon: List },
+  { id: "academic", name: "Academic Style", description: "Formal structure with citations", icon: GraduationCap },
+];
 
 const difficultyLabels = {
   1: "Easy",
@@ -83,12 +94,14 @@ export const VideoGenerationSettingsDialog = ({
   const [count, setCount] = useState(type === "quiz" ? 10 : type === "flashcards" ? 15 : 5);
   const [difficulty, setDifficulty] = useState(2);
   const [detailLevel, setDetailLevel] = useState(2);
+  const [summaryFormat, setSummaryFormat] = useState<SummaryFormat>("concise");
 
   const handleGenerate = () => {
     onGenerate({
       count,
       difficulty: difficulty === 1 ? "easy" : difficulty === 2 ? "medium" : "hard",
-      detailLevel: detailLevel === 1 ? "brief" : detailLevel === 2 ? "standard" : "detailed"
+      detailLevel: detailLevel === 1 ? "brief" : detailLevel === 2 ? "standard" : "detailed",
+      summaryFormat: type === "summary" ? summaryFormat : undefined
     });
     onOpenChange(false);
   };
@@ -117,6 +130,44 @@ export const VideoGenerationSettingsDialog = ({
             <p className="text-xs text-muted-foreground mb-1">Video</p>
             <p className="text-sm font-medium line-clamp-2">{videoTitle}</p>
           </div>
+
+          {/* Summary Format Selection - Only for Summary */}
+          {type === "summary" && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Summary Format</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {summaryFormats.map((format) => {
+                  const FormatIcon = format.icon;
+                  return (
+                    <button
+                      key={format.id}
+                      type="button"
+                      onClick={() => setSummaryFormat(format.id)}
+                      className={cn(
+                        "p-3 rounded-xl border-2 text-left transition-all hover:shadow-md",
+                        summaryFormat === format.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className={cn(
+                          "p-1.5 rounded-lg",
+                          summaryFormat === format.id ? "bg-primary/20" : "bg-muted"
+                        )}>
+                          <FormatIcon className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-sm">{format.name}</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">{format.description}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Number of Items - Only for Quiz and Flashcards */}
           {showCountSlider && (

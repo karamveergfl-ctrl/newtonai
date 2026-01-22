@@ -236,7 +236,7 @@ export const VideoCardWithTools = ({
                   ) : (
                     <BookOpen className="w-4 h-4 text-secondary" />
                   )}
-                  Cards
+                  Flashcards
                 </Button>
               )}
               
@@ -282,7 +282,7 @@ export const VideoCardWithTools = ({
                   ) : (
                     <Network className="w-4 h-4 text-primary" />
                   )}
-                  Map
+                  Mind Map
                 </Button>
               )}
             </div>
@@ -409,7 +409,7 @@ export const VideoCardWithTools = ({
                     <BookOpen className="w-4 h-4 text-violet-500" />
                   )}
                 </div>
-                <span className="text-[10px] text-violet-500/70 group-hover/tool:text-violet-500 font-medium transition-colors">Cards</span>
+                <span className="text-[10px] text-violet-500/70 group-hover/tool:text-violet-500 font-medium transition-colors">Flashcards</span>
               </button>
             )}
             
@@ -455,7 +455,7 @@ export const VideoCardWithTools = ({
                     <Network className="w-4 h-4 text-rose-500" />
                   )}
                 </div>
-                <span className="text-[10px] text-rose-500/70 group-hover/tool:text-rose-500 font-medium transition-colors">Map</span>
+                <span className="text-[10px] text-rose-500/70 group-hover/tool:text-rose-500 font-medium transition-colors">Mind Map</span>
               </button>
             )}
           </div>
