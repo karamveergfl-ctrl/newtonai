@@ -373,7 +373,7 @@ const AISummarizer = () => {
 
       if (type === "recording") {
         const base64Audio = content.split(",")[1] || content;
-        textContent = await transcribeAudio(base64Audio, session.access_token);
+        textContent = await transcribeAudio(base64Audio, session.access_token, undefined, metadata?.language);
         title = "Audio Recording Summary";
       } else if (type === "upload" && metadata?.file) {
         textContent = await processUploadedFile(metadata.file, session.access_token);
