@@ -42,6 +42,7 @@ import MindMap from "./pages/tools/MindMap";
 import AIPodcast from "./pages/tools/AIPodcast";
 
 // Compare pages
+import Compare from "./pages/compare/Compare";
 import CheggComparison from "./pages/compare/CheggComparison";
 import QuizletComparison from "./pages/compare/QuizletComparison";
 import StudocuComparison from "./pages/compare/StudocuComparison";
@@ -99,6 +100,7 @@ function AnimatedRoutes() {
         <Route path="/tools/mind-map" element={<PageTransition><MindMap /></PageTransition>} />
         
         {/* Compare Routes */}
+        <Route path="/compare" element={<PageTransition><Compare /></PageTransition>} />
         <Route path="/compare/chegg" element={<PageTransition><CheggComparison /></PageTransition>} />
         <Route path="/compare/quizlet" element={<PageTransition><QuizletComparison /></PageTransition>} />
         <Route path="/compare/studocu" element={<PageTransition><StudocuComparison /></PageTransition>} />
