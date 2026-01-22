@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Eye, EyeOff, BookOpen, Brain, Layers, FileText, Sparkles, AlertTriangle, ShieldAlert } from "lucide-react";
+import { Loader2, Mail, Eye, EyeOff, AlertTriangle, ShieldAlert } from "lucide-react";
+import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -44,15 +45,6 @@ const getPwnedPasswordCount = async (password: string) => {
   }
   return 0;
 };
-
-// Floating study icons configuration
-const floatingIcons = [
-  { icon: BookOpen, label: "Notes", delay: 0, x: -120, y: -80, color: "text-blue-500" },
-  { icon: Brain, label: "Quiz", delay: 0.2, x: 100, y: -100, color: "text-purple-500" },
-  { icon: Layers, label: "Flashcards", delay: 0.4, x: -140, y: 60, color: "text-green-500" },
-  { icon: FileText, label: "PDF", delay: 0.6, x: 120, y: 40, color: "text-orange-500" },
-  { icon: Sparkles, label: "Mind Map", delay: 0.8, x: -80, y: 140, color: "text-pink-500" },
-];
 
 type AuthMode = "login" | "signup" | "forgot-password";
 
@@ -195,169 +187,23 @@ const Auth = () => {
         keywords="sign up, login, create account, NewtonAI account, student login"
       />
       <div className="flex-1 flex">
-        {/* Left Panel - Illustration */}
+        {/* Left Panel - Floating Tools Showcase */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="hidden lg:flex lg:w-1/2 bg-card relative overflow-hidden items-center justify-center p-12"
+          className="hidden lg:flex lg:w-1/2 bg-[hsl(222,47%,11%)] relative overflow-hidden items-center justify-center p-8"
         >
-        <div className="text-center max-w-lg relative">
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mb-6"
-          >
-            <Logo size="lg" />
-          </motion.div>
-
-          {/* Tagline */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="text-muted-foreground mb-16"
-          >
-            Transform your learning with AI-powered study tools. Create flashcards, quizzes, and summaries in seconds.
-          </motion.p>
-
-          {/* Phone Mockup with Person and Floating Icons */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="relative mx-auto flex items-end justify-center"
-          >
-            {/* Floating Study Icons */}
-            {floatingIcons.map((item, index) => (
-              <motion.div
-                key={item.label}
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ 
-                  opacity: 1, 
-                  scale: 1,
-                  y: [0, -10, 0],
-                }}
-                transition={{
-                  opacity: { duration: 0.3, delay: 0.6 + item.delay },
-                  scale: { duration: 0.4, delay: 0.6 + item.delay },
-                  y: { 
-                    duration: 2 + index * 0.3, 
-                    repeat: Infinity, 
-                    repeatType: "reverse",
-                    ease: "easeInOut",
-                    delay: item.delay
-                  }
-                }}
-                className="absolute z-10"
-                style={{ 
-                  left: `calc(50% + ${item.x}px)`, 
-                  top: `calc(50% + ${item.y}px)`,
-                }}
-              >
-                <div className="bg-background/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-border/50 flex items-center gap-2">
-                  <item.icon className={`w-5 h-5 ${item.color}`} />
-                  <span className="text-xs font-medium text-foreground whitespace-nowrap">{item.label}</span>
-                </div>
-              </motion.div>
-            ))}
-
-            {/* Phone Frame */}
-            <div className="relative">
-              <motion.div 
-                className="bg-muted rounded-[2.5rem] p-3 shadow-2xl w-52"
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-              >
-                <div className="bg-background rounded-[2rem] overflow-hidden">
-                  {/* Phone Screen Content */}
-                  <div className="p-4 space-y-4 min-h-[280px]">
-                    {/* App Header */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                        <div className="w-5 h-5 rounded-lg bg-primary flex items-center justify-center">
-                          <div className="w-2 h-2 rounded-full bg-primary-foreground" />
-                        </div>
-                      </div>
-                      <div className="w-3 h-3 rounded-full bg-primary" />
-                    </div>
-                    
-                    {/* Chat bubbles */}
-                    <div className="space-y-3 pt-2">
-                      <div className="flex gap-1.5">
-                        <motion.div 
-                          className="w-2.5 h-2.5 rounded-full bg-primary"
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 1.5, repeat: Infinity, delay: 0 }}
-                        />
-                        <motion.div 
-                          className="w-2.5 h-2.5 rounded-full bg-primary"
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-                        />
-                        <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
-                      </div>
-                      <div className="flex gap-1.5">
-                        <motion.div 
-                          className="w-2.5 h-2.5 rounded-full bg-primary"
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
-                        />
-                        <motion.div 
-                          className="w-2.5 h-2.5 rounded-full bg-primary"
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 1.5, repeat: Infinity, delay: 0.6 }}
-                        />
-                        <motion.div 
-                          className="w-2.5 h-2.5 rounded-full bg-primary"
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 1.5, repeat: Infinity, delay: 0.8 }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Action Button */}
-                    <div className="pt-4">
-                      <motion.div 
-                        className="w-20 h-7 rounded-lg bg-primary"
-                        animate={{ opacity: [0.7, 1, 0.7] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-              
-              {/* Person Illustration */}
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
-                className="absolute -right-20 -bottom-2"
-              >
-                <svg width="100" height="150" viewBox="0 0 100 150" fill="none">
-                  {/* Head */}
-                  <ellipse cx="50" cy="22" rx="18" ry="20" fill="hsl(var(--muted-foreground) / 0.3)" />
-                  {/* Hair */}
-                  <path d="M32 18 Q35 8 50 6 Q65 8 68 18 Q65 12 50 10 Q35 12 32 18" fill="hsl(var(--foreground))" />
-                  {/* Body/Shirt */}
-                  <path d="M30 45 Q35 38 50 36 Q65 38 70 45 L68 100 L32 100 Z" fill="hsl(var(--primary))" />
-                  {/* Arms */}
-                  <path d="M30 50 Q20 55 18 75 Q16 80 20 82" stroke="hsl(var(--muted-foreground) / 0.3)" strokeWidth="8" strokeLinecap="round" fill="none" />
-                  <path d="M70 50 Q80 55 82 70" stroke="hsl(var(--muted-foreground) / 0.3)" strokeWidth="8" strokeLinecap="round" fill="none" />
-                  {/* Pants */}
-                  <path d="M32 100 L28 148 L42 148 L48 105 L52 105 L58 148 L72 148 L68 100 Z" fill="hsl(var(--foreground))" />
-                  {/* Shoes */}
-                  <ellipse cx="35" cy="148" rx="10" ry="4" fill="hsl(var(--foreground))" />
-                  <ellipse cx="65" cy="148" rx="10" ry="4" fill="hsl(var(--foreground))" />
-                </svg>
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
+          {/* Background gradient effects */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10 pointer-events-none" />
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
+          
+          {/* Floating Tools Showcase - without CTA button */}
+          <div className="relative z-10 w-full max-w-xl">
+            <FloatingToolsShowcase showCTA={false} />
+          </div>
+        </motion.div>
 
       {/* Right Panel - Form */}
       <motion.div
