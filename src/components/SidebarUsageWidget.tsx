@@ -88,17 +88,13 @@ export function SidebarUsageWidget({ isCollapsed = false }: SidebarUsageWidgetPr
       animate={{ opacity: 1 }}
       className="px-3 py-2"
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-          <TrendingUp className="h-3 w-3" />
-          Usage
-        </span>
-        {nearLimitCount > 0 && (
+      {nearLimitCount > 0 && (
+        <div className="flex items-center justify-end mb-2">
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-yellow-500 border-yellow-500/30">
             {nearLimitCount} near limit
           </Badge>
-        )}
-      </div>
+        </div>
+      )}
       
       <div className="space-y-2">
         {limitedFeatures.map((feature, index) => {
