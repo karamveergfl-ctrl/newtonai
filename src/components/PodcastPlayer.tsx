@@ -91,11 +91,16 @@ export function PodcastPlayer({
     segments: segments as AudioSegment[],
     language, // Pass language for Hindi/multilingual voice support
     onSegmentChange: (index) => {
-      // Auto-scroll transcript to current segment
+      // Scroll WITHIN transcript container only, not the whole page
       if (transcriptRef.current) {
-        const segmentElement = transcriptRef.current.querySelector(`[data-segment="${index}"]`);
+        const segmentElement = transcriptRef.current.querySelector(`[data-segment="${index}"]`) as HTMLElement;
         if (segmentElement) {
-          segmentElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          const container = transcriptRef.current;
+          const elementTop = segmentElement.offsetTop;
+          container.scrollTo({
+            top: elementTop - container.clientHeight / 2 + segmentElement.clientHeight / 2,
+            behavior: "smooth"
+          });
         }
       }
     },
