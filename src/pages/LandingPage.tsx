@@ -62,7 +62,7 @@ const LandingPage = () => {
   const breadcrumbs = [{ name: "Home", href: "/" }];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background overflow-x-hidden">
       <SEOHead
         title="Home"
         description="Transform any document, video, or lecture into flashcards, quizzes, summaries, and mind maps. Your personal AI study assistant for smarter learning."
