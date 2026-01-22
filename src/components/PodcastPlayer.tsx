@@ -54,6 +54,7 @@ interface PodcastPlayerProps {
   onRaiseHand: () => void;
   isRaiseHandActive: boolean;
   onClose?: () => void;
+  language?: string;
 }
 
 export function PodcastPlayer({ 
@@ -61,7 +62,8 @@ export function PodcastPlayer({
   segments, 
   onRaiseHand, 
   isRaiseHandActive,
-  onClose 
+  onClose,
+  language = "en"
 }: PodcastPlayerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
@@ -69,7 +71,7 @@ export function PodcastPlayer({
   const containerRef = useRef<HTMLDivElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
 
-  // Use the new audio queue hook
+  // Use the new audio queue hook with language for correct voice selection
   const {
     status,
     currentIndex,
@@ -87,6 +89,7 @@ export function PodcastPlayer({
     pause,
   } = usePodcastAudioQueue({
     segments: segments as AudioSegment[],
+    language, // Pass language for Hindi/multilingual voice support
     onSegmentChange: (index) => {
       // Auto-scroll transcript to current segment
       if (transcriptRef.current) {

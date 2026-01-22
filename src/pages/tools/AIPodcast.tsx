@@ -409,6 +409,7 @@ export default function AIPodcast() {
                 segments={podcast.segments}
                 onRaiseHand={handleRaiseHand}
                 isRaiseHandActive={isRaiseHandOpen}
+                language={podcast.language}
               />
 
               <PodcastRaiseHand
