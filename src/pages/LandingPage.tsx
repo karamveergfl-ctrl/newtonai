@@ -7,7 +7,7 @@ import { TestimonialsSection } from "@/components/TestimonialsSection";
 import CTASection from "@/components/CTASection";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
 import SEOHead from "@/components/SEOHead";
-import { FloatingToolsShowcase } from "@/components/FloatingToolsShowcase";
+import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
 import { HeroParticles } from "@/components/HeroParticles";
 import { 
   BookOpen, 
