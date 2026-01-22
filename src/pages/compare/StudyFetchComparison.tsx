@@ -45,21 +45,25 @@ const StudyFetchComparison = () => {
             </h2>
             <div className="prose prose-lg dark:prose-invert">
               <p>
-                StudyFetch offers AI tutoring at $19/month, but NewtonAI delivers more features at less than half the cost. Here's why students are making the switch:
+                StudyFetch is a solid platform with Spark.E AI tutor and Audio Recap (their podcast feature). However, at $19/month, NewtonAI delivers unique features at less than half the cost. Here's the comparison:
               </p>
               <h3>1. Save 55% on Your Subscription</h3>
               <p>
-                NewtonAI Pro costs $8.49/month compared to StudyFetch's $19/month. That's over $120 saved per year while getting more features.
+                NewtonAI Pro costs $8.49/month compared to StudyFetch's $19/month. That's over $120 saved per year.
               </p>
               <h3>2. Videos Inside Your PDF Reader</h3>
               <p>
-                NewtonAI's revolutionary feature lets you search topics and watch videos directly in your PDF reader. StudyFetch has no video integration.
+                NewtonAI's unique feature lets you search topics and watch videos directly embedded in your PDF reader. StudyFetch doesn't have this integration.
               </p>
-              <h3>3. AI Podcast Generation</h3>
+              <h3>3. Handwriting OCR</h3>
               <p>
-                Turn any document into an engaging audio podcast. Perfect for studying during commutes or workouts - a feature StudyFetch doesn't offer.
+                Take photos of your handwritten notes and convert them to digital text instantly. NewtonAI's Google Lens-style OCR is a feature StudyFetch doesn't have.
               </p>
-              <h3>4. True Free Tier</h3>
+              <h3>4. Mind Map Generator</h3>
+              <p>
+                NewtonAI automatically creates visual mind maps from your content. StudyFetch doesn't offer this feature.
+              </p>
+              <h3>5. Ad-Supported Free Tier</h3>
               <p>
                 NewtonAI offers a generous free tier with all features accessible through video ads. No credit card required to get started.
               </p>

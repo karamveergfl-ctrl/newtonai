@@ -47,25 +47,29 @@ const StudocuComparison = () => {
             </h2>
             <div className="prose prose-lg dark:prose-invert">
               <p>
-                Studocu is a document-sharing platform where students upload notes. NewtonAI flips the script: you upload YOUR materials, and AI creates personalized study resources. Here's why that's better:
+                Studocu now has AI flashcards and quizzes, but it's still primarily a document-sharing platform. NewtonAI flips the script: you upload YOUR materials, and AI creates personalized study resources. Here's why that's better:
               </p>
-              <h3>1. AI-Generated vs. Crowd-Sourced</h3>
+              <h3>1. Videos Embedded in Your PDF Reader</h3>
               <p>
-                Studocu relies on other students' notes, which may be incomplete, incorrect, or not match your syllabus. NewtonAI's AI analyzes YOUR textbooks and lectures to create accurate, personalized study materials every time.
+                NewtonAI's unique feature lets you search any topic and watch educational videos directly inside your PDF reader. Studocu doesn't have any video integration.
               </p>
-              <h3>2. Interactive Study Tools</h3>
+              <h3>2. AI Podcast Generation</h3>
               <p>
-                Studocu offers static PDFs. NewtonAI transforms content into interactive flashcards with spaced repetition, self-grading quizzes, audio podcasts, and visual mind maps – all created automatically.
+                Transform any document into an engaging audio podcast for learning on the go. Study during your commute or workout – something Studocu can't offer.
               </p>
-              <h3>3. Videos Embedded in Reading</h3>
+              <h3>3. Mind Map Generator</h3>
               <p>
-                While reading your PDF in NewtonAI, select any concept to instantly find and watch related educational videos. This integrated learning experience doesn't exist in Studocu.
+                NewtonAI automatically creates visual mind maps from your content. Studocu doesn't have this feature.
               </p>
-              <h3>4. Multiple Input Formats</h3>
+              <h3>4. Handwriting OCR</h3>
               <p>
-                Beyond PDFs, NewtonAI accepts YouTube videos, voice recordings, typed notes, and even handwritten pages via OCR. Studocu only handles uploaded documents.
+                Take photos of your handwritten notes and convert them to digital text instantly. NewtonAI's Google Lens-style OCR is a feature Studocu doesn't have.
               </p>
-              <h3>5. Free Tier with Ads</h3>
+              <h3>5. Personalized vs. Crowd-Sourced</h3>
+              <p>
+                Studocu relies on other students' notes, which may be incomplete or not match your syllabus. NewtonAI's AI analyzes YOUR textbooks and lectures to create accurate, personalized study materials.
+              </p>
+              <h3>6. Free Tier with Ads</h3>
               <p>
                 Studocu's free access is severely limited with upload requirements. NewtonAI offers a genuinely free tier where you can earn credits by watching optional video ads.
               </p>

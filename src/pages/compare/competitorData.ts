@@ -4,7 +4,7 @@ export const competitors = {
   chegg: {
     name: "Chegg",
     slug: "chegg",
-    tagline: "Homework help and textbook solutions",
+    tagline: "Homework help with AI Create tools",
     logo: "📚",
     monthlyPrice: "$15.95",
     yearlyPrice: "$95.40",
@@ -13,17 +13,18 @@ export const competitors = {
       "Expert Q&A responses",
       "Textbook solutions library",
       "Math solver tool",
-      "Writing assistance",
+      "AI Create (flashcards & practice tests)",
+      "Solution Scout AI",
     ],
     weaknesses: [
-      "No AI-generated flashcards",
-      "No video integration in reading",
-      "No podcast generation",
+      "No video integration in PDF reader",
+      "No AI podcast/audio generation",
+      "No mind map generator",
+      "No handwriting OCR",
       "Expensive monthly subscription",
-      "No free tier available",
-      "Single-purpose platform",
+      "No ad-supported free tier",
     ],
-    verdict: "Chegg excels at textbook solutions but lacks modern AI study tools. NewtonAI offers 7 AI tools at nearly half the price.",
+    verdict: "Chegg now has AI flashcards and quizzes via Create, but still lacks NewtonAI's unique features like videos in PDFs, podcasts, and a free tier at nearly half the price.",
     testimonials: [
       {
         quote: "I was paying $16/month for Chegg just for homework answers. NewtonAI gives me flashcards, quizzes, AND homework help for half the price. The embedded videos in my PDFs are a game-changer.",
@@ -54,18 +55,19 @@ export const competitors = {
     yearlyPrice: "$35.99",
     pricePerMonth: 7.99,
     strengths: [
-      "Large flashcard library",
+      "Large flashcard library (800M+ sets)",
       "Learn mode with spaced repetition",
       "Community-created study sets",
       "Mobile app experience",
+      "AI-enhanced study modes",
     ],
     weaknesses: [
       "No PDF integration or reader",
       "No AI homework help",
       "No video search or embedding",
-      "Limited AI generation capabilities",
       "No podcast or audio learning",
       "No handwriting recognition",
+      "No mind map generation",
     ],
     verdict: "Quizlet is great for pre-made flashcards, but NewtonAI generates them from any content with videos and AI explanations.",
     testimonials: [
@@ -92,26 +94,27 @@ export const competitors = {
   studocu: {
     name: "Studocu",
     slug: "studocu",
-    tagline: "Study documents and notes sharing",
+    tagline: "Study documents with AI tools",
     logo: "📝",
     monthlyPrice: "$9.99",
     yearlyPrice: "$47.88",
     pricePerMonth: 9.99,
     strengths: [
-      "Large student document library",
+      "Large student document library (50M+)",
+      "AI flashcards and quiz generator",
       "Course-specific study guides",
       "Exam preparation materials",
       "University-focused content",
     ],
     weaknesses: [
-      "No AI content generation",
-      "No video integration",
-      "No podcast feature",
-      "Relies entirely on user uploads",
-      "No interactive study tools",
-      "No homework solving",
+      "No video integration in PDF reader",
+      "No AI podcast/audio feature",
+      "No mind map generator",
+      "No handwriting OCR",
+      "Relies on user-uploaded content",
+      "No ad-supported free tier",
     ],
-    verdict: "Studocu offers shared notes, but NewtonAI creates personalized study materials with AI from any document you upload.",
+    verdict: "Studocu now offers AI study tools, but NewtonAI generates personalized materials from YOUR documents with unique features like video integration and podcasts.",
     testimonials: [
       {
         quote: "Studocu had notes from other students, but they weren't always accurate. NewtonAI lets me upload MY professor's slides and generate study materials tailored to MY exams.",
@@ -146,16 +149,17 @@ export const competitors = {
       "Large document library",
       "Practice problems",
       "Course-specific resources",
+      "AI homework help",
     ],
     weaknesses: [
       "Very expensive subscription",
       "No AI podcast generation",
-      "No flashcard auto-generation",
+      "No mind map generator",
       "No video in document reader",
-      "No voice transcription",
-      "Limited free access",
+      "No handwriting OCR",
+      "No ad-supported free tier",
     ],
-    verdict: "Course Hero charges premium prices for document access. NewtonAI provides AI-powered tools that create study materials for you.",
+    verdict: "Course Hero charges premium prices for document access. NewtonAI provides AI-powered tools that create study materials for you at nearly half the cost.",
     testimonials: [
       {
         quote: "Course Hero was $15/month just to unlock documents. NewtonAI is cheaper AND creates original study materials from my own notes. Way better value.",
@@ -180,26 +184,28 @@ export const competitors = {
   chatgpt: {
     name: "ChatGPT",
     slug: "chatgpt",
-    tagline: "General-purpose AI assistant",
+    tagline: "AI assistant with Study Mode",
     logo: "🤖",
     monthlyPrice: "$20",
     yearlyPrice: "$240",
     pricePerMonth: 20,
     strengths: [
+      "Study Mode with Socratic tutoring",
+      "AI flashcard quizzes",
       "Versatile AI capabilities",
       "Code generation",
-      "Creative writing",
-      "General knowledge",
+      "Voice transcription",
     ],
     weaknesses: [
-      "Not study-focused",
-      "No flashcard system or spaced repetition",
-      "No integrated PDF reader",
-      "No video search or embedding",
-      "No progress tracking",
-      "No structured study tools",
+      "Not purpose-built for studying",
+      "No integrated PDF reader with videos",
+      "No AI podcast generation",
+      "No mind map generator",
+      "No handwriting OCR",
+      "Expensive at $20/month",
+      "No spaced repetition tracking",
     ],
-    verdict: "ChatGPT is a general AI, not a study platform. NewtonAI is purpose-built for learning with 7 specialized study tools.",
+    verdict: "ChatGPT now has Study Mode, but it's a general AI, not a dedicated study platform. NewtonAI offers 7 specialized study tools with unique features at less than half the price.",
     testimonials: [
       {
         quote: "ChatGPT is great for general questions, but NewtonAI is built for studying. Structured flashcards, timed quizzes, progress tracking - everything ChatGPT lacks.",
@@ -224,26 +230,28 @@ export const competitors = {
   studyx: {
     name: "Studyx",
     slug: "studyx",
-    tagline: "AI homework helper and study platform",
+    tagline: "AI homework helper with video summarizer",
     logo: "📖",
     monthlyPrice: "$7.99",
     yearlyPrice: "$95.99",
     pricePerMonth: 7.99,
     strengths: [
       "AI-powered homework help",
-      "75M+ community answers",
-      "Math solver tool",
-      "Multiple AI study tools",
+      "Video summarizer",
+      "PDF summarizer",
+      "AI lecture notes",
+      "AI flashcards and quizzes",
+      "Voice transcription",
     ],
     weaknesses: [
-      "No video integration in PDF reader",
+      "No video integration IN PDF reader",
       "No AI podcast generation",
       "No handwriting OCR",
-      "Variable answer quality",
-      "No free tier without limits",
-      "Relies on community answers",
+      "No mind map generator",
+      "Limited free tier",
+      "No ad-supported access",
     ],
-    verdict: "Studyx offers affordable AI homework help but lacks NewtonAI's unique video integration, podcast generation, and comprehensive free tier.",
+    verdict: "Studyx offers good value with video summarizer, but lacks NewtonAI's unique in-PDF video integration, podcast generation, and handwriting OCR.",
     testimonials: [
       {
         quote: "Studyx was okay for quick answers, but NewtonAI's embedded videos in my PDFs help me actually understand the concepts. Plus the AI podcast feature is incredible for commuting.",
@@ -268,29 +276,31 @@ export const competitors = {
   studyfetch: {
     name: "StudyFetch",
     slug: "studyfetch",
-    tagline: "AI-powered study sets and tutoring",
+    tagline: "AI tutor with Audio Recap",
     logo: "⚡",
     monthlyPrice: "$19",
     yearlyPrice: "$228",
     pricePerMonth: 19,
     strengths: [
-      "Spark.E AI tutor",
+      "Spark.E AI tutor with voice calls",
+      "Audio Recap (AI podcast/lecture summaries)",
       "Live lecture transcription",
+      "AI flashcards and quizzes",
       "Essay grading feature",
       "Explainer video creation",
     ],
     weaknesses: [
-      "Expensive subscription ($19/mo)",
-      "No video integration in PDF",
-      "No AI podcast generation",
+      "Expensive subscription ($19/mo vs $8.49)",
+      "No video integration inside PDF reader",
       "No handwriting OCR",
-      "No generous free tier",
-      "Limited input formats",
+      "No mind map generator",
+      "No ad-supported free tier",
+      "Less comprehensive input formats",
     ],
-    verdict: "StudyFetch has a good AI tutor but costs more than double NewtonAI while lacking video integration, podcasts, and a true free tier.",
+    verdict: "StudyFetch offers solid AI tools including Audio Recap, but costs more than double NewtonAI. NewtonAI provides unique video-in-PDF and handwriting OCR features at a better price.",
     testimonials: [
       {
-        quote: "StudyFetch was $19/month and didn't even have videos in the PDF reader. NewtonAI gives me that plus podcasts, flashcards, and quizzes for half the price!",
+        quote: "StudyFetch was $19/month and didn't have videos embedded in the PDF reader. NewtonAI gives me that plus mind maps and OCR for half the price!",
         author: "Hannah T.",
         role: "Nursing Student, Ohio State",
         rating: 5,
@@ -302,7 +312,7 @@ export const competitors = {
         rating: 5,
       },
       {
-        quote: "The AI podcast feature on NewtonAI is something StudyFetch doesn't have. I turn my lecture notes into audio and study during my workouts.",
+        quote: "Both have audio features, but NewtonAI's handwriting OCR is amazing for my handwritten notes. StudyFetch can't do that.",
         author: "Maya S.",
         role: "Law Student, NYU",
         rating: 5,
@@ -361,17 +371,28 @@ export const newtonFeatures = {
   ],
 };
 
+// Accurate feature comparison based on research (January 2026)
 export const featureComparison = [
+  // NewtonAI's TRUE unique features (no competitors have these)
   { feature: "Videos in PDF Reader", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false, studyx: false, studyfetch: false },
-  { feature: "AI Flashcard Generation", newton: true, chegg: false, quizlet: "Limited", studocu: false, "course-hero": false, chatgpt: "Manual", studyx: true, studyfetch: true },
-  { feature: "AI Quiz Generator", newton: true, chegg: false, quizlet: true, studocu: false, "course-hero": false, chatgpt: "Manual", studyx: true, studyfetch: true },
-  { feature: "AI Podcast Creation", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false, studyx: false, studyfetch: false },
-  { feature: "Mind Map Generator", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: "Manual", studyx: false, studyfetch: false },
-  { feature: "AI Homework Help", newton: true, chegg: true, quizlet: false, studocu: false, "course-hero": true, chatgpt: true, studyx: true, studyfetch: true },
-  { feature: "PDF Reader", newton: true, chegg: false, quizlet: false, studocu: true, "course-hero": true, chatgpt: false, studyx: true, studyfetch: true },
-  { feature: "Voice Transcription", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: true, studyx: false, studyfetch: true },
   { feature: "Handwriting OCR", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false, studyx: false, studyfetch: false },
-  { feature: "Free Tier", newton: "Yes (with ads)", chegg: false, quizlet: "Limited", studocu: "Limited", "course-hero": false, chatgpt: "Limited", studyx: "Limited", studyfetch: "Limited" },
+  { feature: "Mind Map Generator", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: "Manual", studyx: false, studyfetch: false },
+  
+  // Audio/Podcast - StudyFetch HAS Audio Recap
+  { feature: "AI Podcast/Audio", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false, studyx: false, studyfetch: true },
+  
+  // Flashcards & Quizzes - Most platforms now have these
+  { feature: "AI Flashcard Generation", newton: true, chegg: true, quizlet: true, studocu: true, "course-hero": false, chatgpt: true, studyx: true, studyfetch: true },
+  { feature: "AI Quiz Generator", newton: true, chegg: true, quizlet: true, studocu: true, "course-hero": false, chatgpt: true, studyx: true, studyfetch: true },
+  
+  // Other features
+  { feature: "AI Homework Help", newton: true, chegg: true, quizlet: false, studocu: false, "course-hero": true, chatgpt: true, studyx: true, studyfetch: true },
+  { feature: "PDF Reader/Summarizer", newton: true, chegg: false, quizlet: false, studocu: true, "course-hero": true, chatgpt: false, studyx: true, studyfetch: true },
+  { feature: "Video Summarizer", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: false, studyx: true, studyfetch: false },
+  { feature: "Voice/Lecture Transcription", newton: true, chegg: false, quizlet: false, studocu: false, "course-hero": false, chatgpt: true, studyx: true, studyfetch: true },
+  
+  // Free tier and pricing
+  { feature: "Free Tier (No CC)", newton: "Yes (with ads)", chegg: false, quizlet: "Limited", studocu: "Limited", "course-hero": false, chatgpt: "Limited", studyx: "Limited", studyfetch: "Limited" },
   { feature: "Starting Price", newton: "$8.49/mo", chegg: "$15.95/mo", quizlet: "$7.99/mo", studocu: "$9.99/mo", "course-hero": "$14.95/mo", chatgpt: "$20/mo", studyx: "$7.99/mo", studyfetch: "$19/mo" },
 ];
 

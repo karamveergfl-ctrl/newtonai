@@ -47,23 +47,27 @@ const CheggComparison = () => {
             </h2>
             <div className="prose prose-lg dark:prose-invert">
               <p>
-                While Chegg has been a go-to for textbook solutions, students are discovering that NewtonAI offers a more comprehensive and affordable learning experience. Here's why:
+                Chegg recently launched AI Create for flashcards and practice tests, but students are discovering that NewtonAI offers a more comprehensive learning experience at nearly half the price. Here's why:
               </p>
               <h3>1. Videos Embedded in Your PDF Reader</h3>
               <p>
                 NewtonAI's revolutionary feature lets you search any topic and watch educational videos directly in your PDF reader. Select text, search, and learn without switching tabs. Chegg doesn't offer anything like this.
               </p>
-              <h3>2. 7 AI Tools vs. Single-Purpose Platform</h3>
+              <h3>2. AI Podcasts for Learning on the Go</h3>
               <p>
-                Chegg focuses primarily on homework solutions. NewtonAI gives you AI-generated flashcards, quizzes, podcasts, mind maps, summaries, lecture notes, and step-by-step homework help – all from any document you upload.
+                Transform any document into an engaging audio podcast. Study during your commute or workout – a feature Chegg doesn't have despite their AI updates.
               </p>
-              <h3>3. Free Tier with Optional Ads</h3>
+              <h3>3. Handwriting OCR</h3>
+              <p>
+                Take photos of your handwritten notes and convert them to digital text instantly. Chegg has no handwriting recognition feature.
+              </p>
+              <h3>4. Free Tier with Optional Ads</h3>
               <p>
                 Unlike Chegg's paywall, NewtonAI offers a generous free tier. Watch a short video ad to earn credits and access premium features without paying. No credit card required.
               </p>
-              <h3>4. Nearly Half the Price</h3>
+              <h3>5. Nearly Half the Price</h3>
               <p>
-                NewtonAI Pro starts at $8.49/month compared to Chegg's $15.95/month. You get more features for less, with multi-currency support in 8 different currencies.
+                NewtonAI Pro starts at $8.49/month compared to Chegg's $15.95/month. You get unique features for less, with multi-currency support in 8 different currencies.
               </p>
             </div>
           </div>
