@@ -36,6 +36,9 @@ import { useCredits } from "@/hooks/useCredits";
 import { CreditModal } from "@/components/CreditModal";
 import { FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
 import { Session } from "@supabase/supabase-js";
+import { useProcessingState } from "@/hooks/useProcessingState";
+import { ProcessingOverlay } from "@/components/ProcessingOverlay";
+
 interface Video {
   id: string;
   title: string;
@@ -119,6 +122,22 @@ const Index = () => {
   const [showFlashcardsScreen, setShowFlashcardsScreen] = useState(false);
   const [showQuizScreen, setShowQuizScreen] = useState(false);
 
+  // Newton processing animation for video tools
+  const { 
+    phase: videoProcessingPhase, 
+    isProcessing: isVideoProcessing, 
+    startThinking: startVideoThinking, 
+    startWriting: startVideoWriting, 
+    complete: completeVideoProcessing, 
+    reset: resetVideoProcessing 
+  } = useProcessingState();
+  const [videoProcessingMessage, setVideoProcessingMessage] = useState("");
+  const [pendingVideoResult, setPendingVideoResult] = useState<{
+    type: 'quiz' | 'flashcards' | 'summary' | 'mindmap';
+    data: any;
+    title: string;
+  } | null>(null);
+
   // Credit modal state
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [blockedFeature, setBlockedFeature] = useState("");
@@ -162,6 +181,48 @@ const Index = () => {
   const {
     toast
   } = useToast();
+
+  // Handle pending video tool results after Newton animation completes
+  useEffect(() => {
+    if (videoProcessingPhase === 'idle' && pendingVideoResult) {
+      const { type, data, title } = pendingVideoResult;
+      
+      switch (type) {
+        case 'quiz':
+          setQuizQuestions(data.questions);
+          setQuizTitle(title);
+          setShowQuizScreen(true);
+          toast({ title: "Quiz Ready! 🧠", description: `Generated ${data.questions.length} questions` });
+          break;
+        case 'flashcards':
+          setFlashcards(data.flashcards);
+          setFlashcardTitle(title);
+          setShowFlashcardsScreen(true);
+          toast({ title: "Flashcards Ready! 📚", description: `Generated ${data.flashcards.length} flashcards` });
+          break;
+        case 'summary':
+          setVideoSummary(data.summary);
+          setVideoStudyToolTitle(title);
+          setShowVideoSummaryScreen(true);
+          toast({ title: "Summary Ready! 📝" });
+          break;
+        case 'mindmap':
+          setVideoMindMap(data.mindMap);
+          if (data.mindMapData) setVideoMindMapData(data.mindMapData);
+          setFullScreenMindMapTitle(title);
+          setShowVideoMindMapScreen(true);
+          toast({ title: "Mind Map Ready! 🧠" });
+          break;
+      }
+      
+      setPendingVideoResult(null);
+      setIsGeneratingFlashcards(false);
+      setIsGeneratingQuiz(false);
+      setIsGeneratingSummary(false);
+      setIsGeneratingMindMap(false);
+      setActiveGenerating(null);
+    }
+  }, [videoProcessingPhase, pendingVideoResult, toast]);
   
   const { 
     credits, 
@@ -568,10 +629,10 @@ const Index = () => {
     const allowed = await trySpendCredits("flashcards");
     if (!allowed) return;
     
-    // INSTANT UI: Show flashcards screen immediately with loading
-    setFlashcards([]);
-    setFlashcardTitle(videoTitle);
-    setShowFlashcardsScreen(true);
+    // Start Newton animation
+    setVideoProcessingMessage("Generating flashcards from video...");
+    startVideoThinking();
+    setActiveGenerating("flashcards");
     setIsGeneratingFlashcards(true);
     
     try {
@@ -584,8 +645,12 @@ const Index = () => {
         throw new Error("Not authenticated");
       }
 
-      // Fetch transcript first
+      // Fetch transcript (thinking phase)
       const transcript = await fetchVideoTranscript(videoId, videoTitle);
+      
+      // Switch to writing phase
+      startVideoWriting();
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`, {
         method: "POST",
         headers: {
@@ -606,23 +671,20 @@ const Index = () => {
         throw new Error("Failed to generate flashcards");
       }
       const data = await response.json();
-      setFlashcards(data.flashcards);
-      toast({
-        title: "Flashcards Ready! 📚",
-        description: `Generated ${data.flashcards.length} flashcards from video`
-      });
+      
+      // Store result and trigger completion animation
+      setPendingVideoResult({ type: 'flashcards', data, title: videoTitle });
+      completeVideoProcessing();
     } catch (error) {
       console.error("Error generating flashcards:", error);
-      setShowFlashcardsScreen(false);
-      setFlashcards([]);
-      setFlashcardTitle("");
+      resetVideoProcessing();
+      setIsGeneratingFlashcards(false);
+      setActiveGenerating(null);
       toast({
         title: "Error",
         description: "Failed to generate flashcards",
         variant: "destructive"
       });
-    } finally {
-      setIsGeneratingFlashcards(false);
     }
   };
   const handleGenerateFlashcardsFromContent = async (settings?: GenerationSettings) => {
@@ -700,10 +762,10 @@ const Index = () => {
     const allowed = await trySpendCredits("quiz");
     if (!allowed) return;
     
-    // INSTANT UI: Show quiz screen immediately with loading
-    setQuizQuestions([]);
-    setQuizTitle(videoTitle);
-    setShowQuizScreen(true);
+    // Start Newton animation
+    setVideoProcessingMessage("Generating quiz from video...");
+    startVideoThinking();
+    setActiveGenerating("quiz");
     setIsGeneratingQuiz(true);
     
     try {
@@ -716,8 +778,12 @@ const Index = () => {
         throw new Error("Not authenticated");
       }
 
-      // Fetch transcript first
+      // Fetch transcript (thinking phase)
       const transcript = await fetchVideoTranscript(videoId, videoTitle);
+      
+      // Switch to writing phase
+      startVideoWriting();
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`, {
         method: "POST",
         headers: {
@@ -738,23 +804,20 @@ const Index = () => {
         throw new Error("Failed to generate quiz");
       }
       const data = await response.json();
-      setQuizQuestions(data.questions);
-      toast({
-        title: "Quiz Ready! 🧠",
-        description: `Generated ${data.questions.length} questions from video`
-      });
+      
+      // Store result and trigger completion animation
+      setPendingVideoResult({ type: 'quiz', data, title: videoTitle });
+      completeVideoProcessing();
     } catch (error) {
       console.error("Error generating quiz:", error);
-      setShowQuizScreen(false);
-      setQuizQuestions([]);
-      setQuizTitle("");
+      resetVideoProcessing();
+      setIsGeneratingQuiz(false);
+      setActiveGenerating(null);
       toast({
         title: "Error",
         description: "Failed to generate quiz",
         variant: "destructive"
       });
-    } finally {
-      setIsGeneratingQuiz(false);
     }
   };
   const handleGenerateSummaryFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
@@ -762,10 +825,12 @@ const Index = () => {
     const allowed = await trySpendCredits("summary");
     if (!allowed) return;
     
-    // Instantly show the screen with loading state
-    setVideoStudyToolTitle(videoTitle);
-    setShowVideoSummaryScreen(true);
+    // Start Newton animation
+    setVideoProcessingMessage("Generating summary from video...");
+    startVideoThinking();
+    setActiveGenerating("summary");
     setIsGeneratingSummary(true);
+    
     try {
       const {
         data: {
@@ -776,8 +841,12 @@ const Index = () => {
         throw new Error("Not authenticated");
       }
 
-      // Fetch transcript first
+      // Fetch transcript (thinking phase)
       const transcript = await fetchVideoTranscript(videoId, videoTitle);
+      
+      // Switch to writing phase
+      startVideoWriting();
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`, {
         method: "POST",
         headers: {
@@ -793,21 +862,20 @@ const Index = () => {
         throw new Error("Failed to generate summary");
       }
       const data = await response.json();
-      setVideoSummary(data.summary);
-      toast({
-        title: "Summary Ready! 📝",
-        description: "Video summary generated successfully"
-      });
+      
+      // Store result and trigger completion animation
+      setPendingVideoResult({ type: 'summary', data, title: videoTitle });
+      completeVideoProcessing();
     } catch (error) {
       console.error("Error generating summary:", error);
-      setShowVideoSummaryScreen(false);
+      resetVideoProcessing();
+      setIsGeneratingSummary(false);
+      setActiveGenerating(null);
       toast({
         title: "Error",
         description: "Failed to generate summary",
         variant: "destructive"
       });
-    } finally {
-      setIsGeneratingSummary(false);
     }
   };
   const handleGenerateMindMapFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
@@ -815,11 +883,12 @@ const Index = () => {
     const allowed = await trySpendCredits("mind_map");
     if (!allowed) return;
     
-    // Instantly show the screen with loading state
-    setVideoStudyToolTitle(videoTitle);
-    setShowVideoMindMapScreen(true);
-    setIsGeneratingMindMap(true);
+    // Start Newton animation
+    setVideoProcessingMessage("Generating mind map from video...");
+    startVideoThinking();
     setActiveGenerating("mindmap");
+    setIsGeneratingMindMap(true);
+    
     try {
       const {
         data: {
@@ -830,8 +899,12 @@ const Index = () => {
         throw new Error("Not authenticated");
       }
 
-      // Fetch transcript first
+      // Fetch transcript (thinking phase)
       const transcript = await fetchVideoTranscript(videoId, videoTitle);
+      
+      // Switch to writing phase
+      startVideoWriting();
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`, {
         method: "POST",
         headers: {
@@ -847,28 +920,20 @@ const Index = () => {
         throw new Error("Failed to generate mind map");
       }
       const data = await response.json();
-      setVideoMindMap(data.mindMap);
-
-      // Set the parsed mind map data for visual rendering
-      if (data.mindMapData) {
-        setVideoMindMapData(data.mindMapData);
-      }
-      setFullScreenMindMapTitle(videoTitle);
-      toast({
-        title: "Mind Map Ready! 🧠",
-        description: "Video mind map generated successfully"
-      });
+      
+      // Store result and trigger completion animation
+      setPendingVideoResult({ type: 'mindmap', data, title: videoTitle });
+      completeVideoProcessing();
     } catch (error) {
       console.error("Error generating mind map:", error);
-      setShowVideoMindMapScreen(false);
+      resetVideoProcessing();
+      setIsGeneratingMindMap(false);
+      setActiveGenerating(null);
       toast({
         title: "Error",
         description: "Failed to generate mind map",
         variant: "destructive"
       });
-    } finally {
-      setIsGeneratingMindMap(false);
-      setActiveGenerating(null);
     }
   };
   const handleGenerateQuizFromContent = async (settings?: GenerationSettings) => {
@@ -1882,6 +1947,16 @@ const Index = () => {
           setShowVideoMindMapScreen(false);
           setVideoMindMap("");
         }} showVideoSlide={showVideosPanel} /> : null)}
+
+          {/* Newton Processing Overlay for Video Tools */}
+          {isVideoProcessing && (
+            <ProcessingOverlay
+              isVisible={isVideoProcessing}
+              phase={videoProcessingPhase}
+              message={videoProcessingMessage}
+              variant="overlay"
+            />
+          )}
         </div>
       </AppLayout>;
   }
@@ -1988,6 +2063,16 @@ const Index = () => {
           setShowVideoMindMapScreen(false);
           setVideoMindMap("");
         }} showVideoSlide={showVideosPanel} /> : null)}
+
+          {/* Newton Processing Overlay for Video Tools */}
+          {isVideoProcessing && (
+            <ProcessingOverlay
+              isVisible={isVideoProcessing}
+              phase={videoProcessingPhase}
+              message={videoProcessingMessage}
+              variant="overlay"
+            />
+          )}
 
           {/* Credit Modal */}
           <CreditModal

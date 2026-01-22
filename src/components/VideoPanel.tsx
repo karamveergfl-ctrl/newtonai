@@ -3,6 +3,7 @@ import { VideoCardWithTools } from "./VideoCardWithTools";
 import { Button } from "@/components/ui/button";
 import { Sparkles, X, Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VideoGenerationSettings } from "./VideoGenerationSettingsDialog";
 
 interface Video {
   id: string;
@@ -20,10 +21,10 @@ interface VideoPanelProps {
   searchQuery: string;
   onVideoClick: (videoId: string) => void;
   onClose: () => void;
-  onGenerateFlashcards?: (videoId: string, videoTitle: string) => void;
-  onGenerateQuiz?: (videoId: string, videoTitle: string) => void;
-  onGenerateSummary?: (videoId: string, videoTitle: string) => void;
-  onGenerateMindMap?: (videoId: string, videoTitle: string) => void;
+  onGenerateFlashcards?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
+  onGenerateQuiz?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
+  onGenerateSummary?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
+  onGenerateMindMap?: (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => void;
   isGenerating?: boolean;
   activeGenerating?: "quiz" | "flashcards" | "summary" | "mindmap" | null;
   defaultTab?: "animation" | "explanation";
