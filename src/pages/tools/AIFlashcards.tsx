@@ -3,13 +3,15 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Layers, RotateCcw, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Layers, RotateCcw, ChevronLeft, ChevronRight, X, Check, Shuffle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Flashcard } from "@/components/Flashcard";
+import { FlashcardCompletionScreen } from "@/components/FlashcardCompletionScreen";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
@@ -17,6 +19,7 @@ import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { useProcessingState } from "@/hooks/useProcessingState";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
+import { cn } from "@/lib/utils";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -41,6 +44,8 @@ const AIFlashcards = () => {
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [masteredCards, setMasteredCards] = useState<Set<number>>(new Set());
+  const [showCompletion, setShowCompletion] = useState(false);
   const { toast } = useToast();
   
   // Use feature limit gate instead of credit gate
@@ -164,11 +169,45 @@ const AIFlashcards = () => {
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev < flashcards.length - 1 ? prev + 1 : 0));
+    if (currentIndex < flashcards.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setIsFlipped(false);
+    } else {
+      // Reached end of deck
+      setShowCompletion(true);
+    }
+  };
+
+  const handleMarkMastered = () => {
+    setMasteredCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(currentIndex)) {
+        newSet.delete(currentIndex);
+      } else {
+        newSet.add(currentIndex);
+      }
+      return newSet;
+    });
+  };
+
+  const handleShuffle = () => {
+    const shuffled = [...flashcards].sort(() => Math.random() - 0.5);
+    setFlashcards(shuffled);
+    setCurrentIndex(0);
     setIsFlipped(false);
+    setMasteredCards(new Set());
+    toast({ title: "Shuffled!", description: "Cards have been shuffled" });
+  };
+
+  const handleRetryFlashcards = () => {
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setMasteredCards(new Set());
+    setShowCompletion(false);
   };
 
   const currentCard = flashcards[currentIndex];
+  const progress = flashcards.length > 0 ? ((currentIndex + 1) / flashcards.length) * 100 : 0;
 
   const getContentTitle = () => {
     if (!pendingContent) return "";
@@ -237,18 +276,63 @@ const AIFlashcards = () => {
                 </CardContent>
               </Card>
             )
+          ) : showCompletion ? (
+            <FlashcardCompletionScreen
+              totalCards={flashcards.length}
+              masteredCount={masteredCards.size}
+              onRetry={handleRetryFlashcards}
+              onDone={() => {
+                setFlashcards([]);
+                setShowCompletion(false);
+                setMasteredCards(new Set());
+              }}
+            />
           ) : (
             <div className="space-y-4 sm:space-y-6">
+              {/* Progress bar */}
+              <div className="px-2 sm:px-0">
+                <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground mb-2">
+                  <span>{currentIndex + 1} of {flashcards.length}</span>
+                  <span>{masteredCards.size} mastered</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+
+              {/* Action buttons */}
               <div className="flex items-center justify-between px-2 sm:px-0">
-                <span className="text-xs sm:text-sm text-muted-foreground font-sans">
-                  Card {currentIndex + 1} of {flashcards.length}
-                </span>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleShuffle}
+                    className="h-10 gap-2"
+                  >
+                    <Shuffle className="h-4 w-4" />
+                    <span className="hidden sm:inline">Shuffle</span>
+                  </Button>
+                  <Button
+                    variant={masteredCards.has(currentIndex) ? "default" : "outline"}
+                    size="sm"
+                    onClick={handleMarkMastered}
+                    className={cn(
+                      "h-10 gap-2",
+                      masteredCards.has(currentIndex) && "bg-green-600 hover:bg-green-700"
+                    )}
+                  >
+                    <Check className="h-4 w-4" />
+                    <span className="hidden sm:inline">
+                      {masteredCards.has(currentIndex) ? "Mastered" : "Mark Mastered"}
+                    </span>
+                  </Button>
+                </div>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => {
                     setFlashcards([]);
+                    setMasteredCards(new Set());
                   }}
+                  className="h-10"
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
                   <span className="hidden sm:inline">New Set</span>
@@ -264,17 +348,26 @@ const AIFlashcards = () => {
                   total={flashcards.length}
                   isFlipped={isFlipped}
                   onFlip={() => setIsFlipped(!isFlipped)}
+                  isMastered={masteredCards.has(currentIndex)}
+                  onMarkMastered={handleMarkMastered}
                 />
               )}
 
               <div className="flex items-center justify-center gap-3 sm:gap-4">
-                <Button variant="outline" onClick={goToPrevious} className="gap-1 sm:gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={goToPrevious} 
+                  className="h-12 gap-2 min-w-[100px] sm:min-w-[120px]"
+                >
                   <ChevronLeft className="h-4 w-4" />
                   <span className="hidden sm:inline">Previous</span>
                   <span className="sm:hidden">Prev</span>
                 </Button>
-                <Button onClick={goToNext} className="gap-1 sm:gap-2">
-                  <span>Next</span>
+                <Button 
+                  onClick={goToNext} 
+                  className="h-12 gap-2 min-w-[100px] sm:min-w-[120px]"
+                >
+                  <span>{currentIndex === flashcards.length - 1 ? "Finish" : "Next"}</span>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
