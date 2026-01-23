@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Brain, BookOpen, Sparkles } from "lucide-react";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
+import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
 
 interface GenerationSettingsDialogProps {
   open: boolean;
@@ -65,19 +66,22 @@ export const GenerationSettingsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {type === "quiz" ? (
-              <>
-                <Brain className="w-5 h-5 text-primary" />
-                Generate Quiz
-              </>
-            ) : (
-              <>
-                <BookOpen className="w-5 h-5 text-secondary" />
-                Generate Flashcards
-              </>
-            )}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              {type === "quiz" ? (
+                <>
+                  <Brain className="w-5 h-5 text-primary" />
+                  Generate Quiz
+                </>
+              ) : (
+                <>
+                  <BookOpen className="w-5 h-5 text-secondary" />
+                  Generate Flashcards
+                </>
+              )}
+            </DialogTitle>
+            <SubscriptionTierBadge tier={subscription.tier} size="sm" />
+          </div>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
