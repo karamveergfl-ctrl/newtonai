@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { AmbientSoundPicker } from "@/components/AmbientSoundPicker";
+import DOMPurify from "dompurify";
 
 export interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -190,13 +191,21 @@ export function PodcastPlayer({
       `;
       
       // Build the HTML content
-      container.innerHTML = `
+      // Helper function to escape HTML to prevent XSS
+      const escapeHtml = (text: string): string => {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      };
+
+      // Build HTML with escaped user content and sanitize with DOMPurify
+      const htmlContent = `
         <div style="margin-bottom: 30px;">
-          <h1 style="font-size: 24px; color: #1a1a1a; margin-bottom: 8px;">${title}</h1>
+          <h1 style="font-size: 24px; color: #1a1a1a; margin-bottom: 8px;">${escapeHtml(title)}</h1>
           <p style="font-size: 14px; color: #666;">Podcast Transcript • ${segments.length} segments</p>
         </div>
         <div style="border-top: 2px solid #e5e5e5; padding-top: 20px;">
-          ${segments.map((seg, idx) => `
+          ${segments.map((seg) => `
             <div style="margin-bottom: 20px; page-break-inside: avoid;">
               <div style="display: flex; align-items: center; margin-bottom: 8px;">
                 <span style="
@@ -207,13 +216,19 @@ export function PodcastPlayer({
                   font-weight: 600;
                   background: ${seg.speaker === "host1" ? "#e0f2fe" : "#fce7f3"};
                   color: ${seg.speaker === "host1" ? "#0369a1" : "#be185d"};
-                ">${seg.name}</span>
+                ">${escapeHtml(seg.name)}</span>
               </div>
-              <p style="font-size: 14px; line-height: 1.6; color: #374151; margin: 0;">${seg.text}</p>
+              <p style="font-size: 14px; line-height: 1.6; color: #374151; margin: 0;">${escapeHtml(seg.text)}</p>
             </div>
           `).join("")}
         </div>
       `;
+      
+      // Sanitize the final HTML to prevent any XSS attacks
+      container.innerHTML = DOMPurify.sanitize(htmlContent, { 
+        ALLOWED_TAGS: ['div', 'h1', 'p', 'span'], 
+        ALLOWED_ATTR: ['style'] 
+      });
       
       document.body.appendChild(container);
       
