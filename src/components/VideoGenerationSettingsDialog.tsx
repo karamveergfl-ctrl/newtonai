@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Brain, BookOpen, FileText, Network, Zap, List, GraduationCap, Circle, GitBranch, Boxes, Clock } from "lucide-react";
+import { Brain, BookOpen, FileText, Network, Zap, List, GraduationCap, Circle, GitBranch, Boxes, Clock, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 
 interface VideoGenerationSettingsDialogProps {
   open: boolean;
@@ -100,7 +101,14 @@ export const VideoGenerationSettingsDialog = ({
   videoTitle,
   onGenerate
 }: VideoGenerationSettingsDialogProps) => {
-  const [count, setCount] = useState(type === "quiz" ? 10 : type === "flashcards" ? 15 : 5);
+  const { subscription } = useFeatureUsage();
+  
+  // Dynamic max count based on subscription tier
+  const isFree = subscription.tier === "free";
+  const maxCount = isFree ? 10 : 20;
+  const minCount = 5;
+  
+  const [count, setCount] = useState(type === "quiz" ? 10 : type === "flashcards" ? 10 : 5);
   const [difficulty, setDifficulty] = useState(2);
   const [detailLevel, setDetailLevel] = useState(2);
   const [summaryFormat, setSummaryFormat] = useState<SummaryFormat>("concise");
@@ -121,8 +129,6 @@ export const VideoGenerationSettingsDialog = ({
   const showDifficultySlider = type === "quiz" || type === "flashcards";
   const showDetailSlider = type === "summary";
 
-  const maxCount = type === "quiz" ? 30 : 50;
-  const minCount = 5;
   const countLabel = type === "quiz" ? "Questions" : "Flashcards";
 
   return (
@@ -237,6 +243,12 @@ export const VideoGenerationSettingsDialog = ({
                 <span>{minCount}</span>
                 <span>{maxCount}</span>
               </div>
+              {isFree && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-primary" />
+                  <span><span className="text-primary font-medium">Upgrade to Pro</span> for up to 20 {countLabel.toLowerCase()}</span>
+                </p>
+              )}
             </div>
           )}
 

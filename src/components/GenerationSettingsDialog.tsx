@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Brain, BookOpen } from "lucide-react";
+import { Brain, BookOpen, Sparkles } from "lucide-react";
+import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 
 interface GenerationSettingsDialogProps {
   open: boolean;
@@ -39,8 +40,15 @@ export const GenerationSettingsDialog = ({
   totalPages,
   onGenerate
 }: GenerationSettingsDialogProps) => {
+  const { subscription } = useFeatureUsage();
+  
+  // Dynamic max count based on subscription tier
+  const isFree = subscription.tier === "free";
+  const maxCount = isFree ? 10 : 20;
+  const minCount = 5;
+  
   const [pageRange, setPageRange] = useState<[number, number]>([1, Math.min(totalPages, 10)]);
-  const [count, setCount] = useState(type === "quiz" ? 10 : 15);
+  const [count, setCount] = useState(10);
   const [difficulty, setDifficulty] = useState(2);
 
   const handleGenerate = () => {
@@ -52,9 +60,6 @@ export const GenerationSettingsDialog = ({
     });
     onOpenChange(false);
   };
-
-  const maxCount = type === "quiz" ? 30 : 50;
-  const minCount = type === "quiz" ? 5 : 5;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -118,6 +123,12 @@ export const GenerationSettingsDialog = ({
               <span>{minCount}</span>
               <span>{maxCount}</span>
             </div>
+            {isFree && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-primary" />
+                <span><span className="text-primary font-medium">Upgrade to Pro</span> for up to 20 {type === "quiz" ? "questions" : "flashcards"}</span>
+              </p>
+            )}
           </div>
 
           {/* Difficulty Level */}
