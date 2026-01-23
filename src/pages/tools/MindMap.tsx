@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,9 @@ const MindMap = () => {
   const [showStyleSelection, setShowStyleSelection] = useState(false);
   const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
   
+  // AbortController for cancellation
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
   // Use persisted style preferences
   const { preferences, setMindMapStyle } = useTemplatePreferences();
   const selectedStyle = preferences.mindMapStyle;
@@ -83,6 +86,10 @@ const MindMap = () => {
     const { content, type, metadata } = pendingContent;
     setShowStyleSelection(false);
     setPendingContent(null);
+    
+    // Create abort controller for cancellation
+    abortControllerRef.current = new AbortController();
+    
     startProcessing();
     setMindMapData(null);
 
@@ -118,6 +125,7 @@ const MindMap = () => {
             structure: selectedStyle,
             detailLevel: "standard",
           }),
+          signal: abortControllerRef.current?.signal,
         }
       );
 
@@ -136,6 +144,15 @@ const MindMap = () => {
         description: `Generated ${selectedStyle} mind map`,
       });
     } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        resetProcessing();
+        toast({
+          title: "Cancelled",
+          description: "Mind map generation was cancelled",
+        });
+        return;
+      }
+      
       resetProcessing();
       setErrorState("confused");
       
@@ -148,6 +165,15 @@ const MindMap = () => {
         });
       }, 2000);
     }
+  };
+
+  const handleCancelGeneration = () => {
+    abortControllerRef.current?.abort();
+    resetProcessing();
+    toast({
+      title: "Cancelled",
+      description: "Mind map generation stopped",
+    });
   };
 
   const handleBackFromStyleSelection = () => {
@@ -205,6 +231,8 @@ const MindMap = () => {
                 message="Creating mind map..."
                 subMessage="Mapping relationships"
                 variant="card"
+                canCancel={true}
+                onCancel={handleCancelGeneration}
               />
             ) : (
               <Card className="border-border/50 shadow-lg">

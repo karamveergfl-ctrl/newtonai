@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,9 @@ const AIFlashcards = () => {
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
+  
+  // AbortController for cancellation
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Error state for confused Newton
   const [errorState, setErrorState] = useState<"confused" | null>(null);
@@ -81,6 +84,10 @@ const AIFlashcards = () => {
     
     const { content, type, metadata } = pendingContent;
     setPendingContent(null);
+    
+    // Create abort controller for cancellation
+    abortControllerRef.current = new AbortController();
+    
     startProcessing();
     setFlashcards([]);
 
@@ -119,6 +126,7 @@ const AIFlashcards = () => {
               difficulty: settings.difficulty,
             },
           }),
+          signal: abortControllerRef.current?.signal,
         }
       );
 
@@ -148,6 +156,15 @@ const AIFlashcards = () => {
         description: `Generated ${data.flashcards.length} flashcards`,
       });
     } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        resetProcessing();
+        toast({
+          title: "Cancelled",
+          description: "Flashcard generation was cancelled",
+        });
+        return;
+      }
+      
       resetProcessing();
       setErrorState("confused");
       
@@ -161,6 +178,15 @@ const AIFlashcards = () => {
         });
       }, 2000);
     }
+  };
+
+  const handleCancelGeneration = () => {
+    abortControllerRef.current?.abort();
+    resetProcessing();
+    toast({
+      title: "Cancelled",
+      description: "Flashcard generation stopped",
+    });
   };
 
   const goToPrevious = () => {
@@ -263,6 +289,8 @@ const AIFlashcards = () => {
                 message="Creating flashcards..."
                 subMessage="Analyzing your content"
                 variant="card"
+                canCancel={true}
+                onCancel={handleCancelGeneration}
               />
             ) : (
               <Card className="border-border/50 shadow-lg">
