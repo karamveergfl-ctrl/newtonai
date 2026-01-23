@@ -93,6 +93,16 @@ export function useSSEProgress(): UseSSEProgressReturn {
                     if (parsed.message) setMessage(parsed.message);
                     continue;
                   }
+
+                  // Handle final result events from our edge functions
+                  if (parsed.type === "result") {
+                    // Normalize into a string so callers can JSON.parse() it.
+                    // (We intentionally overwrite any streaming text content.)
+                    fullContent = JSON.stringify(
+                      parsed.data ?? parsed.result ?? parsed.payload ?? parsed
+                    );
+                    continue;
+                  }
                   
                   // Handle OpenAI-style streaming content
                   const content = parsed.choices?.[0]?.delta?.content;
