@@ -156,6 +156,7 @@ const AILectureNotes = () => {
   // Use persisted template preferences
   const { preferences, setLectureTemplate } = useTemplatePreferences();
   const selectedTemplate = preferences.lectureTemplate;
+  const notesStyle = preferences.notesStyle;
   
   const { toast } = useToast();
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("lecture_notes");
@@ -320,6 +321,7 @@ const AILectureNotes = () => {
           template: selectedTemplate,
           templateStructure: template?.structure || ["Key Points", "Details", "Summary"],
           language: selectedLanguage,
+          notesStyle: notesStyle,
         },
       });
 

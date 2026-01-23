@@ -11,7 +11,10 @@ import {
   Copy,
   ExternalLink,
   Loader2,
-  Save
+  Save,
+  GraduationCap,
+  Zap,
+  Presentation
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -30,6 +33,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { useTemplatePreferences, NotesStyle } from '@/hooks/useTemplatePreferences';
 
 const languages = [
   { value: 'en', label: 'English' },
@@ -102,6 +106,62 @@ const SettingRow = ({
     </div>
   </div>
 );
+
+// Study Tool Preferences Card Component
+function StudyToolPreferencesCard() {
+  const { preferences, setNotesStyle } = useTemplatePreferences();
+
+  const notesStyles: { id: NotesStyle; name: string; description: string; icon: React.ElementType }[] = [
+    { id: "academic", name: "Academic", description: "Prose with Core Ideas, LaTeX, tables", icon: GraduationCap },
+    { id: "quick-notes", name: "Quick Notes", description: "Scannable bullet points", icon: Zap },
+    { id: "slides", name: "Slides", description: "Sparse key points only", icon: Presentation },
+  ];
+
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <div className="px-4 py-3 border-b">
+          <div className="flex items-center gap-2">
+            <IndicatorDot color="orange" />
+            <h3 className="font-semibold">Study Tool Preferences</h3>
+          </div>
+        </div>
+        <div className="px-4 divide-y divide-border">
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <span className="text-foreground">Notes Writing Style</span>
+              <p className="text-xs text-muted-foreground">
+                How AI generates lecture notes and summaries
+              </p>
+            </div>
+            <Select value={preferences.notesStyle} onValueChange={(v) => setNotesStyle(v as NotesStyle)}>
+              <SelectTrigger className="w-40 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {notesStyles.map((style) => (
+                  <SelectItem key={style.id} value={style.id}>
+                    <div className="flex items-center gap-2">
+                      <style.icon className="h-4 w-4" />
+                      <span>{style.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="py-3">
+            <p className="text-xs text-muted-foreground">
+              {preferences.notesStyle === "academic" && "Rich prose with Executive Summaries, Core Idea callouts, comparison tables, and LaTeX notation for technical content."}
+              {preferences.notesStyle === "quick-notes" && "Scannable bullet points with brief explanations. Fast to read and easy to review."}
+              {preferences.notesStyle === "slides" && "Minimal text with only key headlines and takeaways. Perfect for presentations."}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanelProps) {
   const { setTheme, theme } = useTheme();
@@ -384,6 +444,9 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
           </div>
         </CardContent>
       </Card>
+
+      {/* Study Tool Preferences Section */}
+      <StudyToolPreferencesCard />
 
       {/* Email Notifications Settings */}
       <Card>

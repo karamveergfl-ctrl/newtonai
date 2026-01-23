@@ -56,7 +56,7 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { transcription, template, templateStructure, language } = await req.json();
+    const { transcription, template, templateStructure, language, notesStyle = "academic" } = await req.json();
 
     if (!transcription) {
       throw new Error("No transcription provided");
@@ -67,9 +67,10 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    console.log("Generating brief summary from transcription...");
+    console.log("Generating notes from transcription...");
     console.log("Template:", template);
     console.log("Language:", language);
+    console.log("Notes Style:", notesStyle);
 
     // Get language name for the prompt
     const languageNames: Record<string, string> = {
@@ -87,6 +88,46 @@ serve(async (req) => {
       "ru-RU": "Russian",
     };
     const targetLanguage = languageNames[language] || "English";
+
+    // Style modifiers based on user preference
+    const styleModifiers: Record<string, string> = {
+      "academic": `
+WRITING STYLE: ACADEMIC & COMPREHENSIVE
+- Start with an "Executive Summary" section (2-3 prose sentences introducing the topic)
+- Each major section MUST start with "**Core Idea:**" followed by a 1-2 sentence summary
+- Write in PROSE PARAGRAPHS with detailed explanations, not just bullet lists
+- Use NUMBERED sections (1., 2., 3.) for major topics
+- Include COMPARISON TABLES when contrasting concepts (use markdown tables)
+- Use LaTeX notation for ALL technical variables: $V_z$, $I_F$, $R_b$, $\\alpha$
+- Add "Key Technical Findings" or "Key Takeaways" section at the end
+- Include "Key Physical Attributes:" or "Key Parameters:" sub-sections where relevant
+- Academic, formal tone with thorough explanations
+`,
+      "quick-notes": `
+WRITING STYLE: QUICK NOTES (Scannable)
+- Use BULLET POINTS as the primary format
+- Keep explanations BRIEF (1-2 sentences max per point)
+- Focus on KEY FACTS and essential information only
+- Use **bold** for important terms and concepts
+- NO lengthy paragraphs - everything should be scannable
+- Easy to review quickly before exams
+- Skip detailed background - just the essentials
+- Use short, punchy statements
+`,
+      "slides": `
+WRITING STYLE: SLIDES (Minimal & Presentation-Ready)
+- VERY sparse content - think "presentation slides"
+- Maximum 3-5 bullet points per section
+- ONE key idea per section/slide
+- Large, impactful statements only
+- NO paragraphs, NO detailed explanations
+- Just headlines and key takeaways
+- Perfect for quick revision or presentations
+- Use bold for emphasis on critical terms
+`
+    };
+
+    const styleInstruction = styleModifiers[notesStyle] || styleModifiers["academic"];
 
     // Template-specific prompts - COMPREHENSIVE and DETAILED (not summaries!)
     const templatePrompts: Record<string, string> = {
@@ -277,6 +318,8 @@ Comprehensive description of the proposed approach.
 
     const systemPrompt = `You are an expert lecture note-taker and educational content creator. Your task is to create COMPREHENSIVE, DETAILED lecture notes that EXPAND upon the source material.
 
+${styleInstruction}
+
 CRITICAL RULES:
 1. EXPAND the content - add context, explanations, definitions, and elaboration
 2. Be THOROUGH - if the input mentions something briefly, explain it more fully
@@ -288,7 +331,7 @@ CRITICAL RULES:
 8. Make the notes suitable for studying and revision
 9. Add logical CONNECTIONS between ideas
 10. Correct any spelling, grammar, and language errors
-11. The output should be LONGER and MORE DETAILED than the input
+11. For technical content, use LaTeX notation: $V_z$, $I_c$, $\\alpha$, $\\beta$
 
 ${structureInfo}
 

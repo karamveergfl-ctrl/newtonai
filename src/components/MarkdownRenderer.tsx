@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -24,10 +25,12 @@ import {
   Zap,
   type LucideIcon
 } from "lucide-react";
+import { autoDetectLatex, shouldApplyLatex } from "@/utils/latexAutoDetect";
 
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+  enableAutoLatex?: boolean;
 }
 
 // Map heading text patterns to icons
@@ -95,9 +98,17 @@ const extractText = (children: React.ReactNode): string => {
   return '';
 };
 
-export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) => {
+export const MarkdownRenderer = ({ content, className, enableAutoLatex = true }: MarkdownRendererProps) => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+
+  // Apply LaTeX auto-detection if enabled and content looks technical
+  const processedContent = useMemo(() => {
+    if (enableAutoLatex && shouldApplyLatex(content)) {
+      return autoDetectLatex(content);
+    }
+    return content;
+  }, [content, enableAutoLatex]);
 
   const renderHeadingWithIcon = (children: React.ReactNode, Tag: 'h1' | 'h2' | 'h3' | 'h4') => {
     const text = extractText(children);
@@ -220,7 +231,7 @@ export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) 
           },
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );
