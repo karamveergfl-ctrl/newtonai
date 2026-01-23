@@ -1,6 +1,7 @@
-import { memo, useRef, useEffect } from "react";
+import { memo, useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 interface ProcessingOverlayProps {
   /** Whether to show the overlay */
@@ -30,14 +31,26 @@ export const ProcessingOverlay = memo(({
   className = "",
 }: ProcessingOverlayProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
-  // Reset video when becoming visible
+  // Instant start/stop video control
   useEffect(() => {
-    if (isVisible && videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {
-        // Autoplay may be blocked, but video will still show
-      });
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isVisible) {
+      // Reset to start and play immediately
+      video.currentTime = 0;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay may be blocked, but video will still show
+        });
+      }
+    } else {
+      // Stop instantly and reset
+      video.pause();
+      video.currentTime = 0;
     }
   }, [isVisible]);
 
@@ -46,16 +59,23 @@ export const ProcessingOverlay = memo(({
   const content = (
     <div className="flex flex-col items-center justify-center gap-4 py-4">
       {/* Newton Video - loops until processing completes */}
-      <div className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56">
+      <div className="relative w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 rounded-2xl overflow-hidden">
         {/* Glow effect behind video */}
         <motion.div
-          className="absolute inset-0 rounded-full bg-gradient-radial from-primary/20 via-primary/5 to-transparent blur-xl"
+          className="absolute inset-0 rounded-2xl bg-gradient-radial from-primary/20 via-primary/5 to-transparent blur-xl"
           animate={{ 
             scale: [1, 1.1, 1],
             opacity: [0.5, 0.8, 0.5]
           }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
+
+        {/* Loading placeholder while video loads */}
+        {!videoLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted/20 rounded-2xl z-20">
+            <Loader2 className="w-10 h-10 animate-spin text-muted-foreground" />
+          </div>
+        )}
         
         <video
           ref={videoRef}
@@ -64,7 +84,9 @@ export const ProcessingOverlay = memo(({
           loop
           muted
           playsInline
-          className="relative z-10 w-full h-full object-contain"
+          preload="auto"
+          onLoadedData={() => setVideoLoaded(true)}
+          className="relative z-10 w-full h-full object-contain rounded-2xl"
         />
       </div>
 
