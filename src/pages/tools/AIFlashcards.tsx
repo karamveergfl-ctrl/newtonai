@@ -47,7 +47,7 @@ const AIFlashcards = () => {
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("flashcards");
 
   // Processing animation state
-  const { phase, isProcessing: isGenerating, startThinking, startWriting, complete, reset: resetProcessing } = useProcessingState();
+  const { isProcessing: isGenerating, start: startProcessing, stop: stopProcessing, reset: resetProcessing } = useProcessingState();
 
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -76,7 +76,7 @@ const AIFlashcards = () => {
     
     const { content, type, metadata } = pendingContent;
     setPendingContent(null);
-    startThinking(); // Start thinking animation
+    startProcessing();
     setFlashcards([]);
 
     try {
@@ -96,9 +96,6 @@ const AIFlashcards = () => {
       if (!textContent?.trim()) {
         throw new Error("No content to process");
       }
-
-      // Switch to writing phase when API call starts
-      startWriting();
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`,
@@ -136,19 +133,15 @@ const AIFlashcards = () => {
         result_preview: { cardCount: data.flashcards.length },
       });
       
-      // Trigger completed animation
-      complete();
-      
-      // Wait for animation to finish, then show results
-      setTimeout(() => {
-        setFlashcards(data.flashcards);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        toast({
-          title: "Flashcards Ready! 📚",
-          description: `Generated ${data.flashcards.length} flashcards`,
-        });
-      }, 1500);
+      // Stop processing and show results immediately
+      stopProcessing();
+      setFlashcards(data.flashcards);
+      setCurrentIndex(0);
+      setIsFlipped(false);
+      toast({
+        title: "Flashcards Ready! 📚",
+        description: `Generated ${data.flashcards.length} flashcards`,
+      });
     } catch (error) {
       resetProcessing();
       setErrorState("confused");
@@ -228,10 +221,8 @@ const AIFlashcards = () => {
             isGenerating ? (
               <ProcessingOverlay
                 isVisible={isGenerating}
-                phase={phase}
-                message={phase === "thinking" ? "Analyzing your content..." : phase === "writing" ? "Creating flashcards..." : "Flashcards ready!"}
-                subMessage={phase === "thinking" ? "Understanding the material" : phase === "writing" ? "Crafting memorable cards" : undefined}
-                showProgress={true}
+                message="Creating flashcards..."
+                subMessage="Analyzing your content"
                 variant="card"
               />
             ) : (

@@ -1,88 +1,105 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { NewtonProcessingAnimation } from "./NewtonProcessingAnimation";
-import { useSimulatedProgress } from "@/hooks/useSimulatedProgress";
-import type { ProcessingPhase } from "@/hooks/useProcessingState";
-
-// State-specific messages
-export const PROCESSING_MESSAGES: Record<ProcessingPhase, { message: string; subMessage?: string }> = {
-  idle: { message: "" },
-  thinking: { message: "Newton is thinking...", subMessage: "Analyzing your content" },
-  writing: { message: "Writing your results...", subMessage: "Almost there" },
-  completed: { message: "All done!", subMessage: "Here are your results" },
-};
 
 interface ProcessingOverlayProps {
   /** Whether to show the overlay */
   isVisible: boolean;
-  /** Current processing phase */
-  phase?: ProcessingPhase;
-  /** Custom message to display (overrides default) */
+  /** Message to display */
   message?: string;
   /** Sub-message for additional context */
   subMessage?: string;
-  /** Progress value (0-100) - if not provided, uses simulated progress */
-  progress?: number;
-  /** Show progress bar (default: true) */
-  showProgress?: boolean;
-  /** Size of the animation */
-  size?: "sm" | "md" | "lg";
   /** Whether to use full-screen overlay, card, or inline */
   variant?: "overlay" | "card" | "inline";
-  /** Callback when completed animation ends */
-  onCompleteEnd?: () => void;
   /** Additional className */
   className?: string;
 }
 
 /**
- * Processing Overlay Component
+ * Processing Overlay Component (Video-Based)
  * 
- * Provides a reusable loading/processing UI with smooth animations.
- * Shows Newton character with progress bar during processing.
+ * Displays a looping Newton video during processing.
+ * Video loops infinitely until isVisible becomes false.
+ * No fake progress - duration matches real backend time.
  */
 export const ProcessingOverlay = memo(({
   isVisible,
-  phase = "thinking",
-  message,
+  message = "Newton is working...",
   subMessage,
-  progress: externalProgress,
-  showProgress = true,
-  size = "md",
   variant = "card",
-  onCompleteEnd,
   className = "",
 }: ProcessingOverlayProps) => {
-  const [internalPhase, setInternalPhase] = useState<ProcessingPhase>(phase);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Use simulated progress if no external progress provided
-  const { progress: simulatedProgress } = useSimulatedProgress(internalPhase);
-  const displayProgress = externalProgress ?? simulatedProgress;
-
-  // Sync internal phase with prop
+  // Reset video when becoming visible
   useEffect(() => {
-    setInternalPhase(phase);
-  }, [phase]);
+    if (isVisible && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {
+        // Autoplay may be blocked, but video will still show
+      });
+    }
+  }, [isVisible]);
 
-  // Get default messages for the phase
-  const defaultMessages = PROCESSING_MESSAGES[internalPhase];
-  const displayMessage = message || defaultMessages.message;
-  const displaySubMessage = subMessage || defaultMessages.subMessage;
-
-  if (!isVisible && internalPhase === "idle") return null;
+  if (!isVisible) return null;
 
   const content = (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <NewtonProcessingAnimation
-        state={internalPhase}
-        message={displayMessage}
-        subMessage={displaySubMessage}
-        progress={displayProgress}
-        showProgress={showProgress}
-        size={size}
-        onCompleteAnimationEnd={onCompleteEnd}
-      />
+    <div className="flex flex-col items-center justify-center gap-4 py-4">
+      {/* Newton Video - loops until processing completes */}
+      <div className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56">
+        {/* Glow effect behind video */}
+        <motion.div
+          className="absolute inset-0 rounded-full bg-gradient-radial from-primary/20 via-primary/5 to-transparent blur-xl"
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.5, 0.8, 0.5]
+          }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        <video
+          ref={videoRef}
+          src="/newton-processing.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="relative z-10 w-full h-full object-contain"
+        />
+      </div>
+
+      {/* Message text */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center"
+      >
+        <p className="text-base sm:text-lg font-medium text-foreground">
+          {message}
+        </p>
+        {subMessage && (
+          <p className="text-sm text-muted-foreground mt-1">
+            {subMessage}
+          </p>
+        )}
+      </motion.div>
+
+      {/* Indeterminate progress bar - shimmer animation */}
+      <div className="w-full max-w-xs">
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <motion.div
+            className="h-full w-1/3 bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
+            animate={{
+              x: ["-100%", "400%"],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 
@@ -90,16 +107,14 @@ export const ProcessingOverlay = memo(({
   if (variant === "overlay") {
     return (
       <AnimatePresence>
-        {isVisible && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className={`fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm ${className}`}
-          >
-            {content}
-          </motion.div>
-        )}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm ${className}`}
+        >
+          {content}
+        </motion.div>
       </AnimatePresence>
     );
   }
@@ -107,40 +122,32 @@ export const ProcessingOverlay = memo(({
   // Card variant (default)
   if (variant === "card") {
     return (
-      <AnimatePresence>
-        {isVisible && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-            className={className}
-          >
-            <Card className="border-border/50 shadow-lg overflow-hidden">
-              <CardContent className="flex items-center justify-center min-h-[300px] sm:min-h-[400px] py-8">
-                {content}
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.3 }}
+        className={className}
+      >
+        <Card className="border-border/50 shadow-lg overflow-hidden">
+          <CardContent className="flex items-center justify-center min-h-[300px] sm:min-h-[400px] py-8">
+            {content}
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
-  // Inline variant - no border, just floating animation
+  // Inline variant
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className={`flex items-center justify-center py-8 ${className}`}
-        >
-          {content}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className={`flex items-center justify-center py-8 ${className}`}
+    >
+      {content}
+    </motion.div>
   );
 });
 
