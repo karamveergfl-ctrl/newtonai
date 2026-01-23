@@ -32,6 +32,7 @@ export const ProcessingOverlay = memo(({
 }: ProcessingOverlayProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   // Instant start/stop video control
   useEffect(() => {
@@ -54,15 +55,33 @@ export const ProcessingOverlay = memo(({
     }
   }, [isVisible]);
 
+  // Simulated progress animation
+  useEffect(() => {
+    if (!isVisible) {
+      setProgress(0);
+      return;
+    }
+
+    // Progress stages: 0 -> 10% -> 30% -> 60% -> 90%
+    const timers = [
+      setTimeout(() => setProgress(10), 500),
+      setTimeout(() => setProgress(30), 2000),
+      setTimeout(() => setProgress(60), 4000),
+      setTimeout(() => setProgress(90), 6500),
+    ];
+
+    return () => timers.forEach(clearTimeout);
+  }, [isVisible]);
+
   if (!isVisible) return null;
 
   const content = (
     <div className="flex flex-col items-center justify-center gap-4 py-4">
-      {/* Newton Video - loops until processing completes */}
-      <div className="relative w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 rounded-2xl overflow-hidden">
+      {/* Newton Video - larger with rounded corners and border */}
+      <div className="relative w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl overflow-hidden border border-border/30">
         {/* Glow effect behind video */}
         <motion.div
-          className="absolute inset-0 rounded-2xl bg-gradient-radial from-primary/20 via-primary/5 to-transparent blur-xl"
+          className="absolute inset-0 rounded-3xl bg-gradient-radial from-primary/20 via-primary/5 to-transparent blur-xl"
           animate={{ 
             scale: [1, 1.1, 1],
             opacity: [0.5, 0.8, 0.5]
@@ -72,7 +91,7 @@ export const ProcessingOverlay = memo(({
 
         {/* Loading placeholder while video loads */}
         {!videoLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted/20 rounded-2xl z-20">
+          <div className="absolute inset-0 flex items-center justify-center bg-muted/20 rounded-3xl z-20">
             <Loader2 className="w-10 h-10 animate-spin text-muted-foreground" />
           </div>
         )}
@@ -86,7 +105,7 @@ export const ProcessingOverlay = memo(({
           playsInline
           preload="auto"
           onLoadedData={() => setVideoLoaded(true)}
-          className="relative z-10 w-full h-full object-contain rounded-2xl"
+          className="relative z-10 w-full h-full object-contain rounded-3xl"
         />
       </div>
 
@@ -106,19 +125,18 @@ export const ProcessingOverlay = memo(({
         )}
       </motion.div>
 
-      {/* Indeterminate progress bar - shimmer animation */}
-      <div className="w-full max-w-xs">
+      {/* Progress bar with percentage */}
+      <div className="w-full max-w-xs px-4">
+        <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+          <span>Processing...</span>
+          <span className="font-medium">{progress}%</span>
+        </div>
         <div className="h-2 bg-muted rounded-full overflow-hidden">
           <motion.div
-            className="h-full w-1/3 bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
-            animate={{
-              x: ["-100%", "400%"],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
+            className="h-full bg-primary rounded-full"
+            initial={{ width: "0%" }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           />
         </div>
       </div>
