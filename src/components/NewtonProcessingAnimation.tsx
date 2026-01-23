@@ -357,6 +357,7 @@ export const PROCESSING_MESSAGES: Record<ProcessingPhase, { message: string; sub
   thinking: { message: "Newton is thinking...", subMessage: "Analyzing your content" },
   writing: { message: "Writing your results...", subMessage: "Almost there" },
   completed: { message: "All done!", subMessage: "Here are your results" },
+  processing: { message: "Newton is working...", subMessage: "Please wait" },
 };
 
 export default NewtonProcessingAnimation;

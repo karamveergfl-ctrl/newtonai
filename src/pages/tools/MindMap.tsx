@@ -49,7 +49,7 @@ const MindMap = () => {
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("mind_map");
 
   // Processing animation state
-  const { phase, isProcessing: isGenerating, startThinking, startWriting, complete, reset: resetProcessing } = useProcessingState();
+  const { isProcessing: isGenerating, start: startProcessing, stop: stopProcessing, reset: resetProcessing } = useProcessingState();
 
   // Style selection state
   const [showStyleSelection, setShowStyleSelection] = useState(false);
@@ -83,7 +83,7 @@ const MindMap = () => {
     const { content, type, metadata } = pendingContent;
     setShowStyleSelection(false);
     setPendingContent(null);
-    startThinking(); // Start thinking animation
+    startProcessing();
     setMindMapData(null);
 
     try {
@@ -103,9 +103,6 @@ const MindMap = () => {
       if (!textContent?.trim()) {
         throw new Error("No content to process");
       }
-
-      // Switch to writing phase when API call starts
-      startWriting();
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`,
@@ -131,17 +128,13 @@ const MindMap = () => {
       // Track usage after successful generation
       await confirmUsage();
       
-      // Trigger completed animation
-      complete();
-      
-      // Wait for animation to finish, then show results
-      setTimeout(() => {
-        setMindMapData(data.mindMapData || data.mindMap);
-        toast({
-          title: "Mind Map Ready! 🧠",
-          description: `Generated ${selectedStyle} mind map`,
-        });
-      }, 1500);
+      // Stop processing and show results immediately
+      stopProcessing();
+      setMindMapData(data.mindMapData || data.mindMap);
+      toast({
+        title: "Mind Map Ready! 🧠",
+        description: `Generated ${selectedStyle} mind map`,
+      });
     } catch (error) {
       resetProcessing();
       setErrorState("confused");
@@ -209,10 +202,8 @@ const MindMap = () => {
             isGenerating ? (
               <ProcessingOverlay
                 isVisible={isGenerating}
-                phase={phase}
-                message={phase === "thinking" ? "Analyzing your content..." : phase === "writing" ? "Creating mind map..." : "Mind map ready!"}
-                subMessage={phase === "thinking" ? "Understanding the concepts" : phase === "writing" ? "Mapping relationships" : undefined}
-                showProgress={true}
+                message="Creating mind map..."
+                subMessage="Mapping relationships"
                 variant="card"
               />
             ) : (

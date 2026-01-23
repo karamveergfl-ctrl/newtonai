@@ -155,20 +155,11 @@ const AISummarizer = () => {
 
   // Processing state for Newton animation
   const {
-    phase: processingPhase,
     isProcessing,
-    startThinking,
-    startWriting,
-    complete: completeProcessing,
+    start: startProcessing,
+    stop: stopProcessing,
     reset: resetProcessing,
-  } = useProcessingState({ completedAnimationDuration: 1500 });
-  
-  // Pending result to show after animation completes
-  const [pendingResult, setPendingResult] = useState<{
-    type: "flashcards" | "quiz" | "summary" | "mindmap";
-    data: any;
-    title: string;
-  } | null>(null);
+  } = useProcessingState();
 
   // Format selection state for non-video content
   const [showFormatSelection, setShowFormatSelection] = useState(false);
@@ -468,8 +459,8 @@ const AISummarizer = () => {
     const allowed = await trySpendCredits("flashcards");
     if (!allowed) return;
     
-    // Start Newton thinking animation
-    startThinking();
+    // Start Newton processing animation
+    startProcessing();
     setIsGeneratingFlashcards(true);
     setActiveGenerating("flashcards");
     setVideoError(null);
@@ -486,9 +477,6 @@ const AISummarizer = () => {
           description: "This video has limited captions. Results are based on video topic.",
         });
       }
-
-      // Switch to writing phase
-      startWriting();
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`, {
         method: "POST",
@@ -508,13 +496,14 @@ const AISummarizer = () => {
       
       const data = await response.json();
       
-      // Store pending result and trigger completion animation
-      setPendingResult({
-        type: "flashcards",
-        data: data.flashcards,
-        title: videoTitle,
+      // Stop processing and show results immediately
+      stopProcessing();
+      setFlashcards(data.flashcards);
+      setFlashcardTitle(videoTitle);
+      toast({
+        title: "Flashcards Ready! 📚",
+        description: `Generated ${data.flashcards.length} flashcards from video`,
       });
-      completeProcessing();
       
     } catch (error: any) {
       console.error("Error generating flashcards:", error);
@@ -541,8 +530,8 @@ const AISummarizer = () => {
     const allowed = await trySpendCredits("quiz");
     if (!allowed) return;
     
-    // Start Newton thinking animation
-    startThinking();
+    // Start Newton processing animation
+    startProcessing();
     setIsGeneratingQuiz(true);
     setActiveGenerating("quiz");
     setVideoError(null);
@@ -559,9 +548,6 @@ const AISummarizer = () => {
           description: "This video has limited captions. Results are based on video topic.",
         });
       }
-
-      // Switch to writing phase
-      startWriting();
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`, {
         method: "POST",
@@ -581,13 +567,14 @@ const AISummarizer = () => {
       
       const data = await response.json();
       
-      // Store pending result and trigger completion animation
-      setPendingResult({
-        type: "quiz",
-        data: data.questions,
-        title: videoTitle,
+      // Stop processing and show results immediately
+      stopProcessing();
+      setQuizQuestions(data.questions);
+      setQuizTitle(videoTitle);
+      toast({
+        title: "Quiz Ready! 🧠",
+        description: `Generated ${data.questions.length} questions from video`,
       });
-      completeProcessing();
       
     } catch (error: any) {
       console.error("Error generating quiz:", error);
@@ -614,8 +601,8 @@ const AISummarizer = () => {
     const allowed = await trySpendCredits("summary");
     if (!allowed) return;
     
-    // Start Newton thinking animation
-    startThinking();
+    // Start Newton processing animation
+    startProcessing();
     setIsGeneratingSummary(true);
     setActiveGenerating("summary");
     setVideoError(null);
@@ -634,9 +621,6 @@ const AISummarizer = () => {
         });
       }
 
-      // Switch to writing phase
-      startWriting();
-
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`, {
         method: "POST",
         headers: {
@@ -654,13 +638,14 @@ const AISummarizer = () => {
       
       const data = await response.json();
       
-      // Store pending result and trigger completion animation
-      setPendingResult({
-        type: "summary",
-        data: data.summary,
-        title: videoTitle,
+      // Stop processing and show results immediately
+      stopProcessing();
+      setVideoSummary(data.summary);
+      setShowSummaryScreen(true);
+      toast({
+        title: "Summary Ready! 📝",
+        description: "Video summary generated successfully",
       });
-      completeProcessing();
       
     } catch (error: any) {
       console.error("Error generating summary:", error);
@@ -687,8 +672,8 @@ const AISummarizer = () => {
     const allowed = await trySpendCredits("mind_map");
     if (!allowed) return;
     
-    // Start Newton thinking animation
-    startThinking();
+    // Start Newton processing animation
+    startProcessing();
     setIsGeneratingMindMap(true);
     setActiveGenerating("mindmap");
     setMindMapTitle(videoTitle);
@@ -707,9 +692,6 @@ const AISummarizer = () => {
         });
       }
 
-      // Switch to writing phase
-      startWriting();
-
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`, {
         method: "POST",
         headers: {
@@ -726,13 +708,14 @@ const AISummarizer = () => {
       
       const data = await response.json();
       
-      // Store pending result and trigger completion animation
-      setPendingResult({
-        type: "mindmap",
-        data: data.mindMapData,
-        title: videoTitle,
+      // Stop processing and show results immediately
+      stopProcessing();
+      setMindMapData(data.mindMapData);
+      setShowMindMapScreen(true);
+      toast({
+        title: "Mind Map Ready! 🧠",
+        description: "Video mind map generated successfully",
       });
-      completeProcessing();
       
     } catch (error: any) {
       console.error("Error generating mind map:", error);
@@ -814,50 +797,6 @@ const AISummarizer = () => {
   };
 
   const isAnyGenerating = isGeneratingFlashcards || isGeneratingQuiz || isGeneratingSummary || isGeneratingMindMap;
-
-  // Effect to show results after Newton animation completes
-  useEffect(() => {
-    if (processingPhase === "idle" && pendingResult) {
-      const { type, data, title } = pendingResult;
-      
-      switch (type) {
-        case "flashcards":
-          setFlashcards(data);
-          setFlashcardTitle(title);
-          toast({
-            title: "Flashcards Ready! 📚",
-            description: `Generated ${data.length} flashcards from video`,
-          });
-          break;
-        case "quiz":
-          setQuizQuestions(data);
-          setQuizTitle(title);
-          toast({
-            title: "Quiz Ready! 🧠",
-            description: `Generated ${data.length} questions from video`,
-          });
-          break;
-        case "summary":
-          setVideoSummary(data);
-          setShowSummaryScreen(true);
-          toast({
-            title: "Summary Ready! 📝",
-            description: "Video summary generated successfully",
-          });
-          break;
-        case "mindmap":
-          setMindMapData(data);
-          setShowMindMapScreen(true);
-          toast({
-            title: "Mind Map Ready! 🧠",
-            description: "Video mind map generated successfully",
-          });
-          break;
-      }
-      
-      setPendingResult(null);
-    }
-  }, [processingPhase, pendingResult, toast]);
 
   // Render flashcards view
   if (flashcards.length > 0) {
@@ -1202,19 +1141,8 @@ const AISummarizer = () => {
         {/* Newton Processing Overlay for Video Tools */}
         <ProcessingOverlay
           isVisible={isProcessing}
-          phase={processingPhase}
-          message={
-            processingPhase === "thinking" ? "Analyzing video content..." :
-            processingPhase === "writing" ? "Generating study materials..." :
-            processingPhase === "completed" ? "All done!" :
-            undefined
-          }
-          subMessage={
-            processingPhase === "thinking" ? "Fetching video transcript" :
-            processingPhase === "writing" ? "Almost there" :
-            processingPhase === "completed" ? "Here are your results" :
-            undefined
-          }
+          message="Generating study materials..."
+          subMessage="Analyzing video content"
           variant="overlay"
         />
 

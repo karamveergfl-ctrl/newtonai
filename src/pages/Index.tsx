@@ -1901,7 +1901,6 @@ const Index = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <ProcessingOverlay
             isVisible={isVideoProcessing}
-            phase={videoProcessingPhase}
             message={videoProcessingMessage}
             variant="card"
           />
@@ -1972,7 +1971,6 @@ const Index = () => {
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
         <ProcessingOverlay
           isVisible={isVideoProcessing}
-          phase={videoProcessingPhase}
           message={videoProcessingMessage}
           variant="card"
         />

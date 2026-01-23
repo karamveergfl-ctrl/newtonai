@@ -54,7 +54,7 @@ const AIQuiz = () => {
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("quiz");
 
   // Processing animation state
-  const { phase, isProcessing: isGenerating, startThinking, startWriting, complete, reset: resetProcessing } = useProcessingState();
+  const { isProcessing: isGenerating, start: startProcessing, stop: stopProcessing, reset: resetProcessing } = useProcessingState();
 
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -83,7 +83,7 @@ const AIQuiz = () => {
 
     const { content, type, metadata } = pendingContent;
     setPendingContent(null);
-    startThinking(); // Start thinking animation
+    startProcessing();
     setQuestions([]);
     setScore(0);
     setCurrentIndex(0);
@@ -106,9 +106,6 @@ const AIQuiz = () => {
       if (!textContent?.trim()) {
         throw new Error("No content to process");
       }
-
-      // Switch to writing phase when API call starts
-      startWriting();
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`,
@@ -146,17 +143,13 @@ const AIQuiz = () => {
         result_preview: { questionCount: data.questions.length, difficulty: settings.difficulty },
       });
 
-      // Trigger completed animation
-      complete();
-      
-      // Wait for animation to finish, then show results
-      setTimeout(() => {
-        setQuestions(data.questions);
-        toast({
-          title: "Quiz Ready! 🧠",
-          description: `Generated ${data.questions.length} questions`,
-        });
-      }, 1500);
+      // Stop processing and show results immediately
+      stopProcessing();
+      setQuestions(data.questions);
+      toast({
+        title: "Quiz Ready! 🧠",
+        description: `Generated ${data.questions.length} questions`,
+      });
     } catch (error) {
       resetProcessing();
       setErrorState("confused");
@@ -261,10 +254,8 @@ const AIQuiz = () => {
             isGenerating ? (
               <ProcessingOverlay
                 isVisible={isGenerating}
-                phase={phase}
-                message={phase === "thinking" ? "Analyzing your content..." : phase === "writing" ? "Creating quiz questions..." : "Quiz ready!"}
-                subMessage={phase === "thinking" ? "Understanding the material" : phase === "writing" ? "Crafting challenging questions" : undefined}
-                showProgress={true}
+                message="Creating quiz questions..."
+                subMessage="Analyzing your content"
                 variant="card"
               />
             ) : (
