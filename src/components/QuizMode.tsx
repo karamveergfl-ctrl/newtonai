@@ -42,7 +42,10 @@ interface QuizModeProps {
   onComplete: (score: number, total: number, xpEarned: number) => void;
   isLoading?: boolean;
   loadingMessage?: string;
+  initialQuestions?: Question[]; // For retry wrong feature
 }
+
+import { QuizReviewMode } from "@/components/QuizReviewMode";
 
 export const QuizMode = ({ 
   questions, 
@@ -50,7 +53,8 @@ export const QuizMode = ({
   onClose, 
   onComplete,
   isLoading = false,
-  loadingMessage = "Generating quiz questions..."
+  loadingMessage = "Generating quiz questions...",
+  initialQuestions
 }: QuizModeProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -61,6 +65,8 @@ export const QuizMode = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [skippedQuestions, setSkippedQuestions] = useState<Set<number>>(new Set());
+  const [showReview, setShowReview] = useState(false);
+  const [retryWrongQuestions, setRetryWrongQuestions] = useState<Question[] | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -197,7 +203,33 @@ export const QuizMode = ({
     setAnswers(new Array(questions.length).fill(null));
     setIsComplete(false);
     setSkippedQuestions(new Set());
+    setShowReview(false);
+    setRetryWrongQuestions(null);
   };
+
+  const handleRetryWrong = () => {
+    const wrongQuestions = questions.filter((_, i) => 
+      answers[i] !== null && answers[i] !== -1 && answers[i] !== questions[i].correctIndex
+    );
+    if (wrongQuestions.length > 0) {
+      setRetryWrongQuestions(wrongQuestions);
+      setCurrentIndex(0);
+      setSelectedAnswer(null);
+      setShowResult(false);
+      setScore(0);
+      setAnswers(new Array(wrongQuestions.length).fill(null));
+      setIsComplete(false);
+      setSkippedQuestions(new Set());
+      setShowReview(false);
+    }
+  };
+
+  const handleShowReview = () => {
+    setShowReview(true);
+  };
+
+  // Use retry questions if available
+  const activeQuestions = retryWrongQuestions || questions;
 
   const finalScore = score + (showResult && isCorrect ? 1 : 0);
   const percentage = Math.round((finalScore / questions.length) * 100);
@@ -294,7 +326,25 @@ export const QuizMode = ({
     );
   }
 
+  // Show review mode
+  if (showReview) {
+    return (
+      <QuizReviewMode
+        questions={activeQuestions}
+        answers={answers}
+        score={finalScore}
+        onRetryAll={handleRetry}
+        onRetryWrong={handleRetryWrong}
+        onClose={() => setShowReview(false)}
+      />
+    );
+  }
+
   if (isComplete) {
+    const wrongCount = activeQuestions.filter((_, i) => 
+      answers[i] !== null && answers[i] !== -1 && answers[i] !== activeQuestions[i].correctIndex
+    ).length;
+
     return (
       <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
         {/* Confetti celebration */}
@@ -338,7 +388,7 @@ export const QuizMode = ({
               {percentage}%
             </motion.p>
             <p className="text-muted-foreground">
-              {finalScore}/{questions.length} correct
+              {finalScore}/{activeQuestions.length} correct
               {skippedQuestions.size > 0 && (
                 <span className="block text-sm mt-1">
                   ({skippedQuestions.size} skipped)
@@ -350,19 +400,37 @@ export const QuizMode = ({
           <div className="bg-card rounded-xl p-4 border">
             <p className="text-sm text-muted-foreground mb-1">XP Earned</p>
             <p className="text-2xl font-bold text-primary">
-              +{Math.round((finalScore / questions.length) * 100) + 10} XP
+              +{Math.round((finalScore / activeQuestions.length) * 100) + 10} XP
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Button onClick={handleRetry} variant="outline" className="h-12 gap-2 flex-1 sm:flex-none">
-              <RotateCcw className="w-4 h-4" />
-              Try Again
+          <div className="flex flex-col gap-3 justify-center pt-2">
+            {/* Review answers button */}
+            <Button 
+              onClick={handleShowReview} 
+              variant="outline" 
+              className="h-12 gap-2 w-full"
+            >
+              <Brain className="w-4 h-4" />
+              Review All Answers
             </Button>
-            <Button onClick={onClose} className="h-12 gap-2 flex-1 sm:flex-none">
-              <CheckCircle className="w-4 h-4" />
-              Done
-            </Button>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={handleRetry} variant="outline" className="h-12 gap-2 flex-1">
+                <RotateCcw className="w-4 h-4" />
+                Try Again
+              </Button>
+              {wrongCount > 0 && (
+                <Button onClick={handleRetryWrong} variant="secondary" className="h-12 gap-2 flex-1">
+                  <XCircle className="w-4 h-4" />
+                  Retry Wrong ({wrongCount})
+                </Button>
+              )}
+              <Button onClick={onClose} className="h-12 gap-2 flex-1">
+                <CheckCircle className="w-4 h-4" />
+                Done
+              </Button>
+            </div>
           </div>
         </div>
       </div>

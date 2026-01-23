@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Network, ZoomIn, ZoomOut, GitBranch, Boxes, Clock, ArrowLeft, Sparkles, X } from "lucide-react";
+import { Network, ZoomIn, ZoomOut, GitBranch, Boxes, Clock, ArrowLeft, Sparkles, X, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
@@ -273,24 +273,37 @@ const MindMap = () => {
             )
           ) : (
             <div className="space-y-4">
+              {/* Mobile-optimized controls */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0">
                 <Button
                   variant="outline"
                   onClick={() => setMindMapData(null)}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto h-12"
                 >
+                  <RotateCcw className="h-4 w-4 mr-2" />
                   Create New
                 </Button>
                 
-                <div className="flex items-center justify-center gap-2">
-                  <Button variant="outline" size="icon" onClick={handleZoomOut} className="h-9 w-9">
-                    <ZoomOut className="h-4 w-4" />
+                {/* Zoom controls with better touch targets */}
+                <div className="flex items-center justify-center gap-3 bg-card rounded-lg border p-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleZoomOut} 
+                    className="h-10 w-10 rounded-full hover:bg-muted"
+                  >
+                    <ZoomOut className="h-5 w-5" />
                   </Button>
-                  <span className="text-xs sm:text-sm text-muted-foreground w-14 text-center font-sans">
+                  <span className="text-sm font-medium text-muted-foreground w-14 text-center font-sans">
                     {Math.round(zoom * 100)}%
                   </span>
-                  <Button variant="outline" size="icon" onClick={handleZoomIn} className="h-9 w-9">
-                    <ZoomIn className="h-4 w-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleZoomIn} 
+                    className="h-10 w-10 rounded-full hover:bg-muted"
+                  >
+                    <ZoomIn className="h-5 w-5" />
                   </Button>
                 </div>
               </div>
