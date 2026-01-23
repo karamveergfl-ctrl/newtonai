@@ -439,63 +439,58 @@ export const QuizMode = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
-      {/* Header */}
-      <div className="p-3 md:p-4 border-b bg-card/50">
-        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-4 w-full sm:w-auto">
+      {/* Header - Compact on mobile */}
+      <div className="shrink-0 p-2 md:p-4 border-b bg-card/50">
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
             <div className="flex-1 min-w-0">
-              <h2 className="font-bold text-base sm:text-lg truncate">{title}</h2>
-              <p className="text-sm text-muted-foreground">
-                Question {currentIndex + 1} of {questions.length}
+              <h2 className="font-bold text-sm md:text-lg truncate">{title}</h2>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Q {currentIndex + 1}/{questions.length}
               </p>
             </div>
-            <div className="text-right sm:hidden">
-              <p className="text-xs font-medium">Score</p>
-              <p className="text-base font-bold text-primary">{score}/{questions.length}</p>
+            <div className="text-right shrink-0">
+              <p className="text-[10px] md:text-xs font-medium text-muted-foreground">Score</p>
+              <p className="text-sm md:text-lg font-bold text-primary">{score}/{questions.length}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium">Score</p>
-              <p className="text-lg font-bold text-primary">{score}/{questions.length}</p>
-            </div>
+          <div className="flex items-center gap-1 md:gap-2 shrink-0">
             <Button 
               onClick={downloadAsPDF} 
               variant="outline" 
               size="icon" 
               disabled={isDownloading}
               title="Download PDF"
-              className="shrink-0"
+              className="h-8 w-8 md:h-9 md:w-9"
             >
-              {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {isDownloading ? <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Download className="w-3 h-3 md:w-4 md:h-4" />}
             </Button>
-            <Button onClick={onClose} variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none">
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Return to PDF</span>
-              <span className="sm:hidden">Back</span>
+            <Button onClick={onClose} variant="outline" size="sm" className="gap-1 h-8 md:h-9 text-xs md:text-sm px-2 md:px-3">
+              <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">Back</span>
             </Button>
           </div>
         </div>
-        <div className="max-w-2xl mx-auto mt-3">
-          <Progress value={progress} className="h-2" />
+        <div className="max-w-2xl mx-auto mt-2">
+          <Progress value={progress} className="h-1.5 md:h-2" />
         </div>
       </div>
 
-      {/* Question */}
-      <div className="flex-1 overflow-auto p-3 md:p-4 bg-muted/30">
-        <div className="max-w-3xl mx-auto space-y-4 md:space-y-6">
-          {/* Question Card */}
-          <div className="bg-card rounded-lg p-4 md:p-6 border shadow-sm">
-            <p className="text-base md:text-xl font-semibold leading-relaxed">
-              <span className="text-muted-foreground mr-2">Q{currentIndex + 1}.</span>
+      {/* Question - Scrollable area with padding for fixed footer */}
+      <div className="flex-1 overflow-auto p-2 md:p-4 pb-28 md:pb-24 bg-muted/30">
+        <div className="max-w-3xl mx-auto space-y-3 md:space-y-6">
+          {/* Question Card - Compact on mobile */}
+          <div className="bg-card rounded-lg p-3 md:p-6 border shadow-sm">
+            <p className="text-sm md:text-xl font-semibold leading-relaxed">
+              <span className="text-muted-foreground mr-1 md:mr-2 text-xs md:text-base">Q{currentIndex + 1}.</span>
               <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                 {currentQuestion.question}
               </ReactMarkdown>
             </p>
           </div>
 
-          {/* Options */}
-          <div className="space-y-3">
+          {/* Options - Compact on mobile */}
+          <div className="space-y-2 md:space-y-3">
             {currentQuestion.options.map((option, index) => {
               const isSelected = selectedAnswer === index;
               const isCorrectOption = index === currentQuestion.correctIndex;
@@ -525,20 +520,20 @@ export const QuizMode = ({
                   onClick={() => handleSelectAnswer(index)}
                   disabled={showResult}
                   className={cn(
-                    "w-full p-4 rounded-lg border-2 text-left transition-all",
-                    "flex items-start gap-4",
+                    "w-full p-2.5 md:p-4 rounded-lg border-2 text-left transition-all",
+                    "flex items-start gap-2.5 md:gap-4",
                     optionBg,
                     borderStyle,
-                    !showResult && "cursor-pointer hover:shadow-md"
+                    !showResult && "cursor-pointer hover:shadow-md active:scale-[0.99]"
                   )}
                 >
                   <span className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0",
+                    "w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm shrink-0",
                     badgeBg
                   )}>
                     {letter}
                   </span>
-                  <span className="flex-1 pt-1">
+                  <span className="flex-1 text-sm md:text-base pt-0.5 md:pt-1">
                     <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                       {option}
                     </ReactMarkdown>
@@ -548,36 +543,36 @@ export const QuizMode = ({
             })}
           </div>
 
-          {/* Correct Answer & Explanation - Always shown after submit */}
+          {/* Correct Answer & Explanation - Compact on mobile */}
           {showResult && (
             <div className={cn(
-              "rounded-xl p-4 border-2 animate-fade-in",
+              "rounded-xl p-3 md:p-4 border-2 animate-fade-in",
               skippedQuestions.has(currentIndex)
                 ? "bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
                 : "bg-gradient-to-r from-yellow-50/80 to-amber-50/80 dark:from-yellow-900/20 dark:to-amber-900/20 border-yellow-200/50 dark:border-yellow-800/50"
             )}>
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2 md:gap-3">
                 <div className={cn(
-                  "p-2 rounded-full shrink-0",
+                  "p-1.5 md:p-2 rounded-full shrink-0",
                   skippedQuestions.has(currentIndex) ? "bg-amber-500/20" : "bg-yellow-500/20"
                 )}>
                   <Lightbulb className={cn(
-                    "w-5 h-5",
+                    "w-4 h-4 md:w-5 md:h-5",
                     skippedQuestions.has(currentIndex)
                       ? "text-amber-600 dark:text-amber-400"
                       : "text-yellow-600 dark:text-yellow-400"
                   )} />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   {skippedQuestions.has(currentIndex) && (
-                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-1">
+                    <p className="text-xs md:text-sm font-medium text-amber-600 dark:text-amber-400 mb-1">
                       Question skipped
                     </p>
                   )}
-                  <p className="text-sm font-semibold text-foreground mb-1">
-                    ✓ Correct Answer: {String.fromCharCode(65 + currentQuestion.correctIndex)}
+                  <p className="text-xs md:text-sm font-semibold text-foreground mb-1">
+                    ✓ Correct: {String.fromCharCode(65 + currentQuestion.correctIndex)}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs md:text-sm text-muted-foreground line-clamp-4 md:line-clamp-none">
                     {currentQuestion.explanation}
                   </p>
                 </div>
@@ -587,55 +582,54 @@ export const QuizMode = ({
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="p-4 border-t bg-card/50 safe-area-pb">
-        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
-          {/* Skip Button - always visible before showing result */}
-          <div className="order-2 sm:order-1">
-            {!showResult && (
-              <Button
-                onClick={handleSkip}
-                variant="outline"
-                size="lg"
-                className="gap-2 w-full sm:w-auto h-12 text-muted-foreground hover:text-foreground"
-              >
-                <SkipForward className="w-4 h-4" />
-                Skip
-              </Button>
-            )}
-          </div>
+      {/* Footer - Fixed at bottom, always visible */}
+      <div className="shrink-0 fixed bottom-0 left-0 right-0 p-2 md:p-4 border-t bg-card/95 backdrop-blur-sm safe-area-pb z-10">
+        <div className="max-w-2xl mx-auto flex gap-2 md:gap-3 justify-between items-center">
+          {/* Skip Button */}
+          {!showResult && (
+            <Button
+              onClick={handleSkip}
+              variant="outline"
+              size="default"
+              className="gap-1.5 h-11 md:h-12 flex-1 md:flex-none text-muted-foreground hover:text-foreground"
+            >
+              <SkipForward className="w-4 h-4" />
+              <span className="text-sm md:text-base">Skip</span>
+            </Button>
+          )}
+          
+          {/* Spacer when result is shown */}
+          {showResult && <div className="flex-1 md:hidden" />}
           
           {/* Submit / Next Button */}
-          <div className="order-1 sm:order-2 w-full sm:w-auto">
-            {!showResult ? (
-              <Button
-                onClick={handleSubmit}
-                disabled={selectedAnswer === null}
-                size="lg"
-                className="gap-2 w-full sm:w-auto h-12"
-              >
-                Submit Answer
-              </Button>
-            ) : (
-              <Button
-                onClick={handleNext}
-                size="lg"
-                className="gap-2 w-full sm:w-auto h-12 bg-gradient-to-r from-primary to-primary/80"
-              >
-                {currentIndex < questions.length - 1 ? (
-                  <>
-                    Next Question
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                ) : (
-                  <>
-                    See Results
-                    <Trophy className="w-4 h-4" />
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
+          {!showResult ? (
+            <Button
+              onClick={handleSubmit}
+              disabled={selectedAnswer === null}
+              size="default"
+              className="gap-1.5 flex-1 md:flex-none h-11 md:h-12 text-sm md:text-base"
+            >
+              Submit
+            </Button>
+          ) : (
+            <Button
+              onClick={handleNext}
+              size="default"
+              className="gap-1.5 flex-1 h-11 md:h-12 bg-gradient-to-r from-primary to-primary/80 text-sm md:text-base"
+            >
+              {currentIndex < questions.length - 1 ? (
+                <>
+                  Next
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  Results
+                  <Trophy className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </div>

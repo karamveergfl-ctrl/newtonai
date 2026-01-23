@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Brain, BookOpen, FileText, Network, Zap, List, GraduationCap, Circle, GitBranch, Boxes, Clock, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
+import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
 
 interface VideoGenerationSettingsDialogProps {
   open: boolean;
@@ -135,10 +136,13 @@ export const VideoGenerationSettingsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {getIcon(type)}
-            {getTitle(type)}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              {getIcon(type)}
+              {getTitle(type)}
+            </DialogTitle>
+            <SubscriptionTierBadge tier={subscription.tier} size="sm" />
+          </div>
         </DialogHeader>
 
         <div className="space-y-6 py-4">

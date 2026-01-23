@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Brain, BookOpen, FileText, Network, Circle, GitBranch, Boxes, Clock, Zap, List, GraduationCap, Table2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
+import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
 
 export interface UniversalGenerationSettings {
   pageStart?: number;
@@ -164,12 +165,15 @@ export const UniversalStudySettingsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className={cn("p-1.5 rounded-lg bg-primary/10", baseConfig.color)}>
-              <Icon className="h-5 w-5" />
-            </div>
-            Generate {baseConfig.label}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <div className={cn("p-1.5 rounded-lg bg-primary/10", baseConfig.color)}>
+                <Icon className="h-5 w-5" />
+              </div>
+              Generate {baseConfig.label}
+            </DialogTitle>
+            <SubscriptionTierBadge tier={subscription.tier} size="sm" />
+          </div>
           <DialogDescription>{baseConfig.description}</DialogDescription>
         </DialogHeader>
 

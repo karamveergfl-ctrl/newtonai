@@ -304,46 +304,45 @@ export const FlashcardDeck = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
-      {/* Header */}
-      <div className="p-3 md:p-4 border-b bg-card/50">
-        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      {/* Header - Compact on mobile */}
+      <div className="shrink-0 p-2 md:p-4 border-b bg-card/50">
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-lg truncate">{title}</h2>
-            <p className="text-sm text-muted-foreground">
-              {completedCards.size} of {cards.length} mastered
+            <h2 className="font-bold text-sm md:text-lg truncate">{title}</h2>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              {completedCards.size}/{cards.length} mastered
             </p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-1 md:gap-2 shrink-0">
             <Button 
               onClick={downloadAsPDF} 
               variant="outline" 
               size="icon" 
               disabled={isDownloading}
               title="Download PDF"
-              className="shrink-0"
+              className="h-8 w-8 md:h-9 md:w-9"
             >
-              {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {isDownloading ? <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Download className="w-3 h-3 md:w-4 md:h-4" />}
             </Button>
-            <Button onClick={handleShuffle} variant="ghost" size="icon" title="Shuffle" className="shrink-0">
-              <Shuffle className="w-4 h-4" />
+            <Button onClick={handleShuffle} variant="ghost" size="icon" title="Shuffle" className="h-8 w-8 md:h-9 md:w-9">
+              <Shuffle className="w-3 h-3 md:w-4 md:h-4" />
             </Button>
-            <Button onClick={handleReset} variant="ghost" size="icon" title="Reset" className="shrink-0">
-              <RotateCcw className="w-4 h-4" />
+            <Button onClick={handleReset} variant="ghost" size="icon" title="Reset" className="h-8 w-8 md:h-9 md:w-9">
+              <RotateCcw className="w-3 h-3 md:w-4 md:h-4" />
             </Button>
-            <Button onClick={onClose} variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none">
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Return to PDF</span>
-              <span className="sm:hidden">Back</span>
+            <Button onClick={onClose} variant="outline" size="sm" className="gap-1 h-8 md:h-9 text-xs md:text-sm px-2 md:px-3">
+              <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">Back</span>
             </Button>
           </div>
         </div>
-        <div className="max-w-2xl mx-auto mt-3">
-          <Progress value={progress} className="h-2" />
+        <div className="max-w-2xl mx-auto mt-2">
+          <Progress value={progress} className="h-1.5 md:h-2" />
         </div>
       </div>
 
-      {/* Flashcard */}
-      <div className="flex-1 flex items-center justify-center p-4">
+      {/* Flashcard - Centered with padding for fixed footer */}
+      <div className="flex-1 flex items-center justify-center p-2 md:p-4 pb-32 md:pb-28 overflow-auto">
         <Flashcard
           front={cards[currentIndex].front}
           back={cards[currentIndex].back}
@@ -354,43 +353,42 @@ export const FlashcardDeck = ({
         />
       </div>
 
-      {/* Controls */}
-      <div className="p-3 md:p-4 border-t bg-card/50">
-        <div className="max-w-lg mx-auto space-y-3">
+      {/* Controls - Fixed at bottom, always visible */}
+      <div className="shrink-0 fixed bottom-0 left-0 right-0 p-2 md:p-4 border-t bg-card/95 backdrop-blur-sm safe-area-pb z-10">
+        <div className="max-w-lg mx-auto space-y-2 md:space-y-3">
           {/* Flip Button */}
           <div className="flex justify-center">
             <Button
               onClick={handleFlip}
               variant="outline"
-              size="lg"
-              className="gap-2 w-full sm:w-40"
+              size="default"
+              className="gap-2 w-full sm:w-40 h-10 md:h-11"
             >
               <RotateCw className="w-4 h-4" />
-              Flip Card
+              <span className="text-sm md:text-base">Flip Card</span>
             </Button>
           </div>
 
           {/* Navigation Row */}
-          <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center justify-between gap-2">
             <Button
               onClick={handlePrev}
               disabled={currentIndex === 0}
               variant="outline"
               size="default"
-              className="gap-1 sm:gap-2 flex-1 sm:flex-none"
+              className="gap-1 flex-1 h-11 md:h-12"
             >
               <ChevronLeft className="w-5 h-5" />
-              <span className="hidden sm:inline">Previous</span>
+              <span className="hidden sm:inline text-sm md:text-base">Prev</span>
             </Button>
             
             <Button
               onClick={isMastered ? unmarkMastered : markMastered}
-              className={`gap-1 sm:gap-2 flex-1 sm:flex-none ${isMastered ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-primary to-secondary hover:opacity-90'}`}
+              className={`gap-1 flex-1 h-11 md:h-12 ${isMastered ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-primary to-secondary hover:opacity-90'}`}
               size="default"
             >
               <Check className="w-4 h-4" />
-              <span className="hidden sm:inline">{isMastered ? "Mastered ✓" : "Mastered"}</span>
-              <span className="sm:hidden">{isMastered ? "✓" : "Done"}</span>
+              <span className="text-sm md:text-base">{isMastered ? "✓" : "Done"}</span>
             </Button>
 
             <Button
@@ -398,9 +396,9 @@ export const FlashcardDeck = ({
               disabled={currentIndex === cards.length - 1}
               variant="outline"
               size="default"
-              className="gap-1 sm:gap-2 flex-1 sm:flex-none"
+              className="gap-1 flex-1 h-11 md:h-12"
             >
-              <span className="hidden sm:inline">Next</span>
+              <span className="hidden sm:inline text-sm md:text-base">Next</span>
               <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
