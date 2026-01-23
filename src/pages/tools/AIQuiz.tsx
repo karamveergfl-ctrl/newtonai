@@ -236,7 +236,7 @@ const AIQuiz = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/tools")}
+              onClick={() => navigate("/dashboard")}
               className="absolute right-0 top-0 h-9 w-9 rounded-full hover:bg-muted"
             >
               <X className="h-5 w-5" />
