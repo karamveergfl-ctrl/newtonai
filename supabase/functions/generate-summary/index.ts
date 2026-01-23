@@ -58,7 +58,7 @@ serve(async (req) => {
       );
     }
 
-    const { content, selectedText, detailLevel = "standard", format = "concise", language = "en", notesStyle = "academic" } = await req.json();
+    const { content, selectedText, detailLevel = "standard", format = "concise", language = "en", notesStyle = "academic", includeComparison = true } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -71,7 +71,24 @@ serve(async (req) => {
     }
 
     const targetLanguage = languageNames[language] || "English";
-    console.log(`Generating ${format} summary with ${detailLevel} detail in ${targetLanguage}, style: ${notesStyle}, for ${textToSummarize.length} characters`);
+    console.log(`Generating ${format} summary with ${detailLevel} detail in ${targetLanguage}, style: ${notesStyle}, comparison: ${includeComparison}, for ${textToSummarize.length} characters`);
+
+    // Comparison table instruction when enabled
+    const comparisonInstruction = includeComparison ? `
+COMPARISON TABLE GENERATION:
+When the content discusses multiple related concepts, methods, types, or approaches, automatically create comparison tables:
+- Identify 2-4 comparable items (e.g., "Type A vs Type B", "Method 1 vs Method 2")
+- Create a markdown table with relevant comparison dimensions
+- Include at least 4-6 rows comparing different attributes
+- Format: | Feature | Concept A | Concept B | Concept C |
+
+Example triggers for comparison tables:
+- "Types of X" → Compare the types in a table
+- "Method A vs Method B" → Direct comparison table
+- "Advantages and disadvantages" → Pros/cons table
+- "Different approaches" → Approach comparison table
+- "Comparing X and Y" → Side-by-side comparison
+` : "";
 
     // Style modifiers based on user preference
     const styleModifiers: Record<string, string> = {
@@ -285,7 +302,7 @@ RULES:
 - Write everything in ${targetLanguage}`
     };
 
-    const systemPrompt = formatPrompts[format] || formatPrompts["concise"];
+    const systemPrompt = `${formatPrompts[format] || formatPrompts["concise"]}\n\n${comparisonInstruction}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

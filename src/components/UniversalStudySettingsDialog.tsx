@@ -10,8 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Brain, BookOpen, FileText, Network, Circle, GitBranch, Boxes, Clock, Zap, List, GraduationCap } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Brain, BookOpen, FileText, Network, Circle, GitBranch, Boxes, Clock, Zap, List, GraduationCap, Table2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 
 export interface UniversalGenerationSettings {
   pageStart?: number;
@@ -21,6 +23,7 @@ export interface UniversalGenerationSettings {
   detailLevel: "brief" | "standard" | "detailed";
   mindMapStyle?: "radial" | "tree" | "cluster" | "timeline";
   summaryFormat?: "concise" | "detailed" | "bullet-points" | "academic";
+  includeComparison?: boolean;
 }
 
 interface UniversalStudySettingsDialogProps {
@@ -50,7 +53,8 @@ const summaryFormats: { id: SummaryFormat; name: string; description: string; ic
   { id: "academic", name: "Academic Style", description: "Formal structure with citations", icon: GraduationCap },
 ];
 
-const typeConfig = {
+// Base config - countMax will be overridden based on subscription
+const typeConfigBase = {
   quiz: {
     icon: Brain,
     label: "Quiz",
@@ -58,7 +62,6 @@ const typeConfig = {
     color: "text-primary",
     countLabel: "Number of Questions",
     countMin: 5,
-    countMax: 30,
     countDefault: 10,
     showDifficulty: true,
     showDetailLevel: false,
@@ -70,8 +73,7 @@ const typeConfig = {
     color: "text-secondary",
     countLabel: "Number of Flashcards",
     countMin: 5,
-    countMax: 50,
-    countDefault: 15,
+    countDefault: 10,
     showDifficulty: true,
     showDetailLevel: false,
   },
@@ -82,7 +84,6 @@ const typeConfig = {
     color: "text-accent",
     countLabel: "",
     countMin: 0,
-    countMax: 0,
     countDefault: 0,
     showDifficulty: false,
     showDetailLevel: true,
@@ -94,7 +95,6 @@ const typeConfig = {
     color: "text-primary",
     countLabel: "",
     countMin: 0,
-    countMax: 0,
     countDefault: 0,
     showDifficulty: false,
     showDetailLevel: false,
@@ -113,15 +113,21 @@ export const UniversalStudySettingsDialog = ({
   totalPages = 1,
   onGenerate,
 }: UniversalStudySettingsDialogProps) => {
-  const config = typeConfig[type];
-  const Icon = config.icon;
+  const { subscription } = useFeatureUsage();
+  const baseConfig = typeConfigBase[type];
+  const Icon = baseConfig.icon;
+  
+  // Dynamic max count based on subscription tier
+  const isFree = subscription.tier === "free";
+  const maxCount = (type === "quiz" || type === "flashcards") ? (isFree ? 10 : 20) : 0;
 
   const [pageRange, setPageRange] = useState<[number, number]>([1, totalPages]);
-  const [count, setCount] = useState(config.countDefault);
+  const [count, setCount] = useState(Math.min(baseConfig.countDefault, maxCount || baseConfig.countDefault));
   const [difficulty, setDifficulty] = useState(1); // 0=easy, 1=medium, 2=hard
   const [detailLevel, setDetailLevel] = useState(1); // 0=brief, 1=standard, 2=detailed
   const [mindMapStyle, setMindMapStyle] = useState<MindMapStyle>("radial");
   const [summaryFormat, setSummaryFormat] = useState<SummaryFormat>("concise");
+  const [includeComparison, setIncludeComparison] = useState(true);
 
   const handleGenerate = () => {
     const settings: UniversalGenerationSettings = {
@@ -130,6 +136,7 @@ export const UniversalStudySettingsDialog = ({
       detailLevel: ["brief", "standard", "detailed"][detailLevel] as "brief" | "standard" | "detailed",
       mindMapStyle: type === "mindmap" ? mindMapStyle : undefined,
       summaryFormat: type === "summary" ? summaryFormat : undefined,
+      includeComparison: type === "summary" ? includeComparison : undefined,
     };
 
     if (totalPages > 1) {
@@ -158,12 +165,12 @@ export const UniversalStudySettingsDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <div className={cn("p-1.5 rounded-lg bg-primary/10", config.color)}>
+            <div className={cn("p-1.5 rounded-lg bg-primary/10", baseConfig.color)}>
               <Icon className="h-5 w-5" />
             </div>
-            Generate {config.label}
+            Generate {baseConfig.label}
           </DialogTitle>
-          <DialogDescription>{config.description}</DialogDescription>
+          <DialogDescription>{baseConfig.description}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -196,24 +203,30 @@ export const UniversalStudySettingsDialog = ({
           )}
 
           {/* Count Slider - For Quiz and Flashcards */}
-          {config.countMax > 0 && (
+          {maxCount > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">{config.countLabel}</Label>
+                <Label className="text-sm font-medium">{baseConfig.countLabel}</Label>
                 <span className="text-sm font-semibold text-primary">{count}</span>
               </div>
               <Slider
                 value={[count]}
                 onValueChange={([value]) => setCount(value)}
-                min={config.countMin}
-                max={config.countMax}
+                min={baseConfig.countMin}
+                max={maxCount}
                 step={1}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{config.countMin}</span>
-                <span>{config.countMax}</span>
+                <span>{baseConfig.countMin}</span>
+                <span>{maxCount}</span>
               </div>
+              {isFree && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-primary" />
+                  <span><span className="text-primary font-medium">Upgrade to Pro</span> for up to 20 {type === "quiz" ? "questions" : "flashcards"}</span>
+                </p>
+              )}
             </div>
           )}
 
@@ -293,8 +306,25 @@ export const UniversalStudySettingsDialog = ({
             </div>
           )}
 
+          {/* Comparison Table Toggle - For Summary */}
+          {type === "summary" && (
+            <div className="flex items-center justify-between py-2 px-1 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-2">
+                <Table2 className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <Label className="text-sm font-medium">Auto-generate Comparison Tables</Label>
+                  <p className="text-xs text-muted-foreground">Creates tables when comparing concepts</p>
+                </div>
+              </div>
+              <Switch
+                checked={includeComparison}
+                onCheckedChange={setIncludeComparison}
+              />
+            </div>
+          )}
+
           {/* Difficulty Slider - For Quiz and Flashcards */}
-          {config.showDifficulty && (
+          {baseConfig.showDifficulty && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">Difficulty</Label>
@@ -324,7 +354,7 @@ export const UniversalStudySettingsDialog = ({
           )}
 
           {/* Detail Level Slider - For Summary and Mind Map */}
-          {config.showDetailLevel && (
+          {baseConfig.showDetailLevel && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">Detail Level</Label>

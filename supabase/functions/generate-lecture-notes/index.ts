@@ -56,7 +56,7 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { transcription, template, templateStructure, language, notesStyle = "academic" } = await req.json();
+    const { transcription, template, templateStructure, language, notesStyle = "academic", includeComparison = true } = await req.json();
 
     if (!transcription) {
       throw new Error("No transcription provided");
@@ -71,6 +71,24 @@ serve(async (req) => {
     console.log("Template:", template);
     console.log("Language:", language);
     console.log("Notes Style:", notesStyle);
+    console.log("Include Comparison:", includeComparison);
+
+    // Comparison table instruction when enabled
+    const comparisonInstruction = includeComparison ? `
+COMPARISON TABLE GENERATION:
+Automatically detect and create comparison tables when content discusses:
+- Multiple types or categories of something
+- Competing methods, approaches, or techniques
+- Pros vs cons of different options
+- Before vs after scenarios
+- Different components, parts, or versions
+
+When you detect comparable items:
+1. Create a markdown table with clear headers
+2. Include at least 3-4 comparison dimensions (rows)
+3. Use technical notation where appropriate ($V_z$, $I_c$)
+4. Format: | Feature | Option A | Option B |
+` : "";
 
     // Get language name for the prompt
     const languageNames: Record<string, string> = {
@@ -319,6 +337,8 @@ Comprehensive description of the proposed approach.
     const systemPrompt = `You are an expert lecture note-taker and educational content creator. Your task is to create COMPREHENSIVE, DETAILED lecture notes that EXPAND upon the source material.
 
 ${styleInstruction}
+
+${comparisonInstruction}
 
 CRITICAL RULES:
 1. EXPAND the content - add context, explanations, definitions, and elaboration
