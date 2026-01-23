@@ -168,6 +168,7 @@ const AISummarizer = () => {
   // Use persisted format preferences
   const { preferences, setSummaryFormat } = useTemplatePreferences();
   const selectedFormat = preferences.summaryFormat;
+  const notesStyle = preferences.notesStyle;
 
   const { 
     credits, 
@@ -418,6 +419,7 @@ const AISummarizer = () => {
             content: pendingSummaryContent.textContent,
             language: pendingSummaryContent.language,
             format: selectedFormat,
+            notesStyle: notesStyle,
           },
           headers: { Authorization: `Bearer ${session.access_token}` },
         }

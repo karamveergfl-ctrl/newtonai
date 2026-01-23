@@ -58,7 +58,7 @@ serve(async (req) => {
       );
     }
 
-    const { content, selectedText, detailLevel = "standard", format = "concise", language = "en" } = await req.json();
+    const { content, selectedText, detailLevel = "standard", format = "concise", language = "en", notesStyle = "academic" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -71,13 +71,46 @@ serve(async (req) => {
     }
 
     const targetLanguage = languageNames[language] || "English";
-    console.log(`Generating ${format} summary with ${detailLevel} detail in ${targetLanguage} for ${textToSummarize.length} characters`);
+    console.log(`Generating ${format} summary with ${detailLevel} detail in ${targetLanguage}, style: ${notesStyle}, for ${textToSummarize.length} characters`);
+
+    // Style modifiers based on user preference
+    const styleModifiers: Record<string, string> = {
+      "academic": `
+STYLE ENHANCEMENT - ACADEMIC:
+- Start with an "Executive Summary" prose paragraph
+- Each major section should have a "**Core Idea:**" callout (1-2 sentences)
+- Write in prose paragraphs where appropriate, not just bullets
+- Include COMPARISON TABLES when contrasting concepts
+- Use LaTeX for technical variables: $V_z$, $I_c$, $\\alpha$
+- Add "Key Technical Findings" section at the end
+`,
+      "quick-notes": `
+STYLE ENHANCEMENT - QUICK NOTES:
+- Use bullet points primarily
+- Keep each point brief (1-2 sentences max)
+- Focus on essential facts only
+- Use **bold** for key terms
+- Make it scannable and fast to read
+`,
+      "slides": `
+STYLE ENHANCEMENT - SLIDES:
+- Minimal text, sparse content
+- Max 3-5 points per section
+- One key idea per section
+- Headlines and takeaways only
+- No paragraphs or detailed explanations
+`
+    };
+
+    const styleInstruction = styleModifiers[notesStyle] || "";
 
     // Format-specific prompts with language instruction
     const formatPrompts: Record<string, string> = {
       "concise": `You are an expert summarizer. Create a CONCISE summary that captures the essence of the content.
 
 CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All headings, bullet points, and text must be written in ${targetLanguage}.
+
+${styleInstruction}
 
 ## Overview
 [1-2 sentences introducing the main topic]
@@ -95,34 +128,49 @@ RULES:
 - Be brief and to the point
 - Focus only on the most essential information
 - Use clear, simple language
+- Use LaTeX for technical variables: $V_z$, $I_c$
 - Write everything in ${targetLanguage}`,
 
       "detailed": `You are an expert study guide creator. Create a DETAILED analysis with comprehensive coverage.
 
 CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All headings, terms, definitions, and text must be written in ${targetLanguage}.
 
-## Overview
-[2-3 sentences introducing the topic and its importance]
+${styleInstruction}
 
-## Key Topics
-- **Topic 1**: Detailed explanation with context
-- **Topic 2**: In-depth coverage with examples
+## Executive Summary
+[2-3 prose sentences introducing the topic, its importance, and what will be covered]
+
+---
+
+## 1. Overview
+
+**Core Idea:** [1-2 sentence summary of this section's main point]
+
+[Detailed prose paragraph explaining the concept]
+
+## 2. Key Topics
+
+For each topic, include:
+- **Core Idea:** [Summary sentence]
+- Detailed explanation with context
+- Examples and applications
 [Continue for 5-8 major topics]
 
-## Key Terms & Definitions
-| Term | Definition |
-|------|------------|
-| Term 1 | Comprehensive definition with context |
-| Term 2 | Detailed explanation |
+## 3. Key Terms & Definitions
+| Term | Definition | Context |
+|------|------------|---------|
+| Term 1 | Comprehensive definition | Why it matters |
+| Term 2 | Detailed explanation | Application |
 [Include 8-12 important terms]
 
-## Analysis
-- In-depth examination of main concepts
-- Connections between ideas
-- Implications and applications
+## 4. Comparison (if applicable)
+| Feature | Option A | Option B |
+|---------|----------|----------|
+| Purpose | Description | Description |
+[Include when content has contrasting concepts]
 
-## Key Takeaways
-- Detailed summary point 1
+## Key Technical Findings
+- Detailed summary point 1 with LaTeX where relevant ($V_z$, $I_c$)
 - Comprehensive takeaway 2
 - Important conclusion 3
 [Include 5-8 bullet points]
@@ -130,6 +178,7 @@ CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All headings, terms
 RULES:
 - Be thorough and comprehensive
 - Include examples where relevant
+- Use LaTeX for technical variables: $V_z$, $I_c$, $\\alpha$
 - Explain relationships between concepts
 - Write everything in ${targetLanguage}`,
 
@@ -137,16 +186,18 @@ RULES:
 
 CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All points and text must be written in ${targetLanguage}.
 
+${styleInstruction}
+
 ## Main Topic
 - Core concept or theme
 
 ## Key Points
-• First major point
+• **First major point**
   - Supporting detail
   - Additional context
-• Second major point
-  - Supporting detail
-• Third major point
+• **Second major point**
+  - Supporting detail with technical notation where relevant ($V_z$)
+• **Third major point**
   - Supporting detail
 [Continue for all major points]
 
@@ -167,34 +218,60 @@ RULES:
 - Make it scannable at a glance
 - Write everything in ${targetLanguage}`,
 
-      "academic": `You are an academic writer. Create a FORMAL, scholarly summary.
+      "academic": `You are an academic writer. Create a FORMAL, scholarly summary with rich prose and technical precision.
 
 CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All sections, terms, and text must be written in ${targetLanguage}.
 
-## Abstract
-[Formal 3-4 sentence overview of the content and its significance]
+${styleInstruction}
 
-## Introduction
-[Context and background, significance of the topic]
+## Executive Summary
+[Formal 3-4 sentence prose paragraph introducing the topic, its significance, and key findings]
 
-## Main Themes
-### Theme 1
-[Formal analysis with supporting evidence]
+---
 
-### Theme 2
-[Scholarly examination of the concept]
+## 1. Introduction
 
-### Theme 3
-[Academic discussion of implications]
+**Core Idea:** [1-2 sentence encapsulation of the introduction's purpose]
 
-## Key Concepts & Terminology
+[Prose paragraph providing context, background, and significance of the topic]
+
+## 2. Main Themes
+
+### 2.1 Theme 1: [Name]
+
+**Core Idea:** [Summary sentence]
+
+[Formal prose analysis with supporting evidence. Use LaTeX for technical notation: $V_z$, $I_c$, $\\alpha$]
+
+**Key Physical Attributes:** (if applicable)
+- **Attribute 1:** Detailed explanation
+- **Attribute 2:** Technical details with $LaTeX$ notation
+
+### 2.2 Theme 2: [Name]
+
+**Core Idea:** [Summary sentence]
+
+[Scholarly examination with examples and implications]
+
+## 3. Comparison (if applicable)
+| Feature | Concept A | Concept B |
+|---------|-----------|-----------|
+| Purpose | Description | Description |
+| Behavior | Details with $V_z$ notation | Details |
+
+## 4. Key Concepts & Terminology
 | Concept | Definition | Significance |
 |---------|------------|--------------|
-| Term 1 | Formal definition | Why it matters |
+| Term 1 ($V_z$) | Formal definition | Why it matters |
 | Term 2 | Academic explanation | Relevance |
 
+## Key Technical Findings
+- Finding 1 with LaTeX notation where appropriate
+- Finding 2 with implications
+- Finding 3 with connections to other concepts
+
 ## Conclusions
-[Formal summary of findings and implications]
+[Formal prose summary of findings, implications, and areas for further study]
 
 ## Further Considerations
 - Areas for deeper exploration

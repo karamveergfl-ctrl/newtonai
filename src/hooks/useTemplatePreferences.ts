@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 export type LectureTemplate = "lecture" | "study-guide" | "research" | "project";
 export type MindMapStyle = "radial" | "tree" | "cluster" | "timeline";
 export type SummaryFormat = "concise" | "detailed" | "bullet-points" | "academic";
+export type NotesStyle = "academic" | "quick-notes" | "slides";
 export type LanguageCode = 
   | "en" | "es" | "fr" | "de" | "it" | "pt" | "zh" | "ja" | "ko" 
   | "ar" | "hi" | "ru" | "nl" | "pl" | "tr" | "vi" | "th" | "id"
@@ -14,6 +15,7 @@ interface TemplatePreferences {
   mindMapStyle: MindMapStyle;
   summaryFormat: SummaryFormat;
   language: LanguageCode;
+  notesStyle: NotesStyle;
 }
 
 const STORAGE_KEY = "study-tool-preferences";
@@ -23,6 +25,7 @@ const defaultPreferences: TemplatePreferences = {
   mindMapStyle: "radial",
   summaryFormat: "concise",
   language: "en",
+  notesStyle: "academic",
 };
 
 export const useTemplatePreferences = () => {
@@ -66,5 +69,6 @@ export const useTemplatePreferences = () => {
     setMindMapStyle: (value: MindMapStyle) => updatePreference("mindMapStyle", value),
     setSummaryFormat: (value: SummaryFormat) => updatePreference("summaryFormat", value),
     setLanguage: (value: LanguageCode) => updatePreference("language", value),
+    setNotesStyle: (value: NotesStyle) => updatePreference("notesStyle", value),
   };
 };
