@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,9 @@ const AIQuiz = () => {
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [pendingContent, setPendingContent] = useState<PendingContent | null>(null);
+  
+  // AbortController for cancellation
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Error state for confused Newton
   const [errorState, setErrorState] = useState<"confused" | null>(null);
@@ -95,6 +98,10 @@ const AIQuiz = () => {
 
     const { content, type, metadata } = pendingContent;
     setPendingContent(null);
+    
+    // Create abort controller for cancellation
+    abortControllerRef.current = new AbortController();
+    
     startProcessing();
     setQuestions([]);
     setScore(0);
@@ -136,6 +143,7 @@ const AIQuiz = () => {
               difficulty: settings.difficulty,
             },
           }),
+          signal: abortControllerRef.current?.signal,
         }
       );
 
@@ -163,6 +171,15 @@ const AIQuiz = () => {
         description: `Generated ${data.questions.length} questions`,
       });
     } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        resetProcessing();
+        toast({
+          title: "Cancelled",
+          description: "Quiz generation was cancelled",
+        });
+        return;
+      }
+      
       resetProcessing();
       setErrorState("confused");
       
@@ -175,6 +192,15 @@ const AIQuiz = () => {
         });
       }, 2000);
     }
+  };
+  
+  const handleCancelGeneration = () => {
+    abortControllerRef.current?.abort();
+    resetProcessing();
+    toast({
+      title: "Cancelled",
+      description: "Quiz generation stopped",
+    });
   };
 
   const handleAnswerSelect = (index: number) => {
@@ -273,6 +299,8 @@ const AIQuiz = () => {
                 message="Creating quiz questions..."
                 subMessage="Analyzing your content"
                 variant="card"
+                canCancel={true}
+                onCancel={handleCancelGeneration}
               />
             ) : (
               <Card className="border-border/50 shadow-lg">

@@ -1,7 +1,8 @@
 import { memo, useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, CheckCircle, X } from "lucide-react";
 
 interface ProcessingOverlayProps {
   /** Whether to show the overlay */
@@ -18,6 +19,10 @@ interface ProcessingOverlayProps {
   onCompleted?: () => void;
   /** External progress value (0-100) from backend. If provided, overrides simulated progress */
   externalProgress?: number;
+  /** Whether the cancel button should be shown */
+  canCancel?: boolean;
+  /** Called when user clicks cancel button */
+  onCancel?: () => void;
 }
 
 /**
@@ -29,6 +34,8 @@ interface ProcessingOverlayProps {
  * 
  * Progress can be controlled externally via externalProgress prop
  * for real backend integration, or will simulate progress automatically.
+ * 
+ * Optionally shows a cancel button after 1.5 seconds of processing.
  */
 export const ProcessingOverlay = memo(({
   isVisible,
@@ -38,11 +45,14 @@ export const ProcessingOverlay = memo(({
   className = "",
   onCompleted,
   externalProgress,
+  canCancel = false,
+  onCancel,
 }: ProcessingOverlayProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [simulatedProgress, setSimulatedProgress] = useState(0);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showCancelButton, setShowCancelButton] = useState(false);
   const wasVisibleRef = useRef(false);
 
   // Use external progress if provided, otherwise use simulated
@@ -67,8 +77,23 @@ export const ProcessingOverlay = memo(({
       // Stop instantly and reset
       video.pause();
       video.currentTime = 0;
+      setShowCancelButton(false);
     }
   }, [isVisible]);
+
+  // Show cancel button after 1.5 seconds of processing
+  useEffect(() => {
+    if (!isVisible || !canCancel) {
+      setShowCancelButton(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowCancelButton(true);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [isVisible, canCancel]);
 
   // Simulated progress animation (only when externalProgress is not provided)
   useEffect(() => {
@@ -227,6 +252,28 @@ export const ProcessingOverlay = memo(({
           />
         </div>
       </div>
+
+      {/* Cancel button - appears after 1.5 seconds */}
+      <AnimatePresence>
+        {showCancelButton && canCancel && onCancel && !showCompleted && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onCancel}
+              className="gap-2 text-muted-foreground hover:text-destructive hover:border-destructive transition-colors"
+            >
+              <X className="w-4 h-4" />
+              Cancel
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 
