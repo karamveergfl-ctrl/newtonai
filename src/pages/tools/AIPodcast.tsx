@@ -290,13 +290,6 @@ export default function AIPodcast() {
 
       setGenerationStep("complete");
       setProgress(100);
-      
-      const hasElevenLabsAudio = segments.some(s => s.audio);
-      if (hasElevenLabsAudio) {
-        toast.success("Your AI podcast with professional voices is ready!");
-      } else {
-        toast.success("Your AI podcast is ready! Using browser voice synthesis.");
-      }
     } catch (error) {
       console.error("Podcast generation error:", error);
       setErrorState("confused");
