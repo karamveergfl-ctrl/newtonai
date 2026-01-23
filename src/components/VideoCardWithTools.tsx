@@ -159,6 +159,7 @@ export const VideoCardWithTools = ({
               <Button
                 variant="ghost"
                 size="icon"
+                type="button"
                 className="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white w-8 h-8"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -202,6 +203,7 @@ export const VideoCardWithTools = ({
                   }}
                   variant="outline"
                   size="sm"
+                  type="button"
                   className={cn(
                     "flex-1 gap-2",
                     activeGenerating === "quiz" && "bg-primary/10 border-primary"
@@ -225,6 +227,7 @@ export const VideoCardWithTools = ({
                   }}
                   variant="outline"
                   size="sm"
+                  type="button"
                   className={cn(
                     "flex-1 gap-2",
                     activeGenerating === "flashcards" && "bg-secondary/10 border-secondary"
@@ -248,6 +251,7 @@ export const VideoCardWithTools = ({
                   }}
                   variant="outline"
                   size="sm"
+                  type="button"
                   className={cn(
                     "flex-1 gap-2",
                     activeGenerating === "summary" && "bg-accent/10 border-accent"
@@ -271,6 +275,7 @@ export const VideoCardWithTools = ({
                   }}
                   variant="outline"
                   size="sm"
+                  type="button"
                   className={cn(
                     "flex-1 gap-2",
                     activeGenerating === "mindmap" && "bg-primary/10 border-primary"
@@ -369,6 +374,7 @@ export const VideoCardWithTools = ({
           <div className="flex items-center gap-3 mt-2">
             {onGenerateQuiz && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleToolClick("quiz");
@@ -392,6 +398,7 @@ export const VideoCardWithTools = ({
             
             {onGenerateFlashcards && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleToolClick("flashcards");
@@ -415,6 +422,7 @@ export const VideoCardWithTools = ({
             
             {onGenerateSummary && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleToolClick("summary");
@@ -438,6 +446,7 @@ export const VideoCardWithTools = ({
             
             {onGenerateMindMap && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleToolClick("mindmap");
