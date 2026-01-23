@@ -1,7 +1,7 @@
 import { memo, useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 
 interface ProcessingOverlayProps {
   /** Whether to show the overlay */
@@ -14,6 +14,8 @@ interface ProcessingOverlayProps {
   variant?: "overlay" | "card" | "inline";
   /** Additional className */
   className?: string;
+  /** Called after the completion animation finishes */
+  onCompleted?: () => void;
 }
 
 /**
@@ -21,7 +23,7 @@ interface ProcessingOverlayProps {
  * 
  * Displays a looping Newton video during processing.
  * Video loops infinitely until isVisible becomes false.
- * No fake progress - duration matches real backend time.
+ * Shows a brief completion state with checkmark before dismissing.
  */
 export const ProcessingOverlay = memo(({
   isVisible,
@@ -29,10 +31,13 @@ export const ProcessingOverlay = memo(({
   subMessage,
   variant = "card",
   className = "",
+  onCompleted,
 }: ProcessingOverlayProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const wasVisibleRef = useRef(false);
 
   // Instant start/stop video control
   useEffect(() => {
@@ -40,6 +45,7 @@ export const ProcessingOverlay = memo(({
     if (!video) return;
 
     if (isVisible) {
+      wasVisibleRef.current = true;
       // Reset to start and play immediately
       video.currentTime = 0;
       const playPromise = video.play();
@@ -58,7 +64,21 @@ export const ProcessingOverlay = memo(({
   // Simulated progress animation
   useEffect(() => {
     if (!isVisible) {
-      setProgress(0);
+      // When transitioning from visible to hidden, show completion state
+      if (wasVisibleRef.current && progress >= 30) {
+        setProgress(100);
+        setShowCompleted(true);
+        const timer = setTimeout(() => {
+          setShowCompleted(false);
+          setProgress(0);
+          wasVisibleRef.current = false;
+          onCompleted?.();
+        }, 800);
+        return () => clearTimeout(timer);
+      } else {
+        setProgress(0);
+        wasVisibleRef.current = false;
+      }
       return;
     }
 
@@ -71,11 +91,51 @@ export const ProcessingOverlay = memo(({
     ];
 
     return () => timers.forEach(clearTimeout);
-  }, [isVisible]);
+  }, [isVisible, onCompleted]);
 
-  if (!isVisible) return null;
+  // Don't render if not visible and not showing completed state
+  if (!isVisible && !showCompleted) return null;
 
-  const content = (
+  const completedContent = (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center justify-center gap-4 py-8"
+    >
+      {/* Success Circle with Checkmark */}
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-green-500/20 flex items-center justify-center"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
+        >
+          <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500" />
+        </motion.div>
+      </motion.div>
+
+      {/* Complete message */}
+      <motion.p 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="text-xl sm:text-2xl font-semibold text-green-600 dark:text-green-400"
+      >
+        Complete!
+      </motion.p>
+
+      {/* 100% Progress bar */}
+      <div className="w-full max-w-xs px-4">
+        <div className="h-2.5 bg-green-500 rounded-full overflow-hidden" />
+      </div>
+    </motion.div>
+  );
+
+  const processingContent = (
     <div className="flex flex-col items-center justify-center gap-4 py-4">
       {/* Newton Video - larger with rounded corners and border */}
       <div className="relative w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl overflow-hidden border border-border/30">
@@ -131,7 +191,7 @@ export const ProcessingOverlay = memo(({
           <span>Processing...</span>
           <span className="font-medium">{progress}%</span>
         </div>
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <div className="h-2.5 bg-muted rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-primary rounded-full"
             initial={{ width: "0%" }}
@@ -142,6 +202,8 @@ export const ProcessingOverlay = memo(({
       </div>
     </div>
   );
+
+  const content = showCompleted ? completedContent : processingContent;
 
   // Full-screen overlay variant
   if (variant === "overlay") {

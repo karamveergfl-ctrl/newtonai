@@ -13,7 +13,9 @@ import {
   Loader2,
   Brain,
   ArrowLeft,
-  SkipForward
+  SkipForward,
+  Lightbulb,
+  CheckCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -22,6 +24,8 @@ import rehypeKatex from "rehype-katex";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useToast } from "@/hooks/use-toast";
+import { ConfettiCelebration } from "@/components/ConfettiCelebration";
+import { motion } from "framer-motion";
 
 interface Question {
   id: string;
@@ -293,25 +297,48 @@ export const QuizMode = ({
   if (isComplete) {
     return (
       <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+        {/* Confetti celebration */}
+        <ConfettiCelebration isActive={isComplete} />
+        
         <div className="max-w-md w-full text-center space-y-6 animate-fade-in">
-          <div className="relative">
-            <Trophy className={cn(
-              "w-24 h-24 mx-auto animate-bounce",
-              percentage >= 80 ? "text-yellow-500" : percentage >= 60 ? "text-gray-400" : "text-orange-600"
-            )} />
-            <Sparkles className="absolute top-0 right-1/4 w-8 h-8 text-primary animate-pulse" />
-          </div>
+          {/* Trophy with animation */}
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="relative inline-block"
+          >
+            <div className={cn(
+              "w-28 h-28 rounded-full flex items-center justify-center mx-auto",
+              percentage >= 80 
+                ? "bg-gradient-to-br from-yellow-400/20 to-amber-500/20" 
+                : percentage >= 60 
+                ? "bg-gradient-to-br from-gray-300/20 to-gray-400/20"
+                : "bg-gradient-to-br from-orange-400/20 to-red-500/20"
+            )}>
+              <Trophy className={cn(
+                "w-14 h-14",
+                percentage >= 80 ? "text-yellow-500" : percentage >= 60 ? "text-gray-400" : "text-orange-600"
+              )} />
+            </div>
+            <Sparkles className="absolute top-0 right-0 w-8 h-8 text-primary animate-pulse" />
+          </motion.div>
           
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-2xl sm:text-3xl font-bold">
             {percentage >= 80 ? "Excellent! 🎉" : percentage >= 60 ? "Good Job! 👍" : "Keep Learning! 📚"}
           </h2>
           
           <div className="space-y-2">
-            <p className="text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              {finalScore}/{questions.length}
-            </p>
+            <motion.p 
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-primary via-primary to-primary/60 bg-clip-text text-transparent"
+            >
+              {percentage}%
+            </motion.p>
             <p className="text-muted-foreground">
-              {percentage}% correct
+              {finalScore}/{questions.length} correct
               {skippedQuestions.size > 0 && (
                 <span className="block text-sm mt-1">
                   ({skippedQuestions.size} skipped)
@@ -327,12 +354,13 @@ export const QuizMode = ({
             </p>
           </div>
 
-          <div className="flex gap-3 justify-center">
-            <Button onClick={handleRetry} variant="outline" className="gap-2">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <Button onClick={handleRetry} variant="outline" className="h-12 gap-2 flex-1 sm:flex-none">
               <RotateCcw className="w-4 h-4" />
               Try Again
             </Button>
-            <Button onClick={onClose} className="gap-2">
+            <Button onClick={onClose} className="h-12 gap-2 flex-1 sm:flex-none">
+              <CheckCircle className="w-4 h-4" />
               Done
             </Button>
           </div>
@@ -454,33 +482,54 @@ export const QuizMode = ({
 
           {/* Correct Answer & Explanation - Always shown after submit */}
           {showResult && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800 animate-fade-in">
-              {skippedQuestions.has(currentIndex) && (
-                <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-2">
-                  Question skipped
-                </p>
-              )}
-              <p className="text-sm text-muted-foreground italic">
-                <span className="font-medium text-foreground">✓ Correct Answer: {String.fromCharCode(65 + currentQuestion.correctIndex)}</span>
-                {" — "}
-                {currentQuestion.explanation}
-              </p>
+            <div className={cn(
+              "rounded-xl p-4 border-2 animate-fade-in",
+              skippedQuestions.has(currentIndex)
+                ? "bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
+                : "bg-gradient-to-r from-yellow-50/80 to-amber-50/80 dark:from-yellow-900/20 dark:to-amber-900/20 border-yellow-200/50 dark:border-yellow-800/50"
+            )}>
+              <div className="flex items-start gap-3">
+                <div className={cn(
+                  "p-2 rounded-full shrink-0",
+                  skippedQuestions.has(currentIndex) ? "bg-amber-500/20" : "bg-yellow-500/20"
+                )}>
+                  <Lightbulb className={cn(
+                    "w-5 h-5",
+                    skippedQuestions.has(currentIndex)
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-yellow-600 dark:text-yellow-400"
+                  )} />
+                </div>
+                <div className="flex-1">
+                  {skippedQuestions.has(currentIndex) && (
+                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-1">
+                      Question skipped
+                    </p>
+                  )}
+                  <p className="text-sm font-semibold text-foreground mb-1">
+                    ✓ Correct Answer: {String.fromCharCode(65 + currentQuestion.correctIndex)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {currentQuestion.explanation}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t bg-card/50">
-        <div className="max-w-2xl mx-auto flex justify-between items-center">
+      <div className="p-4 border-t bg-card/50 safe-area-pb">
+        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
           {/* Skip Button - always visible before showing result */}
-          <div>
+          <div className="order-2 sm:order-1">
             {!showResult && (
               <Button
                 onClick={handleSkip}
-                variant="ghost"
+                variant="outline"
                 size="lg"
-                className="gap-2 text-muted-foreground hover:text-foreground"
+                className="gap-2 w-full sm:w-auto h-12 text-muted-foreground hover:text-foreground"
               >
                 <SkipForward className="w-4 h-4" />
                 Skip
@@ -489,13 +538,13 @@ export const QuizMode = ({
           </div>
           
           {/* Submit / Next Button */}
-          <div>
+          <div className="order-1 sm:order-2 w-full sm:w-auto">
             {!showResult ? (
               <Button
                 onClick={handleSubmit}
                 disabled={selectedAnswer === null}
                 size="lg"
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto h-12"
               >
                 Submit Answer
               </Button>
@@ -503,7 +552,7 @@ export const QuizMode = ({
               <Button
                 onClick={handleNext}
                 size="lg"
-                className="gap-2 bg-gradient-to-r from-primary to-secondary"
+                className="gap-2 w-full sm:w-auto h-12 bg-gradient-to-r from-primary to-primary/80"
               >
                 {currentIndex < questions.length - 1 ? (
                   <>
@@ -511,7 +560,10 @@ export const QuizMode = ({
                     <ArrowRight className="w-4 h-4" />
                   </>
                 ) : (
-                  "See Results"
+                  <>
+                    See Results
+                    <Trophy className="w-4 h-4" />
+                  </>
                 )}
               </Button>
             )}
