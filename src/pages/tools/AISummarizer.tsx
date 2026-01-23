@@ -428,10 +428,6 @@ const AISummarizer = () => {
       setSummary(summaryData.summary);
       setContentTitle(pendingSummaryContent.title);
       setPendingSummaryContent(null);
-      toast({
-        title: "Summary generated!",
-        description: `Your ${summaryFormats.find(f => f.id === selectedFormat)?.name} is ready.`,
-      });
     } catch (error: any) {
       console.error("Error generating summary:", error);
       setErrorState("confused");

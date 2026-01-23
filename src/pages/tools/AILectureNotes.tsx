@@ -331,11 +331,6 @@ const AILectureNotes = () => {
       await confirmUsage();
 
       setProgress(100);
-      toast({
-        title: "Notes generated!",
-        description: `Your ${template?.name || "notes"} are ready`,
-      });
-      
       handleNotesGenerated(notesData.notes, notesData.title || template?.name || "Lecture Notes");
       
       // Reset state
