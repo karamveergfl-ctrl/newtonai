@@ -181,14 +181,14 @@ export const ProcessingOverlay = memo(({
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-green-500/20 flex items-center justify-center"
+        className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-green-500/20 flex items-center justify-center"
       >
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
         >
-          <CheckCircle className="w-20 h-20 sm:w-24 sm:h-24 text-green-500" />
+          <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-500" />
         </motion.div>
       </motion.div>
 
@@ -212,7 +212,7 @@ export const ProcessingOverlay = memo(({
   const processingContent = (
     <div className="flex flex-col items-center justify-center gap-6 py-4 w-full">
       {/* Newton Video */}
-      <div className="relative w-[85vw] max-w-[500px] aspect-square sm:w-[70vw] sm:max-w-[550px] md:max-w-[600px] lg:max-w-[650px]">
+      <div className="relative w-[50vw] max-w-[280px] aspect-square sm:w-[45vw] sm:max-w-[300px] md:max-w-[320px] lg:max-w-[350px]">
         {/* Glow effect behind video */}
         <motion.div
           className="absolute inset-0 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-radial from-primary/20 via-primary/5 to-transparent blur-2xl"
@@ -261,7 +261,7 @@ export const ProcessingOverlay = memo(({
                   <img 
                     src={newtonCharacter} 
                     alt="Newton loading"
-                    className="relative z-10 w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 object-contain drop-shadow-xl"
+                    className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-contain drop-shadow-xl"
                   />
                   
                   {/* Thinking dots animation */}
@@ -427,7 +427,7 @@ export const ProcessingOverlay = memo(({
           transition={{ duration: 0.3 }}
         >
           <Card className="border-border/50 shadow-xl overflow-hidden">
-            <CardContent className="flex items-center justify-center min-h-[450px] sm:min-h-[550px] md:min-h-[650px] py-8">
+            <CardContent className="flex items-center justify-center min-h-[320px] sm:min-h-[380px] md:min-h-[420px] py-6">
               {content}
             </CardContent>
           </Card>
