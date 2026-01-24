@@ -44,6 +44,9 @@ import {
   CreditCard,
   HelpCircle,
   BookOpen,
+  Upload,
+  Youtube,
+  Zap,
 } from "lucide-react";
 import { SidebarPromoCard } from "@/components/SidebarPromoCard";
 import { cn } from "@/lib/utils";
@@ -66,6 +69,12 @@ const adminTools = [
   { id: "users", label: "Users", icon: Users, path: "/admin/users" },
   { id: "inquiries", label: "Inquiries", icon: MessageSquare, path: "/admin/inquiries" },
   { id: "redeem-codes", label: "Redeem Codes", icon: Gift, path: "/admin/redeem-codes" },
+];
+
+const quickActions = [
+  { id: "upload", label: "Upload PDF", icon: Upload, path: "/tools/summarizer", action: "upload", gradient: "from-blue-500 to-cyan-500" },
+  { id: "record", label: "Record Lecture", icon: Mic, path: "/tools/lecture-notes", action: "record", gradient: "from-rose-500 to-pink-500" },
+  { id: "youtube", label: "Paste YouTube", icon: Youtube, path: "/tools/summarizer", action: "youtube", gradient: "from-red-500 to-orange-500" },
 ];
 
 const exploreLinks = [
@@ -174,6 +183,47 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                   </motion.button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Quick Actions */}
+        <SidebarGroup className="mt-0">
+          {!isCollapsed && (
+            <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Quick Actions
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {quickActions.map((action) => (
+                <SidebarMenuItem key={action.id}>
+                  <SidebarMenuButton asChild tooltip={action.label}>
+                    <motion.button
+                      whileHover={{ x: isCollapsed ? 0 : 4, scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate(`${action.path}?action=${action.action}`)}
+                      className={cn(
+                        "flex w-full items-center rounded-lg text-sm font-medium transition-all group",
+                        isCollapsed 
+                          ? "justify-center p-2.5 gap-0" 
+                          : "gap-3 px-3 py-2",
+                        "text-sidebar-foreground hover:bg-sidebar-accent"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex items-center justify-center rounded-md transition-all",
+                        isCollapsed ? "h-6 w-6" : "h-7 w-7",
+                        `bg-gradient-to-br ${action.gradient} text-white shadow-sm group-hover:shadow-md`
+                      )}>
+                        <action.icon className={cn("shrink-0", isCollapsed ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                      </div>
+                      {!isCollapsed && <span>{action.label}</span>}
+                    </motion.button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import {
   Mic, Download, Copy, Check, Volume2, VolumeX, Pencil, Eye, Highlighter,
   Upload, Youtube, FileText, Globe, Loader2, ArrowLeft, Sparkles, BookOpen, Clipboard, Star, ChevronDown, X
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import {
   DropdownMenu,
@@ -125,8 +125,27 @@ const extractVideoId = (url: string): string | null => {
 
 const AILectureNotes = () => {
   const navigate = useNavigate();
-  // Tab state
-  const [activeTab, setActiveTab] = useState<InputType>("recording");
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Handle ?action= query param for quick actions
+  const actionParam = searchParams.get("action");
+  const defaultTabFromAction = useMemo(() => {
+    if (actionParam === "record") return "recording" as const;
+    return undefined;
+  }, [actionParam]);
+  
+  // Clear the action param after using it
+  useEffect(() => {
+    if (actionParam) {
+      const timer = setTimeout(() => {
+        setSearchParams({}, { replace: true });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [actionParam, setSearchParams]);
+  
+  // Tab state - use action param if provided
+  const [activeTab, setActiveTab] = useState<InputType>(defaultTabFromAction || "recording");
   const [selectedLanguage, setSelectedLanguage] = useState("en-US");
   
   // Notes state

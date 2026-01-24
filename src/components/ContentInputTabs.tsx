@@ -64,6 +64,7 @@ interface ContentInputTabsProps {
   showText?: boolean;
   showLanguageSelector?: boolean;
   defaultLanguage?: string;
+  defaultTab?: InputType;
 }
 
 export const ContentInputTabs = ({
@@ -84,11 +85,12 @@ export const ContentInputTabs = ({
   showText = true,
   showLanguageSelector = true,
   defaultLanguage,
+  defaultTab,
 }: ContentInputTabsProps) => {
   // Use saved language preference
   const { preferences, isLoaded: prefsLoaded, setLanguage: saveLanguage } = useTemplatePreferences();
   
-  const [activeTab, setActiveTab] = useState<InputType>("upload");
+  const [activeTab, setActiveTab] = useState<InputType>(defaultTab || "upload");
   const [textContent, setTextContent] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
