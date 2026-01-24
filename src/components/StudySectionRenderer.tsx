@@ -380,11 +380,10 @@ export const StudySectionRenderer = ({ content, className, type = 'summary' }: S
   const parsed = parseStudyContent(content);
   
   // State for expanded sections - all expanded by default
-  const [expandedSections, setExpandedSections] = useState<Set<number>>(
-    new Set(parsed.sections.map(s => s.sectionNumber))
-  );
-  const [summaryExpanded, setSummaryExpanded] = useState(true);
-  const [takeawaysExpanded, setTakeawaysExpanded] = useState(true);
+  // Start with all sections COLLAPSED by default
+  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
+  const [takeawaysExpanded, setTakeawaysExpanded] = useState(false);
   
   const toggleSection = (sectionNumber: number) => {
     setExpandedSections(prev => {
