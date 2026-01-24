@@ -197,20 +197,25 @@ export const ProcessingOverlay = memo(({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="text-2xl sm:text-3xl font-semibold text-green-600 dark:text-green-400"
+        className="text-lg sm:text-xl font-semibold text-green-600 dark:text-green-400"
       >
         Complete!
       </motion.p>
 
       {/* 100% Progress bar */}
-      <div className="w-full max-w-md px-6">
-        <div className="h-3 bg-green-500 rounded-full overflow-hidden" />
+      <div className="w-full max-w-xs px-4">
+        <div className="h-2 bg-green-500 rounded-full overflow-hidden" />
       </div>
     </motion.div>
   );
 
   const processingContent = (
-    <div className="flex flex-col items-center justify-center gap-6 py-4 w-full">
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="flex flex-col items-center justify-center gap-4 py-4 w-full"
+    >
       {/* Newton Video */}
       <div className="relative w-[50vw] max-w-[280px] aspect-square sm:w-[45vw] sm:max-w-[300px] md:max-w-[320px] lg:max-w-[350px]">
         {/* Glow effect behind video */}
@@ -322,25 +327,25 @@ export const ProcessingOverlay = memo(({
         animate={{ opacity: 1, y: 0 }}
         className="text-center px-4"
       >
-        <p className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground">
+        <p className="text-base sm:text-lg font-semibold text-foreground">
           {message}
         </p>
         {subMessage && (
-          <p className="text-sm sm:text-base text-muted-foreground mt-1.5">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {subMessage}
           </p>
         )}
       </motion.div>
 
       {/* Progress bar - Backend driven ONLY */}
-      <div className="w-full max-w-md px-6">
-        <div className="flex justify-between text-sm text-muted-foreground mb-2">
+      <div className="w-full max-w-xs px-4">
+        <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
           <span className="font-medium">Processing...</span>
           {!isIndeterminate && (
             <span className="font-bold text-foreground">{Math.round(progress)}%</span>
           )}
         </div>
-        <div className="h-3 bg-muted rounded-full overflow-hidden shadow-inner">
+        <div className="h-2 bg-muted rounded-full overflow-hidden shadow-inner">
           {isIndeterminate ? (
             // Indeterminate: Animated shimmer sliding back and forth
             <motion.div
@@ -381,7 +386,7 @@ export const ProcessingOverlay = memo(({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 
   const content = showCompleted ? completedContent : processingContent;
