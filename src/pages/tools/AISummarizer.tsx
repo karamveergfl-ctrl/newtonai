@@ -11,6 +11,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { StudySectionRenderer } from "@/components/StudySectionRenderer";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
@@ -1133,7 +1134,7 @@ const AISummarizer = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <MarkdownRenderer content={summary} />
+                    <StudySectionRenderer content={summary} type="summary" />
                   </CardContent>
                 </Card>
               </motion.div>

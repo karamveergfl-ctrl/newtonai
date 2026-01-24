@@ -149,12 +149,19 @@ WRITING STYLE: SLIDES (Minimal & Presentation-Ready)
 
     // Template-specific prompts - COMPREHENSIVE and DETAILED (not summaries!)
     const templatePrompts: Record<string, string> = {
-      "lecture": `Create COMPREHENSIVE lecture notes following this structure:
+      "lecture": `Create COMPREHENSIVE lecture notes following this MANDATORY structure:
 
-## 📚 Overview
+## Executive Summary
+[2-3 sentences introducing the main topic and its importance]
+
+## 1. Overview
+**Core Idea:** [1-2 sentence summary of the main topic and why it matters]
+
 Introduce the main topic and explain its importance and context (3-5 sentences minimum).
 
-## 🔑 Key Concepts
+## 2. Key Concepts
+**Core Idea:** [Brief overview of the major concepts covered]
+
 For EACH major concept mentioned:
 ### Concept: [Name]
 - **Definition**: Clear, complete explanation of what this is
@@ -164,40 +171,49 @@ For EACH major concept mentioned:
 
 (Include ALL concepts from the source material, not just 2-3)
 
-## 📝 Detailed Notes
+## 3. Detailed Notes
+**Core Idea:** [Thorough coverage of all content]
+
 Provide thorough coverage of the content including:
 - Complete explanations of all topics discussed
 - Supporting details and background information
 - Logical connections between different ideas
 - Any formulas, processes, or methodologies mentioned
 
-## 📖 Key Terms & Definitions
-Create a comprehensive glossary:
+## 4. Key Terms & Definitions
+**Core Idea:** [Essential vocabulary for understanding this topic]
+
 | Term | Definition |
 |------|------------|
 (List ALL important terminology with clear, complete definitions)
 
-## 💡 Examples & Applications
+## 5. Examples & Applications
+**Core Idea:** [Practical applications that reinforce understanding]
+
 - Practical examples that reinforce understanding
 - Real-world applications of the concepts
 - How these ideas can be applied
 
-## ✅ Key Takeaways
-- List 5-10 essential points for revision
-- Include the most important insights
-- Highlight what students should remember
+## Key Takeaways
+- Essential point 1 for revision
+- Essential point 2
+- Essential point 3
+- Important insight 4
+- Key concept 5`,
 
-## 📌 Study Tips
-- Specific suggestions for mastering this material
-- Recommended ways to review and practice
-- Connections to related topics for further study`,
+      "study-guide": `Create a COMPREHENSIVE study guide following this MANDATORY structure:
 
-      "study-guide": `Create a COMPREHENSIVE study guide following this structure:
+## Executive Summary
+[2-3 sentences summarizing what students will learn]
 
-## 📋 Learning Objectives
+## 1. Learning Objectives
+**Core Idea:** [What students will understand after studying this material]
+
 List 5-8 specific things students will understand after studying this material.
 
-## 📚 Chapter Breakdown
+## 2. Chapter Breakdown
+**Core Idea:** [Logical organization of the content into study sections]
+
 Break the content into logical chapters/sections:
 
 ### Chapter 1: [Topic Name]
@@ -205,38 +221,45 @@ Break the content into logical chapters/sections:
 **Key Points**:
 - Point 1 with full explanation
 - Point 2 with full explanation
-- (continue for all points)
 **Important Details**: Additional context and elaboration
 **Review Questions**: 2-3 questions to test understanding
 
 ### Chapter 2: [Topic Name]
 (Continue same structure for all chapters)
 
-## 📖 Complete Glossary
+## 3. Complete Glossary
+**Core Idea:** [Comprehensive list of all terminology]
+
 | Term | Definition | Example |
 |------|------------|---------|
 (Comprehensive list of all terminology)
 
-## 🔗 Concept Connections
+## 4. Concept Connections
+**Core Idea:** [How different concepts relate to each other]
+
 Explain how different concepts relate to each other with a visual or textual map.
 
-## ✍️ Practice Questions
+## 5. Practice Questions
+**Core Idea:** [Questions to test understanding]
+
 Include 5-10 questions covering the material:
 1. Question about concept X
 2. Question about concept Y
 (Include answers or hints)
 
-## 📝 Action Items
+## Key Takeaways
 - Specific study tasks to complete
 - Exercises to reinforce learning
 - Topics to research further`,
 
-      "research": `Create a COMPREHENSIVE research summary following this structure:
+      "research": `Create a COMPREHENSIVE research summary following this MANDATORY structure:
 
-## 📄 Abstract
-A detailed summary of the entire content (150-200 words) covering the main topics, findings, and significance.
+## Executive Summary
+[Detailed summary of the entire content (150-200 words) covering the main topics, findings, and significance]
 
-## 🎯 Research Topics Covered
+## 1. Research Topics Covered
+**Core Idea:** [Overview of the major research areas explored]
+
 For each topic:
 ### Topic 1: [Name]
 - **Scope**: What aspects are covered
@@ -247,38 +270,48 @@ For each topic:
 ### Topic 2: [Name]
 (Continue for all topics)
 
-## 📊 Detailed Analysis
+## 2. Detailed Analysis
+**Core Idea:** [Critical examination of the research content]
+
 - In-depth examination of the content
 - Critical evaluation of arguments or claims
 - Strengths and limitations identified
 - Comparisons with related work if applicable
 
-## 💡 Key Insights & Findings
+## 3. Key Insights & Findings
+**Core Idea:** [The most significant discoveries and conclusions]
+
 1. Finding 1 with detailed explanation
 2. Finding 2 with detailed explanation
 (List all significant insights)
 
-## 🔍 Methodology Notes
+## 4. Methodology Notes
+**Core Idea:** [How the research was conducted]
+
 - How information was presented or gathered
 - Any frameworks or approaches used
 - Data sources or references mentioned
 
-## 📈 Implications & Applications
+## 5. Implications & Applications
+**Core Idea:** [Practical impact of the findings]
+
 - Practical applications of the findings
 - Impact on the field or related areas
 - Future directions suggested
 
-## 📚 References & Further Reading
+## Key Takeaways
 - Topics to explore further
 - Related concepts to investigate
 - Suggested resources if mentioned`,
 
-      "project": `Create a COMPREHENSIVE project work plan following this structure:
+      "project": `Create a COMPREHENSIVE project work plan following this MANDATORY structure:
 
-## 📋 Executive Summary
-Detailed overview of the project scope and objectives (5-7 sentences).
+## Executive Summary
+[Detailed overview of the project scope and objectives (5-7 sentences)]
 
-## 🎯 Problem Analysis
+## 1. Problem Analysis
+**Core Idea:** [Summary of the core problem being addressed]
+
 ### Problem Statement
 - Clear, detailed description of the problem or challenge
 - Context and background information
@@ -292,7 +325,9 @@ Detailed overview of the project scope and objectives (5-7 sentences).
 - Effects of the problem if left unaddressed
 - Stakeholders affected
 
-## 💡 Proposed Solution
+## 2. Proposed Solution
+**Core Idea:** [Overview of the recommended approach]
+
 ### Solution Overview
 Comprehensive description of the proposed approach.
 
@@ -308,22 +343,28 @@ Comprehensive description of the proposed approach.
 - Tools, technologies, or resources needed
 - Prerequisites and dependencies
 
-## 📅 Timeline & Milestones
+## 3. Timeline & Milestones
+**Core Idea:** [Suggested project schedule]
+
 | Phase | Description | Duration |
 |-------|-------------|----------|
 (Suggested timeline based on the content)
 
-## ✅ Success Metrics
+## 4. Success Metrics
+**Core Idea:** [How to measure success]
+
 - How to measure if the solution works
 - Key performance indicators
 - Evaluation criteria
 
-## ⚠️ Risks & Mitigation
+## 5. Risks & Mitigation
+**Core Idea:** [Potential challenges and solutions]
+
 | Risk | Impact | Mitigation Strategy |
 |------|--------|---------------------|
 (Potential challenges and how to address them)
 
-## 📝 Next Steps
+## Key Takeaways
 - Immediate actions to take
 - Resources to gather
 - People to involve`,
@@ -341,17 +382,20 @@ ${styleInstruction}
 ${comparisonInstruction}
 
 CRITICAL RULES:
-1. EXPAND the content - add context, explanations, definitions, and elaboration
-2. Be THOROUGH - if the input mentions something briefly, explain it more fully
-3. Include DEFINITIONS for all key terms mentioned
-4. Add EXAMPLES to clarify concepts where appropriate
-5. Structure information clearly with proper headings, subheadings, and bullet points
-6. Output MUST be in ${targetLanguage}
-7. Use proper markdown formatting with headers (##, ###), bullet points, bold (**text**), and tables
-8. Make the notes suitable for studying and revision
-9. Add logical CONNECTIONS between ideas
-10. Correct any spelling, grammar, and language errors
-11. For technical content, use LaTeX notation: $V_z$, $I_c$, $\\alpha$, $\\beta$
+1. Use NUMBERED sections: ## 1. Title, ## 2. Title, ## 3. Title
+2. Each section MUST start with **Core Idea:** followed by a 1-2 sentence summary
+3. EXPAND the content - add context, explanations, definitions, and elaboration
+4. Be THOROUGH - if the input mentions something briefly, explain it more fully
+5. Include DEFINITIONS for all key terms mentioned
+6. Add EXAMPLES to clarify concepts where appropriate
+7. Structure information clearly with proper headings, subheadings, and bullet points
+8. Output MUST be in ${targetLanguage}
+9. Use proper markdown formatting with headers (##, ###), bullet points, bold (**text**), and tables
+10. Make the notes suitable for studying and revision
+11. Add logical CONNECTIONS between ideas
+12. Correct any spelling, grammar, and language errors
+13. For technical content, use LaTeX notation: $V_z$, $I_c$, $\\alpha$, $\\beta$
+14. End with a "## Key Takeaways" section
 
 ${structureInfo}
 
