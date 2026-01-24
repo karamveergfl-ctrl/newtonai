@@ -317,6 +317,13 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                 <TabsContent value="videos" className="flex-1 mt-0 min-h-0 relative">
                   <ScrollArea className="h-full" onScrollCapture={handleScroll} ref={videosScrollRef as any}>
                     <div className="p-4 sm:p-6">
+                      {/* Show search context */}
+                      {structuredProblem?.topic && (
+                        <div className="mb-4 p-3 rounded-lg bg-muted/50 border border-border text-sm">
+                          <span className="text-muted-foreground">Related videos for: </span>
+                          <span className="font-medium">{structuredProblem.topic}</span>
+                        </div>
+                      )}
                       {videos.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {videos.map((video) => (
