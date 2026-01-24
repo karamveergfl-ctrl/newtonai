@@ -15,9 +15,25 @@ import {
   Sparkles,
   GraduationCap,
   ChevronDown,
-  Printer
+  Printer,
+  Download,
+  FileImage,
+  FileType,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { 
+  downloadMarkdown, 
+  downloadText, 
+  downloadPDF, 
+  downloadPNG 
+} from '@/utils/studyContentExport';
 
 interface StudySection {
   sectionNumber: number;
@@ -414,6 +430,7 @@ export const StudySectionRenderer = ({ content, className, type = 'summary' }: S
   
   const contentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
   
   const handlePrintPDF = useCallback(() => {
     // First expand all sections
@@ -437,6 +454,50 @@ export const StudySectionRenderer = ({ content, className, type = 'summary' }: S
       });
     }, 300);
   }, [expandAll, toast]);
+
+  const handleDownloadMarkdown = useCallback(() => {
+    downloadMarkdown(content, `study-notes-${Date.now()}`);
+    toast({ title: "Downloaded", description: "Markdown file saved" });
+  }, [content, toast]);
+
+  const handleDownloadText = useCallback(() => {
+    downloadText(content, `study-notes-${Date.now()}`);
+    toast({ title: "Downloaded", description: "Text file saved" });
+  }, [content, toast]);
+
+  const handleDownloadPDF = useCallback(async () => {
+    if (!contentRef.current) return;
+    setIsExporting(true);
+    expandAll();
+    
+    await new Promise(r => setTimeout(r, 300)); // Wait for expand animation
+    
+    try {
+      await downloadPDF(contentRef.current, `study-notes-${Date.now()}`);
+      toast({ title: "Downloaded", description: "PDF file saved" });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to generate PDF", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [contentRef, expandAll, toast]);
+
+  const handleDownloadPNG = useCallback(async () => {
+    if (!contentRef.current) return;
+    setIsExporting(true);
+    expandAll();
+    
+    await new Promise(r => setTimeout(r, 300));
+    
+    try {
+      await downloadPNG(contentRef.current, `study-notes-${Date.now()}`);
+      toast({ title: "Downloaded", description: "Image saved" });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to generate image", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [contentRef, expandAll, toast]);
   
   // If no structured content found, fall back to basic markdown
   if (!parsed.executiveSummary && parsed.sections.length === 0 && !parsed.keyTakeaways) {
@@ -454,13 +515,44 @@ export const StudySectionRenderer = ({ content, className, type = 'summary' }: S
       {/* Expand/Collapse All Controls */}
       {(parsed.sections.length > 1 || parsed.executiveSummary || parsed.keyTakeaways) && (
         <div className="flex justify-between items-center gap-2 mb-2 print:hidden">
-          <button
-            onClick={handlePrintPDF}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded hover:bg-muted/50 border border-border/50"
-          >
-            <Printer className="h-3.5 w-3.5" />
-            Export PDF
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                disabled={isExporting}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded hover:bg-muted/50 border border-border/50 disabled:opacity-50"
+              >
+                {isExporting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                Download
+                <ChevronDown className="h-3 w-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-popover z-50">
+              <DropdownMenuItem onClick={handleDownloadPDF}>
+                <FileText className="mr-2 h-4 w-4" />
+                PDF Document
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadMarkdown}>
+                <FileType className="mr-2 h-4 w-4" />
+                Markdown (.md)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadText}>
+                <FileText className="mr-2 h-4 w-4" />
+                Plain Text (.txt)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadPNG}>
+                <FileImage className="mr-2 h-4 w-4" />
+                Image (PNG)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handlePrintPDF}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="flex gap-2">
             <button
               onClick={expandAll}
