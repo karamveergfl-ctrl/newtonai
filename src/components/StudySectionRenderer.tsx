@@ -19,20 +19,24 @@ import {
   Download,
   FileImage,
   FileType,
-  Loader2
+  Loader2,
+  Copy
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
   downloadMarkdown, 
   downloadText, 
   downloadPDF, 
-  downloadPNG 
+  downloadPNG,
+  downloadDOCX,
+  copyToClipboard
 } from '@/utils/studyContentExport';
 
 interface StudySection {
@@ -498,6 +502,27 @@ export const StudySectionRenderer = ({ content, className, type = 'summary' }: S
       setIsExporting(false);
     }
   }, [contentRef, expandAll, toast]);
+
+  const handleDownloadDOCX = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      await downloadDOCX(content, `study-notes-${Date.now()}`);
+      toast({ title: "Downloaded", description: "Word document saved" });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to generate Word document", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [content, toast]);
+
+  const handleCopyToClipboard = useCallback(async () => {
+    const success = await copyToClipboard(content);
+    if (success) {
+      toast({ title: "Copied", description: "Content copied to clipboard" });
+    } else {
+      toast({ title: "Error", description: "Failed to copy to clipboard", variant: "destructive" });
+    }
+  }, [content, toast]);
   
   // If no structured content found, fall back to basic markdown
   if (!parsed.executiveSummary && parsed.sections.length === 0 && !parsed.keyTakeaways) {
@@ -531,9 +556,18 @@ export const StudySectionRenderer = ({ content, className, type = 'summary' }: S
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="bg-popover z-50">
+              <DropdownMenuItem onClick={handleCopyToClipboard}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy to Clipboard
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleDownloadPDF}>
                 <FileText className="mr-2 h-4 w-4" />
                 PDF Document
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadDOCX}>
+                <FileText className="mr-2 h-4 w-4" />
+                Word Document (.docx)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleDownloadMarkdown}>
                 <FileType className="mr-2 h-4 w-4" />
@@ -547,6 +581,7 @@ export const StudySectionRenderer = ({ content, className, type = 'summary' }: S
                 <FileImage className="mr-2 h-4 w-4" />
                 Image (PNG)
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handlePrintPDF}>
                 <Printer className="mr-2 h-4 w-4" />
                 Print
