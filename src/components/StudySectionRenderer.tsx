@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -13,8 +13,10 @@ import {
   BookMarked,
   Sparkles,
   GraduationCap,
-  ChevronDown
+  ChevronDown,
+  Printer
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface StudySection {
   sectionNumber: number;
@@ -409,6 +411,32 @@ export const StudySectionRenderer = ({ content, className, type = 'summary' }: S
     setTakeawaysExpanded(false);
   };
   
+  const contentRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  
+  const handlePrintPDF = useCallback(() => {
+    // First expand all sections
+    expandAll();
+    
+    // Wait for animations to complete before printing
+    setTimeout(() => {
+      // Add print-specific class to body
+      document.body.classList.add('printing-study-content');
+      
+      window.print();
+      
+      // Remove class after print dialog closes
+      setTimeout(() => {
+        document.body.classList.remove('printing-study-content');
+      }, 500);
+      
+      toast({
+        title: "Print Ready",
+        description: "All sections expanded for printing",
+      });
+    }, 300);
+  }, [expandAll, toast]);
+  
   // If no structured content found, fall back to basic markdown
   if (!parsed.executiveSummary && parsed.sections.length === 0 && !parsed.keyTakeaways) {
     return (
@@ -421,23 +449,32 @@ export const StudySectionRenderer = ({ content, className, type = 'summary' }: S
   }
   
   return (
-    <div className={cn("space-y-4", className)}>
+    <div ref={contentRef} className={cn("space-y-4 print-study-content", className)}>
       {/* Expand/Collapse All Controls */}
       {(parsed.sections.length > 1 || parsed.executiveSummary || parsed.keyTakeaways) && (
-        <div className="flex justify-end gap-2 mb-2">
+        <div className="flex justify-between items-center gap-2 mb-2 print:hidden">
           <button
-            onClick={expandAll}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted/50"
+            onClick={handlePrintPDF}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded hover:bg-muted/50 border border-border/50"
           >
-            Expand All
+            <Printer className="h-3.5 w-3.5" />
+            Export PDF
           </button>
-          <span className="text-muted-foreground/50">|</span>
-          <button
-            onClick={collapseAll}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted/50"
-          >
-            Collapse All
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={expandAll}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted/50"
+            >
+              Expand All
+            </button>
+            <span className="text-muted-foreground/50">|</span>
+            <button
+              onClick={collapseAll}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted/50"
+            >
+              Collapse All
+            </button>
+          </div>
         </div>
       )}
       

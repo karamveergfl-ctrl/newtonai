@@ -323,3 +323,61 @@ All colors MUST be HSL.
     animation: none !important;
   }
 }
+
+/* Print styles for study content */
+@media print {
+  /* Hide everything except the study content */
+  body.printing-study-content * {
+    visibility: hidden;
+  }
+  
+  body.printing-study-content .print-study-content,
+  body.printing-study-content .print-study-content * {
+    visibility: visible;
+  }
+  
+  body.printing-study-content .print-study-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+  }
+  
+  /* Remove shadows and backgrounds for cleaner print */
+  body.printing-study-content .print-study-content [class*="shadow"] {
+    box-shadow: none !important;
+  }
+  
+  body.printing-study-content .print-study-content [class*="bg-gradient"] {
+    background: white !important;
+  }
+  
+  /* Ensure borders are visible */
+  body.printing-study-content .print-study-content [class*="border"] {
+    border-color: #e5e7eb !important;
+  }
+  
+  /* Force dark text for readability */
+  body.printing-study-content .print-study-content * {
+    color: #1f2937 !important;
+  }
+  
+  /* Hide interactive elements */
+  body.printing-study-content .print-study-content button,
+  body.printing-study-content .print-study-content [role="button"] {
+    display: none !important;
+  }
+  
+  /* Ensure all collapsed content is visible */
+  body.printing-study-content .print-study-content [class*="overflow-hidden"] {
+    overflow: visible !important;
+    height: auto !important;
+  }
+  
+  /* Page break handling */
+  body.printing-study-content .print-study-content > div {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
