@@ -17,8 +17,12 @@ interface ProcessingOverlayProps {
   className?: string;
   /** Called after the completion animation finishes */
   onCompleted?: () => void;
-  /** External progress value (0-100) from backend. If provided, overrides simulated progress */
-  externalProgress?: number;
+  /** Backend-driven progress value (0-100). This is the ONLY source of progress. */
+  progress?: number;
+  /** When true, show indeterminate/pulsing progress bar */
+  isIndeterminate?: boolean;
+  /** Minimum time before showing overlay - skip for fast responses (default: 300ms) */
+  skipDelayMs?: number;
   /** Whether the cancel button should be shown */
   canCancel?: boolean;
   /** Called when user clicks cancel button */
@@ -26,16 +30,17 @@ interface ProcessingOverlayProps {
 }
 
 /**
- * Processing Overlay Component (Video-Based)
+ * Processing Overlay Component (Video-Based, Backend-Driven)
  * 
- * Displays a large, fullscreen Newton video during processing.
- * Video loops infinitely until isVisible becomes false.
- * Shows a brief completion state with checkmark before dismissing.
+ * Displays a large Newton video during processing.
+ * Video loops until isVisible becomes false.
+ * Progress is ONLY driven by backend - no fake timers.
  * 
- * Progress can be controlled externally via externalProgress prop
- * for real backend integration, or will simulate progress automatically.
- * 
- * Optionally shows a cancel button after 1.5 seconds of processing.
+ * Key behaviors:
+ * - Skips overlay entirely for responses under skipDelayMs (default 300ms)
+ * - Video starts/stops instantly based on visibility
+ * - Progress bar is either indeterminate or shows exact backend progress
+ * - No simulated progress - backend is single source of truth
  */
 export const ProcessingOverlay = memo(({
   isVisible,
@@ -44,46 +49,86 @@ export const ProcessingOverlay = memo(({
   variant = "card",
   className = "",
   onCompleted,
-  externalProgress,
+  progress = 0,
+  isIndeterminate = true,
+  skipDelayMs = 300,
   canCancel = false,
   onCancel,
 }: ProcessingOverlayProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const [simulatedProgress, setSimulatedProgress] = useState(0);
+  const [shouldShow, setShouldShow] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const [showCancelButton, setShowCancelButton] = useState(false);
+  const showTimerRef = useRef<NodeJS.Timeout | null>(null);
   const wasVisibleRef = useRef(false);
 
-  // Use external progress if provided, otherwise use simulated
-  const progress = externalProgress !== undefined ? externalProgress : simulatedProgress;
+  // Skip overlay for fast responses - only show after skipDelayMs
+  useEffect(() => {
+    if (isVisible) {
+      wasVisibleRef.current = true;
+      
+      // Delay showing overlay by skipDelayMs
+      showTimerRef.current = setTimeout(() => {
+        setShouldShow(true);
+      }, skipDelayMs);
+    } else {
+      // Clear timer and check if we should show completion
+      if (showTimerRef.current) {
+        clearTimeout(showTimerRef.current);
+        showTimerRef.current = null;
+      }
+      
+      // If we were visible and showing, show completion state
+      if (wasVisibleRef.current && shouldShow && progress >= 90) {
+        setShowCompleted(true);
+        const timer = setTimeout(() => {
+          setShowCompleted(false);
+          setShouldShow(false);
+          wasVisibleRef.current = false;
+          onCompleted?.();
+        }, 600);
+        return () => clearTimeout(timer);
+      } else {
+        // Fast response - just hide immediately
+        setShouldShow(false);
+        wasVisibleRef.current = false;
+        if (progress >= 90) {
+          onCompleted?.();
+        }
+      }
+    }
+    
+    return () => {
+      if (showTimerRef.current) {
+        clearTimeout(showTimerRef.current);
+      }
+    };
+  }, [isVisible, skipDelayMs, progress, shouldShow, onCompleted]);
 
-  // Instant start/stop video control
+  // Instant video start/stop control
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    if (isVisible) {
-      wasVisibleRef.current = true;
-      // Reset to start and play immediately
+    if (shouldShow && isVisible) {
       video.currentTime = 0;
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise.catch(() => {
-          // Autoplay may be blocked, but video will still show
+          // Autoplay may be blocked
         });
       }
     } else {
-      // Stop instantly and reset
+      // INSTANT stop - no waiting for loop to finish
       video.pause();
       video.currentTime = 0;
-      setShowCancelButton(false);
     }
-  }, [isVisible]);
+  }, [shouldShow, isVisible]);
 
   // Show cancel button after 1.5 seconds of processing
   useEffect(() => {
-    if (!isVisible || !canCancel) {
+    if (!shouldShow || !canCancel) {
       setShowCancelButton(false);
       return;
     }
@@ -93,57 +138,10 @@ export const ProcessingOverlay = memo(({
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [isVisible, canCancel]);
-
-  // Simulated progress animation (only when externalProgress is not provided)
-  useEffect(() => {
-    if (externalProgress !== undefined) return; // Skip if using external progress
-
-    if (!isVisible) {
-      // When transitioning from visible to hidden, show completion state
-      if (wasVisibleRef.current && simulatedProgress >= 30) {
-        setSimulatedProgress(100);
-        setShowCompleted(true);
-        const timer = setTimeout(() => {
-          setShowCompleted(false);
-          setSimulatedProgress(0);
-          wasVisibleRef.current = false;
-          onCompleted?.();
-        }, 800);
-        return () => clearTimeout(timer);
-      } else {
-        setSimulatedProgress(0);
-        wasVisibleRef.current = false;
-      }
-      return;
-    }
-
-    // Progress stages: 0 -> 10% -> 30% -> 60% -> 90%
-    const timers = [
-      setTimeout(() => setSimulatedProgress(10), 500),
-      setTimeout(() => setSimulatedProgress(30), 2000),
-      setTimeout(() => setSimulatedProgress(60), 4000),
-      setTimeout(() => setSimulatedProgress(90), 6500),
-    ];
-
-    return () => timers.forEach(clearTimeout);
-  }, [isVisible, externalProgress, onCompleted, simulatedProgress]);
-
-  // Handle completion when external progress hits 100
-  useEffect(() => {
-    if (externalProgress === 100 && !showCompleted) {
-      setShowCompleted(true);
-      const timer = setTimeout(() => {
-        setShowCompleted(false);
-        wasVisibleRef.current = false;
-        onCompleted?.();
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [externalProgress, showCompleted, onCompleted]);
+  }, [shouldShow, canCancel]);
 
   // Don't render if not visible and not showing completed state
-  if (!isVisible && !showCompleted) return null;
+  if (!shouldShow && !showCompleted) return null;
 
   const completedContent = (
     <motion.div 
@@ -186,7 +184,7 @@ export const ProcessingOverlay = memo(({
 
   const processingContent = (
     <div className="flex flex-col items-center justify-center gap-6 py-4 w-full">
-      {/* Newton Video - MUCH LARGER to fill screen with prominent rounded corners */}
+      {/* Newton Video */}
       <div className="relative w-[85vw] max-w-[500px] aspect-square sm:w-[70vw] sm:max-w-[550px] md:max-w-[600px] lg:max-w-[650px]">
         {/* Glow effect behind video */}
         <motion.div
@@ -198,7 +196,7 @@ export const ProcessingOverlay = memo(({
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
 
-        {/* Video container with prominent rounded corners */}
+        {/* Video container */}
         <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-2 border-border/40 shadow-2xl bg-card/50">
           {/* Loading placeholder while video loads */}
           {!videoLoaded && (
@@ -237,19 +235,31 @@ export const ProcessingOverlay = memo(({
         )}
       </motion.div>
 
-      {/* Progress bar with percentage - wider and more prominent */}
+      {/* Progress bar - Backend driven ONLY */}
       <div className="w-full max-w-md px-6">
         <div className="flex justify-between text-sm text-muted-foreground mb-2">
           <span className="font-medium">Processing...</span>
-          <span className="font-bold text-foreground">{progress}%</span>
+          {!isIndeterminate && (
+            <span className="font-bold text-foreground">{Math.round(progress)}%</span>
+          )}
         </div>
         <div className="h-3 bg-muted rounded-full overflow-hidden shadow-inner">
-          <motion.div
-            className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
-            initial={{ width: "0%" }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          />
+          {isIndeterminate ? (
+            // Indeterminate: Animated shimmer sliding back and forth
+            <motion.div
+              className="h-full w-1/3 bg-gradient-to-r from-primary/60 via-primary to-primary/60 rounded-full"
+              animate={{ x: ["-100%", "400%"] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            />
+          ) : (
+            // Determinate: Exact progress from backend
+            <motion.div
+              className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
+              initial={{ width: "0%" }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            />
+          )}
         </div>
       </div>
 
@@ -295,7 +305,7 @@ export const ProcessingOverlay = memo(({
     );
   }
 
-  // Card variant (default) - with larger min height for bigger video
+  // Card variant (default)
   if (variant === "card") {
     return (
       <motion.div

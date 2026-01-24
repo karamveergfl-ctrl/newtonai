@@ -13,10 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    // Validate JWT token
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.log("Missing authorization header");
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -32,7 +30,6 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      console.log("Invalid or expired token:", authError?.message);
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -54,9 +51,7 @@ serve(async (req) => {
       );
     }
 
-    console.log("Authenticated user:", user.id);
-
-    const { transcription, template, templateStructure, language, notesStyle = "academic", includeComparison = true } = await req.json();
+    const { transcription, template, templateStructure, language, notesStyle = "academic", includeComparison = true, stream = false } = await req.json();
 
     if (!transcription) {
       throw new Error("No transcription provided");
@@ -67,340 +62,271 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    console.log("Generating notes from transcription...");
-    console.log("Template:", template);
-    console.log("Language:", language);
-    console.log("Notes Style:", notesStyle);
-    console.log("Include Comparison:", includeComparison);
+    console.log(`Generating notes: Template=${template}, Language=${language}, Style=${notesStyle}`);
 
-    // Comparison table instruction when enabled
     const comparisonInstruction = includeComparison ? `
 COMPARISON TABLE GENERATION:
 Automatically detect and create comparison tables when content discusses:
-- Multiple types or categories of something
-- Competing methods, approaches, or techniques
-- Pros vs cons of different options
-- Before vs after scenarios
-- Different components, parts, or versions
+- Multiple types or categories
+- Competing methods or approaches
+- Pros vs cons
 
-When you detect comparable items:
-1. Create a markdown table with clear headers
-2. Include at least 3-4 comparison dimensions (rows)
-3. Use technical notation where appropriate ($V_z$, $I_c$)
-4. Format: | Feature | Option A | Option B |
+When detected, create markdown tables with clear headers.
 ` : "";
 
-    // Get language name for the prompt
     const languageNames: Record<string, string> = {
-      "en-US": "English",
-      "es-ES": "Spanish",
-      "fr-FR": "French",
-      "de-DE": "German",
-      "it-IT": "Italian",
-      "pt-BR": "Portuguese",
-      "zh-CN": "Chinese",
-      "ja-JP": "Japanese",
-      "ko-KR": "Korean",
-      "ar-SA": "Arabic",
-      "hi-IN": "Hindi",
-      "ru-RU": "Russian",
+      "en-US": "English", "es-ES": "Spanish", "fr-FR": "French",
+      "de-DE": "German", "it-IT": "Italian", "pt-BR": "Portuguese",
+      "zh-CN": "Chinese", "ja-JP": "Japanese", "ko-KR": "Korean",
+      "ar-SA": "Arabic", "hi-IN": "Hindi", "ru-RU": "Russian",
     };
     const targetLanguage = languageNames[language] || "English";
 
-    // Style modifiers based on user preference
     const styleModifiers: Record<string, string> = {
       "academic": `
 WRITING STYLE: ACADEMIC & COMPREHENSIVE
-- Start with an "Executive Summary" section (2-3 prose sentences introducing the topic)
+- Start with an "Executive Summary" section (2-3 prose sentences)
 - Each major section MUST start with "**Core Idea:**" followed by a 1-2 sentence summary
-- Write in PROSE PARAGRAPHS with detailed explanations, not just bullet lists
-- Use NUMBERED sections (1., 2., 3.) for major topics
-- Include COMPARISON TABLES when contrasting concepts (use markdown tables)
-- Use LaTeX notation for ALL technical variables: $V_z$, $I_F$, $R_b$, $\\alpha$
-- Add "Key Technical Findings" or "Key Takeaways" section at the end
-- Include "Key Physical Attributes:" or "Key Parameters:" sub-sections where relevant
-- Academic, formal tone with thorough explanations
+- Write in PROSE PARAGRAPHS with detailed explanations
+- Use NUMBERED sections (1., 2., 3.)
+- Use LaTeX notation for technical variables: $V_z$, $I_F$
+- Add "Key Technical Findings" at the end
 `,
       "quick-notes": `
 WRITING STYLE: QUICK NOTES (Scannable)
-- Use BULLET POINTS as the primary format
-- Keep explanations BRIEF (1-2 sentences max per point)
-- Focus on KEY FACTS and essential information only
-- Use **bold** for important terms and concepts
-- NO lengthy paragraphs - everything should be scannable
-- Easy to review quickly before exams
-- Skip detailed background - just the essentials
-- Use short, punchy statements
+- Use BULLET POINTS as primary format
+- Keep explanations BRIEF (1-2 sentences max)
+- Focus on KEY FACTS only
+- Use **bold** for important terms
+- Easy to review quickly
 `,
       "slides": `
-WRITING STYLE: SLIDES (Minimal & Presentation-Ready)
-- VERY sparse content - think "presentation slides"
+WRITING STYLE: SLIDES (Minimal)
+- VERY sparse content
 - Maximum 3-5 bullet points per section
-- ONE key idea per section/slide
-- Large, impactful statements only
-- NO paragraphs, NO detailed explanations
+- ONE key idea per section
 - Just headlines and key takeaways
-- Perfect for quick revision or presentations
-- Use bold for emphasis on critical terms
+- NO paragraphs
 `
     };
 
     const styleInstruction = styleModifiers[notesStyle] || styleModifiers["academic"];
 
-    // Template-specific prompts - COMPREHENSIVE and DETAILED (not summaries!)
     const templatePrompts: Record<string, string> = {
-      "lecture": `Create COMPREHENSIVE lecture notes following this MANDATORY structure:
+      "lecture": `Create COMPREHENSIVE lecture notes:
 
 ## Executive Summary
-[2-3 sentences introducing the main topic and its importance]
+[2-3 sentences]
 
 ## 1. Overview
-**Core Idea:** [1-2 sentence summary of the main topic and why it matters]
-
-Introduce the main topic and explain its importance and context (3-5 sentences minimum).
+**Core Idea:** [Summary of main topic]
+[Introduction paragraph]
 
 ## 2. Key Concepts
-**Core Idea:** [Brief overview of the major concepts covered]
-
-For EACH major concept mentioned:
+**Core Idea:** [Brief overview of concepts]
 ### Concept: [Name]
-- **Definition**: Clear, complete explanation of what this is
-- **Context**: Why this matters and how it connects to the broader topic
-- **Details**: In-depth elaboration with supporting information
-- **Example**: A practical illustration or real-world application
-
-(Include ALL concepts from the source material, not just 2-3)
+- **Definition**: Explanation
+- **Context**: Why it matters
+- **Example**: Illustration
 
 ## 3. Detailed Notes
-**Core Idea:** [Thorough coverage of all content]
-
-Provide thorough coverage of the content including:
-- Complete explanations of all topics discussed
-- Supporting details and background information
-- Logical connections between different ideas
-- Any formulas, processes, or methodologies mentioned
+**Core Idea:** [Coverage summary]
+[Thorough content coverage]
 
 ## 4. Key Terms & Definitions
-**Core Idea:** [Essential vocabulary for understanding this topic]
-
+**Core Idea:** [Vocabulary overview]
 | Term | Definition |
-|------|------------|
-(List ALL important terminology with clear, complete definitions)
 
 ## 5. Examples & Applications
-**Core Idea:** [Practical applications that reinforce understanding]
-
-- Practical examples that reinforce understanding
-- Real-world applications of the concepts
-- How these ideas can be applied
+**Core Idea:** [Practical applications]
 
 ## Key Takeaways
-- Essential point 1 for revision
-- Essential point 2
-- Essential point 3
-- Important insight 4
-- Key concept 5`,
+- Essential points`,
 
-      "study-guide": `Create a COMPREHENSIVE study guide following this MANDATORY structure:
+      "study-guide": `Create a COMPREHENSIVE study guide:
 
 ## Executive Summary
-[2-3 sentences summarizing what students will learn]
+[Summary of learning objectives]
 
 ## 1. Learning Objectives
-**Core Idea:** [What students will understand after studying this material]
-
-List 5-8 specific things students will understand after studying this material.
+**Core Idea:** [What students will understand]
+[5-8 specific objectives]
 
 ## 2. Chapter Breakdown
-**Core Idea:** [Logical organization of the content into study sections]
-
-Break the content into logical chapters/sections:
-
-### Chapter 1: [Topic Name]
-**Overview**: Detailed introduction to this section
-**Key Points**:
-- Point 1 with full explanation
-- Point 2 with full explanation
-**Important Details**: Additional context and elaboration
-**Review Questions**: 2-3 questions to test understanding
-
-### Chapter 2: [Topic Name]
-(Continue same structure for all chapters)
+**Core Idea:** [Content organization]
+### Chapter 1: [Topic]
+**Overview**: Introduction
+**Key Points**: Main ideas
+**Review Questions**: 2-3 questions
 
 ## 3. Complete Glossary
-**Core Idea:** [Comprehensive list of all terminology]
-
+**Core Idea:** [All terminology]
 | Term | Definition | Example |
-|------|------------|---------|
-(Comprehensive list of all terminology)
 
 ## 4. Concept Connections
-**Core Idea:** [How different concepts relate to each other]
-
-Explain how different concepts relate to each other with a visual or textual map.
+**Core Idea:** [Relationships between concepts]
 
 ## 5. Practice Questions
-**Core Idea:** [Questions to test understanding]
+**Core Idea:** [Testing understanding]
 
-Include 5-10 questions covering the material:
-1. Question about concept X
-2. Question about concept Y
-(Include answers or hints)
+## Key Takeaways`,
 
-## Key Takeaways
-- Specific study tasks to complete
-- Exercises to reinforce learning
-- Topics to research further`,
-
-      "research": `Create a COMPREHENSIVE research summary following this MANDATORY structure:
+      "research": `Create a COMPREHENSIVE research summary:
 
 ## Executive Summary
-[Detailed summary of the entire content (150-200 words) covering the main topics, findings, and significance]
+[150-200 word summary]
 
 ## 1. Research Topics Covered
-**Core Idea:** [Overview of the major research areas explored]
-
-For each topic:
+**Core Idea:** [Overview of research areas]
 ### Topic 1: [Name]
-- **Scope**: What aspects are covered
-- **Key Findings**: Detailed findings and insights
-- **Methodology**: How information was gathered or conclusions reached
-- **Significance**: Why this matters
-
-### Topic 2: [Name]
-(Continue for all topics)
+- **Scope**: Coverage
+- **Key Findings**: Insights
+- **Significance**: Importance
 
 ## 2. Detailed Analysis
-**Core Idea:** [Critical examination of the research content]
-
-- In-depth examination of the content
-- Critical evaluation of arguments or claims
-- Strengths and limitations identified
-- Comparisons with related work if applicable
+**Core Idea:** [Critical examination]
 
 ## 3. Key Insights & Findings
-**Core Idea:** [The most significant discoveries and conclusions]
-
-1. Finding 1 with detailed explanation
-2. Finding 2 with detailed explanation
-(List all significant insights)
+**Core Idea:** [Significant discoveries]
 
 ## 4. Methodology Notes
-**Core Idea:** [How the research was conducted]
-
-- How information was presented or gathered
-- Any frameworks or approaches used
-- Data sources or references mentioned
+**Core Idea:** [Research approach]
 
 ## 5. Implications & Applications
-**Core Idea:** [Practical impact of the findings]
+**Core Idea:** [Practical impact]
 
-- Practical applications of the findings
-- Impact on the field or related areas
-- Future directions suggested
+## Key Takeaways`,
 
-## Key Takeaways
-- Topics to explore further
-- Related concepts to investigate
-- Suggested resources if mentioned`,
-
-      "project": `Create a COMPREHENSIVE project work plan following this MANDATORY structure:
+      "project": `Create a COMPREHENSIVE project work plan:
 
 ## Executive Summary
-[Detailed overview of the project scope and objectives (5-7 sentences)]
+[5-7 sentences overview]
 
 ## 1. Problem Analysis
-**Core Idea:** [Summary of the core problem being addressed]
-
+**Core Idea:** [Core problem summary]
 ### Problem Statement
-- Clear, detailed description of the problem or challenge
-- Context and background information
-- Why this problem needs to be addressed
-
 ### Root Causes
-- Underlying factors contributing to the problem
-- Analysis of each cause
-
 ### Impact Assessment
-- Effects of the problem if left unaddressed
-- Stakeholders affected
 
 ## 2. Proposed Solution
-**Core Idea:** [Overview of the recommended approach]
-
+**Core Idea:** [Recommended approach]
 ### Solution Overview
-Comprehensive description of the proposed approach.
-
 ### Implementation Steps
-1. **Step 1**: [Description]
-   - Detailed actions required
-   - Resources needed
-   - Expected outcomes
-2. **Step 2**: [Description]
-   (Continue for all steps)
-
-### Technical Requirements
-- Tools, technologies, or resources needed
-- Prerequisites and dependencies
 
 ## 3. Timeline & Milestones
-**Core Idea:** [Suggested project schedule]
-
+**Core Idea:** [Project schedule]
 | Phase | Description | Duration |
-|-------|-------------|----------|
-(Suggested timeline based on the content)
 
 ## 4. Success Metrics
-**Core Idea:** [How to measure success]
-
-- How to measure if the solution works
-- Key performance indicators
-- Evaluation criteria
+**Core Idea:** [Measurement criteria]
 
 ## 5. Risks & Mitigation
-**Core Idea:** [Potential challenges and solutions]
+**Core Idea:** [Challenges and solutions]
+| Risk | Impact | Mitigation |
 
-| Risk | Impact | Mitigation Strategy |
-|------|--------|---------------------|
-(Potential challenges and how to address them)
-
-## Key Takeaways
-- Immediate actions to take
-- Resources to gather
-- People to involve`,
+## Key Takeaways`,
     };
 
     const selectedTemplatePrompt = templatePrompts[template] || templatePrompts["lecture"];
     const structureInfo = templateStructure?.length > 0 
-      ? `Consider incorporating these key sections: ${templateStructure.join(", ")}` 
+      ? `Consider incorporating: ${templateStructure.join(", ")}` 
       : "";
 
-    const systemPrompt = `You are an expert lecture note-taker and educational content creator. Your task is to create COMPREHENSIVE, DETAILED lecture notes that EXPAND upon the source material.
+    const systemPrompt = `You are an expert lecture note-taker.
 
 ${styleInstruction}
 
 ${comparisonInstruction}
 
 CRITICAL RULES:
-1. Use NUMBERED sections: ## 1. Title, ## 2. Title, ## 3. Title
-2. Each section MUST start with **Core Idea:** followed by a 1-2 sentence summary
-3. EXPAND the content - add context, explanations, definitions, and elaboration
-4. Be THOROUGH - if the input mentions something briefly, explain it more fully
-5. Include DEFINITIONS for all key terms mentioned
-6. Add EXAMPLES to clarify concepts where appropriate
-7. Structure information clearly with proper headings, subheadings, and bullet points
-8. Output MUST be in ${targetLanguage}
-9. Use proper markdown formatting with headers (##, ###), bullet points, bold (**text**), and tables
-10. Make the notes suitable for studying and revision
-11. Add logical CONNECTIONS between ideas
-12. Correct any spelling, grammar, and language errors
-13. For technical content, use LaTeX notation: $V_z$, $I_c$, $\\alpha$, $\\beta$
-14. End with a "## Key Takeaways" section
+1. Use NUMBERED sections: ## 1. Title, ## 2. Title
+2. Each section MUST start with **Core Idea:** followed by summary
+3. EXPAND content - add context, explanations, definitions
+4. Be THOROUGH
+5. Include DEFINITIONS for key terms
+6. Add EXAMPLES to clarify
+7. Output MUST be in ${targetLanguage}
+8. Use proper markdown formatting
+9. End with "## Key Takeaways"
 
 ${structureInfo}
 
 ${selectedTemplatePrompt}`;
 
+    // SSE streaming response
+    if (stream) {
+      const encoder = new TextEncoder();
+      
+      const sendProgress = (controller: ReadableStreamDefaultController, data: { stage: string; progress: number; message?: string }) => {
+        const event = `data: ${JSON.stringify({ type: "progress", ...data })}\n\n`;
+        controller.enqueue(encoder.encode(event));
+      };
+
+      const streamResponse = new ReadableStream({
+        async start(controller) {
+          try {
+            // Stage 1: Analyzing
+            sendProgress(controller, { stage: "analyzing", progress: 15, message: "Analyzing transcription..." });
+
+            // Stage 2: Generating
+            sendProgress(controller, { stage: "generating", progress: 40, message: "Newton is creating your notes..." });
+
+            const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: `Create comprehensive lecture notes from this content. Expand, add definitions, examples. Output in ${targetLanguage}:\n\n${transcription}` },
+                ],
+                max_tokens: 4000,
+              }),
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error("API error:", response.status, errorText);
+              throw new Error(`API request failed: ${response.status}`);
+            }
+
+            // Stage 3: Processing
+            sendProgress(controller, { stage: "processing", progress: 80, message: "Formatting notes..." });
+
+            const data = await response.json();
+            const notes = data.choices?.[0]?.message?.content;
+
+            if (!notes) {
+              throw new Error("No notes generated");
+            }
+
+            const titleMatch = notes.match(/^#\s*(.+)$/m) || notes.match(/\*\*(.+?)\*\*/);
+            const title = titleMatch ? titleMatch[1].trim() : "Lecture Notes";
+
+            // Stage 4: Complete
+            sendProgress(controller, { stage: "complete", progress: 100, message: "Notes ready!" });
+
+            // Send final result
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "result", data: { notes, title } })}\n\n`));
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            controller.close();
+          } catch (error) {
+            console.error("Error generating lecture notes:", error);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: error instanceof Error ? error.message : "Failed to generate notes" })}\n\n`));
+            controller.close();
+          }
+        }
+      });
+
+      return new Response(streamResponse, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+      });
+    }
+
+    // Non-streaming response (original behavior)
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -430,11 +356,8 @@ ${selectedTemplatePrompt}`;
       throw new Error("No notes generated");
     }
 
-    // Extract title from the notes (first heading)
     const titleMatch = notes.match(/^#\s*(.+)$/m) || notes.match(/\*\*(.+?)\*\*/);
     const title = titleMatch ? titleMatch[1].trim() : "Lecture Notes";
-
-    console.log("Notes generated successfully");
 
     return new Response(
       JSON.stringify({ notes, title }),

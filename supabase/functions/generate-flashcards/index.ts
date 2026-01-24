@@ -21,10 +21,8 @@ serve(async (req) => {
   }
 
   try {
-    // Validate JWT token
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.log("Missing authorization header");
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -40,7 +38,6 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      console.log("Invalid or expired token:", authError?.message);
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -62,16 +59,13 @@ serve(async (req) => {
       );
     }
 
-    console.log("Authenticated user:", user.id);
-
-    const { content, type, videoTitle, settings, language = "en" } = await req.json();
+    const { content, type, videoTitle, settings, language = "en", stream = false } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Extract settings with defaults
     const count = settings?.count || 10;
     const difficulty = settings?.difficulty || "medium";
     const targetLanguage = languageNames[language] || "English";
@@ -84,15 +78,12 @@ serve(async (req) => {
       hard: "Focus on complex concepts, edge cases, and deeper analysis. Cards should challenge deep understanding."
     };
 
-    let systemPrompt = `You are an expert educator that creates effective flashcards for studying.
+    const systemPrompt = `You are an expert educator that creates effective flashcards for studying.
 
-CRITICAL RULES - YOU MUST FOLLOW ALL OF THESE:
+CRITICAL RULES:
 1. Generate ALL flashcards in ${targetLanguage}. Both front (question) and back (answer) MUST be in ${targetLanguage}.
 2. ONLY use information that is EXPLICITLY stated in the provided content below.
-3. DO NOT add any external knowledge, facts, or information not present in the source material.
-4. If the content is about a specific topic (e.g., Zener Diodes, Newton's Laws, etc.), ALL flashcards must be about that EXACT topic.
-5. Do NOT generalize or expand beyond what is directly mentioned in the content.
-6. Every flashcard MUST be directly traceable to a sentence or concept in the provided text.
+3. DO NOT add any external knowledge not present in the source material.
 
 You MUST respond with ONLY a valid JSON array. No explanations, no markdown, no extra text.
 Each flashcard should have a clear question on the front and a concise answer on the back.
@@ -104,49 +95,32 @@ ${difficultyGuide[difficulty as keyof typeof difficultyGuide]}`;
     let userPrompt = '';
     
     if (type === 'video') {
-      userPrompt = `Based ONLY on the following educational video content. DO NOT use any external knowledge:
+      userPrompt = `Based ONLY on the following educational video content:
 
 Title: "${videoTitle}"
-
-Content/Transcript (use ONLY this information - every flashcard must come from this text):
+Content/Transcript:
 ---
 ${content?.slice(0, 6000) || ''}
 ---
 
-IMPORTANT: Generate flashcards ONLY from the information provided above. Do NOT include any facts, concepts, or definitions not explicitly mentioned in this transcript.
-
 Generate exactly ${count} flashcards at ${difficulty} difficulty IN ${targetLanguage}.
 Both the front (question) and back (answer) must be written in ${targetLanguage}.
-
-Each flashcard MUST:
-- Be directly based on content from the transcript above
-- Have a clear, focused question in ${targetLanguage}
-- Have a concise but complete answer in ${targetLanguage} (use LaTeX for math: $formula$)
-- NOT include any external information or general knowledge
 
 Return ONLY a JSON array with this exact format:
 [
   {"front": "Question in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"},
   {"front": "Question in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"}
 ]`;
-    } else if (type === 'pdf' || type === 'image') {
-      userPrompt = `Based ONLY on the following document content. DO NOT use any external knowledge:
+    } else {
+      userPrompt = `Based ONLY on the following document content:
 
-Document Content (use ONLY this information - every flashcard must come from this text):
+Document Content:
 ---
 ${content?.slice(0, 6000) || ''}
 ---
 
-IMPORTANT: Generate flashcards ONLY from the information provided above. Do NOT add external knowledge, general facts, or concepts not present in this content.
-
 Generate exactly ${count} flashcards at ${difficulty} difficulty IN ${targetLanguage}.
 Both the front (question) and back (answer) must be written in ${targetLanguage}.
-
-Each flashcard MUST:
-- Be directly based on content from the document above
-- Have a clear, focused question in ${targetLanguage}
-- Have a concise but complete answer in ${targetLanguage} (use LaTeX for math: $formula$)
-- NOT include any external information or general knowledge
 
 Return ONLY a JSON array with this exact format:
 [
@@ -155,6 +129,116 @@ Return ONLY a JSON array with this exact format:
 ]`;
     }
 
+    // SSE streaming response
+    if (stream) {
+      const encoder = new TextEncoder();
+      
+      const sendProgress = (controller: ReadableStreamDefaultController, data: { stage: string; progress: number; message?: string }) => {
+        const event = `data: ${JSON.stringify({ type: "progress", ...data })}\n\n`;
+        controller.enqueue(encoder.encode(event));
+      };
+
+      const streamResponse = new ReadableStream({
+        async start(controller) {
+          try {
+            // Stage 1: Analyzing
+            sendProgress(controller, { stage: "analyzing", progress: 15, message: "Analyzing content..." });
+
+            // Stage 2: Generating
+            sendProgress(controller, { stage: "generating", progress: 40, message: "Newton is creating flashcards..." });
+
+            const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: userPrompt }
+                ],
+              }),
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error("AI gateway error:", response.status, errorText);
+              throw new Error(response.status === 429 ? "Rate limit exceeded." : response.status === 402 ? "Payment required." : "AI gateway error");
+            }
+
+            // Stage 3: Processing
+            sendProgress(controller, { stage: "processing", progress: 75, message: "Processing flashcards..." });
+
+            const data = await response.json();
+            const responseText = data.choices?.[0]?.message?.content || '';
+
+            // Extract flashcards
+            const extractFlashcards = (text: string): any[] => {
+              const cards: any[] = [];
+              
+              const arrayMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+              if (arrayMatch) {
+                try {
+                  let jsonStr = arrayMatch[0].replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+                  const parsed = JSON.parse(jsonStr);
+                  if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                } catch {}
+              }
+              
+              const cardPattern = /\{\s*"front"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"back"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}/g;
+              let match;
+              while ((match = cardPattern.exec(text)) !== null) {
+                cards.push({
+                  front: match[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\').replace(/\\n/g, '\n'),
+                  back: match[2].replace(/\\"/g, '"').replace(/\\\\/g, '\\').replace(/\\n/g, '\n')
+                });
+              }
+              
+              return cards;
+            };
+
+            let cleanText = responseText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+            let flashcards = extractFlashcards(cleanText);
+
+            if (flashcards.length === 0) {
+              throw new Error("Could not generate flashcards. Please try with different content.");
+            }
+
+            const flashcardsWithIds = flashcards.slice(0, count).map((card: { front: string; back: string }, index: number) => ({
+              id: `card-${Date.now()}-${index}`,
+              front: card.front || "Question",
+              back: card.back || "Answer",
+            }));
+
+            // Stage 4: Complete
+            sendProgress(controller, { stage: "complete", progress: 100, message: "Flashcards ready!" });
+
+            // Send final result
+            const result = { 
+              flashcards: flashcardsWithIds,
+              source: type,
+              title: videoTitle || 'Content Flashcards',
+              difficulty
+            };
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "result", data: result })}\n\n`));
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            controller.close();
+          } catch (error) {
+            console.error("Error generating flashcards:", error);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: error instanceof Error ? error.message : "Failed to generate flashcards" })}\n\n`));
+            controller.close();
+          }
+        }
+      });
+
+      return new Response(streamResponse, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+      });
+    }
+
+    // Non-streaming response (original behavior)
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -191,29 +275,22 @@ Return ONLY a JSON array with this exact format:
 
     const data = await response.json();
     const responseText = data.choices?.[0]?.message?.content || '';
-    
-    console.log("AI Response:", responseText.slice(0, 500));
 
-    // Extract JSON from response - robust parsing
+    // Extract JSON from response
     let flashcards: any[] = [];
     
     const extractFlashcards = (text: string): any[] => {
       const cards: any[] = [];
       
-      // Method 1: Find JSON array pattern
       const arrayMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
       if (arrayMatch) {
         try {
-          let jsonStr = arrayMatch[0];
-          jsonStr = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+          let jsonStr = arrayMatch[0].replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
           const parsed = JSON.parse(jsonStr);
           if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        } catch (e) {
-          console.log("Array match parse failed:", e);
-        }
+        } catch {}
       }
       
-      // Method 2: Extract individual card objects using regex
       const cardPattern = /\{\s*"front"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"back"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}/g;
       let match;
       while ((match = cardPattern.exec(text)) !== null) {
@@ -222,39 +299,14 @@ Return ONLY a JSON array with this exact format:
           back: match[2].replace(/\\"/g, '"').replace(/\\\\/g, '\\').replace(/\\n/g, '\n')
         });
       }
-      if (cards.length > 0) return cards;
-      
-      // Method 3: Parse markdown-style flashcards
-      const mdPattern = /\*\*Front[:\s]*\*\*\s*(.+?)[\n\r]+\*\*Back[:\s]*\*\*\s*(.+?)(?=\*\*Front|$)/gis;
-      while ((match = mdPattern.exec(text)) !== null) {
-        cards.push({
-          front: match[1].trim(),
-          back: match[2].trim()
-        });
-      }
-      
-      // Method 4: Parse Q: A: format
-      const qaPattern = /(?:Q:|Question:)\s*(.+?)[\n\r]+(?:A:|Answer:)\s*(.+?)(?=(?:Q:|Question:)|$)/gis;
-      while ((match = qaPattern.exec(text)) !== null) {
-        cards.push({
-          front: match[1].trim(),
-          back: match[2].trim()
-        });
-      }
       
       return cards;
     };
 
-    // Clean and extract
-    let cleanText = responseText;
-    cleanText = cleanText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    let cleanText = responseText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     flashcards = extractFlashcards(cleanText);
-    
-    console.log(`Extracted ${flashcards.length} flashcards from AI response`);
 
-    // Generate fallback flashcards if extraction failed
     if (flashcards.length === 0 && content) {
-      console.log("Generating fallback flashcards from content");
       const sentences = content.split(/[.!?]+/)
         .map((s: string) => s.trim())
         .filter((s: string) => s.length > 20 && s.length < 300);
@@ -272,14 +324,11 @@ Return ONLY a JSON array with this exact format:
       throw new Error("Could not generate flashcards. Please try with different content.");
     }
 
-    // Add IDs to flashcards
     const flashcardsWithIds = flashcards.slice(0, count).map((card: { front: string; back: string }, index: number) => ({
       id: `card-${Date.now()}-${index}`,
       front: card.front || "Question",
       back: card.back || "Answer",
     }));
-
-    console.log(`Generated ${flashcardsWithIds.length} flashcards`);
 
     return new Response(JSON.stringify({ 
       flashcards: flashcardsWithIds,
