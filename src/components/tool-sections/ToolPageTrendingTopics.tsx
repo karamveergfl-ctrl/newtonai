@@ -1,8 +1,10 @@
 import { useRef, useState, useEffect } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { TrendingUp, Flame, Sparkles, Loader2 } from "lucide-react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { TrendingUp, Flame, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeActivity } from "@/hooks/useRealtimeActivity";
+import { TrendingSkeleton } from "./PromoSectionSkeleton";
 
 interface TrendingTopic {
   name: string;
@@ -10,6 +12,7 @@ interface TrendingTopic {
   count: number;
   gradient: string;
   isHot?: boolean;
+  activeNow?: number;
 }
 
 // Static fallback topics
@@ -103,6 +106,9 @@ export function ToolPageTrendingTopics({ className }: ToolPageTrendingTopicsProp
   const [topics, setTopics] = useState<TrendingTopic[]>(staticTopics);
   const [loading, setLoading] = useState(true);
   
+  // Real-time activity tracking
+  const { getTopicActiveCount, isConnected, totalActiveUsers } = useRealtimeActivity();
+  
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
@@ -145,6 +151,7 @@ export function ToolPageTrendingTopics({ className }: ToolPageTrendingTopicsProp
             icon: topicMeta[name]?.icon || "📚",
             gradient: topicMeta[name]?.gradient || "from-gray-500 to-slate-500",
             isHot: count > data.length * 0.15, // Mark as "hot" if > 15% of total
+            activeNow: 0, // Will be updated by realtime
           }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 8);
@@ -190,6 +197,14 @@ export function ToolPageTrendingTopics({ className }: ToolPageTrendingTopicsProp
     return count.toString();
   };
 
+  if (loading) {
+    return (
+      <section className={cn("relative", className)}>
+        <TrendingSkeleton />
+      </section>
+    );
+  }
+
   return (
     <section ref={ref} className={cn("relative", className)}>
       {/* Section Header with Parallax */}
@@ -226,23 +241,30 @@ export function ToolPageTrendingTopics({ className }: ToolPageTrendingTopicsProp
           className="text-muted-foreground max-w-lg mx-auto"
         >
           See what other students are studying right now
+          {totalActiveUsers > 0 && (
+            <span className="ml-2 inline-flex items-center gap-1 text-primary">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              {totalActiveUsers} active now
+            </span>
+          )}
         </motion.p>
       </motion.div>
 
       {/* Trending Topics Grid */}
-      {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4"
-        >
-          {topics.map((topic, index) => (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4"
+      >
+        {topics.map((topic, index) => {
+          const activeCount = getTopicActiveCount(topic.name);
+          
+          return (
             <motion.div
               key={topic.name}
               variants={itemVariants}
@@ -295,13 +317,32 @@ export function ToolPageTrendingTopics({ className }: ToolPageTrendingTopicsProp
                       <Sparkles className="h-3 w-3" />
                       {formatCount(topic.count)} this week
                     </p>
+                    
+                    {/* Real-time active users indicator */}
+                    <AnimatePresence>
+                      {activeCount > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="flex items-center justify-center gap-1 mt-1.5 text-[10px] text-green-500"
+                        >
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                          </span>
+                          <Users className="h-2.5 w-2.5" />
+                          {activeCount} studying now
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               </div>
             </motion.div>
-          ))}
-        </motion.div>
-      )}
+          );
+        })}
+      </motion.div>
     </section>
   );
 }

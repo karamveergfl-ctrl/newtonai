@@ -23,6 +23,7 @@ import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { usePodcastPreferences } from "@/hooks/usePodcastPreferences";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
+import { StudyStreakWidget } from "@/components/StudyStreakWidget";
 
 interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -570,11 +571,17 @@ export default function AIPodcast() {
                 </div>
               </Card>
 
-              <div className="mt-6">
-                <PodcastHistory 
-                  onSelectPodcast={handleSelectSavedPodcast}
-                  refreshTrigger={historyRefresh}
-                />
+              {/* Study Streak Widget and Podcast History */}
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <PodcastHistory 
+                    onSelectPodcast={handleSelectSavedPodcast}
+                    refreshTrigger={historyRefresh}
+                  />
+                </div>
+                <div className="lg:col-span-1">
+                  <StudyStreakWidget />
+                </div>
               </div>
 
               {/* Promotional sections with FAQ included */}
