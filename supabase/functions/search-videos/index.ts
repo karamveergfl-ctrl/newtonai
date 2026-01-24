@@ -53,7 +53,7 @@ serve(async (req) => {
       );
     }
 
-    const { query, maxResults = 6 } = await req.json();
+    const { query, maxResults = 6, pageToken } = await req.json();
     
     if (!query) {
       throw new Error('No search query provided');
@@ -93,7 +93,7 @@ serve(async (req) => {
       ];
 
       return new Response(
-        JSON.stringify({ success: true, videos: mockVideos }),
+        JSON.stringify({ success: true, videos: mockVideos, nextPageToken: null }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -110,6 +110,11 @@ serve(async (req) => {
     searchUrl.searchParams.set('safeSearch', 'strict');
     searchUrl.searchParams.set('videoDuration', 'medium');
     searchUrl.searchParams.set('key', YOUTUBE_API_KEY);
+    
+    // Add pageToken for pagination
+    if (pageToken) {
+      searchUrl.searchParams.set('pageToken', pageToken);
+    }
 
     const searchResponse = await fetch(searchUrl.toString());
     
@@ -121,9 +126,12 @@ serve(async (req) => {
 
     const searchData = await searchResponse.json();
     
+    // Store next page token for pagination
+    const nextPageToken = searchData.nextPageToken || null;
+    
     if (!searchData.items || searchData.items.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, videos: [] }),
+        JSON.stringify({ success: true, videos: [], nextPageToken: null }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -159,10 +167,10 @@ serve(async (req) => {
       viewCount: detailsMap[item.id.videoId]?.viewCount || ''
     }));
 
-    console.log('Found videos:', videos.length);
+    console.log('Found videos:', videos.length, 'Next page token:', nextPageToken ? 'available' : 'none');
 
     return new Response(
-      JSON.stringify({ success: true, videos }),
+      JSON.stringify({ success: true, videos, nextPageToken }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

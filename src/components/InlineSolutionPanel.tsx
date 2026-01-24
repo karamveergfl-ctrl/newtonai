@@ -48,6 +48,9 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
   const [activeTab, setActiveTab] = useState('solution');
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isLoadingMoreVideos, setIsLoadingMoreVideos] = useState(false);
+  const [videoPageToken, setVideoPageToken] = useState<string | null>(null);
+  const [hasMoreVideos, setHasMoreVideos] = useState(true);
   const solutionScrollRef = useRef<HTMLDivElement>(null);
   const videosScrollRef = useRef<HTMLDivElement>(null);
 
@@ -127,6 +130,8 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
 
       if (videoData?.videos) {
         setVideos(videoData.videos);
+        setVideoPageToken(videoData.nextPageToken || null);
+        setHasMoreVideos(!!videoData.nextPageToken);
       }
 
       setLoadingStage('complete');
@@ -136,6 +141,36 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
       setError(err.message || 'An error occurred while solving the problem');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadMoreVideos = async () => {
+    if (isLoadingMoreVideos || !hasMoreVideos) return;
+    
+    try {
+      setIsLoadingMoreVideos(true);
+      const searchQuery = structuredProblem?.topic || extractedText.slice(0, 100);
+      
+      const { data: videoData } = await supabase.functions.invoke('search-videos', {
+        body: { 
+          query: searchQuery, 
+          maxResults: 6,
+          pageToken: videoPageToken 
+        }
+      });
+
+      if (videoData?.videos) {
+        setVideos(prev => [...prev, ...videoData.videos]);
+        setVideoPageToken(videoData.nextPageToken || null);
+        setHasMoreVideos(!!videoData.nextPageToken);
+      } else {
+        setHasMoreVideos(false);
+      }
+    } catch (err) {
+      console.error('Error loading more videos:', err);
+      setHasMoreVideos(false);
+    } finally {
+      setIsLoadingMoreVideos(false);
     }
   };
 
@@ -325,6 +360,7 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                         </div>
                       )}
                       {videos.length > 0 ? (
+                        <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {videos.map((video) => (
                             <VideoGate
@@ -367,6 +403,31 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                             </VideoGate>
                           ))}
                         </div>
+                        
+                        {/* Load More Button */}
+                        {hasMoreVideos && (
+                          <div className="flex justify-center mt-6">
+                            <Button
+                              variant="outline"
+                              onClick={loadMoreVideos}
+                              disabled={isLoadingMoreVideos}
+                              className="gap-2"
+                            >
+                              {isLoadingMoreVideos ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Loading...
+                                </>
+                              ) : (
+                                <>
+                                  <Video className="h-4 w-4" />
+                                  Load More Videos
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
+                      </>
                       ) : (
                         <div className="text-center py-12 text-muted-foreground">
                           <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
