@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star, ChevronDown, X } from "lucide-react";
@@ -1000,7 +1001,7 @@ const AISummarizer = () => {
             </Button>
           </motion.div>
         ) : (
-          <>
+          <div className="space-y-6">
             <ContentInputTabs
               onContentReady={handleContentReady}
               isProcessing={isLoading}
@@ -1012,6 +1013,11 @@ const AISummarizer = () => {
               placeholder="Drop a PDF, image, or text file here"
               showLanguageSelector
             />
+
+            {/* Contextual FAQ - show when no summary */}
+            {!summary && (
+              <ContextualFAQ maxItems={4} />
+            )}
 
             {summary && (
               <motion.div
@@ -1107,7 +1113,7 @@ const AISummarizer = () => {
                 </Card>
               </motion.div>
             )}
-          </>
+          </div>
         )}
 
         {/* Video Player Modal */}

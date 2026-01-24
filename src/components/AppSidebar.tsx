@@ -39,7 +39,13 @@ import {
   MessageSquare,
   Shield,
   Gift,
+  Grid3X3,
+  TrendingDown,
+  CreditCard,
+  HelpCircle,
+  BookOpen,
 } from "lucide-react";
+import { SidebarPromoCard } from "@/components/SidebarPromoCard";
 import { cn } from "@/lib/utils";
 import { FEATURE_COSTS } from "@/lib/creditConfig";
 import { useCredits } from "@/hooks/useCredits";
@@ -60,6 +66,14 @@ const adminTools = [
   { id: "users", label: "Users", icon: Users, path: "/admin/users" },
   { id: "inquiries", label: "Inquiries", icon: MessageSquare, path: "/admin/inquiries" },
   { id: "redeem-codes", label: "Redeem Codes", icon: Gift, path: "/admin/redeem-codes" },
+];
+
+const exploreLinks = [
+  { id: "all-tools", label: "All Tools", icon: Grid3X3, path: "/tools", badge: null },
+  { id: "compare", label: "Compare", icon: TrendingDown, path: "/compare", badge: "NEW" },
+  { id: "pricing", label: "Pricing", icon: CreditCard, path: "/pricing", badge: null },
+  { id: "faq", label: "FAQ", icon: HelpCircle, path: "/faq", badge: null },
+  { id: "blog", label: "Blog", icon: BookOpen, path: "/blog", badge: null },
 ];
 
 interface AppSidebarProps {
@@ -233,6 +247,70 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Explore Section */}
+        <SidebarGroup className="mt-0">
+          {!isCollapsed && (
+            <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Explore
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <AnimatePresence mode="popLayout">
+                {exploreLinks.map((link, index) => (
+                  <motion.div
+                    key={link.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ delay: index * 0.03 }}
+                    layout
+                  >
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip={link.label}>
+                        <motion.button
+                          whileHover={{ x: isCollapsed ? 0 : 4 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => navigate(link.path)}
+                          className={cn(
+                            "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                            isCollapsed 
+                              ? "justify-center p-2.5 gap-0" 
+                              : "gap-3 px-3 py-2",
+                            isActive(link.path)
+                              ? "bg-primary text-primary-foreground"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent"
+                          )}
+                        >
+                          <link.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && (
+                            <>
+                              <span className="flex-1">{link.label}</span>
+                              {link.badge && (
+                                <Badge 
+                                  variant="secondary" 
+                                  className={cn(
+                                    "text-[10px] px-1.5 py-0 h-5 font-semibold animate-pulse",
+                                    isActive(link.path) 
+                                      ? "bg-primary-foreground/20 text-primary-foreground" 
+                                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                  )}
+                                >
+                                  {link.badge}
+                                </Badge>
+                              )}
+                            </>
+                          )}
+                        </motion.button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {/* Admin Section - Only visible to admins */}
         {isAdmin && (
           <SidebarGroup className="mt-0">
@@ -276,6 +354,13 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         <SidebarGroup className="mt-auto pt-2 border-t border-sidebar-border">
           <SidebarUsageWidget isCollapsed={isCollapsed} />
         </SidebarGroup>
+
+        {/* Premium Promo Card - Only for free users */}
+        {!isPremium && (
+          <SidebarGroup className="pt-0">
+            <SidebarPromoCard isCollapsed={isCollapsed} />
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-3">

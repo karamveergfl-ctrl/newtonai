@@ -10,6 +10,7 @@ import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { Flashcard } from "@/components/Flashcard";
 import { FlashcardCompletionScreen } from "@/components/FlashcardCompletionScreen";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
@@ -293,16 +294,21 @@ const AIFlashcards = () => {
                 onCancel={handleCancelGeneration}
               />
             ) : (
-              <Card className="border-border/50 shadow-lg">
-                <CardContent className="pt-6">
-                  <ContentInputTabs
-                    onContentReady={handleContentReady}
-                    isProcessing={isGenerating}
-                    placeholder="Paste your study content here (lecture notes, textbook excerpts, etc.)..."
-                    supportedFormats="PDF, TXT, Images; Max size: 20MB"
-                  />
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <Card className="border-border/50 shadow-lg">
+                  <CardContent className="pt-6">
+                    <ContentInputTabs
+                      onContentReady={handleContentReady}
+                      isProcessing={isGenerating}
+                      placeholder="Paste your study content here (lecture notes, textbook excerpts, etc.)..."
+                      supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                    />
+                  </CardContent>
+                </Card>
+                
+                {/* Contextual FAQ */}
+                <ContextualFAQ className="mt-6" maxItems={4} />
+              </div>
             )
           ) : showCompletion ? (
             <FlashcardCompletionScreen
