@@ -120,7 +120,7 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="fixed inset-4 md:inset-8 z-50 bg-background rounded-xl shadow-2xl border border-border overflow-hidden flex flex-col"
+      className="fixed inset-0 md:inset-4 z-50 bg-background md:rounded-xl shadow-2xl border border-border flex flex-col max-h-screen overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
