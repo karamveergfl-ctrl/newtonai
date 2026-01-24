@@ -24,6 +24,7 @@ import {
 } from "@/utils/contentProcessing";
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { ToolPagePromoSections } from "@/components/tool-sections";
+import { InlineRecents } from "@/components/InlineRecents";
 
 type MindMapStyle = "radial" | "tree" | "cluster" | "timeline";
 
@@ -297,6 +298,9 @@ const MindMap = () => {
                       placeholder="Paste your study content here (lecture notes, concepts, topics)..."
                       supportedFormats="PDF, TXT, Images; Max size: 20MB"
                     />
+                    
+                    {/* Inline recents - just below input */}
+                    <InlineRecents toolId="mind-map" />
                     
                     {/* Promotional sections with FAQ included */}
                     <ToolPagePromoSections toolId="mind-map" />

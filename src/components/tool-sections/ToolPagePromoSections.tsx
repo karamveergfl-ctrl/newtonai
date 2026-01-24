@@ -18,7 +18,7 @@ interface ToolPagePromoSectionsProps {
 
 export function ToolPagePromoSections({ 
   toolId, 
-  showRecents = true,
+  showRecents = false, // Default to false since we use InlineRecents now
   className 
 }: ToolPagePromoSectionsProps) {
   const data = toolPromoData[toolId];

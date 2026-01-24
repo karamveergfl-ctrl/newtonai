@@ -27,6 +27,7 @@ import {
 } from "@/utils/contentProcessing";
 import { logGeneration } from "@/hooks/useGenerationHistory";
 import { ToolPagePromoSections } from "@/components/tool-sections";
+import { InlineRecents } from "@/components/InlineRecents";
 
 interface FlashcardData {
   id: string;
@@ -303,6 +304,9 @@ const AIFlashcards = () => {
                       placeholder="Paste your study content here (lecture notes, textbook excerpts, etc.)..."
                       supportedFormats="PDF, TXT, Images; Max size: 20MB"
                     />
+                    
+                    {/* Inline recents - just below input */}
+                    <InlineRecents toolId="flashcards" />
                   </CardContent>
                 </Card>
 
