@@ -99,29 +99,68 @@ serve(async (req) => {
     const systemPrompt = `Solve this problem step by step.${langInstruction}
 
 INSTRUCTIONS:
-1. First line MUST be: "TOPIC: [specific topic for YouTube, e.g., "projectile motion", "RC circuit"]"
+1. First line MUST be: "TOPIC: [specific topic, e.g., "BODMAS order of operations", "quadratic equations", "projectile motion"]"
+2. Second line MUST be: "SEARCH: [optimal YouTube search query for similar solved problems, e.g., "BODMAS rule solved examples step by step"]"
 
-2. Provide a SHORT, CONCISE solution:
+3. Provide a CLEAN, WELL-FORMATTED solution:
 
 ## 📊 Problem
 Brief 1-2 line description of the problem.
 
-## 📝 Quick Solution
+## 📝 Solution
 
-**Given:** List key values only
+**Given:** List key values using proper math notation
 
 **Find:** What to calculate
 
-**Solution:**
-Key formula and steps with clear substitution
+**Step-by-Step Solution:**
 
-**✅ Answer:** Use \\boxed{} for final answer
+Show each step on a SEPARATE line with clear labels:
+- Step 1: [Description]
+- Step 2: [Description]
+- Continue...
 
-RULES:
-- Keep solution SHORT (max 10 lines of math)
-- Only show essential steps, skip obvious algebra
-- Use $...$ for inline, $$...$$ for display math
-- Use \\boxed{} for final answer`;
+**✅ Final Answer:** Use \\boxed{} for the final answer
+
+CRITICAL FORMATTING RULES:
+1. ALWAYS use LaTeX for ALL math expressions:
+   - Inline math: $expression$
+   - Display math: $$expression$$
+2. NEVER use plain text operators:
+   - Use $\\times$ for multiplication, NOT * or x
+   - Use $\\div$ or $\\frac{a}{b}$ for division, NOT /
+   - Use $+$ and $-$ within math expressions
+3. Each calculation step MUST be on its OWN line
+4. Use proper fractions: $\\frac{numerator}{denominator}$
+5. NO raw markdown symbols (**, *, _) mixed with math
+6. Keep steps simple and verifiable
+7. Always simplify fractions and show intermediate results
+
+EXAMPLE for BODMAS/Order of Operations:
+TOPIC: BODMAS order of operations
+SEARCH: BODMAS rule solved examples step by step tutorial
+
+## 📊 Problem
+Evaluate $2 + 5 \\times 2 \\div 6$ using BODMAS rule.
+
+## 📝 Solution
+
+**Given:** Expression $2 + 5 \\times 2 \\div 6$
+
+**Find:** Simplified value using BODMAS
+
+**Step-by-Step Solution:**
+
+Step 1: Apply multiplication first (left to right)
+$$5 \\times 2 = 10$$
+
+Step 2: Apply division next
+$$10 \\div 6 = \\frac{10}{6} = \\frac{5}{3}$$
+
+Step 3: Apply addition
+$$2 + \\frac{5}{3} = \\frac{6}{3} + \\frac{5}{3} = \\frac{11}{3}$$
+
+**✅ Final Answer:** $$\\boxed{\\frac{11}{3} \\approx 3.67}$$`;
 
     // Build message content based on available inputs
     const messageContent: any[] = [{ type: "text", text: systemPrompt }];
@@ -222,17 +261,36 @@ RULES:
     const fullResponse = analysisData.choices[0].message.content;
     console.log("Received analysis from Gemini");
 
-    // Extract topic from first line and solution from rest
+    // Extract topic, search query, and solution from response
     const lines = fullResponse.split('\n');
     let topic = "Problem Solution";
+    let searchQuery = "";
     let solution = fullResponse;
     
+    // Extract TOPIC line
     if (lines[0].startsWith("TOPIC:")) {
       topic = lines[0].replace("TOPIC:", "").trim();
-      solution = lines.slice(1).join('\n').trim();
+    }
+    
+    // Extract SEARCH line for better YouTube matching
+    const searchLineIndex = lines.findIndex((l: string) => l.startsWith("SEARCH:"));
+    if (searchLineIndex !== -1) {
+      searchQuery = lines[searchLineIndex].replace("SEARCH:", "").trim();
+    }
+    
+    // Remove TOPIC and SEARCH lines from displayed solution
+    solution = lines
+      .filter((l: string) => !l.startsWith("TOPIC:") && !l.startsWith("SEARCH:"))
+      .join('\n')
+      .trim();
+    
+    // Fallback search query if not provided by AI
+    if (!searchQuery) {
+      searchQuery = `${topic} solved examples step by step tutorial`;
     }
     
     console.log("Extracted topic:", topic);
+    console.log("YouTube search query:", searchQuery);
 
     // Search YouTube for related videos
     const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
@@ -240,8 +298,6 @@ RULES:
       throw new Error("YOUTUBE_API_KEY not configured");
     }
 
-    // Search for exact video solutions matching the problem type
-    const searchQuery = `${topic} solved numerical problem step by step solution`;
     console.log("Searching YouTube for exact video solution:", searchQuery);
     
     const youtubeResponse = await fetch(

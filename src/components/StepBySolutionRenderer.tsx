@@ -9,6 +9,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import "katex/dist/katex.min.css";
 
+// Clean up content to fix common formatting issues
+function cleanMathContent(text: string): string {
+  return text
+    // Fix raw asterisks that should be bold - ensure no spaces break the markdown
+    .replace(/\*\*\s+/g, '**')
+    .replace(/\s+\*\*/g, '**')
+    // Convert plain multiplication symbols to LaTeX (only between numbers)
+    .replace(/(\d+)\s*\*\s*(\d+)/g, '$$$1 \\times $2$$')
+    // Fix standalone operators that aren't in LaTeX
+    .replace(/(?<!\$)\s*×\s*(?!\$)/g, ' $\\times$ ')
+    .replace(/(?<!\$)\s*÷\s*(?!\$)/g, ' $\\div$ ')
+    // Clean up multiple newlines
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 interface StepBySolutionRendererProps {
   content: string;
   className?: string;
@@ -58,20 +74,23 @@ function generateDetailedExplanation(step: SolutionStep): string {
 function parseSolution(content: string): ParsedSolution {
   const result: ParsedSolution = { steps: [] };
   
+  // Clean up the content first
+  const cleanedContent = cleanMathContent(content);
+  
   // Extract Problem section
-  const problemMatch = content.match(/(?:^|\n)(?:##?\s*)?(?:\*\*)?Problem(?:\*\*)?[:\s]*([\s\S]*?)(?=\n(?:##?\s*)?(?:\*\*)?(?:Given|Find|Solution|Step|Quick Solution)|\n##|$)/i);
+  const problemMatch = cleanedContent.match(/(?:^|\n)(?:##?\s*)?(?:\*\*)?Problem(?:\*\*)?[:\s]*([\s\S]*?)(?=\n(?:##?\s*)?(?:\*\*)?(?:Given|Find|Solution|Step|Quick Solution)|\n##|$)/i);
   if (problemMatch) {
     result.problem = problemMatch[1].trim();
   }
   
   // Extract Given section
-  const givenMatch = content.match(/(?:^|\n)(?:##?\s*)?(?:\*\*)?Given(?:\*\*)?[:\s]*([\s\S]*?)(?=\n(?:##?\s*)?(?:\*\*)?(?:Find|Solution|Step)|\n##|$)/i);
+  const givenMatch = cleanedContent.match(/(?:^|\n)(?:##?\s*)?(?:\*\*)?Given(?:\*\*)?[:\s]*([\s\S]*?)(?=\n(?:##?\s*)?(?:\*\*)?(?:Find|Solution|Step)|\n##|$)/i);
   if (givenMatch) {
     result.given = givenMatch[1].trim();
   }
   
   // Extract Find section
-  const findMatch = content.match(/(?:^|\n)(?:##?\s*)?(?:\*\*)?Find(?:\*\*)?[:\s]*([\s\S]*?)(?=\n(?:##?\s*)?(?:\*\*)?(?:Solution|Step)|\n##|$)/i);
+  const findMatch = cleanedContent.match(/(?:^|\n)(?:##?\s*)?(?:\*\*)?Find(?:\*\*)?[:\s]*([\s\S]*?)(?=\n(?:##?\s*)?(?:\*\*)?(?:Solution|Step)|\n##|$)/i);
   if (findMatch) {
     result.find = findMatch[1].trim();
   }
@@ -86,7 +105,7 @@ function parseSolution(content: string): ParsedSolution {
   for (const pattern of stepPatterns) {
     let match;
     const regex = new RegExp(pattern.source, pattern.flags);
-    while ((match = regex.exec(content)) !== null) {
+    while ((match = regex.exec(cleanedContent)) !== null) {
       const stepNum = parseInt(match[1]);
       const title = match[2].replace(/\*\*/g, '').trim();
       const stepContent = match[3].trim();
@@ -114,7 +133,7 @@ function parseSolution(content: string): ParsedSolution {
   ];
   
   for (const pattern of answerPatterns) {
-    const match = content.match(pattern);
+    const match = cleanedContent.match(pattern);
     if (match) {
       result.finalAnswer = match[1].trim();
       break;
