@@ -376,22 +376,36 @@ export function PodcastPlayer({
           </div>
         </div>
 
-        {/* Speaker Avatars - NotebookLM Style */}
+        {/* Speaker Avatars - NotebookLM Style with active glow */}
         <div className="flex justify-center items-end gap-6 sm:gap-12 mb-4 sm:mb-6">
-          <PodcastSpeakingAvatar
-            speaker="host1"
-            name="Alex"
-            isActive={isPlaying && currentSeg?.speaker === "host1"}
-            isLoading={isLoading && currentSeg?.speaker === "host1"}
-            size="lg"
-          />
-          <PodcastSpeakingAvatar
-            speaker="host2"
-            name="Sarah"
-            isActive={isPlaying && currentSeg?.speaker === "host2"}
-            isLoading={isLoading && currentSeg?.speaker === "host2"}
-            size="lg"
-          />
+          <div className={cn(
+            "transition-all duration-300 rounded-full",
+            isPlaying && currentSeg?.speaker === "host1" 
+              ? "ring-4 ring-teal-500/30 shadow-lg shadow-teal-500/20" 
+              : ""
+          )}>
+            <PodcastSpeakingAvatar
+              speaker="host1"
+              name="Alex"
+              isActive={isPlaying && currentSeg?.speaker === "host1"}
+              isLoading={isLoading && currentSeg?.speaker === "host1"}
+              size="lg"
+            />
+          </div>
+          <div className={cn(
+            "transition-all duration-300 rounded-full",
+            isPlaying && currentSeg?.speaker === "host2" 
+              ? "ring-4 ring-indigo-500/30 shadow-lg shadow-indigo-500/20" 
+              : ""
+          )}>
+            <PodcastSpeakingAvatar
+              speaker="host2"
+              name="Sarah"
+              isActive={isPlaying && currentSeg?.speaker === "host2"}
+              isLoading={isLoading && currentSeg?.speaker === "host2"}
+              size="lg"
+            />
+          </div>
         </div>
 
         {/* Current Text Display */}
@@ -416,6 +430,7 @@ export function PodcastPlayer({
           progress={progress}
           onSeekToSegment={seekToSegment}
           className="mb-4 sm:mb-6"
+          isPlaying={isPlaying}
         />
 
         {/* Controls */}
