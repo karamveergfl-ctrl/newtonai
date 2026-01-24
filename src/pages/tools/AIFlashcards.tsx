@@ -27,6 +27,7 @@ import {
   processUploadedFile 
 } from "@/utils/contentProcessing";
 import { logGeneration } from "@/hooks/useGenerationHistory";
+import { ToolPagePromoSections } from "@/components/tool-sections";
 
 interface FlashcardData {
   id: string;
@@ -308,6 +309,9 @@ const AIFlashcards = () => {
                 
                 {/* Contextual FAQ */}
                 <ContextualFAQ className="mt-6" maxItems={4} />
+                
+                {/* Promotional sections */}
+                <ToolPagePromoSections toolId="flashcards" />
               </div>
             )
           ) : showCompletion ? (

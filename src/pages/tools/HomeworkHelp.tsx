@@ -23,6 +23,7 @@ import {
   fileToBase64
 } from "@/utils/contentProcessing";
 import { cn } from "@/lib/utils";
+import { ToolPagePromoSections } from "@/components/tool-sections";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -299,9 +300,12 @@ const HomeworkHelp = () => {
             </CardContent>
           </Card>
 
-          {/* Contextual FAQ - show when no solution */}
-          {!solution && (
-            <ContextualFAQ className="mt-6" maxItems={4} />
+          {/* Contextual FAQ and promo sections - show when no solution */}
+          {!solution && !isLoading && (
+            <>
+              <ContextualFAQ className="mt-6" maxItems={4} />
+              <ToolPagePromoSections toolId="homework-help" />
+            </>
           )}
 
           {solution && (

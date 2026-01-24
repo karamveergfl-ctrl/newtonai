@@ -35,6 +35,7 @@ import {
   transcribeAudio,
 } from "@/utils/contentProcessing";
 import { cn } from "@/lib/utils";
+import { ToolPagePromoSections } from "@/components/tool-sections";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1035,9 +1036,12 @@ const AISummarizer = () => {
               defaultTab={defaultTab}
             />
 
-            {/* Contextual FAQ - show when no summary */}
+            {/* Contextual FAQ and promo sections - show when no summary */}
             {!summary && (
-              <ContextualFAQ maxItems={4} />
+              <>
+                <ContextualFAQ maxItems={4} />
+                <ToolPagePromoSections toolId="summarizer" />
+              </>
             )}
 
             {summary && (

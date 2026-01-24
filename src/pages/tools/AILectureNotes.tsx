@@ -24,6 +24,7 @@ import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { cn } from "@/lib/utils";
+import { ToolPagePromoSections } from "@/components/tool-sections";
 import { useDropzone } from "react-dropzone";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -820,6 +821,11 @@ const AILectureNotes = () => {
               </AnimatePresence>
             </CardContent>
           </Card>
+          
+          {/* Promotional sections - show when no notes yet */}
+          {!notes && !isProcessing && !showTemplateSelection && (
+            <ToolPagePromoSections toolId="notes" />
+          )}
 
           {notes && (
             <motion.div

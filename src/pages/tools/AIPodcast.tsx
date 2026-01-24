@@ -22,6 +22,7 @@ import { CreditModal } from "@/components/CreditModal";
 import { usePodcastContext } from "@/contexts/PodcastContext";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { usePodcastPreferences } from "@/hooks/usePodcastPreferences";
+import { ToolPagePromoSections } from "@/components/tool-sections";
 
 interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -577,6 +578,9 @@ export default function AIPodcast() {
               <div className="mt-6">
                 <ContextualFAQ maxItems={4} />
               </div>
+              
+              {/* Promotional sections */}
+              <ToolPagePromoSections toolId="podcast" />
             </motion.div>
           )}
         </AnimatePresence>
