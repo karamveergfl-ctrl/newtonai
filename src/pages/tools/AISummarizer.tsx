@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,7 +8,7 @@ import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star, ChevronDown, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
@@ -100,6 +100,7 @@ interface FlashcardData {
 
 const AISummarizer = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [summary, setSummary] = useState<string | null>(null);
   const [contentTitle, setContentTitle] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -109,6 +110,25 @@ const AISummarizer = () => {
   const { incrementUsage } = useFeatureUsage();
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("summary");
   const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
+
+  // Handle ?action= query param for quick actions
+  const actionParam = searchParams.get("action");
+  const defaultTab = useMemo(() => {
+    if (actionParam === "upload") return "upload" as const;
+    if (actionParam === "youtube") return "youtube" as const;
+    return undefined;
+  }, [actionParam]);
+  
+  // Clear the action param after using it (optional - prevents confusion on reload)
+  useEffect(() => {
+    if (actionParam) {
+      // Clear the param after a short delay to prevent flash
+      const timer = setTimeout(() => {
+        setSearchParams({}, { replace: true });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [actionParam, setSearchParams]);
 
   // Video-specific state
   const [videoData, setVideoData] = useState<VideoData | null>(null);
@@ -1012,6 +1032,7 @@ const AISummarizer = () => {
               }}
               placeholder="Drop a PDF, image, or text file here"
               showLanguageSelector
+              defaultTab={defaultTab}
             />
 
             {/* Contextual FAQ - show when no summary */}

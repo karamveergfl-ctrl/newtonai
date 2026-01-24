@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import Footer from "@/components/Footer";
 import { TopStatsBar } from "@/components/TopStatsBar";
 import { useUsageLimitNotifications } from "@/hooks/useUsageLimitNotifications";
+import { FloatingUpgradeBanner } from "@/components/FloatingUpgradeBanner";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,7 @@ export function AppLayout({
         {showTopStats && <TopStatsBar />}
         <div className="flex-1">{children}</div>
         {showFooter && <Footer />}
+        <FloatingUpgradeBanner />
       </div>
     );
   }
@@ -45,6 +47,7 @@ export function AppLayout({
           {showFooter && <Footer />}
         </main>
       </div>
+      <FloatingUpgradeBanner />
     </SidebarProvider>
   );
 }
