@@ -57,6 +57,7 @@ import PaymentFailure from "./pages/payment/Failure";
 
 // Admin pages
 import { AdminRoute } from "./components/AdminRoute";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import AdminAnalytics from "./pages/admin/Analytics";
 import AdminUsers from "./pages/admin/Users";
 import AdminInquiries from "./pages/admin/Inquiries";
@@ -71,9 +72,9 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
-        <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+        <Route path="/dashboard" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
-        <Route path="/onboarding" element={<PageTransition><Onboarding /></PageTransition>} />
+        <Route path="/onboarding" element={<PageTransition><ProtectedRoute><Onboarding /></ProtectedRoute></PageTransition>} />
         <Route path="/pricing" element={<PageTransition><Pricing /></PageTransition>} />
         <Route path="/about" element={<PageTransition><About /></PageTransition>} />
         <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
@@ -81,25 +82,25 @@ function AnimatedRoutes() {
         <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
         <Route path="/refund" element={<PageTransition><Refund /></PageTransition>} />
-        <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
-        <Route path="/credits" element={<PageTransition><Credits /></PageTransition>} />
+        <Route path="/profile" element={<PageTransition><ProtectedRoute><Profile /></ProtectedRoute></PageTransition>} />
+        <Route path="/credits" element={<PageTransition><ProtectedRoute><Credits /></ProtectedRoute></PageTransition>} />
         <Route path="/enterprise" element={<PageTransition><Enterprise /></PageTransition>} />
         <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
         <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
         
         {/* Payment Routes */}
-        <Route path="/payment/success" element={<PageTransition><PaymentSuccess /></PageTransition>} />
-        <Route path="/payment/failure" element={<PageTransition><PaymentFailure /></PageTransition>} />
+        <Route path="/payment/success" element={<PageTransition><ProtectedRoute><PaymentSuccess /></ProtectedRoute></PageTransition>} />
+        <Route path="/payment/failure" element={<PageTransition><ProtectedRoute><PaymentFailure /></ProtectedRoute></PageTransition>} />
         
-        {/* Tool Routes */}
-        <Route path="/tools" element={<PageTransition><Tools /></PageTransition>} />
-        <Route path="/tools/homework-help" element={<PageTransition><HomeworkHelp /></PageTransition>} />
-        <Route path="/tools/flashcards" element={<PageTransition><AIFlashcards /></PageTransition>} />
-        <Route path="/tools/quiz" element={<PageTransition><AIQuiz /></PageTransition>} />
-        <Route path="/tools/summarizer" element={<PageTransition><AISummarizer /></PageTransition>} />
-        <Route path="/tools/lecture-notes" element={<PageTransition><AILectureNotes /></PageTransition>} />
-        <Route path="/tools/ai-podcast" element={<PageTransition><AIPodcast /></PageTransition>} />
-        <Route path="/tools/mind-map" element={<PageTransition><MindMap /></PageTransition>} />
+        {/* Tool Routes - All protected */}
+        <Route path="/tools" element={<PageTransition><ProtectedRoute><Tools /></ProtectedRoute></PageTransition>} />
+        <Route path="/tools/homework-help" element={<PageTransition><ProtectedRoute><HomeworkHelp /></ProtectedRoute></PageTransition>} />
+        <Route path="/tools/flashcards" element={<PageTransition><ProtectedRoute><AIFlashcards /></ProtectedRoute></PageTransition>} />
+        <Route path="/tools/quiz" element={<PageTransition><ProtectedRoute><AIQuiz /></ProtectedRoute></PageTransition>} />
+        <Route path="/tools/summarizer" element={<PageTransition><ProtectedRoute><AISummarizer /></ProtectedRoute></PageTransition>} />
+        <Route path="/tools/lecture-notes" element={<PageTransition><ProtectedRoute><AILectureNotes /></ProtectedRoute></PageTransition>} />
+        <Route path="/tools/ai-podcast" element={<PageTransition><ProtectedRoute><AIPodcast /></ProtectedRoute></PageTransition>} />
+        <Route path="/tools/mind-map" element={<PageTransition><ProtectedRoute><MindMap /></ProtectedRoute></PageTransition>} />
         
         {/* Compare Routes */}
         <Route path="/compare" element={<PageTransition><Compare /></PageTransition>} />
