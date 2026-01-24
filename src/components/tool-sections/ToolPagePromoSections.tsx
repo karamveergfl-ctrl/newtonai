@@ -1,11 +1,13 @@
 import { cn } from "@/lib/utils";
 import { ToolPageStatsBar } from "./ToolPageStatsBar";
 import { ToolPageFeatures } from "./ToolPageFeatures";
+import { ToolPageTrendingTopics } from "./ToolPageTrendingTopics";
 import { ToolPageSubjects } from "./ToolPageSubjects";
 import { ToolPageOtherTools } from "./ToolPageOtherTools";
 import { ToolPageRecents } from "./ToolPageRecents";
 import { ToolPageWhyUse } from "./ToolPageWhyUse";
 import { ToolPageFAQ } from "./ToolPageFAQ";
+import { FloatingScrollTop } from "./FloatingScrollTop";
 import { toolPromoData, ToolId } from "./toolPromoData";
 
 interface ToolPagePromoSectionsProps {
@@ -28,11 +30,17 @@ export function ToolPagePromoSections({
 
   return (
     <div className={cn("space-y-12 md:space-y-16 py-12 md:py-16", className)}>
+      {/* Floating Scroll to Top Button */}
+      <FloatingScrollTop />
+      
       {/* Stats Bar */}
       <ToolPageStatsBar stats={data.stats} />
       
       {/* Features Grid */}
       <ToolPageFeatures features={data.features} />
+      
+      {/* Trending Topics - Between Features and Subjects */}
+      <ToolPageTrendingTopics />
       
       {/* Subjects Grid - Only for quiz, flashcards, homework-help */}
       {data.showSubjects && <ToolPageSubjects />}
