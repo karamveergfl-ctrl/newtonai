@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
@@ -303,16 +304,21 @@ const AIQuiz = () => {
                 onCancel={handleCancelGeneration}
               />
             ) : (
-              <Card className="border-border/50 shadow-lg">
-                <CardContent className="pt-6">
-                  <ContentInputTabs
-                    onContentReady={handleContentReady}
-                    isProcessing={isGenerating}
-                    placeholder="Paste your study content here..."
-                    supportedFormats="PDF, TXT, Images; Max size: 20MB"
-                  />
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <Card className="border-border/50 shadow-lg">
+                  <CardContent className="pt-6">
+                    <ContentInputTabs
+                      onContentReady={handleContentReady}
+                      isProcessing={isGenerating}
+                      placeholder="Paste your study content here..."
+                      supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                    />
+                  </CardContent>
+                </Card>
+                
+                {/* Contextual FAQ */}
+                <ContextualFAQ className="mt-6" maxItems={4} />
+              </div>
             )
           ) : quizCompleted ? (
             <motion.div

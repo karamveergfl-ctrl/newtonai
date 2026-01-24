@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { PodcastPlayer } from "@/components/PodcastPlayer";
 import { PodcastRaiseHand } from "@/components/PodcastRaiseHand";
 import { PodcastHistory } from "@/components/PodcastHistory";
@@ -570,6 +571,11 @@ export default function AIPodcast() {
                   onSelectPodcast={handleSelectSavedPodcast}
                   refreshTrigger={historyRefresh}
                 />
+              </div>
+
+              {/* Contextual FAQ */}
+              <div className="mt-6">
+                <ContextualFAQ maxItems={4} />
               </div>
             </motion.div>
           )}

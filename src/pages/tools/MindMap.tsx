@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
@@ -289,12 +290,17 @@ const MindMap = () => {
                     </Button>
                   </motion.div>
                 ) : (
-                  <ContentInputTabs
-                    onContentReady={handleContentReady}
-                    isProcessing={isGenerating}
-                    placeholder="Paste your study content here (lecture notes, concepts, topics)..."
-                    supportedFormats="PDF, TXT, Images; Max size: 20MB"
-                  />
+                  <div className="space-y-6">
+                    <ContentInputTabs
+                      onContentReady={handleContentReady}
+                      isProcessing={isGenerating}
+                      placeholder="Paste your study content here (lecture notes, concepts, topics)..."
+                      supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                    />
+                    
+                    {/* Contextual FAQ */}
+                    <ContextualFAQ maxItems={4} />
+                  </div>
                 )}
               </CardContent>
             </Card>

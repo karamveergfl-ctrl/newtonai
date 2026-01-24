@@ -8,6 +8,7 @@ import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { Button } from "@/components/ui/button";
 import { StepBySolutionRenderer } from "@/components/StepBySolutionRenderer";
 import { InlineSolutionPanel } from "@/components/InlineSolutionPanel";
@@ -297,6 +298,11 @@ const HomeworkHelp = () => {
               />
             </CardContent>
           </Card>
+
+          {/* Contextual FAQ - show when no solution */}
+          {!solution && (
+            <ContextualFAQ className="mt-6" maxItems={4} />
+          )}
 
           {solution && (
             <motion.div
