@@ -6,7 +6,6 @@ import { PodcastPlayer } from "@/components/PodcastPlayer";
 import { PodcastRaiseHand } from "@/components/PodcastRaiseHand";
 import { PodcastHistory } from "@/components/PodcastHistory";
 import { PodcastStylePresets, PodcastSettings } from "@/components/PodcastStylePresets";
-import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Podcast, Sparkles, ArrowLeft, Volume2, Minimize2, X } from "lucide-react";
@@ -19,6 +18,7 @@ import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLi
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { CreditModal } from "@/components/CreditModal";
 import { usePodcastContext } from "@/contexts/PodcastContext";
+import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { usePodcastPreferences } from "@/hooks/usePodcastPreferences";
 import { ToolPagePromoSections } from "@/components/tool-sections";
@@ -68,6 +68,10 @@ export default function AIPodcast() {
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("ai_podcast");
   const { hasCompletedSetup } = usePodcastPreferences();
+  
+  // Global processing overlay
+  const { showProcessing, hideProcessing, updateProgress, updateMessage } = useProcessingOverlay();
+  
   // Error state for confused Newton
   const [errorState, setErrorState] = useState<"confused" | null>(null);
   
@@ -118,7 +122,14 @@ export default function AIPodcast() {
     const { content, type, metadata } = pending;
     pendingContentRef.current = null;
 
+    // Show global processing overlay IMMEDIATELY
     setIsProcessing(true);
+    showProcessing({
+      message: stepMessages["analyzing"],
+      subMessage: "This may take a minute...",
+      variant: "overlay",
+    });
+    
     setProgress(0);
     setGenerationStep("analyzing");
 
@@ -187,6 +198,8 @@ export default function AIPodcast() {
       // Step 1: Generate script with settings
       setGenerationStep("scripting");
       setProgress(20);
+      updateProgress(20);
+      updateMessage(stepMessages["scripting"], "Creating the podcast script...");
 
       const { data: scriptData, error: scriptError } = await supabase.functions.invoke(
         "generate-podcast-script",
@@ -203,9 +216,11 @@ export default function AIPodcast() {
       if (!scriptData?.segments) throw new Error("Failed to generate script");
 
       setProgress(40);
+      updateProgress(40);
 
       // Step 2: Generate ElevenLabs audio for each segment
       setGenerationStep("voicing");
+      updateMessage(stepMessages["voicing"], "Creating professional voice audio...");
       
       let segments: PodcastSegment[] = scriptData.segments.map((segment: any) => ({
         speaker: segment.speaker,
@@ -248,6 +263,7 @@ export default function AIPodcast() {
       }
 
       setProgress(90);
+      updateProgress(90);
 
       // Track usage after successful generation (credits are optional on top of limits)
       await confirmUsage();
@@ -293,8 +309,11 @@ export default function AIPodcast() {
 
       setGenerationStep("complete");
       setProgress(100);
+      updateProgress(100);
+      hideProcessing();
     } catch (error) {
       console.error("Podcast generation error:", error);
+      hideProcessing();
       setErrorState("confused");
       setTimeout(() => {
         setErrorState(null);
@@ -429,27 +448,7 @@ export default function AIPodcast() {
                 onResponseComplete={handleResponseComplete}
               />
             </motion.div>
-          ) : isProcessing ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <ProcessingOverlay
-                isVisible={isProcessing}
-                message={stepMessages[generationStep]}
-                subMessage={
-                  generationStep === "voicing" 
-                    ? "Creating professional voice audio..."
-                    : "This may take a minute..."
-                }
-                progress={progress}
-                isIndeterminate={progress === 0}
-                variant="card"
-              />
-            </motion.div>
-          ) : (
+          ) : !isProcessing && (
             <motion.div
               key="input"
               initial={{ opacity: 0 }}

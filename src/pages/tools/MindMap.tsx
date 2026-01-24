@@ -12,8 +12,7 @@ import { VisualMindMap } from "@/components/VisualMindMap";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
-import { ProcessingOverlay } from "@/components/ProcessingOverlay";
-import { useProcessingState } from "@/hooks/useProcessingState";
+import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { cn } from "@/lib/utils";
@@ -50,8 +49,9 @@ const MindMap = () => {
   // Use feature limit gate instead of credit gate
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("mind_map");
 
-  // Processing animation state
-  const { isProcessing: isGenerating, start: startProcessing, stop: stopProcessing, reset: resetProcessing } = useProcessingState();
+  // Global processing overlay
+  const { showProcessing, hideProcessing } = useProcessingOverlay();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Style selection state
   const [showStyleSelection, setShowStyleSelection] = useState(false);
@@ -92,7 +92,16 @@ const MindMap = () => {
     // Create abort controller for cancellation
     abortControllerRef.current = new AbortController();
     
-    startProcessing();
+    // Show global processing overlay IMMEDIATELY
+    setIsGenerating(true);
+    showProcessing({
+      message: "Creating mind map...",
+      subMessage: "Mapping relationships",
+      variant: "overlay",
+      canCancel: true,
+      onCancel: handleCancelGeneration,
+    });
+    
     setMindMapData(null);
 
     try {
@@ -138,8 +147,9 @@ const MindMap = () => {
       // Track usage after successful generation
       await confirmUsage();
       
-      // Stop processing and show results immediately
-      stopProcessing();
+      // Hide processing and show results immediately
+      hideProcessing();
+      setIsGenerating(false);
       setMindMapData(data.mindMapData || data.mindMap);
       toast({
         title: "Mind Map Ready! 🧠",
@@ -147,7 +157,8 @@ const MindMap = () => {
       });
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
-        resetProcessing();
+        hideProcessing();
+        setIsGenerating(false);
         toast({
           title: "Cancelled",
           description: "Mind map generation was cancelled",
@@ -155,7 +166,8 @@ const MindMap = () => {
         return;
       }
       
-      resetProcessing();
+      hideProcessing();
+      setIsGenerating(false);
       setErrorState("confused");
       
       setTimeout(() => {
@@ -171,7 +183,8 @@ const MindMap = () => {
 
   const handleCancelGeneration = () => {
     abortControllerRef.current?.abort();
-    resetProcessing();
+    hideProcessing();
+    setIsGenerating(false);
     toast({
       title: "Cancelled",
       description: "Mind map generation stopped",
@@ -227,16 +240,7 @@ const MindMap = () => {
           </div>
 
           {!mindMapData ? (
-            isGenerating ? (
-              <ProcessingOverlay
-                isVisible={isGenerating}
-                message="Creating mind map..."
-                subMessage="Mapping relationships"
-                variant="card"
-                canCancel={true}
-                onCancel={handleCancelGeneration}
-              />
-            ) : (
+            !isGenerating && (
               <Card className="border-border/50 shadow-lg">
                 <CardContent className="pt-6">
                   {showStyleSelection ? (
