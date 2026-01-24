@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
-import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
@@ -299,11 +298,7 @@ const MindMap = () => {
                       supportedFormats="PDF, TXT, Images; Max size: 20MB"
                     />
                     
-                    {/* Contextual FAQ */}
-                    {/* Contextual FAQ */}
-                    <ContextualFAQ maxItems={4} />
-                    
-                    {/* Promotional sections */}
+                    {/* Promotional sections with FAQ included */}
                     <ToolPagePromoSections toolId="mind-map" />
                   </div>
                 )}

@@ -21,7 +21,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
-import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
@@ -316,11 +315,8 @@ const AIQuiz = () => {
                     />
                   </CardContent>
                 </Card>
-                
-                {/* Contextual FAQ */}
-                <ContextualFAQ className="mt-6" maxItems={4} />
-                
-                {/* Promotional sections */}
+
+                {/* Promotional sections with FAQ included */}
                 <ToolPagePromoSections toolId="quiz" />
               </div>
             )
