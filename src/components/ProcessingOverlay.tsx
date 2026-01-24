@@ -274,6 +274,7 @@ export const ProcessingOverlay = memo(({
           <motion.video
             ref={videoRef}
             src="/newton-processing.mp4"
+            poster="/newton-poster.webp"
             autoPlay
             loop
             muted
