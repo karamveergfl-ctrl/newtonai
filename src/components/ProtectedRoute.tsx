@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { SignInRequiredModal } from "./SignInRequiredModal";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,7 +11,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
-  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -20,9 +21,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         setAuthenticated(!!session);
         setLoading(false);
         if (!session) {
-          // Redirect to auth with return URL
-          const returnTo = encodeURIComponent(location.pathname + location.search);
-          navigate(`/auth?returnTo=${returnTo}`, { replace: true });
+          setShowModal(true);
         }
       }
     );
@@ -32,13 +31,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       setAuthenticated(!!session);
       setLoading(false);
       if (!session) {
-        const returnTo = encodeURIComponent(location.pathname + location.search);
-        navigate(`/auth?returnTo=${returnTo}`, { replace: true });
+        setShowModal(true);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, location]);
+  }, [location]);
 
   if (loading) {
     return (
@@ -49,7 +47,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!authenticated) {
-    return null;
+    return (
+      <SignInRequiredModal 
+        open={showModal} 
+        onOpenChange={setShowModal}
+        returnTo={location.pathname + location.search}
+      />
+    );
   }
 
   return <>{children}</>;
