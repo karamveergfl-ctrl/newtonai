@@ -32,6 +32,27 @@ const toolIdToDbName: Record<ToolId, string> = {
   "homework-help": "homework_help",
 };
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring" as const, stiffness: 100, damping: 12 },
+  },
+};
+
 export function ToolPageRecents({ toolId, title = "Your Recent Activity", className }: ToolPageRecentsProps) {
   const navigate = useNavigate();
   const [recents, setRecents] = useState<RecentItem[]>([]);
@@ -76,24 +97,29 @@ export function ToolPageRecents({ toolId, title = "Your Recent Activity", classN
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-50px" }}
+      variants={containerVariants}
       className={cn("w-full", className)}
     >
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl md:text-2xl font-display font-bold">
-          {title}
-        </h2>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => navigate("/profile?tab=history")}
-          className="text-primary hover:text-primary/80"
+        <motion.h2 
+          variants={itemVariants}
+          className="text-xl md:text-2xl font-display font-bold"
         >
-          Go to library <ArrowRight className="h-4 w-4 ml-1" />
-        </Button>
+          {title}
+        </motion.h2>
+        <motion.div variants={itemVariants}>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate("/profile?tab=history")}
+            className="text-primary hover:text-primary/80"
+          >
+            Go to library <ArrowRight className="h-4 w-4 ml-1" />
+          </Button>
+        </motion.div>
       </div>
       
       {loading ? (
@@ -103,26 +129,29 @@ export function ToolPageRecents({ toolId, title = "Your Recent Activity", classN
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {recents.map((item, index) => {
+        <motion.div 
+          variants={containerVariants}
+          className="grid grid-cols-2 md:grid-cols-3 gap-4"
+        >
+          {recents.map((item) => {
             const Icon = toolInfo?.icon || FileText;
             return (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-                whileHover={{ y: -2 }}
+                variants={itemVariants}
+                whileHover={{ y: -4, scale: 1.02 }}
                 className="p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
               >
                 <div className="flex items-start gap-3">
-                  <div className={cn(
-                    "flex items-center justify-center w-9 h-9 rounded-lg shrink-0",
-                    `bg-gradient-to-br ${toolInfo?.gradient || "from-primary to-primary/70"}`
-                  )}>
+                  <motion.div 
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    className={cn(
+                      "flex items-center justify-center w-9 h-9 rounded-lg shrink-0",
+                      `bg-gradient-to-br ${toolInfo?.gradient || "from-primary to-primary/70"}`
+                    )}
+                  >
                     <Icon className="h-4 w-4 text-white" />
-                  </div>
+                  </motion.div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
                       {item.title || "Untitled"}
@@ -136,7 +165,7 @@ export function ToolPageRecents({ toolId, title = "Your Recent Activity", classN
               </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </motion.div>
   );

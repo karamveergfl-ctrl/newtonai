@@ -5,6 +5,7 @@ import { ToolPageSubjects } from "./ToolPageSubjects";
 import { ToolPageOtherTools } from "./ToolPageOtherTools";
 import { ToolPageRecents } from "./ToolPageRecents";
 import { ToolPageWhyUse } from "./ToolPageWhyUse";
+import { ToolPageFAQ } from "./ToolPageFAQ";
 import { toolPromoData, ToolId } from "./toolPromoData";
 
 interface ToolPagePromoSectionsProps {
@@ -42,7 +43,10 @@ export function ToolPagePromoSections({
       {/* Other Tools */}
       <ToolPageOtherTools currentToolId={toolId} />
       
-      {/* Why Use Section */}
+      {/* FAQ Section - Above Why Use */}
+      <ToolPageFAQ toolId={toolId} />
+      
+      {/* Why Use Section (CTA) */}
       <ToolPageWhyUse 
         title={data.whyUseTitle} 
         benefits={data.whyUseBenefits} 

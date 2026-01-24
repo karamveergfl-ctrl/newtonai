@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import { StatItem } from "./toolPromoData";
 
@@ -7,13 +8,43 @@ interface ToolPageStatsBarProps {
   className?: string;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, scale: 0.8, y: 30 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { type: "spring" as const, stiffness: 100, damping: 12 },
+  },
+};
+
 export function ToolPageStatsBar({ stats, className }: ToolPageStatsBarProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+
+  const iconY = useTransform(scrollYProgress, [0, 1], [20, -20]);
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
+      ref={ref}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-50px" }}
+      variants={containerVariants}
       className={cn("w-full", className)}
     >
       <div className="grid grid-cols-3 gap-4 md:gap-6">
@@ -22,15 +53,16 @@ export function ToolPageStatsBar({ stats, className }: ToolPageStatsBarProps) {
           return (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="flex flex-col items-center justify-center p-4 md:p-6 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all"
+              variants={itemVariants}
+              whileHover={{ y: -4, scale: 1.02 }}
+              className="flex flex-col items-center justify-center p-4 md:p-6 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all"
             >
-              <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 mb-3">
+              <motion.div 
+                style={{ y: iconY }}
+                className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 mb-3"
+              >
                 <Icon className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-              </div>
+              </motion.div>
               <span className="text-2xl md:text-3xl font-display font-bold text-foreground">
                 {stat.value}
               </span>

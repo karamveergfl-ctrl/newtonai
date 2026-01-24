@@ -10,7 +10,6 @@ import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
-import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { Flashcard } from "@/components/Flashcard";
 import { FlashcardCompletionScreen } from "@/components/FlashcardCompletionScreen";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
@@ -306,11 +305,8 @@ const AIFlashcards = () => {
                     />
                   </CardContent>
                 </Card>
-                
-                {/* Contextual FAQ */}
-                <ContextualFAQ className="mt-6" maxItems={4} />
-                
-                {/* Promotional sections */}
+
+                {/* Promotional sections with FAQ included */}
                 <ToolPagePromoSections toolId="flashcards" />
               </div>
             )

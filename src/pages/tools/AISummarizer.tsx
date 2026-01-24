@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
-import { ContextualFAQ } from "@/components/ContextualFAQ";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star, ChevronDown, X } from "lucide-react";
@@ -1036,12 +1035,9 @@ const AISummarizer = () => {
               defaultTab={defaultTab}
             />
 
-            {/* Contextual FAQ and promo sections - show when no summary */}
+            {/* Promotional sections with FAQ included - show when no summary */}
             {!summary && (
-              <>
-                <ContextualFAQ maxItems={4} />
-                <ToolPagePromoSections toolId="summarizer" />
-              </>
+              <ToolPagePromoSections toolId="summarizer" />
             )}
 
             {summary && (
