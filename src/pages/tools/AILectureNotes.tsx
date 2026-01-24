@@ -19,6 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { LectureRecorder } from "@/components/LectureRecorder";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { StudySectionRenderer } from "@/components/StudySectionRenderer";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
@@ -1001,7 +1002,7 @@ const AILectureNotes = () => {
                         isHighlightMode && "cursor-text select-text"
                       )}
                     >
-                      <MarkdownRenderer content={notes} />
+                      <StudySectionRenderer content={notes} type="lecture" />
                     </div>
                   )}
                 </CardContent>

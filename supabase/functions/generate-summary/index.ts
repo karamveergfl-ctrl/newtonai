@@ -129,22 +129,38 @@ CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All headings, bulle
 
 ${styleInstruction}
 
-## Overview
-[1-2 sentences introducing the main topic]
+MANDATORY STRUCTURE (follow exactly):
 
-## Key Points
+## Executive Summary
+[1-2 sentences introducing the main topic and its significance]
+
+## 1. Overview
+**Core Idea:** [One sentence capturing the main point of this section]
+
+[Brief paragraph explaining the main topic]
+
+## 2. Key Points
+**Core Idea:** [The most important insights at a glance]
+
 - **Point 1**: Brief, essential takeaway
-- **Point 2**: Second key insight
+- **Point 2**: Second key insight  
 - **Point 3**: Third important point
-[3-5 bullet points maximum]
 
-## Summary
+## 3. Summary
+**Core Idea:** [Final synthesis of the content]
+
 [2-3 sentences summarizing the entire content]
 
+## Key Takeaways
+- Main insight 1
+- Main insight 2
+- Main insight 3
+
 RULES:
+- Use NUMBERED sections (## 1., ## 2., ## 3.)
+- Each section MUST start with **Core Idea:** line
 - Be brief and to the point
 - Focus only on the most essential information
-- Use clear, simple language
 - Use LaTeX for technical variables: $V_z$, $I_c$
 - Write everything in ${targetLanguage}`,
 
@@ -154,26 +170,27 @@ CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All headings, terms
 
 ${styleInstruction}
 
+MANDATORY STRUCTURE (follow exactly):
+
 ## Executive Summary
 [2-3 prose sentences introducing the topic, its importance, and what will be covered]
 
----
-
 ## 1. Overview
-
 **Core Idea:** [1-2 sentence summary of this section's main point]
 
 [Detailed prose paragraph explaining the concept]
 
 ## 2. Key Topics
+**Core Idea:** [The main themes and subjects covered]
 
 For each topic, include:
-- **Core Idea:** [Summary sentence]
 - Detailed explanation with context
 - Examples and applications
-[Continue for 5-8 major topics]
+[Continue for all major topics]
 
 ## 3. Key Terms & Definitions
+**Core Idea:** [Essential vocabulary for understanding this topic]
+
 | Term | Definition | Context |
 |------|------------|---------|
 | Term 1 | Comprehensive definition | Why it matters |
@@ -181,22 +198,33 @@ For each topic, include:
 [Include 8-12 important terms]
 
 ## 4. Comparison (if applicable)
+**Core Idea:** [How different concepts relate and contrast]
+
 | Feature | Option A | Option B |
 |---------|----------|----------|
 | Purpose | Description | Description |
 [Include when content has contrasting concepts]
 
-## Key Technical Findings
+## 5. Technical Findings
+**Core Idea:** [Key technical insights and conclusions]
+
 - Detailed summary point 1 with LaTeX where relevant ($V_z$, $I_c$)
 - Comprehensive takeaway 2
 - Important conclusion 3
-[Include 5-8 bullet points]
+
+## Key Takeaways
+- Main insight 1
+- Main insight 2
+- Main insight 3
+- Main insight 4
+- Main insight 5
 
 RULES:
+- Use NUMBERED sections (## 1., ## 2., ## 3., etc.)
+- Each section MUST start with **Core Idea:** line
 - Be thorough and comprehensive
 - Include examples where relevant
 - Use LaTeX for technical variables: $V_z$, $I_c$, $\\alpha$
-- Explain relationships between concepts
 - Write everything in ${targetLanguage}`,
 
       "bullet-points": `You are a skilled note-taker. Create an easy-to-scan BULLET POINT summary.
@@ -205,10 +233,19 @@ CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All points and text
 
 ${styleInstruction}
 
-## Main Topic
+MANDATORY STRUCTURE (follow exactly):
+
+## Executive Summary
+[1-2 sentences introducing the main topic]
+
+## 1. Main Topic
+**Core Idea:** [The central theme or concept being covered]
+
 - Core concept or theme
 
-## Key Points
+## 2. Key Points
+**Core Idea:** [The most important takeaways]
+
 • **First major point**
   - Supporting detail
   - Additional context
@@ -218,18 +255,22 @@ ${styleInstruction}
   - Supporting detail
 [Continue for all major points]
 
-## Quick Facts
+## 3. Quick Facts
+**Core Idea:** [Essential facts to remember]
+
 - Fact 1
 - Fact 2
 - Fact 3
 
-## Action Items / Takeaways
+## Key Takeaways
 □ First takeaway
 □ Second takeaway
 □ Third takeaway
 
 RULES:
-- Use bullet points exclusively
+- Use NUMBERED sections (## 1., ## 2., ## 3.)
+- Each section MUST start with **Core Idea:** line
+- Use bullet points within sections
 - Keep each point brief (under 15 words)
 - Use indentation for hierarchy
 - Make it scannable at a glance
@@ -241,22 +282,20 @@ CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All sections, terms
 
 ${styleInstruction}
 
+MANDATORY STRUCTURE (follow exactly):
+
 ## Executive Summary
 [Formal 3-4 sentence prose paragraph introducing the topic, its significance, and key findings]
 
----
-
 ## 1. Introduction
-
 **Core Idea:** [1-2 sentence encapsulation of the introduction's purpose]
 
 [Prose paragraph providing context, background, and significance of the topic]
 
 ## 2. Main Themes
+**Core Idea:** [Overview of the major themes explored]
 
 ### 2.1 Theme 1: [Name]
-
-**Core Idea:** [Summary sentence]
 
 [Formal prose analysis with supporting evidence. Use LaTeX for technical notation: $V_z$, $I_c$, $\\alpha$]
 
@@ -266,35 +305,38 @@ ${styleInstruction}
 
 ### 2.2 Theme 2: [Name]
 
-**Core Idea:** [Summary sentence]
-
 [Scholarly examination with examples and implications]
 
 ## 3. Comparison (if applicable)
+**Core Idea:** [Contrasting key concepts or approaches]
+
 | Feature | Concept A | Concept B |
 |---------|-----------|-----------|
 | Purpose | Description | Description |
 | Behavior | Details with $V_z$ notation | Details |
 
 ## 4. Key Concepts & Terminology
+**Core Idea:** [Essential academic vocabulary]
+
 | Concept | Definition | Significance |
 |---------|------------|--------------|
 | Term 1 ($V_z$) | Formal definition | Why it matters |
 | Term 2 | Academic explanation | Relevance |
 
-## Key Technical Findings
-- Finding 1 with LaTeX notation where appropriate
-- Finding 2 with implications
-- Finding 3 with connections to other concepts
+## 5. Conclusions
+**Core Idea:** [Final synthesis and implications]
 
-## Conclusions
 [Formal prose summary of findings, implications, and areas for further study]
 
-## Further Considerations
+## Key Takeaways
+- Key finding 1 with LaTeX notation where appropriate
+- Key finding 2 with implications
+- Key finding 3 with connections to other concepts
 - Areas for deeper exploration
-- Related topics to investigate
 
 RULES:
+- Use NUMBERED sections (## 1., ## 2., ## 3., etc.)
+- Each section MUST start with **Core Idea:** line
 - Use formal, academic language
 - Maintain objective tone
 - Include scholarly structure
