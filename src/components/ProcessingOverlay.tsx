@@ -1,9 +1,10 @@
-import { memo, useRef, useEffect, useState } from "react";
+import { memo, useRef, useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, X } from "lucide-react";
 import newtonCharacter from "@/assets/newton-character.png";
+
 interface ProcessingOverlayProps {
   /** Whether to show the overlay */
   isVisible: boolean;
@@ -21,7 +22,7 @@ interface ProcessingOverlayProps {
   progress?: number;
   /** When true, show indeterminate/pulsing progress bar */
   isIndeterminate?: boolean;
-  /** Minimum time before showing overlay - skip for fast responses (default: 300ms) */
+  /** Minimum time before showing overlay - skip for fast responses (default: 0 for instant) */
   skipDelayMs?: number;
   /** Whether the cancel button should be shown */
   canCancel?: boolean;
@@ -37,9 +38,9 @@ interface ProcessingOverlayProps {
  * Progress is ONLY driven by backend - no fake timers.
  * 
  * Key behaviors:
- * - Skips overlay entirely for responses under skipDelayMs (default 300ms)
- * - Video starts/stops instantly based on visibility
- * - Progress bar is either indeterminate or shows exact backend progress
+ * - Video is ALWAYS mounted for instant display (no decode delay)
+ * - Visibility is controlled via CSS, not conditional rendering
+ * - Video starts playing IMMEDIATELY when isVisible becomes true
  * - No simulated progress - backend is single source of truth
  */
 export const ProcessingOverlay = memo(({
@@ -51,7 +52,7 @@ export const ProcessingOverlay = memo(({
   onCompleted,
   progress = 0,
   isIndeterminate = true,
-  skipDelayMs = 300,
+  skipDelayMs = 0, // Changed default to 0 for instant display
   canCancel = false,
   onCancel,
 }: ProcessingOverlayProps) => {
@@ -62,33 +63,70 @@ export const ProcessingOverlay = memo(({
   const [showCancelButton, setShowCancelButton] = useState(false);
   const showTimerRef = useRef<NodeJS.Timeout | null>(null);
   const wasVisibleRef = useRef(false);
+  const startTimeRef = useRef<number>(0);
 
-  // Skip overlay for fast responses - only show after skipDelayMs
+  // Minimum display time to prevent flash for ultra-fast responses
+  const MIN_SHOW_MS = 120;
+
+  // Force video play immediately when visible
+  const forceVideoPlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    video.currentTime = 0;
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Autoplay may be blocked, but video is still ready
+      });
+    }
+  }, []);
+
+  // Handle visibility changes - INSTANT response
   useEffect(() => {
     if (isVisible) {
       wasVisibleRef.current = true;
+      startTimeRef.current = Date.now();
       
-      // Delay showing overlay by skipDelayMs
-      showTimerRef.current = setTimeout(() => {
+      // Force video play IMMEDIATELY
+      forceVideoPlay();
+      
+      if (skipDelayMs > 0) {
+        // Delay showing overlay by skipDelayMs (if needed)
+        showTimerRef.current = setTimeout(() => {
+          setShouldShow(true);
+        }, skipDelayMs);
+      } else {
+        // INSTANT - show immediately (default behavior)
         setShouldShow(true);
-      }, skipDelayMs);
+      }
     } else {
-      // Clear timer and check if we should show completion
+      // Clear any pending timer
       if (showTimerRef.current) {
         clearTimeout(showTimerRef.current);
         showTimerRef.current = null;
       }
       
+      const elapsed = Date.now() - startTimeRef.current;
+      
       // If we were visible and showing, show completion state
       if (wasVisibleRef.current && shouldShow && progress >= 90) {
-        setShowCompleted(true);
-        const timer = setTimeout(() => {
-          setShowCompleted(false);
+        // Only show completion if we displayed for long enough
+        if (elapsed >= MIN_SHOW_MS) {
+          setShowCompleted(true);
+          const timer = setTimeout(() => {
+            setShowCompleted(false);
+            setShouldShow(false);
+            wasVisibleRef.current = false;
+            onCompleted?.();
+          }, 600);
+          return () => clearTimeout(timer);
+        } else {
+          // Ultra-fast response - skip completion animation
           setShouldShow(false);
           wasVisibleRef.current = false;
           onCompleted?.();
-        }, 600);
-        return () => clearTimeout(timer);
+        }
       } else {
         // Fast response - just hide immediately
         setShouldShow(false);
@@ -97,6 +135,13 @@ export const ProcessingOverlay = memo(({
           onCompleted?.();
         }
       }
+      
+      // Stop video
+      const video = videoRef.current;
+      if (video) {
+        video.pause();
+        video.currentTime = 0;
+      }
     }
     
     return () => {
@@ -104,27 +149,7 @@ export const ProcessingOverlay = memo(({
         clearTimeout(showTimerRef.current);
       }
     };
-  }, [isVisible, skipDelayMs, progress, shouldShow, onCompleted]);
-
-  // Instant video start/stop control
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (shouldShow && isVisible) {
-      video.currentTime = 0;
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // Autoplay may be blocked
-        });
-      }
-    } else {
-      // INSTANT stop - no waiting for loop to finish
-      video.pause();
-      video.currentTime = 0;
-    }
-  }, [shouldShow, isVisible]);
+  }, [isVisible, skipDelayMs, progress, shouldShow, onCompleted, forceVideoPlay]);
 
   // Show cancel button after 1.5 seconds of processing
   useEffect(() => {
@@ -140,8 +165,10 @@ export const ProcessingOverlay = memo(({
     return () => clearTimeout(timer);
   }, [shouldShow, canCancel]);
 
-  // Don't render if not visible and not showing completed state
-  if (!shouldShow && !showCompleted) return null;
+  // Handle video loaded state
+  const handleVideoLoaded = useCallback(() => {
+    setVideoLoaded(true);
+  }, []);
 
   const completedContent = (
     <motion.div 
@@ -270,7 +297,7 @@ export const ProcessingOverlay = memo(({
             )}
           </AnimatePresence>
           
-          {/* Video with fade-in when loaded */}
+          {/* Video - ALWAYS MOUNTED, visibility controlled via CSS */}
           <motion.video
             ref={videoRef}
             src="/newton-processing.mp4"
@@ -280,7 +307,7 @@ export const ProcessingOverlay = memo(({
             muted
             playsInline
             preload="auto"
-            onLoadedData={() => setVideoLoaded(true)}
+            onLoadedData={handleVideoLoaded}
             initial={{ opacity: 0 }}
             animate={{ opacity: videoLoaded ? 1 : 0 }}
             transition={{ duration: 0.3 }}
@@ -359,51 +386,71 @@ export const ProcessingOverlay = memo(({
 
   const content = showCompleted ? completedContent : processingContent;
 
-  // Full-screen overlay variant
+  // Determine if we should render the overlay
+  const isActive = shouldShow || showCompleted;
+
+  // Full-screen overlay variant - ALWAYS MOUNTED, toggle visibility
   if (variant === "overlay") {
     return (
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md ${className}`}
-        >
-          {content}
-        </motion.div>
-      </AnimatePresence>
+      <div
+        className={`fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md transition-all duration-200 ${className}`}
+        style={{
+          visibility: isActive ? "visible" : "hidden",
+          opacity: isActive ? 1 : 0,
+          pointerEvents: isActive ? "auto" : "none",
+        }}
+        aria-hidden={!isActive}
+      >
+        <AnimatePresence>
+          {isActive && content}
+        </AnimatePresence>
+      </div>
     );
   }
 
-  // Card variant (default)
+  // Card variant (default) - ALWAYS MOUNTED, toggle visibility
   if (variant === "card") {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.3 }}
-        className={className}
+      <div
+        className={`transition-all duration-200 ${className}`}
+        style={{
+          visibility: isActive ? "visible" : "hidden",
+          opacity: isActive ? 1 : 0,
+          height: isActive ? "auto" : 0,
+          overflow: "hidden",
+        }}
+        aria-hidden={!isActive}
       >
-        <Card className="border-border/50 shadow-xl overflow-hidden">
-          <CardContent className="flex items-center justify-center min-h-[450px] sm:min-h-[550px] md:min-h-[650px] py-8">
-            {content}
-          </CardContent>
-        </Card>
-      </motion.div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="border-border/50 shadow-xl overflow-hidden">
+            <CardContent className="flex items-center justify-center min-h-[450px] sm:min-h-[550px] md:min-h-[650px] py-8">
+              {content}
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     );
   }
 
-  // Inline variant
+  // Inline variant - ALWAYS MOUNTED, toggle visibility
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className={`flex items-center justify-center py-8 ${className}`}
+    <div
+      className={`flex items-center justify-center py-8 transition-all duration-200 ${className}`}
+      style={{
+        visibility: isActive ? "visible" : "hidden",
+        opacity: isActive ? 1 : 0,
+        height: isActive ? "auto" : 0,
+      }}
+      aria-hidden={!isActive}
     >
-      {content}
-    </motion.div>
+      <AnimatePresence>
+        {isActive && content}
+      </AnimatePresence>
+    </div>
   );
 });
 

@@ -6,10 +6,10 @@ import { PodcastPlayer } from "@/components/PodcastPlayer";
 import { PodcastRaiseHand } from "@/components/PodcastRaiseHand";
 import { PodcastHistory } from "@/components/PodcastHistory";
 import { PodcastStylePresets, PodcastSettings } from "@/components/PodcastStylePresets";
+import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Podcast, Sparkles, ArrowLeft, Radio, Volume2, Minimize2, X } from "lucide-react";
+import { Podcast, Sparkles, ArrowLeft, Volume2, Minimize2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
@@ -436,57 +436,18 @@ export default function AIPodcast() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Card className="p-4 sm:p-8 text-center space-y-4 sm:space-y-6">
-                <div className="relative mx-auto w-16 h-16 sm:w-24 sm:h-24">
-                  <motion.div
-                    className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/30 to-secondary/30"
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                  <div className="absolute inset-1.5 sm:inset-2 rounded-full bg-background flex items-center justify-center">
-                    {generationStep === "voicing" ? (
-                      <Volume2 className="w-6 h-6 sm:w-10 sm:h-10 text-primary animate-pulse" />
-                    ) : generationStep === "scripting" ? (
-                      <Sparkles className="w-6 h-6 sm:w-10 sm:h-10 text-primary animate-pulse" />
-                    ) : (
-                      <Radio className="w-6 h-6 sm:w-10 sm:h-10 text-primary animate-pulse" />
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">
-                    {stepMessages[generationStep]}
-                  </h3>
-                  <p className="text-muted-foreground text-xs sm:text-sm">
-                    {generationStep === "voicing" 
-                      ? "Creating professional voice audio..."
-                      : "This may take a minute..."}
-                  </p>
-                </div>
-
-                <div className="max-w-md mx-auto px-2">
-                  <Progress value={progress} className="h-1.5 sm:h-2" />
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-                    {progress}% complete
-                  </p>
-                </div>
-
-                <div className="flex justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                  <div className={`flex items-center gap-1 ${generationStep === "analyzing" || generationStep === "scripting" || generationStep === "voicing" || generationStep === "complete" ? "text-primary" : ""}`}>
-                    <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${generationStep === "analyzing" ? "bg-primary animate-pulse" : progress > 0 ? "bg-primary" : "bg-muted"}`} />
-                    Analyze
-                  </div>
-                  <div className={`flex items-center gap-1 ${generationStep === "scripting" || generationStep === "voicing" || generationStep === "complete" ? "text-primary" : ""}`}>
-                    <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${generationStep === "scripting" ? "bg-primary animate-pulse" : progress > 20 ? "bg-primary" : "bg-muted"}`} />
-                    Script
-                  </div>
-                  <div className={`flex items-center gap-1 ${generationStep === "voicing" || generationStep === "complete" ? "text-primary" : ""}`}>
-                    <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${generationStep === "voicing" ? "bg-primary animate-pulse" : progress > 40 ? "bg-primary" : "bg-muted"}`} />
-                    Voice
-                  </div>
-                </div>
-              </Card>
+              <ProcessingOverlay
+                isVisible={isProcessing}
+                message={stepMessages[generationStep]}
+                subMessage={
+                  generationStep === "voicing" 
+                    ? "Creating professional voice audio..."
+                    : "This may take a minute..."
+                }
+                progress={progress}
+                isIndeterminate={progress === 0}
+                variant="card"
+              />
             </motion.div>
           ) : (
             <motion.div

@@ -11,6 +11,7 @@ import { PodcastMiniPlayer } from "@/components/PodcastMiniPlayer";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { PageTransition } from "./components/PageTransition";
 import CookieConsent from "./components/CookieConsent";
+import { VideoPreloader } from "./components/VideoPreloader";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -133,6 +134,8 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          {/* Global video preloader - forces browser to download & decode video at app startup */}
+          <VideoPreloader />
           <BrowserRouter>
             <ScrollToTop />
             <PodcastProvider>
