@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Loader2, Play, Eye, ChevronRight, Sparkles, BookOpen, Video, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Loader2, Play, Eye, ChevronRight, Sparkles, BookOpen, Video, RefreshCw, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -47,6 +47,9 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('solution');
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const solutionScrollRef = useRef<HTMLDivElement>(null);
+  const videosScrollRef = useRef<HTMLDivElement>(null);
 
   // Lock body scroll when panel is open
   useEffect(() => {
@@ -59,6 +62,19 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
   useEffect(() => {
     processProblem();
   }, [screenshot]);
+
+  // Handle scroll to show/hide scroll-to-top button
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    setShowScrollTop(target.scrollTop > 300);
+  };
+
+  const scrollToTop = () => {
+    const scrollRef = activeTab === 'solution' ? solutionScrollRef : videosScrollRef;
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const processProblem = async () => {
     try {
@@ -203,9 +219,9 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                   </TabsList>
                 </div>
 
-                <TabsContent value="solution" className="flex-1 mt-0 min-h-0">
-                  <ScrollArea className="h-full">
-                    <div className="p-6 space-y-6">
+                <TabsContent value="solution" className="flex-1 mt-0 min-h-0 relative">
+                  <ScrollArea className="h-full" onScrollCapture={handleScroll} ref={solutionScrollRef as any}>
+                    <div className="p-4 sm:p-6 space-y-6">
                       {/* Problem Statement */}
                       {structuredProblem && (
                         <div className="p-4 rounded-lg bg-muted/50 border border-border">
@@ -298,8 +314,8 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                   </ScrollArea>
                 </TabsContent>
 
-                <TabsContent value="videos" className="flex-1 mt-0 min-h-0">
-                  <ScrollArea className="h-full">
+                <TabsContent value="videos" className="flex-1 mt-0 min-h-0 relative">
+                  <ScrollArea className="h-full" onScrollCapture={handleScroll} ref={videosScrollRef as any}>
                     <div className="p-4 sm:p-6">
                       {videos.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -353,6 +369,26 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                     </div>
                   </ScrollArea>
                 </TabsContent>
+                {/* Floating Scroll-to-Top Button */}
+                <AnimatePresence>
+                  {showScrollTop && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="absolute bottom-4 right-4 z-10"
+                    >
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        onClick={scrollToTop}
+                        className="h-10 w-10 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-primary text-primary-foreground hover:bg-primary/90"
+                      >
+                        <ArrowUp className="h-5 w-5" />
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </Tabs>
             </div>
 
