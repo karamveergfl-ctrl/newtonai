@@ -2,8 +2,8 @@ import { memo, useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, X } from "lucide-react";
-
+import { CheckCircle, X } from "lucide-react";
+import newtonCharacter from "@/assets/newton-character.png";
 interface ProcessingOverlayProps {
   /** Whether to show the overlay */
   isVisible: boolean;
@@ -198,14 +198,80 @@ export const ProcessingOverlay = memo(({
 
         {/* Video container */}
         <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-2 border-border/40 shadow-2xl bg-card/50">
-          {/* Loading placeholder while video loads */}
-          {!videoLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-muted/30 z-20">
-              <Loader2 className="w-12 h-12 animate-spin text-muted-foreground" />
-            </div>
-          )}
+          {/* Enhanced loading fallback while video loads */}
+          <AnimatePresence>
+            {!videoLoaded && (
+              <motion.div
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-muted/50 to-muted/30 z-20"
+              >
+                {/* Animated Newton character */}
+                <motion.div
+                  className="relative"
+                  animate={{ 
+                    y: [0, -8, 0],
+                    scale: [1, 1.02, 1]
+                  }}
+                  transition={{ 
+                    duration: 1.5, 
+                    repeat: Infinity, 
+                    ease: "easeInOut" 
+                  }}
+                >
+                  {/* Soft glow behind character */}
+                  <motion.div
+                    className="absolute inset-0 rounded-full bg-primary/20 blur-2xl scale-150"
+                    animate={{ 
+                      scale: [1.5, 1.8, 1.5],
+                      opacity: [0.3, 0.6, 0.3]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  
+                  {/* Newton character image */}
+                  <img 
+                    src={newtonCharacter} 
+                    alt="Newton loading"
+                    className="relative z-10 w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 object-contain drop-shadow-xl"
+                  />
+                  
+                  {/* Thinking dots animation */}
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                    {[0, 1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        className="w-2.5 h-2.5 rounded-full bg-primary"
+                        animate={{ 
+                          y: [0, -8, 0],
+                          opacity: [0.4, 1, 0.4]
+                        }}
+                        transition={{ 
+                          duration: 0.8, 
+                          repeat: Infinity, 
+                          delay: i * 0.15,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+                
+                {/* Loading text */}
+                <motion.p
+                  className="mt-10 text-sm text-muted-foreground font-medium"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  Loading Newton...
+                </motion.p>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
-          <video
+          {/* Video with fade-in when loaded */}
+          <motion.video
             ref={videoRef}
             src="/newton-processing.mp4"
             autoPlay
@@ -214,6 +280,9 @@ export const ProcessingOverlay = memo(({
             playsInline
             preload="auto"
             onLoadedData={() => setVideoLoaded(true)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: videoLoaded ? 1 : 0 }}
+            transition={{ duration: 0.3 }}
             className="relative z-10 w-full h-full object-cover rounded-[2rem] sm:rounded-[2.5rem]"
           />
         </div>
