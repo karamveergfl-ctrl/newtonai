@@ -48,6 +48,14 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
   const [activeTab, setActiveTab] = useState('solution');
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
+  // Lock body scroll when panel is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   useEffect(() => {
     processProblem();
   }, [screenshot]);
@@ -120,17 +128,17 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="fixed inset-0 md:inset-4 z-50 bg-background md:rounded-xl shadow-2xl border border-border flex flex-col max-h-screen overflow-hidden"
+      className="fixed inset-0 z-50 bg-background flex flex-col"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-muted/30 shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
             <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h2 className="font-semibold text-lg">AI Problem Solver</h2>
-            <p className="text-sm text-muted-foreground">Step-by-step solution with explanations</p>
+            <p className="text-sm text-muted-foreground hidden sm:block">Step-by-step solution with explanations</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose}>
@@ -138,8 +146,8 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
         </Button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* Content - flex-1 with min-h-0 for proper scroll */}
+      <div className="flex-1 flex min-h-0">
         {isLoading ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8">
             {/* Visual Pipeline */}
@@ -178,11 +186,11 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex">
+          <div className="flex-1 flex min-h-0">
             {/* Main solution area */}
-            <div className="flex-1 flex flex-col min-w-0">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                <div className="px-6 pt-4">
+            <div className="flex-1 flex flex-col min-w-0 min-h-0">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+                <div className="px-4 sm:px-6 pt-4 shrink-0">
                   <TabsList className="grid w-full max-w-md grid-cols-2">
                     <TabsTrigger value="solution" className="flex items-center gap-2">
                       <BookOpen className="h-4 w-4" />
@@ -195,7 +203,7 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                   </TabsList>
                 </div>
 
-                <TabsContent value="solution" className="flex-1 mt-0 overflow-hidden">
+                <TabsContent value="solution" className="flex-1 mt-0 min-h-0">
                   <ScrollArea className="h-full">
                     <div className="p-6 space-y-6">
                       {/* Problem Statement */}
@@ -290,9 +298,9 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                   </ScrollArea>
                 </TabsContent>
 
-                <TabsContent value="videos" className="flex-1 mt-0 overflow-hidden">
+                <TabsContent value="videos" className="flex-1 mt-0 min-h-0">
                   <ScrollArea className="h-full">
-                    <div className="p-6">
+                    <div className="p-4 sm:p-6">
                       {videos.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {videos.map((video) => (
