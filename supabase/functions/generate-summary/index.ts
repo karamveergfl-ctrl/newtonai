@@ -58,7 +58,7 @@ serve(async (req) => {
       );
     }
 
-    const { content, selectedText, detailLevel = "standard", format = "concise", language = "en", notesStyle = "academic", includeComparison = true } = await req.json();
+    const { content, selectedText, detailLevel = "standard", format = "concise", language = "en", notesStyle = "academic", includeComparison = true, stream = false } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -71,34 +71,24 @@ serve(async (req) => {
     }
 
     const targetLanguage = languageNames[language] || "English";
-    console.log(`Generating ${format} summary with ${detailLevel} detail in ${targetLanguage}, style: ${notesStyle}, comparison: ${includeComparison}, for ${textToSummarize.length} characters`);
+    console.log(`Generating ${format} summary with ${detailLevel} detail in ${targetLanguage}`);
 
-    // Comparison table instruction when enabled
     const comparisonInstruction = includeComparison ? `
 COMPARISON TABLE GENERATION:
-When the content discusses multiple related concepts, methods, types, or approaches, automatically create comparison tables:
-- Identify 2-4 comparable items (e.g., "Type A vs Type B", "Method 1 vs Method 2")
+When the content discusses multiple related concepts, automatically create comparison tables:
+- Identify 2-4 comparable items
 - Create a markdown table with relevant comparison dimensions
-- Include at least 4-6 rows comparing different attributes
-- Format: | Feature | Concept A | Concept B | Concept C |
-
-Example triggers for comparison tables:
-- "Types of X" → Compare the types in a table
-- "Method A vs Method B" → Direct comparison table
-- "Advantages and disadvantages" → Pros/cons table
-- "Different approaches" → Approach comparison table
-- "Comparing X and Y" → Side-by-side comparison
+- Format: | Feature | Concept A | Concept B |
 ` : "";
 
-    // Style modifiers based on user preference
     const styleModifiers: Record<string, string> = {
       "academic": `
 STYLE ENHANCEMENT - ACADEMIC:
 - Start with an "Executive Summary" prose paragraph
 - Each major section should have a "**Core Idea:**" callout (1-2 sentences)
-- Write in prose paragraphs where appropriate, not just bullets
+- Write in prose paragraphs where appropriate
 - Include COMPARISON TABLES when contrasting concepts
-- Use LaTeX for technical variables: $V_z$, $I_c$, $\\alpha$
+- Use LaTeX for technical variables: $V_z$, $I_c$
 - Add "Key Technical Findings" section at the end
 `,
       "quick-notes": `
@@ -121,34 +111,29 @@ STYLE ENHANCEMENT - SLIDES:
 
     const styleInstruction = styleModifiers[notesStyle] || "";
 
-    // Format-specific prompts with language instruction
     const formatPrompts: Record<string, string> = {
-      "concise": `You are an expert summarizer. Create a CONCISE summary that captures the essence of the content.
+      "concise": `You are an expert summarizer. Create a CONCISE summary.
 
-CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All headings, bullet points, and text must be written in ${targetLanguage}.
+CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}.
 
 ${styleInstruction}
 
-MANDATORY STRUCTURE (follow exactly):
-
+MANDATORY STRUCTURE:
 ## Executive Summary
-[1-2 sentences introducing the main topic and its significance]
+[1-2 sentences introducing the main topic]
 
 ## 1. Overview
-**Core Idea:** [One sentence capturing the main point of this section]
-
+**Core Idea:** [One sentence capturing the main point]
 [Brief paragraph explaining the main topic]
 
 ## 2. Key Points
-**Core Idea:** [The most important insights at a glance]
-
+**Core Idea:** [The most important insights]
 - **Point 1**: Brief, essential takeaway
-- **Point 2**: Second key insight  
+- **Point 2**: Second key insight
 - **Point 3**: Third important point
 
 ## 3. Summary
-**Core Idea:** [Final synthesis of the content]
-
+**Core Idea:** [Final synthesis]
 [2-3 sentences summarizing the entire content]
 
 ## Key Takeaways
@@ -159,193 +144,193 @@ MANDATORY STRUCTURE (follow exactly):
 RULES:
 - Use NUMBERED sections (## 1., ## 2., ## 3.)
 - Each section MUST start with **Core Idea:** line
-- Be brief and to the point
-- Focus only on the most essential information
-- Use LaTeX for technical variables: $V_z$, $I_c$
 - Write everything in ${targetLanguage}`,
 
-      "detailed": `You are an expert study guide creator. Create a DETAILED analysis with comprehensive coverage.
+      "detailed": `You are an expert study guide creator. Create a DETAILED analysis.
 
-CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All headings, terms, definitions, and text must be written in ${targetLanguage}.
+CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}.
 
 ${styleInstruction}
 
-MANDATORY STRUCTURE (follow exactly):
-
+MANDATORY STRUCTURE:
 ## Executive Summary
-[2-3 prose sentences introducing the topic, its importance, and what will be covered]
+[2-3 prose sentences]
 
 ## 1. Overview
-**Core Idea:** [1-2 sentence summary of this section's main point]
-
-[Detailed prose paragraph explaining the concept]
+**Core Idea:** [1-2 sentence summary]
+[Detailed prose paragraph]
 
 ## 2. Key Topics
-**Core Idea:** [The main themes and subjects covered]
-
-For each topic, include:
-- Detailed explanation with context
-- Examples and applications
-[Continue for all major topics]
+**Core Idea:** [Main themes covered]
+[Detailed explanations with examples]
 
 ## 3. Key Terms & Definitions
-**Core Idea:** [Essential vocabulary for understanding this topic]
-
+**Core Idea:** [Essential vocabulary]
 | Term | Definition | Context |
 |------|------------|---------|
-| Term 1 | Comprehensive definition | Why it matters |
-| Term 2 | Detailed explanation | Application |
 [Include 8-12 important terms]
 
 ## 4. Comparison (if applicable)
-**Core Idea:** [How different concepts relate and contrast]
-
+**Core Idea:** [How concepts relate]
 | Feature | Option A | Option B |
-|---------|----------|----------|
-| Purpose | Description | Description |
 [Include when content has contrasting concepts]
 
 ## 5. Technical Findings
-**Core Idea:** [Key technical insights and conclusions]
-
-- Detailed summary point 1 with LaTeX where relevant ($V_z$, $I_c$)
-- Comprehensive takeaway 2
-- Important conclusion 3
+**Core Idea:** [Key technical insights]
+- Detailed summary with LaTeX where relevant
 
 ## Key Takeaways
-- Main insight 1
-- Main insight 2
-- Main insight 3
-- Main insight 4
-- Main insight 5
+- Main insight 1 through 5
 
 RULES:
-- Use NUMBERED sections (## 1., ## 2., ## 3., etc.)
+- Use NUMBERED sections
 - Each section MUST start with **Core Idea:** line
-- Be thorough and comprehensive
-- Include examples where relevant
-- Use LaTeX for technical variables: $V_z$, $I_c$, $\\alpha$
 - Write everything in ${targetLanguage}`,
 
-      "bullet-points": `You are a skilled note-taker. Create an easy-to-scan BULLET POINT summary.
+      "bullet-points": `You are a skilled note-taker. Create a BULLET POINT summary.
 
-CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All points and text must be written in ${targetLanguage}.
+CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}.
 
 ${styleInstruction}
 
-MANDATORY STRUCTURE (follow exactly):
-
+MANDATORY STRUCTURE:
 ## Executive Summary
-[1-2 sentences introducing the main topic]
+[1-2 sentences]
 
 ## 1. Main Topic
-**Core Idea:** [The central theme or concept being covered]
-
-- Core concept or theme
+**Core Idea:** [The central theme]
+- Core concept
 
 ## 2. Key Points
-**Core Idea:** [The most important takeaways]
-
+**Core Idea:** [Most important takeaways]
 • **First major point**
   - Supporting detail
-  - Additional context
 • **Second major point**
-  - Supporting detail with technical notation where relevant ($V_z$)
-• **Third major point**
   - Supporting detail
-[Continue for all major points]
 
 ## 3. Quick Facts
-**Core Idea:** [Essential facts to remember]
-
-- Fact 1
-- Fact 2
-- Fact 3
+**Core Idea:** [Essential facts]
+- Fact 1, 2, 3
 
 ## Key Takeaways
-□ First takeaway
-□ Second takeaway
-□ Third takeaway
+□ First through third takeaway
 
 RULES:
-- Use NUMBERED sections (## 1., ## 2., ## 3.)
+- Use NUMBERED sections
 - Each section MUST start with **Core Idea:** line
-- Use bullet points within sections
-- Keep each point brief (under 15 words)
-- Use indentation for hierarchy
-- Make it scannable at a glance
 - Write everything in ${targetLanguage}`,
 
-      "academic": `You are an academic writer. Create a FORMAL, scholarly summary with rich prose and technical precision.
+      "academic": `You are an academic writer. Create a FORMAL, scholarly summary.
 
-CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}. All sections, terms, and text must be written in ${targetLanguage}.
+CRITICAL: Your ENTIRE response MUST be in ${targetLanguage}.
 
 ${styleInstruction}
 
-MANDATORY STRUCTURE (follow exactly):
-
+MANDATORY STRUCTURE:
 ## Executive Summary
-[Formal 3-4 sentence prose paragraph introducing the topic, its significance, and key findings]
+[Formal 3-4 sentence prose paragraph]
 
 ## 1. Introduction
-**Core Idea:** [1-2 sentence encapsulation of the introduction's purpose]
-
-[Prose paragraph providing context, background, and significance of the topic]
+**Core Idea:** [Purpose of this section]
+[Prose paragraph with context]
 
 ## 2. Main Themes
-**Core Idea:** [Overview of the major themes explored]
-
+**Core Idea:** [Overview of major themes]
 ### 2.1 Theme 1: [Name]
-
-[Formal prose analysis with supporting evidence. Use LaTeX for technical notation: $V_z$, $I_c$, $\\alpha$]
-
-**Key Physical Attributes:** (if applicable)
-- **Attribute 1:** Detailed explanation
-- **Attribute 2:** Technical details with $LaTeX$ notation
+[Formal prose analysis with LaTeX]
 
 ### 2.2 Theme 2: [Name]
-
-[Scholarly examination with examples and implications]
+[Scholarly examination]
 
 ## 3. Comparison (if applicable)
-**Core Idea:** [Contrasting key concepts or approaches]
-
+**Core Idea:** [Contrasting concepts]
 | Feature | Concept A | Concept B |
-|---------|-----------|-----------|
-| Purpose | Description | Description |
-| Behavior | Details with $V_z$ notation | Details |
 
 ## 4. Key Concepts & Terminology
-**Core Idea:** [Essential academic vocabulary]
-
+**Core Idea:** [Academic vocabulary]
 | Concept | Definition | Significance |
-|---------|------------|--------------|
-| Term 1 ($V_z$) | Formal definition | Why it matters |
-| Term 2 | Academic explanation | Relevance |
 
 ## 5. Conclusions
-**Core Idea:** [Final synthesis and implications]
-
-[Formal prose summary of findings, implications, and areas for further study]
+**Core Idea:** [Final synthesis]
+[Formal prose summary]
 
 ## Key Takeaways
-- Key finding 1 with LaTeX notation where appropriate
-- Key finding 2 with implications
-- Key finding 3 with connections to other concepts
-- Areas for deeper exploration
+- Key findings 1-4
 
 RULES:
-- Use NUMBERED sections (## 1., ## 2., ## 3., etc.)
+- Use NUMBERED sections
 - Each section MUST start with **Core Idea:** line
-- Use formal, academic language
-- Maintain objective tone
-- Include scholarly structure
-- Reference key concepts formally
 - Write everything in ${targetLanguage}`
     };
 
     const systemPrompt = `${formatPrompts[format] || formatPrompts["concise"]}\n\n${comparisonInstruction}`;
 
+    // SSE streaming response
+    if (stream) {
+      const encoder = new TextEncoder();
+      
+      const sendProgress = (controller: ReadableStreamDefaultController, data: { stage: string; progress: number; message?: string }) => {
+        const event = `data: ${JSON.stringify({ type: "progress", ...data })}\n\n`;
+        controller.enqueue(encoder.encode(event));
+      };
+
+      const streamResponse = new ReadableStream({
+        async start(controller) {
+          try {
+            // Stage 1: Analyzing
+            sendProgress(controller, { stage: "analyzing", progress: 15, message: "Analyzing content..." });
+
+            // Stage 2: Generating
+            sendProgress(controller, { stage: "generating", progress: 40, message: "Newton is creating your summary..." });
+
+            const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: `Create a study guide in ${targetLanguage} for this content:\n\n${textToSummarize.slice(0, 10000)}` }
+                ],
+              }),
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error("AI gateway error:", response.status, errorText);
+              throw new Error(response.status === 429 ? "Rate limit exceeded." : response.status === 402 ? "Payment required." : "AI gateway error");
+            }
+
+            // Stage 3: Processing
+            sendProgress(controller, { stage: "processing", progress: 80, message: "Formatting summary..." });
+
+            const data = await response.json();
+            const summary = data.choices?.[0]?.message?.content || '';
+
+            // Stage 4: Complete
+            sendProgress(controller, { stage: "complete", progress: 100, message: "Summary ready!" });
+
+            // Send final result
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "result", data: { summary } })}\n\n`));
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            controller.close();
+          } catch (error) {
+            console.error("Error generating summary:", error);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: error instanceof Error ? error.message : "Failed to generate summary" })}\n\n`));
+            controller.close();
+          }
+        }
+      });
+
+      return new Response(streamResponse, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+      });
+    }
+
+    // Non-streaming response (original behavior)
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -382,8 +367,6 @@ RULES:
 
     const data = await response.json();
     const summary = data.choices?.[0]?.message?.content || '';
-    
-    console.log("Generated study guide successfully");
 
     return new Response(
       JSON.stringify({ summary }),
