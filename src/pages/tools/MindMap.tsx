@@ -24,6 +24,7 @@ import {
   processUploadedFile 
 } from "@/utils/contentProcessing";
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
+import { ToolPagePromoSections } from "@/components/tool-sections";
 
 type MindMapStyle = "radial" | "tree" | "cluster" | "timeline";
 
@@ -299,7 +300,11 @@ const MindMap = () => {
                     />
                     
                     {/* Contextual FAQ */}
+                    {/* Contextual FAQ */}
                     <ContextualFAQ maxItems={4} />
+                    
+                    {/* Promotional sections */}
+                    <ToolPagePromoSections toolId="mind-map" />
                   </div>
                 )}
               </CardContent>
