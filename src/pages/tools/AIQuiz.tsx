@@ -25,8 +25,7 @@ import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
-import { ProcessingOverlay } from "@/components/ProcessingOverlay";
-import { useProcessingState } from "@/hooks/useProcessingState";
+import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { ConfettiCelebration } from "@/components/ConfettiCelebration";
@@ -67,8 +66,9 @@ const AIQuiz = () => {
   // Use feature limit gate instead of credit gate
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("quiz");
 
-  // Processing animation state
-  const { isProcessing: isGenerating, start: startProcessing, stop: stopProcessing, reset: resetProcessing } = useProcessingState();
+  // Global processing overlay
+  const { showProcessing, hideProcessing, updateMessage } = useProcessingOverlay();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -104,7 +104,16 @@ const AIQuiz = () => {
     // Create abort controller for cancellation
     abortControllerRef.current = new AbortController();
     
-    startProcessing();
+    // Show global processing overlay IMMEDIATELY before any async work
+    setIsGenerating(true);
+    showProcessing({
+      message: "Creating quiz questions...",
+      subMessage: "Analyzing your content",
+      variant: "overlay",
+      canCancel: true,
+      onCancel: handleCancelGeneration,
+    });
+    
     setQuestions([]);
     setScore(0);
     setCurrentIndex(0);
@@ -165,8 +174,9 @@ const AIQuiz = () => {
         result_preview: { questionCount: data.questions.length, difficulty: settings.difficulty },
       });
 
-      // Stop processing and show results immediately
-      stopProcessing();
+      // Hide processing and show results immediately
+      hideProcessing();
+      setIsGenerating(false);
       setQuestions(data.questions);
       toast({
         title: "Quiz Ready! 🧠",
@@ -174,7 +184,8 @@ const AIQuiz = () => {
       });
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
-        resetProcessing();
+        hideProcessing();
+        setIsGenerating(false);
         toast({
           title: "Cancelled",
           description: "Quiz generation was cancelled",
@@ -182,7 +193,8 @@ const AIQuiz = () => {
         return;
       }
       
-      resetProcessing();
+      hideProcessing();
+      setIsGenerating(false);
       setErrorState("confused");
       
       setTimeout(() => {
@@ -198,7 +210,8 @@ const AIQuiz = () => {
   
   const handleCancelGeneration = () => {
     abortControllerRef.current?.abort();
-    resetProcessing();
+    hideProcessing();
+    setIsGenerating(false);
     toast({
       title: "Cancelled",
       description: "Quiz generation stopped",
@@ -295,16 +308,7 @@ const AIQuiz = () => {
           </div>
 
           {questions.length === 0 ? (
-            isGenerating ? (
-              <ProcessingOverlay
-                isVisible={isGenerating}
-                message="Creating quiz questions..."
-                subMessage="Analyzing your content"
-                variant="card"
-                canCancel={true}
-                onCancel={handleCancelGeneration}
-              />
-            ) : (
+            !isGenerating && (
               <div className="space-y-6">
                 <Card className="border-border/50 shadow-lg">
                   <CardContent className="pt-6">

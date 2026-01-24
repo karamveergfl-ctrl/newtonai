@@ -4,6 +4,8 @@ import Footer from "@/components/Footer";
 import { TopStatsBar } from "@/components/TopStatsBar";
 import { useUsageLimitNotifications } from "@/hooks/useUsageLimitNotifications";
 import { FloatingUpgradeBanner } from "@/components/FloatingUpgradeBanner";
+import { ProcessingOverlay } from "@/components/ProcessingOverlay";
+import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -24,6 +26,10 @@ export function AppLayout({
 }: AppLayoutProps) {
   // Show notifications when users are approaching their feature limits
   useUsageLimitNotifications();
+  
+  // Get global processing overlay state
+  const { state: overlayState } = useProcessingOverlay();
+  
   if (!showSidebar) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -31,6 +37,17 @@ export function AppLayout({
         <div className="flex-1">{children}</div>
         {showFooter && <Footer />}
         <FloatingUpgradeBanner />
+        {/* Global Processing Overlay - always mounted for instant video playback */}
+        <ProcessingOverlay
+          isVisible={overlayState.isVisible}
+          message={overlayState.message}
+          subMessage={overlayState.subMessage}
+          progress={overlayState.progress}
+          isIndeterminate={overlayState.isIndeterminate}
+          canCancel={overlayState.canCancel}
+          onCancel={overlayState.onCancel}
+          variant={overlayState.variant}
+        />
       </div>
     );
   }
@@ -48,6 +65,17 @@ export function AppLayout({
         </main>
       </div>
       <FloatingUpgradeBanner />
+      {/* Global Processing Overlay - always mounted for instant video playback */}
+      <ProcessingOverlay
+        isVisible={overlayState.isVisible}
+        message={overlayState.message}
+        subMessage={overlayState.subMessage}
+        progress={overlayState.progress}
+        isIndeterminate={overlayState.isIndeterminate}
+        canCancel={overlayState.canCancel}
+        onCancel={overlayState.onCancel}
+        variant={overlayState.variant}
+      />
     </SidebarProvider>
   );
 }

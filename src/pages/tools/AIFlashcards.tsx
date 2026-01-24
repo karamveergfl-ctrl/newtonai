@@ -15,8 +15,7 @@ import { FlashcardCompletionScreen } from "@/components/FlashcardCompletionScree
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
-import { ProcessingOverlay } from "@/components/ProcessingOverlay";
-import { useProcessingState } from "@/hooks/useProcessingState";
+import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { cn } from "@/lib/utils";
@@ -53,8 +52,9 @@ const AIFlashcards = () => {
   // Use feature limit gate instead of credit gate
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("flashcards");
 
-  // Processing animation state
-  const { isProcessing: isGenerating, start: startProcessing, stop: stopProcessing, reset: resetProcessing } = useProcessingState();
+  // Global processing overlay
+  const { showProcessing, hideProcessing } = useProcessingOverlay();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Settings dialog state
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -90,7 +90,16 @@ const AIFlashcards = () => {
     // Create abort controller for cancellation
     abortControllerRef.current = new AbortController();
     
-    startProcessing();
+    // Show global processing overlay IMMEDIATELY
+    setIsGenerating(true);
+    showProcessing({
+      message: "Creating flashcards...",
+      subMessage: "Analyzing your content",
+      variant: "overlay",
+      canCancel: true,
+      onCancel: handleCancelGeneration,
+    });
+    
     setFlashcards([]);
 
     try {
@@ -148,8 +157,9 @@ const AIFlashcards = () => {
         result_preview: { cardCount: data.flashcards.length },
       });
       
-      // Stop processing and show results immediately
-      stopProcessing();
+      // Hide processing and show results immediately
+      hideProcessing();
+      setIsGenerating(false);
       setFlashcards(data.flashcards);
       setCurrentIndex(0);
       setIsFlipped(false);
@@ -159,7 +169,8 @@ const AIFlashcards = () => {
       });
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
-        resetProcessing();
+        hideProcessing();
+        setIsGenerating(false);
         toast({
           title: "Cancelled",
           description: "Flashcard generation was cancelled",
@@ -167,7 +178,8 @@ const AIFlashcards = () => {
         return;
       }
       
-      resetProcessing();
+      hideProcessing();
+      setIsGenerating(false);
       setErrorState("confused");
       
       // Show Newton confused for 2 seconds, then show toast
@@ -184,7 +196,8 @@ const AIFlashcards = () => {
 
   const handleCancelGeneration = () => {
     abortControllerRef.current?.abort();
-    resetProcessing();
+    hideProcessing();
+    setIsGenerating(false);
     toast({
       title: "Cancelled",
       description: "Flashcard generation stopped",
@@ -285,16 +298,7 @@ const AIFlashcards = () => {
           </div>
 
           {flashcards.length === 0 ? (
-            isGenerating ? (
-              <ProcessingOverlay
-                isVisible={isGenerating}
-                message="Creating flashcards..."
-                subMessage="Analyzing your content"
-                variant="card"
-                canCancel={true}
-                onCancel={handleCancelGeneration}
-              />
-            ) : (
+            !isGenerating && (
               <div className="space-y-6">
                 <Card className="border-border/50 shadow-lg">
                   <CardContent className="pt-6">

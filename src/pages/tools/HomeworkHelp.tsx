@@ -15,7 +15,7 @@ import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLi
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
-import { ProcessingOverlay } from "@/components/ProcessingOverlay";
+import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -62,6 +62,9 @@ const HomeworkHelp = () => {
   const { canUse, tryUseFeature, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("homework_help");
   const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
   const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
+
+  // Global processing overlay
+  const { showProcessing, hideProcessing } = useProcessingOverlay();
 
   // Error state for confused Newton
   const [errorState, setErrorState] = useState<"confused" | null>(null);
@@ -161,7 +164,14 @@ const HomeworkHelp = () => {
       return;
     }
 
+    // Show global processing overlay IMMEDIATELY
     setIsLoading(true);
+    showProcessing({
+      message: "Solving your problem...",
+      subMessage: "Newton is working on a step-by-step solution",
+      variant: "overlay",
+    });
+    
     setSolution("");
     cancel();
 
@@ -228,11 +238,13 @@ const HomeworkHelp = () => {
         }
       }
 
+      hideProcessing();
       toast({
         title: "Solution Ready! ✨",
         description: "Your homework has been solved",
       });
     } catch (error) {
+      hideProcessing();
       setErrorState("confused");
       setTimeout(() => {
         setErrorState(null);
@@ -402,16 +414,6 @@ const HomeworkHelp = () => {
           />
         )}
       </AnimatePresence>
-
-      {/* Newton Processing Overlay */}
-      <ProcessingOverlay
-        isVisible={isLoading}
-        message="Solving your problem..."
-        subMessage="Newton is working on a step-by-step solution"
-        variant="overlay"
-        isIndeterminate={true}
-        skipDelayMs={300}
-      />
 
       {/* Confused Newton for errors */}
       <NewtonFeedback 
