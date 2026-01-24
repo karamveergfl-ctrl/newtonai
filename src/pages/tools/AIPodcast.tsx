@@ -101,6 +101,16 @@ export default function AIPodcast() {
     }
   }, []);
 
+  // Auto-minimize when navigating away from podcast page
+  useEffect(() => {
+    return () => {
+      // On unmount (navigating away), minimize if podcast is active
+      if (podcast && isPlaying) {
+        setIsMinimized(true);
+      }
+    };
+  }, [podcast, isPlaying, setIsMinimized]);
+
   const handleContentReady = async (
     content: string,
     type: "upload" | "recording" | "youtube" | "text",
