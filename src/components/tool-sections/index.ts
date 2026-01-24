@@ -8,4 +8,11 @@ export { ToolPageRecents } from "./ToolPageRecents";
 export { ToolPageWhyUse } from "./ToolPageWhyUse";
 export { ToolPageFAQ } from "./ToolPageFAQ";
 export { FloatingScrollTop } from "./FloatingScrollTop";
+export { 
+  FeatureSkeleton, 
+  SubjectSkeleton, 
+  TrendingSkeleton, 
+  WhyUseSkeleton, 
+  RecentSkeleton 
+} from "./PromoSectionSkeleton";
 export * from "./toolPromoData";
