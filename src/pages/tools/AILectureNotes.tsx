@@ -161,6 +161,7 @@ const AILectureNotes = () => {
   const [isHighlightMode, setIsHighlightMode] = useState(false);
   const [selectedHighlightColor, setSelectedHighlightColor] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
+  const notesRef = useRef<HTMLDivElement>(null);
   
   // Processing state
   const [isProcessing, setIsProcessing] = useState(false);
@@ -837,8 +838,12 @@ const AILectureNotes = () => {
 
           {notes && (
             <motion.div
+              ref={notesRef}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              onAnimationComplete={() => {
+                notesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
             >
               <Card className="border-border/50 shadow-lg overflow-hidden">
                 <CardHeader className="flex flex-col gap-3 border-b border-border/50 bg-muted/30">

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -175,6 +175,9 @@ const AISummarizer = () => {
 
   // Error state for confused Newton
   const [errorState, setErrorState] = useState<"confused" | null>(null);
+
+  // Ref for auto-scrolling to summary
+  const summaryRef = useRef<HTMLDivElement>(null);
 
   // Processing state for Newton animation
   const {
@@ -1047,9 +1050,13 @@ const AISummarizer = () => {
 
             {summary && (
               <motion.div
+                ref={summaryRef}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-8"
+                onAnimationComplete={() => {
+                  summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
               >
                 <Card>
                   <CardHeader>
