@@ -86,7 +86,13 @@ serve(async (req) => {
 
     let systemPrompt = `You are an expert educator that creates effective flashcards for studying.
 
-CRITICAL: Generate ALL flashcards in ${targetLanguage}. Both the front (question) and back (answer) of EVERY card must be written in ${targetLanguage}.
+CRITICAL RULES - YOU MUST FOLLOW ALL OF THESE:
+1. Generate ALL flashcards in ${targetLanguage}. Both front (question) and back (answer) MUST be in ${targetLanguage}.
+2. ONLY use information that is EXPLICITLY stated in the provided content below.
+3. DO NOT add any external knowledge, facts, or information not present in the source material.
+4. If the content is about a specific topic (e.g., Zener Diodes, Newton's Laws, etc.), ALL flashcards must be about that EXACT topic.
+5. Do NOT generalize or expand beyond what is directly mentioned in the content.
+6. Every flashcard MUST be directly traceable to a sentence or concept in the provided text.
 
 You MUST respond with ONLY a valid JSON array. No explanations, no markdown, no extra text.
 Each flashcard should have a clear question on the front and a concise answer on the back.
@@ -98,18 +104,25 @@ ${difficultyGuide[difficulty as keyof typeof difficultyGuide]}`;
     let userPrompt = '';
     
     if (type === 'video') {
-      userPrompt = `Based on this educational video: "${videoTitle}"
-      
-Content/Transcript:
+      userPrompt = `Based ONLY on the following educational video content. DO NOT use any external knowledge:
+
+Title: "${videoTitle}"
+
+Content/Transcript (use ONLY this information - every flashcard must come from this text):
+---
 ${content?.slice(0, 6000) || ''}
+---
+
+IMPORTANT: Generate flashcards ONLY from the information provided above. Do NOT include any facts, concepts, or definitions not explicitly mentioned in this transcript.
 
 Generate exactly ${count} flashcards at ${difficulty} difficulty IN ${targetLanguage}.
 Both the front (question) and back (answer) must be written in ${targetLanguage}.
 
-Each flashcard should:
+Each flashcard MUST:
+- Be directly based on content from the transcript above
 - Have a clear, focused question in ${targetLanguage}
 - Have a concise but complete answer in ${targetLanguage} (use LaTeX for math: $formula$)
-- Cover key concepts, definitions, formulas, or facts
+- NOT include any external information or general knowledge
 
 Return ONLY a JSON array with this exact format:
 [
@@ -117,17 +130,23 @@ Return ONLY a JSON array with this exact format:
   {"front": "Question in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"}
 ]`;
     } else if (type === 'pdf' || type === 'image') {
-      userPrompt = `Based on this content:
-      
+      userPrompt = `Based ONLY on the following document content. DO NOT use any external knowledge:
+
+Document Content (use ONLY this information - every flashcard must come from this text):
+---
 ${content?.slice(0, 6000) || ''}
+---
+
+IMPORTANT: Generate flashcards ONLY from the information provided above. Do NOT add external knowledge, general facts, or concepts not present in this content.
 
 Generate exactly ${count} flashcards at ${difficulty} difficulty IN ${targetLanguage}.
 Both the front (question) and back (answer) must be written in ${targetLanguage}.
 
-Each flashcard should:
+Each flashcard MUST:
+- Be directly based on content from the document above
 - Have a clear, focused question in ${targetLanguage}
 - Have a concise but complete answer in ${targetLanguage} (use LaTeX for math: $formula$)
-- Cover key concepts, definitions, formulas, or facts
+- NOT include any external information or general knowledge
 
 Return ONLY a JSON array with this exact format:
 [

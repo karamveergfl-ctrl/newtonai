@@ -149,14 +149,33 @@ export const VisualMindMap = ({
 
   const fitToScreen = useCallback(() => {
     if (!contentRef.current || !containerRef.current) return;
-    const container = containerRef.current.getBoundingClientRect();
-    const content = contentRef.current.getBoundingClientRect();
     
-    const scaleX = (container.width - 32) / (content.width / zoom);
-    const scaleY = (container.height - 32) / (content.height / zoom);
-    const newZoom = Math.min(scaleX, scaleY, 1.2);
-    setZoom(Math.max(0.3, Math.min(newZoom, 1.5)));
-  }, [zoom]);
+    // Reset zoom first to get accurate content dimensions
+    setZoom(1);
+    
+    setTimeout(() => {
+      if (!contentRef.current || !containerRef.current) return;
+      const container = containerRef.current.getBoundingClientRect();
+      const content = contentRef.current.getBoundingClientRect();
+      
+      // Calculate scale with more padding margin
+      const scaleX = (container.width - 64) / content.width;
+      const scaleY = (container.height - 64) / content.height;
+      const newZoom = Math.min(scaleX, scaleY, 1);
+      setZoom(Math.max(0.25, newZoom));
+      
+      // Center the scroll position after zoom
+      setTimeout(() => {
+        if (!containerRef.current) return;
+        const scrollWidth = containerRef.current.scrollWidth;
+        const scrollHeight = containerRef.current.scrollHeight;
+        const clientWidth = containerRef.current.clientWidth;
+        const clientHeight = containerRef.current.clientHeight;
+        containerRef.current.scrollLeft = (scrollWidth - clientWidth) / 2;
+        containerRef.current.scrollTop = (scrollHeight - clientHeight) / 2;
+      }, 50);
+    }, 50);
+  }, []);
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.3));
@@ -298,7 +317,7 @@ export const VisualMindMap = ({
     const rightChildren = children.slice(Math.ceil(children.length / 2));
 
     return (
-      <div className="flex items-center justify-center gap-4 py-8 px-12">
+      <div className="flex items-center justify-center gap-4 py-8 px-24">
         {/* Left branches */}
         <div className="flex flex-col gap-6">
           {leftChildren.map((child, idx) => (
@@ -746,7 +765,7 @@ export const VisualMindMap = ({
       <div 
         ref={containerRef} 
         className={cn(
-          "flex-1 overflow-auto flex items-start justify-start w-full h-full select-none",
+          "flex-1 overflow-auto flex items-center justify-center w-full h-full select-none",
           isPanning ? "cursor-grabbing" : "cursor-grab"
         )}
         style={{ background: isDarkMode ? themes[selectedTheme].bgGradientDark : themes[selectedTheme].bgGradient }}
@@ -758,7 +777,7 @@ export const VisualMindMap = ({
       >
         <div 
           ref={contentRef} 
-          className="transition-transform duration-200 origin-top-left min-w-full min-h-full flex items-center justify-center p-8"
+          className="transition-transform duration-200 origin-center min-w-max min-h-max flex items-center justify-center p-16"
           style={{ transform: `scale(${zoom})` }}
         >
           {renderLayout()}
