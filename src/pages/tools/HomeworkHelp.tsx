@@ -15,6 +15,7 @@ import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLi
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
+import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { 
   getYouTubeTranscript, 
   transcribeAudio, 
@@ -401,6 +402,16 @@ const HomeworkHelp = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Newton Processing Overlay */}
+      <ProcessingOverlay
+        isVisible={isLoading}
+        message="Solving your problem..."
+        subMessage="Newton is working on a step-by-step solution"
+        variant="overlay"
+        isIndeterminate={true}
+        skipDelayMs={300}
+      />
 
       {/* Confused Newton for errors */}
       <NewtonFeedback 

@@ -26,6 +26,7 @@ import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
+import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { InlineRecents } from "@/components/InlineRecents";
 import { useDropzone } from "react-dropzone";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1011,6 +1012,17 @@ const AILectureNotes = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Newton Processing Overlay */}
+      <ProcessingOverlay
+        isVisible={isProcessing && activeTab !== "recording"}
+        message={processingStep || "Generating lecture notes..."}
+        subMessage="Newton is organizing your content"
+        variant="overlay"
+        progress={progress}
+        isIndeterminate={progress === 0}
+        skipDelayMs={300}
+      />
 
       {/* Usage Limit Modal */}
       <UsageLimitModal

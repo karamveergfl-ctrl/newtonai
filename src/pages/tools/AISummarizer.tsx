@@ -1168,12 +1168,14 @@ const AISummarizer = () => {
           onDismiss={() => setErrorState(null)}
         />
 
-        {/* Newton Processing Overlay for Video Tools */}
+        {/* Newton Processing Overlay - for ALL generation (main summary + video tools) */}
         <ProcessingOverlay
-          isVisible={isProcessing}
-          message="Generating study materials..."
-          subMessage="Analyzing video content"
+          isVisible={isProcessing || isLoading}
+          message={isLoading ? "Creating your summary..." : "Generating study materials..."}
+          subMessage={isLoading ? "Newton is analyzing your content" : "Analyzing video content"}
           variant="overlay"
+          isIndeterminate={true}
+          skipDelayMs={300}
         />
 
         {/* Usage Limit Modal */}
