@@ -22,6 +22,7 @@ import { usePodcastContext } from "@/contexts/PodcastContext";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { usePodcastPreferences } from "@/hooks/usePodcastPreferences";
 import { ToolPagePromoSections } from "@/components/tool-sections";
+import { InlineRecents } from "@/components/InlineRecents";
 
 interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -534,6 +535,9 @@ export default function AIPodcast() {
                   onContentReady={handleContentReady}
                   isProcessing={isProcessing}
                 />
+                
+                {/* Inline recents - just below input */}
+                <InlineRecents toolId="podcast" className="mt-6 pt-6" />
 
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm">
                   <div className="p-4 rounded-lg bg-primary/5">

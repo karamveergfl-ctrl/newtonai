@@ -25,6 +25,7 @@ import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
+import { InlineRecents } from "@/components/InlineRecents";
 import { useDropzone } from "react-dropzone";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -821,6 +822,11 @@ const AILectureNotes = () => {
               </AnimatePresence>
             </CardContent>
           </Card>
+          
+          {/* Inline recents - show when no notes yet */}
+          {!notes && !isProcessing && !showTemplateSelection && (
+            <InlineRecents toolId="notes" className="mt-0 pt-0 border-t-0" />
+          )}
           
           {/* Promotional sections - show when no notes yet */}
           {!notes && !isProcessing && !showTemplateSelection && (

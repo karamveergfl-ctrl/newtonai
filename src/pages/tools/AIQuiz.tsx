@@ -37,6 +37,7 @@ import {
 } from "@/utils/contentProcessing";
 import { logGeneration } from "@/hooks/useGenerationHistory";
 import { ToolPagePromoSections } from "@/components/tool-sections";
+import { InlineRecents } from "@/components/InlineRecents";
 
 interface QuizQuestion {
   id: string;
@@ -313,6 +314,9 @@ const AIQuiz = () => {
                       placeholder="Paste your study content here..."
                       supportedFormats="PDF, TXT, Images; Max size: 20MB"
                     />
+                    
+                    {/* Inline recents - just below input */}
+                    <InlineRecents toolId="quiz" />
                   </CardContent>
                 </Card>
 

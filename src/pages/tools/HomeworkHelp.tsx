@@ -23,6 +23,7 @@ import {
 } from "@/utils/contentProcessing";
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
+import { InlineRecents } from "@/components/InlineRecents";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -296,6 +297,9 @@ const HomeworkHelp = () => {
                 placeholder="Type your homework question here..."
                 supportedFormats="Images, PDF, TXT; Max size: 20MB"
               />
+              
+              {/* Inline recents - just below input */}
+              <InlineRecents toolId="homework-help" />
             </CardContent>
           </Card>
 

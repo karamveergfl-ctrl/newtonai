@@ -35,6 +35,7 @@ import {
 } from "@/utils/contentProcessing";
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
+import { InlineRecents } from "@/components/InlineRecents";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1034,6 +1035,9 @@ const AISummarizer = () => {
               showLanguageSelector
               defaultTab={defaultTab}
             />
+            
+            {/* Inline recents - just below input */}
+            <InlineRecents toolId="summarizer" />
 
             {/* Promotional sections with FAQ included - show when no summary */}
             {!summary && (
