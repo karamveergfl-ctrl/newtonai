@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import { cn } from '@/lib/utils';
 import { 
@@ -221,7 +222,7 @@ const SectionCard = ({
                 {/* Main Content */}
                 <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                   <ReactMarkdown 
-                    remarkPlugins={[remarkMath]} 
+                    remarkPlugins={[remarkGfm, remarkMath]}
                     rehypePlugins={[rehypeKatex]}
                     components={{
                       table: ({ children }) => (
@@ -312,7 +313,7 @@ const ExecutiveSummaryCard = ({
             className="overflow-hidden"
           >
             <div className="px-5 pb-5 prose prose-sm dark:prose-invert max-w-none text-foreground/85 leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
                 {content}
               </ReactMarkdown>
             </div>
@@ -367,7 +368,7 @@ const KeyTakeawaysCard = ({
             className="overflow-hidden"
           >
             <div className="px-5 pb-5 prose prose-sm dark:prose-invert max-w-none [&_li]:text-foreground/90 [&_strong]:text-foreground">
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
                 {content}
               </ReactMarkdown>
             </div>
@@ -441,7 +442,7 @@ export const StudySectionRenderer = ({ content, className, type = 'summary' }: S
   if (!parsed.executiveSummary && parsed.sections.length === 0 && !parsed.keyTakeaways) {
     return (
       <div className={cn("prose prose-sm dark:prose-invert max-w-none", className)}>
-        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
           {content}
         </ReactMarkdown>
       </div>
