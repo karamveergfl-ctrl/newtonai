@@ -13,6 +13,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { PageTransition } from "./components/PageTransition";
 import CookieConsent from "./components/CookieConsent";
 import { VideoPreloader } from "./components/VideoPreloader";
+import { GlobalNewtonAssistant } from "./components/GlobalNewtonAssistant";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -146,6 +147,7 @@ const App = () => (
                 <AnimatedRoutes />
                 <PodcastMiniPlayer />
                 <CookieConsent />
+                <GlobalNewtonAssistant />
               </PodcastProvider>
             </BrowserRouter>
           </TooltipProvider>
