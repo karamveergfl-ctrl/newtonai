@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -8,11 +8,14 @@ export interface Citation {
   quote: string;
 }
 
+export type ConfidenceLevel = 'high' | 'medium' | 'low' | 'not_found';
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   citations?: Citation[];
+  confidence?: ConfidenceLevel;
   createdAt: Date;
 }
 
@@ -29,8 +32,44 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
   const [contextMode, setContextMode] = useState<ContextMode>('entire_document');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedText, setSelectedText] = useState<string | null>(null);
+  const [streamingContent, setStreamingContent] = useState<string>('');
+  const [isStreaming, setIsStreaming] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
+
+  // Load conversation history when session changes
+  useEffect(() => {
+    if (sessionId) {
+      loadConversationHistory();
+    }
+  }, [sessionId]);
+
+  const loadConversationHistory = useCallback(async () => {
+    if (!sessionId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('pdf_chat_messages')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const loadedMessages: ChatMessage[] = data.map((msg) => ({
+          id: msg.id,
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+          citations: (msg.citations as unknown as Citation[]) || [],
+          createdAt: new Date(msg.created_at || Date.now()),
+        }));
+        setMessages(loadedMessages);
+      }
+    } catch (error) {
+      console.error('Error loading conversation history:', error);
+    }
+  }, [sessionId]);
 
   const sendMessage = useCallback(async (question: string) => {
     if (!documentId || !question.trim() || isLoading) return;
@@ -44,6 +83,7 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
     };
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
+    setStreamingContent('');
 
     try {
       abortControllerRef.current = new AbortController();
@@ -65,11 +105,22 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
 
       if (error) throw error;
 
+      // Determine confidence level from response
+      let confidence: ConfidenceLevel = 'high';
+      if (data.confidence === 'not_found') {
+        confidence = 'not_found';
+      } else if (data.citations && data.citations.length === 0) {
+        confidence = 'low';
+      } else if (data.citations && data.citations.length <= 2) {
+        confidence = 'medium';
+      }
+
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: data.answer,
         citations: data.citations || [],
+        confidence,
         createdAt: new Date(),
       };
       setMessages(prev => [...prev, assistantMessage]);
@@ -90,6 +141,8 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
       });
     } finally {
       setIsLoading(false);
+      setIsStreaming(false);
+      setStreamingContent('');
       abortControllerRef.current = null;
     }
   }, [documentId, sessionId, messages, contextMode, currentPage, selectedText, isLoading, toast]);
@@ -98,6 +151,8 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       setIsLoading(false);
+      setIsStreaming(false);
+      setStreamingContent('');
     }
   }, []);
 
@@ -122,11 +177,14 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
     contextMode,
     currentPage,
     selectedText,
+    streamingContent,
+    isStreaming,
     sendMessage,
     cancelRequest,
     clearMessages,
     setContextMode: updateContextMode,
     setCurrentPage,
     setSelectedText: updateSelectedText,
+    loadConversationHistory,
   };
 }

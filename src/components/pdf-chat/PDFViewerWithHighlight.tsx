@@ -2,9 +2,9 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2, Maximize2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2, Maximize2, Search, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -39,8 +39,14 @@ export function PDFViewerWithHighlight({
   const [isLoading, setIsLoading] = useState(true);
   const [pageInputValue, setPageInputValue] = useState(String(currentPage));
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Array<{ page: number; index: number }>>([]);
+  const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
+  const [highlightAnimation, setHighlightAnimation] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const pagesTextRef = useRef<Map<number, string>>(new Map());
 
   // Track container dimensions for auto-fit
@@ -57,7 +63,6 @@ export function PDFViewerWithHighlight({
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     
-    // Also observe the container for size changes
     const resizeObserver = new ResizeObserver(updateDimensions);
     if (scrollAreaRef.current) {
       resizeObserver.observe(scrollAreaRef.current);
@@ -69,20 +74,45 @@ export function PDFViewerWithHighlight({
     };
   }, []);
 
+  // Handle keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        setShowSearch(true);
+        setTimeout(() => searchInputRef.current?.focus(), 100);
+      }
+      if (e.key === 'Escape' && showSearch) {
+        setShowSearch(false);
+        setSearchQuery('');
+        setSearchResults([]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSearch]);
+
+  // Trigger highlight animation when highlight changes
+  useEffect(() => {
+    if (highlight) {
+      setHighlightAnimation(true);
+      const timer = setTimeout(() => setHighlightAnimation(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlight]);
+
   // Calculate page width based on auto-fit or manual scale
   const getPageWidth = useCallback(() => {
     if (!containerDimensions.width) return 600;
     
     if (isAutoFit) {
-      // Use 95% of container width, accounting for padding
-      const availableWidth = containerDimensions.width - 32; // subtract padding
+      const availableWidth = containerDimensions.width - 32;
       const availableHeight = containerDimensions.height - 32;
-      // Assume typical PDF aspect ratio of ~0.77 (letter size)
       const heightBasedWidth = availableHeight * 0.77;
-      return Math.min(availableWidth, heightBasedWidth, 900); // cap at 900px max
+      return Math.min(availableWidth, heightBasedWidth, 900);
     }
     
-    // Manual zoom mode - use scale percentage
     return 600 * scale;
   }, [isAutoFit, scale, containerDimensions]);
 
@@ -104,7 +134,6 @@ export function PDFViewerWithHighlight({
       
       pagesTextRef.current.set(page.pageNumber, text);
 
-      // Once all pages are loaded, extract all text
       if (pagesTextRef.current.size === numPages && numPages > 0) {
         const allPages = Array.from(pagesTextRef.current.entries())
           .sort((a, b) => a[0] - b[0])
@@ -142,6 +171,47 @@ export function PDFViewerWithHighlight({
     }
   };
 
+  const handleSearch = useCallback(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const results: Array<{ page: number; index: number }> = [];
+    const query = searchQuery.toLowerCase();
+
+    pagesTextRef.current.forEach((text, pageNumber) => {
+      let index = 0;
+      let pos = text.toLowerCase().indexOf(query);
+      while (pos !== -1) {
+        results.push({ page: pageNumber, index });
+        index++;
+        pos = text.toLowerCase().indexOf(query, pos + 1);
+      }
+    });
+
+    setSearchResults(results);
+    setCurrentSearchIndex(0);
+
+    if (results.length > 0) {
+      onPageChange(results[0].page);
+    }
+  }, [searchQuery, onPageChange]);
+
+  const navigateSearch = (direction: 'next' | 'prev') => {
+    if (searchResults.length === 0) return;
+
+    let newIndex = currentSearchIndex;
+    if (direction === 'next') {
+      newIndex = (currentSearchIndex + 1) % searchResults.length;
+    } else {
+      newIndex = (currentSearchIndex - 1 + searchResults.length) % searchResults.length;
+    }
+
+    setCurrentSearchIndex(newIndex);
+    onPageChange(searchResults[newIndex].page);
+  };
+
   if (!file) {
     return (
       <div className="flex items-center justify-center h-full bg-muted/20">
@@ -151,7 +221,59 @@ export function PDFViewerWithHighlight({
   }
 
   return (
-    <div className="flex flex-col h-full bg-muted/10">
+    <div className="flex flex-col h-full bg-muted/10 relative">
+      {/* Search Bar */}
+      {showSearch && (
+        <div className="absolute top-14 right-4 z-20 flex items-center gap-2 bg-popover border rounded-lg shadow-lg p-2 animate-in slide-in-from-top-2">
+          <Search className="w-4 h-4 text-muted-foreground" />
+          <Input
+            ref={searchInputRef}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSearch();
+            }}
+            placeholder="Find in document..."
+            className="w-48 h-8"
+          />
+          {searchResults.length > 0 && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {currentSearchIndex + 1} / {searchResults.length}
+            </span>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigateSearch('prev')}
+            disabled={searchResults.length === 0}
+            className="h-8 w-8"
+          >
+            <ChevronUp className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigateSearch('next')}
+            disabled={searchResults.length === 0}
+            className="h-8 w-8"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setShowSearch(false);
+              setSearchQuery('');
+              setSearchResults([]);
+            }}
+            className="h-8 w-8"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex items-center justify-between p-2 border-b bg-background gap-2">
         <div className="flex items-center gap-1">
@@ -183,6 +305,15 @@ export function PDFViewerWithHighlight({
         </div>
 
         <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowSearch(!showSearch)}
+            className={showSearch ? 'bg-primary/10' : ''}
+            title="Search (Ctrl+F)"
+          >
+            <Search className="w-4 h-4" />
+          </Button>
           <Button
             variant="outline"
             size="icon"
@@ -263,9 +394,16 @@ export function PDFViewerWithHighlight({
 
       {/* Highlight overlay - shown when a citation is clicked */}
       {highlight && highlight.pageNumber === currentPage && (
-        <div className="absolute bottom-4 left-4 right-4 bg-primary/10 border border-primary/30 rounded-lg p-3 backdrop-blur-sm">
-          <p className="text-sm font-medium text-primary">Highlighted from Page {highlight.pageNumber}:</p>
-          <p className="text-sm text-muted-foreground italic mt-1">"{highlight.text}"</p>
+        <div 
+          className={cn(
+            "absolute bottom-4 left-4 right-4 border rounded-lg p-3 backdrop-blur-sm transition-all duration-500",
+            highlightAnimation 
+              ? "bg-primary/20 border-primary shadow-lg shadow-primary/20 animate-pulse" 
+              : "bg-primary/10 border-primary/30"
+          )}
+        >
+          <p className="text-sm font-medium text-primary">Cited from Page {highlight.pageNumber}:</p>
+          <p className="text-sm text-muted-foreground italic mt-1 line-clamp-3">"{highlight.text}"</p>
         </div>
       )}
     </div>
