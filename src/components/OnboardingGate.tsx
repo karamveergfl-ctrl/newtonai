@@ -20,13 +20,21 @@ export function OnboardingGate({ children }: OnboardingGateProps) {
         return;
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("onboarding_completed")
         .eq("id", session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (!profile?.onboarding_completed) {
+      // Handle stale session - user exists in JWT but not in database
+      if (error || !profile) {
+        console.warn("Stale session detected - signing out", error);
+        await supabase.auth.signOut();
+        setChecking(false);
+        return;
+      }
+
+      if (!profile.onboarding_completed) {
         navigate("/onboarding", { replace: true });
       } else {
         setChecking(false);
