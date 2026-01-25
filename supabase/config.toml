@@ -122,3 +122,9 @@ verify_jwt = true
 
 [functions.newton-chat]
 verify_jwt = false
+
+[functions.ads-request]
+verify_jwt = false
+
+[functions.ads-complete]
+verify_jwt = false

@@ -11,17 +11,23 @@ export const FEATURE_COSTS: Record<string, number> = {
   ai_podcast: 10,
 };
 
-// Credit rewards from ads
+// Credit rewards from ads (updated values)
 export const AD_REWARDS = {
-  '30sec': 4,
-  '60sec': 9,
-  daily_bonus: 2,
+  '30sec': 10,
+  '60sec': 20,
+  daily_bonus: 5,
 };
 
-// Daily limits for ad watching
+// Daily limits for earning credits
+export const DAILY_LIMITS = {
+  max_ads: 10,
+  max_credits: 200,
+};
+
+// Legacy daily ad limits (kept for backwards compatibility)
 export const DAILY_AD_LIMITS = {
-  free: 8,
-  logged_in: 12,
+  free: 10,
+  logged_in: 10,
   premium: 0, // Premium users don't need ads
 };
 

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_sessions: {
+        Row: {
+          ad_type: string
+          completed_at: string | null
+          created_at: string | null
+          duration: number
+          id: string
+          reward: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          ad_type?: string
+          completed_at?: string | null
+          created_at?: string | null
+          duration: number
+          id?: string
+          reward: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          ad_type?: string
+          completed_at?: string | null
+          created_at?: string | null
+          duration?: number
+          id?: string
+          reward?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_notifications: {
         Row: {
           created_at: string | null
@@ -744,6 +777,7 @@ export type Database = {
           ads_watched_today: number
           created_at: string
           credits: number
+          credits_earned_today: number | null
           id: string
           last_ad_date: string | null
           lifetime_earned: number
@@ -755,6 +789,7 @@ export type Database = {
           ads_watched_today?: number
           created_at?: string
           credits?: number
+          credits_earned_today?: number | null
           id?: string
           last_ad_date?: string | null
           lifetime_earned?: number
@@ -766,6 +801,7 @@ export type Database = {
           ads_watched_today?: number
           created_at?: string
           credits?: number
+          credits_earned_today?: number | null
           id?: string
           last_ad_date?: string | null
           lifetime_earned?: number
@@ -906,7 +942,12 @@ export type Database = {
         Args: { p_ad_duration: number; p_credits_earned: number }
         Returns: Json
       }
+      earn_credits_v2: {
+        Args: { p_credits_earned: number; p_session_id: string }
+        Returns: Json
+      }
       end_study_session: { Args: { p_session_id: string }; Returns: Json }
+      get_ad_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
