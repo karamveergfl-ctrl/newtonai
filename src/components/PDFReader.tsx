@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -63,11 +63,39 @@ export const PDFReader = ({
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [isAutoFit, setIsAutoFit] = useState(true);
+  const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+
+  // ResizeObserver to track container dimensions for reliable fit-to-screen
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateDimensions = () => {
+      setContainerDimensions({
+        width: container.clientWidth,
+        height: container.clientHeight,
+      });
+    };
+
+    // Initial measurement
+    updateDimensions();
+
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    resizeObserver.observe(container);
+
+    // Also listen to window resize for additional safety
+    window.addEventListener('resize', updateDimensions);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateDimensions);
+    };
+  }, []);
 
   // Handle text selection
   useEffect(() => {
@@ -508,20 +536,32 @@ export const PDFReader = ({
     setZoom(100);
   };
 
-  const getPageWidth = () => {
+  const getPageWidth = useCallback(() => {
     if (typeof window === 'undefined') return 800;
     
+    const containerWidth = containerDimensions.width || window.innerWidth * 0.9;
+    const containerHeight = containerDimensions.height;
+    
     // Auto-fit mode: calculate width to fit the container
-    if (isAutoFit && containerRef.current) {
-      const containerWidth = containerRef.current.clientWidth;
-      const containerHeight = containerRef.current.clientHeight - 56; // subtract header space
-      // Use 95% of container width for better fit
-      return Math.min(containerWidth * 0.95, containerHeight * 0.75);
+    if (isAutoFit) {
+      // Guard: if container height is too small (not yet measured), use width-based fit only
+      if (containerHeight < 200) {
+        // Use 95% of container width, capped at reasonable max
+        return Math.min(containerWidth * 0.95, 900);
+      }
+      
+      // Full calculation: fit to both width and height
+      const availableHeight = containerHeight - 80; // subtract header and padding
+      const widthBasedFit = containerWidth * 0.95;
+      const heightBasedFit = availableHeight * 0.75; // typical PDF aspect ratio
+      
+      return Math.min(widthBasedFit, heightBasedFit, 1200);
     }
     
-    const baseWidth = Math.min(window.innerWidth * 0.95, 1200);
+    // Manual zoom mode
+    const baseWidth = Math.min(containerWidth * 0.95, 1200);
     return baseWidth * (zoom / 100);
-  };
+  }, [isAutoFit, zoom, containerDimensions]);
 
   return (
     <div className="h-full flex flex-col relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">

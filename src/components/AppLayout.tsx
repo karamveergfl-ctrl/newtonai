@@ -56,9 +56,9 @@ export function AppLayout({
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar onToolSelect={onToolSelect} onSignOut={onSignOut} />
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-hidden min-h-0">
           {showTopStats && <TopStatsBar />}
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 flex flex-col overflow-auto min-h-0">
             {children}
           </div>
           {showFooter && <Footer />}
