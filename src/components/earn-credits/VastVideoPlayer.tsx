@@ -23,6 +23,7 @@ interface VastVideoPlayerProps {
 interface VastData {
   mediaUrl: string;
   duration: number;
+  clickThroughUrl?: string;
   trackingEvents: {
     impression?: string[];
     start?: string[];
@@ -30,6 +31,7 @@ interface VastData {
     midpoint?: string[];
     thirdQuartile?: string[];
     complete?: string[];
+    clickTracking?: string[];
   };
 }
 
@@ -117,7 +119,20 @@ export function VastVideoPlayer({
         }
       });
 
-      return { mediaUrl, duration, trackingEvents };
+      // Get ClickThrough URL (for ExoClick and other VAST providers)
+      const clickThroughUrl = doc.querySelector('ClickThrough')?.textContent?.trim();
+      
+      // Get ClickTracking URLs
+      const clickTrackingNodes = doc.querySelectorAll('ClickTracking');
+      trackingEvents.clickTracking = [];
+      clickTrackingNodes.forEach(node => {
+        const url = node.textContent?.trim();
+        if (url) {
+          trackingEvents.clickTracking!.push(url);
+        }
+      });
+
+      return { mediaUrl, duration, clickThroughUrl, trackingEvents };
     } catch (err) {
       console.error('Error parsing VAST:', err);
       return null;
@@ -294,14 +309,26 @@ export function VastVideoPlayer({
                 <video
                   ref={videoRef}
                   src={vastData.mediaUrl}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain cursor-pointer"
                   autoPlay
                   playsInline
                   onTimeUpdate={handleTimeUpdate}
                   onEnded={handleVideoEnded}
                   onPlay={() => setIsPaused(false)}
                   onPause={() => setIsPaused(true)}
+                  onClick={() => {
+                    if (vastData.clickThroughUrl) {
+                      // Fire click tracking pixels
+                      fireTrackingPixels(vastData.trackingEvents.clickTracking);
+                      window.open(vastData.clickThroughUrl, '_blank');
+                    }
+                  }}
                 />
+                {vastData.clickThroughUrl && (
+                  <div className="absolute bottom-2 right-2 text-xs text-white/70 bg-black/50 px-2 py-1 rounded pointer-events-none">
+                    Click to learn more
+                  </div>
+                )}
               </div>
 
               <Progress value={progress} className="h-2" />
