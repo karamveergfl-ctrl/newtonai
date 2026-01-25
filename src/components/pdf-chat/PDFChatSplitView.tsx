@@ -1,14 +1,33 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
-import { X, Upload } from 'lucide-react';
+import { 
+  X, 
+  Upload, 
+  ArrowLeft, 
+  ChevronDown,
+  Brain,
+  BookOpen,
+  FileText,
+  Network,
+  Settings2
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { PDFViewerWithHighlight } from './PDFViewerWithHighlight';
 import { ChatPanel } from './ChatPanel';
+import { PDFStudyToolsBar } from './PDFStudyToolsBar';
 import { usePDFChat } from '@/hooks/usePDFChat';
 import { usePDFDocument } from '@/hooks/usePDFDocument';
+import { usePDFStudyTools } from '@/hooks/usePDFStudyTools';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { GenerationSettingsDialog, GenerationSettings } from '@/components/GenerationSettingsDialog';
 
 interface PDFChatSplitViewProps {
   initialFile?: File | null;
@@ -27,6 +46,8 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   const [currentPage, setCurrentPage] = useState(1);
   const [highlight, setHighlight] = useState<HighlightInfo | null>(null);
   const [mobileTab, setMobileTab] = useState<'pdf' | 'chat'>('pdf');
+  const [searchQuery, setSearchQuery] = useState('');
+  const extractedTextRef = useRef<string>('');
 
   const {
     document,
@@ -52,6 +73,19 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     sessionId,
   });
 
+  const {
+    isGenerating,
+    activeToolDialog,
+    generateStudyMaterial,
+    openToolDialog,
+    closeToolDialog,
+  } = usePDFStudyTools({
+    documentId: document?.id || null,
+    extractedText: extractedTextRef.current,
+    totalPages: document?.totalPages || 1,
+    fileName: document?.fileName || file?.name || 'Document',
+  });
+
   // Initialize document when file is provided
   useEffect(() => {
     if (initialFile && !document) {
@@ -65,6 +99,9 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   }, [currentPage, setChatCurrentPage]);
 
   const handleTextExtracted = useCallback(async (pages: Array<{ pageNumber: number; text: string }>) => {
+    // Store full extracted text for study tools
+    extractedTextRef.current = pages.map(p => p.text).join('\n\n');
+    
     if (document?.id && pages.length > 0) {
       await processPages(document.id, pages);
     }
@@ -88,8 +125,13 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     if (onClose) {
       onClose();
     } else {
-      navigate(-1);
+      navigate('/dashboard');
     }
+  };
+
+  const handleNewFile = () => {
+    setFile(null);
+    extractedTextRef.current = '';
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,6 +142,23 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     }
   };
 
+  const handleToolGenerate = useCallback((tool: 'quiz' | 'flashcards' | 'summary' | 'mind_map') => {
+    if (tool === 'quiz' || tool === 'flashcards') {
+      openToolDialog(tool);
+    } else {
+      generateStudyMaterial(tool);
+    }
+  }, [openToolDialog, generateStudyMaterial]);
+
+  const handleSettingsConfirm = useCallback((settings: GenerationSettings) => {
+    if (activeToolDialog) {
+      generateStudyMaterial(activeToolDialog, settings);
+      closeToolDialog();
+    }
+  }, [activeToolDialog, generateStudyMaterial, closeToolDialog]);
+
+  const isDocumentReady = document?.processingStatus === 'completed' || processingProgress >= 50;
+
   // No file uploaded yet
   if (!file) {
     return (
@@ -109,7 +168,7 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
           <h2 className="text-xl font-semibold mb-2">Upload a PDF to chat</h2>
           <p className="text-muted-foreground mb-6">
             Upload a PDF document and ask questions about its content. 
-            Answers will be grounded only in the document.
+            Generate quizzes, flashcards, summaries, and mind maps.
           </p>
           <label>
             <input
@@ -132,10 +191,44 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     return (
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-2 border-b bg-background">
-          <h1 className="font-semibold text-sm truncate flex-1 px-2">
+        <div className="flex items-center justify-between p-2 border-b bg-background gap-2">
+          <Button variant="ghost" size="sm" onClick={handleNewFile} className="gap-1">
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-xs">New</span>
+          </Button>
+          
+          <h1 className="font-semibold text-sm truncate flex-1 px-2 text-center">
             {document?.fileName || file.name}
           </h1>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1">
+                <Settings2 className="w-4 h-4" />
+                <span className="text-xs">Study</span>
+                <ChevronDown className="w-3 h-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => handleToolGenerate('quiz')} disabled={!isDocumentReady || isGenerating}>
+                <Brain className="w-4 h-4 mr-2 text-primary" />
+                Generate Quiz
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToolGenerate('flashcards')} disabled={!isDocumentReady || isGenerating}>
+                <BookOpen className="w-4 h-4 mr-2 text-secondary" />
+                Generate Flashcards
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToolGenerate('summary')} disabled={!isDocumentReady || isGenerating}>
+                <FileText className="w-4 h-4 mr-2 text-accent" />
+                Generate Summary
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToolGenerate('mind_map')} disabled={!isDocumentReady || isGenerating}>
+                <Network className="w-4 h-4 mr-2 text-primary" />
+                Generate Mind Map
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button variant="ghost" size="icon" onClick={handleClose}>
             <X className="w-4 h-4" />
           </Button>
@@ -171,6 +264,22 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
             />
           </TabsContent>
         </Tabs>
+
+        {/* Settings Dialogs */}
+        <GenerationSettingsDialog
+          open={activeToolDialog === 'quiz'}
+          onOpenChange={(open) => !open && closeToolDialog()}
+          type="quiz"
+          totalPages={document?.totalPages || 1}
+          onGenerate={handleSettingsConfirm}
+        />
+        <GenerationSettingsDialog
+          open={activeToolDialog === 'flashcards'}
+          onOpenChange={(open) => !open && closeToolDialog()}
+          type="flashcards"
+          totalPages={document?.totalPages || 1}
+          onGenerate={handleSettingsConfirm}
+        />
       </div>
     );
   }
@@ -179,14 +288,66 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-2 border-b bg-background">
-        <h1 className="font-semibold truncate flex-1 px-2">
-          {document?.fileName || file.name}
-        </h1>
-        <Button variant="ghost" size="icon" onClick={handleClose}>
-          <X className="w-4 h-4" />
-        </Button>
+      <div className="flex items-center justify-between p-2 border-b bg-background gap-2">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={handleNewFile} className="gap-1.5">
+            <ArrowLeft className="w-4 h-4" />
+            <span>New File</span>
+          </Button>
+          
+          <span className="text-muted-foreground">|</span>
+          
+          <h1 className="font-semibold truncate max-w-[300px]">
+            {document?.fileName || file.name}
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Settings2 className="w-4 h-4" />
+                Study
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => handleToolGenerate('quiz')} disabled={!isDocumentReady || isGenerating}>
+                <Brain className="w-4 h-4 mr-2 text-primary" />
+                Generate Quiz
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToolGenerate('flashcards')} disabled={!isDocumentReady || isGenerating}>
+                <BookOpen className="w-4 h-4 mr-2 text-secondary" />
+                Generate Flashcards
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToolGenerate('summary')} disabled={!isDocumentReady || isGenerating}>
+                <FileText className="w-4 h-4 mr-2 text-accent" />
+                Generate Summary
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToolGenerate('mind_map')} disabled={!isDocumentReady || isGenerating}>
+                <Network className="w-4 h-4 mr-2 text-primary" />
+                Generate Mind Map
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button variant="ghost" size="icon" onClick={handleClose}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
+
+      {/* Study Tools Toolbar */}
+      <PDFStudyToolsBar
+        onGenerateQuiz={() => handleToolGenerate('quiz')}
+        onGenerateFlashcards={() => handleToolGenerate('flashcards')}
+        onGenerateSummary={() => handleToolGenerate('summary')}
+        onGenerateMindMap={() => handleToolGenerate('mind_map')}
+        isGenerating={isGenerating}
+        disabled={!isDocumentReady}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
 
       {/* Split View */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
@@ -218,6 +379,22 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
           />
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      {/* Settings Dialogs */}
+      <GenerationSettingsDialog
+        open={activeToolDialog === 'quiz'}
+        onOpenChange={(open) => !open && closeToolDialog()}
+        type="quiz"
+        totalPages={document?.totalPages || 1}
+        onGenerate={handleSettingsConfirm}
+      />
+      <GenerationSettingsDialog
+        open={activeToolDialog === 'flashcards'}
+        onOpenChange={(open) => !open && closeToolDialog()}
+        type="flashcards"
+        totalPages={document?.totalPages || 1}
+        onGenerate={handleSettingsConfirm}
+      />
     </div>
   );
 }
