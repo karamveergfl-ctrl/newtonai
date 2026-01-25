@@ -127,6 +127,7 @@ export default function Credits() {
           duration={currentSession.duration}
           reward={currentSession.reward}
           sessionId={currentSession.session_id}
+          smartlinkUrl={currentSession.smartlink_url || ''}
           onComplete={handleAdComplete}
           onCancel={handleAdCancel}
         />

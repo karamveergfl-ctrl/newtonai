@@ -15,6 +15,7 @@ interface SmartlinkTimerProps {
   duration: number;
   reward: number;
   sessionId: string;
+  smartlinkUrl: string;
   onComplete: (sessionId: string) => void;
   onCancel: (sessionId: string) => void;
 }
@@ -24,6 +25,7 @@ export function SmartlinkTimer({
   duration,
   reward,
   sessionId,
+  smartlinkUrl,
   onComplete,
   onCancel,
 }: SmartlinkTimerProps) {
@@ -88,10 +90,10 @@ export function SmartlinkTimer({
   }, [open, duration]);
 
   const handleOpenLink = useCallback(() => {
-    // Open a placeholder link (in real app, this would be the ad smartlink)
-    window.open('about:blank', '_blank');
+    // Open the smartlink ad URL
+    window.open(smartlinkUrl, '_blank', 'noopener,noreferrer');
     setHasOpened(true);
-  }, []);
+  }, [smartlinkUrl]);
 
   const handleComplete = useCallback(() => {
     onComplete(sessionId);
