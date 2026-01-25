@@ -5,12 +5,18 @@ import { toast } from 'sonner';
 interface AdSession {
   session_id: string;
   type: 'rewarded_video' | 'smartlink' | 'vast';
+  provider?: 'exoclick' | 'adsterra' | 'monetag';
   smartlink_url?: string;
   vast_url?: string;
   duration: 30 | 60;
   reward: number;
   is_first_ad: boolean;
   bonus: number;
+  // Retry and fallback configuration
+  retry_allowed?: boolean;
+  fallback_allowed_after_ms?: number;
+  max_retries?: number;
+  retry_delay_ms?: number;
 }
 
 interface AdStats {
