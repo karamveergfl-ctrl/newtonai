@@ -2004,8 +2004,6 @@ const Index = () => {
             <span className="text-sm font-bold text-primary uppercase tracking-wide">Tools</span>
           </div>
           <StudyToolsBar onGenerateQuiz={handleGenerateQuizFromContent} onGenerateFlashcards={handleGenerateFlashcardsFromContent} onGenerateSummary={handleGenerateSummary} onGenerateMindMap={handleGenerateMindMap} onScreenshot={() => setTriggerScreenshot(true)} isGeneratingQuiz={isGeneratingQuiz} isGeneratingFlashcards={isGeneratingFlashcards} isGeneratingSummary={isGeneratingSummary} isGeneratingMindMap={isGeneratingMindMap} disabled={!pdfText && !fileData?.ocrText} totalPages={pdfPageCount} className="border-0 p-0 bg-transparent" />
-          <div className="h-4 w-px bg-border/50" />
-          <SearchBox onSearch={handleSearch} isSearching={isSearching} />
         </div>
 
         {/* Main Content - Responsive Layout */}
