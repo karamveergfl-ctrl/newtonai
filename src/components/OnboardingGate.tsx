@@ -30,7 +30,7 @@ export function OnboardingGate({ children }: OnboardingGateProps) {
       if (error || !profile) {
         console.warn("Stale session detected - signing out", error);
         await supabase.auth.signOut();
-        setChecking(false);
+        navigate("/auth", { replace: true });
         return;
       }
 

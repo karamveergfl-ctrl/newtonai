@@ -64,13 +64,20 @@ const Auth = () => {
       if (!session) return;
       
       // Check if user has completed onboarding
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("onboarding_completed")
         .eq("id", session.user.id)
-        .single();
+        .maybeSingle();
       
-      if (profile?.onboarding_completed) {
+      // Handle stale session - user exists in JWT but not in database
+      if (error || !profile) {
+        console.warn("Stale session detected in Auth - signing out", error);
+        await supabase.auth.signOut();
+        return; // Stay on auth page after sign out
+      }
+      
+      if (profile.onboarding_completed) {
         navigate("/dashboard");
       } else {
         navigate("/onboarding");

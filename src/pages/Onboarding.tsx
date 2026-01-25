@@ -185,21 +185,29 @@ const Onboarding = () => {
       return;
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from("profiles")
       .select("onboarding_completed, full_name, avatar_url")
       .eq("id", session.user.id)
-      .single();
+      .maybeSingle();
 
-    if (profile?.onboarding_completed) {
+    // Handle stale session - user exists in JWT but not in database
+    if (error || !profile) {
+      console.warn("Stale session detected in Onboarding - signing out", error);
+      await supabase.auth.signOut();
+      navigate("/auth");
+      return;
+    }
+
+    if (profile.onboarding_completed) {
       navigate("/dashboard");
       return;
     }
 
-    if (profile?.full_name) {
+    if (profile.full_name) {
       setFormData(prev => ({ ...prev, fullName: profile.full_name || "" }));
     }
-    if (profile?.avatar_url) {
+    if (profile.avatar_url) {
       setFormData(prev => ({ ...prev, avatarUrl: profile.avatar_url }));
     }
   };
