@@ -116,16 +116,21 @@ serve(async (req) => {
       );
     }
 
-    // Get smartlink URL from environment or use default
+    // Get ad URLs from environment
     const smartlinkUrl = Deno.env.get("SMARTLINK_URL") || 
       "https://www.effectivegatecpm.com/sg8mw5c5?key=105235ba548a9d0898b671559ccd7c80";
+    const vastUrl = Deno.env.get("VAST_TAG_URL") || null;
+
+    // Determine ad type - prefer VAST if available
+    const adType = vastUrl ? "vast" : "smartlink";
 
     return new Response(
       JSON.stringify({
         success: true,
         session_id: session.id,
-        type: "smartlink",
+        type: adType,
         smartlink_url: smartlinkUrl,
+        vast_url: vastUrl,
         duration,
         reward: totalReward,
         is_first_ad: isFirstAd,
