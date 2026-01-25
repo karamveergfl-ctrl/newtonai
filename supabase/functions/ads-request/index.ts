@@ -116,13 +116,20 @@ serve(async (req) => {
       );
     }
 
-    // Get ad URLs from environment
-    const smartlinkUrl = Deno.env.get("SMARTLINK_URL") || 
-      "https://www.effectivegatecpm.com/sg8mw5c5?key=105235ba548a9d0898b671559ccd7c80";
+    // Get ad URLs from environment - ExoClick VAST is primary, Adsterra smartlink is fallback
     const vastUrl = Deno.env.get("VAST_TAG_URL") || null;
+    const smartlinkUrl = Deno.env.get("SMARTLINK_URL") || Deno.env.get("ADSTERRA_SMARTLINK_URL") || null;
 
-    // Determine ad type - prefer VAST if available
-    const adType = vastUrl ? "vast" : "smartlink";
+    // Determine ad type - prefer VAST if available, smartlink as fallback
+    const adType = vastUrl ? "vast" : (smartlinkUrl ? "smartlink" : "none");
+
+    // Handle case where no ads are configured
+    if (adType === "none") {
+      return new Response(
+        JSON.stringify({ success: false, error: "No ad sources configured" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(
       JSON.stringify({
