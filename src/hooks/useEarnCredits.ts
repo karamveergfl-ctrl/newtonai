@@ -4,10 +4,12 @@ import { toast } from 'sonner';
 
 interface AdSession {
   session_id: string;
-  type: 'rewarded_video' | 'smartlink' | 'vast';
+  type: 'rewarded_video' | 'smartlink' | 'vast' | 'outstream';
   provider?: 'exoclick' | 'adsterra' | 'monetag';
   smartlink_url?: string;
   vast_url?: string;
+  outstream_zone_id?: string;
+  outstream_script?: string;
   duration: 30 | 60;
   reward: number;
   is_first_ad: boolean;
@@ -122,12 +124,19 @@ export function useEarnCredits(): UseEarnCreditsResult {
       const adSession: AdSession = {
         session_id: data.session_id,
         type: data.type,
+        provider: data.provider,
         smartlink_url: data.smartlink_url,
         vast_url: data.vast_url,
+        outstream_zone_id: data.outstream_zone_id,
+        outstream_script: data.outstream_script,
         duration: data.duration,
         reward: data.reward,
         is_first_ad: data.is_first_ad,
         bonus: data.bonus,
+        retry_allowed: data.retry_allowed,
+        fallback_allowed_after_ms: data.fallback_allowed_after_ms,
+        max_retries: data.max_retries,
+        retry_delay_ms: data.retry_delay_ms,
       };
 
       setCurrentSession(adSession);

@@ -22,7 +22,7 @@ import { useEarnCredits } from "@/hooks/useEarnCredits";
 import { FEATURE_COSTS as FALLBACK_COSTS, FEATURE_NAMES, AD_REWARDS } from "@/lib/creditConfig";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { AdButton, DailyProgress, RulesCard, SmartlinkTimer, VastVideoPlayer } from "@/components/earn-credits";
+import { AdButton, DailyProgress, RulesCard, SmartlinkTimer, VastVideoPlayer, OutstreamVideoPlayer } from "@/components/earn-credits";
 import { AdBanner } from "@/components/AdBanner";
 
 export default function Credits() {
@@ -41,6 +41,7 @@ export default function Credits() {
   
   const [showTimer, setShowTimer] = useState(false);
   const [showVastPlayer, setShowVastPlayer] = useState(false);
+  const [showOutstreamPlayer, setShowOutstreamPlayer] = useState(false);
   const [featureCosts, setFeatureCosts] = useState<Record<string, number>>(FALLBACK_COSTS);
 
   // Fetch feature costs from database
@@ -68,10 +69,15 @@ export default function Credits() {
   const handleWatchAd = async (duration: 30 | 60) => {
     const session = await requestAd(duration);
     if (session) {
-      // Show appropriate player based on ad type
-      if (session.type === 'vast' && session.vast_url) {
+      // Show appropriate player based on ad type priority: Outstream > VAST > Smartlink
+      if (session.type === 'outstream' && session.outstream_zone_id) {
+        console.log('[AD_DEBUG] Opening Outstream player, zone:', session.outstream_zone_id);
+        setShowOutstreamPlayer(true);
+      } else if (session.type === 'vast' && session.vast_url) {
+        console.log('[AD_DEBUG] Opening VAST player');
         setShowVastPlayer(true);
-      } else {
+      } else if (session.smartlink_url) {
+        console.log('[AD_DEBUG] Opening Smartlink timer');
         setShowTimer(true);
       }
     }
@@ -82,6 +88,7 @@ export default function Credits() {
     if (success) {
       setShowTimer(false);
       setShowVastPlayer(false);
+      setShowOutstreamPlayer(false);
       // Refresh credits after successful completion
       await refreshCredits();
       await refreshStats();
@@ -92,6 +99,23 @@ export default function Credits() {
     cancelAd(sessionId);
     setShowTimer(false);
     setShowVastPlayer(false);
+    setShowOutstreamPlayer(false);
+  };
+
+  // Handle Outstream error - fallback to VAST, then smartlink
+  const handleOutstreamError = () => {
+    console.log('[AD_DEBUG] Outstream failed, attempting fallback');
+    setShowOutstreamPlayer(false);
+    
+    if (currentSession?.vast_url) {
+      console.log('[AD_DEBUG] Falling back to VAST');
+      setShowVastPlayer(true);
+    } else if (currentSession?.smartlink_url) {
+      console.log('[AD_DEBUG] Falling back to Smartlink');
+      setShowTimer(true);
+    } else {
+      console.log('[AD_DEBUG] No fallback available');
+    }
   };
 
   // Handle VAST error - fallback to smartlink with debug logging
@@ -169,6 +193,19 @@ export default function Credits() {
           fallbackAfterMs={currentSession.fallback_allowed_after_ms ?? 3000}
           maxRetries={currentSession.max_retries ?? 1}
           retryDelayMs={currentSession.retry_delay_ms ?? 1000}
+        />
+      )}
+
+      {/* Outstream Video Player Dialog */}
+      {currentSession && currentSession.outstream_zone_id && (
+        <OutstreamVideoPlayer
+          open={showOutstreamPlayer}
+          zoneId={currentSession.outstream_zone_id}
+          reward={currentSession.reward}
+          sessionId={currentSession.session_id}
+          onComplete={handleAdComplete}
+          onCancel={handleAdCancel}
+          onError={handleOutstreamError}
         />
       )}
 
