@@ -4,3 +4,7 @@ export { CitationChip } from './CitationChip';
 export { ContextModeSelector } from './ContextModeSelector';
 export { PDFStudyToolsBar } from './PDFStudyToolsBar';
 export { PDFViewerWithHighlight } from './PDFViewerWithHighlight';
+export { SuggestedQuestions } from './SuggestedQuestions';
+export { TextSelectionToolbar } from './TextSelectionToolbar';
+export { StreamingMessage } from './StreamingMessage';
+export { ConfidenceIndicator } from './ConfidenceIndicator';

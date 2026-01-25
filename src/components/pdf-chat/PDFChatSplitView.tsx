@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PDFViewerWithHighlight } from './PDFViewerWithHighlight';
 import { ChatPanel } from './ChatPanel';
+import { TextSelectionToolbar } from './TextSelectionToolbar';
 import { PDFStudyToolsBar } from './PDFStudyToolsBar';
 import { usePDFChat } from '@/hooks/usePDFChat';
 import { usePDFDocument } from '@/hooks/usePDFDocument';
@@ -47,6 +48,7 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   const [highlight, setHighlight] = useState<HighlightInfo | null>(null);
   const [mobileTab, setMobileTab] = useState<'pdf' | 'chat'>('pdf');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSelectionToolbar, setShowSelectionToolbar] = useState(false);
   const extractedTextRef = useRef<string>('');
 
   const {
@@ -63,8 +65,11 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     isLoading,
     contextMode,
     selectedText,
+    streamingContent,
+    isStreaming,
     sendMessage,
     cancelRequest,
+    clearMessages,
     setContextMode,
     setCurrentPage: setChatCurrentPage,
     setSelectedText,
@@ -98,8 +103,16 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     setChatCurrentPage(currentPage);
   }, [currentPage, setChatCurrentPage]);
 
+  // Show selection toolbar when text is selected
+  useEffect(() => {
+    if (selectedText) {
+      setShowSelectionToolbar(true);
+    } else {
+      setShowSelectionToolbar(false);
+    }
+  }, [selectedText]);
+
   const handleTextExtracted = useCallback(async (pages: Array<{ pageNumber: number; text: string }>) => {
-    // Store full extracted text for study tools
     extractedTextRef.current = pages.map(p => p.text).join('\n\n');
     
     if (document?.id && pages.length > 0) {
@@ -117,7 +130,6 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     if (isMobile) {
       setMobileTab('pdf');
     }
-    // Clear highlight after 5 seconds
     setTimeout(() => setHighlight(null), 5000);
   }, [isMobile]);
 
@@ -132,6 +144,7 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   const handleNewFile = () => {
     setFile(null);
     extractedTextRef.current = '';
+    clearMessages();
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,6 +169,29 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
       closeToolDialog();
     }
   }, [activeToolDialog, generateStudyMaterial, closeToolDialog]);
+
+  const handleAskAboutSelection = useCallback((text: string) => {
+    setContextMode('selected_text');
+    sendMessage(`What does this mean: "${text}"`);
+    setShowSelectionToolbar(false);
+    if (isMobile) {
+      setMobileTab('chat');
+    }
+  }, [setContextMode, sendMessage, isMobile]);
+
+  const handleExplainSelection = useCallback((text: string) => {
+    setContextMode('selected_text');
+    sendMessage(`Explain this in simple terms: "${text}"`);
+    setShowSelectionToolbar(false);
+    if (isMobile) {
+      setMobileTab('chat');
+    }
+  }, [setContextMode, sendMessage, isMobile]);
+
+  const handleCloseSelectionToolbar = useCallback(() => {
+    setShowSelectionToolbar(false);
+    setSelectedText(null);
+  }, [setSelectedText]);
 
   const isDocumentReady = document?.processingStatus === 'completed' || processingProgress >= 50;
 
@@ -190,6 +226,16 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   if (isMobile) {
     return (
       <div className="flex flex-col h-full">
+        {/* Selection Toolbar */}
+        {showSelectionToolbar && selectedText && (
+          <TextSelectionToolbar
+            selectedText={selectedText}
+            onAskAbout={handleAskAboutSelection}
+            onExplain={handleExplainSelection}
+            onClose={handleCloseSelectionToolbar}
+          />
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between p-2 border-b bg-background gap-2">
           <Button variant="ghost" size="sm" onClick={handleNewFile} className="gap-1">
@@ -259,8 +305,11 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
               onCancelRequest={cancelRequest}
               onContextModeChange={setContextMode}
               onCitationClick={handleCitationClick}
+              onClearMessages={clearMessages}
               processingStatus={document?.processingStatus}
               processingProgress={processingProgress}
+              streamingContent={streamingContent}
+              isStreaming={isStreaming}
             />
           </TabsContent>
         </Tabs>
@@ -287,6 +336,16 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   // Desktop layout with split view
   return (
     <div className="flex flex-col h-full">
+      {/* Selection Toolbar */}
+      {showSelectionToolbar && selectedText && (
+        <TextSelectionToolbar
+          selectedText={selectedText}
+          onAskAbout={handleAskAboutSelection}
+          onExplain={handleExplainSelection}
+          onClose={handleCloseSelectionToolbar}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between p-2 border-b bg-background gap-2">
         <div className="flex items-center gap-2">
@@ -374,8 +433,11 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
             onCancelRequest={cancelRequest}
             onContextModeChange={setContextMode}
             onCitationClick={handleCitationClick}
+            onClearMessages={clearMessages}
             processingStatus={document?.processingStatus}
             processingProgress={processingProgress}
+            streamingContent={streamingContent}
+            isStreaming={isStreaming}
           />
         </ResizablePanel>
       </ResizablePanelGroup>

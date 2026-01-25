@@ -2,10 +2,12 @@ import { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Mic, Copy, Check, Loader2, Sparkles, StopCircle } from 'lucide-react';
+import { Send, Mic, Copy, Check, Loader2, Sparkles, StopCircle, RotateCcw } from 'lucide-react';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { CitationChip } from './CitationChip';
 import { ContextModeSelector } from './ContextModeSelector';
+import { SuggestedQuestions } from './SuggestedQuestions';
+import { ConfidenceIndicator } from './ConfidenceIndicator';
 import { LottieNewton } from '@/components/newton/LottieNewton';
 import { AudioRecorder, blobToBase64 } from '@/utils/audioRecorder';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,9 +23,12 @@ interface ChatPanelProps {
   onCancelRequest: () => void;
   onContextModeChange: (mode: ContextMode) => void;
   onCitationClick: (pageNumber: number, quote: string) => void;
+  onClearMessages?: () => void;
   disabled?: boolean;
   processingStatus?: 'pending' | 'processing' | 'completed' | 'failed';
   processingProgress?: number;
+  streamingContent?: string;
+  isStreaming?: boolean;
 }
 
 export function ChatPanel({
@@ -35,9 +40,12 @@ export function ChatPanel({
   onCancelRequest,
   onContextModeChange,
   onCitationClick,
+  onClearMessages,
   disabled = false,
   processingStatus,
   processingProgress = 0,
+  streamingContent,
+  isStreaming,
 }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -50,7 +58,7 @@ export function ChatPanel({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, streamingContent]);
 
   const handleSend = () => {
     if (!input.trim() || isLoading || disabled) return;
@@ -63,6 +71,10 @@ export function ChatPanel({
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleSuggestionSelect = (question: string) => {
+    onSendMessage(question);
   };
 
   const handleVoiceRecord = async () => {
@@ -118,6 +130,17 @@ export function ChatPanel({
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-primary" />
           <span className="font-medium text-sm">Chat with PDF</span>
+          {messages.length > 0 && onClearMessages && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClearMessages}
+              className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="w-3 h-3" />
+              New
+            </Button>
+          )}
         </div>
         <ContextModeSelector
           mode={contextMode}
@@ -136,6 +159,7 @@ export function ChatPanel({
             <p className="text-muted-foreground text-sm mt-2 max-w-xs">
               Answers are generated only from its content. No external knowledge will be used.
             </p>
+            
             {isProcessingDoc && (
               <div className="mt-4 w-full max-w-xs">
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -148,6 +172,14 @@ export function ChatPanel({
                   Analyzing document... {processingProgress}%
                 </p>
               </div>
+            )}
+
+            {/* Suggested questions */}
+            {isReady && (
+              <SuggestedQuestions 
+                onSelect={handleSuggestionSelect}
+                disabled={isLoading}
+              />
             )}
           </div>
         ) : (
@@ -172,9 +204,14 @@ export function ChatPanel({
                     )}
                   </div>
 
-                  {/* Citations and actions for assistant messages */}
+                  {/* Citations, confidence, and actions for assistant messages */}
                   {msg.role === 'assistant' && (
                     <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {/* Confidence indicator */}
+                      {msg.confidence && (
+                        <ConfidenceIndicator level={msg.confidence} />
+                      )}
+                      
                       {msg.citations && msg.citations.length > 0 && (
                         <>
                           <span className="text-xs text-muted-foreground">Sources:</span>
@@ -206,8 +243,20 @@ export function ChatPanel({
               </div>
             ))}
 
+            {/* Streaming message */}
+            {isStreaming && streamingContent && (
+              <div className="flex justify-start">
+                <div className="max-w-[85%]">
+                  <div className="p-3 rounded-lg bg-muted">
+                    <MarkdownRenderer content={streamingContent} />
+                    <span className="inline-block w-2 h-4 bg-primary/80 animate-pulse ml-0.5" />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Loading indicator */}
-            {isLoading && (
+            {isLoading && !isStreaming && (
               <div className="flex justify-start">
                 <div className="bg-muted p-3 rounded-lg flex items-center gap-2">
                   <LottieNewton state="thinking" size="sm" />
