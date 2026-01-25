@@ -116,15 +116,26 @@ serve(async (req) => {
       );
     }
 
-    // Get ad URLs from environment - ExoClick VAST is primary, Adsterra smartlink is fallback
+    // Get ad URLs from environment
+    // Priority: Outstream (SDK) > VAST (In-Stream) > Smartlink
+    const outstreamZoneId = Deno.env.get("OUTSTREAM_ZONE_ID") || null;
     const vastUrl = Deno.env.get("VAST_TAG_URL") || null;
     const smartlinkUrl = Deno.env.get("SMARTLINK_URL") || Deno.env.get("ADSTERRA_SMARTLINK_URL") || null;
 
-    // Determine ad type - prefer VAST if available, smartlink as fallback
-    const adType = vastUrl ? "vast" : (smartlinkUrl ? "smartlink" : "none");
-
-    // Handle case where no ads are configured
-    if (adType === "none") {
+    // Determine ad type - prefer Outstream > VAST > Smartlink
+    let adType: string;
+    let provider: string;
+    
+    if (outstreamZoneId) {
+      adType = "outstream";
+      provider = "exoclick";
+    } else if (vastUrl) {
+      adType = "vast";
+      provider = "exoclick";
+    } else if (smartlinkUrl) {
+      adType = "smartlink";
+      provider = "adsterra";
+    } else {
       return new Response(
         JSON.stringify({ success: false, error: "No ad sources configured" }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -136,16 +147,22 @@ serve(async (req) => {
         success: true,
         session_id: session.id,
         type: adType,
-        provider: vastUrl ? "exoclick" : "adsterra",
-        smartlink_url: smartlinkUrl,
+        provider,
+        // Outstream SDK fields
+        outstream_zone_id: outstreamZoneId,
+        outstream_script: outstreamZoneId ? "https://a.magsrv.com/ad-provider.js" : null,
+        // VAST fields
         vast_url: vastUrl,
+        // Smartlink fields  
+        smartlink_url: smartlinkUrl,
+        // Common fields
         duration,
         reward: totalReward,
         is_first_ad: isFirstAd,
         bonus: bonusReward,
         stats,
-        // Retry and fallback configuration for VAST ads
-        retry_allowed: !!vastUrl,
+        // Retry and fallback configuration
+        retry_allowed: !!(vastUrl || outstreamZoneId),
         fallback_allowed_after_ms: 3000,
         max_retries: 1,
         retry_delay_ms: 1000,
