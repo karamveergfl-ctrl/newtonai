@@ -1978,7 +1978,7 @@ const Index = () => {
     )}
     
     <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
-      <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="flex-1 flex flex-col overflow-hidden min-h-0 bg-gradient-to-br from-background via-background to-primary/5">
         {/* Compact Header */}
         <div className="p-2 md:p-3 border-b bg-card/50 backdrop-blur-sm">
           <div className="flex items-center justify-between gap-2">
@@ -2012,12 +2012,12 @@ const Index = () => {
         </div>
 
         {/* Main Content - Responsive Layout */}
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
           {/* Conditional rendering: Show PDF/Image or Search Results */}
           {!showVideosPanel && !solutionData ?
         // File View with Search and Chat
-        <div className="flex-1 flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in">
-              <div className="flex-1 overflow-hidden">
+        <div className="flex-1 flex flex-col p-2 md:p-4 overflow-hidden animate-fade-in min-h-0">
+              <div className="flex-1 overflow-hidden min-h-0">
                 {fileData.isPdf ? <PDFReader pdfUrl={fileData.url} onTextSelect={handleTextSelect} onImageCapture={handleImageCapture} onPdfTextExtracted={setPdfText} triggerScreenshot={triggerScreenshot} onScreenshotTriggered={() => setTriggerScreenshot(false)} onGenerateQuizFromText={handleGenerateQuizFromText} onGenerateFlashcardsFromText={handleGenerateFlashcardsFromText} onGenerateSummaryFromText={handleGenerateSummaryFromText} onGenerateMindMapFromText={handleGenerateMindMapFromText} isGeneratingQuiz={isGeneratingQuiz} isGeneratingFlashcards={isGeneratingFlashcards} isGeneratingSummary={isGeneratingSummary} isGeneratingMindMap={isGeneratingMindMap} isSearching={isSearching} /> : <ImageViewer imageUrl={fileData.url} imageName={fileData.name} ocrText={fileData.ocrText} onTextSelect={handleTextSelect} onImageCapture={handleImageCapture} onGenerateQuizFromText={handleGenerateQuizFromText} onGenerateFlashcardsFromText={handleGenerateFlashcardsFromText} onGenerateSummaryFromText={handleGenerateSummaryFromText} onGenerateMindMapFromText={handleGenerateMindMapFromText} isGeneratingQuiz={isGeneratingQuiz} isGeneratingFlashcards={isGeneratingFlashcards} isGeneratingSummary={isGeneratingSummary} isGeneratingMindMap={isGeneratingMindMap} isSearching={isSearching} />}
               </div>
               {fileData.isPdf && <PDFChat pdfText={pdfText} pdfName={fileData.name} />}
