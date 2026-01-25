@@ -38,6 +38,7 @@ import { FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
 import { Session } from "@supabase/supabase-js";
 import { useProcessingState } from "@/hooks/useProcessingState";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
+import { AdBanner } from "@/components/AdBanner";
 
 interface Video {
   id: string;
@@ -1918,6 +1919,10 @@ const Index = () => {
               </div>}
             <div className="mt-8 space-y-6 my-[3px]">
               <StudyTracker />
+              
+              {/* Banner Ad for Free Users */}
+              <AdBanner placement="inline" />
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <UploadZone onUploadComplete={handleUploadComplete} />
                 <LectureRecorder onNotesGenerated={(notes, title) => {

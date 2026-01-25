@@ -37,6 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
+import { AdBanner } from "@/components/AdBanner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1042,6 +1043,11 @@ const AISummarizer = () => {
             
             {/* Inline recents - just below input */}
             <InlineRecents toolId="summarizer" />
+
+            {/* Banner Ad for Free Users - show when no summary */}
+            {!summary && (
+              <AdBanner placement="inline" />
+            )}
 
             {/* Promotional sections with FAQ included - show when no summary */}
             {!summary && (

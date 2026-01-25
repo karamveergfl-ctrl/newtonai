@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
+import { AdBanner } from "@/components/AdBanner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -315,6 +316,11 @@ const HomeworkHelp = () => {
               <InlineRecents toolId="homework-help" />
             </CardContent>
           </Card>
+
+          {/* Banner Ad for Free Users - show when no solution */}
+          {!solution && !isLoading && (
+            <AdBanner placement="inline" />
+          )}
 
           {/* Promotional sections with FAQ included - show when no solution */}
           {!solution && !isLoading && (
