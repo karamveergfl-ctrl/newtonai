@@ -540,26 +540,17 @@ export const PDFReader = ({
     if (typeof window === 'undefined') return 800;
     
     const containerWidth = containerDimensions.width || window.innerWidth * 0.9;
-    const containerHeight = containerDimensions.height;
     
-    // Auto-fit mode: calculate width to fit the container
+    // Auto-fit mode: WIDTH-FIRST fitting (prevents tiny thumbnail render)
     if (isAutoFit) {
-      // Guard: if container height is too small (not yet measured), use width-based fit only
-      if (containerHeight < 200) {
-        // Use 95% of container width, capped at reasonable max
-        return Math.min(containerWidth * 0.95, 900);
-      }
-      
-      // Full calculation: fit to both width and height
-      const availableHeight = containerHeight - 80; // subtract header and padding
-      const widthBasedFit = containerWidth * 0.95;
-      const heightBasedFit = availableHeight * 0.75; // typical PDF aspect ratio
-      
-      return Math.min(widthBasedFit, heightBasedFit, 1200);
+      // Use 95% of container width, capped at reasonable max for readability
+      // This ensures PDF is always visible and readable on initial load
+      const widthFit = containerWidth * 0.95;
+      return Math.min(widthFit, 1400);
     }
     
     // Manual zoom mode
-    const baseWidth = Math.min(containerWidth * 0.95, 1200);
+    const baseWidth = Math.min(containerWidth * 0.95, 1400);
     return baseWidth * (zoom / 100);
   }, [isAutoFit, zoom, containerDimensions]);
 
