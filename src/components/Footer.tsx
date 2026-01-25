@@ -3,10 +3,14 @@ import { motion } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Instagram, Youtube, Facebook, Twitter, Mail, Phone } from "lucide-react";
 import { GradientBlob } from "./GradientBlob";
+import { AdBanner } from "./AdBanner";
 
 const Footer = () => {
   return (
     <footer className="bg-muted/50 border-t relative overflow-hidden">
+      {/* Banner Ad for Free Users */}
+      <AdBanner placement="footer" />
+      
       {/* Decorative Blob */}
       <GradientBlob
         color="primary"

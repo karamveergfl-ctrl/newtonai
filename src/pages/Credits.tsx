@@ -23,6 +23,7 @@ import { FEATURE_COSTS as FALLBACK_COSTS, FEATURE_NAMES, AD_REWARDS } from "@/li
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { AdButton, DailyProgress, RulesCard, SmartlinkTimer } from "@/components/earn-credits";
+import { AdBanner } from "@/components/AdBanner";
 
 export default function Credits() {
   const navigate = useNavigate();
@@ -134,6 +135,9 @@ export default function Credits() {
       )}
 
       <div className="container max-w-4xl py-8 px-4 space-y-8">
+        {/* Banner Ad for Free Users */}
+        <AdBanner placement="inline" />
+        
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
