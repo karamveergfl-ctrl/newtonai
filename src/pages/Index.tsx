@@ -1991,13 +1991,10 @@ const Index = () => {
                 {fileData.name}
               </h1>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {isSearching && <div className="hidden md:flex items-center gap-2 text-primary">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-xs">Searching...</span>
-                </div>}
-              <StudyModeSelector onGenerateFlashcards={handleGenerateFlashcardsFromContent} onGenerateQuiz={handleGenerateQuizFromContent} isGenerating={isGeneratingFlashcards || isGeneratingQuiz} disabled={!pdfText && !fileData?.ocrText} />
-            </div>
+            {isSearching && <div className="flex items-center gap-2 text-primary shrink-0">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-xs">Searching...</span>
+              </div>}
           </div>
         </div>
 
