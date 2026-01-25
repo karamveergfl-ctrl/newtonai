@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SidebarUsageWidget } from "@/components/SidebarUsageWidget";
 import {
@@ -45,23 +44,20 @@ import {
   CreditCard,
   HelpCircle,
   BookOpen,
-  FileSearch,
 } from "lucide-react";
 import { SidebarPromoCard } from "@/components/SidebarPromoCard";
 import { cn } from "@/lib/utils";
-import { FEATURE_COSTS } from "@/lib/creditConfig";
 import { useCredits } from "@/hooks/useCredits";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 const studyTools = [
-  { id: "pdf-chat", label: "Chat with PDF", icon: FileSearch, path: "/pdf-chat", feature: "pdf_chat" },
-  { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz", feature: "quiz" },
-  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards", feature: "flashcards" },
-  { id: "podcast", label: "AI Podcast", icon: Podcast, path: "/tools/ai-podcast", feature: "ai_podcast" },
-  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map", feature: "mind_map" },
-  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes", feature: "lecture_notes" },
-  { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer", feature: "summary" },
-  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help", feature: "homework_help" },
+  { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz" },
+  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards" },
+  { id: "podcast", label: "AI Podcast", icon: Podcast, path: "/tools/ai-podcast" },
+  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map" },
+  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes" },
+  { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer" },
+  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help" },
 ];
 
 const adminTools = [
@@ -73,11 +69,11 @@ const adminTools = [
 
 
 const exploreLinks = [
-  { id: "all-tools", label: "All Tools", icon: Grid3X3, path: "/tools", badge: null },
-  { id: "compare", label: "Compare", icon: TrendingDown, path: "/compare", badge: "NEW" },
-  { id: "pricing", label: "Pricing", icon: CreditCard, path: "/pricing", badge: null },
-  { id: "faq", label: "FAQ", icon: HelpCircle, path: "/faq", badge: null },
-  { id: "blog", label: "Blog", icon: BookOpen, path: "/blog", badge: null },
+  { id: "all-tools", label: "All Tools", icon: Grid3X3, path: "/tools" },
+  { id: "compare", label: "Compare", icon: TrendingDown, path: "/compare" },
+  { id: "pricing", label: "Pricing", icon: CreditCard, path: "/pricing" },
+  { id: "faq", label: "FAQ", icon: HelpCircle, path: "/faq" },
+  { id: "blog", label: "Blog", icon: BookOpen, path: "/blog" },
 ];
 
 interface AppSidebarProps {
@@ -218,25 +214,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                             )}
                           >
                             <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                            {!isCollapsed && (
-                              <>
-                                <span className="flex-1">{tool.label}</span>
-                                {!isPremium && FEATURE_COSTS[tool.feature] && (
-                                  <Badge 
-                                    variant="secondary" 
-                                    className={cn(
-                                      "text-[10px] px-1.5 py-0 h-5 font-medium gap-0.5",
-                                      isActive(tool.path) 
-                                        ? "bg-primary-foreground/20 text-primary-foreground" 
-                                        : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
-                                    )}
-                                  >
-                                    <Coins className="h-3 w-3" />
-                                    {FEATURE_COSTS[tool.feature]}
-                                  </Badge>
-                                )}
-                              </>
-                            )}
+                            {!isCollapsed && <span>{tool.label}</span>}
                           </motion.button>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -289,24 +267,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                           )}
                         >
                           <link.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                          {!isCollapsed && (
-                            <>
-                              <span className="flex-1">{link.label}</span>
-                              {link.badge && (
-                                <Badge 
-                                  variant="secondary" 
-                                  className={cn(
-                                    "text-[10px] px-1.5 py-0 h-5 font-semibold animate-pulse",
-                                    isActive(link.path) 
-                                      ? "bg-primary-foreground/20 text-primary-foreground" 
-                                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                                  )}
-                                >
-                                  {link.badge}
-                                </Badge>
-                              )}
-                            </>
-                          )}
+                          {!isCollapsed && <span>{link.label}</span>}
                         </motion.button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
