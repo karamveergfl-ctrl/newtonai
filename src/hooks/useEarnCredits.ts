@@ -4,8 +4,9 @@ import { toast } from 'sonner';
 
 interface AdSession {
   session_id: string;
-  type: 'rewarded_video' | 'smartlink';
+  type: 'rewarded_video' | 'smartlink' | 'vast';
   smartlink_url?: string;
+  vast_url?: string;
   duration: 30 | 60;
   reward: number;
   is_first_ad: boolean;
@@ -116,6 +117,7 @@ export function useEarnCredits(): UseEarnCreditsResult {
         session_id: data.session_id,
         type: data.type,
         smartlink_url: data.smartlink_url,
+        vast_url: data.vast_url,
         duration: data.duration,
         reward: data.reward,
         is_first_ad: data.is_first_ad,

@@ -22,7 +22,7 @@ import { useEarnCredits } from "@/hooks/useEarnCredits";
 import { FEATURE_COSTS as FALLBACK_COSTS, FEATURE_NAMES, AD_REWARDS } from "@/lib/creditConfig";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { AdButton, DailyProgress, RulesCard, SmartlinkTimer } from "@/components/earn-credits";
+import { AdButton, DailyProgress, RulesCard, SmartlinkTimer, VastVideoPlayer } from "@/components/earn-credits";
 import { AdBanner } from "@/components/AdBanner";
 
 export default function Credits() {
@@ -40,6 +40,7 @@ export default function Credits() {
   } = useEarnCredits();
   
   const [showTimer, setShowTimer] = useState(false);
+  const [showVastPlayer, setShowVastPlayer] = useState(false);
   const [featureCosts, setFeatureCosts] = useState<Record<string, number>>(FALLBACK_COSTS);
 
   // Fetch feature costs from database
@@ -67,7 +68,12 @@ export default function Credits() {
   const handleWatchAd = async (duration: 30 | 60) => {
     const session = await requestAd(duration);
     if (session) {
-      setShowTimer(true);
+      // Show appropriate player based on ad type
+      if (session.type === 'vast' && session.vast_url) {
+        setShowVastPlayer(true);
+      } else {
+        setShowTimer(true);
+      }
     }
   };
 
@@ -75,6 +81,7 @@ export default function Credits() {
     const success = await completeAd(sessionId);
     if (success) {
       setShowTimer(false);
+      setShowVastPlayer(false);
       // Refresh credits after successful completion
       await refreshCredits();
       await refreshStats();
@@ -84,6 +91,16 @@ export default function Credits() {
   const handleAdCancel = (sessionId: string) => {
     cancelAd(sessionId);
     setShowTimer(false);
+    setShowVastPlayer(false);
+  };
+
+  // Handle VAST error - fallback to smartlink
+  const handleVastError = () => {
+    setShowVastPlayer(false);
+    // Show smartlink timer as fallback
+    if (currentSession?.smartlink_url) {
+      setShowTimer(true);
+    }
   };
 
   const loading = creditsLoading || statsLoading;
@@ -121,16 +138,29 @@ export default function Credits() {
         noIndex={true}
       />
       
-      {/* Timer Dialog */}
-      {currentSession && (
+      {/* Smartlink Timer Dialog */}
+      {currentSession && currentSession.smartlink_url && (
         <SmartlinkTimer
           open={showTimer}
           duration={currentSession.duration}
           reward={currentSession.reward}
           sessionId={currentSession.session_id}
-          smartlinkUrl={currentSession.smartlink_url || ''}
+          smartlinkUrl={currentSession.smartlink_url}
           onComplete={handleAdComplete}
           onCancel={handleAdCancel}
+        />
+      )}
+
+      {/* VAST Video Player Dialog */}
+      {currentSession && currentSession.vast_url && (
+        <VastVideoPlayer
+          open={showVastPlayer}
+          vastUrl={currentSession.vast_url}
+          reward={currentSession.reward}
+          sessionId={currentSession.session_id}
+          onComplete={handleAdComplete}
+          onCancel={handleAdCancel}
+          onError={handleVastError}
         />
       )}
 
