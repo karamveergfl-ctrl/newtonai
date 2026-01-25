@@ -116,11 +116,16 @@ serve(async (req) => {
       );
     }
 
+    // Get smartlink URL from environment or use default
+    const smartlinkUrl = Deno.env.get("SMARTLINK_URL") || 
+      "https://www.effectivegatecpm.com/sg8mw5c5?key=105235ba548a9d0898b671559ccd7c80";
+
     return new Response(
       JSON.stringify({
         success: true,
         session_id: session.id,
         type: "smartlink",
+        smartlink_url: smartlinkUrl,
         duration,
         reward: totalReward,
         is_first_ad: isFirstAd,
