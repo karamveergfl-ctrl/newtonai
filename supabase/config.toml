@@ -110,3 +110,12 @@ verify_jwt = false
 
 [functions.send-welcome-email]
 verify_jwt = false
+
+[functions.process-pdf-chunks]
+verify_jwt = true
+
+[functions.semantic-search-pdf]
+verify_jwt = true
+
+[functions.rag-chat-pdf]
+verify_jwt = true

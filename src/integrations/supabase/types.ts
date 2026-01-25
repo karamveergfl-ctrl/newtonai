@@ -74,6 +74,50 @@ export type Database = {
         }
         Relationships: []
       }
+      document_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string | null
+          document_id: string
+          embedding: string | null
+          heading: string | null
+          id: string
+          page_number: number
+          token_count: number | null
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          created_at?: string | null
+          document_id: string
+          embedding?: string | null
+          heading?: string | null
+          id?: string
+          page_number: number
+          token_count?: number | null
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string | null
+          document_id?: string
+          embedding?: string | null
+          heading?: string | null
+          id?: string
+          page_number?: number
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enterprise_inquiries: {
         Row: {
           company: string
@@ -258,6 +302,115 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pdf_chat_messages: {
+        Row: {
+          citations: Json | null
+          content: string
+          created_at: string | null
+          id: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          citations?: Json | null
+          content: string
+          created_at?: string | null
+          id?: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          citations?: Json | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_chat_sessions: {
+        Row: {
+          context_mode: string | null
+          created_at: string | null
+          document_id: string
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          context_mode?: string | null
+          created_at?: string | null
+          document_id: string
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          context_mode?: string | null
+          created_at?: string | null
+          document_id?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_chat_sessions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_documents: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_path: string | null
+          id: string
+          is_scanned: boolean | null
+          ocr_enabled: boolean | null
+          processing_status: string | null
+          total_pages: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_path?: string | null
+          id?: string
+          is_scanned?: boolean | null
+          ocr_enabled?: boolean | null
+          processing_status?: string | null
+          total_pages?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_path?: string | null
+          id?: string
+          is_scanned?: boolean | null
+          ocr_enabled?: boolean | null
+          processing_status?: string | null
+          total_pages?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       podcasts: {
         Row: {
@@ -775,6 +928,21 @@ export type Database = {
       record_video_watch_time: {
         Args: { p_duration_seconds: number; p_video_id: string }
         Returns: Json
+      }
+      search_document_chunks: {
+        Args: {
+          p_document_id: string
+          p_limit?: number
+          p_page_filter?: number
+          p_query_embedding: string
+        }
+        Returns: {
+          chunk_id: string
+          content: string
+          heading: string
+          page_number: number
+          similarity: number
+        }[]
       }
       spend_credits:
         | { Args: { p_feature_name: string }; Returns: Json }
