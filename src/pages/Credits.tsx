@@ -1,50 +1,44 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Coins, 
   Crown, 
-  Play, 
-  Loader2, 
   TrendingUp, 
   Gift,
   Sparkles,
-  Clock,
   CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  Wallet
 } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { AppLayout } from "@/components/AppLayout";
 import { AnimatedCreditCounter } from "@/components/AnimatedCreditCounter";
 import { useCredits } from "@/hooks/useCredits";
-import { AD_REWARDS, DAILY_AD_LIMITS, FEATURE_COSTS as FALLBACK_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
+import { useEarnCredits } from "@/hooks/useEarnCredits";
+import { FEATURE_COSTS as FALLBACK_COSTS, FEATURE_NAMES, AD_REWARDS } from "@/lib/creditConfig";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-
-declare global {
-  interface Window {
-    adsbygoogle: unknown[];
-  }
-}
+import { AdButton, DailyProgress, RulesCard, SmartlinkTimer } from "@/components/earn-credits";
 
 export default function Credits() {
   const navigate = useNavigate();
+  const { credits, loading: creditsLoading, isPremium, refreshCredits } = useCredits();
   const { 
-    credits, 
-    loading, 
-    isPremium, 
-    earnCredits, 
-    canWatchMoreAds, 
-    getRemainingAds,
-    adsWatchedToday 
-  } = useCredits();
+    stats, 
+    loading: statsLoading, 
+    requesting, 
+    currentSession,
+    requestAd, 
+    completeAd, 
+    cancelAd,
+    refreshStats 
+  } = useEarnCredits();
   
-  const [watchingAd, setWatchingAd] = useState<30 | 60 | null>(null);
-  const adInitialized = useRef(false);
+  const [showTimer, setShowTimer] = useState(false);
   const [featureCosts, setFeatureCosts] = useState<Record<string, number>>(FALLBACK_COSTS);
 
   // Fetch feature costs from database
@@ -69,38 +63,40 @@ export default function Credits() {
     fetchFeatureCosts();
   }, [fetchFeatureCosts]);
 
-  // Initialize Google AdSense ads
-  useEffect(() => {
-    if (!loading && !isPremium && !adInitialized.current) {
-      try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-        adInitialized.current = true;
-      } catch (e) {
-        console.error('AdSense error:', e);
-      }
-    }
-  }, [loading, isPremium]);
-
   const handleWatchAd = async (duration: 30 | 60) => {
-    setWatchingAd(duration);
-    try {
-      await earnCredits(duration);
-    } finally {
-      setWatchingAd(null);
+    const session = await requestAd(duration);
+    if (session) {
+      setShowTimer(true);
     }
   };
 
-  const dailyLimit = DAILY_AD_LIMITS.logged_in;
-  const adsProgress = (adsWatchedToday / dailyLimit) * 100;
-  const remainingAds = getRemainingAds();
+  const handleAdComplete = async (sessionId: string) => {
+    const success = await completeAd(sessionId);
+    if (success) {
+      setShowTimer(false);
+      // Refresh credits after successful completion
+      await refreshCredits();
+      await refreshStats();
+    }
+  };
+
+  const handleAdCancel = (sessionId: string) => {
+    cancelAd(sessionId);
+    setShowTimer(false);
+  };
+
+  const loading = creditsLoading || statsLoading;
 
   if (loading) {
     return (
       <AppLayout showFooter={false}>
         <div className="container max-w-4xl py-8 px-4 space-y-6">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-10 w-48 mx-auto" />
+          <Skeleton className="h-32 w-full" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-48" />
+            <Skeleton className="h-48" />
+          </div>
           <Skeleton className="h-64 w-full" />
         </div>
       </AppLayout>
@@ -109,18 +105,33 @@ export default function Credits() {
 
   const breadcrumbs = [
     { name: "Home", href: "/" },
-    { name: "Credits", href: "/credits" },
+    { name: "Earn Credits", href: "/credits" },
   ];
+
+  const canEarnMore = stats && stats.ads_remaining > 0 && stats.credits_remaining > 0;
 
   return (
     <AppLayout showFooter={false}>
       <SEOHead
-        title="Study Credits"
-        description="Earn and manage your NewtonAI study credits. Watch videos to earn credits or upgrade to premium for unlimited access."
+        title="Earn Credits"
+        description="Earn free study credits by watching short videos. Use credits to unlock AI-powered study tools like quizzes, flashcards, and more."
         canonicalPath="/credits"
         breadcrumbs={breadcrumbs}
         noIndex={true}
       />
+      
+      {/* Timer Dialog */}
+      {currentSession && (
+        <SmartlinkTimer
+          open={showTimer}
+          duration={currentSession.duration}
+          reward={currentSession.reward}
+          sessionId={currentSession.session_id}
+          onComplete={handleAdComplete}
+          onCancel={handleAdCancel}
+        />
+      )}
+
       <div className="container max-w-4xl py-8 px-4 space-y-8">
         {/* Header */}
         <motion.div
@@ -130,10 +141,10 @@ export default function Credits() {
         >
           <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
             <Coins className="w-8 h-8 text-yellow-500" />
-            Study Credits
+            Earn Credits
           </h1>
           <p className="text-muted-foreground">
-            Earn credits to unlock AI-powered study tools
+            Watch short videos to earn study credits
           </p>
         </motion.div>
 
@@ -146,10 +157,15 @@ export default function Credits() {
           <Card className="bg-gradient-to-br from-primary/10 via-background to-yellow-500/10 border-primary/20">
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="text-center md:text-left">
-                  <p className="text-sm text-muted-foreground mb-1">Current Balance</p>
-                  <div className="flex items-center gap-3 text-3xl">
-                    <AnimatedCreditCounter value={credits} showLabel className="text-3xl [&_svg]:w-8 [&_svg]:h-8" />
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-full bg-yellow-500/20">
+                    <Wallet className="w-6 h-6 text-yellow-500" />
+                  </div>
+                  <div className="text-center md:text-left">
+                    <p className="text-sm text-muted-foreground">Current Balance</p>
+                    <div className="flex items-center gap-2 text-3xl">
+                      <AnimatedCreditCounter value={credits} showLabel className="text-3xl [&_svg]:w-7 [&_svg]:h-7" />
+                    </div>
                   </div>
                 </div>
                 
@@ -162,10 +178,10 @@ export default function Credits() {
                   <Button 
                     onClick={() => navigate('/pricing')}
                     className="gap-2"
+                    variant="outline"
                   >
                     <Crown className="w-4 h-4" />
-                    Upgrade to Premium
-                    <ArrowRight className="w-4 h-4" />
+                    Go Premium
                   </Button>
                 )}
               </div>
@@ -173,135 +189,98 @@ export default function Credits() {
           </Card>
         </motion.div>
 
-        {/* Earn Credits Section */}
+        {/* Main Earn Section */}
         {!isPremium && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+            className="grid gap-6 md:grid-cols-2"
+          >
+            {/* Daily Progress */}
+            {stats && (
+              <DailyProgress
+                adsWatched={stats.ads_watched}
+                maxAds={stats.max_ads}
+                creditsEarned={stats.credits_earned}
+                maxCredits={stats.max_credits}
+              />
+            )}
+
+            {/* Rules Card */}
+            <RulesCard />
+          </motion.div>
+        )}
+
+        {/* Watch & Earn Section */}
+        {!isPremium && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
           >
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Gift className="w-5 h-5 text-primary" />
-                  Earn Free Credits
+                  Watch & Earn
                 </CardTitle>
                 <CardDescription>
-                  Watch short videos to earn study credits
+                  Choose a video to watch and earn credits
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Daily Progress */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Daily videos watched</span>
-                    <span className="font-medium">{adsWatchedToday} / {dailyLimit}</span>
-                  </div>
-                  <Progress value={adsProgress} className="h-2" />
-                  {remainingAds > 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      {remainingAds} videos remaining today
-                    </p>
-                  ) : (
-                    <p className="text-xs text-yellow-600">
-                      Daily limit reached! Come back tomorrow or upgrade to Premium.
-                    </p>
-                  )}
-                </div>
+              <CardContent className="space-y-4">
+                {canEarnMore ? (
+                  <>
+                    {/* First ad bonus message */}
+                    {stats?.ads_watched === 0 && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                        <Sparkles className="w-5 h-5 text-green-500 shrink-0" />
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                          <span className="font-medium">First video bonus!</span> Your first video today earns +5 extra credits!
+                        </p>
+                      </div>
+                    )}
 
-                {/* Ad Options */}
-                {canWatchMoreAds() ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {/* 30 Second Ad */}
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Button
-                        variant="outline"
-                        className="w-full h-auto p-4 flex flex-col items-start gap-2"
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <AdButton
+                        duration={30}
+                        reward={stats?.ads_watched === 0 ? AD_REWARDS['30sec'] + AD_REWARDS.daily_bonus : AD_REWARDS['30sec']}
+                        loading={requesting}
+                        disabled={requesting}
                         onClick={() => handleWatchAd(30)}
-                        disabled={watchingAd !== null}
-                      >
-                        <div className="flex items-center gap-2 w-full">
-                          <div className="p-2 rounded-full bg-primary/10">
-                            <Play className="w-4 h-4 text-primary" />
-                          </div>
-                          <div className="flex-1 text-left">
-                            <div className="font-semibold">30 Second Video</div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="w-3 h-3" /> Quick option
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className="text-yellow-600 bg-yellow-500/10">
-                            {watchingAd === 30 ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <>+{AD_REWARDS['30sec']} SC</>
-                            )}
-                          </Badge>
-                        </div>
-                      </Button>
-                    </motion.div>
-
-                    {/* 60 Second Ad */}
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Button
-                        variant="outline"
-                        className="w-full h-auto p-4 flex flex-col items-start gap-2 border-primary/50 bg-primary/5"
+                      />
+                      <AdButton
+                        duration={60}
+                        reward={stats?.ads_watched === 0 ? AD_REWARDS['60sec'] + AD_REWARDS.daily_bonus : AD_REWARDS['60sec']}
+                        loading={requesting}
+                        disabled={requesting}
+                        isBestValue
                         onClick={() => handleWatchAd(60)}
-                        disabled={watchingAd !== null}
-                      >
-                        <div className="flex items-center gap-2 w-full">
-                          <div className="p-2 rounded-full bg-primary/20">
-                            <Play className="w-4 h-4 text-primary" />
-                          </div>
-                          <div className="flex-1 text-left">
-                            <div className="font-semibold">60 Second Video</div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Sparkles className="w-3 h-3" /> Best value
-                            </div>
-                          </div>
-                          <Badge className="bg-yellow-500 text-white">
-                            {watchingAd === 60 ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <>+{AD_REWARDS['60sec']} SC</>
-                            )}
-                          </Badge>
-                        </div>
-                      </Button>
-                    </motion.div>
-                  </div>
+                      />
+                    </div>
+                  </>
                 ) : (
-                  <div className="text-center py-4 px-6 rounded-lg bg-muted/50">
-                    <p className="text-muted-foreground">
-                      You've watched all available videos today.
+                  <div className="text-center py-8 px-6 rounded-lg bg-muted/50">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                      <CheckCircle2 className="w-6 h-6 text-yellow-500" />
+                    </div>
+                    <h3 className="font-semibold mb-1">Daily Limit Reached!</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {stats?.ads_remaining === 0 
+                        ? "You've watched all available videos today." 
+                        : "You've earned the maximum credits for today."}
                     </p>
                     <Button 
-                      variant="link" 
-                      className="mt-2"
+                      variant="default"
                       onClick={() => navigate('/pricing')}
+                      className="gap-2"
                     >
-                      Upgrade for unlimited access
+                      <Crown className="w-4 h-4" />
+                      Upgrade for Unlimited
                     </Button>
                   </div>
                 )}
-
-                {/* Google Ad Placement Zone */}
-                <div className="mt-6 rounded-lg overflow-hidden">
-                  <ins 
-                    className="adsbygoogle"
-                    style={{ display: 'block' }}
-                    data-ad-client="ca-pub-8032920863696759"
-                    data-ad-slot="3142749567"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"
-                  />
-                </div>
               </CardContent>
             </Card>
           </motion.div>
@@ -311,7 +290,7 @@ export default function Credits() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.4 }}
         >
           <Card>
             <CardHeader>
@@ -348,13 +327,13 @@ export default function Credits() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.5 }}
           >
             <Card className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border-yellow-500/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="w-5 h-5 text-yellow-500" />
-                  Premium Benefits
+                  Skip the Ads - Go Premium
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -378,24 +357,11 @@ export default function Credits() {
                 >
                   <Crown className="w-4 h-4" />
                   Upgrade to Premium
+                  <ArrowRight className="w-4 h-4" />
                 </Button>
               </CardContent>
             </Card>
           </motion.div>
-        )}
-
-        {/* Bottom Ad Placement */}
-        {!isPremium && (
-          <div className="rounded-lg overflow-hidden">
-            <ins 
-              className="adsbygoogle"
-              style={{ display: 'block' }}
-              data-ad-client="ca-pub-8032920863696759"
-              data-ad-slot="3142749567"
-              data-ad-format="auto"
-              data-full-width-responsive="true"
-            />
-          </div>
         )}
       </div>
     </AppLayout>
