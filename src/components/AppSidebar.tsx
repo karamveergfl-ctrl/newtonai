@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { SidebarUsageWidget } from "@/components/SidebarUsageWidget";
 import {
   Sidebar,
@@ -147,9 +148,9 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-hidden">
-        {/* Home */}
-        <SidebarGroup className="py-0">
+      <SidebarContent className="flex flex-col overflow-hidden">
+        {/* Home - Fixed */}
+        <SidebarGroup className="py-0 shrink-0">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -181,78 +182,79 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-
-        {/* Study Tools */}
-        <SidebarGroup className="mt-0">
+        {/* Study Tools - Scrollable */}
+        <SidebarGroup className="mt-0 flex-1 min-h-0 flex flex-col overflow-hidden">
           {!isCollapsed && (
-            <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground shrink-0">
               Study Tools
             </SidebarGroupLabel>
           )}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <AnimatePresence mode="popLayout">
-                {filteredTools.map((tool) => (
-                  <motion.div
-                    key={tool.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    layout
-                  >
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip={tool.label}>
-                        <motion.button
-                          whileHover={{ x: isCollapsed ? 0 : 4 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => navigate(tool.path)}
-                          className={cn(
-                            "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                            isCollapsed 
-                              ? "justify-center p-2.5 gap-0" 
-                              : "gap-3 px-3 py-2",
-                            isActive(tool.path)
-                              ? "bg-primary text-primary-foreground"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent"
-                          )}
-                        >
-                          <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                          {!isCollapsed && (
-                            <>
-                              <span className="flex-1">{tool.label}</span>
-                              {!isPremium && FEATURE_COSTS[tool.feature] && (
-                                <Badge 
-                                  variant="secondary" 
-                                  className={cn(
-                                    "text-[10px] px-1.5 py-0 h-5 font-medium gap-0.5",
-                                    isActive(tool.path) 
-                                      ? "bg-primary-foreground/20 text-primary-foreground" 
-                                      : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
-                                  )}
-                                >
-                                  <Coins className="h-3 w-3" />
-                                  {FEATURE_COSTS[tool.feature]}
-                                </Badge>
-                              )}
-                            </>
-                          )}
-                        </motion.button>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              {filteredTools.length === 0 && !isCollapsed && (
-                <p className="text-xs text-muted-foreground text-center py-4">
-                  No tools found
-                </p>
-              )}
-            </SidebarMenu>
+          <SidebarGroupContent className="flex-1 min-h-0 overflow-hidden">
+            <ScrollArea className="h-full">
+              <SidebarMenu>
+                <AnimatePresence mode="popLayout">
+                  {filteredTools.map((tool) => (
+                    <motion.div
+                      key={tool.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      layout
+                    >
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip={tool.label}>
+                          <motion.button
+                            whileHover={{ x: isCollapsed ? 0 : 4 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => navigate(tool.path)}
+                            className={cn(
+                              "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                              isCollapsed 
+                                ? "justify-center p-2.5 gap-0" 
+                                : "gap-3 px-3 py-2",
+                              isActive(tool.path)
+                                ? "bg-primary text-primary-foreground"
+                                : "text-sidebar-foreground hover:bg-sidebar-accent"
+                            )}
+                          >
+                            <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                            {!isCollapsed && (
+                              <>
+                                <span className="flex-1">{tool.label}</span>
+                                {!isPremium && FEATURE_COSTS[tool.feature] && (
+                                  <Badge 
+                                    variant="secondary" 
+                                    className={cn(
+                                      "text-[10px] px-1.5 py-0 h-5 font-medium gap-0.5",
+                                      isActive(tool.path) 
+                                        ? "bg-primary-foreground/20 text-primary-foreground" 
+                                        : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                                    )}
+                                  >
+                                    <Coins className="h-3 w-3" />
+                                    {FEATURE_COSTS[tool.feature]}
+                                  </Badge>
+                                )}
+                              </>
+                            )}
+                          </motion.button>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                {filteredTools.length === 0 && !isCollapsed && (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No tools found
+                  </p>
+                )}
+              </SidebarMenu>
+            </ScrollArea>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Explore Section */}
-        <SidebarGroup className="mt-0">
+        {/* Explore Section - Fixed */}
+        <SidebarGroup className="mt-0 shrink-0">
           {!isCollapsed && (
             <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Explore
@@ -317,7 +319,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
 
         {/* Admin Section - Only visible to admins */}
         {isAdmin && (
-          <SidebarGroup className="mt-0">
+          <SidebarGroup className="mt-0 shrink-0">
             {!isCollapsed && (
               <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Shield className="h-3 w-3" />
@@ -354,14 +356,14 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        {/* Usage Summary Widget */}
-        <SidebarGroup className="mt-auto pt-2 border-t border-sidebar-border">
+        {/* Usage Summary Widget - Fixed */}
+        <SidebarGroup className="mt-auto pt-2 border-t border-sidebar-border shrink-0">
           <SidebarUsageWidget isCollapsed={isCollapsed} />
         </SidebarGroup>
 
         {/* Premium Promo Card - Only for free users */}
         {!isPremium && (
-          <SidebarGroup className="pt-0">
+          <SidebarGroup className="pt-0 shrink-0">
             <SidebarPromoCard isCollapsed={isCollapsed} />
           </SidebarGroup>
         )}
