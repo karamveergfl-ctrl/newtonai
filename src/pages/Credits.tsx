@@ -94,12 +94,16 @@ export default function Credits() {
     setShowVastPlayer(false);
   };
 
-  // Handle VAST error - fallback to smartlink
-  const handleVastError = () => {
+  // Handle VAST error - fallback to smartlink with debug logging
+  const handleVastError = (reason: 'timeout' | 'no_fill' | 'error') => {
+    console.log(`[AD_DEBUG] VAST failed, fallback_reason: ${reason}, switching to Adsterra`);
     setShowVastPlayer(false);
-    // Show smartlink timer as fallback
+    // Show smartlink timer as fallback (Adsterra)
     if (currentSession?.smartlink_url) {
+      console.log('[AD_DEBUG] Adsterra smartlink opened');
       setShowTimer(true);
+    } else {
+      console.log('[AD_DEBUG] No fallback available');
     }
   };
 
@@ -161,6 +165,10 @@ export default function Credits() {
           onComplete={handleAdComplete}
           onCancel={handleAdCancel}
           onError={handleVastError}
+          retryAllowed={currentSession.retry_allowed ?? true}
+          fallbackAfterMs={currentSession.fallback_allowed_after_ms ?? 3000}
+          maxRetries={currentSession.max_retries ?? 1}
+          retryDelayMs={currentSession.retry_delay_ms ?? 1000}
         />
       )}
 

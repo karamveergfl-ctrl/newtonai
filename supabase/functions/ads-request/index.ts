@@ -136,6 +136,7 @@ serve(async (req) => {
         success: true,
         session_id: session.id,
         type: adType,
+        provider: vastUrl ? "exoclick" : "adsterra",
         smartlink_url: smartlinkUrl,
         vast_url: vastUrl,
         duration,
@@ -143,6 +144,11 @@ serve(async (req) => {
         is_first_ad: isFirstAd,
         bonus: bonusReward,
         stats,
+        // Retry and fallback configuration for VAST ads
+        retry_allowed: !!vastUrl,
+        fallback_allowed_after_ms: 3000,
+        max_retries: 1,
+        retry_delay_ms: 1000,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

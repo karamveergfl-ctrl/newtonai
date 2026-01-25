@@ -8,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
 
 interface VastVideoPlayerProps {
   open: boolean;
@@ -17,7 +16,12 @@ interface VastVideoPlayerProps {
   sessionId: string;
   onComplete: (sessionId: string) => void;
   onCancel: (sessionId: string) => void;
-  onError: () => void;
+  onError: (reason: 'timeout' | 'no_fill' | 'error') => void;
+  // Retry and fallback configuration
+  retryAllowed?: boolean;
+  fallbackAfterMs?: number;
+  maxRetries?: number;
+  retryDelayMs?: number;
 }
 
 interface VastData {
@@ -35,6 +39,8 @@ interface VastData {
   };
 }
 
+type LoadingState = 'idle' | 'loading' | 'retrying' | 'playing' | 'complete' | 'error';
+
 export function VastVideoPlayer({
   open,
   vastUrl,
@@ -43,15 +49,23 @@ export function VastVideoPlayer({
   onComplete,
   onCancel,
   onError,
+  retryAllowed = true,
+  fallbackAfterMs = 3000,
+  maxRetries = 1,
+  retryDelayMs = 1000,
 }: VastVideoPlayerProps) {
-  const [loading, setLoading] = useState(true);
+  const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [vastData, setVastData] = useState<VastData | null>(null);
   const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const firedEvents = useRef<Set<string>>(new Set());
+  const loadStartTime = useRef<number>(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Fire tracking pixels
   const fireTrackingPixels = useCallback((urls: string[] | undefined) => {
@@ -68,17 +82,17 @@ export function VastVideoPlayer({
       const parser = new DOMParser();
       const doc = parser.parseFromString(xml, 'text/xml');
       
-      // Check for VAST error
+      // Check for VAST error or empty response
       const vastError = doc.querySelector('Error');
       if (vastError && !doc.querySelector('Ad')) {
-        console.error('VAST returned no ads');
+        console.log('[AD_DEBUG] VAST returned no ads (no fill)');
         return null;
       }
 
       // Get media file
       const mediaFile = doc.querySelector('MediaFile');
       if (!mediaFile) {
-        console.error('No MediaFile found in VAST');
+        console.log('[AD_DEBUG] No MediaFile found in VAST');
         return null;
       }
 
@@ -86,7 +100,7 @@ export function VastVideoPlayer({
       
       // Get duration
       const durationNode = doc.querySelector('Duration');
-      let duration = 30; // Default 30 seconds
+      let duration = 30;
       if (durationNode?.textContent) {
         const parts = durationNode.textContent.split(':');
         if (parts.length === 3) {
@@ -119,7 +133,7 @@ export function VastVideoPlayer({
         }
       });
 
-      // Get ClickThrough URL (for ExoClick and other VAST providers)
+      // Get ClickThrough URL
       const clickThroughUrl = doc.querySelector('ClickThrough')?.textContent?.trim();
       
       // Get ClickTracking URLs
@@ -134,46 +148,104 @@ export function VastVideoPlayer({
 
       return { mediaUrl, duration, clickThroughUrl, trackingEvents };
     } catch (err) {
-      console.error('Error parsing VAST:', err);
+      console.error('[AD_DEBUG] Error parsing VAST:', err);
       return null;
     }
   }, []);
 
-  // Fetch and parse VAST
+  // Fetch VAST with retry logic
+  const fetchVast = useCallback(async (isRetry = false): Promise<boolean> => {
+    const currentAttempt = isRetry ? 2 : 1;
+    loadStartTime.current = Date.now();
+    
+    console.log(`[AD_DEBUG] ad_provider_attempted: exoclick, attempt: ${currentAttempt}`);
+    setLoadingState(isRetry ? 'retrying' : 'loading');
+    setAttemptCount(currentAttempt);
+    
+    // Create abort controller for timeout
+    abortControllerRef.current = new AbortController();
+    const timeoutId = setTimeout(() => {
+      abortControllerRef.current?.abort();
+    }, fallbackAfterMs);
+    
+    try {
+      const response = await fetch(vastUrl, { 
+        signal: abortControllerRef.current.signal 
+      });
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error('fetch_failed');
+      }
+      
+      const xml = await response.text();
+      const data = await parseVast(xml);
+      
+      const loadTimeMs = Date.now() - loadStartTime.current;
+      console.log(`[AD_DEBUG] vast_load_time_ms: ${loadTimeMs}`);
+      
+      if (!data || !data.mediaUrl) {
+        throw new Error('no_fill');
+      }
+      
+      setVastData(data);
+      setLoadingState('playing');
+      
+      // Fire impression pixels
+      fireTrackingPixels(data.trackingEvents.impression);
+      return true;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      const loadTimeMs = Date.now() - loadStartTime.current;
+      
+      let reason: 'timeout' | 'no_fill' | 'error';
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          reason = 'timeout';
+        } else if (err.message === 'no_fill') {
+          reason = 'no_fill';
+        } else {
+          reason = 'error';
+        }
+      } else {
+        reason = 'error';
+      }
+      
+      console.log(`[AD_DEBUG] vast_load_time_ms: ${loadTimeMs}, fallback_reason: ${reason}`);
+      
+      // Check if we should retry
+      if (!isRetry && retryAllowed && maxRetries > 0) {
+        console.log(`[AD_DEBUG] Scheduling retry in ${retryDelayMs}ms`);
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        return fetchVast(true);
+      }
+      
+      // Both attempts failed - trigger fallback
+      console.log(`[AD_DEBUG] All VAST attempts failed, triggering fallback`);
+      setError('Failed to load video ad');
+      setLoadingState('error');
+      onError(reason);
+      return false;
+    }
+  }, [vastUrl, fallbackAfterMs, retryAllowed, maxRetries, retryDelayMs, parseVast, fireTrackingPixels, onError]);
+
+  // Fetch and parse VAST when dialog opens
   useEffect(() => {
     if (!open || !vastUrl) return;
 
-    const fetchVast = async () => {
-      setLoading(true);
-      setError(null);
-      firedEvents.current.clear();
-      
-      try {
-        const response = await fetch(vastUrl);
-        if (!response.ok) throw new Error('Failed to fetch VAST');
-        
-        const xml = await response.text();
-        const data = await parseVast(xml);
-        
-        if (!data || !data.mediaUrl) {
-          throw new Error('No video ad available');
-        }
-        
-        setVastData(data);
-        
-        // Fire impression pixels
-        fireTrackingPixels(data.trackingEvents.impression);
-      } catch (err) {
-        console.error('VAST fetch error:', err);
-        setError('Failed to load video ad');
-        onError();
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    // Reset state
+    setLoadingState('loading');
+    setError(null);
+    setVastData(null);
+    firedEvents.current.clear();
+    
     fetchVast();
-  }, [open, vastUrl, parseVast, fireTrackingPixels, onError]);
+
+    // Cleanup on close
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, [open, vastUrl, fetchVast]);
 
   // Handle video progress
   const handleTimeUpdate = useCallback(() => {
@@ -214,6 +286,7 @@ export function VastVideoPlayer({
     }
     
     setIsComplete(true);
+    setLoadingState('complete');
   }, [vastData, fireTrackingPixels]);
 
   // Handle visibility change (pause when tab hidden)
@@ -241,6 +314,7 @@ export function VastVideoPlayer({
       setIsComplete(false);
       setIsPaused(false);
       setError(null);
+      setAttemptCount(0);
       firedEvents.current.clear();
     }
   }, [open]);
@@ -250,8 +324,11 @@ export function VastVideoPlayer({
   }, [onComplete, sessionId]);
 
   const handleClose = useCallback(() => {
+    abortControllerRef.current?.abort();
     onCancel(sessionId);
   }, [onCancel, sessionId]);
+
+  const isLoading = loadingState === 'loading' || loadingState === 'retrying';
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
@@ -266,12 +343,21 @@ export function VastVideoPlayer({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {loading ? (
+          {isLoading ? (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground mt-2">Loading video ad...</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {loadingState === 'retrying' 
+                  ? 'Retrying video ad...' 
+                  : 'Loading video ad...'}
+              </p>
+              {attemptCount > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Attempt {attemptCount} of {maxRetries + 1}
+                </p>
+              )}
             </div>
-          ) : error ? (
+          ) : loadingState === 'error' ? (
             <div className="flex flex-col items-center justify-center py-8">
               <AlertCircle className="w-8 h-8 text-destructive" />
               <p className="text-sm text-destructive mt-2">{error}</p>
@@ -340,7 +426,7 @@ export function VastVideoPlayer({
           ) : null}
         </div>
 
-        {!isComplete && !loading && (
+        {!isComplete && !isLoading && (
           <div className="flex justify-center">
             <Button variant="ghost" size="sm" onClick={handleClose} className="gap-1">
               <X className="w-4 h-4" />
