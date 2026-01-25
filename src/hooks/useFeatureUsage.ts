@@ -160,53 +160,25 @@ export function useFeatureUsage() {
   const incrementUsage = useCallback(async (featureName: string, minutes?: number) => {
     if (!userId) return false;
 
-    const today = new Date().toISOString().split("T")[0];
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+    try {
+      // Use the secure RPC function to track usage (bypasses RLS)
+      const { data, error } = await supabase.rpc('track_feature_usage', {
+        p_feature_name: featureName,
+        p_usage_minutes: minutes || 0,
+      });
 
-    // Determine the correct period based on feature type
-    const limits = FREE_LIMITS; // Just to check the unit type
-    const featureConfig = limits[featureName];
-    const periodStart = featureConfig?.unit === "per_day" ? today : monthStart;
-
-    // Use upsert to increment usage
-    const { error } = await supabase
-      .from("feature_usage")
-      .upsert(
-        {
-          user_id: userId,
-          feature_name: featureName,
-          period_start: periodStart,
-          usage_count: minutes ? 0 : 1,
-          usage_minutes: minutes || 0,
-        },
-        {
-          onConflict: "user_id,feature_name,period_start",
-        }
-      );
-
-    if (error) {
-      // If upsert fails, try to update
-      const { data: existing } = await supabase
-        .from("feature_usage")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("feature_name", featureName)
-        .eq("period_start", periodStart)
-        .single();
-
-      if (existing) {
-        await supabase
-          .from("feature_usage")
-          .update({
-            usage_count: minutes ? existing.usage_count : existing.usage_count + 1,
-            usage_minutes: minutes ? existing.usage_minutes + minutes : existing.usage_minutes,
-          })
-          .eq("id", existing.id);
+      if (error) {
+        console.error('Failed to track feature usage:', error);
+        return false;
       }
-    }
 
-    await fetchUsage();
-    return true;
+      // Refresh usage data after tracking
+      await fetchUsage();
+      return true;
+    } catch (err) {
+      console.error('Error tracking usage:', err);
+      return false;
+    }
   }, [userId, fetchUsage]);
 
   return {
