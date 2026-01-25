@@ -119,3 +119,6 @@ verify_jwt = true
 
 [functions.rag-chat-pdf]
 verify_jwt = true
+
+[functions.newton-chat]
+verify_jwt = false
