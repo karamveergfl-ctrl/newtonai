@@ -42,6 +42,7 @@ import AISummarizer from "./pages/tools/AISummarizer";
 import AILectureNotes from "./pages/tools/AILectureNotes";
 import MindMap from "./pages/tools/MindMap";
 import AIPodcast from "./pages/tools/AIPodcast";
+import PDFChat from "./pages/PDFChat";
 
 // Compare pages
 import Compare from "./pages/compare/Compare";
@@ -97,6 +98,7 @@ function AnimatedRoutes() {
         
         {/* Tool Routes - All protected */}
         <Route path="/tools" element={<PageTransition><ProtectedRoute><OnboardingGate><Tools /></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/pdf-chat" element={<PageTransition><ProtectedRoute><OnboardingGate><PDFChat /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/tools/homework-help" element={<PageTransition><ProtectedRoute><OnboardingGate><HomeworkHelp /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/tools/flashcards" element={<PageTransition><ProtectedRoute><OnboardingGate><AIFlashcards /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/tools/quiz" element={<PageTransition><ProtectedRoute><OnboardingGate><AIQuiz /></OnboardingGate></ProtectedRoute></PageTransition>} />

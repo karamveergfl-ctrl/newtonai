@@ -44,6 +44,7 @@ import {
   CreditCard,
   HelpCircle,
   BookOpen,
+  FileSearch,
 } from "lucide-react";
 import { SidebarPromoCard } from "@/components/SidebarPromoCard";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 const studyTools = [
+  { id: "pdf-chat", label: "Chat with PDF", icon: FileSearch, path: "/pdf-chat", feature: "pdf_chat" },
   { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz", feature: "quiz" },
   { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards", feature: "flashcards" },
   { id: "podcast", label: "AI Podcast", icon: Podcast, path: "/tools/ai-podcast", feature: "ai_podcast" },
