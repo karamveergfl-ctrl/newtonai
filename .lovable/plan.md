@@ -1,136 +1,173 @@
 
-# Implementation Plan: UX/UI Improvements
+# Fix: Ads Not Loading for Free Users
 
-## Overview
-This plan addresses 4 key improvements:
-1. **Onboarding Auto-Advance** - Steps with single-selection options automatically advance when clicked
-2. **Dashboard Upload Zone Enhancement** - Better visual clarity for where users need to click
-3. **Newton Animation Fallback** - Use video starting frame as fallback for errors/loading
+## Problem Analysis
+The screenshot shows "ADVERTISEMENT" and "RECOMMENDED FOR YOU" labels with empty content areas. This indicates:
+1. The components ARE rendering (meaning `shouldShowAd` is `true` for a free user)
+2. But the ad network scripts are NOT loading/executing properly
 
----
+## Root Causes Identified
 
-## 1. Onboarding Auto-Advance on Single Selection
+### Issue 1: AdBanner Script Injection Race Condition
+The current implementation clears the container and creates scripts on every re-render, but the `scriptLoadedRef` guard doesn't properly handle React's strict mode and component lifecycle.
 
-### Current Behavior
-- User clicks an option (e.g., Education Level, Referral Source)
-- User must then click "Continue" button to proceed
+### Issue 2: RecommendationWidget Not Refreshing AdProvider
+The ExoClick widget requires calling `AdProvider.push({ serve: {} })` AFTER the `ins` element is in the DOM, but the current logic may call it before React has fully rendered the element.
 
-### New Behavior
-- For **single-selection steps** (Steps 2, 5): Auto-advance after 600ms delay
-- For **multi-selection steps** (Steps 3, 4): Keep "Continue" button (user selects multiple items)
-- Step 1 (Name) and Step 6 (Customization): Keep manual continue
+### Issue 3: Missing Error Handling
+No fallback or error states when ads fail to load, leaving blank spaces visible.
 
-### Files to Modify
-- `src/pages/Onboarding.tsx`
-
-### Technical Changes
-```
-Step 2 (Education Level) - Single selection
-- Add useEffect that watches formData.educationLevel
-- When value changes from empty to selected, trigger 600ms delay then call handleNext()
-- Add visual feedback (checkmark pulse, brief "selected" animation)
-
-Step 5 (Referral Source) - Single selection  
-- Same pattern: watch formData.referralSource
-- Auto-advance after selection with smooth transition
-
-UI Enhancements:
-- Add success animation when option selected
-- Show brief "Great choice!" toast or micro-animation
-- Smooth transition to next step
-```
+### Issue 4: Cleanup Logic Conflicts
+The cleanup functions set refs to `false`, but this can cause issues with React 18 strict mode which mounts/unmounts/remounts components.
 
 ---
 
-## 2. Dashboard Upload Zone - Better Visual Clarity
+## Implementation Plan
 
-### Current Issue
-- Upload zone appears as a dashed border container
-- Not immediately obvious it's clickable
-- Feature descriptions are small and subtle
+### 1. Fix AdBanner Component
+**File:** `src/components/AdBanner.tsx`
 
-### Improvements
-- Add animated pulse/glow effect to draw attention
-- Add "Click here" or pointing animation
-- Larger upload icons with hover animations
-- More prominent call-to-action styling
-- Add animated arrow or highlight pointing to the clickable area
+Changes:
+- Add proper script load detection using a more robust approach
+- Add a "loaded" state to track when ad content appears
+- Add fallback UI when ads fail to load after timeout
+- Use `useLayoutEffect` to ensure DOM is ready before script injection
+- Add retry logic for failed ad loads
+- Show a subtle placeholder or hide container if ad fails
 
-### Files to Modify
-- `src/components/UploadZone.tsx`
-
-### Technical Changes
 ```
-Visual Enhancements:
-1. Add breathing/pulse animation to the border (subtle glow cycle)
-2. Add floating "Click to upload" badge that animates
-3. Increase icon sizes (w-12 h-12 instead of w-10)
-4. Add gradient hover effect on the entire zone
-5. Add animated upload arrow that bounces
-6. Make the entire zone have a subtle hover lift effect
-7. Add "Drop files here or click to browse" with animated underline
-8. Add visual "sparkle" effect using CSS animations
+Key changes:
+1. Add adLoaded state + failedToLoad state
+2. Add 5-second timeout to detect load failures
+3. If failed, hide the entire container (not just content)
+4. Use MutationObserver to detect when iframe/content appears
+5. Add proper cleanup without breaking re-initialization
+```
+
+### 2. Fix RecommendationWidget Component
+**File:** `src/components/RecommendationWidget.tsx`
+
+Changes:
+- Delay AdProvider.push() call until after component mounts
+- Use requestAnimationFrame or setTimeout to ensure DOM readiness
+- Add error boundary for ad loading failures
+- Add fallback when no ads available
+- Track load state and hide if no content appears
+
+```
+Key changes:
+1. Add loaded state tracking
+2. Use setTimeout(0) to push to AdProvider after render
+3. Add MutationObserver to detect content insertion
+4. Hide entire widget if no content loads after timeout
+5. Add proper script error handling
+```
+
+### 3. Add Loading States & Fallbacks
+Both components should:
+- Show nothing (or minimal placeholder) while loading
+- Hide completely if ad fails to load (no empty "ADVERTISEMENT" labels)
+- Track whether actual ad content was inserted into the container
+
+---
+
+## Technical Details
+
+### AdBanner Fix Strategy
+```typescript
+// Improved structure
+export const AdBanner = memo(function AdBanner(...) {
+  const [adLoaded, setAdLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  
+  useEffect(() => {
+    if (!shouldShowAd || loading) return;
+    
+    // Set timeout for load failure detection
+    timeoutRef.current = setTimeout(() => {
+      if (!adLoaded) setLoadFailed(true);
+    }, 5000);
+    
+    // Use MutationObserver to detect when iframe appears
+    const observer = new MutationObserver((mutations) => {
+      const hasContent = containerRef.current?.querySelector('iframe');
+      if (hasContent) {
+        setAdLoaded(true);
+        clearTimeout(timeoutRef.current);
+      }
+    });
+    
+    // ... script injection logic
+    
+    return () => {
+      clearTimeout(timeoutRef.current);
+      observer.disconnect();
+    };
+  }, [shouldShowAd, loading]);
+  
+  // Don't render if loading, premium, OR ad failed to load
+  if (loading || !shouldShowAd || loadFailed) return null;
+});
+```
+
+### RecommendationWidget Fix Strategy
+```typescript
+// Improved structure  
+export const RecommendationWidget = memo(function RecommendationWidget(...) {
+  const [hasContent, setHasContent] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  
+  useEffect(() => {
+    if (!shouldShowAd || loading) return;
+    
+    const initAd = () => {
+      // Ensure DOM is ready
+      requestAnimationFrame(() => {
+        (window.AdProvider = window.AdProvider || []).push({ serve: {} });
+      });
+    };
+    
+    // Check for existing script or load new one
+    // ... script loading logic with onload callback
+    
+    // Monitor for content insertion
+    const timeout = setTimeout(() => {
+      const container = containerRef.current;
+      if (!container?.querySelector('*:not(.eas6a97888e20)')) {
+        setLoadFailed(true);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timeout);
+  }, [shouldShowAd, loading]);
+  
+  if (loading || !shouldShowAd || loadFailed) return null;
+});
 ```
 
 ---
 
-## 3. Newton Animation Fallback - Use Video Starting Frame
-
-### Current Behavior
-- When video is loading, shows animated Newton character PNG with thinking dots
-- Uses `newtonCharacter` image from assets
-
-### New Behavior
-- Use the video's poster image (`/newton-poster.webp`) as the loading fallback
-- This makes the transition from loading to video seamless
-- The poster frame is already the starting frame of the video
-
-### Files to Modify
-- `src/components/ProcessingOverlay.tsx`
-
-### Technical Changes
-```
-Replace the fallback loading animation:
-1. Instead of showing newtonCharacter PNG with animations
-2. Show /newton-poster.webp as a static image  
-3. Add subtle breathing/glow animation to the poster
-4. This ensures visual consistency between loading and video states
-5. Remove the complex "thinking dots" animation
-6. Keep the "Loading Newton..." text with fade animation
-
-The poster image is already configured: poster="/newton-poster.webp"
-The change makes the fallback match the video's first frame exactly.
-```
-
----
-
-## Technical Summary
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/Onboarding.tsx` | Add auto-advance logic for single-selection steps (2 and 5), add selection animations |
-| `src/components/UploadZone.tsx` | Enhanced visual styling, pulse animation, clearer CTA |
-| `src/components/ProcessingOverlay.tsx` | Use poster image as loading fallback instead of PNG character |
+| `src/components/AdBanner.tsx` | Fix script injection, add load detection, hide on failure |
+| `src/components/RecommendationWidget.tsx` | Fix AdProvider timing, add content detection, hide on failure |
 
 ---
 
-## User Experience Flow
+## Expected Behavior After Fix
 
-### Onboarding (After Changes)
-1. User enters name → clicks Continue
-2. User clicks "High School" → **auto-advances** (0.6s delay with animation)
-3. User selects subjects → clicks Continue (multi-select)
-4. User selects goals → clicks Continue (multi-select)
-5. User clicks "YouTube" → **auto-advances** (0.6s delay with animation)
-6. User customizes profile → clicks "Get Started"
+1. **For Premium Users**: Components return `null` immediately, no labels shown
+2. **For Free Users with Working Ads**: Labels + ad content display correctly
+3. **For Free Users with Blocked/Failed Ads**: Components hide completely (no empty labels)
+4. **On Ad Blockers**: Components detect no content loaded and hide gracefully
 
-### Dashboard (After Changes)
-- Upload zone has animated pulse border
-- Floating "Click to Upload" indicator
-- Larger, more prominent icons
-- Clear visual hierarchy
+---
 
-### Processing Overlay (After Changes)
-- Loading state shows video poster frame
-- Seamless transition to video playback
-- Consistent visual appearance throughout
+## Testing Notes
+- Test with a free user account to verify ads load
+- Test with ad blocker enabled to verify graceful fallback
+- Verify premium users see no ad components at all
+- Check that no console errors occur during ad loading
