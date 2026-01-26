@@ -14,7 +14,10 @@ import {
   Save,
   GraduationCap,
   Zap,
-  Presentation
+  Presentation,
+  Eye,
+  EyeOff,
+  ShieldCheck
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -169,6 +172,14 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
   const [saving, setSaving] = useState(false);
   const [nicknameDialogOpen, setNicknameDialogOpen] = useState(false);
   const [nicknameValue, setNicknameValue] = useState(profile.full_name || '');
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [formData, setFormData] = useState({
     email_notifications: profile.email_notifications ?? true,
@@ -276,6 +287,65 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
     }
   };
 
+  const handlePasswordChange = async () => {
+    setPasswordError(null);
+    
+    // Validation
+    if (!currentPassword) {
+      setPasswordError('Current password is required');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters');
+      return;
+    }
+    
+    if (!/[A-Z]/.test(newPassword)) {
+      setPasswordError('New password must contain at least 1 capital letter');
+      return;
+    }
+    
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+    
+    setChangingPassword(true);
+    
+    try {
+      // First, verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      
+      if (signInError) {
+        setPasswordError('Current password is incorrect');
+        setChangingPassword(false);
+        return;
+      }
+      
+      // Update to new password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      
+      if (updateError) throw updateError;
+      
+      toast.success('Password updated successfully!');
+      setPasswordDialogOpen(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setPasswordError(null);
+    } catch (error: any) {
+      setPasswordError(error.message || 'Failed to update password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const displayId = profile.id.slice(0, 10) + '...';
 
   return (
@@ -306,11 +376,108 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
               showArrow={true}
               onClick={() => toast.info('Email changes are not supported yet')}
             />
-            <SettingRow 
-              label="Password" 
-              showArrow={true}
-              onClick={() => toast.info('Password reset email will be sent to your email')}
-            />
+            <Dialog open={passwordDialogOpen} onOpenChange={(open) => {
+              setPasswordDialogOpen(open);
+              if (!open) {
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmNewPassword('');
+                setPasswordError(null);
+              }
+            }}>
+              <DialogTrigger asChild>
+                <div>
+                  <SettingRow 
+                    label="Password" 
+                    value={<span className="text-sm text-muted-foreground">••••••••</span>}
+                    showArrow={true}
+                    onClick={() => setPasswordDialogOpen(true)}
+                  />
+                </div>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
+                    Change Password
+                  </DialogTitle>
+                  <DialogDescription>
+                    Enter your current password and choose a new secure password.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">Current Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="current-password"
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        value={currentPassword}
+                        onChange={(e) => { setCurrentPassword(e.target.value); setPasswordError(null); }}
+                        placeholder="Enter current password"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        tabIndex={-1}
+                      >
+                        {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="new-password"
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => { setNewPassword(e.target.value); setPasswordError(null); }}
+                        placeholder="6+ characters, 1 capital letter"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        tabIndex={-1}
+                      >
+                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                    <Input
+                      id="confirm-new-password"
+                      type="password"
+                      value={confirmNewPassword}
+                      onChange={(e) => { setConfirmNewPassword(e.target.value); setPasswordError(null); }}
+                      placeholder="Re-enter new password"
+                    />
+                  </div>
+                  
+                  {passwordError && (
+                    <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+                      <p className="text-sm text-destructive">{passwordError}</p>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button onClick={handlePasswordChange} disabled={changingPassword}>
+                    {changingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+                    Update Password
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardContent>
       </Card>
