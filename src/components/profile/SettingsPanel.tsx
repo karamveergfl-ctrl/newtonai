@@ -173,10 +173,8 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
   const [nicknameDialogOpen, setNicknameDialogOpen] = useState(false);
   const [nicknameValue, setNicknameValue] = useState(profile.full_name || '');
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
@@ -291,11 +289,6 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
     setPasswordError(null);
     
     // Validation
-    if (!currentPassword) {
-      setPasswordError('Current password is required');
-      return;
-    }
-    
     if (newPassword.length < 6) {
       setPasswordError('New password must be at least 6 characters');
       return;
@@ -314,18 +307,6 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
     setChangingPassword(true);
     
     try {
-      // First, verify current password by attempting to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: currentPassword,
-      });
-      
-      if (signInError) {
-        setPasswordError('Current password is incorrect');
-        setChangingPassword(false);
-        return;
-      }
-      
       // Update to new password
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
@@ -335,7 +316,6 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
       
       toast.success('Password updated successfully!');
       setPasswordDialogOpen(false);
-      setCurrentPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
       setPasswordError(null);
@@ -379,7 +359,6 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
             <Dialog open={passwordDialogOpen} onOpenChange={(open) => {
               setPasswordDialogOpen(open);
               if (!open) {
-                setCurrentPassword('');
                 setNewPassword('');
                 setConfirmNewPassword('');
                 setPasswordError(null);
@@ -402,32 +381,10 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
                     Change Password
                   </DialogTitle>
                   <DialogDescription>
-                    Enter your current password and choose a new secure password.
+                    Choose a new secure password for your account.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="current-password">Current Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="current-password"
-                        type={showCurrentPassword ? 'text' : 'password'}
-                        value={currentPassword}
-                        onChange={(e) => { setCurrentPassword(e.target.value); setPasswordError(null); }}
-                        placeholder="Enter current password"
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        tabIndex={-1}
-                      >
-                        {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="new-password">New Password</Label>
                     <div className="relative">
