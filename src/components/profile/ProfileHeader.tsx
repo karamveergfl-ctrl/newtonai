@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AvatarUpload } from './AvatarUpload';
+import { UsageSummaryBadge } from './UsageSummaryBadge';
 import { Crown, Sparkles, Check, X, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -131,6 +132,7 @@ export function ProfileHeader({
             </>
           )}
           {getTierBadge()}
+          <UsageSummaryBadge />
         </div>
         <p className="text-sm text-muted-foreground">
           Member since {format(new Date(createdAt), 'MMMM yyyy')}
