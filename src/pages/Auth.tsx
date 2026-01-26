@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Eye, EyeOff, AlertTriangle, ShieldAlert, BookOpen, Brain, Layers, Mic } from "lucide-react";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
@@ -60,6 +61,7 @@ const Auth = () => {
   const [isVerifyingSession, setIsVerifyingSession] = useState(false);
   const [sessionVerified, setSessionVerified] = useState(false);
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -209,6 +211,14 @@ const Auth = () => {
       } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        
+        // Store remember me preference for session management
+        if (rememberMe) {
+          localStorage.removeItem('newtonai_session_only');
+        } else {
+          sessionStorage.setItem('newtonai_session_only', 'true');
+        }
+        
         toast({ title: "Welcome back!", description: "You've successfully logged in." });
         navigate("/dashboard");
       } else {
@@ -536,6 +546,23 @@ const Auth = () => {
                     </div>
                   </motion.div>
                 )}
+              </div>
+            )}
+
+            {/* Remember Me Checkbox - Only for login mode */}
+            {mode === "login" && (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember-me"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                />
+                <Label 
+                  htmlFor="remember-me" 
+                  className="text-sm text-muted-foreground cursor-pointer select-none"
+                >
+                  Remember me
+                </Label>
               </div>
             )}
 
