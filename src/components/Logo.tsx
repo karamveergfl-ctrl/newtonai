@@ -34,13 +34,11 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
           }}
         />
         {/* Logo container */}
-        <div
-          className="relative rounded-xl overflow-hidden shadow-md w-full h-full"
-        >
+        <div className="relative rounded-xl overflow-hidden w-full h-full">
           <img
             src={newtonLogo}
             alt="NewtonAI Logo"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover scale-125"
           />
         </div>
       </motion.div>

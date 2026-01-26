@@ -60,11 +60,11 @@ export const NewtonTriggerButton = memo(function NewtonTriggerButton({
         {isOpen ? (
           <X className="w-6 h-6 text-primary-foreground" />
         ) : (
-          <div className="w-10 h-10 rounded-full overflow-hidden">
+          <div className="w-11 h-11 rounded-full overflow-hidden">
             <img
               src={newtonChatAvatar}
               alt="Newton AI"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover scale-110"
             />
           </div>
         )}

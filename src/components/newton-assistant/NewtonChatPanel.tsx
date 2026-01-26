@@ -82,11 +82,11 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-primary/20 shadow-sm">
+          <div className="w-9 h-9 rounded-full overflow-hidden shadow-sm">
             <img
               src={newtonChatAvatar}
               alt="Newton"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover scale-110"
             />
           </div>
           <div>

@@ -28,7 +28,7 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
       <div
         className={cn(
           "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden",
-          isUser ? "bg-primary" : "border-2 border-primary/20"
+          isUser ? "bg-primary" : ""
         )}
       >
         {isUser ? (
@@ -37,7 +37,7 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
           <img
             src={newtonChatAvatar}
             alt="Newton"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover scale-110"
           />
         )}
       </div>
