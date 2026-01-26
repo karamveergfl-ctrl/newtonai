@@ -57,10 +57,13 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isVerifyingSession, setIsVerifyingSession] = useState(false);
+  const [sessionVerified, setSessionVerified] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check URL for reset mode (user clicked email link)
+  // Check URL for reset mode and wait for session verification
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlMode = params.get('mode');
@@ -70,9 +73,47 @@ const Auth = () => {
     const accessToken = hashParams.get('access_token');
     const type = hashParams.get('type');
     
-    if (urlMode === 'reset' || type === 'recovery' || accessToken) {
-      setMode('reset-password');
+    // Not a password reset flow
+    if (urlMode !== 'reset' && type !== 'recovery' && !accessToken) {
+      return;
     }
+    
+    setMode('reset-password');
+    setIsVerifyingSession(true);
+    setRecoveryError(null);
+    
+    let sessionFound = false;
+    
+    // Listen for PASSWORD_RECOVERY event from Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        sessionFound = true;
+        setSessionVerified(true);
+        setIsVerifyingSession(false);
+      }
+    });
+    
+    // Also check if session already exists (token already processed)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        sessionFound = true;
+        setSessionVerified(true);
+        setIsVerifyingSession(false);
+      }
+    });
+    
+    // Timeout for expired/invalid tokens (5 seconds)
+    const timeout = setTimeout(() => {
+      if (!sessionFound) {
+        setIsVerifyingSession(false);
+        setRecoveryError('Your password reset link has expired or is invalid. Please request a new one.');
+      }
+    }, 5000);
+    
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {
@@ -118,6 +159,14 @@ const Auth = () => {
 
     try {
       if (mode === "reset-password") {
+        // Verify we have a session before attempting password update
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setRecoveryError("Session expired. Please request a new password reset link.");
+          setLoading(false);
+          return;
+        }
+        
         // Validate new password
         if (password.length < 6) {
           setPasswordError("Password must be at least 6 characters");
@@ -149,6 +198,7 @@ const Auth = () => {
         setMode("login");
         setPassword("");
         setConfirmPassword("");
+        setSessionVerified(false);
       } else if (mode === "forgot-password") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth?mode=reset`,
@@ -345,14 +395,58 @@ const Auth = () => {
                   : "Enter your email and we'll send you a reset link."}
               </p>
             )}
-            {mode === "reset-password" && (
+            {mode === "reset-password" && !isVerifyingSession && !recoveryError && (
               <p className="text-muted-foreground mt-2 text-sm">
                 Enter your new password below.
               </p>
             )}
           </motion.div>
 
-          {/* Form */}
+          {/* Session Verification Loading State */}
+          {mode === "reset-password" && isVerifyingSession && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center justify-center py-12 space-y-4"
+            >
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-muted-foreground text-sm">Verifying your reset link...</p>
+            </motion.div>
+          )}
+
+          {/* Recovery Error State */}
+          {mode === "reset-password" && recoveryError && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
+              <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-destructive">Reset link expired</p>
+                    <p className="text-sm text-muted-foreground mt-1">{recoveryError}</p>
+                  </div>
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={() => {
+                  setMode("forgot-password");
+                  setRecoveryError(null);
+                  setSessionVerified(false);
+                  window.history.replaceState({}, document.title, '/auth');
+                }}
+                className="w-full h-12"
+              >
+                Request New Reset Link
+              </Button>
+            </motion.div>
+          )}
+
+          {/* Form - Only show when not verifying and no recovery error for reset-password mode */}
+          {(mode !== "reset-password" || (sessionVerified && !recoveryError)) && (
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -535,6 +629,7 @@ const Auth = () => {
             )}
 
           </motion.form>
+          )}
 
           {/* Toggle */}
           <motion.div
