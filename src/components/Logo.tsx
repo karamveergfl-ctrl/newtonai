@@ -35,7 +35,7 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
         />
         {/* Logo container */}
         <div
-          className="relative rounded-xl overflow-hidden shadow-md border border-white/10 w-full h-full"
+          className="relative rounded-xl overflow-hidden shadow-md w-full h-full"
         >
           <img
             src={newtonLogo}
