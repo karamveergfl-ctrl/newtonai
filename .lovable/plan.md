@@ -1,124 +1,108 @@
 
+# Fix Logo & Newton Chat Improvements
 
-# Improve Newton Chat with New Character Image
+## Issues to Address
 
-## Overview
-
-Enhance the Newton AI assistant visuals by:
-1. **Chat Avatar**: Use the new Newton character image with circular crop for all chat components
-2. **New Logo**: Create a version with rounded square corners and "NewtonAI" branding on the paper sheet
+Based on the user's screenshots and requirements:
+1. **Logo zoom in** - Make Newton character appear bigger inside the logo container
+2. **Remove black border** - Eliminate the visible dark border/outline from the logo
+3. **Apply same style to sidebar** - Ensure the sidebar logo matches the updated style
+4. **Improve Newton Chat logo** - Enhance the floating trigger button avatar
 
 ## Implementation Details
 
-### Step 1: Add New Character Assets
+### 1. Update Logo Component (`src/components/Logo.tsx`)
 
-| Asset | Description | Destination |
-|-------|-------------|-------------|
-| `newton-chat-avatar.png` | Circular-cropped version for chat | `src/assets/newton-chat-avatar.png` |
-| `newton-logo.png` | Rounded square version with "NewtonAI" on paper | `src/assets/newton-logo.png` |
+**Changes:**
+- Add `scale-125` transform to zoom in on the Newton character image
+- Remove any shadow that might be causing the dark border appearance
+- Keep the rounded-xl container but remove shadow-md which creates the border effect
+- Maintain the glowing gradient effect
 
-The uploaded image will be copied to `src/assets/` and used directly. For the logo version with "NewtonAI" text on the paper, we'll use AI image generation to create a modified version.
-
-### Step 2: Update Newton Chat Components
-
-**Files to modify:**
-
-| File | Changes |
-|------|---------|
-| `src/components/newton-assistant/NewtonChatPanel.tsx` | Update header avatar to use new circular image with proper styling |
-| `src/components/newton-assistant/NewtonTriggerButton.tsx` | Update floating button to use new circular character image |
-| `src/components/newton-assistant/NewtonMessageBubble.tsx` | Update assistant message avatar to use new circular image |
-| `src/components/GlobalNewtonAssistant.tsx` | Remove unused import of old character image |
-
-**Avatar Styling (Circular Crop):**
 ```tsx
-<div className="w-8 h-8 rounded-full overflow-hidden border-2 border-primary/20">
-  <img
-    src={newtonChatAvatar}
-    alt="Newton"
-    className="w-full h-full object-cover"
-  />
-</div>
-```
-
-### Step 3: Update Logo Component
-
-**File:** `src/components/Logo.tsx`
-
-| Change | Description |
-|--------|-------------|
-| Import new logo image | `import newtonLogo from "@/assets/newton-logo.png"` |
-| Update container styling | Change from `rounded-full` to `rounded-xl` for rounded square edges |
-| Keep glowing effect | Adjust blur styling to match rounded square shape |
-
-**New Logo Styling:**
-```tsx
-<div className="relative rounded-xl overflow-hidden shadow-md border border-white/10 w-full h-full">
+{/* Logo container */}
+<div className="relative rounded-xl overflow-hidden w-full h-full">
   <img
     src={newtonLogo}
     alt="NewtonAI Logo"
-    className="w-full h-full object-cover"
+    className="w-full h-full object-cover scale-125"
   />
 </div>
 ```
 
-### Step 4: Create Logo Image with "NewtonAI" Text
+### 2. Sidebar Already Uses Logo Component
 
-Use AI image generation to create a version of the Newton character with "NewtonAI" written on the paper sheet he's writing on. This provides brand consistency across the application.
+The `AppSidebar.tsx` already imports and uses the `Logo` component (line 128):
+```tsx
+{!isCollapsed && <Logo size="sm" showText={true} />}
+```
 
-**Prompt for generation:**
-- Same Newton character at desk with pencil
-- "NewtonAI" text visible on the paper sheet
-- Rounded square aspect ratio suitable for logo use
+Changes to `Logo.tsx` will automatically apply to the sidebar.
+
+### 3. Improve Newton Chat Trigger Button (`NewtonTriggerButton.tsx`)
+
+**Current Issues:**
+- Avatar appears small inside the button
+- May have border/outline visible
+
+**Improvements:**
+- Increase avatar size from `w-10 h-10` to `w-11 h-11` for better visibility
+- Remove any visible borders
+- Add subtle scale transform to make Newton appear more prominent
+- Improve the overall visual quality
+
+```tsx
+<div className="w-11 h-11 rounded-full overflow-hidden">
+  <img
+    src={newtonChatAvatar}
+    alt="Newton AI"
+    className="w-full h-full object-cover scale-110"
+  />
+</div>
+```
+
+### 4. Improve Newton Chat Panel Header Avatar (`NewtonChatPanel.tsx`)
+
+**Changes:**
+- Remove the border styling that may be causing outline issues
+- Apply scale transform to zoom in on Newton
+- Enhance shadow for depth without borders
+
+```tsx
+<div className="w-9 h-9 rounded-full overflow-hidden shadow-sm">
+  <img
+    src={newtonChatAvatar}
+    alt="Newton"
+    className="w-full h-full object-cover scale-110"
+  />
+</div>
+```
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/Logo.tsx` | Remove shadow-md, add scale-125 to image for zoom effect |
+| `src/components/newton-assistant/NewtonTriggerButton.tsx` | Increase avatar size, add scale transform |
+| `src/components/newton-assistant/NewtonChatPanel.tsx` | Remove border from header avatar, add scale |
+| `src/components/newton-assistant/NewtonMessageBubble.tsx` | Remove border from message avatars, add scale |
 
 ## Visual Summary
 
 ```
-+----------------------------------+
-|  NEWTON CHAT IMPROVEMENTS        |
-+----------------------------------+
-|                                  |
-|  Chat Header:                    |
-|  [●] Newton AI                   |
-|   ^-- Circular crop avatar       |
-|                                  |
-|  Trigger Button:                 |
-|       +-----+                    |
-|       | ●●● | <-- Circular crop  |
-|       +-----+     with glow      |
-|                                  |
-|  Message Bubbles:                |
-|  [●] Hi, I'm Newton!             |
-|   ^-- Circular avatar            |
-|                                  |
-+----------------------------------+
-|  LOGO COMPONENT                  |
-+----------------------------------+
-|                                  |
-|  +-------+                       |
-|  |       |  NewtonAI             |
-|  | 📝    |  ^-- Gradient text    |
-|  +-------+                       |
-|   ^-- Rounded square             |
-|       with "NewtonAI" on paper   |
-|                                  |
-+----------------------------------+
+BEFORE                          AFTER
++-------+                      +-------+
+| [···] | shadow border        |       | no border
+| [img] | small Newton         | [IMG] | zoomed-in Newton
++-------+                      +-------+
+
+Logo: scale(1.0) + shadow    → scale(1.25) + no shadow
+Chat Avatar: 10×10 + border  → 11×11 + scale(1.1) + no border
 ```
 
-## Files Modified
+## Expected Results
 
-1. `src/assets/newton-chat-avatar.png` - New circular avatar image (copied from upload)
-2. `src/assets/newton-logo.png` - New logo with "NewtonAI" text on paper (AI generated)
-3. `src/components/newton-assistant/NewtonChatPanel.tsx` - Updated avatar styling
-4. `src/components/newton-assistant/NewtonTriggerButton.tsx` - Updated button image
-5. `src/components/newton-assistant/NewtonMessageBubble.tsx` - Updated message avatar
-6. `src/components/GlobalNewtonAssistant.tsx` - Cleaned up unused imports
-7. `src/components/Logo.tsx` - Updated to use new rounded square logo
-
-## Expected Result
-
-- **Chat Widget**: Newton character appears in clean circular crops throughout the chat interface
-- **Floating Button**: Prominent Newton avatar with breathing glow effect
-- **Logo**: Professional rounded square logo with "NewtonAI" branding visible on the paper sheet
-- **Consistent Branding**: Same character design used across all Newton-related UI elements
-
+- **Logo**: Newton character appears larger/zoomed-in, no black border/outline visible
+- **Sidebar**: Same improved logo automatically applied
+- **Newton Chat Button**: Larger, cleaner avatar without border
+- **Chat Panel**: Consistent borderless avatars throughout
