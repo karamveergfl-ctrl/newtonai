@@ -158,7 +158,9 @@ const Onboarding = () => {
   const [direction, setDirection] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     educationLevel: "",
@@ -172,6 +174,40 @@ const Onboarding = () => {
   });
 
   const totalSteps = 6;
+  
+  // Auto-advance for single-selection steps (Step 2 and Step 5)
+  useEffect(() => {
+    // Clear any existing timer on cleanup
+    return () => {
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+      }
+    };
+  }, []);
+  
+  // Auto-advance when education level is selected (Step 2)
+  useEffect(() => {
+    if (step === 2 && formData.educationLevel && !isAutoAdvancing) {
+      setIsAutoAdvancing(true);
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        setDirection(1);
+        setStep(3);
+        setIsAutoAdvancing(false);
+      }, 600);
+    }
+  }, [formData.educationLevel, step, isAutoAdvancing]);
+  
+  // Auto-advance when referral source is selected (Step 5)
+  useEffect(() => {
+    if (step === 5 && formData.referralSource && !isAutoAdvancing) {
+      setIsAutoAdvancing(true);
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        setDirection(1);
+        setStep(6);
+        setIsAutoAdvancing(false);
+      }, 600);
+    }
+  }, [formData.referralSource, step, isAutoAdvancing]);
   const progress = (step / totalSteps) * 100;
 
   useEffect(() => {
@@ -543,16 +579,30 @@ const Onboarding = () => {
                           initial="hidden"
                           animate="visible"
                           onClick={() => setFormData(prev => ({ ...prev, educationLevel: level.id }))}
-                          className={`p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50 hover:scale-[1.02] ${
+                          className={`p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50 hover:scale-[1.02] relative ${
                             formData.educationLevel === level.id
-                              ? "border-primary bg-primary/5"
+                              ? "border-primary bg-primary/5 ring-2 ring-primary/30"
                               : "border-border"
                           }`}
                           whileTap={{ scale: 0.98 }}
                         >
+                          {/* Selection checkmark with animation */}
+                          <AnimatePresence>
+                            {formData.educationLevel === level.id && (
+                              <motion.div 
+                                className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg"
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                exit={{ scale: 0 }}
+                                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                              >
+                                <Check className="w-4 h-4 text-primary-foreground" />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                           <motion.span 
                             className="text-2xl mb-2 block"
-                            animate={formData.educationLevel === level.id ? { scale: [1, 1.2, 1] } : {}}
+                            animate={formData.educationLevel === level.id ? { scale: [1, 1.3, 1] } : {}}
                             transition={{ duration: 0.3 }}
                           >
                             {level.icon}
@@ -561,6 +611,8 @@ const Onboarding = () => {
                         </motion.button>
                       ))}
                     </div>
+                    
+                    {/* Auto-advancing indicator or back button */}
                     <motion.div 
                       className="flex gap-3 mt-6"
                       initial={{ opacity: 0, y: 20 }}
@@ -571,10 +623,25 @@ const Onboarding = () => {
                         <ChevronLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                         Back
                       </Button>
-                      <Button onClick={handleNext} className="flex-1 h-12 group">
-                        Continue
-                        <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Button>
+                      {isAutoAdvancing && formData.educationLevel ? (
+                        <motion.div 
+                          className="flex-1 h-12 flex items-center justify-center gap-2 text-primary font-medium"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                        >
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          >
+                            <Sparkles className="w-5 h-5" />
+                          </motion.div>
+                          Great choice!
+                        </motion.div>
+                      ) : (
+                        <div className="flex-1 h-12 flex items-center justify-center text-sm text-muted-foreground">
+                          Select an option to continue
+                        </div>
+                      )}
                     </motion.div>
                   </CardContent>
                 </Card>
@@ -815,7 +882,7 @@ const Onboarding = () => {
                           onClick={() => setFormData(prev => ({ ...prev, referralSource: source.id }))}
                           className={`p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50 hover:scale-[1.02] relative ${
                             formData.referralSource === source.id
-                              ? "border-primary bg-primary/5"
+                              ? "border-primary bg-primary/5 ring-2 ring-primary/30"
                               : "border-border"
                           }`}
                           whileTap={{ scale: 0.98 }}
@@ -823,19 +890,19 @@ const Onboarding = () => {
                           <AnimatePresence>
                             {formData.referralSource === source.id && (
                               <motion.div 
-                                className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center"
-                                variants={checkmarkVariants}
-                                initial="initial"
-                                animate="animate"
-                                exit="exit"
+                                className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg"
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                exit={{ scale: 0 }}
+                                transition={{ type: "spring", stiffness: 500, damping: 25 }}
                               >
-                                <Check className="w-3 h-3 text-primary-foreground" />
+                                <Check className="w-4 h-4 text-primary-foreground" />
                               </motion.div>
                             )}
                           </AnimatePresence>
                           <motion.span 
                             className="text-2xl mb-2 block"
-                            animate={formData.referralSource === source.id ? { scale: [1, 1.2, 1] } : {}}
+                            animate={formData.referralSource === source.id ? { scale: [1, 1.3, 1] } : {}}
                             transition={{ duration: 0.3 }}
                           >
                             {source.icon}
@@ -845,6 +912,8 @@ const Onboarding = () => {
                         </motion.button>
                       ))}
                     </div>
+                    
+                    {/* Auto-advancing indicator or back button */}
                     <motion.div 
                       className="flex gap-3 mt-6"
                       initial={{ opacity: 0, y: 20 }}
@@ -855,10 +924,25 @@ const Onboarding = () => {
                         <ChevronLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                         Back
                       </Button>
-                      <Button onClick={handleNext} className="flex-1 h-12 group">
-                        Continue
-                        <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Button>
+                      {isAutoAdvancing && formData.referralSource ? (
+                        <motion.div 
+                          className="flex-1 h-12 flex items-center justify-center gap-2 text-primary font-medium"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                        >
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          >
+                            <Sparkles className="w-5 h-5" />
+                          </motion.div>
+                          Almost there!
+                        </motion.div>
+                      ) : (
+                        <div className="flex-1 h-12 flex items-center justify-center text-sm text-muted-foreground">
+                          Select an option to continue
+                        </div>
+                      )}
                     </motion.div>
                   </CardContent>
                 </Card>
