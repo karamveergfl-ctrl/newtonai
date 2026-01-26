@@ -86,7 +86,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             <img
               src={newtonChatAvatar}
               alt="Newton"
-              className="w-full h-full object-cover scale-110"
+              className="w-full h-full object-cover scale-150"
             />
           </div>
           <div>

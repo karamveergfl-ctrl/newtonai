@@ -64,7 +64,7 @@ export const NewtonTriggerButton = memo(function NewtonTriggerButton({
             <img
               src={newtonChatAvatar}
               alt="Newton AI"
-              className="w-full h-full object-cover scale-110"
+              className="w-full h-full object-cover scale-150"
             />
           </div>
         )}
