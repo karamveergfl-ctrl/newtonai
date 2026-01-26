@@ -2,7 +2,7 @@ import { memo } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import newtonCharacter from "@/assets/newton-character.png";
+import newtonChatAvatar from "@/assets/newton-chat-avatar.png";
 
 interface NewtonTriggerButtonProps {
   isOpen: boolean;
@@ -60,11 +60,13 @@ export const NewtonTriggerButton = memo(function NewtonTriggerButton({
         {isOpen ? (
           <X className="w-6 h-6 text-primary-foreground" />
         ) : (
-          <img
-            src={newtonCharacter}
-            alt="Newton AI"
-            className="w-10 h-10 object-contain"
-          />
+          <div className="w-10 h-10 rounded-full overflow-hidden">
+            <img
+              src={newtonChatAvatar}
+              alt="Newton AI"
+              className="w-full h-full object-cover"
+            />
+          </div>
         )}
       </motion.div>
 
