@@ -39,13 +39,7 @@ import {
   MessageSquare,
   Shield,
   Gift,
-  Grid3X3,
-  TrendingDown,
-  CreditCard,
-  HelpCircle,
-  BookOpen,
 } from "lucide-react";
-import { SidebarPromoCard } from "@/components/SidebarPromoCard";
 import { cn } from "@/lib/utils";
 import { useCredits } from "@/hooks/useCredits";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
@@ -67,15 +61,6 @@ const adminTools = [
   { id: "redeem-codes", label: "Redeem Codes", icon: Gift, path: "/admin/redeem-codes" },
 ];
 
-
-const exploreLinks = [
-  { id: "all-tools", label: "All Tools", icon: Grid3X3, path: "/tools" },
-  { id: "compare", label: "Compare", icon: TrendingDown, path: "/compare" },
-  { id: "pricing", label: "Pricing", icon: CreditCard, path: "/pricing" },
-  { id: "faq", label: "FAQ", icon: HelpCircle, path: "/faq" },
-  { id: "blog", label: "Blog", icon: BookOpen, path: "/blog" },
-];
-
 interface AppSidebarProps {
   onToolSelect?: (tool: string) => void;
   onSignOut?: () => void;
@@ -87,7 +72,6 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [searchQuery, setSearchQuery] = useState("");
-  const { isPremium } = useCredits();
   const { isAdmin } = useAdminAccess();
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
@@ -121,7 +105,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-sidebar-border bg-sidebar-background"
+      className="border-r border-sidebar-border bg-sidebar"
     >
       <SidebarHeader className="p-3">
         <div className={cn(
@@ -179,7 +163,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         </SidebarGroup>
 
         {/* Study Tools - Scrollable */}
-        <SidebarGroup className="mt-0 flex-1 min-h-0 flex flex-col overflow-hidden">
+        <SidebarGroup className="mt-2 flex-1 min-h-0 flex flex-col overflow-hidden">
           {!isCollapsed && (
             <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground shrink-0">
               Study Tools
@@ -231,53 +215,6 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Explore Section - Fixed */}
-        <SidebarGroup className="mt-0 shrink-0">
-          {!isCollapsed && (
-            <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Explore
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <AnimatePresence mode="popLayout">
-                {exploreLinks.map((link, index) => (
-                  <motion.div
-                    key={link.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ delay: index * 0.03 }}
-                    layout
-                  >
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip={link.label}>
-                        <motion.button
-                          whileHover={{ x: isCollapsed ? 0 : 4 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => navigate(link.path)}
-                          className={cn(
-                            "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                            isCollapsed 
-                              ? "justify-center p-2.5 gap-0" 
-                              : "gap-3 px-3 py-2",
-                            isActive(link.path)
-                              ? "bg-primary text-primary-foreground"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent"
-                          )}
-                        >
-                          <link.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                          {!isCollapsed && <span>{link.label}</span>}
-                        </motion.button>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {/* Admin Section - Only visible to admins */}
         {isAdmin && (
           <SidebarGroup className="mt-0 shrink-0">
@@ -316,29 +253,35 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
-
-        {/* Premium Promo Card - Only for free users */}
-        {!isPremium && (
-          <SidebarGroup className="mt-auto pt-2 border-t border-sidebar-border shrink-0">
-            <SidebarPromoCard isCollapsed={isCollapsed} />
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
-        <div className="space-y-0.5">
-          {/* Theme Toggle - styled like other menu buttons */}
+      <SidebarFooter className="p-3 border-t border-sidebar-border">
+        {/* Usage Section Label */}
+        {!isCollapsed && (
+          <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Usage
+          </p>
+        )}
+        
+        <div className="space-y-1">
+          {/* Theme Toggle */}
           <SidebarMenuButton asChild tooltip="Toggle Theme">
             <motion.button
-              whileHover={{ x: 4 }}
+              whileHover={{ x: isCollapsed ? 0 : 4 }}
               whileTap={{ scale: 0.98 }}
               onClick={toggleTheme}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+              className={cn(
+                "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                isCollapsed 
+                  ? "justify-center p-2.5 gap-0" 
+                  : "gap-3 px-3 py-2",
+                "text-sidebar-foreground hover:bg-sidebar-accent"
+              )}
             >
               {theme === "light" ? (
-                <Moon className="h-5 w-5 shrink-0" />
+                <Moon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
               ) : (
-                <Sun className="h-5 w-5 shrink-0" />
+                <Sun className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
               )}
               {!isCollapsed && <span>Theme</span>}
             </motion.button>
@@ -347,17 +290,20 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           {/* Credits */}
           <SidebarMenuButton asChild tooltip="Credits">
             <motion.button
-              whileHover={{ x: 4 }}
+              whileHover={{ x: isCollapsed ? 0 : 4 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate("/credits")}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                isCollapsed 
+                  ? "justify-center p-2.5 gap-0" 
+                  : "gap-3 px-3 py-2",
                 isActive("/credits")
                   ? "bg-primary text-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent"
               )}
             >
-              <Coins className="h-5 w-5 shrink-0" />
+              <Coins className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
               {!isCollapsed && <span>Credits</span>}
             </motion.button>
           </SidebarMenuButton>
@@ -365,17 +311,20 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           {/* Profile */}
           <SidebarMenuButton asChild tooltip="Profile">
             <motion.button
-              whileHover={{ x: 4 }}
+              whileHover={{ x: isCollapsed ? 0 : 4 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate("/profile")}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                isCollapsed 
+                  ? "justify-center p-2.5 gap-0" 
+                  : "gap-3 px-3 py-2",
                 isActive("/profile")
                   ? "bg-primary text-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent"
               )}
             >
-              <User className="h-5 w-5 shrink-0" />
+              <User className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
               {!isCollapsed && <span>Profile</span>}
             </motion.button>
           </SidebarMenuButton>
@@ -383,12 +332,18 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           {/* Sign Out */}
           <SidebarMenuButton asChild tooltip="Sign Out">
             <motion.button
-              whileHover={{ x: 4 }}
+              whileHover={{ x: isCollapsed ? 0 : 4 }}
               whileTap={{ scale: 0.98 }}
               onClick={onSignOut}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+              className={cn(
+                "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                isCollapsed 
+                  ? "justify-center p-2.5 gap-0" 
+                  : "gap-3 px-3 py-2",
+                "text-sidebar-foreground hover:bg-destructive hover:text-destructive-foreground"
+              )}
             >
-              <LogOut className="h-5 w-5 shrink-0" />
+              <LogOut className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
               {!isCollapsed && <span>Sign Out</span>}
             </motion.button>
           </SidebarMenuButton>
@@ -398,7 +353,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="pt-1"
+              className="pt-3"
             >
               <Button
                 onClick={() => navigate("/pricing")}
