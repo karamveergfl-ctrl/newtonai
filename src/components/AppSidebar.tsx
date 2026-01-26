@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { CreditBadge } from "@/components/CreditBadge";
+import { FEATURE_COSTS } from "@/lib/creditConfig";
 
 import {
   Sidebar,
@@ -39,19 +40,20 @@ import {
   MessageSquare,
   Shield,
   Gift,
+  MessageSquareText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCredits } from "@/hooks/useCredits";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 const studyTools = [
-  { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz" },
-  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards" },
-  { id: "podcast", label: "AI Podcast", icon: Podcast, path: "/tools/ai-podcast" },
-  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map" },
-  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes" },
-  { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer" },
-  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help" },
+  { id: "pdf-chat", label: "Chat with PDF", icon: MessageSquareText, path: "/pdf-chat", creditKey: "ai_chat" },
+  { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz", creditKey: "quiz" },
+  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards", creditKey: "flashcards" },
+  { id: "podcast", label: "AI Podcast", icon: Podcast, path: "/tools/ai-podcast", creditKey: "ai_podcast" },
+  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map", creditKey: "mind_map" },
+  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes", creditKey: "lecture_notes" },
+  { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer", creditKey: "summary" },
+  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help", creditKey: "homework_help" },
 ];
 
 const adminTools = [
@@ -71,7 +73,6 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const navigate = useNavigate();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
-  const [searchQuery, setSearchQuery] = useState("");
   const { isAdmin } = useAdminAccess();
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
@@ -91,16 +92,6 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   };
 
   const isActive = (path: string) => location.pathname === path;
-
-  const filteredTools = useMemo(() => {
-    if (!searchQuery.trim()) return studyTools;
-    const query = searchQuery.toLowerCase();
-    return studyTools.filter(
-      (tool) =>
-        tool.label.toLowerCase().includes(query) ||
-        tool.id.toLowerCase().includes(query)
-    );
-  }, [searchQuery]);
 
   return (
     <Sidebar
@@ -128,7 +119,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="flex flex-col overflow-hidden">
+      <SidebarContent className="flex flex-col">
         {/* Home - Fixed */}
         <SidebarGroup className="py-0 shrink-0">
           <SidebarGroupContent>
@@ -162,62 +153,56 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Study Tools - Scrollable */}
-        <SidebarGroup className="mt-2 flex-1 min-h-0 flex flex-col overflow-hidden">
+        {/* Study Tools - No scroll, all visible */}
+        <SidebarGroup className="mt-2 shrink-0">
           {!isCollapsed && (
-            <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground shrink-0">
+            <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Study Tools
             </SidebarGroupLabel>
           )}
-          <SidebarGroupContent className="flex-1 min-h-0 overflow-hidden">
-            <ScrollArea className="h-full">
-              <SidebarMenu>
-                <AnimatePresence mode="popLayout">
-                  {filteredTools.map((tool) => (
-                    <motion.div
-                      key={tool.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      layout
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {studyTools.map((tool) => (
+                <SidebarMenuItem key={tool.id}>
+                  <SidebarMenuButton asChild tooltip={tool.label}>
+                    <motion.button
+                      whileHover={{ x: isCollapsed ? 0 : 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate(tool.path)}
+                      className={cn(
+                        "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                        isCollapsed 
+                          ? "justify-center p-2.5 gap-0" 
+                          : "gap-3 px-3 py-2",
+                        isActive(tool.path)
+                          ? "bg-primary text-primary-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent"
+                      )}
                     >
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip={tool.label}>
-                          <motion.button
-                            whileHover={{ x: isCollapsed ? 0 : 4 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => navigate(tool.path)}
-                            className={cn(
-                              "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                              isCollapsed 
-                                ? "justify-center p-2.5 gap-0" 
-                                : "gap-3 px-3 py-2",
-                              isActive(tool.path)
-                                ? "bg-primary text-primary-foreground"
-                                : "text-sidebar-foreground hover:bg-sidebar-accent"
-                            )}
-                          >
-                            <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                            {!isCollapsed && <span>{tool.label}</span>}
-                          </motion.button>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                {filteredTools.length === 0 && !isCollapsed && (
-                  <p className="text-xs text-muted-foreground text-center py-4">
-                    No tools found
-                  </p>
-                )}
-              </SidebarMenu>
-            </ScrollArea>
+                      <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                      {!isCollapsed && (
+                        <>
+                          <span className="flex-1">{tool.label}</span>
+                          <span className={cn(
+                            "flex items-center gap-0.5 text-xs",
+                            isActive(tool.path) ? "text-primary-foreground/80" : "text-amber-500"
+                          )}>
+                            <Coins className="h-3.5 w-3.5" />
+                            {FEATURE_COSTS[tool.creditKey] || 5}
+                          </span>
+                        </>
+                      )}
+                    </motion.button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         {/* Admin Section - Only visible to admins */}
         {isAdmin && (
-          <SidebarGroup className="mt-0 shrink-0">
+          <SidebarGroup className="mt-2 shrink-0">
             {!isCollapsed && (
               <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Shield className="h-3 w-3" />
@@ -256,13 +241,6 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter className="p-3 border-t border-sidebar-border">
-        {/* Usage Section Label */}
-        {!isCollapsed && (
-          <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Usage
-          </p>
-        )}
-        
         <div className="space-y-1">
           {/* Theme Toggle */}
           <SidebarMenuButton asChild tooltip="Toggle Theme">
