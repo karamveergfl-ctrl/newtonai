@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, X } from "lucide-react";
-import newtonCharacter from "@/assets/newton-character.png";
 
 interface ProcessingOverlayProps {
   /** Whether to show the overlay */
@@ -230,74 +229,54 @@ export const ProcessingOverlay = memo(({
 
         {/* Video container */}
         <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-2 border-border/40 shadow-2xl bg-card/50">
-          {/* Enhanced loading fallback while video loads */}
+          {/* Poster-based loading fallback - matches video starting frame */}
           <AnimatePresence>
             {!videoLoaded && (
               <motion.div
                 initial={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-muted/50 to-muted/30 z-20"
+                transition={{ duration: 0.4 }}
+                className="absolute inset-0 flex flex-col items-center justify-center z-20 overflow-hidden rounded-[2rem] sm:rounded-[2.5rem]"
               >
-                {/* Animated Newton character */}
+                {/* Poster image with subtle breathing animation */}
                 <motion.div
-                  className="relative"
+                  className="relative w-full h-full"
                   animate={{ 
-                    y: [0, -8, 0],
-                    scale: [1, 1.02, 1]
+                    scale: [1, 1.02, 1],
                   }}
                   transition={{ 
-                    duration: 1.5, 
+                    duration: 2.5, 
                     repeat: Infinity, 
                     ease: "easeInOut" 
                   }}
                 >
-                  {/* Soft glow behind character */}
+                  {/* Soft glow overlay */}
                   <motion.div
-                    className="absolute inset-0 rounded-full bg-primary/20 blur-2xl scale-150"
+                    className="absolute inset-0 bg-gradient-radial from-primary/15 via-transparent to-transparent z-10 pointer-events-none"
                     animate={{ 
-                      scale: [1.5, 1.8, 1.5],
                       opacity: [0.3, 0.6, 0.3]
                     }}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                   />
                   
-                  {/* Newton character image */}
+                  {/* Poster image - same as video poster for seamless transition */}
                   <img 
-                    src={newtonCharacter} 
+                    src="/newton-poster.webp" 
                     alt="Newton loading"
-                    className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-contain drop-shadow-xl"
+                    className="w-full h-full object-cover"
                   />
-                  
-                  {/* Thinking dots animation */}
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-                    {[0, 1, 2].map((i) => (
-                      <motion.div
-                        key={i}
-                        className="w-2.5 h-2.5 rounded-full bg-primary"
-                        animate={{ 
-                          y: [0, -8, 0],
-                          opacity: [0.4, 1, 0.4]
-                        }}
-                        transition={{ 
-                          duration: 0.8, 
-                          repeat: Infinity, 
-                          delay: i * 0.15,
-                          ease: "easeInOut"
-                        }}
-                      />
-                    ))}
-                  </div>
                 </motion.div>
                 
-                {/* Loading text */}
-                <motion.p
-                  className="mt-10 text-sm text-muted-foreground font-medium"
-                  animate={{ opacity: [0.5, 1, 0.5] }}
+                {/* Loading text overlay at bottom */}
+                <motion.div
+                  className="absolute bottom-4 left-0 right-0 flex justify-center"
+                  animate={{ opacity: [0.6, 1, 0.6] }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  Loading Newton...
-                </motion.p>
+                  <span className="px-3 py-1.5 bg-background/80 backdrop-blur-sm rounded-full text-xs font-medium text-muted-foreground shadow-lg">
+                    Loading Newton...
+                  </span>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
