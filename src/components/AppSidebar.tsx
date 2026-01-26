@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { CreditBadge } from "@/components/CreditBadge";
 import { FEATURE_COSTS } from "@/lib/creditConfig";
+import { useScrollContext } from "@/contexts/ScrollContext";
 
 import {
   Sidebar,
@@ -41,6 +41,11 @@ import {
   Shield,
   Gift,
   MessageSquareText,
+  Grid3X3,
+  TrendingUp,
+  CreditCard,
+  HelpCircle,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
@@ -63,6 +68,14 @@ const adminTools = [
   { id: "redeem-codes", label: "Redeem Codes", icon: Gift, path: "/admin/redeem-codes" },
 ];
 
+const exploreLinks = [
+  { id: "all-tools", label: "All Tools", icon: Grid3X3, path: "/tools" },
+  { id: "compare", label: "Compare", icon: TrendingUp, path: "/compare", isNew: true },
+  { id: "pricing", label: "Pricing", icon: CreditCard, path: "/pricing" },
+  { id: "faq", label: "FAQ", icon: HelpCircle, path: "/faq" },
+  { id: "blog", label: "Blog", icon: BookOpen, path: "/blog" },
+];
+
 interface AppSidebarProps {
   onToolSelect?: (tool: string) => void;
   onSignOut?: () => void;
@@ -75,6 +88,15 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const isCollapsed = state === "collapsed";
   const { isAdmin } = useAdminAccess();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  
+  // Get scroll state from context - safely handle when not in provider
+  let hasScrolled = false;
+  try {
+    const scrollContext = useScrollContext();
+    hasScrolled = scrollContext.hasScrolled;
+  } catch {
+    // Not wrapped in ScrollProvider, default to not scrolled
+  }
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
@@ -199,6 +221,62 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Explore Section - Only visible when scrolled */}
+        <AnimatePresence>
+          {hasScrolled && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <SidebarGroup className="mt-2 shrink-0">
+                {!isCollapsed && (
+                  <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Explore
+                  </SidebarGroupLabel>
+                )}
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {exploreLinks.map((link) => (
+                      <SidebarMenuItem key={link.id}>
+                        <SidebarMenuButton asChild tooltip={link.label}>
+                          <motion.button
+                            whileHover={{ x: isCollapsed ? 0 : 4 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => navigate(link.path)}
+                            className={cn(
+                              "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                              isCollapsed 
+                                ? "justify-center p-2.5 gap-0" 
+                                : "gap-3 px-3 py-2",
+                              isActive(link.path)
+                                ? "bg-primary text-primary-foreground"
+                                : "text-sidebar-foreground hover:bg-sidebar-accent"
+                            )}
+                          >
+                            <link.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                            {!isCollapsed && (
+                              <>
+                                <span className="flex-1">{link.label}</span>
+                                {link.isNew && (
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                    NEW
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </motion.button>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Admin Section - Only visible to admins */}
         {isAdmin && (
