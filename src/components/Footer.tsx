@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Logo from "@/components/Logo";
-import { Instagram, Youtube, Facebook, Twitter, Mail, Phone } from "lucide-react";
+import { Instagram, Youtube, Facebook, Twitter, Mail } from "lucide-react";
 import { GradientBlob } from "./GradientBlob";
 import { AdBanner } from "./AdBanner";
+import { RecommendationWidget } from "./RecommendationWidget";
 
 const Footer = () => {
   return (
@@ -11,6 +12,8 @@ const Footer = () => {
       {/* Banner Ad for Free Users */}
       <AdBanner placement="footer" />
       
+      {/* Recommendation Widget for Free Users */}
+      <RecommendationWidget className="container mx-auto px-4" />
       {/* Decorative Blob */}
       <GradientBlob
         color="primary"
