@@ -46,18 +46,34 @@ const getPwnedPasswordCount = async (password: string) => {
   return 0;
 };
 
-type AuthMode = "login" | "signup" | "forgot-password";
+type AuthMode = "login" | "signup" | "forgot-password" | "reset-password";
 
 const Auth = () => {
   const [mode, setMode] = useState<AuthMode>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check URL for reset mode (user clicked email link)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlMode = params.get('mode');
+    
+    // Check for password reset flow (access_token in hash or type=recovery)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    
+    if (urlMode === 'reset' || type === 'recovery' || accessToken) {
+      setMode('reset-password');
+    }
+  }, []);
 
   useEffect(() => {
     const checkOnboardingAndRedirect = async (session: any) => {
@@ -101,7 +117,39 @@ const Auth = () => {
     setPasswordError(null);
 
     try {
-      if (mode === "forgot-password") {
+      if (mode === "reset-password") {
+        // Validate new password
+        if (password.length < 6) {
+          setPasswordError("Password must be at least 6 characters");
+          throw new Error("Password must be at least 6 characters");
+        }
+        if (!/[A-Z]/.test(password)) {
+          setPasswordError("Password must contain at least 1 capital letter");
+          throw new Error("Password must contain at least 1 capital letter");
+        }
+        if (password !== confirmPassword) {
+          setPasswordError("Passwords do not match");
+          throw new Error("Passwords do not match");
+        }
+
+        const pwnedCount = await getPwnedPasswordCount(password);
+        if (pwnedCount > 0) {
+          setPasswordError("This password has appeared in data breaches. Please choose a different, more secure password.");
+          setLoading(false);
+          return;
+        }
+
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+        
+        toast({ title: "Password updated!", description: "You can now sign in with your new password." });
+        
+        // Clear URL params and redirect to login
+        window.history.replaceState({}, document.title, '/auth');
+        setMode("login");
+        setPassword("");
+        setConfirmPassword("");
+      } else if (mode === "forgot-password") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth?mode=reset`,
         });
@@ -114,6 +162,7 @@ const Auth = () => {
         toast({ title: "Welcome back!", description: "You've successfully logged in." });
         navigate("/dashboard");
       } else {
+        // Signup mode
         if (password.length < 6) {
           setPasswordError("Password must be at least 6 characters");
           throw new Error("Password must be at least 6 characters");
@@ -284,16 +333,21 @@ const Auth = () => {
             className="mb-8"
           >
             <span className="text-primary text-sm font-semibold uppercase tracking-wider">
-              {mode === "login" ? "Welcome Back" : mode === "forgot-password" ? "Reset Password" : "Start For Free"}
+              {mode === "login" ? "Welcome Back" : mode === "forgot-password" ? "Reset Password" : mode === "reset-password" ? "Set New Password" : "Start For Free"}
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mt-2">
-              {mode === "login" ? "Sign in to NewtonAI" : mode === "forgot-password" ? "Forgot your password?" : "Sign up to NewtonAI"}
+              {mode === "login" ? "Sign in to NewtonAI" : mode === "forgot-password" ? "Forgot your password?" : mode === "reset-password" ? "Create a new password" : "Sign up to NewtonAI"}
             </h2>
             {mode === "forgot-password" && (
               <p className="text-muted-foreground mt-2 text-sm">
                 {resetEmailSent 
                   ? "Check your inbox for the reset link." 
                   : "Enter your email and we'll send you a reset link."}
+              </p>
+            )}
+            {mode === "reset-password" && (
+              <p className="text-muted-foreground mt-2 text-sm">
+                Enter your new password below.
               </p>
             )}
           </motion.div>
@@ -306,32 +360,34 @@ const Auth = () => {
             onSubmit={handleAuth}
             className="space-y-5"
           >
-            {/* Email Field */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                Email
-              </Label>
-              <div className="relative">
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                  className="h-12 pr-10 bg-background border-border"
-                />
-                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            {/* Email Field - Hidden for reset-password mode */}
+            {mode !== "reset-password" && (
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="h-12 pr-10 bg-background border-border"
+                  />
+                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Password Field - Hidden for forgot password */}
-            {mode !== "forgot-password" && (
+            {/* Password Field - Hidden for forgot password, shown for reset-password */}
+            {(mode !== "forgot-password") && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                    Password
+                    {mode === "reset-password" ? "New Password" : "Password"}
                   </Label>
                   {mode === "login" && (
                     <button
@@ -347,7 +403,7 @@ const Auth = () => {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder={mode === "login" ? "Enter your password" : "6+ Characters, 1 Capital letter"}
+                    placeholder={mode === "login" ? "Enter your password" : mode === "reset-password" ? "Enter new password" : "6+ Characters, 1 Capital letter"}
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setPasswordError(null); }}
                     required
@@ -389,6 +445,36 @@ const Auth = () => {
               </div>
             )}
 
+            {/* Confirm Password Field - Only for reset-password mode */}
+            {mode === "reset-password" && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+                  Confirm New Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Confirm your new password"
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(null); }}
+                    required
+                    disabled={loading}
+                    minLength={6}
+                    className={`h-12 pr-10 bg-background border-border ${passwordError?.includes("match") ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Submit Button */}
             <Button 
               type="submit" 
@@ -398,15 +484,15 @@ const Auth = () => {
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  {mode === "login" ? "Signing in..." : mode === "forgot-password" ? "Sending..." : "Creating account..."}
+                  {mode === "login" ? "Signing in..." : mode === "forgot-password" ? "Sending..." : mode === "reset-password" ? "Updating password..." : "Creating account..."}
                 </>
               ) : (
-                <>{mode === "login" ? "Sign In" : mode === "forgot-password" ? (resetEmailSent ? "Email Sent!" : "Send Reset Link") : "Create an account"}</>
+                <>{mode === "login" ? "Sign In" : mode === "forgot-password" ? (resetEmailSent ? "Email Sent!" : "Send Reset Link") : mode === "reset-password" ? "Update Password" : "Create an account"}</>
               )}
             </Button>
 
-            {/* Divider - Hidden for forgot password */}
-            {mode !== "forgot-password" && (
+            {/* Divider - Hidden for forgot password and reset-password */}
+            {mode !== "forgot-password" && mode !== "reset-password" && (
               <>
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
@@ -457,12 +543,20 @@ const Auth = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-6"
           >
-            {mode === "forgot-password" ? (
+            {mode === "forgot-password" || mode === "reset-password" ? (
               <p className="text-sm text-muted-foreground">
-                Remember your password?{" "}
+                {mode === "reset-password" ? "Changed your mind?" : "Remember your password?"}{" "}
                 <button
                   type="button"
-                  onClick={() => { setMode("login"); setResetEmailSent(false); }}
+                  onClick={() => { 
+                    setMode("login"); 
+                    setResetEmailSent(false); 
+                    setPassword("");
+                    setConfirmPassword("");
+                    setPasswordError(null);
+                    // Clear URL params
+                    window.history.replaceState({}, document.title, '/auth');
+                  }}
                   className="text-primary font-semibold hover:underline"
                   disabled={loading}
                 >
