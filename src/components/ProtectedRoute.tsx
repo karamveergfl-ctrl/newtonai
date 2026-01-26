@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { SignInRequiredModal } from "./SignInRequiredModal";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,8 +10,8 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Set up listener BEFORE checking session (per Supabase best practices)
@@ -21,7 +20,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         setAuthenticated(!!session);
         setLoading(false);
         if (!session) {
-          setShowModal(true);
+          const returnPath = `?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
+          navigate(`/auth${returnPath}`, { replace: true });
         }
       }
     );
@@ -31,12 +31,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       setAuthenticated(!!session);
       setLoading(false);
       if (!session) {
-        setShowModal(true);
+        const returnPath = `?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
+        navigate(`/auth${returnPath}`, { replace: true });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [location]);
+  }, [location, navigate]);
 
   if (loading) {
     return (
@@ -47,13 +48,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!authenticated) {
-    return (
-      <SignInRequiredModal 
-        open={showModal} 
-        onOpenChange={setShowModal}
-        returnTo={location.pathname + location.search}
-      />
-    );
+    return null;
   }
 
   return <>{children}</>;
