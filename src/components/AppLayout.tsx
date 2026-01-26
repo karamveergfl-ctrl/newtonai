@@ -6,6 +6,25 @@ import { useUsageLimitNotifications } from "@/hooks/useUsageLimitNotifications";
 import { FloatingUpgradeBanner } from "@/components/FloatingUpgradeBanner";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
+import { ScrollProvider, useScrollContext } from "@/contexts/ScrollContext";
+
+function ScrollableContent({ children, showFooter }: { children: React.ReactNode; showFooter: boolean }) {
+  const { setScrollPosition } = useScrollContext();
+  
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setScrollPosition(e.currentTarget.scrollTop);
+  };
+
+  return (
+    <div 
+      className="flex-1 flex flex-col overflow-auto min-h-0"
+      onScroll={handleScroll}
+    >
+      {children}
+      {showFooter && <Footer />}
+    </div>
+  );
+}
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -53,29 +72,30 @@ export function AppLayout({
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar onToolSelect={onToolSelect} onSignOut={onSignOut} />
-        <main className="flex-1 flex flex-col overflow-hidden min-h-0">
-          {showTopStats && <TopStatsBar />}
-          <div className="flex-1 flex flex-col overflow-auto min-h-0">
-            {children}
-          </div>
-          {showFooter && <Footer />}
-        </main>
-      </div>
-      <FloatingUpgradeBanner />
-      {/* Global Processing Overlay - always mounted for instant video playback */}
-      <ProcessingOverlay
-        isVisible={overlayState.isVisible}
-        message={overlayState.message}
-        subMessage={overlayState.subMessage}
-        progress={overlayState.progress}
-        isIndeterminate={overlayState.isIndeterminate}
-        canCancel={overlayState.canCancel}
-        onCancel={overlayState.onCancel}
-        variant={overlayState.variant}
-      />
-    </SidebarProvider>
+    <ScrollProvider>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <AppSidebar onToolSelect={onToolSelect} onSignOut={onSignOut} />
+          <main className="flex-1 flex flex-col overflow-hidden min-h-0">
+            {showTopStats && <TopStatsBar />}
+            <ScrollableContent showFooter={showFooter}>
+              {children}
+            </ScrollableContent>
+          </main>
+        </div>
+        <FloatingUpgradeBanner />
+        {/* Global Processing Overlay - always mounted for instant video playback */}
+        <ProcessingOverlay
+          isVisible={overlayState.isVisible}
+          message={overlayState.message}
+          subMessage={overlayState.subMessage}
+          progress={overlayState.progress}
+          isIndeterminate={overlayState.isIndeterminate}
+          canCancel={overlayState.canCancel}
+          onCancel={overlayState.onCancel}
+          variant={overlayState.variant}
+        />
+      </SidebarProvider>
+    </ScrollProvider>
   );
 }
