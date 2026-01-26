@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import newtonCharacter from "@/assets/newton-character.png";
+import newtonChatAvatar from "@/assets/newton-chat-avatar.png";
 import type { NewtonMessage } from "@/hooks/useNewtonChat";
 
 interface NewtonMessageBubbleProps {
@@ -27,17 +27,17 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
       {/* Avatar */}
       <div
         className={cn(
-          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-          isUser ? "bg-primary" : "bg-gradient-to-br from-primary/20 to-primary/10"
+          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden",
+          isUser ? "bg-primary" : "border-2 border-primary/20"
         )}
       >
         {isUser ? (
           <User className="w-4 h-4 text-primary-foreground" />
         ) : (
           <img
-            src={newtonCharacter}
+            src={newtonChatAvatar}
             alt="Newton"
-            className="w-6 h-6 object-contain"
+            className="w-full h-full object-cover"
           />
         )}
       </div>

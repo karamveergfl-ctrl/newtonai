@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { NewtonMessageBubble } from "./NewtonMessageBubble";
 import { LottieNewton } from "@/components/newton/LottieNewton";
 import type { NewtonMessage } from "@/hooks/useNewtonChat";
-import newtonCharacter from "@/assets/newton-character.png";
+import newtonChatAvatar from "@/assets/newton-chat-avatar.png";
 
 interface NewtonChatPanelProps {
   messages: NewtonMessage[];
@@ -82,11 +82,11 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-primary/20 shadow-sm">
             <img
-              src={newtonCharacter}
+              src={newtonChatAvatar}
               alt="Newton"
-              className="w-6 h-6 object-contain"
+              className="w-full h-full object-cover"
             />
           </div>
           <div>

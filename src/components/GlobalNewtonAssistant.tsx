@@ -10,7 +10,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import newtonCharacter from "@/assets/newton-character.png";
+
 
 /**
  * Global Newton AI Assistant - Fixed to bottom-right corner

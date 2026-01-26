@@ -1,4 +1,4 @@
-import logoImage from "@/assets/logo.png";
+import newtonLogo from "@/assets/newton-logo.png";
 import { motion } from "framer-motion";
 
 interface LogoProps {
@@ -27,7 +27,7 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
       >
         {/* Static glowing ring - constant primary color */}
         <div 
-          className="absolute inset-0 rounded-full blur-md opacity-70"
+          className="absolute inset-0 rounded-xl blur-md opacity-70"
           style={{ 
             margin: -4,
             background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))"
@@ -35,12 +35,12 @@ const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
         />
         {/* Logo container */}
         <div
-          className="relative rounded-full overflow-hidden shadow-md border border-white/10 w-full h-full"
+          className="relative rounded-xl overflow-hidden shadow-md border border-white/10 w-full h-full"
         >
           <img
-            src={logoImage}
+            src={newtonLogo}
             alt="NewtonAI Logo"
-            className="w-full h-full object-cover scale-125"
+            className="w-full h-full object-cover"
           />
         </div>
       </motion.div>
