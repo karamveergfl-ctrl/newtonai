@@ -1,78 +1,137 @@
 
-# Plan: Revert Ads to Previous State & Add Mobile Support
+# Fix: Password Reset "Auth session missing!" Error
 
-## Overview
-This plan will:
-1. **Revert ad components** to their simpler previous implementation (remove the MutationObserver/timeout logic)
-2. **Add responsive mobile ad support** using different ad sizes for mobile vs desktop
+## Problem Analysis
 
----
+When users click the password reset link from their email, they see the "Auth session missing!" error when trying to update their password. This happens because:
 
-## Current Issues
+1. **Supabase's password reset flow** sends tokens in the URL (access_token, refresh_token in hash)
+2. **The app detects `mode=reset`** and shows the password update form immediately
+3. **BUT the session hasn't been established yet** - Supabase needs to process the tokens first
+4. **When user submits**, `supabase.auth.updateUser()` fails because there's no active session
 
-### AdBanner Component
-- The 728x90 ad format is **desktop-only** - too wide for mobile screens
-- Current complex logic with MutationObserver and timeouts may be causing issues
-- Need to add a mobile-responsive ad size (320x50 or 300x250)
+The auth logs confirm this - showing "One-time token not found" errors when the token gets consumed or expires.
 
-### RecommendationWidget Component
-- Similar complexity issues with MutationObserver
-- Widget should work on all devices but needs simpler initialization
+## Root Cause
 
----
+In `Auth.tsx` lines 63-76, the code only sets the mode to `reset-password` when it detects URL tokens, but it doesn't:
+1. Wait for Supabase to process the tokens and establish a session
+2. Verify a session exists before allowing password update
+3. Handle the case where the token is expired or already used
 
-## Implementation
+## Solution
 
-### 1. Simplify AdBanner Component
-
-**File:** `src/components/AdBanner.tsx`
-
-Changes:
-- Remove `MutationObserver` and timeout logic
-- Remove `adLoaded`, `loadFailed` states
-- Keep the simple script injection approach
-- Add responsive ad sizing:
-  - **Desktop (≥768px):** 728x90 banner
-  - **Mobile (<768px):** 320x50 or 300x250 banner
-- Use `useIsMobile()` hook to detect device
-
-```
-Structure:
-- Use useIsMobile() to determine ad size
-- Desktop: 728x90 HighPerformanceFormat ad
-- Mobile: 320x50 or 300x100 mobile banner ad
-- Simple script injection without complex detection
-- Always show the ad container (let ad network handle failures)
-```
-
-### 2. Simplify RecommendationWidget Component
-
-**File:** `src/components/RecommendationWidget.tsx`
-
-Changes:
-- Remove `MutationObserver` and timeout logic
-- Remove `hasContent`, `loadFailed` states
-- Simple script load and AdProvider initialization
-- Widget is already responsive by nature
-
-```
-Structure:
-- Simple script injection
-- Basic AdProvider.push() call
-- Always render the container
-- Let ad network handle content/failures
-```
+Modify the Auth component to:
+1. **Detect recovery flow and wait for session** - When URL has recovery tokens, show a loading state while Supabase establishes the session
+2. **Verify session before showing form** - Only show the password update form after confirming an active session
+3. **Handle token expiration gracefully** - If session can't be established (expired/used token), show an error and offer to resend the reset email
 
 ---
 
-## Responsive Ad Strategy
+## Implementation Details
 
-| Screen Size | Ad Format | Dimensions |
-|-------------|-----------|------------|
-| Desktop (≥768px) | Banner | 728x90 |
-| Mobile (<768px) | Mobile Banner | 320x50 |
+### File: `src/pages/Auth.tsx`
 
-The HighPerformanceFormat network supports multiple ad sizes. We'll use conditional rendering based on screen width.
+#### 1. Add new state for session verification
+```typescript
+const [isVerifyingSession, setIsVerifyingSession] = useState(false);
+const [sessionVerified, setSessionVerified] = useState(false);
+const [recoveryError, setRecoveryError] = useState<string | null>(null);
+```
+
+#### 2. Update the URL detection useEffect to wait for session
+Instead of just setting the mode, the code will:
+- Detect recovery flow from URL parameters
+- Set a loading/verifying state
+- Wait for `onAuthStateChange` to fire with the `PASSWORD_RECOVERY` event
+- Only then set `sessionVerified = true` and show the form
+
+```typescript
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const urlMode = params.get('mode');
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const accessToken = hashParams.get('access_token');
+  const type = hashParams.get('type');
+  
+  // Check if this is a password reset flow
+  if (urlMode === 'reset' || type === 'recovery' || accessToken) {
+    setMode('reset-password');
+    setIsVerifyingSession(true);
+    
+    // Supabase will automatically handle the token from URL
+    // We listen for the PASSWORD_RECOVERY event
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        setSessionVerified(true);
+        setIsVerifyingSession(false);
+      }
+    });
+    
+    // Also check if session already exists (token already processed)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setSessionVerified(true);
+        setIsVerifyingSession(false);
+      }
+    });
+    
+    // Timeout for expired/invalid tokens
+    const timeout = setTimeout(() => {
+      if (!sessionVerified) {
+        setIsVerifyingSession(false);
+        setRecoveryError('Your password reset link has expired or is invalid. Please request a new one.');
+      }
+    }, 5000);
+    
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
+  }
+}, []);
+```
+
+#### 3. Update handleAuth to verify session before update
+```typescript
+if (mode === "reset-password") {
+  // Verify we have a session
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error("Session expired. Please request a new password reset link.");
+  }
+  
+  // ... rest of password validation and update logic
+}
+```
+
+#### 4. Update UI to show loading/error states
+- Show spinner while verifying session
+- Show error message with "Request new link" button if token expired
+- Only show password form when session is verified
+
+---
+
+## UI Changes
+
+### When verifying session (loading state):
+```
+"Verifying your reset link..."
+[Spinner]
+```
+
+### When token is expired/invalid:
+```
+"Reset link expired"
+"Your password reset link has expired or is invalid."
+[Request New Link Button] → switches to forgot-password mode
+```
+
+### When session is verified:
+```
+"Create a new password"
+[Password form as normal]
+```
 
 ---
 
@@ -80,88 +139,23 @@ The HighPerformanceFormat network supports multiple ad sizes. We'll use conditio
 
 | File | Changes |
 |------|---------|
-| `src/components/AdBanner.tsx` | Simplify logic, add mobile responsive ads |
-| `src/components/RecommendationWidget.tsx` | Simplify logic, ensure works on all devices |
+| `src/pages/Auth.tsx` | Add session verification logic, loading states, and error handling |
 
 ---
 
-## Technical Details
+## Expected Behavior After Fix
 
-### AdBanner - Simplified with Mobile Support
-```typescript
-// Key changes:
-const isMobile = useIsMobile();
-
-// Different ad config for mobile vs desktop
-const adConfig = isMobile 
-  ? { key: 'MOBILE_AD_KEY', width: 320, height: 50 }
-  : { key: 'c5d398ab0a723a7cfa61f3c2d7960602', width: 728, height: 90 };
-
-// Simple script injection without complex detection
-useEffect(() => {
-  if (!shouldShowAd || loading) return;
-  
-  const container = containerRef.current;
-  if (!container) return;
-
-  const optionsScript = document.createElement('script');
-  optionsScript.innerHTML = `
-    atOptions = {
-      'key': '${adConfig.key}',
-      'format': 'iframe',
-      'height': ${adConfig.height},
-      'width': ${adConfig.width},
-      'params': {}
-    };
-  `;
-  
-  const invokeScript = document.createElement('script');
-  invokeScript.src = `https://www.highperformanceformat.com/${adConfig.key}/invoke.js`;
-  invokeScript.async = true;
-  
-  container.appendChild(optionsScript);
-  container.appendChild(invokeScript);
-}, [shouldShowAd, loading, isMobile]);
-```
-
-### RecommendationWidget - Simplified
-```typescript
-// Remove all MutationObserver/timeout logic
-// Simple initialization:
-useEffect(() => {
-  if (!shouldShowAd || loading) return;
-  
-  const existingScript = document.querySelector('script[src*="ad-provider.js"]');
-  
-  if (!existingScript) {
-    const script = document.createElement('script');
-    script.src = 'https://a.magsrv.com/ad-provider.js';
-    script.async = true;
-    script.onload = () => {
-      (window.AdProvider = window.AdProvider || []).push({ serve: {} });
-    };
-    document.head.appendChild(script);
-  } else {
-    (window.AdProvider = window.AdProvider || []).push({ serve: {} });
-  }
-}, [shouldShowAd, loading]);
-```
+1. **User clicks reset link** → Shows "Verifying your reset link..." with spinner
+2. **Token is valid** → Session established, password form appears
+3. **Token is expired** → Shows error with "Request New Link" button
+4. **User enters new password** → Password updated successfully
+5. **Session already expired** → Shows helpful error, doesn't show confusing "Auth session missing!" toast
 
 ---
 
-## Expected Behavior After Changes
+## Technical Notes
 
-1. **Desktop users:** See 728x90 banner ads
-2. **Mobile users:** See 320x50 mobile-optimized banner ads
-3. **All devices:** Recommendation widget displays
-4. **Premium users:** No ads shown (handled by useAdVisibility)
-5. **Ad failures:** Container remains but shows empty (ad network's responsibility)
-
----
-
-## Note on Ad Keys
-The current ad key (`c5d398ab0a723a7cfa61f3c2d7960602`) is for 728x90 desktop ads. For mobile, you may need to:
-- Create a separate ad zone in HighPerformanceFormat dashboard for mobile (320x50)
-- Or use the same key if the network auto-adapts (some do)
-
-If a separate mobile ad key is needed, you'll need to get it from the ad network dashboard.
+- Supabase fires `PASSWORD_RECOVERY` event when processing a valid recovery token
+- The `access_token` in the URL hash is automatically consumed by Supabase's `onAuthStateChange` listener
+- A 5-second timeout is used to detect expired/invalid tokens (Supabase processes quickly if valid)
+- Clearing URL params after verification prevents re-triggering on page refresh
