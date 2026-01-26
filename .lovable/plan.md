@@ -1,150 +1,78 @@
 
-# Fix: Ads Not Loading for Free Users
+# Plan: Revert Ads to Previous State & Add Mobile Support
 
-## Problem Analysis
-The screenshot shows "ADVERTISEMENT" and "RECOMMENDED FOR YOU" labels with empty content areas. This indicates:
-1. The components ARE rendering (meaning `shouldShowAd` is `true` for a free user)
-2. But the ad network scripts are NOT loading/executing properly
-
-## Root Causes Identified
-
-### Issue 1: AdBanner Script Injection Race Condition
-The current implementation clears the container and creates scripts on every re-render, but the `scriptLoadedRef` guard doesn't properly handle React's strict mode and component lifecycle.
-
-### Issue 2: RecommendationWidget Not Refreshing AdProvider
-The ExoClick widget requires calling `AdProvider.push({ serve: {} })` AFTER the `ins` element is in the DOM, but the current logic may call it before React has fully rendered the element.
-
-### Issue 3: Missing Error Handling
-No fallback or error states when ads fail to load, leaving blank spaces visible.
-
-### Issue 4: Cleanup Logic Conflicts
-The cleanup functions set refs to `false`, but this can cause issues with React 18 strict mode which mounts/unmounts/remounts components.
+## Overview
+This plan will:
+1. **Revert ad components** to their simpler previous implementation (remove the MutationObserver/timeout logic)
+2. **Add responsive mobile ad support** using different ad sizes for mobile vs desktop
 
 ---
 
-## Implementation Plan
+## Current Issues
 
-### 1. Fix AdBanner Component
+### AdBanner Component
+- The 728x90 ad format is **desktop-only** - too wide for mobile screens
+- Current complex logic with MutationObserver and timeouts may be causing issues
+- Need to add a mobile-responsive ad size (320x50 or 300x250)
+
+### RecommendationWidget Component
+- Similar complexity issues with MutationObserver
+- Widget should work on all devices but needs simpler initialization
+
+---
+
+## Implementation
+
+### 1. Simplify AdBanner Component
+
 **File:** `src/components/AdBanner.tsx`
 
 Changes:
-- Add proper script load detection using a more robust approach
-- Add a "loaded" state to track when ad content appears
-- Add fallback UI when ads fail to load after timeout
-- Use `useLayoutEffect` to ensure DOM is ready before script injection
-- Add retry logic for failed ad loads
-- Show a subtle placeholder or hide container if ad fails
+- Remove `MutationObserver` and timeout logic
+- Remove `adLoaded`, `loadFailed` states
+- Keep the simple script injection approach
+- Add responsive ad sizing:
+  - **Desktop (≥768px):** 728x90 banner
+  - **Mobile (<768px):** 320x50 or 300x250 banner
+- Use `useIsMobile()` hook to detect device
 
 ```
-Key changes:
-1. Add adLoaded state + failedToLoad state
-2. Add 5-second timeout to detect load failures
-3. If failed, hide the entire container (not just content)
-4. Use MutationObserver to detect when iframe/content appears
-5. Add proper cleanup without breaking re-initialization
+Structure:
+- Use useIsMobile() to determine ad size
+- Desktop: 728x90 HighPerformanceFormat ad
+- Mobile: 320x50 or 300x100 mobile banner ad
+- Simple script injection without complex detection
+- Always show the ad container (let ad network handle failures)
 ```
 
-### 2. Fix RecommendationWidget Component
+### 2. Simplify RecommendationWidget Component
+
 **File:** `src/components/RecommendationWidget.tsx`
 
 Changes:
-- Delay AdProvider.push() call until after component mounts
-- Use requestAnimationFrame or setTimeout to ensure DOM readiness
-- Add error boundary for ad loading failures
-- Add fallback when no ads available
-- Track load state and hide if no content appears
+- Remove `MutationObserver` and timeout logic
+- Remove `hasContent`, `loadFailed` states
+- Simple script load and AdProvider initialization
+- Widget is already responsive by nature
 
 ```
-Key changes:
-1. Add loaded state tracking
-2. Use setTimeout(0) to push to AdProvider after render
-3. Add MutationObserver to detect content insertion
-4. Hide entire widget if no content loads after timeout
-5. Add proper script error handling
+Structure:
+- Simple script injection
+- Basic AdProvider.push() call
+- Always render the container
+- Let ad network handle content/failures
 ```
-
-### 3. Add Loading States & Fallbacks
-Both components should:
-- Show nothing (or minimal placeholder) while loading
-- Hide completely if ad fails to load (no empty "ADVERTISEMENT" labels)
-- Track whether actual ad content was inserted into the container
 
 ---
 
-## Technical Details
+## Responsive Ad Strategy
 
-### AdBanner Fix Strategy
-```typescript
-// Improved structure
-export const AdBanner = memo(function AdBanner(...) {
-  const [adLoaded, setAdLoaded] = useState(false);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  
-  useEffect(() => {
-    if (!shouldShowAd || loading) return;
-    
-    // Set timeout for load failure detection
-    timeoutRef.current = setTimeout(() => {
-      if (!adLoaded) setLoadFailed(true);
-    }, 5000);
-    
-    // Use MutationObserver to detect when iframe appears
-    const observer = new MutationObserver((mutations) => {
-      const hasContent = containerRef.current?.querySelector('iframe');
-      if (hasContent) {
-        setAdLoaded(true);
-        clearTimeout(timeoutRef.current);
-      }
-    });
-    
-    // ... script injection logic
-    
-    return () => {
-      clearTimeout(timeoutRef.current);
-      observer.disconnect();
-    };
-  }, [shouldShowAd, loading]);
-  
-  // Don't render if loading, premium, OR ad failed to load
-  if (loading || !shouldShowAd || loadFailed) return null;
-});
-```
+| Screen Size | Ad Format | Dimensions |
+|-------------|-----------|------------|
+| Desktop (≥768px) | Banner | 728x90 |
+| Mobile (<768px) | Mobile Banner | 320x50 |
 
-### RecommendationWidget Fix Strategy
-```typescript
-// Improved structure  
-export const RecommendationWidget = memo(function RecommendationWidget(...) {
-  const [hasContent, setHasContent] = useState(false);
-  const [loadFailed, setLoadFailed] = useState(false);
-  
-  useEffect(() => {
-    if (!shouldShowAd || loading) return;
-    
-    const initAd = () => {
-      // Ensure DOM is ready
-      requestAnimationFrame(() => {
-        (window.AdProvider = window.AdProvider || []).push({ serve: {} });
-      });
-    };
-    
-    // Check for existing script or load new one
-    // ... script loading logic with onload callback
-    
-    // Monitor for content insertion
-    const timeout = setTimeout(() => {
-      const container = containerRef.current;
-      if (!container?.querySelector('*:not(.eas6a97888e20)')) {
-        setLoadFailed(true);
-      }
-    }, 5000);
-    
-    return () => clearTimeout(timeout);
-  }, [shouldShowAd, loading]);
-  
-  if (loading || !shouldShowAd || loadFailed) return null;
-});
-```
+The HighPerformanceFormat network supports multiple ad sizes. We'll use conditional rendering based on screen width.
 
 ---
 
@@ -152,22 +80,88 @@ export const RecommendationWidget = memo(function RecommendationWidget(...) {
 
 | File | Changes |
 |------|---------|
-| `src/components/AdBanner.tsx` | Fix script injection, add load detection, hide on failure |
-| `src/components/RecommendationWidget.tsx` | Fix AdProvider timing, add content detection, hide on failure |
+| `src/components/AdBanner.tsx` | Simplify logic, add mobile responsive ads |
+| `src/components/RecommendationWidget.tsx` | Simplify logic, ensure works on all devices |
 
 ---
 
-## Expected Behavior After Fix
+## Technical Details
 
-1. **For Premium Users**: Components return `null` immediately, no labels shown
-2. **For Free Users with Working Ads**: Labels + ad content display correctly
-3. **For Free Users with Blocked/Failed Ads**: Components hide completely (no empty labels)
-4. **On Ad Blockers**: Components detect no content loaded and hide gracefully
+### AdBanner - Simplified with Mobile Support
+```typescript
+// Key changes:
+const isMobile = useIsMobile();
+
+// Different ad config for mobile vs desktop
+const adConfig = isMobile 
+  ? { key: 'MOBILE_AD_KEY', width: 320, height: 50 }
+  : { key: 'c5d398ab0a723a7cfa61f3c2d7960602', width: 728, height: 90 };
+
+// Simple script injection without complex detection
+useEffect(() => {
+  if (!shouldShowAd || loading) return;
+  
+  const container = containerRef.current;
+  if (!container) return;
+
+  const optionsScript = document.createElement('script');
+  optionsScript.innerHTML = `
+    atOptions = {
+      'key': '${adConfig.key}',
+      'format': 'iframe',
+      'height': ${adConfig.height},
+      'width': ${adConfig.width},
+      'params': {}
+    };
+  `;
+  
+  const invokeScript = document.createElement('script');
+  invokeScript.src = `https://www.highperformanceformat.com/${adConfig.key}/invoke.js`;
+  invokeScript.async = true;
+  
+  container.appendChild(optionsScript);
+  container.appendChild(invokeScript);
+}, [shouldShowAd, loading, isMobile]);
+```
+
+### RecommendationWidget - Simplified
+```typescript
+// Remove all MutationObserver/timeout logic
+// Simple initialization:
+useEffect(() => {
+  if (!shouldShowAd || loading) return;
+  
+  const existingScript = document.querySelector('script[src*="ad-provider.js"]');
+  
+  if (!existingScript) {
+    const script = document.createElement('script');
+    script.src = 'https://a.magsrv.com/ad-provider.js';
+    script.async = true;
+    script.onload = () => {
+      (window.AdProvider = window.AdProvider || []).push({ serve: {} });
+    };
+    document.head.appendChild(script);
+  } else {
+    (window.AdProvider = window.AdProvider || []).push({ serve: {} });
+  }
+}, [shouldShowAd, loading]);
+```
 
 ---
 
-## Testing Notes
-- Test with a free user account to verify ads load
-- Test with ad blocker enabled to verify graceful fallback
-- Verify premium users see no ad components at all
-- Check that no console errors occur during ad loading
+## Expected Behavior After Changes
+
+1. **Desktop users:** See 728x90 banner ads
+2. **Mobile users:** See 320x50 mobile-optimized banner ads
+3. **All devices:** Recommendation widget displays
+4. **Premium users:** No ads shown (handled by useAdVisibility)
+5. **Ad failures:** Container remains but shows empty (ad network's responsibility)
+
+---
+
+## Note on Ad Keys
+The current ad key (`c5d398ab0a723a7cfa61f3c2d7960602`) is for 728x90 desktop ads. For mobile, you may need to:
+- Create a separate ad zone in HighPerformanceFormat dashboard for mobile (320x50)
+- Or use the same key if the network auto-adapts (some do)
+
+If a separate mobile ad key is needed, you'll need to get it from the ad network dashboard.
