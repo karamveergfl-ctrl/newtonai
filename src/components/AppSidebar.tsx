@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SidebarUsageWidget } from "@/components/SidebarUsageWidget";
+
 import {
   Sidebar,
   SidebarContent,
@@ -317,14 +317,9 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        {/* Usage Summary Widget - Fixed */}
-        <SidebarGroup className="mt-auto pt-2 border-t border-sidebar-border shrink-0">
-          <SidebarUsageWidget isCollapsed={isCollapsed} />
-        </SidebarGroup>
-
         {/* Premium Promo Card - Only for free users */}
         {!isPremium && (
-          <SidebarGroup className="pt-0 shrink-0">
+          <SidebarGroup className="mt-auto pt-2 border-t border-sidebar-border shrink-0">
             <SidebarPromoCard isCollapsed={isCollapsed} />
           </SidebarGroup>
         )}
