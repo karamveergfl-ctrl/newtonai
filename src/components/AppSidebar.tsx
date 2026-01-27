@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useScrollContext } from "@/contexts/ScrollContext";
+import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   Sidebar,
@@ -86,6 +88,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const isCollapsed = state === "collapsed";
   const { isAdmin } = useAdminAccess();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   
   // Get scroll state from context - safely handle when not in provider
   let hasScrolled = false;
@@ -95,6 +98,25 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   } catch {
     // Not wrapped in ScrollProvider, default to not scrolled
   }
+
+  // Fetch user's subscription tier
+  useEffect(() => {
+    const fetchTier = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("subscription_tier")
+          .eq("id", user.id)
+          .maybeSingle();
+        
+        if (profile?.subscription_tier) {
+          setSubscriptionTier(profile.subscription_tier);
+        }
+      }
+    };
+    fetchTier();
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
@@ -307,6 +329,13 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
 
       <SidebarFooter className="p-2 border-t border-sidebar-border">
         <div className="space-y-1">
+          {/* Subscription Tier Badge */}
+          {!isCollapsed && (
+            <div className="px-3 py-2">
+              <SubscriptionTierBadge tier={subscriptionTier} size="sm" />
+            </div>
+          )}
+          
           {/* Theme Toggle */}
           <SidebarMenuButton asChild tooltip="Toggle Theme">
             <motion.button
