@@ -263,7 +263,7 @@ export const VideoCardWithTools = ({
                   ) : (
                     <FileText className="w-4 h-4 text-amber-500" />
                   )}
-                  Notes
+                  Summary
                 </Button>
               )}
               
@@ -440,7 +440,7 @@ export const VideoCardWithTools = ({
                     <FileText className="w-4 h-4 text-amber-500" />
                   )}
                 </div>
-                <span className="text-[10px] text-amber-500/70 group-hover/tool:text-amber-500 font-medium transition-colors">Notes</span>
+                <span className="text-[10px] text-amber-500/70 group-hover/tool:text-amber-500 font-medium transition-colors">Summary</span>
               </button>
             )}
             
