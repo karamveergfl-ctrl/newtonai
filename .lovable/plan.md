@@ -1,232 +1,119 @@
 
-# Unify Study Tools to Match Search Bar Video Tool Behavior
+Goal
+- Fix flashcards not flipping everywhere (Dashboard PDF flashcards, Search-bar video flashcards, tool pages flashcards).
+- Fix “Notes” from PDF: generated content opens a blank “Study Guide” screen.
+- Fix PDF toolbar tools (Quiz/Flashcards/Notes/Mind Map) so the Newton processing animation video always appears (Overlay → Result), matching the search-bar video tools behavior.
 
-## Problem Analysis
+What’s causing the issues (based on code review)
+1) Flashcards not flipping
+- `src/components/Flashcard.tsx` uses Tailwind/CSS classes (`rotate-y-180`) to apply a 3D `transform`, but the same element is a `motion.div` with `whileTap={{ scale: 0.98 }}`.
+- Framer Motion writes to the `transform` style, which can override the class-based `transform` (so rotateY never actually applies), making cards “not flip” even though state changes.
 
-You have multiple tools across different contexts that need to work consistently like the search bar video tool:
+2) Notes from PDF opens a blank “Study Guide”
+- In `src/pages/Index.tsx`, `handleGenerateSummary()` sets `showVideoSummaryScreen = true` (which renders the video-summary screen), but it writes the response into `summary` state, while the rendered screen reads from `videoSummary`.
+- Result: UI opens, but content is empty → blank page (matches your screenshot).
 
-| Tool Location | Current Behavior | Issue |
-|---------------|------------------|-------|
-| Text Selection (Image 1) | Direct API calls | No Newton animation, no settings dialog |
-| PDF Top Toolbar (Image 2) | Instant UI pattern | Different UX from video tools |
-| Video Panel (Image 4) | Has Newton animation | ✓ Reference implementation |
-| Search Bar (Image 5) | Has Newton animation | ✓ Target behavior |
+3) Newton animation video not showing for PDF toolbar tools
+- PDF toolbar buttons call document-level handlers:
+  - `handleGenerateQuizFromContent`
+  - `handleGenerateFlashcardsFromContent`
+  - `handleGenerateSummary`
+  - `handleGenerateMindMap`
+- These handlers still use the older “instant UI” flow (open result screen immediately) and do NOT consistently call `startVideoThinking()/startVideoWriting()/completeVideoProcessing()`.
+- So the overlay never appears for those actions.
 
-The search bar video tool uses:
-- Newton processing animation with thinking → writing → completed phases
-- `VideoGenerationSettingsDialog` for customization
-- Proper loading states with `ProcessingOverlay`
+Implementation plan (what I will change)
+A) Fix flip animation globally (Flashcard component)
+Files
+- `src/components/Flashcard.tsx`
 
-## Solution
+Changes
+- Move the flip transform fully into Framer Motion so rotateY and scale are composed correctly.
+- Replace:
+  - class toggling `rotate-y-180`
+  - with `animate={{ rotateY: isFlipped ? 180 : 0 }}` and a proper transition.
+- Keep 3D settings:
+  - keep `.perspective-1000` on wrapper
+  - keep `transformStyle: "preserve-3d"`
+  - keep back face with `transform: "rotateY(180deg)"`
 
-Update the Text Selection Toolbar and PDF Study Tools to use the same Newton animation workflow as the video tools.
+Acceptance
+- Clicking on the card flips.
+- Clicking “Flip Card” button flips.
+- Works in:
+  - `/dashboard` PDF flashcards (FlashcardDeck)
+  - `/tools/flashcards` (AIFlashcards)
+  - Anywhere else Flashcard is used.
 
-## Implementation
+B) Fix Notes (PDF) blank screen + unify document tools to Overlay → Result
+Files
+- `src/pages/Index.tsx`
 
-### 1. Update TextSelectionToolbar Props
+Changes (core)
+1) Replace the “instant UI” document-level handlers with the same Newton workflow used by search-bar video tools:
+- Update these functions:
+  - `handleGenerateQuizFromContent`
+  - `handleGenerateFlashcardsFromContent`
+  - `handleGenerateSummary`
+  - `handleGenerateMindMap`
+- New standard flow for each:
+  1. Validate content exists
+  2. `trySpendCredits(...)`
+  3. Set message: `setVideoProcessingMessage("...")`
+  4. `startVideoThinking()`
+  5. Call backend function
+  6. `startVideoWriting()`
+  7. On success: `setPendingVideoResult({ type, data, title })`
+  8. `completeVideoProcessing()`
+  9. On error: `resetVideoProcessing()`, clear relevant `isGenerating*`, `activeGenerating`, show toast
 
-**File: `src/components/TextSelectionToolbar.tsx`**
+2) Specifically fix Notes blank screen
+- Stop writing document notes into `summary` while rendering from `videoSummary`.
+- With the unified flow, we will always set:
+  - `pendingVideoResult.type = "summary"`
+  - `pendingVideoResult.data = { summary: ... }`
+  - `pendingVideoResult.title = fileData.name`
+- The existing “pending result” effect already populates `videoSummary` and opens the full-screen notes UI, so the Study Guide won’t be blank anymore.
 
-Add settings dialog integration - the toolbar should open settings dialog before generation (like video cards do):
+3) Ensure the overlay is truly “Overlay → Result”
+- Keep the logic that only opens the result UI after the processing phase returns to `idle` (your existing `useEffect` on `videoProcessingPhase` already does that).
+- Optionally (recommended): switch ProcessingOverlay usage to `variant="overlay"` (full-screen) and remove the extra wrapper div so the overlay presentation matches your desired behavior more closely.
 
-```tsx
-// Add new imports
-import { UniversalStudySettingsDialog, UniversalStudySettings } from "./UniversalStudySettingsDialog";
-import { useState } from "react";
+Acceptance
+- Clicking Notes in the PDF toolbar:
+  - shows Newton processing animation video
+  - then opens Study Guide with real generated content (not blank)
+- Clicking Quiz/Flashcards/Mind Map in PDF toolbar:
+  - shows Newton processing animation video
+  - then opens the correct result view
+- If generation fails:
+  - overlay closes
+  - no blank result screen remains open
+  - user sees a clear error toast.
 
-// Add state for pending tool and settings dialog
-const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-const [pendingToolType, setPendingToolType] = useState<string | null>(null);
+C) Quick validation checklist (manual test steps)
+1) Dashboard PDF toolbar
+- Upload a PDF
+- Click Notes → should show Newton overlay → then Study Guide populated
+- Click Flashcards → Newton overlay → flashcards open → flip works
+- Click Quiz → Newton overlay → quiz questions show
+- Click Mind Map → Newton overlay → mind map shows
 
-// Modify button handlers to open settings first
-const handleToolClick = (toolType: string) => {
-  setPendingToolType(toolType);
-  setSettingsDialogOpen(true);
-};
+2) Selected text tools (within PDF)
+- Select text → open selection toolbar → choose Flashcards → overlay → deck opens → flip works
 
-// Add settings dialog component at the end
-```
+3) Tool pages
+- Go to `/tools/flashcards` and generate → flip works
 
-### 2. Update Index.tsx Text Selection Handlers
+Risk / edge cases to handle in code
+- Ensure all document-level handlers set/clear:
+  - `setActiveGenerating(...)`
+  - `setIsGeneratingFlashcards/Quiz/Summary/MindMap(...)`
+  - `resetVideoProcessing()` on error
+- Make sure “Notes” keeps using the same backend function (`generate-summary`) and reads `data.summary`.
 
-**File: `src/pages/Index.tsx`**
+Files to change (summary)
+- `src/components/Flashcard.tsx` (fix flipping everywhere)
+- `src/pages/Index.tsx` (fix notes blank screen + enable Newton overlay for PDF toolbar tools)
 
-The text selection handlers (`handleGenerateQuizFromText`, etc.) need to use the Newton processing animation like video handlers do:
-
-**Current Pattern (lines 1523-1581):**
-```tsx
-const handleGenerateFlashcardsFromText = async (selectedText: string) => {
-  // INSTANT UI: Show flashcards screen immediately with loading
-  setFlashcards([]);
-  setFlashcardTitle("Flashcards from Selected Text");
-  setShowFlashcardsScreen(true);
-  setIsGeneratingFlashcards(true);
-  // ... API call
-};
-```
-
-**Target Pattern (match video handlers, lines 624-685):**
-```tsx
-const handleGenerateFlashcardsFromText = async (selectedText: string, settings?: GenerationSettings) => {
-  // Check credits
-  const allowed = await trySpendCredits("flashcards");
-  if (!allowed) return;
-  
-  // Start Newton animation
-  setVideoProcessingMessage("Generating flashcards...");
-  startVideoThinking();
-  setActiveGenerating("flashcards");
-  setIsGeneratingFlashcards(true);
-  
-  try {
-    // API call
-    startVideoWriting();
-    const response = await fetch(...);
-    const data = await response.json();
-    
-    // Store result and trigger completion animation
-    setPendingVideoResult({ type: 'flashcards', data, title: "Selected Text" });
-    completeVideoProcessing();
-  } catch (error) {
-    resetVideoProcessing();
-    // ... error handling
-  }
-};
-```
-
-### 3. Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/TextSelectionToolbar.tsx` | Add settings dialog, change handlers to open settings first |
-| `src/components/MobileTextSelectionDrawer.tsx` | Add settings dialog for mobile |
-| `src/pages/Index.tsx` | Update `handleGenerate*FromText` functions to use Newton animation pattern |
-| `src/components/StudyToolsBar.tsx` | Optionally add Newton animation for PDF-based tools |
-
-### 4. Detailed Changes
-
-#### A. TextSelectionToolbar.tsx - Add Settings Dialog
-
-```tsx
-import { useState } from "react";
-import { UniversalStudySettingsDialog } from "./UniversalStudySettingsDialog";
-
-interface TextSelectionToolbarProps {
-  // ... existing props
-  // Add settings callback variant
-  onGenerateQuizWithSettings?: (settings: any) => void;
-  onGenerateFlashcardsWithSettings?: (settings: any) => void;
-  onGenerateSummaryWithSettings?: (settings: any) => void;
-  onGenerateMindMapWithSettings?: (settings: any) => void;
-}
-
-export const TextSelectionToolbar = ({
-  // ... existing props
-}: TextSelectionToolbarProps) => {
-  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  const [pendingToolType, setPendingToolType] = useState<"quiz" | "flashcards" | "summary" | "mindmap" | null>(null);
-  
-  const handleToolClick = (toolType: "quiz" | "flashcards" | "summary" | "mindmap") => {
-    setPendingToolType(toolType);
-    setSettingsDialogOpen(true);
-  };
-  
-  const handleGenerateWithSettings = (settings: any) => {
-    if (!pendingToolType) return;
-    switch (pendingToolType) {
-      case "quiz":
-        onGenerateQuiz();
-        break;
-      // ... other cases
-    }
-    setPendingToolType(null);
-  };
-  
-  return (
-    <>
-      {/* Existing card UI with buttons calling handleToolClick instead */}
-      
-      {/* Add Settings Dialog */}
-      {pendingToolType && (
-        <UniversalStudySettingsDialog
-          open={settingsDialogOpen}
-          onOpenChange={setSettingsDialogOpen}
-          toolType={pendingToolType}
-          contentSource="text"
-          onGenerate={handleGenerateWithSettings}
-        />
-      )}
-    </>
-  );
-};
-```
-
-#### B. Index.tsx - Update Text Handlers to Use Newton Animation
-
-Update all four handlers (`handleGenerateQuizFromText`, `handleGenerateFlashcardsFromText`, `handleGenerateSummaryFromText`, `handleGenerateMindMapFromText`) to follow this pattern:
-
-```tsx
-const handleGenerateFlashcardsFromText = async (selectedText: string, settings?: GenerationSettings) => {
-  if (!selectedText || selectedText.length < 20) {
-    toast({ title: "Text too short", ... });
-    return;
-  }
-  
-  const allowed = await trySpendCredits("flashcards");
-  if (!allowed) return;
-  
-  // Newton animation start
-  setVideoProcessingMessage("Generating flashcards from selected text...");
-  startVideoThinking();
-  setActiveGenerating("flashcards");
-  setIsGeneratingFlashcards(true);
-  
-  try {
-    const { data: { session: authSession } } = await supabase.auth.getSession();
-    if (!authSession?.access_token) throw new Error("Not authenticated");
-    
-    startVideoWriting();
-    
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authSession.access_token}`
-      },
-      body: JSON.stringify({
-        type: "text",
-        content: selectedText,
-        title: "Selected Text",
-        settings
-      })
-    });
-    
-    if (!response.ok) throw new Error("Failed to generate flashcards");
-    const data = await response.json();
-    
-    // Store result and complete animation
-    setPendingVideoResult({ type: 'flashcards', data, title: "Selected Text Flashcards" });
-    completeVideoProcessing();
-  } catch (error) {
-    console.error("Error:", error);
-    resetVideoProcessing();
-    setIsGeneratingFlashcards(false);
-    setActiveGenerating(null);
-    toast({ title: "Error", description: "Failed to generate flashcards", variant: "destructive" });
-  }
-};
-```
-
-## Benefits
-
-1. **Consistent UX** - All tools (text selection, PDF toolbar, video cards, search bar) use the same Newton animation workflow
-2. **Settings Dialogs** - Users can customize generation before it starts (count, difficulty, etc.)
-3. **Visual Feedback** - Newton character provides engaging feedback during processing
-4. **Unified Codebase** - Easier to maintain with one pattern for all generation tools
-
-## Technical Notes
-
-- The Newton animation uses `useProcessingState` hook with phases: `idle → thinking → writing → completed → idle`
-- The `ProcessingOverlay` component displays the Newton animation
-- `pendingVideoResult` stores results until animation completes, then displays the content
-- This pattern prevents the jarring "instant UI" behavior and provides a polished experience
+After you approve this plan, I’ll switch to implementation mode and apply the fixes.
