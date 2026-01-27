@@ -49,10 +49,10 @@ import { cn } from "@/lib/utils";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 const studyTools = [
-  { id: "pdf-chat", label: "Chat with PDF", icon: MessageSquareText, path: "/pdf-chat" },
   { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz" },
   { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards" },
   { id: "podcast", label: "AI Podcast", icon: Podcast, path: "/tools/ai-podcast" },
+  { id: "pdf-chat", label: "Chat with PDF", icon: MessageSquareText, path: "/pdf-chat" },
   { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map" },
   { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes" },
   { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer" },
