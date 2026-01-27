@@ -471,29 +471,54 @@ const Index = () => {
           console.error("Error fetching videos:", videoError);
         }
       } else {
-        // Text-only search - use search-youtube to find videos
+        // Text-only search - search both animation and explanation videos in parallel
         setSearchQuery(query);
         setShowVideosPanel(false);
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authSession.access_token}`
-          },
-          body: JSON.stringify({
-            query
+        setAnimationNextPageToken(null);
+        setExplanationNextPageToken(null);
+        
+        const [animationResponse, explanationResponse] = await Promise.all([
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authSession.access_token}`
+            },
+            body: JSON.stringify({
+              query,
+              type: "animation"
+            })
+          }),
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authSession.access_token}`
+            },
+            body: JSON.stringify({
+              query,
+              type: "explanation"
+            })
           })
-        });
-        if (!response.ok) {
+        ]);
+        
+        if (!animationResponse.ok || !explanationResponse.ok) {
           throw new Error("Failed to search videos");
         }
-        const data = await response.json();
-        setExplanationVideos(data.videos || []);
-        setAnimationVideos([]);
+        
+        const [animationData, explanationData] = await Promise.all([
+          animationResponse.json(),
+          explanationResponse.json()
+        ]);
+        
+        setAnimationVideos(animationData.videos || []);
+        setExplanationVideos(explanationData.videos || []);
+        setAnimationNextPageToken(animationData.nextPageToken || null);
+        setExplanationNextPageToken(explanationData.nextPageToken || null);
         setShowVideosPanel(true);
         toast({
           title: "Videos Found!",
-          description: `Found ${data.videos?.length || 0} videos for "${query}"`
+          description: `Found ${animationData.videos?.length || 0} animations and ${explanationData.videos?.length || 0} explanations for "${query}"`
         });
       }
 
