@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { motion } from "framer-motion";
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 
 interface FlashcardProps {
   front: string;
@@ -25,7 +25,7 @@ export const Flashcard = ({
   onMarkMastered
 }: FlashcardProps) => {
   return (
-    <div className="w-full max-w-sm sm:max-w-md mx-auto perspective-1000 px-2 sm:px-0">
+    <div className="w-full max-w-sm sm:max-w-md mx-auto px-2 sm:px-0" style={{ perspective: "1000px" }}>
       {/* Card number badge */}
       <div className="flex items-center justify-center gap-3 mb-3 sm:mb-4">
         <motion.div 
@@ -45,17 +45,16 @@ export const Flashcard = ({
 
       <motion.div
         onClick={onFlip}
-        className={cn(
-          "relative w-full aspect-[4/3] cursor-pointer transition-transform duration-500 preserve-3d",
-          isFlipped && "rotate-y-180"
-        )}
-        style={{ transformStyle: "preserve-3d" }}
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
         whileTap={{ scale: 0.98 }}
+        className="relative w-full aspect-[4/3] cursor-pointer"
+        style={{ transformStyle: "preserve-3d" }}
       >
         {/* Front */}
         <div
           className={cn(
-            "absolute inset-0 backface-hidden rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col items-center justify-center",
+            "absolute inset-0 rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col items-center justify-center",
             "bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20",
             "border-2 border-primary/30 shadow-xl",
             "min-h-[200px] sm:min-h-[280px]"
@@ -86,9 +85,9 @@ export const Flashcard = ({
         {/* Back */}
         <div
           className={cn(
-            "absolute inset-0 backface-hidden rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col items-center justify-center",
+            "absolute inset-0 rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col items-center justify-center",
             "bg-gradient-to-br from-secondary/20 via-secondary/10 to-accent/20",
-            "border-2 border-secondary/30 shadow-xl rotate-y-180",
+            "border-2 border-secondary/30 shadow-xl",
             "min-h-[200px] sm:min-h-[280px]"
           )}
           style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
