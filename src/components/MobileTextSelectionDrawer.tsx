@@ -144,7 +144,7 @@ export const MobileTextSelectionDrawer = ({
                 {isGeneratingFlashcards ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <BookOpen className="w-5 h-5 text-secondary" />
+                  <BookOpen className="w-5 h-5 text-violet-500" />
                 )}
                 Flashcards
               </Button>
@@ -158,9 +158,9 @@ export const MobileTextSelectionDrawer = ({
                 {isGeneratingSummary ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <FileText className="w-5 h-5 text-accent" />
+                  <FileText className="w-5 h-5 text-amber-500" />
                 )}
-                Summary
+                Notes
               </Button>
 
               <Button
@@ -172,7 +172,7 @@ export const MobileTextSelectionDrawer = ({
                 {isGeneratingMindMap ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <Network className="w-5 h-5 text-primary" />
+                  <Network className="w-5 h-5 text-rose-500" />
                 )}
                 Mind Map
               </Button>

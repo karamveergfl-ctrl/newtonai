@@ -138,15 +138,15 @@ export const TextSelectionToolbar = ({
               variant="outline"
               size="sm"
               disabled={isAnyLoading}
-              className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-secondary/10 hover:border-secondary/50"
+              className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-violet-500/10 hover:border-violet-500/50"
               title="Generate Flashcards"
             >
               {isGeneratingFlashcards ? (
-                <Loader2 className="w-4 h-4 animate-spin text-secondary" />
+                <Loader2 className="w-4 h-4 animate-spin text-violet-500" />
               ) : (
-                <BookOpen className="w-4 h-4 text-secondary" />
+                <BookOpen className="w-4 h-4 text-violet-500" />
               )}
-              <span className="text-[10px] leading-tight">Cards</span>
+              <span className="text-[10px] leading-tight">Flashcards</span>
             </Button>
 
             <Button 
@@ -154,15 +154,15 @@ export const TextSelectionToolbar = ({
               variant="outline"
               size="sm"
               disabled={isAnyLoading}
-              className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-accent/10 hover:border-accent/50"
-              title="Generate Summary"
+              className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-amber-500/10 hover:border-amber-500/50"
+              title="Generate Notes"
             >
               {isGeneratingSummary ? (
-                <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
               ) : (
-                <FileText className="w-4 h-4 text-accent" />
+                <FileText className="w-4 h-4 text-amber-500" />
               )}
-              <span className="text-[10px] leading-tight">Summary</span>
+              <span className="text-[10px] leading-tight">Notes</span>
             </Button>
 
             <Button 
@@ -170,13 +170,13 @@ export const TextSelectionToolbar = ({
               variant="outline"
               size="sm"
               disabled={isAnyLoading}
-              className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-primary/10 hover:border-primary/50"
+              className="flex flex-col items-center gap-1 h-auto py-2 px-1 hover:bg-rose-500/10 hover:border-rose-500/50"
               title="Generate Mind Map"
             >
               {isGeneratingMindMap ? (
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <Loader2 className="w-4 h-4 animate-spin text-rose-500" />
               ) : (
-                <Network className="w-4 h-4 text-primary" />
+                <Network className="w-4 h-4 text-rose-500" />
               )}
               <span className="text-[10px] leading-tight">Map</span>
             </Button>
