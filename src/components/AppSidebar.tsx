@@ -120,7 +120,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
       collapsible="icon"
       className="border-r border-sidebar-border bg-sidebar"
     >
-      <SidebarHeader className="p-3">
+      <SidebarHeader className="p-2">
         <div className={cn(
           "flex items-center",
           isCollapsed ? "justify-center" : "justify-between"
@@ -160,7 +160,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                       "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
                       isCollapsed 
                         ? "justify-center p-2.5 gap-0" 
-                        : "gap-3 px-3 py-2",
+                        : "gap-3 px-3 py-1.5",
                       isActive("/dashboard")
                         ? "bg-primary text-primary-foreground"
                         : "text-sidebar-foreground hover:bg-sidebar-accent"
@@ -176,7 +176,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         </SidebarGroup>
 
         {/* Study Tools - No scroll, all visible */}
-        <SidebarGroup className="mt-2 shrink-0">
+        <SidebarGroup className="mt-1 shrink-0">
           {!isCollapsed && (
             <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Study Tools
@@ -195,7 +195,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                         "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
                         isCollapsed 
                           ? "justify-center p-2.5 gap-0" 
-                          : "gap-3 px-3 py-2",
+                          : "gap-3 px-3 py-1.5",
                         isActive(tool.path)
                           ? "bg-primary text-primary-foreground"
                           : "text-sidebar-foreground hover:bg-sidebar-accent"
