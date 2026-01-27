@@ -115,7 +115,7 @@ export const PDFReader = ({
       const selection = window.getSelection();
       const text = selection?.toString().trim();
       
-      if (text && text.length >= 5) {
+      if (text && text.length >= 1) {
         setSelectedText(text);
         if (isMobile) {
           // On mobile, wait for long-press to trigger
@@ -183,7 +183,7 @@ export const PDFReader = ({
       const selection = window.getSelection();
       const text = selection?.toString().trim();
       
-      if (text && text.length >= 3) {
+      if (text && text.length >= 1) {
         setSelectedText(text);
         setShowMobilePrompt(true);
         // Haptic feedback

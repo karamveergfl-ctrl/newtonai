@@ -1484,11 +1484,12 @@ const Index = () => {
 
   // Generate study tools from selected text - using Newton animation pattern
   const handleGenerateQuizFromText = async (selectedText: string, settings?: UniversalGenerationSettings) => {
-    if (!selectedText || selectedText.length < 20) {
+    const text = selectedText?.trim();
+    if (!text) {
       toast({
-        title: "Text too short",
-        description: "Please select more text to generate a quiz",
-        variant: "destructive"
+        title: "No text selected",
+        description: "Please select some text to generate a quiz",
+        variant: "destructive",
       });
       return;
     }
@@ -1524,7 +1525,7 @@ const Index = () => {
         },
         body: JSON.stringify({
           type: "text",
-          content: selectedText,
+          content: text,
           title: "Selected Text Quiz",
           settings: settings ? {
             count: settings.count,
@@ -1553,11 +1554,12 @@ const Index = () => {
     }
   };
   const handleGenerateFlashcardsFromText = async (selectedText: string, settings?: UniversalGenerationSettings) => {
-    if (!selectedText || selectedText.length < 20) {
+    const text = selectedText?.trim();
+    if (!text) {
       toast({
-        title: "Text too short",
-        description: "Please select more text to generate flashcards",
-        variant: "destructive"
+        title: "No text selected",
+        description: "Please select some text to generate flashcards",
+        variant: "destructive",
       });
       return;
     }
@@ -1593,7 +1595,7 @@ const Index = () => {
         },
         body: JSON.stringify({
           type: "text",
-          content: selectedText,
+          content: text,
           title: "Selected Text",
           settings: settings ? {
             count: settings.count,
@@ -1622,11 +1624,12 @@ const Index = () => {
     }
   };
   const handleGenerateSummaryFromText = async (selectedText: string, settings?: UniversalGenerationSettings) => {
-    if (!selectedText || selectedText.length < 20) {
+    const text = selectedText?.trim();
+    if (!text) {
       toast({
-        title: "Text too short",
-        description: "Please select more text to generate a summary",
-        variant: "destructive"
+        title: "No text selected",
+        description: "Please select some text to generate notes",
+        variant: "destructive",
       });
       return;
     }
@@ -1661,7 +1664,7 @@ const Index = () => {
           Authorization: `Bearer ${authSession.access_token}`
         },
         body: JSON.stringify({
-          content: selectedText,
+          content: text,
           detailLevel: settings?.detailLevel || "standard",
           format: settings?.summaryFormat || "concise",
           includeComparison: settings?.includeComparison ?? true
@@ -1688,11 +1691,12 @@ const Index = () => {
     }
   };
   const handleGenerateMindMapFromText = async (selectedText: string, settings?: UniversalGenerationSettings) => {
-    if (!selectedText || selectedText.length < 20) {
+    const text = selectedText?.trim();
+    if (!text) {
       toast({
-        title: "Text too short",
-        description: "Please select more text to generate a mind map",
-        variant: "destructive"
+        title: "No text selected",
+        description: "Please select some text to generate a mind map",
+        variant: "destructive",
       });
       return;
     }
@@ -1727,7 +1731,7 @@ const Index = () => {
           Authorization: `Bearer ${authSession.access_token}`
         },
         body: JSON.stringify({
-          content: selectedText,
+          content: text,
           detailLevel: settings?.detailLevel
         })
       });
