@@ -24,6 +24,7 @@ import { FullScreenStudyTool } from "@/components/FullScreenStudyTool";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { GenerationSettings } from "@/components/GenerationSettingsDialog";
 import { VideoGenerationSettings } from "@/components/VideoGenerationSettingsDialog";
+import { UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { AppLayout } from "@/components/AppLayout";
 import Logo from "@/components/Logo";
@@ -1459,8 +1460,8 @@ const Index = () => {
     }
   };
 
-  // Generate study tools from selected text
-  const handleGenerateQuizFromText = async (selectedText: string) => {
+  // Generate study tools from selected text - using Newton animation pattern
+  const handleGenerateQuizFromText = async (selectedText: string, settings?: UniversalGenerationSettings) => {
     if (!selectedText || selectedText.length < 20) {
       toast({
         title: "Text too short",
@@ -1474,10 +1475,10 @@ const Index = () => {
     const allowed = await trySpendCredits("quiz");
     if (!allowed) return;
     
-    // INSTANT UI: Show quiz screen immediately with loading
-    setQuizQuestions([]);
-    setQuizTitle("Quiz from Selected Text");
-    setShowQuizScreen(true);
+    // Start Newton animation
+    setVideoProcessingMessage("Generating quiz from selected text...");
+    startVideoThinking();
+    setActiveGenerating("quiz");
     setIsGeneratingQuiz(true);
     
     try {
@@ -1489,6 +1490,10 @@ const Index = () => {
       if (!authSession?.access_token) {
         throw new Error("Not authenticated");
       }
+      
+      // Switch to writing phase
+      startVideoWriting();
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-quiz`, {
         method: "POST",
         headers: {
@@ -1498,29 +1503,34 @@ const Index = () => {
         body: JSON.stringify({
           type: "text",
           content: selectedText,
-          title: "Selected Text Quiz"
+          title: "Selected Text Quiz",
+          settings: settings ? {
+            count: settings.count,
+            difficulty: settings.difficulty
+          } : undefined
         })
       });
       if (!response.ok) {
         throw new Error("Failed to generate quiz");
       }
       const data = await response.json();
-      setQuizQuestions(data.questions);
+      
+      // Store result and trigger completion animation
+      setPendingVideoResult({ type: 'quiz', data, title: "Quiz from Selected Text" });
+      completeVideoProcessing();
     } catch (error) {
       console.error("Error generating quiz from text:", error);
-      setShowQuizScreen(false);
-      setQuizQuestions([]);
-      setQuizTitle("");
+      resetVideoProcessing();
+      setIsGeneratingQuiz(false);
+      setActiveGenerating(null);
       toast({
         title: "Error",
         description: "Failed to generate quiz",
         variant: "destructive"
       });
-    } finally {
-      setIsGeneratingQuiz(false);
     }
   };
-  const handleGenerateFlashcardsFromText = async (selectedText: string) => {
+  const handleGenerateFlashcardsFromText = async (selectedText: string, settings?: UniversalGenerationSettings) => {
     if (!selectedText || selectedText.length < 20) {
       toast({
         title: "Text too short",
@@ -1534,10 +1544,10 @@ const Index = () => {
     const allowed = await trySpendCredits("flashcards");
     if (!allowed) return;
     
-    // INSTANT UI: Show flashcards screen immediately with loading
-    setFlashcards([]);
-    setFlashcardTitle("Flashcards from Selected Text");
-    setShowFlashcardsScreen(true);
+    // Start Newton animation
+    setVideoProcessingMessage("Generating flashcards from selected text...");
+    startVideoThinking();
+    setActiveGenerating("flashcards");
     setIsGeneratingFlashcards(true);
     
     try {
@@ -1549,6 +1559,10 @@ const Index = () => {
       if (!authSession?.access_token) {
         throw new Error("Not authenticated");
       }
+      
+      // Switch to writing phase
+      startVideoWriting();
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`, {
         method: "POST",
         headers: {
@@ -1558,29 +1572,34 @@ const Index = () => {
         body: JSON.stringify({
           type: "text",
           content: selectedText,
-          title: "Selected Text"
+          title: "Selected Text",
+          settings: settings ? {
+            count: settings.count,
+            difficulty: settings.difficulty
+          } : undefined
         })
       });
       if (!response.ok) {
         throw new Error("Failed to generate flashcards");
       }
       const data = await response.json();
-      setFlashcards(data.flashcards);
+      
+      // Store result and trigger completion animation
+      setPendingVideoResult({ type: 'flashcards', data, title: "Flashcards from Selected Text" });
+      completeVideoProcessing();
     } catch (error) {
       console.error("Error generating flashcards from text:", error);
-      setShowFlashcardsScreen(false);
-      setFlashcards([]);
-      setFlashcardTitle("");
+      resetVideoProcessing();
+      setIsGeneratingFlashcards(false);
+      setActiveGenerating(null);
       toast({
         title: "Error",
         description: "Failed to generate flashcards",
         variant: "destructive"
       });
-    } finally {
-      setIsGeneratingFlashcards(false);
     }
   };
-  const handleGenerateSummaryFromText = async (selectedText: string) => {
+  const handleGenerateSummaryFromText = async (selectedText: string, settings?: UniversalGenerationSettings) => {
     if (!selectedText || selectedText.length < 20) {
       toast({
         title: "Text too short",
@@ -1594,10 +1613,10 @@ const Index = () => {
     const allowed = await trySpendCredits("summary");
     if (!allowed) return;
     
-    // INSTANT UI: Show summary screen immediately with loading
-    setSummary("");
-    setShowVideoSummaryScreen(true);
-    setVideoStudyToolTitle("Summary from Selected Text");
+    // Start Newton animation
+    setVideoProcessingMessage("Generating summary from selected text...");
+    startVideoThinking();
+    setActiveGenerating("summary");
     setIsGeneratingSummary(true);
     
     try {
@@ -1609,6 +1628,10 @@ const Index = () => {
       if (!authSession?.access_token) {
         throw new Error("Not authenticated");
       }
+      
+      // Switch to writing phase
+      startVideoWriting();
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-summary`, {
         method: "POST",
         headers: {
@@ -1616,27 +1639,31 @@ const Index = () => {
           Authorization: `Bearer ${authSession.access_token}`
         },
         body: JSON.stringify({
-          content: selectedText
+          content: selectedText,
+          detailLevel: settings?.detailLevel
         })
       });
       if (!response.ok) {
         throw new Error("Failed to generate summary");
       }
       const data = await response.json();
-      setSummary(data.summary);
+      
+      // Store result and trigger completion animation
+      setPendingVideoResult({ type: 'summary', data, title: "Summary from Selected Text" });
+      completeVideoProcessing();
     } catch (error) {
       console.error("Error generating summary from text:", error);
-      setShowVideoSummaryScreen(false);
+      resetVideoProcessing();
+      setIsGeneratingSummary(false);
+      setActiveGenerating(null);
       toast({
         title: "Error",
         description: "Failed to generate summary",
         variant: "destructive"
       });
-    } finally {
-      setIsGeneratingSummary(false);
     }
   };
-  const handleGenerateMindMapFromText = async (selectedText: string) => {
+  const handleGenerateMindMapFromText = async (selectedText: string, settings?: UniversalGenerationSettings) => {
     if (!selectedText || selectedText.length < 20) {
       toast({
         title: "Text too short",
@@ -1650,11 +1677,10 @@ const Index = () => {
     const allowed = await trySpendCredits("mind_map");
     if (!allowed) return;
     
-    // INSTANT UI: Show mind map screen immediately with loading
-    setMindMapData(null);
-    setMindMap("");
-    setShowFullScreenMindMap(true);
-    setFullScreenMindMapTitle("Mind Map from Selected Text");
+    // Start Newton animation
+    setVideoProcessingMessage("Generating mind map from selected text...");
+    startVideoThinking();
+    setActiveGenerating("mindmap");
     setIsGeneratingMindMap(true);
     
     try {
@@ -1666,6 +1692,10 @@ const Index = () => {
       if (!authSession?.access_token) {
         throw new Error("Not authenticated");
       }
+      
+      // Switch to writing phase
+      startVideoWriting();
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`, {
         method: "POST",
         headers: {
@@ -1673,27 +1703,28 @@ const Index = () => {
           Authorization: `Bearer ${authSession.access_token}`
         },
         body: JSON.stringify({
-          content: selectedText
+          content: selectedText,
+          detailLevel: settings?.detailLevel
         })
       });
       if (!response.ok) {
         throw new Error("Failed to generate mind map");
       }
       const data = await response.json();
-      setMindMap(data.mindMap);
-      if (data.mindMapData) {
-        setMindMapData(data.mindMapData);
-      }
+      
+      // Store result and trigger completion animation
+      setPendingVideoResult({ type: 'mindmap', data, title: "Mind Map from Selected Text" });
+      completeVideoProcessing();
     } catch (error) {
       console.error("Error generating mind map from text:", error);
-      setShowFullScreenMindMap(false);
+      resetVideoProcessing();
+      setIsGeneratingMindMap(false);
+      setActiveGenerating(null);
       toast({
         title: "Error",
         description: "Failed to generate mind map",
         variant: "destructive"
       });
-    } finally {
-      setIsGeneratingMindMap(false);
     }
   };
 
