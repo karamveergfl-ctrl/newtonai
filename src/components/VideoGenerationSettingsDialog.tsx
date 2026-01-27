@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Brain, BookOpen, FileText, Network, Zap, List, GraduationCap, Circle, GitBranch, Boxes, Clock, Sparkles } from "lucide-react";
+import { Brain, BookOpen, FileText, Network, Zap, List, GraduationCap, Circle, GitBranch, Boxes, Clock, Sparkles, Table2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
@@ -22,6 +23,7 @@ export interface VideoGenerationSettings {
   detailLevel?: "brief" | "standard" | "detailed";
   summaryFormat?: "concise" | "detailed" | "bullet-points" | "academic";
   mindMapStyle?: "radial" | "tree" | "cluster" | "timeline";
+  includeComparison?: boolean;
 }
 
 type SummaryFormat = "concise" | "detailed" | "bullet-points" | "academic";
@@ -114,6 +116,7 @@ export const VideoGenerationSettingsDialog = ({
   const [detailLevel, setDetailLevel] = useState(2);
   const [summaryFormat, setSummaryFormat] = useState<SummaryFormat>("concise");
   const [mindMapStyle, setMindMapStyle] = useState<MindMapStyle>("radial");
+  const [includeComparison, setIncludeComparison] = useState(true);
 
   const handleGenerate = () => {
     onGenerate({
@@ -121,7 +124,8 @@ export const VideoGenerationSettingsDialog = ({
       difficulty: difficulty === 1 ? "easy" : difficulty === 2 ? "medium" : "hard",
       detailLevel: detailLevel === 1 ? "brief" : detailLevel === 2 ? "standard" : "detailed",
       summaryFormat: type === "summary" ? summaryFormat : undefined,
-      mindMapStyle: type === "mindmap" ? mindMapStyle : undefined
+      mindMapStyle: type === "mindmap" ? mindMapStyle : undefined,
+      includeComparison: type === "summary" ? includeComparison : undefined
     });
     onOpenChange(false);
   };
@@ -190,7 +194,22 @@ export const VideoGenerationSettingsDialog = ({
             </div>
           )}
 
-          {/* Mind Map Style Selection - Only for Mind Map */}
+          {/* Comparison Table Toggle - For Summary */}
+          {type === "summary" && (
+            <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-2">
+                <Table2 className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <Label className="text-sm font-medium">Auto-generate Comparison Tables</Label>
+                  <p className="text-xs text-muted-foreground">Creates tables when comparing concepts</p>
+                </div>
+              </div>
+              <Switch
+                checked={includeComparison}
+                onCheckedChange={setIncludeComparison}
+              />
+            </div>
+          )}
           {type === "mindmap" && (
             <div className="space-y-3">
               <Label className="text-sm font-medium">Mind Map Style</Label>

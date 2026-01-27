@@ -854,7 +854,9 @@ const Index = () => {
         },
         body: JSON.stringify({
           content: transcript.slice(0, 10000),
-          detailLevel: settings?.detailLevel
+          detailLevel: settings?.detailLevel || "standard",
+          format: settings?.summaryFormat || "concise",
+          includeComparison: settings?.includeComparison ?? true
         })
       });
       if (!response.ok) {
@@ -1660,7 +1662,9 @@ const Index = () => {
         },
         body: JSON.stringify({
           content: selectedText,
-          detailLevel: settings?.detailLevel
+          detailLevel: settings?.detailLevel || "standard",
+          format: settings?.summaryFormat || "concise",
+          includeComparison: settings?.includeComparison ?? true
         })
       });
       if (!response.ok) {
