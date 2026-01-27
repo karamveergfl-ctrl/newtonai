@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { GamificationBadge } from "@/components/GamificationBadge";
-import { CreditBalance } from "@/components/CreditBalance";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
@@ -19,7 +18,6 @@ export function TopStatsBar() {
             {/* Bracket-style separator - mobile only */}
             <div className="md:hidden h-6 w-[3px] rounded-full bg-primary/20 shadow-[0_0_6px_hsl(var(--primary)/0.3)] animate-pulse" />
             <GamificationBadge />
-            <CreditBalance showLabel />
           </div>
           <div className="flex items-center gap-1 bg-muted/50 rounded-full px-1 py-1">
             <ThemeToggle />
