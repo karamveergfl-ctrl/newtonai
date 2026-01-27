@@ -361,6 +361,7 @@ export function PDFViewerWithHighlight({
         <div 
           className="flex justify-center items-start p-4 min-h-full"
           onMouseUp={handleTextSelection}
+          onTouchEnd={handleTextSelection}
           ref={containerRef}
         >
           <Document
