@@ -130,7 +130,8 @@ const AIFlashcards = () => {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ 
-            type: "text",
+            type: type === "youtube" ? "video" : "text",
+            videoTitle: type === "youtube" ? (textContent.split('\n')[0]?.replace('Video Title: ', '') || 'YouTube Video') : undefined,
             content: textContent.slice(0, 8000),
             language: metadata?.language || "en",
             settings: {
