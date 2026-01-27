@@ -646,10 +646,10 @@ export const ImageViewer = ({
             selectedText={selectedText}
             onDismiss={handleDismiss}
             onSearchVideos={handleSearch}
-            onGenerateQuiz={(settings) => onGenerateQuizFromText?.(selectedText, settings)}
-            onGenerateFlashcards={(settings) => onGenerateFlashcardsFromText?.(selectedText, settings)}
-            onGenerateSummary={(settings) => onGenerateSummaryFromText?.(selectedText, settings)}
-            onGenerateMindMap={(settings) => onGenerateMindMapFromText?.(selectedText, settings)}
+            onGenerateQuiz={(text, settings) => onGenerateQuizFromText?.(text, settings)}
+            onGenerateFlashcards={(text, settings) => onGenerateFlashcardsFromText?.(text, settings)}
+            onGenerateSummary={(text, settings) => onGenerateSummaryFromText?.(text, settings)}
+            onGenerateMindMap={(text, settings) => onGenerateMindMapFromText?.(text, settings)}
             isGeneratingQuiz={isGeneratingQuiz}
             isGeneratingFlashcards={isGeneratingFlashcards}
             isGeneratingSummary={isGeneratingSummary}
@@ -665,10 +665,10 @@ export const ImageViewer = ({
         onOpenChange={setShowMobilePrompt}
         selectedText={selectedText}
         onSearchVideos={handleSearch}
-        onGenerateQuiz={(settings) => onGenerateQuizFromText?.(selectedText, settings)}
-        onGenerateFlashcards={(settings) => onGenerateFlashcardsFromText?.(selectedText, settings)}
-        onGenerateSummary={(settings) => onGenerateSummaryFromText?.(selectedText, settings)}
-        onGenerateMindMap={(settings) => onGenerateMindMapFromText?.(selectedText, settings)}
+        onGenerateQuiz={(text, settings) => onGenerateQuizFromText?.(text, settings)}
+        onGenerateFlashcards={(text, settings) => onGenerateFlashcardsFromText?.(text, settings)}
+        onGenerateSummary={(text, settings) => onGenerateSummaryFromText?.(text, settings)}
+        onGenerateMindMap={(text, settings) => onGenerateMindMapFromText?.(text, settings)}
         isGeneratingQuiz={isGeneratingQuiz}
         isGeneratingFlashcards={isGeneratingFlashcards}
         isGeneratingSummary={isGeneratingSummary}
