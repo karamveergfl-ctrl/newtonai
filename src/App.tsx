@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { HelmetProvider } from "react-helmet-async";
-import { CreditsProvider } from "@/contexts/CreditsContext";
 import { PodcastProvider } from "@/contexts/PodcastContext";
 import { ProcessingOverlayProvider } from "@/contexts/ProcessingOverlayContext";
 import { PodcastMiniPlayer } from "@/components/PodcastMiniPlayer";
@@ -28,7 +27,6 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Refund from "./pages/Refund";
 import Profile from "./pages/Profile";
-import Credits from "./pages/Credits";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
 import Blog from "./pages/Blog";
@@ -88,7 +86,6 @@ function AnimatedRoutes() {
         <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
         <Route path="/refund" element={<PageTransition><Refund /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><ProtectedRoute><OnboardingGate><Profile /></OnboardingGate></ProtectedRoute></PageTransition>} />
-        <Route path="/credits" element={<PageTransition><ProtectedRoute><OnboardingGate><Credits /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/enterprise" element={<PageTransition><Enterprise /></PageTransition>} />
         <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
         <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
@@ -134,25 +131,23 @@ function AnimatedRoutes() {
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
-      <CreditsProvider>
-        <ProcessingOverlayProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            {/* Global video preloader - forces browser to download & decode video at app startup */}
-            <VideoPreloader />
-            <BrowserRouter>
-              <ScrollToTop />
-              <PodcastProvider>
-                <AnimatedRoutes />
-                <PodcastMiniPlayer />
-                <CookieConsent />
-                <GlobalNewtonAssistant />
-              </PodcastProvider>
-            </BrowserRouter>
-          </TooltipProvider>
-        </ProcessingOverlayProvider>
-      </CreditsProvider>
+      <ProcessingOverlayProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          {/* Global video preloader - forces browser to download & decode video at app startup */}
+          <VideoPreloader />
+          <BrowserRouter>
+            <ScrollToTop />
+            <PodcastProvider>
+              <AnimatedRoutes />
+              <PodcastMiniPlayer />
+              <CookieConsent />
+              <GlobalNewtonAssistant />
+            </PodcastProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ProcessingOverlayProvider>
     </QueryClientProvider>
   </HelmetProvider>
 );

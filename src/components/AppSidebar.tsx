@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { FEATURE_COSTS } from "@/lib/creditConfig";
 import { useScrollContext } from "@/contexts/ScrollContext";
 
 import {
@@ -31,7 +30,6 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Coins,
   Moon,
   Sun,
   Podcast,
@@ -51,14 +49,14 @@ import { cn } from "@/lib/utils";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 const studyTools = [
-  { id: "pdf-chat", label: "Chat with PDF", icon: MessageSquareText, path: "/pdf-chat", creditKey: "ai_chat" },
-  { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz", creditKey: "quiz" },
-  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards", creditKey: "flashcards" },
-  { id: "podcast", label: "AI Podcast", icon: Podcast, path: "/tools/ai-podcast", creditKey: "ai_podcast" },
-  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map", creditKey: "mind_map" },
-  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes", creditKey: "lecture_notes" },
-  { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer", creditKey: "summary" },
-  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help", creditKey: "homework_help" },
+  { id: "pdf-chat", label: "Chat with PDF", icon: MessageSquareText, path: "/pdf-chat" },
+  { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz" },
+  { id: "flashcards", label: "AI Flashcards", icon: Layers, path: "/tools/flashcards" },
+  { id: "podcast", label: "AI Podcast", icon: Podcast, path: "/tools/ai-podcast" },
+  { id: "mindmap", label: "Mind Map", icon: Sparkles, path: "/tools/mind-map" },
+  { id: "lecture", label: "AI Lecture Notes", icon: Mic, path: "/tools/lecture-notes" },
+  { id: "summarizer", label: "AI Summarizer", icon: FileText, path: "/tools/summarizer" },
+  { id: "homework", label: "Homework Help", icon: FileQuestion, path: "/tools/homework-help" },
 ];
 
 const adminTools = [
@@ -202,18 +200,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                       )}
                     >
                       <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                      {!isCollapsed && (
-                        <>
-                          <span className="flex-1">{tool.label}</span>
-                          <span className={cn(
-                            "flex items-center gap-0.5 text-xs",
-                            isActive(tool.path) ? "text-primary-foreground/80" : "text-amber-500"
-                          )}>
-                            <Coins className="h-3.5 w-3.5" />
-                            {FEATURE_COSTS[tool.creditKey] || 5}
-                          </span>
-                        </>
-                      )}
+                      {!isCollapsed && <span>{tool.label}</span>}
                     </motion.button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -343,26 +330,6 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             </motion.button>
           </SidebarMenuButton>
 
-          {/* Credits */}
-          <SidebarMenuButton asChild tooltip="Credits">
-            <motion.button
-              whileHover={{ x: isCollapsed ? 0 : 4 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate("/credits")}
-              className={cn(
-                "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                isCollapsed 
-                  ? "justify-center p-2.5 gap-0" 
-                  : "gap-3 px-3 py-1.5",
-                isActive("/credits")
-                  ? "bg-primary text-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent"
-              )}
-            >
-              <Coins className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-              {!isCollapsed && <span>Credits</span>}
-            </motion.button>
-          </SidebarMenuButton>
 
           {/* Profile */}
           <SidebarMenuButton asChild tooltip="Profile">
