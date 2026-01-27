@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TextSelectionToolbar } from "@/components/TextSelectionToolbar";
 import { MobileTextSelectionDrawer } from "@/components/MobileTextSelectionDrawer";
+import { UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -21,10 +22,10 @@ interface PDFReaderProps {
   triggerScreenshot?: boolean;
   onScreenshotTriggered?: () => void;
   // Study tool callbacks for selected text
-  onGenerateQuizFromText?: (text: string) => void;
-  onGenerateFlashcardsFromText?: (text: string) => void;
-  onGenerateSummaryFromText?: (text: string) => void;
-  onGenerateMindMapFromText?: (text: string) => void;
+  onGenerateQuizFromText?: (text: string, settings?: UniversalGenerationSettings) => void;
+  onGenerateFlashcardsFromText?: (text: string, settings?: UniversalGenerationSettings) => void;
+  onGenerateSummaryFromText?: (text: string, settings?: UniversalGenerationSettings) => void;
+  onGenerateMindMapFromText?: (text: string, settings?: UniversalGenerationSettings) => void;
   isGeneratingQuiz?: boolean;
   isGeneratingFlashcards?: boolean;
   isGeneratingSummary?: boolean;
@@ -752,10 +753,10 @@ export const PDFReader = ({
             selectedText={selectedText}
             onDismiss={handleDismiss}
             onSearchVideos={handleSearchClick}
-            onGenerateQuiz={() => onGenerateQuizFromText?.(selectedText)}
-            onGenerateFlashcards={() => onGenerateFlashcardsFromText?.(selectedText)}
-            onGenerateSummary={() => onGenerateSummaryFromText?.(selectedText)}
-            onGenerateMindMap={() => onGenerateMindMapFromText?.(selectedText)}
+            onGenerateQuiz={(settings) => onGenerateQuizFromText?.(selectedText, settings)}
+            onGenerateFlashcards={(settings) => onGenerateFlashcardsFromText?.(selectedText, settings)}
+            onGenerateSummary={(settings) => onGenerateSummaryFromText?.(selectedText, settings)}
+            onGenerateMindMap={(settings) => onGenerateMindMapFromText?.(selectedText, settings)}
             isGeneratingQuiz={isGeneratingQuiz}
             isGeneratingFlashcards={isGeneratingFlashcards}
             isGeneratingSummary={isGeneratingSummary}
@@ -771,10 +772,10 @@ export const PDFReader = ({
         onOpenChange={setShowMobilePrompt}
         selectedText={selectedText}
         onSearchVideos={() => handleMobileSearch(selectedText)}
-        onGenerateQuiz={() => onGenerateQuizFromText?.(selectedText)}
-        onGenerateFlashcards={() => onGenerateFlashcardsFromText?.(selectedText)}
-        onGenerateSummary={() => onGenerateSummaryFromText?.(selectedText)}
-        onGenerateMindMap={() => onGenerateMindMapFromText?.(selectedText)}
+        onGenerateQuiz={(settings) => onGenerateQuizFromText?.(selectedText, settings)}
+        onGenerateFlashcards={(settings) => onGenerateFlashcardsFromText?.(selectedText, settings)}
+        onGenerateSummary={(settings) => onGenerateSummaryFromText?.(selectedText, settings)}
+        onGenerateMindMap={(settings) => onGenerateMindMapFromText?.(selectedText, settings)}
         isGeneratingQuiz={isGeneratingQuiz}
         isGeneratingFlashcards={isGeneratingFlashcards}
         isGeneratingSummary={isGeneratingSummary}

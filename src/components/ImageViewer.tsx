@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TextSelectionToolbar } from "@/components/TextSelectionToolbar";
 import { MobileTextSelectionDrawer } from "@/components/MobileTextSelectionDrawer";
+import { UniversalGenerationSettings } from "@/components/UniversalStudySettingsDialog";
 
 interface ImageViewerProps {
   imageUrl: string;
@@ -15,10 +16,10 @@ interface ImageViewerProps {
   onTextSelect: (text: string) => void;
   onImageCapture: (imageData: string) => void;
   // Study tool callbacks for selected text
-  onGenerateQuizFromText?: (text: string) => void;
-  onGenerateFlashcardsFromText?: (text: string) => void;
-  onGenerateSummaryFromText?: (text: string) => void;
-  onGenerateMindMapFromText?: (text: string) => void;
+  onGenerateQuizFromText?: (text: string, settings?: UniversalGenerationSettings) => void;
+  onGenerateFlashcardsFromText?: (text: string, settings?: UniversalGenerationSettings) => void;
+  onGenerateSummaryFromText?: (text: string, settings?: UniversalGenerationSettings) => void;
+  onGenerateMindMapFromText?: (text: string, settings?: UniversalGenerationSettings) => void;
   isGeneratingQuiz?: boolean;
   isGeneratingFlashcards?: boolean;
   isGeneratingSummary?: boolean;
@@ -645,10 +646,10 @@ export const ImageViewer = ({
             selectedText={selectedText}
             onDismiss={handleDismiss}
             onSearchVideos={handleSearch}
-            onGenerateQuiz={() => onGenerateQuizFromText?.(selectedText)}
-            onGenerateFlashcards={() => onGenerateFlashcardsFromText?.(selectedText)}
-            onGenerateSummary={() => onGenerateSummaryFromText?.(selectedText)}
-            onGenerateMindMap={() => onGenerateMindMapFromText?.(selectedText)}
+            onGenerateQuiz={(settings) => onGenerateQuizFromText?.(selectedText, settings)}
+            onGenerateFlashcards={(settings) => onGenerateFlashcardsFromText?.(selectedText, settings)}
+            onGenerateSummary={(settings) => onGenerateSummaryFromText?.(selectedText, settings)}
+            onGenerateMindMap={(settings) => onGenerateMindMapFromText?.(selectedText, settings)}
             isGeneratingQuiz={isGeneratingQuiz}
             isGeneratingFlashcards={isGeneratingFlashcards}
             isGeneratingSummary={isGeneratingSummary}
@@ -664,10 +665,10 @@ export const ImageViewer = ({
         onOpenChange={setShowMobilePrompt}
         selectedText={selectedText}
         onSearchVideos={handleSearch}
-        onGenerateQuiz={() => onGenerateQuizFromText?.(selectedText)}
-        onGenerateFlashcards={() => onGenerateFlashcardsFromText?.(selectedText)}
-        onGenerateSummary={() => onGenerateSummaryFromText?.(selectedText)}
-        onGenerateMindMap={() => onGenerateMindMapFromText?.(selectedText)}
+        onGenerateQuiz={(settings) => onGenerateQuizFromText?.(selectedText, settings)}
+        onGenerateFlashcards={(settings) => onGenerateFlashcardsFromText?.(selectedText, settings)}
+        onGenerateSummary={(settings) => onGenerateSummaryFromText?.(selectedText, settings)}
+        onGenerateMindMap={(settings) => onGenerateMindMapFromText?.(selectedText, settings)}
         isGeneratingQuiz={isGeneratingQuiz}
         isGeneratingFlashcards={isGeneratingFlashcards}
         isGeneratingSummary={isGeneratingSummary}
