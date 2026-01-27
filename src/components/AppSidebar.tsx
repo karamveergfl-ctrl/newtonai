@@ -329,10 +329,20 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
 
       <SidebarFooter className="p-2 border-t border-sidebar-border">
         <div className="space-y-1">
-          {/* Subscription Tier Badge */}
+          {/* Subscription Tier Badge with Upgrade CTA */}
           {!isCollapsed && (
-            <div className="px-3 py-2">
+            <div className="px-3 py-2 flex items-center gap-2">
               <SubscriptionTierBadge tier={subscriptionTier} size="sm" />
+              {subscriptionTier === "free" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/pricing")}
+                  className="h-6 px-2 text-xs font-medium text-primary hover:text-primary hover:bg-primary/10"
+                >
+                  Upgrade
+                </Button>
+              )}
             </div>
           )}
           
