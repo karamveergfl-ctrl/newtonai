@@ -19,10 +19,11 @@ interface TextSelectionToolbarProps {
   selectedText: string;
   onDismiss: () => void;
   onSearchVideos: () => void;
-  onGenerateQuiz: (settings?: UniversalGenerationSettings) => void;
-  onGenerateFlashcards: (settings?: UniversalGenerationSettings) => void;
-  onGenerateSummary: (settings?: UniversalGenerationSettings) => void;
-  onGenerateMindMap: (settings?: UniversalGenerationSettings) => void;
+  // Updated: callbacks now receive text as first parameter to prevent stale closure issues
+  onGenerateQuiz: (text: string, settings?: UniversalGenerationSettings) => void;
+  onGenerateFlashcards: (text: string, settings?: UniversalGenerationSettings) => void;
+  onGenerateSummary: (text: string, settings?: UniversalGenerationSettings) => void;
+  onGenerateMindMap: (text: string, settings?: UniversalGenerationSettings) => void;
   isGeneratingQuiz?: boolean;
   isGeneratingFlashcards?: boolean;
   isGeneratingSummary?: boolean;
@@ -70,28 +71,35 @@ export const TextSelectionToolbar = ({
   const handleGenerateWithSettings = useCallback((settings: UniversalGenerationSettings) => {
     if (!pendingToolType) return;
     
-    // Use the captured text from when the tool was clicked
-    const textToUse = capturedTextRef.current || selectedText;
+    // Use the captured text from when the tool was clicked - this prevents stale closure issues
+    const textToUse = capturedTextRef.current;
     
+    if (!textToUse) {
+      console.error("No captured text available for generation");
+      setPendingToolType(null);
+      return;
+    }
+    
+    // Pass text explicitly to callbacks to ensure correct text is used
     switch (pendingToolType) {
       case "quiz":
-        onGenerateQuiz(settings);
+        onGenerateQuiz(textToUse, settings);
         break;
       case "flashcards":
-        onGenerateFlashcards(settings);
+        onGenerateFlashcards(textToUse, settings);
         break;
       case "summary":
-        onGenerateSummary(settings);
+        onGenerateSummary(textToUse, settings);
         break;
       case "mindmap":
-        onGenerateMindMap(settings);
+        onGenerateMindMap(textToUse, settings);
         break;
     }
     
     setPendingToolType(null);
     capturedTextRef.current = "";
     onDismiss();
-  }, [pendingToolType, selectedText, onGenerateQuiz, onGenerateFlashcards, onGenerateSummary, onGenerateMindMap, onDismiss]);
+  }, [pendingToolType, onGenerateQuiz, onGenerateFlashcards, onGenerateSummary, onGenerateMindMap, onDismiss]);
 
   const handleDismissClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
