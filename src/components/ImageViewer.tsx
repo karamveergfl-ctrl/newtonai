@@ -93,7 +93,10 @@ export const ImageViewer = ({
           });
         }
         
-        if (!isMobile) {
+        if (isMobile) {
+          // On mobile, show the drawer immediately when text is selected
+          setShowMobilePrompt(true);
+        } else {
           setShowSearchPrompt(true);
         }
       } else if (!text) {

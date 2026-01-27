@@ -132,7 +132,8 @@ export const PDFReader = ({
         }
         
         if (isMobile) {
-          // On mobile, wait for long-press to trigger
+          // On mobile, show the drawer immediately when text is selected
+          setShowMobilePrompt(true);
         } else {
           setShowSearchPrompt(true);
         }
