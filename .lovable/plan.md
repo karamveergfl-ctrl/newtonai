@@ -1,89 +1,126 @@
 
-Problem restatement (what’s happening)
-- User selects text in the PDF/video slide view (first image).
-- The “Selected text” toolbar (second image) appears and correctly shows the selected text.
-- Clicking Quiz / Flashcards / Notes / Map appears to do nothing (no settings dialog, no Newton processing, no network call).
+# Plan: Fix Mobile Text Selection Tools Across All Pages
 
-Do I know what the issue is?
-- Yes. The selection toolbar click handler is firing (we see `[TextSelectionToolbar] Captured text for quiz : Zener Diode`), but the generation flow is getting interrupted immediately after because the PDF viewer uses a global `document.addEventListener("mouseup"/"touchend")` selection handler that can clear `selectedText` and hide the toolbar when the selection collapses during button clicks. When the toolbar gets unmounted, the settings dialog (rendered inside the toolbar component) also gets unmounted before it can appear, so the user perceives “nothing happens”.
+## Overview
+The text selection tools are not appearing on mobile devices across multiple components. This plan addresses all affected areas to ensure consistent mobile support for study tools.
 
-Root cause (code-level)
-- In `src/components/PDFReader.tsx`, there is a document-level handler:
+## Problem Analysis
+After exploring the codebase, I identified several issues:
 
-  - On every mouseup/touchend anywhere, it reads `window.getSelection()` and:
-    - If selection text exists → shows the toolbar
-    - Else (no selection) → hides toolbar and clears `selectedText`
+1. **PDFChatSplitView (PDF Chat page)**: Uses a simplified `TextSelectionToolbar` from `pdf-chat/` folder that only has "Ask" and "Explain" buttons - no full study tools and no mobile drawer
+2. **MobileTextSelectionDrawer**: Still shows "Notes" label instead of "Summary"
+3. **PDFViewerWithHighlight**: Only handles `mouseUp` for text selection, missing `touchEnd` support
+4. **Inconsistent toolbar components**: Different pages use different selection toolbars with varying features
 
-- When a user clicks a tool button:
-  - The browser often collapses/clears the selection on that mouseup/touchend
-  - The document-level handler runs and hides the toolbar
-  - The toolbar component (and its `UniversalStudySettingsDialog`) gets unmounted immediately
-  - Result: no dialog, no generation, “nothing happens”
+## Implementation Tasks
 
-Solution overview
-- Make the selection handler in `PDFReader` ignore mouseup/touchend events that are not originating from the PDF text layer itself (i.e., clicks on the floating toolbar or dialogs should not clear selection state).
-- Apply the same protection in `ImageViewer` as well (it also listens on `document`), to prevent the same class of bug in image OCR mode.
-- Optional hardening: stop propagation on mouseup/pointerup inside the toolbar card so other parent listeners don’t fire even if they exist.
+### Task 1: Update MobileTextSelectionDrawer Label
+**File**: `src/components/MobileTextSelectionDrawer.tsx`
 
-Implementation steps (what I will change)
-1) Fix selection handler scope in `src/components/PDFReader.tsx`
-   - Update `handleTextSelection` to accept the event argument (`MouseEvent | TouchEvent`)
-   - Add a guard:
-     - If the event target is outside `containerRef.current` (the PDF viewing area), return early and do nothing.
-     - This ensures clicks on the floating toolbar (which is outside the PDF container) do not trigger the “clear selection” path.
-   - Keep existing behavior when user clicks inside the PDF area (selection changes should still show/hide the toolbar normally).
+Change "Notes" to "Summary" on line 200 to match the updated naming convention used elsewhere.
 
-   Pseudocode:
-   ```ts
-   const handleTextSelection = (e: MouseEvent | TouchEvent) => {
-     if (isScreenshotMode || isCapturing) return;
+---
 
-     const container = containerRef.current;
-     const target = e.target as Node | null;
+### Task 2: Add Mobile Touch Support to PDFViewerWithHighlight
+**File**: `src/components/pdf-chat/PDFViewerWithHighlight.tsx`
 
-     // Only react to selections inside the PDF container
-     if (container && target && !container.contains(target)) return;
+Add `onTouchEnd` event listener alongside `onMouseUp` for the text selection handler:
+- Add `onTouchEnd={handleTextSelection}` to the container div (line 363)
+- This ensures text selection triggers on mobile touch devices
 
-     const text = window.getSelection()?.toString().trim();
-     if (text && text.length >= 5) { ... } else { ...clear... }
-   };
-   ```
+---
 
-2) Apply the same guard in `src/components/ImageViewer.tsx`
-   - It also uses `document.addEventListener("mouseup"/"touchend")` for text selection.
-   - Add the same “only handle events originating from inside the image/text overlay container” rule using its existing `containerRef`.
-   - This prevents toolbar clicks from interfering with selection state in OCR image mode as well.
+### Task 3: Create Mobile Selection Support for PDFChatSplitView
+**File**: `src/components/pdf-chat/PDFChatSplitView.tsx`
 
-3) Hardening in `src/components/TextSelectionToolbar.tsx`
-   - Add `onMouseUp` and `onPointerUp` stopPropagation to the root Card (similar to what’s already done for `onMouseDown` / `onPointerDown`).
-   - This reduces chances of other selection/listeners reacting to toolbar interactions.
-   - Keep existing explicit text capture (`capturedTextRef`) and explicit callback text passing (already correct).
+Currently, the PDF Chat page uses a simplified `TextSelectionToolbar` from the `pdf-chat/` folder that only has "Ask" and "Explain" buttons. On mobile, we need to:
 
-4) Verify that generation uses the selected text and follows the same “Text mode” pipeline
-   - Confirm that after the settings dialog stays open:
-     - Clicking Generate triggers `handleGenerateWithSettings`
-     - Which calls `onGenerateQuiz(textToUse, settings)` / etc.
-     - Which reaches `src/pages/Index.tsx` handlers:
-       - `handleGenerateQuizFromText`
-       - `handleGenerateFlashcardsFromText`
-       - `handleGenerateSummaryFromText` (Notes)
-       - `handleGenerateMindMapFromText`
-     - Which starts Newton processing and calls the backend generation functions.
+1. Import the `MobileTextSelectionDrawer` from the main components folder
+2. Import `useIsMobile` hook
+3. Add state for `showMobileDrawer`
+4. Show the main `TextSelectionToolbar` (with full study tools) on desktop
+5. Show `MobileTextSelectionDrawer` on mobile
+6. Connect the drawer to study tool generation functions
 
-Testing checklist (what you’ll be able to confirm in Preview)
-- On /dashboard, open a PDF slide (like the Zener Diode slide).
-- Select a multi-line chunk of text.
-- Toolbar appears.
-- Click “Quiz”:
-  - Settings dialog should now reliably appear and stay open.
-  - Click “Generate” → Newton animation should run → quiz result should appear.
-- Repeat for Flashcards, Notes, Map.
-- Ensure clicking inside toolbar no longer dismisses the toolbar prematurely.
+Changes required:
+- Add imports for `MobileTextSelectionDrawer` and the main `TextSelectionToolbar` 
+- Add mobile drawer state management
+- Render different toolbars based on device type
+- Wire up video search and study tool callbacks
 
-Files that will be changed
-- src/components/PDFReader.tsx  (main fix: scope selection listener to PDF container)
-- src/components/ImageViewer.tsx (same class of fix for OCR image mode)
-- src/components/TextSelectionToolbar.tsx (hardening: stop propagation on mouseup/pointerup)
+---
 
-Expected outcome
-- The toolbar in the second image will work consistently: clicking Quiz/Flashcards/Notes/Map will use the already-displayed selected text and generate content using the same backend + Newton workflow as “Text mode”.
+### Task 4: Update PDF Chat TextSelectionToolbar or Replace It
+**Option A (Recommended)**: Replace the simplified toolbar with the main one
+
+The `src/components/pdf-chat/TextSelectionToolbar.tsx` is a simplified version with only "Ask" and "Explain" buttons. We should:
+- Use the main `src/components/TextSelectionToolbar.tsx` instead
+- This provides full study tools (Videos, Quiz, Flashcards, Summary, Mind Map)
+- Keeps "Ask" and "Explain" as additional PDF-specific actions
+
+**Option B**: Extend the existing PDF Chat toolbar
+- Add video search and study tool buttons
+- Add mobile drawer integration
+- More code duplication
+
+I recommend **Option A** for consistency, but we'll need to keep the Ask/Explain functionality specific to PDF Chat by adding those handlers.
+
+---
+
+### Task 5: Wire Up Study Tool Generation in PDFChatSplitView
+**File**: `src/components/pdf-chat/PDFChatSplitView.tsx`
+
+Add handlers for:
+- Video search from selected text
+- Quiz generation from selected text
+- Flashcards generation from selected text
+- Summary generation from selected text  
+- Mind Map generation from selected text
+
+These will use the existing `usePDFStudyTools` hook but with the selected text as input.
+
+---
+
+## Technical Details
+
+### PDFChatSplitView Changes (Main Work)
+
+```text
+Current mobile rendering (simplified, no study tools):
+┌─────────────────────────┐
+│  TextSelectionToolbar   │  ← Only Ask/Explain
+│  (pdf-chat version)     │
+└─────────────────────────┘
+
+Proposed mobile rendering (full feature):
+┌─────────────────────────┐
+│ MobileTextSelectionDrawer│  ← Full study tools
+│ - Videos                 │
+│ - Quiz                   │
+│ - Flashcards             │
+│ - Summary                │
+│ - Mind Map               │
+│ + PDF-specific actions   │
+└─────────────────────────┘
+```
+
+### Files to Modify
+
+| File | Change Type | Description |
+|------|-------------|-------------|
+| `src/components/MobileTextSelectionDrawer.tsx` | Label fix | Change "Notes" to "Summary" |
+| `src/components/pdf-chat/PDFViewerWithHighlight.tsx` | Add touch support | Add `onTouchEnd` handler |
+| `src/components/pdf-chat/PDFChatSplitView.tsx` | Major update | Add mobile drawer, wire up study tools |
+
+### Dependencies
+- No new dependencies required
+- Uses existing components: `MobileTextSelectionDrawer`, `TextSelectionToolbar`
+- Uses existing hooks: `usePDFStudyTools`, `useIsMobile`
+
+## Testing Checklist
+- [ ] Verify text selection works on mobile devices for PDF Chat
+- [ ] Verify drawer appears with all study tool options
+- [ ] Verify "Summary" label shows instead of "Notes" everywhere
+- [ ] Verify video search works from selected text
+- [ ] Verify study tool generation works from selected text
+- [ ] Verify desktop behavior remains unchanged
