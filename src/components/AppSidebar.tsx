@@ -176,7 +176,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         </SidebarGroup>
 
         {/* Study Tools - No scroll, all visible */}
-        <SidebarGroup className="mt-1 shrink-0">
+        <SidebarGroup className="mt-0 shrink-0">
           {!isCollapsed && (
             <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Study Tools
@@ -318,7 +318,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-3 border-t border-sidebar-border">
+      <SidebarFooter className="p-2 border-t border-sidebar-border">
         <div className="space-y-1">
           {/* Theme Toggle */}
           <SidebarMenuButton asChild tooltip="Toggle Theme">
@@ -330,7 +330,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
                 isCollapsed 
                   ? "justify-center p-2.5 gap-0" 
-                  : "gap-3 px-3 py-2",
+                  : "gap-3 px-3 py-1.5",
                 "text-sidebar-foreground hover:bg-sidebar-accent"
               )}
             >
@@ -353,7 +353,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
                 isCollapsed 
                   ? "justify-center p-2.5 gap-0" 
-                  : "gap-3 px-3 py-2",
+                  : "gap-3 px-3 py-1.5",
                 isActive("/credits")
                   ? "bg-primary text-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent"
@@ -374,7 +374,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
                 isCollapsed 
                   ? "justify-center p-2.5 gap-0" 
-                  : "gap-3 px-3 py-2",
+                  : "gap-3 px-3 py-1.5",
                 isActive("/profile")
                   ? "bg-primary text-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent"
@@ -395,7 +395,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
                 isCollapsed 
                   ? "justify-center p-2.5 gap-0" 
-                  : "gap-3 px-3 py-2",
+                  : "gap-3 px-3 py-1.5",
                 "text-sidebar-foreground hover:bg-destructive hover:text-destructive-foreground"
               )}
             >
@@ -409,7 +409,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="pt-3"
+              className="pt-2"
             >
               <Button
                 onClick={() => navigate("/pricing")}
