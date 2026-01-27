@@ -77,11 +77,16 @@ export const ImageViewer = ({
       const selection = window.getSelection();
       const text = selection?.toString().trim();
       
-      if (text && text.length >= 5) {
+      if (text && text.length >= 1) {
         setSelectedText(text);
         if (!isMobile) {
           setShowSearchPrompt(true);
         }
+      } else if (!text) {
+        if (!isMobile) {
+          setShowSearchPrompt(false);
+        }
+        setSelectedText("");
       }
     };
 
@@ -105,7 +110,7 @@ export const ImageViewer = ({
       const selection = window.getSelection();
       const text = selection?.toString().trim();
       
-      if (text && text.length >= 3) {
+      if (text && text.length >= 1) {
         setSelectedText(text);
         setShowMobilePrompt(true);
         if ('vibrate' in navigator) {
