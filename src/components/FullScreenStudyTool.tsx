@@ -93,9 +93,9 @@ export const FullScreenStudyTool = ({
   };
 
   return (
-    <div className={cn("fixed inset-0 z-50 bg-muted/50 flex flex-col", showVideoSlide && "sm:pr-80")}>
+    <div className={cn("fixed inset-0 z-50 bg-background flex flex-col", showVideoSlide && "sm:pr-80")}>
       {/* Header */}
-      <div className="p-3 md:p-4 border-b bg-background/80 backdrop-blur-sm flex flex-col sm:flex-row items-start sm:items-center justify-between sticky top-0 z-10 gap-3">
+      <div className="p-3 md:p-4 border-b bg-background flex flex-col sm:flex-row items-start sm:items-center justify-between sticky top-0 z-10 gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: nlmColors.blue }}>
             <span className="text-white">{getIcon()}</span>
