@@ -149,7 +149,7 @@ export const FullScreenStudyTool = ({
             </p>
           </div>
         ) : (
-          <div className="p-4 md:p-8 bg-muted/30 min-h-full">
+          <div className="p-4 md:p-8 bg-muted min-h-full">
             {type === "summary" ? (
               <div className="max-w-4xl mx-auto">
                 <StudySectionRenderer content={content} type="summary" />
