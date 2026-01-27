@@ -1,45 +1,39 @@
 
-# Zoom In Logo to Make Newton Fill Container Completely
+# Remove Inline Ad from Dashboard
 
-## Issue
+## Problem
 
-The current logo has `scale-125` applied to the Newton image, but there's still a visible outline/edge around the container. The Newton character needs to fill the container completely without any visible background or border.
+The advertisement banner is currently displayed in the middle of the dashboard page, directly after the "Your Study Progress" section. This interrupts the user experience and clutters the main content area.
 
 ## Solution
 
-Increase the scale transform from `scale-125` to `scale-150` to make Newton zoom in more and completely fill the rounded container, eliminating any visible outline.
+Remove the inline `AdBanner` from the dashboard page. The Footer component already contains ads (`AdBanner` and `RecommendationWidget`) that will continue to display for free users, providing ad visibility without disrupting the main dashboard flow.
 
 ## Implementation
 
-### File: `src/components/Logo.tsx`
+### File: `src/pages/Index.tsx`
 
-**Line 41** - Change scale value:
+**Remove lines 1922-1924** - Delete the inline AdBanner and its comment:
+
+```tsx
+// DELETE THESE LINES:
+{/* Banner Ad for Free Users */}
+<AdBanner placement="inline" />
+```
+
+The AdBanner import on line 41 can optionally be removed if unused elsewhere, but keeping it won't cause issues.
+
+## Result
 
 | Before | After |
 |--------|-------|
-| `scale-125` | `scale-150` |
+| Ad between StudyTracker and Upload zone | Clean dashboard layout |
+| Ads in Footer | Ads in Footer (unchanged) |
 
-```tsx
-<img
-  src={newtonLogo}
-  alt="NewtonAI Logo"
-  className="w-full h-full object-cover scale-150"
-/>
-```
-
-## Visual Result
-
-```
-BEFORE (scale-125)          AFTER (scale-150)
-+-------+                   +-------+
-|  ___  | visible edge      |███████| Newton fills
-| /   \ |                   |███N███| entire container
-| \_N_/ |                   |███████| 
-+-------+                   +-------+
-```
-
-## Single File Change
+## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/Logo.tsx` | Line 41: Change `scale-125` to `scale-150` |
+| `src/pages/Index.tsx` | Remove lines 1922-1924 (inline AdBanner) |
+
+The Footer already displays ads for free users, so no changes are needed there.
