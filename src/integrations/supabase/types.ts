@@ -151,6 +151,35 @@ export type Database = {
           },
         ]
       }
+      document_file_paths: {
+        Row: {
+          created_at: string | null
+          document_id: string
+          file_path: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_id: string
+          file_path: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          document_id?: string
+          file_path?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_file_paths_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "pdf_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enterprise_inquiries: {
         Row: {
           company: string
@@ -410,7 +439,6 @@ export type Database = {
         Row: {
           created_at: string | null
           file_name: string
-          file_path: string | null
           id: string
           is_scanned: boolean | null
           ocr_enabled: boolean | null
@@ -422,7 +450,6 @@ export type Database = {
         Insert: {
           created_at?: string | null
           file_name: string
-          file_path?: string | null
           id?: string
           is_scanned?: boolean | null
           ocr_enabled?: boolean | null
@@ -434,7 +461,6 @@ export type Database = {
         Update: {
           created_at?: string | null
           file_name?: string
-          file_path?: string | null
           id?: string
           is_scanned?: boolean | null
           ocr_enabled?: boolean | null
@@ -948,6 +974,10 @@ export type Database = {
       }
       end_study_session: { Args: { p_session_id: string }; Returns: Json }
       get_ad_stats: { Args: never; Returns: Json }
+      get_document_file_path: {
+        Args: { p_document_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -984,6 +1014,10 @@ export type Database = {
           page_number: number
           similarity: number
         }[]
+      }
+      set_document_file_path: {
+        Args: { p_document_id: string; p_file_path: string }
+        Returns: boolean
       }
       spend_credits:
         | { Args: { p_feature_name: string }; Returns: Json }
