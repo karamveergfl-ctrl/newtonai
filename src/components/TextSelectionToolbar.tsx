@@ -15,6 +15,13 @@ import { UniversalStudySettingsDialog, UniversalGenerationSettings } from "./Uni
 
 type ToolType = "quiz" | "flashcards" | "summary" | "mindmap";
 
+interface SelectionPosition {
+  top: number;
+  left: number;
+  bottom: number;
+  right: number;
+}
+
 interface TextSelectionToolbarProps {
   selectedText: string;
   onDismiss: () => void;
@@ -29,6 +36,8 @@ interface TextSelectionToolbarProps {
   isGeneratingSummary?: boolean;
   isGeneratingMindMap?: boolean;
   isSearching?: boolean;
+  /** Position of the text selection for positioning the toolbar near it */
+  selectionPosition?: SelectionPosition | null;
 }
 
 export const TextSelectionToolbar = ({
@@ -44,13 +53,62 @@ export const TextSelectionToolbar = ({
   isGeneratingSummary = false,
   isGeneratingMindMap = false,
   isSearching = false,
+  selectionPosition,
 }: TextSelectionToolbarProps) => {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [pendingToolType, setPendingToolType] = useState<ToolType | null>(null);
   // Store selected text at the time of clicking to prevent closure issues
   const capturedTextRef = useRef<string>("");
+  const toolbarRef = useRef<HTMLDivElement>(null);
   
   const isAnyLoading = isGeneratingQuiz || isGeneratingFlashcards || isGeneratingSummary || isGeneratingMindMap || isSearching;
+
+  // Calculate toolbar position based on selection
+  const getToolbarStyle = (): React.CSSProperties => {
+    if (!selectionPosition) {
+      // Fallback to bottom-center positioning
+      return {
+        position: 'fixed',
+        bottom: '1rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+      };
+    }
+
+    const toolbarHeight = 120; // Approximate height of toolbar
+    const toolbarWidth = 380; // Approximate width of toolbar
+    const padding = 12;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Position above the selection by default
+    let top = selectionPosition.top - toolbarHeight - padding;
+    let left = selectionPosition.left + (selectionPosition.right - selectionPosition.left) / 2 - toolbarWidth / 2;
+
+    // If toolbar would go above viewport, position below selection
+    if (top < padding) {
+      top = selectionPosition.bottom + padding;
+    }
+
+    // If toolbar would still go below viewport, clamp it
+    if (top + toolbarHeight > viewportHeight - padding) {
+      top = viewportHeight - toolbarHeight - padding;
+    }
+
+    // Clamp horizontal position to viewport
+    if (left < padding) {
+      left = padding;
+    }
+    if (left + toolbarWidth > viewportWidth - padding) {
+      left = viewportWidth - toolbarWidth - padding;
+    }
+
+    return {
+      position: 'fixed',
+      top: `${Math.max(padding, top)}px`,
+      left: `${left}px`,
+    };
+  };
 
   const handleToolClick = useCallback((e: React.MouseEvent, toolType: ToolType) => {
     e.preventDefault();
@@ -128,18 +186,23 @@ export const TextSelectionToolbar = ({
 
   return (
     <>
-      <Card 
-        className="p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-md w-full"
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        onMouseUp={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-        onPointerUp={(e) => e.stopPropagation()}
+      <div
+        ref={toolbarRef}
+        style={getToolbarStyle()}
+        className="z-50 w-11/12 md:max-w-md"
       >
-        <div className="space-y-3">
-          {/* Header with selected text */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
+        <Card 
+          className="p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
+        >
+          <div className="space-y-3">
+            {/* Header with selected text */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-1">
                 <Sparkles className="w-3 h-3 text-primary" />
                 <p className="text-xs text-muted-foreground">Selected text:</p>
@@ -237,9 +300,10 @@ export const TextSelectionToolbar = ({
               )}
               <span className="text-[10px] leading-tight">Map</span>
             </Button>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
       
       {/* Settings Dialog */}
       {pendingToolType && (
