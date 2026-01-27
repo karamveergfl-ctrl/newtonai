@@ -155,7 +155,7 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     }
   };
 
-  const handleToolGenerate = useCallback((tool: 'quiz' | 'flashcards' | 'summary' | 'mind_map') => {
+  const handleToolGenerate = useCallback((tool: 'quiz' | 'flashcards' | 'summary' | 'mind_map' | 'podcast') => {
     if (tool === 'quiz' || tool === 'flashcards') {
       openToolDialog(tool);
     } else {
@@ -400,6 +400,7 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
       <PDFStudyToolsBar
         onGenerateQuiz={() => handleToolGenerate('quiz')}
         onGenerateFlashcards={() => handleToolGenerate('flashcards')}
+        onGeneratePodcast={() => handleToolGenerate('podcast')}
         onGenerateSummary={() => handleToolGenerate('summary')}
         onGenerateMindMap={() => handleToolGenerate('mind_map')}
         isGenerating={isGenerating}

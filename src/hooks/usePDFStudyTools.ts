@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useProcessingOverlay } from '@/contexts/ProcessingOverlayContext';
 import { GenerationSettings } from '@/components/GenerationSettingsDialog';
 
-export type StudyToolType = 'quiz' | 'flashcards' | 'summary' | 'mind_map';
+export type StudyToolType = 'quiz' | 'flashcards' | 'summary' | 'mind_map' | 'podcast';
 
 interface UsePDFStudyToolsOptions {
   documentId: string | null;
@@ -32,6 +32,7 @@ export function usePDFStudyTools({
       case 'flashcards': return 'Flashcards';
       case 'summary': return 'Summary';
       case 'mind_map': return 'Mind Map';
+      case 'podcast': return 'Podcast';
     }
   };
 
@@ -112,6 +113,14 @@ export function usePDFStudyTools({
             title: fileName,
           };
           break;
+        case 'podcast':
+          endpoint = 'generate-podcast-script';
+          body = {
+            content,
+            title: fileName,
+            language: 'en',
+          };
+          break;
       }
 
       updateMessage(`Generating ${toolLabel}...`, 'Processing content...');
@@ -151,6 +160,9 @@ export function usePDFStudyTools({
           break;
         case 'mind_map':
           navigate('/tools/mind-map', { state: { fromPDF: true, result: data } });
+          break;
+        case 'podcast':
+          navigate('/tools/podcast', { state: { fromPDF: true, result: data } });
           break;
       }
 
