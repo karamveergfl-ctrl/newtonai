@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Search, 
@@ -36,6 +36,17 @@ interface MobileTextSelectionDrawerProps {
   isSearching?: boolean;
 }
 
+// Haptic feedback utility
+const triggerHapticFeedback = (pattern: number | number[] = 10) => {
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate(pattern);
+    } catch (e) {
+      // Silently fail if vibration not supported
+    }
+  }
+};
+
 export const MobileTextSelectionDrawer = ({
   open,
   onOpenChange,
@@ -55,6 +66,15 @@ export const MobileTextSelectionDrawer = ({
   const [pendingToolType, setPendingToolType] = useState<ToolType | null>(null);
   // Store selected text at the time of clicking to prevent closure issues
   const capturedTextRef = useRef<string>("");
+  const prevOpenRef = useRef(false);
+  
+  // Trigger haptic feedback when drawer opens
+  useEffect(() => {
+    if (open && !prevOpenRef.current) {
+      triggerHapticFeedback(15); // Short vibration on open
+    }
+    prevOpenRef.current = open;
+  }, [open]);
   
   const isAnyLoading = isGeneratingQuiz || isGeneratingFlashcards || isGeneratingSummary || isGeneratingMindMap || isSearching;
 
