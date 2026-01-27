@@ -1,19 +1,17 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
-import { X, Download, Loader2, Brain, BookOpen, FileText, Network, List, HelpCircle, Lightbulb, MessageSquare, ClipboardList, ArrowLeft } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { Loader2, Brain, BookOpen, FileText, Network, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { cn } from "@/lib/utils";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { parseSummaryContent, nlmColors, typography } from "./NotebookLMStyles";
+import { nlmColors, typography } from "./NotebookLMStyles";
+import { StudySectionRenderer } from "./StudySectionRenderer";
+import { Card } from "@/components/ui/card";
 
 interface FullScreenStudyToolProps {
   type: "quiz" | "flashcards" | "mindmap" | "summary";
@@ -34,9 +32,7 @@ export const FullScreenStudyTool = ({
   isLoading = false,
   loadingMessage = "Generating content...",
 }: FullScreenStudyToolProps) => {
-  const [isDownloading, setIsDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const contentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -73,199 +69,6 @@ export const FullScreenStudyTool = ({
       case "summary": return "Study Guide";
     }
   };
-
-  const downloadAsPDF = async () => {
-    if (!contentRef.current) return;
-    
-    setIsDownloading(true);
-    try {
-      toast({ title: "Generating PDF", description: "Please wait..." });
-
-      const canvas = await html2canvas(contentRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      });
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const a4Width = 210;
-      const a4Height = 297;
-      const margin = 10;
-      
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      const availableWidth = a4Width - (margin * 2);
-      const availableHeight = a4Height - (margin * 2);
-      const canvasAspect = canvas.width / canvas.height;
-      
-      let imgWidth = availableWidth;
-      let imgHeight = availableWidth / canvasAspect;
-      
-      if (imgHeight > availableHeight) {
-        const pageHeight = (availableHeight / imgHeight) * canvas.height;
-        let yOffset = 0;
-        let isFirstPage = true;
-        
-        while (yOffset < canvas.height) {
-          if (!isFirstPage) pdf.addPage();
-          
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = canvas.width;
-          pageCanvas.height = Math.min(pageHeight, canvas.height - yOffset);
-          
-          const ctx = pageCanvas.getContext('2d');
-          if (ctx) ctx.drawImage(canvas, 0, -yOffset);
-          
-          const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
-          const pageImgHeight = (pageCanvas.height / canvas.width) * availableWidth;
-          
-          pdf.addImage(pageImgData, 'PNG', margin, margin, availableWidth, pageImgHeight);
-          
-          yOffset += pageHeight;
-          isFirstPage = false;
-        }
-      } else {
-        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
-      }
-
-      pdf.save(`${getTypeLabel()}_${title.slice(0, 30)}.pdf`);
-      toast({ title: "Downloaded", description: "PDF downloaded successfully" });
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({ title: "Error", description: "Failed to generate PDF", variant: "destructive" });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const getSectionIcon = (sectionType: string) => {
-    switch (sectionType) {
-      case "overview": return <BookOpen className="w-5 h-5 text-white" />;
-      case "keyTopics": return <List className="w-5 h-5 text-white" />;
-      case "keyTerms": return <ClipboardList className="w-5 h-5 text-white" />;
-      case "quickReview": return <HelpCircle className="w-5 h-5 text-white" />;
-      case "essayPrompts": return <MessageSquare className="w-5 h-5 text-white" />;
-      case "takeaways": return <Lightbulb className="w-5 h-5 text-white" />;
-      default: return <FileText className="w-5 h-5 text-white" />;
-    }
-  };
-
-  // Render NotebookLM-style study guide
-  const renderStudyGuide = () => {
-    const sections = parseSummaryContent(content);
-    
-    // If no sections parsed, fall back to regular markdown
-    if (sections.length === 0) {
-      return (
-        <Card className="max-w-4xl mx-auto p-8 shadow-lg bg-card">
-          <h3 className={cn(typography.heading1, "mb-6 text-center text-foreground")}>{title}</h3>
-          <div className="prose prose-lg max-w-none dark:prose-invert">
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-              {content}
-            </ReactMarkdown>
-          </div>
-        </Card>
-      );
-    }
-
-    return (
-      <div className="max-w-4xl mx-auto space-y-4">
-        {/* Title Card */}
-        <Card className="p-6 bg-card shadow-sm border">
-          <h1 className={cn(typography.heading1, "text-center text-foreground")}>{title}</h1>
-          <p className="text-center text-muted-foreground mt-2 font-sans text-sm">Study Guide • {sections.length} sections</p>
-        </Card>
-
-        {/* Section Cards */}
-        {sections.map((section, index) => (
-          <Card 
-            key={section.type} 
-            className="bg-card shadow-sm border overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            {/* Section Header */}
-            <div className="flex items-center gap-3 p-4 border-b">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm"
-                style={{ backgroundColor: section.iconColor }}
-              >
-                {getSectionIcon(section.type)}
-              </div>
-              <h2 className={cn(typography.heading2, "text-foreground")}>{section.title}</h2>
-            </div>
-
-            {/* Section Content */}
-            <div className="p-6">
-              {section.type === "keyTerms" ? (
-                // Render table for key terms
-                <div className="overflow-x-auto">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                    components={{
-                      table: ({ children }) => (
-                        <Table className="border rounded-lg overflow-hidden">
-                          {children}
-                        </Table>
-                      ),
-                      thead: ({ children }) => (
-                        <TableHeader className="bg-muted/50">
-                          {children}
-                        </TableHeader>
-                      ),
-                      tbody: ({ children }) => <TableBody>{children}</TableBody>,
-                      tr: ({ children }) => <TableRow className="border-b">{children}</TableRow>,
-                      th: ({ children }) => (
-                        <TableHead className="font-display font-semibold text-foreground/80 py-3 px-4">
-                          {children}
-                        </TableHead>
-                      ),
-                      td: ({ children }) => (
-                        <TableCell className="py-3 px-4 text-muted-foreground">
-                          {children}
-                        </TableCell>
-                      ),
-                      p: ({ children }) => <p className="mb-3 text-foreground/80 leading-relaxed">{children}</p>,
-                    }}
-                  >
-                    {section.content}
-                  </ReactMarkdown>
-                </div>
-              ) : (
-                // Regular markdown for other sections
-                <div className="prose prose-gray max-w-none dark:prose-invert">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                    components={{
-                      p: ({ children }) => <p className="mb-3 text-foreground/80 leading-relaxed font-sans">{children}</p>,
-                      strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                      ul: ({ children }) => <ul className="space-y-2 my-3">{children}</ul>,
-                      ol: ({ children }) => <ol className="space-y-3 my-3 list-decimal list-inside">{children}</ol>,
-                      li: ({ children }) => (
-                        <li className="text-foreground/80 leading-relaxed pl-1">
-                          <span className="text-foreground/80">{children}</span>
-                        </li>
-                      ),
-                      h3: ({ children }) => <h3 className="font-display font-medium text-foreground/90 mt-4 mb-2">{children}</h3>,
-                      blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 pl-4 italic text-muted-foreground my-3" style={{ borderColor: section.iconColor }}>
-                          {children}
-                        </blockquote>
-                      ),
-                    }}
-                  >
-                    {section.content}
-                  </ReactMarkdown>
-                </div>
-              )}
-            </div>
-          </Card>
-        ))}
-      </div>
-    );
-  };
-
   // Format content for other types
   const formatContent = (text: string) => {
     if (type === "mindmap") {
@@ -303,17 +106,6 @@ export const FullScreenStudyTool = ({
           </div>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button
-            onClick={downloadAsPDF}
-            variant="outline"
-            size="sm"
-            disabled={isDownloading || isLoading}
-            className="gap-2 font-sans flex-1 sm:flex-none"
-          >
-            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            <span className="hidden sm:inline">Download PDF</span>
-            <span className="sm:hidden">PDF</span>
-          </Button>
           <Button 
             onClick={onClose} 
             variant="outline" 
@@ -357,9 +149,11 @@ export const FullScreenStudyTool = ({
             </p>
           </div>
         ) : (
-          <div ref={contentRef} className="p-4 md:p-8 bg-muted/30 min-h-full">
+          <div className="p-4 md:p-8 bg-muted/30 min-h-full">
             {type === "summary" ? (
-              renderStudyGuide()
+              <div className="max-w-4xl mx-auto">
+                <StudySectionRenderer content={content} type="summary" />
+              </div>
             ) : (
               <Card className="max-w-4xl mx-auto p-8 shadow-lg bg-card border">
                 <h3 className={cn(typography.heading1, "mb-6 text-center text-foreground")}>{title}</h3>
