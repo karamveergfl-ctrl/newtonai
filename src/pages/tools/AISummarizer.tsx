@@ -525,10 +525,6 @@ const AISummarizer = () => {
       stopProcessing();
       setFlashcards(data.flashcards);
       setFlashcardTitle(videoTitle);
-      toast({
-        title: "Flashcards Ready! 📚",
-        description: `Generated ${data.flashcards.length} flashcards from video`,
-      });
       
     } catch (error: any) {
       console.error("Error generating flashcards:", error);
@@ -596,10 +592,6 @@ const AISummarizer = () => {
       stopProcessing();
       setQuizQuestions(data.questions);
       setQuizTitle(videoTitle);
-      toast({
-        title: "Quiz Ready! 🧠",
-        description: `Generated ${data.questions.length} questions from video`,
-      });
       
     } catch (error: any) {
       console.error("Error generating quiz:", error);
@@ -667,10 +659,6 @@ const AISummarizer = () => {
       stopProcessing();
       setVideoSummary(data.summary);
       setShowSummaryScreen(true);
-      toast({
-        title: "Summary Ready! 📝",
-        description: "Video summary generated successfully",
-      });
       
     } catch (error: any) {
       console.error("Error generating summary:", error);
@@ -737,10 +725,6 @@ const AISummarizer = () => {
       stopProcessing();
       setMindMapData(data.mindMapData);
       setShowMindMapScreen(true);
-      toast({
-        title: "Mind Map Ready! 🧠",
-        description: "Video mind map generated successfully",
-      });
       
     } catch (error: any) {
       console.error("Error generating mind map:", error);
