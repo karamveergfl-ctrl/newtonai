@@ -8,7 +8,8 @@ import {
   Network, 
   Loader2,
   Search,
-  Coins
+  Coins,
+  Podcast
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FEATURE_COSTS } from "@/lib/creditConfig";
@@ -17,6 +18,7 @@ import { useCredits } from "@/hooks/useCredits";
 interface PDFStudyToolsBarProps {
   onGenerateQuiz: () => void;
   onGenerateFlashcards: () => void;
+  onGeneratePodcast: () => void;
   onGenerateSummary: () => void;
   onGenerateMindMap: () => void;
   isGenerating: boolean;
@@ -29,6 +31,7 @@ interface PDFStudyToolsBarProps {
 export function PDFStudyToolsBar({
   onGenerateQuiz,
   onGenerateFlashcards,
+  onGeneratePodcast,
   onGenerateSummary,
   onGenerateMindMap,
   isGenerating,
@@ -92,6 +95,23 @@ export function PDFStudyToolsBar({
         )}
         <span className="text-xs">Flashcards</span>
         <CreditBadge feature="flashcards" />
+      </Button>
+
+      {/* Podcast */}
+      <Button
+        onClick={onGeneratePodcast}
+        disabled={disabled || isGenerating}
+        variant="outline"
+        size="sm"
+        className="gap-1.5 h-8 shrink-0"
+      >
+        {isGenerating ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Podcast className="w-4 h-4 text-emerald-500" />
+        )}
+        <span className="text-xs">Podcast</span>
+        <CreditBadge feature="podcast" />
       </Button>
 
       {/* Notes (was Summary) */}
