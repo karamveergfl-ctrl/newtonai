@@ -35,18 +35,37 @@ export const NewtonTriggerButton = memo(function NewtonTriggerButton({
     >
       {/* Pulsing glow effect when closed */}
       {!isOpen && (
-        <motion.div
-          className="absolute inset-0 rounded-full bg-primary/30"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.5, 0, 0.5],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
+        <>
+          {/* Outer glow ring */}
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            style={{
+              boxShadow: "0 0 20px 8px hsl(var(--primary) / 0.4)",
+            }}
+            animate={{
+              opacity: [0.4, 0.8, 0.4],
+              scale: [1, 1.05, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          {/* Inner pulse */}
+          <motion.div
+            className="absolute inset-0 rounded-full bg-primary/20"
+            animate={{
+              scale: [1, 1.15, 1],
+              opacity: [0.3, 0, 0.3],
+            }}
+            transition={{
+              duration: 2.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        </>
       )}
 
       {/* Button content */}

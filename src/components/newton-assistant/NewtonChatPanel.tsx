@@ -74,10 +74,15 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   return (
     <motion.div
       className="flex flex-col h-full bg-background rounded-2xl border shadow-2xl overflow-hidden"
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      initial={{ opacity: 0, x: 40, scale: 0.9 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 40, scale: 0.9 }}
+      transition={{ 
+        type: "spring", 
+        stiffness: 400, 
+        damping: 28,
+        mass: 0.8
+      }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
