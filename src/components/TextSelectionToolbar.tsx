@@ -55,8 +55,17 @@ export const TextSelectionToolbar = ({
   const handleToolClick = useCallback((e: React.MouseEvent, toolType: ToolType) => {
     e.preventDefault();
     e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+    
     // Capture the current selected text before opening dialog
-    capturedTextRef.current = selectedText;
+    const textToCapture = selectedText;
+    if (!textToCapture) {
+      console.warn("[TextSelectionToolbar] No text selected when tool clicked");
+      return;
+    }
+    capturedTextRef.current = textToCapture;
+    console.log("[TextSelectionToolbar] Captured text for", toolType, ":", textToCapture.slice(0, 50));
+    
     setPendingToolType(toolType);
     setSettingsDialogOpen(true);
   }, [selectedText]);
@@ -69,13 +78,19 @@ export const TextSelectionToolbar = ({
   }, [onSearchVideos, onDismiss]);
 
   const handleGenerateWithSettings = useCallback((settings: UniversalGenerationSettings) => {
-    if (!pendingToolType) return;
+    console.log("[TextSelectionToolbar] Generate with settings called:", pendingToolType, settings);
+    
+    if (!pendingToolType) {
+      console.error("[TextSelectionToolbar] No pending tool type");
+      return;
+    }
     
     // Use the captured text from when the tool was clicked - this prevents stale closure issues
     const textToUse = capturedTextRef.current;
+    console.log("[TextSelectionToolbar] Using captured text:", textToUse?.slice(0, 50));
     
     if (!textToUse) {
-      console.error("No captured text available for generation");
+      console.error("[TextSelectionToolbar] No captured text available for generation");
       setPendingToolType(null);
       return;
     }
@@ -83,15 +98,19 @@ export const TextSelectionToolbar = ({
     // Pass text explicitly to callbacks to ensure correct text is used
     switch (pendingToolType) {
       case "quiz":
+        console.log("[TextSelectionToolbar] Calling onGenerateQuiz");
         onGenerateQuiz(textToUse, settings);
         break;
       case "flashcards":
+        console.log("[TextSelectionToolbar] Calling onGenerateFlashcards");
         onGenerateFlashcards(textToUse, settings);
         break;
       case "summary":
+        console.log("[TextSelectionToolbar] Calling onGenerateSummary");
         onGenerateSummary(textToUse, settings);
         break;
       case "mindmap":
+        console.log("[TextSelectionToolbar] Calling onGenerateMindMap");
         onGenerateMindMap(textToUse, settings);
         break;
     }
@@ -113,6 +132,7 @@ export const TextSelectionToolbar = ({
         className="p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
       >
         <div className="space-y-3">
           {/* Header with selected text */}
