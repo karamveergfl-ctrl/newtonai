@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
@@ -46,16 +46,32 @@ export const TextSelectionToolbar = ({
 }: TextSelectionToolbarProps) => {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [pendingToolType, setPendingToolType] = useState<ToolType | null>(null);
+  // Store selected text at the time of clicking to prevent closure issues
+  const capturedTextRef = useRef<string>("");
   
   const isAnyLoading = isGeneratingQuiz || isGeneratingFlashcards || isGeneratingSummary || isGeneratingMindMap || isSearching;
 
-  const handleToolClick = (toolType: ToolType) => {
+  const handleToolClick = useCallback((e: React.MouseEvent, toolType: ToolType) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Capture the current selected text before opening dialog
+    capturedTextRef.current = selectedText;
     setPendingToolType(toolType);
     setSettingsDialogOpen(true);
-  };
+  }, [selectedText]);
 
-  const handleGenerateWithSettings = (settings: UniversalGenerationSettings) => {
+  const handleSearchClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSearchVideos();
+    onDismiss();
+  }, [onSearchVideos, onDismiss]);
+
+  const handleGenerateWithSettings = useCallback((settings: UniversalGenerationSettings) => {
     if (!pendingToolType) return;
+    
+    // Use the captured text from when the tool was clicked
+    const textToUse = capturedTextRef.current || selectedText;
     
     switch (pendingToolType) {
       case "quiz":
@@ -73,12 +89,23 @@ export const TextSelectionToolbar = ({
     }
     
     setPendingToolType(null);
+    capturedTextRef.current = "";
     onDismiss();
-  };
+  }, [pendingToolType, selectedText, onGenerateQuiz, onGenerateFlashcards, onGenerateSummary, onGenerateMindMap, onDismiss]);
+
+  const handleDismissClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDismiss();
+  }, [onDismiss]);
 
   return (
     <>
-      <Card className="p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-md w-full">
+      <Card 
+        className="p-3 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm animate-fade-in max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div className="space-y-3">
           {/* Header with selected text */}
           <div className="flex items-start justify-between gap-2">
@@ -92,7 +119,7 @@ export const TextSelectionToolbar = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={onDismiss}
+              onClick={handleDismissClick}
               className="h-6 w-6 shrink-0"
             >
               <X className="w-4 h-4" />
@@ -102,7 +129,7 @@ export const TextSelectionToolbar = ({
           {/* Tool buttons grid */}
           <div className="grid grid-cols-5 gap-1.5">
             <Button 
-              onClick={onSearchVideos}
+              onClick={handleSearchClick}
               variant="outline"
               size="sm"
               disabled={isAnyLoading}
@@ -118,7 +145,7 @@ export const TextSelectionToolbar = ({
             </Button>
 
             <Button 
-              onClick={() => handleToolClick("quiz")}
+              onClick={(e) => handleToolClick(e, "quiz")}
               variant="outline"
               size="sm"
               disabled={isAnyLoading}
@@ -134,7 +161,7 @@ export const TextSelectionToolbar = ({
             </Button>
 
             <Button 
-              onClick={() => handleToolClick("flashcards")}
+              onClick={(e) => handleToolClick(e, "flashcards")}
               variant="outline"
               size="sm"
               disabled={isAnyLoading}
@@ -150,7 +177,7 @@ export const TextSelectionToolbar = ({
             </Button>
 
             <Button 
-              onClick={() => handleToolClick("summary")}
+              onClick={(e) => handleToolClick(e, "summary")}
               variant="outline"
               size="sm"
               disabled={isAnyLoading}
@@ -166,7 +193,7 @@ export const TextSelectionToolbar = ({
             </Button>
 
             <Button 
-              onClick={() => handleToolClick("mindmap")}
+              onClick={(e) => handleToolClick(e, "mindmap")}
               variant="outline"
               size="sm"
               disabled={isAnyLoading}
@@ -190,7 +217,10 @@ export const TextSelectionToolbar = ({
           open={settingsDialogOpen}
           onOpenChange={(open) => {
             setSettingsDialogOpen(open);
-            if (!open) setPendingToolType(null);
+            if (!open) {
+              setPendingToolType(null);
+              capturedTextRef.current = "";
+            }
           }}
           type={pendingToolType}
           contentTitle={selectedText.slice(0, 50) + (selectedText.length > 50 ? "..." : "")}
