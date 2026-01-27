@@ -1920,9 +1920,6 @@ const Index = () => {
             <div className="mt-8 space-y-6 my-[3px]">
               <StudyTracker />
               
-              {/* Banner Ad for Free Users */}
-              <AdBanner placement="inline" />
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <UploadZone onUploadComplete={handleUploadComplete} />
                 <LectureRecorder onNotesGenerated={(notes, title) => {
