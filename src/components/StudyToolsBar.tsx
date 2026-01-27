@@ -116,7 +116,7 @@ export const StudyToolsBar = ({
           <CreditBadge feature="flashcards" />
         </Button>
 
-        {/* Notes (was Summary) */}
+        {/* Summary */}
         <Button
           onClick={onGenerateSummary}
           disabled={disabled || isAnyGenerating}
@@ -129,7 +129,7 @@ export const StudyToolsBar = ({
           ) : (
             <FileText className="w-4 h-4 text-amber-500" />
           )}
-          <span className="text-xs hidden sm:inline">Notes</span>
+          <span className="text-xs hidden sm:inline">Summary</span>
           <CreditBadge feature="summary" />
         </Button>
 
