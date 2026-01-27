@@ -60,9 +60,19 @@ export const ImageViewer = ({
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
+  // Handle text selection - scoped to only react to events inside the image container
   useEffect(() => {
-    const handleTextSelection = () => {
+    const handleTextSelection = (e: MouseEvent | TouchEvent) => {
       if (isScreenshotMode || isCapturing) return;
+      
+      const container = containerRef.current;
+      const target = e.target as Node | null;
+      
+      // Only react to selections inside the image container
+      // Clicks on the toolbar or dialogs should NOT clear selection
+      if (container && target && !container.contains(target)) {
+        return;
+      }
       
       const selection = window.getSelection();
       const text = selection?.toString().trim();
