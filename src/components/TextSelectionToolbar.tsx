@@ -219,7 +219,7 @@ export const TextSelectionToolbar = ({
               ) : (
                 <FileText className="w-4 h-4 text-amber-500" />
               )}
-              <span className="text-[10px] leading-tight">Notes</span>
+              <span className="text-[10px] leading-tight">Summary</span>
             </Button>
 
             <Button 
