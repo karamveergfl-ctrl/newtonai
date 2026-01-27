@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Loader2, Play, Eye, ChevronRight, Sparkles, BookOpen, Video, RefreshCw, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -53,6 +53,11 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
   const [hasMoreVideos, setHasMoreVideos] = useState(true);
   const solutionScrollRef = useRef<HTMLDivElement>(null);
   const videosScrollRef = useRef<HTMLDivElement>(null);
+  
+  // Swipe gesture state
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const minSwipeDistance = 50;
 
   // Lock body scroll when panel is open
   useEffect(() => {
@@ -78,6 +83,34 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
       scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  // Swipe gesture handlers
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    touchEndX.current = null;
+    touchStartX.current = e.targetTouches[0].clientX;
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe && activeTab === 'solution') {
+      setActiveTab('videos');
+    } else if (isRightSwipe && activeTab === 'videos') {
+      setActiveTab('solution');
+    }
+    
+    // Reset
+    touchStartX.current = null;
+    touchEndX.current = null;
+  }, [activeTab]);
 
   const processProblem = async () => {
     try {
@@ -237,7 +270,12 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex min-h-0 overflow-hidden">
+          <div 
+            className="flex-1 flex min-h-0 overflow-hidden"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
             {/* Main solution area */}
             <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
