@@ -646,7 +646,9 @@ const AISummarizer = () => {
         },
         body: JSON.stringify({
           content: transcript.slice(0, 10000),
-          detailLevel: settings?.detailLevel,
+          detailLevel: settings?.detailLevel || "standard",
+          format: settings?.summaryFormat || "concise",
+          includeComparison: true,
           language: selectedLanguage,
         }),
       });

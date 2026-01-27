@@ -98,7 +98,9 @@ export function usePDFStudyTools({
           body = {
             content,
             sourceType: 'pdf',
-            detailLevel: 'standard',
+            detailLevel: settings?.detailLevel || 'standard',
+            format: settings?.summaryFormat || 'concise',
+            includeComparison: settings?.includeComparison ?? true,
             title: fileName,
           };
           break;

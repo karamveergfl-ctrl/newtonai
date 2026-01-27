@@ -20,6 +20,9 @@ export interface GenerationSettings {
   pageEnd: number;
   count: number;
   difficulty: "easy" | "medium" | "hard";
+  detailLevel?: "brief" | "standard" | "detailed";
+  summaryFormat?: "concise" | "detailed" | "bullet-points" | "academic";
+  includeComparison?: boolean;
 }
 
 const difficultyLabels = {
