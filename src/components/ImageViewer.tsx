@@ -45,6 +45,7 @@ export const ImageViewer = ({
 }: ImageViewerProps) => {
   const [showOverlay, setShowOverlay] = useState(!!ocrText);
   const [selectedText, setSelectedText] = useState("");
+  const [selectionPosition, setSelectionPosition] = useState<{ top: number; left: number; bottom: number; right: number } | null>(null);
   const [showSearchPrompt, setShowSearchPrompt] = useState(false);
   const [showMobilePrompt, setShowMobilePrompt] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -79,6 +80,19 @@ export const ImageViewer = ({
       
       if (text && text.length >= 1) {
         setSelectedText(text);
+        
+        // Get selection bounding rect for positioning toolbar
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          setSelectionPosition({
+            top: rect.top,
+            left: rect.left,
+            bottom: rect.bottom,
+            right: rect.right,
+          });
+        }
+        
         if (!isMobile) {
           setShowSearchPrompt(true);
         }
@@ -87,6 +101,7 @@ export const ImageViewer = ({
           setShowSearchPrompt(false);
         }
         setSelectedText("");
+        setSelectionPosition(null);
       }
     };
 
@@ -656,22 +671,21 @@ export const ImageViewer = ({
 
       {/* Desktop text selection toolbar with study tools */}
       {!isMobile && showSearchPrompt && !isScreenshotMode && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 md:max-w-md">
-          <TextSelectionToolbar
-            selectedText={selectedText}
-            onDismiss={handleDismiss}
-            onSearchVideos={handleSearch}
-            onGenerateQuiz={(text, settings) => onGenerateQuizFromText?.(text, settings)}
-            onGenerateFlashcards={(text, settings) => onGenerateFlashcardsFromText?.(text, settings)}
-            onGenerateSummary={(text, settings) => onGenerateSummaryFromText?.(text, settings)}
-            onGenerateMindMap={(text, settings) => onGenerateMindMapFromText?.(text, settings)}
-            isGeneratingQuiz={isGeneratingQuiz}
-            isGeneratingFlashcards={isGeneratingFlashcards}
-            isGeneratingSummary={isGeneratingSummary}
-            isGeneratingMindMap={isGeneratingMindMap}
-            isSearching={isSearching}
-          />
-        </div>
+        <TextSelectionToolbar
+          selectedText={selectedText}
+          selectionPosition={selectionPosition}
+          onDismiss={handleDismiss}
+          onSearchVideos={handleSearch}
+          onGenerateQuiz={(text, settings) => onGenerateQuizFromText?.(text, settings)}
+          onGenerateFlashcards={(text, settings) => onGenerateFlashcardsFromText?.(text, settings)}
+          onGenerateSummary={(text, settings) => onGenerateSummaryFromText?.(text, settings)}
+          onGenerateMindMap={(text, settings) => onGenerateMindMapFromText?.(text, settings)}
+          isGeneratingQuiz={isGeneratingQuiz}
+          isGeneratingFlashcards={isGeneratingFlashcards}
+          isGeneratingSummary={isGeneratingSummary}
+          isGeneratingMindMap={isGeneratingMindMap}
+          isSearching={isSearching}
+        />
       )}
 
       {/* Mobile text selection drawer with study tools */}
