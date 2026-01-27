@@ -60,6 +60,7 @@ export function PDFStudyToolsBar({
         Tools
       </span>
       
+      {/* Quiz */}
       <Button
         onClick={onGenerateQuiz}
         disabled={disabled || isGenerating}
@@ -76,6 +77,7 @@ export function PDFStudyToolsBar({
         <CreditBadge feature="quiz" />
       </Button>
 
+      {/* Flashcards */}
       <Button
         onClick={onGenerateFlashcards}
         disabled={disabled || isGenerating}
@@ -86,12 +88,13 @@ export function PDFStudyToolsBar({
         {isGenerating ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          <BookOpen className="w-4 h-4 text-secondary" />
+          <BookOpen className="w-4 h-4 text-violet-500" />
         )}
         <span className="text-xs">Flashcards</span>
         <CreditBadge feature="flashcards" />
       </Button>
 
+      {/* Notes (was Summary) */}
       <Button
         onClick={onGenerateSummary}
         disabled={disabled || isGenerating}
@@ -102,12 +105,13 @@ export function PDFStudyToolsBar({
         {isGenerating ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          <FileText className="w-4 h-4 text-accent" />
+          <FileText className="w-4 h-4 text-amber-500" />
         )}
-        <span className="text-xs">Summary</span>
+        <span className="text-xs">Notes</span>
         <CreditBadge feature="summary" />
       </Button>
 
+      {/* Mind Map */}
       <Button
         onClick={onGenerateMindMap}
         disabled={disabled || isGenerating}
@@ -118,7 +122,7 @@ export function PDFStudyToolsBar({
         {isGenerating ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          <Network className="w-4 h-4 text-primary" />
+          <Network className="w-4 h-4 text-rose-500" />
         )}
         <span className="text-xs">Mind Map</span>
         <CreditBadge feature="mind_map" />

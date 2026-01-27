@@ -230,14 +230,14 @@ export const VideoCardWithTools = ({
                   type="button"
                   className={cn(
                     "flex-1 gap-2",
-                    activeGenerating === "flashcards" && "bg-secondary/10 border-secondary"
+                    activeGenerating === "flashcards" && "bg-violet-500/10 border-violet-500"
                   )}
                   disabled={isGenerating}
                 >
                   {activeGenerating === "flashcards" ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <BookOpen className="w-4 h-4 text-secondary" />
+                    <BookOpen className="w-4 h-4 text-violet-500" />
                   )}
                   Flashcards
                 </Button>
@@ -254,16 +254,16 @@ export const VideoCardWithTools = ({
                   type="button"
                   className={cn(
                     "flex-1 gap-2",
-                    activeGenerating === "summary" && "bg-accent/10 border-accent"
+                    activeGenerating === "summary" && "bg-amber-500/10 border-amber-500"
                   )}
                   disabled={isGenerating}
                 >
                   {activeGenerating === "summary" ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <FileText className="w-4 h-4 text-accent-foreground" />
+                    <FileText className="w-4 h-4 text-amber-500" />
                   )}
-                  Summary
+                  Notes
                 </Button>
               )}
               

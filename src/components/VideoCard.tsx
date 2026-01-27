@@ -95,7 +95,7 @@ export const VideoCard = ({
                     onClick={() => onGenerateQuiz(video.videoId, video.title)} 
                     className="gap-2"
                   >
-                    <Brain className="w-4 h-4" />
+                    <Brain className="w-4 h-4 text-primary" />
                     Generate Quiz
                   </DropdownMenuItem>
                 )}
@@ -104,7 +104,7 @@ export const VideoCard = ({
                     onClick={() => onGenerateFlashcards(video.videoId, video.title)} 
                     className="gap-2"
                   >
-                    <BookOpen className="w-4 h-4" />
+                    <BookOpen className="w-4 h-4 text-violet-500" />
                     Generate Flashcards
                   </DropdownMenuItem>
                 )}
@@ -113,8 +113,8 @@ export const VideoCard = ({
                     onClick={() => onGenerateSummary(video.videoId, video.title)} 
                     className="gap-2"
                   >
-                    <FileText className="w-4 h-4" />
-                    Generate Summary
+                    <FileText className="w-4 h-4 text-amber-500" />
+                    Generate Notes
                   </DropdownMenuItem>
                 )}
                 {onGenerateMindMap && (
@@ -122,7 +122,7 @@ export const VideoCard = ({
                     onClick={() => onGenerateMindMap(video.videoId, video.title)} 
                     className="gap-2"
                   >
-                    <Network className="w-4 h-4" />
+                    <Network className="w-4 h-4 text-rose-500" />
                     Generate Mind Map
                   </DropdownMenuItem>
                 )}

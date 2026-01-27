@@ -261,12 +261,12 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
                 Generate Quiz
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToolGenerate('flashcards')} disabled={!isDocumentReady || isGenerating}>
-                <BookOpen className="w-4 h-4 mr-2 text-secondary" />
+                <BookOpen className="w-4 h-4 mr-2 text-violet-500" />
                 Generate Flashcards
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToolGenerate('summary')} disabled={!isDocumentReady || isGenerating}>
-                <FileText className="w-4 h-4 mr-2 text-accent" />
-                Generate Summary
+                <FileText className="w-4 h-4 mr-2 text-amber-500" />
+                Generate Notes
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToolGenerate('mind_map')} disabled={!isDocumentReady || isGenerating}>
                 <Network className="w-4 h-4 mr-2 text-primary" />
@@ -376,12 +376,12 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
                 Generate Quiz
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToolGenerate('flashcards')} disabled={!isDocumentReady || isGenerating}>
-                <BookOpen className="w-4 h-4 mr-2 text-secondary" />
+                <BookOpen className="w-4 h-4 mr-2 text-violet-500" />
                 Generate Flashcards
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToolGenerate('summary')} disabled={!isDocumentReady || isGenerating}>
-                <FileText className="w-4 h-4 mr-2 text-accent" />
-                Generate Summary
+                <FileText className="w-4 h-4 mr-2 text-amber-500" />
+                Generate Notes
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToolGenerate('mind_map')} disabled={!isDocumentReady || isGenerating}>
                 <Network className="w-4 h-4 mr-2 text-primary" />
