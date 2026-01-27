@@ -193,26 +193,22 @@ const Index = () => {
           setQuizQuestions(data.questions);
           setQuizTitle(title);
           setShowQuizScreen(true);
-          toast({ title: "Quiz Ready! 🧠", description: `Generated ${data.questions.length} questions` });
           break;
         case 'flashcards':
           setFlashcards(data.flashcards);
           setFlashcardTitle(title);
           setShowFlashcardsScreen(true);
-          toast({ title: "Flashcards Ready! 📚", description: `Generated ${data.flashcards.length} flashcards` });
           break;
         case 'summary':
           setVideoSummary(data.summary);
           setVideoStudyToolTitle(title);
           setShowVideoSummaryScreen(true);
-          toast({ title: "Summary Ready! 📝" });
           break;
         case 'mindmap':
           setVideoMindMap(data.mindMap);
           if (data.mindMapData) setVideoMindMapData(data.mindMapData);
           setFullScreenMindMapTitle(title);
           setShowVideoMindMapScreen(true);
-          toast({ title: "Mind Map Ready! 🧠" });
           break;
       }
       
@@ -735,10 +731,6 @@ const Index = () => {
       }
       const data = await response.json();
       setFlashcards(data.flashcards);
-      toast({
-        title: "Flashcards Ready! 📚",
-        description: `Generated ${data.flashcards.length} flashcards for studying`
-      });
     } catch (error) {
       console.error("Error generating flashcards:", error);
       setShowFlashcardsScreen(false);
@@ -985,10 +977,6 @@ const Index = () => {
       }
       const data = await response.json();
       setQuizQuestions(data.questions);
-      toast({
-        title: "Quiz Ready! 🧠",
-        description: `Generated ${data.questions.length} questions for testing`
-      });
     } catch (error) {
       console.error("Error generating quiz:", error);
       setShowQuizScreen(false);
@@ -1397,10 +1385,6 @@ const Index = () => {
       }
       const data = await response.json();
       setSummary(data.summary);
-      toast({
-        title: "Summary Ready! 📝",
-        description: "Document summary generated successfully"
-      });
     } catch (error) {
       console.error("Error generating summary:", error);
       setShowVideoSummaryScreen(false);
@@ -1462,10 +1446,6 @@ const Index = () => {
       if (data.mindMapData) {
         setMindMapData(data.mindMapData);
       }
-      toast({
-        title: "Mind Map Ready! 🧠",
-        description: "Visual mind map generated successfully"
-      });
     } catch (error) {
       console.error("Error generating mind map:", error);
       setShowFullScreenMindMap(false);
@@ -1526,10 +1506,6 @@ const Index = () => {
       }
       const data = await response.json();
       setQuizQuestions(data.questions);
-      toast({
-        title: "Quiz Ready! 🧠",
-        description: `Generated ${data.questions.length} questions from selected text`
-      });
     } catch (error) {
       console.error("Error generating quiz from text:", error);
       setShowQuizScreen(false);
@@ -1590,10 +1566,6 @@ const Index = () => {
       }
       const data = await response.json();
       setFlashcards(data.flashcards);
-      toast({
-        title: "Flashcards Ready! 📚",
-        description: `Generated ${data.flashcards.length} flashcards from selected text`
-      });
     } catch (error) {
       console.error("Error generating flashcards from text:", error);
       setShowFlashcardsScreen(false);
@@ -1652,10 +1624,6 @@ const Index = () => {
       }
       const data = await response.json();
       setSummary(data.summary);
-      toast({
-        title: "Summary Ready! 📝",
-        description: "Summary generated from selected text"
-      });
     } catch (error) {
       console.error("Error generating summary from text:", error);
       setShowVideoSummaryScreen(false);
@@ -1716,10 +1684,6 @@ const Index = () => {
       if (data.mindMapData) {
         setMindMapData(data.mindMapData);
       }
-      toast({
-        title: "Mind Map Ready! 🧠",
-        description: "Mind map generated from selected text"
-      });
     } catch (error) {
       console.error("Error generating mind map from text:", error);
       setShowFullScreenMindMap(false);

@@ -179,10 +179,6 @@ const AIQuiz = () => {
       hideProcessing();
       setIsGenerating(false);
       setQuestions(data.questions);
-      toast({
-        title: "Quiz Ready! 🧠",
-        description: `Generated ${data.questions.length} questions`,
-      });
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
         hideProcessing();

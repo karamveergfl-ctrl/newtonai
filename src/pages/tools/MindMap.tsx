@@ -152,10 +152,6 @@ const MindMap = () => {
       hideProcessing();
       setIsGenerating(false);
       setMindMapData(data.mindMapData || data.mindMap);
-      toast({
-        title: "Mind Map Ready! 🧠",
-        description: `Generated ${selectedStyle} mind map`,
-      });
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
         hideProcessing();

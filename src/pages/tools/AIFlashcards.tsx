@@ -164,10 +164,6 @@ const AIFlashcards = () => {
       setFlashcards(data.flashcards);
       setCurrentIndex(0);
       setIsFlipped(false);
-      toast({
-        title: "Flashcards Ready! 📚",
-        description: `Generated ${data.flashcards.length} flashcards`,
-      });
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
         hideProcessing();
