@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useProcessingOverlay } from '@/contexts/ProcessingOverlayContext';
-import { GenerationSettings } from '@/components/GenerationSettingsDialog';
+import { UniversalGenerationSettings } from '@/components/UniversalStudySettingsDialog';
 
 export type StudyToolType = 'quiz' | 'flashcards' | 'summary' | 'mind_map' | 'podcast';
 
@@ -38,7 +38,7 @@ export function usePDFStudyTools({
 
   const generateStudyMaterial = useCallback(async (
     tool: StudyToolType,
-    settings?: GenerationSettings
+    settings?: UniversalGenerationSettings
   ) => {
     if (!extractedText || isGenerating) {
       toast({
@@ -110,6 +110,7 @@ export function usePDFStudyTools({
           body = {
             content,
             sourceType: 'pdf',
+            style: settings?.mindMapStyle || 'radial',
             title: fileName,
           };
           break;

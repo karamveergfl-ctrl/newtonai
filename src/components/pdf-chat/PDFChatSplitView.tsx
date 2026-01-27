@@ -11,7 +11,8 @@ import {
   BookOpen,
   FileText,
   Network,
-  Settings2
+  Settings2,
+  Podcast
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -25,10 +26,10 @@ import { TextSelectionToolbar } from './TextSelectionToolbar';
 import { PDFStudyToolsBar } from './PDFStudyToolsBar';
 import { usePDFChat } from '@/hooks/usePDFChat';
 import { usePDFDocument } from '@/hooks/usePDFDocument';
-import { usePDFStudyTools } from '@/hooks/usePDFStudyTools';
+import { usePDFStudyTools, StudyToolType } from '@/hooks/usePDFStudyTools';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { GenerationSettingsDialog, GenerationSettings } from '@/components/GenerationSettingsDialog';
+import { UniversalStudySettingsDialog, UniversalGenerationSettings } from '@/components/UniversalStudySettingsDialog';
 
 interface PDFChatSplitViewProps {
   initialFile?: File | null;
@@ -155,15 +156,16 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     }
   };
 
-  const handleToolGenerate = useCallback((tool: 'quiz' | 'flashcards' | 'summary' | 'mind_map' | 'podcast') => {
-    if (tool === 'quiz' || tool === 'flashcards') {
-      openToolDialog(tool);
-    } else {
+  const handleToolGenerate = useCallback((tool: StudyToolType) => {
+    // Open settings dialog for all tools except podcast
+    if (tool === 'podcast') {
       generateStudyMaterial(tool);
+    } else {
+      openToolDialog(tool);
     }
   }, [openToolDialog, generateStudyMaterial]);
 
-  const handleSettingsConfirm = useCallback((settings: GenerationSettings) => {
+  const handleSettingsConfirm = useCallback((settings: UniversalGenerationSettings) => {
     if (activeToolDialog) {
       generateStudyMaterial(activeToolDialog, settings);
       closeToolDialog();
@@ -314,21 +316,18 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
           </TabsContent>
         </Tabs>
 
-        {/* Settings Dialogs */}
-        <GenerationSettingsDialog
-          open={activeToolDialog === 'quiz'}
-          onOpenChange={(open) => !open && closeToolDialog()}
-          type="quiz"
-          totalPages={document?.totalPages || 1}
-          onGenerate={handleSettingsConfirm}
-        />
-        <GenerationSettingsDialog
-          open={activeToolDialog === 'flashcards'}
-          onOpenChange={(open) => !open && closeToolDialog()}
-          type="flashcards"
-          totalPages={document?.totalPages || 1}
-          onGenerate={handleSettingsConfirm}
-        />
+        {/* Settings Dialog - Universal for all tools */}
+        {activeToolDialog && activeToolDialog !== 'podcast' && (
+          <UniversalStudySettingsDialog
+            open={!!activeToolDialog}
+            onOpenChange={(open) => !open && closeToolDialog()}
+            type={activeToolDialog === 'mind_map' ? 'mindmap' : activeToolDialog}
+            contentTitle={document?.fileName || file?.name}
+            contentType="pdf"
+            totalPages={document?.totalPages || 1}
+            onGenerate={handleSettingsConfirm}
+          />
+        )}
       </div>
     );
   }
@@ -443,21 +442,18 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
         </ResizablePanel>
       </ResizablePanelGroup>
 
-      {/* Settings Dialogs */}
-      <GenerationSettingsDialog
-        open={activeToolDialog === 'quiz'}
-        onOpenChange={(open) => !open && closeToolDialog()}
-        type="quiz"
-        totalPages={document?.totalPages || 1}
-        onGenerate={handleSettingsConfirm}
-      />
-      <GenerationSettingsDialog
-        open={activeToolDialog === 'flashcards'}
-        onOpenChange={(open) => !open && closeToolDialog()}
-        type="flashcards"
-        totalPages={document?.totalPages || 1}
-        onGenerate={handleSettingsConfirm}
-      />
+      {/* Settings Dialog - Universal for all tools */}
+      {activeToolDialog && activeToolDialog !== 'podcast' && (
+        <UniversalStudySettingsDialog
+          open={!!activeToolDialog}
+          onOpenChange={(open) => !open && closeToolDialog()}
+          type={activeToolDialog === 'mind_map' ? 'mindmap' : activeToolDialog}
+          contentTitle={document?.fileName || file?.name}
+          contentType="pdf"
+          totalPages={document?.totalPages || 1}
+          onGenerate={handleSettingsConfirm}
+        />
+      )}
     </div>
   );
 }
