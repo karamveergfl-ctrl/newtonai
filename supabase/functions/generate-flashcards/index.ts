@@ -78,12 +78,44 @@ serve(async (req) => {
       hard: "Focus on complex concepts, edge cases, and deeper analysis. Cards should challenge deep understanding."
     };
 
+    // Detect if we have a real transcript or just title/description
+    const hasRealContent = content && content.length > 300 && 
+      !content.includes("Enjoy the videos and music you love");
+    
+    // Extract the actual subject from the video title (e.g., "Zener Diode" from "Lec 5 | Zener Diode...")
+    const extractSubject = (title: string): string => {
+      if (!title) return '';
+      // Remove common prefixes like "Lec 5 |", "Lecture 5:", etc.
+      let subject = title
+        .replace(/^(Lec|Lecture|Class|Session|Part|Chapter|Unit|Module)\s*\d+\s*[:||\-\s]*/gi, '')
+        .replace(/\|\s*(Engineering|Physics|Chemistry|Biology|Math|Computer|Science).*$/gi, '')
+        .replace(/\s*\|.*B\.?Tech.*$/gi, '')
+        .replace(/\s*\|.*Year.*$/gi, '')
+        .trim();
+      // Take the first meaningful part before any pipe or parenthesis
+      const parts = subject.split(/[|]/);
+      return parts[0]?.trim() || title;
+    };
+
+    const subjectTopic = type === 'video' && videoTitle ? extractSubject(videoTitle) : '';
+
     const systemPrompt = `You are an expert educator that creates effective flashcards for studying.
 
 CRITICAL RULES:
 1. Generate ALL flashcards in ${targetLanguage}. Both front (question) and back (answer) MUST be in ${targetLanguage}.
-2. ONLY use information that is EXPLICITLY stated in the provided content below.
-3. DO NOT add any external knowledge not present in the source material.
+2. Create flashcards about the ACTUAL SUBJECT MATTER being taught, NOT about the video/document metadata.
+3. NEVER create flashcards asking about:
+   - Which lecture number this is (Lec 5, Lecture 3, etc.)
+   - What year/semester the course is for
+   - The video title or description structure
+   - YouTube functionality
+   - General information about the course structure
+4. DO create flashcards about:
+   - Core concepts and definitions of the topic
+   - Important formulas and equations
+   - Real-world applications
+   - Key principles and mechanisms
+   - Practical examples and use cases
 
 You MUST respond with ONLY a valid JSON array. No explanations, no markdown, no extra text.
 Each flashcard should have a clear question on the front and a concise answer on the back.
@@ -95,24 +127,43 @@ ${difficultyGuide[difficulty as keyof typeof difficultyGuide]}`;
     let userPrompt = '';
     
     if (type === 'video') {
-      userPrompt = `Based ONLY on the following educational video content:
+      if (hasRealContent) {
+        // We have actual transcript content
+        userPrompt = `Based on the following educational video content about "${subjectTopic || videoTitle}":
 
-Title: "${videoTitle}"
-Content/Transcript:
+Transcript:
 ---
 ${content?.slice(0, 6000) || ''}
 ---
 
 Generate exactly ${count} flashcards at ${difficulty} difficulty IN ${targetLanguage}.
+Focus ONLY on the educational content about ${subjectTopic || 'the topic'}.
 Both the front (question) and back (answer) must be written in ${targetLanguage}.
 
 Return ONLY a JSON array with this exact format:
 [
-  {"front": "Question in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"},
-  {"front": "Question in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"}
+  {"front": "Question about ${subjectTopic || 'the topic'} in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"},
+  {"front": "Question about ${subjectTopic || 'the topic'} in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"}
 ]`;
+      } else {
+        // No real transcript - generate educational flashcards about the subject from the title
+        userPrompt = `The video is about: "${subjectTopic || videoTitle}"
+
+Since no transcript is available, generate ${count} educational flashcards at ${difficulty} difficulty about the topic "${subjectTopic || videoTitle}" IN ${targetLanguage}.
+
+IMPORTANT: Create useful study flashcards about the ACTUAL SUBJECT (${subjectTopic || videoTitle}).
+- Include definitions, key concepts, formulas, applications
+- DO NOT ask about lecture numbers, course years, or video structure
+- Make cards that would genuinely help someone learn about ${subjectTopic || videoTitle}
+
+Return ONLY a JSON array with this exact format:
+[
+  {"front": "Question about ${subjectTopic || videoTitle} in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"},
+  {"front": "Question about ${subjectTopic || videoTitle} in ${targetLanguage}?", "back": "Answer in ${targetLanguage}"}
+]`;
+      }
     } else {
-      userPrompt = `Based ONLY on the following document content:
+      userPrompt = `Based on the following document content:
 
 Document Content:
 ---
@@ -120,6 +171,7 @@ ${content?.slice(0, 6000) || ''}
 ---
 
 Generate exactly ${count} flashcards at ${difficulty} difficulty IN ${targetLanguage}.
+Focus on the actual educational content, not document metadata.
 Both the front (question) and back (answer) must be written in ${targetLanguage}.
 
 Return ONLY a JSON array with this exact format:
