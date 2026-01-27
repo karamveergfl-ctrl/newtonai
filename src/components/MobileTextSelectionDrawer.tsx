@@ -195,9 +195,9 @@ export const MobileTextSelectionDrawer = ({
                 {isGeneratingSummary ? (
                   <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
                 ) : (
-                  <FileText className="w-5 h-5 text-amber-500" />
+                <FileText className="w-5 h-5 text-amber-500" />
                 )}
-                <span className="text-[10px]">Notes</span>
+                <span className="text-[10px]">Summary</span>
               </Button>
 
               <Button 

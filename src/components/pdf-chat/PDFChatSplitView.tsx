@@ -12,17 +12,19 @@ import {
   FileText,
   Network,
   Settings2,
-  Podcast
+  Podcast,
+  MessageSquare,
+  Lightbulb
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { PDFViewerWithHighlight } from './PDFViewerWithHighlight';
 import { ChatPanel } from './ChatPanel';
-import { TextSelectionToolbar } from './TextSelectionToolbar';
 import { PDFStudyToolsBar } from './PDFStudyToolsBar';
 import { usePDFChat } from '@/hooks/usePDFChat';
 import { usePDFDocument } from '@/hooks/usePDFDocument';
@@ -30,6 +32,10 @@ import { usePDFStudyTools, StudyToolType } from '@/hooks/usePDFStudyTools';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from '@/components/UniversalStudySettingsDialog';
+import { TextSelectionToolbar } from '@/components/TextSelectionToolbar';
+import { MobileTextSelectionDrawer } from '@/components/MobileTextSelectionDrawer';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface PDFChatSplitViewProps {
   initialFile?: File | null;
@@ -41,15 +47,30 @@ interface HighlightInfo {
   text: string;
 }
 
+interface SelectionPosition {
+  top: number;
+  left: number;
+  bottom: number;
+  right: number;
+}
+
 export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   const [file, setFile] = useState<File | null>(initialFile || null);
   const [currentPage, setCurrentPage] = useState(1);
   const [highlight, setHighlight] = useState<HighlightInfo | null>(null);
   const [mobileTab, setMobileTab] = useState<'pdf' | 'chat'>('pdf');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSelectionToolbar, setShowSelectionToolbar] = useState(false);
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+  const [selectionPosition, setSelectionPosition] = useState<SelectionPosition | null>(null);
+  const [isSearchingVideos, setIsSearchingVideos] = useState(false);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [isGeneratingMindMap, setIsGeneratingMindMap] = useState(false);
   const extractedTextRef = useRef<string>('');
 
   const {
@@ -107,11 +128,30 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   // Show selection toolbar when text is selected
   useEffect(() => {
     if (selectedText) {
-      setShowSelectionToolbar(true);
+      // Capture selection position
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        setSelectionPosition({
+          top: rect.top,
+          left: rect.left,
+          bottom: rect.bottom,
+          right: rect.right,
+        });
+      }
+      
+      if (isMobile) {
+        setShowMobileDrawer(true);
+      } else {
+        setShowSelectionToolbar(true);
+      }
     } else {
       setShowSelectionToolbar(false);
+      setShowMobileDrawer(false);
+      setSelectionPosition(null);
     }
-  }, [selectedText]);
+  }, [selectedText, isMobile]);
 
   const handleTextExtracted = useCallback(async (pages: Array<{ pageNumber: number; text: string }>) => {
     extractedTextRef.current = pages.map(p => p.text).join('\n\n');
@@ -172,10 +212,12 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     }
   }, [activeToolDialog, generateStudyMaterial, closeToolDialog]);
 
+  // PDF-specific Ask/Explain handlers
   const handleAskAboutSelection = useCallback((text: string) => {
     setContextMode('selected_text');
     sendMessage(`What does this mean: "${text}"`);
     setShowSelectionToolbar(false);
+    setShowMobileDrawer(false);
     if (isMobile) {
       setMobileTab('chat');
     }
@@ -185,6 +227,7 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     setContextMode('selected_text');
     sendMessage(`Explain this in simple terms: "${text}"`);
     setShowSelectionToolbar(false);
+    setShowMobileDrawer(false);
     if (isMobile) {
       setMobileTab('chat');
     }
@@ -192,8 +235,178 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
 
   const handleCloseSelectionToolbar = useCallback(() => {
     setShowSelectionToolbar(false);
+    setShowMobileDrawer(false);
     setSelectedText(null);
   }, [setSelectedText]);
+
+  // Video search handler for selected text
+  const handleSearchVideos = useCallback(async () => {
+    if (!selectedText) return;
+    
+    setIsSearchingVideos(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-videos', {
+        body: { query: selectedText.slice(0, 200) }
+      });
+      
+      if (error) throw error;
+      
+      // Store results and navigate
+      sessionStorage.setItem('pdf_video_search', JSON.stringify({
+        query: selectedText.slice(0, 100),
+        videos: data?.videos || [],
+        source: document?.fileName || 'PDF',
+      }));
+      
+      navigate('/dashboard', { state: { showVideoResults: true } });
+    } catch (error: any) {
+      console.error('Video search error:', error);
+      toast({
+        title: 'Search Failed',
+        description: error.message || 'Failed to search for videos',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSearchingVideos(false);
+      setShowSelectionToolbar(false);
+      setShowMobileDrawer(false);
+    }
+  }, [selectedText, document?.fileName, navigate, toast]);
+
+  // Study tool generation handlers for selected text
+  const handleGenerateQuiz = useCallback(async (text: string, settings?: UniversalGenerationSettings) => {
+    setIsGeneratingQuiz(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-quiz', {
+        body: {
+          content: text,
+          sourceType: 'text',
+          count: settings?.count || 10,
+          difficulty: settings?.difficulty || 'medium',
+          title: document?.fileName || 'Selected Text',
+        }
+      });
+      
+      if (error) throw error;
+      
+      sessionStorage.setItem('pdf_quiz_result', JSON.stringify({
+        data,
+        source: document?.fileName || 'PDF',
+        sourceType: 'pdf',
+      }));
+      
+      navigate('/tools/quiz', { state: { fromPDF: true, result: data } });
+    } catch (error: any) {
+      console.error('Quiz generation error:', error);
+      toast({
+        title: 'Generation Failed',
+        description: error.message || 'Failed to generate quiz',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  }, [document?.fileName, navigate, toast]);
+
+  const handleGenerateFlashcards = useCallback(async (text: string, settings?: UniversalGenerationSettings) => {
+    setIsGeneratingFlashcards(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-flashcards', {
+        body: {
+          content: text,
+          sourceType: 'text',
+          count: settings?.count || 10,
+          title: document?.fileName || 'Selected Text',
+        }
+      });
+      
+      if (error) throw error;
+      
+      sessionStorage.setItem('pdf_flashcards_result', JSON.stringify({
+        data,
+        source: document?.fileName || 'PDF',
+        sourceType: 'pdf',
+      }));
+      
+      navigate('/tools/flashcards', { state: { fromPDF: true, result: data } });
+    } catch (error: any) {
+      console.error('Flashcards generation error:', error);
+      toast({
+        title: 'Generation Failed',
+        description: error.message || 'Failed to generate flashcards',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingFlashcards(false);
+    }
+  }, [document?.fileName, navigate, toast]);
+
+  const handleGenerateSummary = useCallback(async (text: string, settings?: UniversalGenerationSettings) => {
+    setIsGeneratingSummary(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-summary', {
+        body: {
+          content: text,
+          sourceType: 'text',
+          detailLevel: settings?.detailLevel || 'standard',
+          format: settings?.summaryFormat || 'concise',
+          title: document?.fileName || 'Selected Text',
+        }
+      });
+      
+      if (error) throw error;
+      
+      sessionStorage.setItem('pdf_summary_result', JSON.stringify({
+        data,
+        source: document?.fileName || 'PDF',
+        sourceType: 'pdf',
+      }));
+      
+      navigate('/tools/summarizer', { state: { fromPDF: true, result: data } });
+    } catch (error: any) {
+      console.error('Summary generation error:', error);
+      toast({
+        title: 'Generation Failed',
+        description: error.message || 'Failed to generate summary',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  }, [document?.fileName, navigate, toast]);
+
+  const handleGenerateMindMap = useCallback(async (text: string, settings?: UniversalGenerationSettings) => {
+    setIsGeneratingMindMap(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-mindmap', {
+        body: {
+          content: text,
+          sourceType: 'text',
+          style: settings?.mindMapStyle || 'radial',
+          title: document?.fileName || 'Selected Text',
+        }
+      });
+      
+      if (error) throw error;
+      
+      sessionStorage.setItem('pdf_mindmap_result', JSON.stringify({
+        data,
+        source: document?.fileName || 'PDF',
+        sourceType: 'pdf',
+      }));
+      
+      navigate('/tools/mind-map', { state: { fromPDF: true, result: data } });
+    } catch (error: any) {
+      console.error('Mind map generation error:', error);
+      toast({
+        title: 'Generation Failed',
+        description: error.message || 'Failed to generate mind map',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingMindMap(false);
+    }
+  }, [document?.fileName, navigate, toast]);
 
   const isDocumentReady = document?.processingStatus === 'completed' || processingProgress >= 50;
 
@@ -228,15 +441,22 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   if (isMobile) {
     return (
       <div className="flex flex-col h-full">
-        {/* Selection Toolbar */}
-        {showSelectionToolbar && selectedText && (
-          <TextSelectionToolbar
-            selectedText={selectedText}
-            onAskAbout={handleAskAboutSelection}
-            onExplain={handleExplainSelection}
-            onClose={handleCloseSelectionToolbar}
-          />
-        )}
+        {/* Mobile Text Selection Drawer */}
+        <MobileTextSelectionDrawer
+          open={showMobileDrawer}
+          onOpenChange={setShowMobileDrawer}
+          selectedText={selectedText || ''}
+          onSearchVideos={handleSearchVideos}
+          onGenerateQuiz={handleGenerateQuiz}
+          onGenerateFlashcards={handleGenerateFlashcards}
+          onGenerateSummary={handleGenerateSummary}
+          onGenerateMindMap={handleGenerateMindMap}
+          isSearching={isSearchingVideos}
+          isGeneratingQuiz={isGeneratingQuiz}
+          isGeneratingFlashcards={isGeneratingFlashcards}
+          isGeneratingSummary={isGeneratingSummary}
+          isGeneratingMindMap={isGeneratingMindMap}
+        />
 
         {/* Header */}
         <div className="flex items-center justify-between p-2 border-b bg-background gap-2">
@@ -268,10 +488,10 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToolGenerate('summary')} disabled={!isDocumentReady || isGenerating}>
                 <FileText className="w-4 h-4 mr-2 text-amber-500" />
-                Generate Notes
+                Generate Summary
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToolGenerate('mind_map')} disabled={!isDocumentReady || isGenerating}>
-                <Network className="w-4 h-4 mr-2 text-primary" />
+                <Network className="w-4 h-4 mr-2 text-rose-500" />
                 Generate Mind Map
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -335,13 +555,22 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   // Desktop layout with split view
   return (
     <div className="flex flex-col h-full">
-      {/* Selection Toolbar */}
+      {/* Selection Toolbar - Full study tools + Ask/Explain */}
       {showSelectionToolbar && selectedText && (
         <TextSelectionToolbar
           selectedText={selectedText}
-          onAskAbout={handleAskAboutSelection}
-          onExplain={handleExplainSelection}
-          onClose={handleCloseSelectionToolbar}
+          onDismiss={handleCloseSelectionToolbar}
+          onSearchVideos={handleSearchVideos}
+          onGenerateQuiz={handleGenerateQuiz}
+          onGenerateFlashcards={handleGenerateFlashcards}
+          onGenerateSummary={handleGenerateSummary}
+          onGenerateMindMap={handleGenerateMindMap}
+          isSearching={isSearchingVideos}
+          isGeneratingQuiz={isGeneratingQuiz}
+          isGeneratingFlashcards={isGeneratingFlashcards}
+          isGeneratingSummary={isGeneratingSummary}
+          isGeneratingMindMap={isGeneratingMindMap}
+          selectionPosition={selectionPosition}
         />
       )}
 
@@ -380,10 +609,10 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToolGenerate('summary')} disabled={!isDocumentReady || isGenerating}>
                 <FileText className="w-4 h-4 mr-2 text-amber-500" />
-                Generate Notes
+                Generate Summary
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToolGenerate('mind_map')} disabled={!isDocumentReady || isGenerating}>
-                <Network className="w-4 h-4 mr-2 text-primary" />
+                <Network className="w-4 h-4 mr-2 text-rose-500" />
                 Generate Mind Map
               </DropdownMenuItem>
             </DropdownMenuContent>
