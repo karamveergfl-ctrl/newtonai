@@ -237,50 +237,65 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex min-h-0">
+          <div className="flex-1 flex min-h-0 overflow-hidden">
             {/* Main solution area */}
-            <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-                <div className="px-4 sm:px-6 pt-4 shrink-0">
-                  <TabsList className="grid w-full max-w-md grid-cols-2">
-                    <TabsTrigger value="solution" className="flex items-center gap-2">
+                {/* Tab buttons styled like chip options */}
+                <div className="px-3 sm:px-6 pt-3 sm:pt-4 shrink-0">
+                  <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                    <button
+                      onClick={() => setActiveTab('solution')}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                        activeTab === 'solution'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'bg-muted/60 text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
                       <BookOpen className="h-4 w-4" />
                       Solution
-                    </TabsTrigger>
-                    <TabsTrigger value="videos" className="flex items-center gap-2">
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('videos')}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                        activeTab === 'videos'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'bg-muted/60 text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
                       <Video className="h-4 w-4" />
                       Videos ({videos.length})
-                    </TabsTrigger>
-                  </TabsList>
+                    </button>
+                  </div>
                 </div>
 
-                <TabsContent value="solution" className="flex-1 mt-0 min-h-0 relative">
+                <TabsContent value="solution" className="flex-1 mt-0 min-h-0 relative data-[state=inactive]:hidden">
                   <ScrollArea className="h-full" onScrollCapture={handleScroll} ref={solutionScrollRef as any}>
-                    <div className="p-4 sm:p-6 space-y-6">
+                    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
                       {/* Problem Statement */}
                       {structuredProblem && (
-                        <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                        <div className="p-3 sm:p-4 rounded-lg bg-muted/50 border border-border overflow-hidden">
                           <h3 className="font-semibold mb-2 flex items-center gap-2">
-                            <span className="p-1 rounded bg-primary/10">
-                              <BookOpen className="h-4 w-4 text-primary" />
+                            <span className="p-1.5 rounded-full bg-primary text-primary-foreground shrink-0">
+                              <span className="text-xs font-bold">1</span>
                             </span>
                             Problem
                           </h3>
-                          <div className="text-sm">
+                          <div className="text-sm break-words overflow-x-auto">
                             <MixedContent content={structuredProblem.problemStatement || extractedText} />
                           </div>
                           {structuredProblem.given && (
                             <div className="mt-3 pt-3 border-t border-border">
-                              <span className="text-xs font-medium text-muted-foreground uppercase">Given:</span>
-                              <div className="mt-1 text-sm">
+                              <span className="text-xs font-medium text-primary uppercase">Given:</span>
+                              <div className="mt-1.5 text-sm break-words overflow-x-auto">
                                 <MixedContent content={structuredProblem.given} />
                               </div>
                             </div>
                           )}
                           {structuredProblem.find && (
                             <div className="mt-2">
-                              <span className="text-xs font-medium text-muted-foreground uppercase">Find:</span>
-                              <div className="mt-1 text-sm">
+                              <span className="text-xs font-medium text-primary uppercase">Find:</span>
+                              <div className="mt-1 text-sm break-words overflow-x-auto">
                                 <MixedContent content={structuredProblem.find} />
                               </div>
                             </div>
@@ -289,10 +304,10 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                       )}
 
                       {/* Solution Steps */}
-                      <div className="space-y-4">
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-primary" />
-                          Step-by-Step Solution
+                      <div className="space-y-3 sm:space-y-4">
+                        <h3 className="font-semibold text-base sm:text-lg flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+                          Step-by-Step Solution:
                         </h3>
                         
                         {solution.map((step, index) => (
@@ -301,27 +316,29 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.1 }}
-                            className="relative pl-8"
+                            className="relative pl-7 sm:pl-8"
                           >
                             {/* Step connector line */}
                             {index < solution.length - 1 && (
-                              <div className="absolute left-3 top-8 bottom-0 w-0.5 bg-border" />
+                              <div className="absolute left-[11px] sm:left-3 top-7 sm:top-8 bottom-0 w-0.5 bg-border" />
                             )}
                             
                             {/* Step number */}
-                            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
                               {step.stepNumber || index + 1}
                             </div>
                             
-                            <div className="p-4 rounded-lg bg-card border border-border">
-                              <h4 className="font-medium mb-2">{step.title}</h4>
-                              <div className="text-sm text-muted-foreground">
+                            <div className="p-3 sm:p-4 rounded-lg bg-card border border-border overflow-hidden">
+                              <h4 className="font-medium mb-2 text-sm sm:text-base break-words">{step.title}</h4>
+                              <div className="text-sm text-muted-foreground break-words overflow-x-auto">
                                 <MixedContent content={step.content} />
                               </div>
                               {step.explanation && (
-                                <div className="mt-3 p-3 rounded bg-muted/50 text-sm">
-                                  <span className="text-xs font-medium text-primary uppercase">Explanation: </span>
-                                  <MixedContent content={step.explanation} />
+                                <div className="mt-3 p-2.5 sm:p-3 rounded bg-muted/50 text-sm overflow-hidden">
+                                  <span className="text-xs font-medium text-primary uppercase block mb-1">Explanation: </span>
+                                  <div className="break-words overflow-x-auto">
+                                    <MixedContent content={step.explanation} />
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -334,13 +351,13 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                         <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="p-4 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/20"
+                          className="p-3 sm:p-4 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/20 overflow-hidden"
                         >
-                          <h3 className="font-semibold mb-2 flex items-center gap-2 text-primary">
-                            <ChevronRight className="h-5 w-5" />
+                          <h3 className="font-semibold mb-2 flex items-center gap-2 text-primary text-sm sm:text-base">
+                            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
                             Final Answer
                           </h3>
-                          <div className="text-lg font-medium">
+                          <div className="text-base sm:text-lg font-medium break-words overflow-x-auto">
                             <MixedContent content={finalAnswer} />
                           </div>
                         </motion.div>
@@ -349,14 +366,14 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                   </ScrollArea>
                 </TabsContent>
 
-                <TabsContent value="videos" className="flex-1 mt-0 min-h-0 relative">
+                <TabsContent value="videos" className="flex-1 mt-0 min-h-0 relative data-[state=inactive]:hidden">
                   <ScrollArea className="h-full" onScrollCapture={handleScroll} ref={videosScrollRef as any}>
-                    <div className="p-4 sm:p-6">
+                    <div className="p-3 sm:p-6">
                       {/* Show search context */}
                       {structuredProblem?.topic && (
-                        <div className="mb-4 p-3 rounded-lg bg-muted/50 border border-border text-sm">
+                        <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 rounded-lg bg-muted/50 border border-border text-xs sm:text-sm">
                           <span className="text-muted-foreground">Related videos for: </span>
-                          <span className="font-medium">{structuredProblem.topic}</span>
+                          <span className="font-medium break-words">{structuredProblem.topic}</span>
                         </div>
                       )}
                       {videos.length > 0 ? (
