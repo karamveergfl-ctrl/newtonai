@@ -27,7 +27,7 @@ import {
 import { logGeneration } from "@/hooks/useGenerationHistory";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
-import { AdBanner } from "@/components/AdBanner";
+
 
 interface FlashcardData {
   id: string;
@@ -311,9 +311,6 @@ const AIFlashcards = () => {
                     <InlineRecents toolId="flashcards" />
                   </CardContent>
                 </Card>
-
-                {/* Banner Ad for Free Users */}
-                <AdBanner placement="inline" />
 
                 {/* Promotional sections with FAQ included */}
                 <ToolPagePromoSections toolId="flashcards" />

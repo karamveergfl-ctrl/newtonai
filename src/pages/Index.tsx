@@ -39,7 +39,7 @@ import { FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
 import { Session } from "@supabase/supabase-js";
 import { useProcessingState } from "@/hooks/useProcessingState";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
-import { AdBanner } from "@/components/AdBanner";
+
 
 interface Video {
   id: string;

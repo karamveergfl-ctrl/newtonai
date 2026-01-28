@@ -24,7 +24,7 @@ import { usePodcastPreferences } from "@/hooks/usePodcastPreferences";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
 import { StudyStreakWidget } from "@/components/StudyStreakWidget";
-import { AdBanner } from "@/components/AdBanner";
+
 
 interface PodcastSegment {
   speaker: "host1" | "host2";
@@ -554,9 +554,6 @@ export default function AIPodcast() {
                   <StudyStreakWidget />
                 </div>
               </div>
-
-              {/* Banner Ad for Free Users */}
-              <AdBanner placement="inline" />
 
               {/* Promotional sections with FAQ included */}
               <ToolPagePromoSections toolId="podcast" />
