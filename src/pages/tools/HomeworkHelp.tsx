@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 import {
   DropdownMenu,
@@ -311,6 +312,9 @@ const HomeworkHelp = () => {
                 placeholder="Type your homework question here..."
                 supportedFormats="Images, PDF, TXT; Max size: 20MB"
               />
+              
+              {/* Ad between input and recents */}
+              <AdsterraNativeBanner instanceId="homework-input" />
               
               {/* Inline recents - just below input */}
               <InlineRecents toolId="homework-help" />

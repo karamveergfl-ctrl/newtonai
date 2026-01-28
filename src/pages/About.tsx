@@ -5,6 +5,7 @@ import { BookOpen, Brain, Users, Zap, Sparkles, ArrowRight } from "lucide-react"
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
 import SEOHead from "@/components/SEOHead";
 
@@ -147,6 +148,11 @@ const About = () => {
             ))}
           </div>
         </section>
+
+        {/* Ad between values and CTA */}
+        <div className="container">
+          <AdsterraNativeBanner instanceId="about-values" />
+        </div>
 
         {/* CTA Section */}
         <section className="bg-primary text-primary-foreground py-16 relative overflow-hidden">

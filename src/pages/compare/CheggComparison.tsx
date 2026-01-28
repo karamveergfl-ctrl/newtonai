@@ -8,6 +8,7 @@ import UniqueFeatures from "@/components/compare/UniqueFeatures";
 import CompetitorTestimonials from "@/components/compare/CompetitorTestimonials";
 import FeatureParitySection from "@/components/compare/FeatureParitySection";
 import { CTASection } from "@/components/CTASection";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 const CheggComparison = () => {
   return (
@@ -35,9 +36,19 @@ const CheggComparison = () => {
           <ComparisonTable competitor="chegg" />
         </section>
 
+        {/* Ad after comparison table */}
+        <div className="container">
+          <AdsterraNativeBanner instanceId="chegg-table" />
+        </div>
+
         <FeatureParitySection competitor="chegg" />
 
         <PricingComparison competitor="chegg" />
+
+        {/* Ad after pricing */}
+        <div className="container">
+          <AdsterraNativeBanner instanceId="chegg-pricing" />
+        </div>
 
         <CompetitorTestimonials competitor="chegg" />
 

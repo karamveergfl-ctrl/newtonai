@@ -24,6 +24,7 @@ import { usePodcastPreferences } from "@/hooks/usePodcastPreferences";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
 import { StudyStreakWidget } from "@/components/StudyStreakWidget";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 
 interface PodcastSegment {
@@ -508,6 +509,9 @@ export default function AIPodcast() {
                   isProcessing={isProcessing}
                 />
                 
+                {/* Ad between input and recents */}
+                <AdsterraNativeBanner instanceId="podcast-input" />
+                
                 {/* Inline recents - just below input */}
                 <InlineRecents toolId="podcast" className="mt-6 pt-6" />
 
@@ -554,6 +558,9 @@ export default function AIPodcast() {
                   <StudyStreakWidget />
                 </div>
               </div>
+
+              {/* Ad between history and promo sections */}
+              <AdsterraNativeBanner instanceId="podcast-history" />
 
               {/* Promotional sections with FAQ included */}
               <ToolPagePromoSections toolId="podcast" />

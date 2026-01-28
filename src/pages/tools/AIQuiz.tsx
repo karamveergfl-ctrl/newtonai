@@ -37,6 +37,7 @@ import {
 import { logGeneration } from "@/hooks/useGenerationHistory";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 
 interface QuizQuestion {
@@ -315,6 +316,9 @@ const AIQuiz = () => {
                       placeholder="Paste your study content here..."
                       supportedFormats="PDF, TXT, Images; Max size: 20MB"
                     />
+                    
+                    {/* Ad between input and recents */}
+                    <AdsterraNativeBanner instanceId="quiz-input" />
                     
                     {/* Inline recents - just below input */}
                     <InlineRecents toolId="quiz" />

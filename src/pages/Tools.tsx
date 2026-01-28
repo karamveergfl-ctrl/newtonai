@@ -18,6 +18,7 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
 
 const tools = [
@@ -245,6 +246,11 @@ const Tools = () => {
           ))}
         </div>
       </section>
+
+      {/* Ad before CTA */}
+      <div className="container">
+        <AdsterraNativeBanner instanceId="tools-grid" />
+      </div>
 
       {/* CTA Section */}
       <section className="bg-primary text-primary-foreground py-16">

@@ -8,6 +8,7 @@ import UniqueFeatures from "@/components/compare/UniqueFeatures";
 import CompetitorTestimonials from "@/components/compare/CompetitorTestimonials";
 import FeatureParitySection from "@/components/compare/FeatureParitySection";
 import { CTASection } from "@/components/CTASection";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 const StudyxComparison = () => {
   return (
@@ -35,9 +36,20 @@ const StudyxComparison = () => {
           <ComparisonTable competitor="studyx" />
         </section>
 
+        {/* Ad after comparison table */}
+        <div className="container">
+          <AdsterraNativeBanner instanceId="studyx-table" />
+        </div>
+
         <FeatureParitySection competitor="studyx" />
 
         <PricingComparison competitor="studyx" />
+
+        {/* Ad after pricing */}
+        <div className="container">
+          <AdsterraNativeBanner instanceId="studyx-pricing" />
+        </div>
+
         <CompetitorTestimonials competitor="studyx" />
         <UniqueFeatures />
 
