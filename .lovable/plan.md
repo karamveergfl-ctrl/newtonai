@@ -1,185 +1,146 @@
 
-# Plan: Remove Animations for Mobile Performance
+# Plan: Remove All Remaining Animations from Header Navigation Pages
 
-## Problem Analysis
-The site is experiencing significant lag on mobile devices due to excessive use of Framer Motion animations, including:
-1. **HeroParticles.tsx** - 14 floating icons + 25 dot particles with continuous animations (extremely heavy)
-2. **FloatingToolsShowcase.tsx** - 8 tool badges with parallax scroll + floating animations + connection lines with animated dashes
-3. **Framer Motion `whileInView`** - Used in 22+ files with staggered delays causing constant intersection observer calculations
-4. **CSS blob animations** - Multiple gradient blobs with 20s infinite animations
-5. **GradientBlob** components - Multiple instances with continuous animations
-6. **Lottie Newton character** - Embedded in FloatingToolsShowcase (additional rendering overhead)
+## Overview
+Remove all Framer Motion animations from the pages shown in the header navigation: **Home, Tools, Compare, Pricing, Blog, About, FAQ**. The goal is to eliminate all JavaScript-driven animations for maximum mobile performance.
 
-## Solution Strategy
-Replace JavaScript-based Framer Motion animations with instant rendering or lightweight CSS-only transitions. Keep only essential, user-triggered animations (like hover effects).
+## Current Animation Inventory
+
+### Pages with Remaining Animations
+
+| Page | File | Animation Types Found |
+|------|------|----------------------|
+| **Pricing** | `src/pages/Pricing.tsx` | motion.div for blobs, header, badges, controls, cards, table - **Heavy** |
+| **Blog** | `src/pages/Blog.tsx` | motion.div for hero title, blog cards with staggered delays |
+| **BlogPost** | `src/pages/BlogPost.tsx` | motion.div for content sections |
+| **Landing** | Already cleaned | Static - no changes needed |
+| **Tools** | Already cleaned | Static - no changes needed |
+| **Compare** | Already cleaned | Static - no changes needed |
+| **About** | Already cleaned | Static - no changes needed |
+| **FAQ** | Already cleaned | Static - no changes needed |
+
+### Components with Animations Still Used
+
+| Component | File | Used By | Animation Types |
+|-----------|------|---------|-----------------|
+| **PricingCard** | `src/components/pricing/PricingCard.tsx` | Pricing | motion.div entrance, hover, feature stagger, badge animations |
+| **FloatingBadge** | `src/components/FloatingBadge.tsx` | Various | Spring entrance animation |
+| **ContextualFAQ** | `src/components/ContextualFAQ.tsx` | Tool pages | motion.div stagger, accordion animation |
 
 ---
 
 ## Files to Modify
 
-### High-Impact Changes (Landing Page)
+### 1. Pricing Page (`src/pages/Pricing.tsx`)
+**Lines with motion:** 1, 210-227, 233-270, 273-277, 292-302, 338-343, 345-360, 374, 409-414
 
-**1. Remove HeroParticles entirely**
-File: `src/pages/LandingPage.tsx`
-- Remove `HeroParticles` import and usage (lines 11, 85)
-- Remove `OptimizedBackgroundBlobs` usage in hero (line 82)
-- This eliminates 39+ continuously animated elements
+**Changes:**
+- Remove `motion` import
+- Replace animated gradient blobs (lines 210-227) with static divs
+- Replace `motion.div` header section with static `div`
+- Replace animated badge with static badge
+- Replace motion controls with static controls
+- Replace motion redeem code section with static
+- Replace motion feature comparison table with static
+- Keep only CSS hover effects
 
-**2. Simplify FloatingToolsShowcase to static badges**
-File: `src/components/FloatingToolsShowcase.tsx`
-- Remove all `motion.*` components
-- Remove `useScroll`, `useTransform` parallax effects
-- Remove connection lines SVG with animated paths
-- Remove continuous floating animations (`animate: { y: [0, -10, 0] }`)
-- Make tool badges static with simple CSS hover effects
-- Remove LottieNewton from the phone mockup (or make it static)
-- Keep the auto-rotate functionality (no visual animation, just state change)
+### 2. PricingCard Component (`src/components/pricing/PricingCard.tsx`)
+**Lines with motion:** 2, 92-106, 112-145, 148-159, 162-171, 188-196, 204-210, 223-232, 241-247
 
-**3. Replace animated sections with static content**
-File: `src/pages/LandingPage.tsx`
-- Replace all `motion.div` with regular `div`
-- Remove `initial`, `animate`, `whileInView`, `transition` props
-- Keep hover effects via CSS (`hover:` classes are fine)
+**Changes:**
+- Remove `motion` and `AnimatePresence` imports
+- Replace `motion.div` card wrapper with static `div`
+- Keep AnimatePresence only for verifying payment overlay (essential UX)
+- Replace animated popular badge with static
+- Replace animated current plan badge with static
+- Replace animated price display with static
+- Replace animated billing box with static
+- Replace animated feature list items with static
+- Remove whileHover effects
 
-**4. Simplify TestimonialsSection**
-File: `src/components/TestimonialsSection.tsx`
-- Replace `motion.div` with static `div` elements
-- Remove staggered entrance animations for stats and testimonials
-- Remove university badge animations (`whileHover`, `whileInView`)
+### 3. Blog Page (`src/pages/Blog.tsx`)
+**Lines with motion:** 2, 120-133, 147-153
 
-**5. Simplify CTASection**
-File: `src/components/CTASection.tsx`
-- Replace all `motion.*` components with static elements
-- Remove GradientBlob animated decorations
+**Changes:**
+- Remove `motion` import
+- Replace motion.div hero with static div
+- Replace motion.div blog cards with static divs
+- Keep CSS hover effects
 
-**6. Simplify SectionHeader**
-File: `src/components/SectionHeader.tsx`
-- Replace `motion.div` with static `div`
-- Remove `whileInView` animation
+### 4. BlogPost Page (`src/pages/BlogPost.tsx`)
+**Lines with motion:** 2 (and various content sections)
 
-**7. Simplify Footer**
-File: `src/components/Footer.tsx`
-- Replace all `motion.div` with static `div`
-- Remove staggered animations for columns
-- Remove GradientBlob
+**Changes:**
+- Remove `motion` import
+- Replace all motion.div sections with static divs
 
-**8. Simplify Header**
-File: `src/components/Header.tsx`
-- Remove header slide-in animation (`initial={{ y: -100 }}`)
-- Keep mobile menu AnimatePresence (essential for UX)
+### 5. FloatingBadge Component (`src/components/FloatingBadge.tsx`)
+**All lines use motion**
 
-### Remove/Simplify Background Decorations
+**Changes:**
+- Remove `motion` import
+- Replace motion.div with static div
+- Remove spring animations
 
-**9. Remove animated blobs from GradientBlob**
-File: `src/components/GradientBlob.tsx`
-- Remove `animate-blob-slow` class (make blob static)
+### 6. ContextualFAQ Component (`src/components/ContextualFAQ.tsx`)
+**Lines with motion:** 3, 218-224, 232-237, 240-252, 260-267
 
-**10. Keep OptimizedBackgroundBlobs but make static**
-File: `src/components/OptimizedBackgroundBlobs.tsx`
-- Remove `animate-blob-slow` class from blobs (static gradients only)
-
-### Other Pages to Simplify
-
-**11. Tools Page**
-File: `src/pages/Tools.tsx`
-- Replace `motion.div` with static `div` for tool cards
-- Remove staggered entrance animations
-
-**12. About Page**
-File: `src/pages/About.tsx`
-- Replace all `motion.*` with static elements
-
-**13. FAQ Page**
-File: `src/pages/FAQ.tsx`
-- Replace motion animations with static content
-
-**14. Compare Pages** (Compare.tsx and all comparison pages)
-- Remove `motion` imports and replace with static `div`
-
-**15. Credits Page**
-File: `src/pages/Credits.tsx`
-- Replace motion animations with static content
-
-**16. Blog/BlogPost Pages**
-- Remove motion animations if present
-
-**17. Tool Section Components**
-File: `src/components/tool-sections/ToolPageFAQ.tsx`
-- Remove motion variants and animations
-
-**18. Compare Components**
-Files: `src/components/compare/*.tsx`
-- Remove motion animations from UniqueFeatures, CompetitorTestimonials, ComparisonTable, etc.
+**Changes:**
+- Remove `motion` and `AnimatePresence` imports
+- Replace motion.div FAQ items with static divs
+- Keep accordion expand/collapse using CSS or Radix accordion
+- Replace animated chevron with CSS rotation
 
 ---
 
-## CSS Changes
+## Technical Implementation Pattern
 
-**19. Update CSS blob animation**
-File: `src/index.css`
-- Make `.animate-blob-slow` have no animation by default, rely on `prefers-reduced-motion` logic being inverted
+### Before (with animations):
+```tsx
+import { motion, AnimatePresence } from "framer-motion";
+
+<motion.div
+  initial={{ opacity: 0, y: 30 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5, delay: index * 0.1 }}
+  className="bg-card"
+>
+```
+
+### After (static with CSS hover):
+```tsx
+<div className="bg-card hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
+```
 
 ---
 
 ## What to Keep
 
-- **Essential UX animations**:
-  - Mobile menu AnimatePresence (open/close)
-  - Accordion expand/collapse
-  - Toast notifications
-  - Modal/dialog transitions
-  - Button hover effects (CSS-only)
-  
-- **Hover micro-interactions** (CSS-based):
-  - `hover:scale-105`, `hover:-translate-y-1`
-  - `transition-all duration-200`
+- **Payment verification overlay** in PricingCard (essential UX - user needs feedback)
+- **CSS hover effects** (lightweight, GPU-accelerated)
+- **CSS transitions** (`transition-all duration-200`)
 
 ---
 
-## Summary of Changes
+## Files to Modify Summary
 
-| Area | Before | After |
-|------|--------|-------|
-| HeroParticles | 39 animated elements | Removed entirely |
-| FloatingToolsShowcase | 8 parallax badges + SVG lines | Static badges with CSS hover |
-| Landing page motion.divs | ~15 animated sections | Static divs |
-| TestimonialsSection | 10+ animated cards | Static cards with CSS hover |
-| Footer | 6 animated columns | Static columns |
-| Background blobs | Continuous 20s animation | Static gradients |
-| Compare pages | Motion animations | Static content |
-| Tool pages | Motion animations | Static content |
+| File | Priority | Scope |
+|------|----------|-------|
+| `src/pages/Pricing.tsx` | High | Major rewrite - 10+ motion elements |
+| `src/components/pricing/PricingCard.tsx` | High | Card component - 8+ motion elements |
+| `src/pages/Blog.tsx` | Medium | 3 motion elements |
+| `src/pages/BlogPost.tsx` | Medium | Multiple motion elements |
+| `src/components/FloatingBadge.tsx` | Low | 1 motion wrapper |
+| `src/components/ContextualFAQ.tsx` | Low | 4 motion elements |
 
-**Expected Performance Improvement:**
-- Eliminate 100+ JavaScript-driven animations
-- Remove continuous `requestAnimationFrame` calls from Framer Motion
-- Reduce intersection observer overhead (22+ files using `whileInView`)
-- Significantly reduce main thread work on mobile devices
+**Total: 6 files to modify**
 
 ---
 
-## Technical Details
+## Expected Performance Improvement
 
-### Pattern for replacing motion components:
-
-Before:
-```tsx
-<motion.div
-  initial={{ opacity: 0, y: 30 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true }}
-  transition={{ duration: 0.5, delay: index * 0.1 }}
-  className="bg-card rounded-xl p-6"
->
-```
-
-After:
-```tsx
-<div className="bg-card rounded-xl p-6">
-```
-
-### Simplified FloatingToolsShowcase approach:
-- Remove motion components entirely
-- Use static positioned badges with Tailwind classes
-- Remove SVG connection lines
-- Remove Lottie character or replace with static image
-- Keep tool rotation logic but without visual animation effects
+- Eliminate 25+ JavaScript-driven animations on Pricing page alone
+- Remove staggered entrance delays causing delayed content visibility
+- Eliminate Framer Motion intersection observer overhead on Blog page
+- Reduce main thread work significantly on mobile devices
+- Content will render instantly instead of animating in
