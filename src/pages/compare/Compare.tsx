@@ -11,6 +11,7 @@ import { GradientBlob } from "@/components/GradientBlob";
 import { competitors, newtonFeatures } from "./competitorData";
 import { useCurrency } from "@/hooks/useCurrency";
 import { DISPLAY_PRICING, COMPETITOR_PRICING, CURRENCY_FLAGS, CurrencyCode } from "@/lib/currencyUtils";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import {
   Select,
   SelectContent,
@@ -121,6 +122,11 @@ const Compare = () => {
           </div>
         </section>
 
+        {/* Ad after highlights */}
+        <div className="container">
+          <AdsterraNativeBanner instanceId="compare-hero" />
+        </div>
+
         {/* Competitor Grid */}
         <section className="py-16">
           <div className="container">
@@ -203,6 +209,11 @@ const Compare = () => {
             </div>
           </div>
         </section>
+
+        {/* Ad before feature matrix */}
+        <div className="container">
+          <AdsterraNativeBanner instanceId="compare-grid" />
+        </div>
 
         {/* Quick Feature Matrix */}
         <section className="py-16 bg-muted/30">

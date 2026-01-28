@@ -37,6 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 import {
   DropdownMenu,
@@ -1026,6 +1027,9 @@ const AISummarizer = () => {
               showLanguageSelector
               defaultTab={defaultTab}
             />
+            
+            {/* Ad between input and recents */}
+            <AdsterraNativeBanner instanceId="summarizer-input" />
             
             {/* Inline recents - just below input */}
             <InlineRecents toolId="summarizer" />
