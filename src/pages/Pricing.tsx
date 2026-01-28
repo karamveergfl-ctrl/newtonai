@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { PricingCard } from "@/components/pricing/PricingCard";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 // Feature comparison data for the table
 const featureLimits = [
@@ -398,6 +399,8 @@ const Pricing = () => {
           })}
         </div>
 
+        <AdsterraNativeBanner instanceId="pricing-after-cards" />
+
         {/* Feature Comparison Table */}
         <motion.div
           className="mt-20 max-w-4xl mx-auto"
@@ -470,6 +473,8 @@ const Pricing = () => {
             <span className="text-xs">Wallets</span>
           </div>
         </motion.div>
+
+        <AdsterraNativeBanner instanceId="pricing-before-enterprise" />
 
         {/* Enterprise CTA */}
         <motion.div
