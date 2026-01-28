@@ -10,6 +10,7 @@ import { ToolPageFAQ } from "./ToolPageFAQ";
 import { FloatingScrollTop } from "./FloatingScrollTop";
 import { toolPromoData, ToolId } from "./toolPromoData";
 import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
+import { AdsterraBanner } from "@/components/AdsterraBanner";
 
 interface ToolPagePromoSectionsProps {
   toolId: ToolId;
@@ -40,7 +41,8 @@ export function ToolPagePromoSections({
       {/* Features Grid */}
       <ToolPageFeatures features={data.features} />
       
-      {/* Ad between Features and Trending Topics */}
+      {/* Ads between Features and Trending Topics */}
+      <AdsterraBanner />
       <AdsterraNativeBanner instanceId={`${toolId}-features`} />
       
       {/* Trending Topics - Between Features and Subjects */}
