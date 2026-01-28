@@ -17,7 +17,7 @@ export function AdsterraNativeBanner({ className }: AdsterraNativeBannerProps) {
       script.id = scriptId;
       script.async = true;
       script.setAttribute('data-cfasync', 'false');
-      script.src = 'https://pl28588760.effectivegatecpm.com/784f975abdd60c86610b3cf2654a25b5/invoke.js';
+      script.src = 'https://pl28588760.effectivegatecpm.com/dd2f47defd1c8eb7a262dd533be4ffdd/invoke.js';
       document.head.appendChild(script);
     }
   }, []);
@@ -30,7 +30,7 @@ export function AdsterraNativeBanner({ className }: AdsterraNativeBannerProps) {
       )} 
       ref={containerRef}
     >
-      <div id="container-784f975abdd60c86610b3cf2654a25b5"></div>
+      <div id="container-dd2f47defd1c8eb7a262dd533be4ffdd"></div>
     </div>
   );
 }
