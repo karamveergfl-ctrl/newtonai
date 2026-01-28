@@ -1,105 +1,164 @@
 
-# Plan: Fix Adsterra Native Ads Not Displaying
+# Plan: Add Adsterra Banners Site-Wide
 
-## Problem Analysis
+## Overview
+Add both the 728x90 Adsterra banner (`AdsterraBanner`) and the native Adsterra banner (`AdsterraNativeBanner`) to all pages across the application, with multiple placements on longer pages to maximize ad coverage.
 
-The ads are not showing because of how the Adsterra script works:
+## Pages to Update
 
-1. The Adsterra script (`invoke.js`) is hardcoded to look for a container with the **exact** ID `container-784f975abdd60c86610b3cf2654a25b5`
-2. Our component is creating custom IDs like `container-784f975abdd60c86610b3cf2654a25b5-summarizer-input`
-3. The script cannot find the custom container IDs, so no ads are rendered
+### Header Navigation Pages
 
-## Solution
+**1. Home/Landing Page (`src/pages/LandingPage.tsx`)** - Already has ads
+- Currently has 1 placement between Features and Benefits
+- **Add more placements:**
+  - After Hero section (before Features)
+  - After Testimonials section (before CTA)
 
-We need to restructure the component to work with Adsterra's requirements. There are two approaches:
+**2. Tools Page (`src/pages/Tools.tsx`)** - Already has ads
+- No changes needed
 
-**Option A (Recommended)**: Load the script globally once and let Adsterra handle ad placement through their standard container. Each instance still works but we use the standard container ID.
+**3. Compare Page (`src/pages/compare/Compare.tsx`)** - Has native ads only
+- **Add 728x90 banner** alongside existing native ads at:
+  - After highlights (before competitor grid)
+  - Before feature matrix
 
-**Option B**: Use a single instance approach where only one ad loads per page, or reload the script each time with a delay.
+**4. Pricing Page (`src/pages/Pricing.tsx`)** - Already has ads
+- No changes needed
 
-I'll implement Option A with a refined approach that:
-1. Uses the **exact container ID** that Adsterra expects
-2. Loads the script only once globally (not per instance)
-3. Adds a slight delay between instances to allow the script to initialize properly
+**5. Blog Page (`src/pages/Blog.tsx`)** - No ads currently
+- **Add placements:**
+  - Between hero and blog posts grid
+  - After blog posts grid (before footer)
 
-## Implementation
+**6. About Page (`src/pages/About.tsx`)** - Has native ad only
+- **Add 728x90 banner** alongside existing native ad
+- **Add another pair** after hero section
 
-### Update AdsterraNativeBanner.tsx
+**7. FAQ Page (`src/pages/FAQ.tsx`)** - Has native ads only
+- **Add 728x90 banners** alongside existing native ads
 
-```text
-src/components/AdsterraNativeBanner.tsx
+### Sidebar Study Tools Pages
 
-Changes:
-- Use the exact container ID that Adsterra expects (without instance suffix)
-- Load the script globally once, not per component
-- Each component instance creates the container and triggers script execution
-- Add window-level tracking to prevent duplicate script loads
+**8. AI Quiz (`src/pages/tools/AIQuiz.tsx`)** - Has native ad
+- **Add 728x90 banner** before native ad placement
+
+**9. AI Flashcards (`src/pages/tools/AIFlashcards.tsx`)** - Has native ad
+- **Add 728x90 banner** before native ad placement
+
+**10. AI Podcast (`src/pages/tools/AIPodcast.tsx`)** - Has native ad
+- **Add 728x90 banner** before native ad placement
+
+**11. Chat with PDF (`src/pages/PDFChat.tsx`)** - No ads
+- This is a fullscreen split-view tool - **Skip ads** to maintain UX
+
+**12. Mind Map (`src/pages/tools/MindMap.tsx`)** - Has native ad
+- **Add 728x90 banner** before native ad placement
+
+**13. AI Lecture Notes (`src/pages/tools/AILectureNotes.tsx`)** - Has native ad
+- **Add 728x90 banner** before native ad placement
+
+**14. AI Summarizer (`src/pages/tools/AISummarizer.tsx`)** - Has native ad
+- **Add 728x90 banner** before native ad placement
+
+**15. Homework Help (`src/pages/tools/HomeworkHelp.tsx`)** - Has native ad
+- **Add 728x90 banner** before native ad placement
+
+### Comparison Pages
+
+**16. Chegg Comparison (`src/pages/compare/CheggComparison.tsx`)** - Has native ads only
+- **Add 728x90 banners** alongside existing native ads
+
+**17. Quizlet Comparison (`src/pages/compare/QuizletComparison.tsx`)**
+- **Add 728x90 and native banners** (after table, after pricing)
+
+**18. Studocu Comparison (`src/pages/compare/StudocuComparison.tsx`)**
+- **Add 728x90 and native banners** (after table, after pricing)
+
+**19. Course Hero Comparison (`src/pages/compare/CourseHeroComparison.tsx`)**
+- **Add 728x90 and native banners** (after table, after pricing)
+
+**20. ChatGPT Comparison (`src/pages/compare/ChatGPTComparison.tsx`)**
+- **Add 728x90 and native banners** (after table, after pricing)
+
+**21. StudyFetch Comparison (`src/pages/compare/StudyFetchComparison.tsx`)**
+- **Add 728x90 and native banners** (after table, after pricing)
+
+**22. Studyx Comparison (`src/pages/compare/StudyxComparison.tsx`)** - Already updated
+- No changes needed
+
+### Other Pages
+
+**23. Contact Page (`src/pages/Contact.tsx`)** - Has native ad
+- **Add 728x90 banner** before native ad
+
+**24. Enterprise Page (`src/pages/Enterprise.tsx`)** - No ads
+- **Add both banners** after features grid, before contact form
+
+**25. Blog Post Page (`src/pages/BlogPost.tsx`)** - Check and add ads
+- **Add banners** between content sections
+
+---
+
+## Technical Implementation
+
+### Import Statement to Add
+```tsx
+import { AdsterraBanner } from "@/components/AdsterraBanner";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 ```
 
-**New logic:**
-1. Component mounts and creates a container with the standard Adsterra ID
-2. Check if the global script is already loaded
-3. If not loaded, append the script to document.head (not the container)
-4. The script will find all containers with the matching ID and populate them
-5. For multiple instances on the same page, we need to use Adsterra's refresh/multiple ad approach
+### Standard Ad Block Pattern
+```tsx
+{/* Ad Section */}
+<div className="container mx-auto px-4 py-8">
+  <AdsterraBanner />
+  <AdsterraNativeBanner />
+</div>
+```
 
-**Alternative approach (simpler):**
-Since Adsterra native ads typically only support one ad per page per script, we should:
-1. Keep the component simple
-2. Load script to document.head once
-3. Use the standard container ID
-4. For multiple placements, consider using different ad zones from Adsterra (different script/container pairs)
+For pages within AppLayout (study tools):
+```tsx
+<AdsterraBanner />
+<AdsterraNativeBanner instanceId="tool-placement" />
+```
+
+---
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/AdsterraNativeBanner.tsx` | Rewrite script loading logic to use global script and standard container ID |
+| `src/pages/LandingPage.tsx` | Add 2 more ad sections |
+| `src/pages/Blog.tsx` | Add 2 ad sections |
+| `src/pages/About.tsx` | Add 728x90 banner + 1 more section |
+| `src/pages/FAQ.tsx` | Add 728x90 banners to 2 existing placements |
+| `src/pages/Contact.tsx` | Add 728x90 banner |
+| `src/pages/Enterprise.tsx` | Add both banners |
+| `src/pages/BlogPost.tsx` | Add both banners |
+| `src/pages/compare/Compare.tsx` | Add 728x90 banners to 2 existing placements |
+| `src/pages/compare/CheggComparison.tsx` | Add 728x90 banners |
+| `src/pages/compare/QuizletComparison.tsx` | Add both banners |
+| `src/pages/compare/StudocuComparison.tsx` | Add both banners |
+| `src/pages/compare/CourseHeroComparison.tsx` | Add both banners |
+| `src/pages/compare/ChatGPTComparison.tsx` | Add both banners |
+| `src/pages/compare/StudyFetchComparison.tsx` | Add both banners |
+| `src/pages/tools/AIQuiz.tsx` | Add 728x90 banner |
+| `src/pages/tools/AIFlashcards.tsx` | Add 728x90 banner |
+| `src/pages/tools/AIPodcast.tsx` | Add 728x90 banner |
+| `src/pages/tools/MindMap.tsx` | Add 728x90 banner |
+| `src/pages/tools/AILectureNotes.tsx` | Add 728x90 banner |
+| `src/pages/tools/AISummarizer.tsx` | Add 728x90 banner |
+| `src/pages/tools/HomeworkHelp.tsx` | Add 728x90 banner |
 
-## Technical Details
+**Total: 21 files to modify**
 
-The updated component will:
+---
 
-```tsx
-export function AdsterraNativeBanner({ className, instanceId = 'default' }: AdsterraNativeBannerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+## Summary
+This plan adds comprehensive Adsterra ad coverage across all 21+ pages in the application:
+- All header navigation pages (Home, Tools, Compare, Pricing, Blog, About, FAQ)
+- All sidebar study tool pages (Quiz, Flashcards, Podcast, Mind Map, Lecture Notes, Summarizer, Homework Help)
+- All comparison pages (7 competitor comparisons)
+- Corporate pages (Contact, Enterprise, Blog Post)
 
-  useEffect(() => {
-    // Check if script already exists globally
-    const scriptId = 'adsterra-native-script';
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement('script');
-      script.id = scriptId;
-      script.async = true;
-      script.setAttribute('data-cfasync', 'false');
-      script.src = 'https://pl28588760.effectivegatecpm.com/784f975abdd60c86610b3cf2654a25b5/invoke.js';
-      document.head.appendChild(script);
-    }
-  }, []);
-
-  return (
-    <div className={cn("w-full my-6 md:my-8 px-4 sm:px-0 overflow-hidden", className)} ref={containerRef}>
-      {/* Use the exact container ID Adsterra expects */}
-      <div id="container-784f975abdd60c86610b3cf2654a25b5"></div>
-    </div>
-  );
-}
-```
-
-**Note:** If Adsterra only populates the first container it finds, we may need to request multiple ad zones from Adsterra for multiple placements per page. This is a common limitation with native ad scripts.
-
-## Expected Result
-
-After this fix:
-- The Adsterra script will load once globally
-- The container will have the exact ID that Adsterra expects
-- Ads should start displaying in the container
-
-## Potential Limitation
-
-If only one ad shows per page (due to Adsterra's script behavior), you may need to:
-1. Contact Adsterra for multiple native ad zones
-2. Use only one ad placement per page
-3. Implement a rotation system
-
-This fix addresses the immediate bug of ads not loading at all.
+Each long page will have multiple ad placements (2-4) strategically placed between major content sections.
