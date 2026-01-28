@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { HelpCircle, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { HelpCircle, ChevronDown, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FAQItem {
@@ -215,11 +214,8 @@ export function ContextualFAQ({
 
       <div className="space-y-2">
         {displayFAQs.map((faq, index) => (
-          <motion.div
+          <div
             key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
             className="rounded-lg border border-border bg-card/50 overflow-hidden"
           >
             <button
@@ -229,42 +225,39 @@ export function ContextualFAQ({
               <span className="text-sm font-medium text-foreground pr-2">
                 {faq.question}
               </span>
-              <motion.div
-                animate={{ rotate: expandedIndex === index ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-              </motion.div>
+              <ChevronDown 
+                className={cn(
+                  "h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200",
+                  expandedIndex === index && "rotate-180"
+                )} 
+              />
             </button>
             
-            <AnimatePresence>
-              {expandedIndex === index && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="px-3 pb-3 text-sm text-muted-foreground border-t border-border pt-2">
-                    {faq.answer}
-                  </div>
-                </motion.div>
+            <div
+              className={cn(
+                "grid transition-all duration-200",
+                expandedIndex === index ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
               )}
-            </AnimatePresence>
-          </motion.div>
+            >
+              <div className="overflow-hidden">
+                <div className="px-3 pb-3 text-sm text-muted-foreground border-t border-border pt-2">
+                  {faq.answer}
+                </div>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
 
       {/* View all link */}
       {currentFAQs.length > maxItems && (
-        <motion.a
+        <a
           href="/faq"
           className="flex items-center justify-center gap-1 mt-3 text-xs text-primary hover:text-primary/80 transition-colors"
-          whileHover={{ x: 2 }}
         >
           <Sparkles className="h-3 w-3" />
           View all FAQs
-        </motion.a>
+        </a>
       )}
     </div>
   );
