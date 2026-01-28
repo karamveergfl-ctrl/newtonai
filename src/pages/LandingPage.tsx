@@ -9,6 +9,8 @@ import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs"
 import SEOHead from "@/components/SEOHead";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
 import { HeroParticles } from "@/components/HeroParticles";
+import { AdsterraBanner } from "@/components/AdsterraBanner";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import { 
   BookOpen, 
   Brain, 
@@ -182,6 +184,12 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      {/* Ad Section */}
+      <div className="container mx-auto px-4 py-8">
+        <AdsterraBanner />
+        <AdsterraNativeBanner />
+      </div>
 
       {/* Benefits Section */}
       <section className="py-24 relative overflow-hidden">
