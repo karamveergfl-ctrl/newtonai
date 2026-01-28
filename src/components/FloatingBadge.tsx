@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 
 interface FloatingBadgeProps {
@@ -13,19 +12,10 @@ export const FloatingBadge = ({
   icon: Icon,
   label,
   className = "",
-  delay = 0,
   avatarUrl,
 }: FloatingBadgeProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{
-        duration: 0.5,
-        delay,
-        type: "spring",
-        stiffness: 100,
-      }}
+    <div
       className={`absolute glass rounded-full px-4 py-2 flex items-center gap-2 shadow-lg ${className}`}
     >
       {avatarUrl ? (
@@ -42,7 +32,7 @@ export const FloatingBadge = ({
       <span className="text-sm font-medium text-foreground whitespace-nowrap">
         {label}
       </span>
-    </motion.div>
+    </div>
   );
 };
 

@@ -1,5 +1,4 @@
 import { useParams, Link, Navigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, ArrowLeft, ArrowRight } from "lucide-react";
@@ -564,12 +563,7 @@ const BlogPost = () => {
         </Link>
 
         {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
+        <header className="mb-8">
           <Badge variant="secondary" className="mb-4">
             {post.category}
           </Badge>
@@ -593,15 +587,10 @@ const BlogPost = () => {
               {post.readTime}
             </span>
           </div>
-        </motion.header>
+        </header>
 
         {/* Content */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="prose prose-lg dark:prose-invert max-w-none"
-        >
+        <div className="prose prose-lg dark:prose-invert max-w-none">
           {content.content.split('\n').map((paragraph, index) => {
             if (paragraph.startsWith('## ')) {
               return <h2 key={index} className="text-2xl font-bold mt-8 mb-4">{paragraph.replace('## ', '')}</h2>;
@@ -644,7 +633,7 @@ const BlogPost = () => {
             }
             return null;
           })}
-        </motion.div>
+        </div>
 
         {/* Ad after content */}
         <div className="my-8">
