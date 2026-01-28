@@ -8,6 +8,7 @@ import UniqueFeatures from "@/components/compare/UniqueFeatures";
 import CompetitorTestimonials from "@/components/compare/CompetitorTestimonials";
 import FeatureParitySection from "@/components/compare/FeatureParitySection";
 import { CTASection } from "@/components/CTASection";
+import { AdsterraBanner } from "@/components/AdsterraBanner";
 import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 const ChatGPTComparison = () => {
@@ -38,6 +39,7 @@ const ChatGPTComparison = () => {
 
         {/* Ad after comparison table */}
         <div className="container">
+          <AdsterraBanner />
           <AdsterraNativeBanner instanceId="chatgpt-table" />
         </div>
 
@@ -47,6 +49,7 @@ const ChatGPTComparison = () => {
 
         {/* Ad after pricing */}
         <div className="container">
+          <AdsterraBanner />
           <AdsterraNativeBanner instanceId="chatgpt-pricing" />
         </div>
 

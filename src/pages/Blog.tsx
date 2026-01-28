@@ -7,7 +7,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
-
+import { AdsterraBanner } from "@/components/AdsterraBanner";
+import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 export interface BlogPost {
   slug: string;
   title: string;
@@ -133,6 +134,12 @@ const Blog = () => {
         </div>
       </section>
 
+      {/* Ad after hero */}
+      <div className="container mx-auto px-4 py-8">
+        <AdsterraBanner />
+        <AdsterraNativeBanner />
+      </div>
+
       {/* Blog Posts Grid */}
       <section className="container mx-auto px-4 pb-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -184,6 +191,12 @@ const Blog = () => {
           ))}
         </div>
       </section>
+
+      {/* Ad before footer */}
+      <div className="container mx-auto px-4 py-8">
+        <AdsterraBanner />
+        <AdsterraNativeBanner />
+      </div>
 
       <Footer />
     </div>

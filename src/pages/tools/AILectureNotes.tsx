@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { InlineRecents } from "@/components/InlineRecents";
+import { AdsterraBanner } from "@/components/AdsterraBanner";
 import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 import { useDropzone } from "react-dropzone";

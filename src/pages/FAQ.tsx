@@ -5,6 +5,7 @@ import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { AdsterraBanner } from "@/components/AdsterraBanner";
 import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 const faqs = [
@@ -139,6 +140,7 @@ const FAQ = () => {
           </Accordion>
         </div>
 
+        <AdsterraBanner />
         <AdsterraNativeBanner instanceId="faq-middle" />
 
         {/* CTA Section */}
@@ -152,6 +154,7 @@ const FAQ = () => {
           </Link>
         </div>
 
+        <AdsterraBanner />
         <AdsterraNativeBanner instanceId="faq-bottom" />
       </main>
 
