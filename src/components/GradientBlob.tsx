@@ -26,7 +26,7 @@ export const GradientBlob = memo(({
 }: GradientBlobProps) => {
   return (
     <div
-      className={`absolute rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob-slow motion-reduce:animate-none gpu-accelerated ${sizeClasses[size]} ${colorClasses[color]} ${className}`}
+      className={`absolute rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl ${sizeClasses[size]} ${colorClasses[color]} ${className}`}
       aria-hidden="true"
     />
   );

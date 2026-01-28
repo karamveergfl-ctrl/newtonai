@@ -1,8 +1,6 @@
-import { motion } from "framer-motion";
 import { SectionHeader } from "./SectionHeader";
 import { StarRating } from "./StarRating";
 import { Users, FileText, Brain, Clock } from "lucide-react";
-import { OptimizedBackgroundBlobs } from "./OptimizedBackgroundBlobs";
 
 interface Testimonial {
   id: string;
@@ -80,20 +78,17 @@ const testimonials: Testimonial[] = [
 export const TestimonialsSection = () => {
   return (
     <section className="py-24 px-4 bg-muted/30 relative overflow-hidden">
-      {/* Optimized background decorations */}
-      <OptimizedBackgroundBlobs variant="section" />
+      {/* Static background decorations */}
+      <div className="absolute top-40 -right-32 w-72 h-72 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-20 left-0 w-64 h-64 bg-gradient-to-tr from-secondary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       <div className="container mx-auto relative z-10">
         {/* Stats Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
-          {stats.map((stat, index) => (
-            <motion.div
+          {stats.map((stat) => (
+            <div
               key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.4, delay: index * 0.08 }}
-              className="bg-card/80 backdrop-blur-sm rounded-2xl p-6 border border-border/50 text-center group cursor-default hover:shadow-lg hover:-translate-y-1 transition-all duration-200 gpu-accelerated"
+              className="bg-card/80 backdrop-blur-sm rounded-2xl p-6 border border-border/50 text-center group cursor-default hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
             >
               <div className={`w-12 h-12 mx-auto mb-4 rounded-xl bg-background flex items-center justify-center ${stat.color}`}>
                 <stat.icon className="w-6 h-6" />
@@ -102,7 +97,7 @@ export const TestimonialsSection = () => {
                 {stat.value}
               </div>
               <div className="text-sm text-muted-foreground">{stat.label}</div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
@@ -113,14 +108,10 @@ export const TestimonialsSection = () => {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-          {testimonials.map((testimonial, index) => (
-            <motion.div
+          {testimonials.map((testimonial) => (
+            <div
               key={testimonial.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.5, delay: index * 0.05 }}
-              className="bg-card rounded-2xl p-6 shadow-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group gpu-accelerated"
+              className="bg-card rounded-2xl p-6 shadow-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group"
             >
               <div className="flex items-center justify-between mb-4">
                 <StarRating rating={testimonial.rating} size="md" />
@@ -148,18 +139,12 @@ export const TestimonialsSection = () => {
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
-        {/* Trust badges - Animated University Logos */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="mt-16 text-center"
-        >
+        {/* Trust badges - Static University Logos */}
+        <div className="mt-16 text-center">
           <p className="text-muted-foreground text-sm mb-6">Trusted by students from</p>
           <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
             {[
@@ -171,31 +156,21 @@ export const TestimonialsSection = () => {
               { name: "IIT", shortName: "IIT", color: "from-blue-600 to-blue-800" },
               { name: "IIM", shortName: "IIM", color: "from-emerald-600 to-emerald-800" },
               { name: "AIIMS", shortName: "A", color: "from-teal-500 to-teal-700" },
-            ].map((uni, index) => (
-              <motion.div
+            ].map((uni) => (
+              <div
                 key={uni.name}
-                initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                whileHover={{ scale: 1.08, y: -2 }}
-                viewport={{ once: true }}
-                transition={{ 
-                  duration: 0.4, 
-                  delay: index * 0.08,
-                  type: "spring",
-                  stiffness: 200
-                }}
                 className="group cursor-default"
               >
-                <div className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-gradient-to-r ${uni.color} shadow-lg shadow-black/20 border border-white/10 transition-all duration-300 group-hover:shadow-xl group-hover:shadow-primary/20`}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-gradient-to-r ${uni.color} shadow-lg shadow-black/20 border border-white/10 transition-all duration-300 group-hover:shadow-xl group-hover:scale-105 group-hover:-translate-y-0.5`}>
                   <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
                     <span className="text-[10px] md:text-xs font-bold text-white">{uni.shortName}</span>
                   </div>
                   <span className="text-xs md:text-sm font-semibold text-white">{uni.name}</span>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

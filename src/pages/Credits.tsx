@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { 
   Coins, 
   Crown, 
@@ -140,11 +139,7 @@ export default function Credits() {
 
       <div className="container max-w-4xl py-8 px-4 space-y-8">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-2"
-        >
+        <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
             <Coins className="w-8 h-8 text-yellow-500" />
             Earn Credits
@@ -152,14 +147,10 @@ export default function Credits() {
           <p className="text-muted-foreground">
             Watch short videos to earn study credits
           </p>
-        </motion.div>
+        </div>
 
         {/* Current Balance Card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-        >
+        <div>
           <Card className="bg-gradient-to-br from-primary/10 via-background to-yellow-500/10 border-primary/20">
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -193,16 +184,11 @@ export default function Credits() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
 
         {/* Main Earn Section */}
         {!isPremium && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="grid gap-6 md:grid-cols-2"
-          >
+          <div className="grid gap-6 md:grid-cols-2">
             {/* Daily Progress */}
             {stats && (
               <DailyProgress
@@ -215,16 +201,12 @@ export default function Credits() {
 
             {/* Rules Card */}
             <RulesCard />
-          </motion.div>
+          </div>
         )}
 
         {/* Watch & Earn Section */}
         {!isPremium && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
+          <div>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -289,15 +271,11 @@ export default function Credits() {
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         )}
 
         {/* Credit Costs Reference */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
+        <div>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -326,15 +304,11 @@ export default function Credits() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
 
         {/* Premium Benefits */}
         {!isPremium && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
+          <div>
             <Card className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border-yellow-500/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -367,7 +341,7 @@ export default function Credits() {
                 </Button>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         )}
       </div>
     </AppLayout>

@@ -1,31 +1,20 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Instagram, Youtube, Facebook, Twitter, Mail } from "lucide-react";
-import { GradientBlob } from "./GradientBlob";
 import { AdsterraNativeBanner } from "./AdsterraNativeBanner";
 
 const Footer = () => {
   return (
     <footer className="bg-muted/50 border-t relative overflow-hidden">
-      {/* Decorative Blob */}
-      <GradientBlob
-        color="primary"
-        size="xl"
-        className="-bottom-40 -right-40 opacity-10"
-      />
+      {/* Static Decorative Blob */}
+      <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl pointer-events-none opacity-10" />
 
       <div className="container mx-auto px-4 py-16 relative z-10">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-10 mb-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
+            <div>
               <Logo size="lg" className="mb-4" />
               <p className="text-muted-foreground text-sm leading-relaxed mb-6 max-w-sm">
                 Transform your learning experience with AI-powered study tools.
@@ -41,16 +30,11 @@ const Footer = () => {
                   support@newtonai.site
                 </a>
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* Study Tools */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
+          <div>
             <h3 className="font-display font-semibold text-foreground mb-4">
               Study Tools
             </h3>
@@ -73,15 +57,10 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
 
           {/* Compare */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
+          <div>
             <h3 className="font-display font-semibold text-foreground mb-4">
               Compare
             </h3>
@@ -103,15 +82,10 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
 
           {/* Company */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
+          <div>
             <h3 className="font-display font-semibold text-foreground mb-4">
               Company
             </h3>
@@ -132,15 +106,10 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
 
           {/* Legal */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
+          <div>
             <h3 className="font-display font-semibold text-foreground mb-4">
               Legal
             </h3>
@@ -160,7 +129,7 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
         </div>
 
         {/* Native Ad Banner */}
@@ -169,13 +138,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="pt-8 border-t border-border"
-        >
+        <div className="pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-muted-foreground text-sm">
               © {new Date().getFullYear()} NewtonAI. All rights reserved.
@@ -202,7 +165,7 @@ const Footer = () => {
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </footer>
   );

@@ -1,5 +1,3 @@
-import { motion } from "framer-motion";
-
 interface SectionHeaderProps {
   label?: string;
   title: string;
@@ -16,13 +14,7 @@ export const SectionHeader = ({
   className = "",
 }: SectionHeaderProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className={`${centered ? "text-center" : ""} ${className}`}
-    >
+    <div className={`${centered ? "text-center" : ""} ${className}`}>
       {label && (
         <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4">
           {label}
@@ -36,7 +28,7 @@ export const SectionHeader = ({
           {description}
         </p>
       )}
-    </motion.div>
+    </div>
   );
 };
 
