@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Brain, Users, Zap, Sparkles, ArrowRight } from "lucide-react";
@@ -7,7 +6,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AdsterraBanner } from "@/components/AdsterraBanner";
 import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
-import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
 import SEOHead from "@/components/SEOHead";
 
 const values = [
@@ -49,9 +47,10 @@ const About = () => {
         keywords="about NewtonAI, AI education, study tools, learning platform"
       />
       
-      {/* Optimized floating gradient blobs */}
+      {/* Static floating gradient blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <OptimizedBackgroundBlobs variant="hero" />
+        <div className="absolute top-20 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-full blur-3xl" />
+        <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-bl from-secondary/20 to-accent/10 rounded-full blur-3xl" />
       </div>
       
       <Header />
@@ -59,33 +58,18 @@ const About = () => {
       <main className="relative z-10">
         {/* Hero Section */}
         <section className="container mx-auto px-4 py-16 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20"
-          >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
             <Sparkles className="w-4 h-4" />
             About NewtonAI
-          </motion.div>
+          </div>
           
-          <motion.h1 
-            className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-6"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
+          <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-6">
             Revolutionizing How You Learn
-          </motion.h1>
-          <motion.p 
-            className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed">
             NewtonAI combines cutting-edge AI technology with proven learning methods 
             to help students achieve their academic goals faster and more effectively.
-          </motion.p>
+          </p>
         </section>
 
         {/* Ad after hero */}
@@ -96,16 +80,10 @@ const About = () => {
 
         {/* Mission Section */}
         <section className="bg-muted/50 py-16 relative overflow-hidden">
-          <OptimizedBackgroundBlobs variant="minimal" />
+          <div className="absolute top-40 -right-32 w-64 h-64 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
           
           <div className="container mx-auto px-4 relative z-10">
-            <motion.div 
-              className="max-w-3xl mx-auto text-center"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.6 }}
-            >
+            <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-display text-3xl font-bold text-foreground mb-6">
                 Our Mission
               </h2>
@@ -114,31 +92,19 @@ const About = () => {
                 Our mission is to democratize education by making AI-powered study assistance 
                 available to everyone, regardless of their background or resources.
               </p>
-            </motion.div>
+            </div>
           </div>
         </section>
 
         {/* Values Section */}
         <section className="container mx-auto px-4 py-16">
-          <motion.h2 
-            className="font-display text-3xl font-bold text-foreground text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
+          <h2 className="font-display text-3xl font-bold text-foreground text-center mb-12">
             What Drives Us
-          </motion.h2>
+          </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {values.map((value, index) => (
-              <motion.div
-                key={value.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.5, delay: index * 0.08 }}
-              >
-                <Card className="h-full group cursor-pointer hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 gpu-accelerated">
+            {values.map((value) => (
+              <div key={value.title}>
+                <Card className="h-full group cursor-pointer hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
                   <CardContent className="pt-6 text-center">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200">
                       <value.icon className="h-6 w-6 text-primary" />
@@ -151,7 +117,7 @@ const About = () => {
                     </p>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
           </div>
         </section>
@@ -165,37 +131,20 @@ const About = () => {
         {/* CTA Section */}
         <section className="bg-primary text-primary-foreground py-16 relative overflow-hidden">
           <div className="container mx-auto px-4 text-center relative z-10">
-            <motion.h2 
-              className="font-display text-3xl font-bold mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
+            <h2 className="font-display text-3xl font-bold mb-4">
               Ready to Transform Your Learning?
-            </motion.h2>
-            <motion.p 
-              className="text-lg opacity-90 mb-8 max-w-2xl mx-auto leading-relaxed"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-            >
+            </h2>
+            <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto leading-relaxed">
               Join thousands of students who are already using NewtonAI to ace their studies.
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
+            </p>
+            <div>
               <Link to="/auth">
                 <Button size="lg" variant="secondary" className="shadow-lg">
                   Get Started Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-            </motion.div>
+            </div>
           </div>
         </section>
       </main>

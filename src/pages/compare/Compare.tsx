@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, X, TrendingDown } from "lucide-react";
 import Header from "@/components/Header";
@@ -7,7 +6,6 @@ import SEOHead from "@/components/SEOHead";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { GradientBlob } from "@/components/GradientBlob";
 import { competitors, newtonFeatures } from "./competitorData";
 import { useCurrency } from "@/hooks/useCurrency";
 import { DISPLAY_PRICING, COMPETITOR_PRICING, CURRENCY_FLAGS, CurrencyCode } from "@/lib/currencyUtils";
@@ -47,16 +45,11 @@ const Compare = () => {
       <main>
         {/* Hero Section */}
         <section className="relative py-20 overflow-hidden">
-          <GradientBlob color="primary" size="xl" className="-top-40 -right-40 opacity-20" />
-          <GradientBlob color="secondary" size="lg" className="top-1/2 -left-20 opacity-15" />
+          <div className="absolute top-0 -right-40 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl pointer-events-none opacity-20" />
+          <div className="absolute top-1/2 -left-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl pointer-events-none opacity-15" />
 
           <div className="container relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-center max-w-4xl mx-auto"
-            >
+            <div className="text-center max-w-4xl mx-auto">
               <Badge variant="secondary" className="mb-4">
                 <TrendingDown className="h-3 w-3 mr-1" />
                 Save up to 58% vs competitors
@@ -82,7 +75,7 @@ const Compare = () => {
                   <Link to="/pricing">View Pricing</Link>
                 </Button>
               </div>
-            </motion.div>
+            </div>
           </div>
         </section>
 
@@ -132,35 +125,24 @@ const Compare = () => {
         {/* Competitor Grid */}
         <section className="py-16">
           <div className="container">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
+            <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
                 Choose a Comparison
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Click on any competitor below to see a detailed feature-by-feature comparison with NewtonAI.
               </p>
-            </motion.div>
+            </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {competitorList.map((comp, index) => {
+              {competitorList.map((comp) => {
                 const competitorPricing = COMPETITOR_PRICING[comp.slug]?.[currency];
                 const competitorPriceValue = competitorPricing?.monthlyValue || comp.pricePerMonth;
                 const savings = ((competitorPriceValue - newtonPriceValue) / competitorPriceValue * 100).toFixed(0);
                 const competitorMonthlyDisplay = competitorPricing?.monthly || comp.monthlyPrice;
                 
                 return (
-                  <motion.div
-                    key={comp.slug}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
-                  >
+                  <div key={comp.slug}>
                     <Link to={`/compare/${comp.slug}`}>
                       <Card className="h-full hover:shadow-xl transition-all border-2 hover:border-primary/50 group cursor-pointer">
                         <CardContent className="p-6">
@@ -205,7 +187,7 @@ const Compare = () => {
                         </CardContent>
                       </Card>
                     </Link>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
@@ -221,19 +203,14 @@ const Compare = () => {
         {/* Quick Feature Matrix */}
         <section className="py-16 bg-muted/30">
           <div className="container">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
+            <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
                 Quick Feature Overview
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 See at a glance which features each platform offers.
               </p>
-            </motion.div>
+            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full max-w-5xl mx-auto bg-card rounded-xl border">
@@ -296,12 +273,7 @@ const Compare = () => {
         {/* CTA Section */}
         <section className="py-20">
           <div className="container">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center max-w-3xl mx-auto"
-            >
+            <div className="text-center max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
                 Ready to Make the Switch?
               </h2>
@@ -319,7 +291,7 @@ const Compare = () => {
                   <Link to="/pricing">Compare Plans</Link>
                 </Button>
               </div>
-            </motion.div>
+            </div>
           </div>
         </section>
       </main>

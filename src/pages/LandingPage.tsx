@@ -1,14 +1,11 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import CTASection from "@/components/CTASection";
-import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
 import SEOHead from "@/components/SEOHead";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
-import { HeroParticles } from "@/components/HeroParticles";
 import { AdsterraBanner } from "@/components/AdsterraBanner";
 import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import { 
@@ -78,11 +75,9 @@ const LandingPage = () => {
       
       {/* Hero Section */}
       <section className="relative pt-20 pb-24 overflow-hidden">
-        {/* Optimized Background Blobs */}
-        <OptimizedBackgroundBlobs variant="hero" />
-        
-        {/* Floating particle effects */}
-        <HeroParticles iconCount={14} dotCount={25} />
+        {/* Static gradient background */}
+        <div className="absolute top-20 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-bl from-secondary/20 to-accent/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
         
@@ -95,49 +90,29 @@ const LandingPage = () => {
           }}
         />
         <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center max-w-4xl mx-auto"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6, type: "spring", stiffness: 100 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20"
-            >
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
               <Sparkles className="w-4 h-4" />
               AI-Powered Study Tools
-            </motion.div>
+            </div>
             
-            <motion.h1 
-              className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.7 }}
-            >
+            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
               Study Smarter with{" "}
               <span className="text-primary bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 AI-Powered
               </span>
               {" "}Tools
-            </motion.h1>
+            </h1>
             
-            <motion.p 
-              className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-            >
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Transform any document, video, or lecture into flashcards, quizzes, summaries, and mind maps. 
               Your personal AI study assistant.
-            </motion.p>
+            </p>
             
             {/* Floating Tools Showcase - now includes its own CTA */}
             <FloatingToolsShowcase />
-        </motion.div>
-      </div>
+          </div>
+        </div>
       
       {/* Ad after hero */}
       <div className="container mx-auto px-4 py-8 relative z-10">
@@ -148,33 +123,23 @@ const LandingPage = () => {
 
       {/* Features Section */}
       <section className="py-24 bg-muted/30 relative overflow-hidden">
-        <OptimizedBackgroundBlobs variant="minimal" />
+        <div className="absolute top-40 -right-32 w-72 h-72 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
+          <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Everything You Need to Study Effectively
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Our AI-powered tools help you learn faster and retain more information.
             </p>
-          </motion.div>
+          </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
+            {features.map((feature) => (
+              <div
                 key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.5, delay: index * 0.05 }}
-                className="bg-card rounded-xl p-6 border border-border hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer group gpu-accelerated"
+                className="bg-card rounded-xl p-6 border border-border hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer group"
               >
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
                   <feature.icon className="w-6 h-6 text-primary" />
@@ -185,7 +150,7 @@ const LandingPage = () => {
                 <p className="text-muted-foreground">
                   {feature.description}
                 </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -199,16 +164,11 @@ const LandingPage = () => {
 
       {/* Benefits Section */}
       <section className="py-24 relative overflow-hidden">
-        <OptimizedBackgroundBlobs variant="minimal" />
+        <div className="absolute top-40 -right-32 w-64 h-64 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.6 }}
-            >
+            <div>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
                 Why Students Love Our Platform
               </h2>
@@ -216,29 +176,19 @@ const LandingPage = () => {
                 Join thousands of students who are already studying smarter with our AI-powered tools.
               </p>
               <ul className="space-y-4">
-                {benefits.map((benefit, index) => (
-                  <motion.li
+                {benefits.map((benefit) => (
+                  <li
                     key={benefit}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: index * 0.08 }}
                     className="flex items-center gap-3"
                   >
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                     <span className="text-foreground">{benefit}</span>
-                  </motion.li>
+                  </li>
                 ))}
               </ul>
-            </motion.div>
+            </div>
             
-            <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.6 }}
-              className="bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl p-8 aspect-square flex items-center justify-center relative overflow-hidden"
-            >
+            <div className="bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl p-8 aspect-square flex items-center justify-center relative overflow-hidden">
               <div className="text-center relative z-10">
                 <div className="text-6xl font-bold text-primary mb-2">
                   10K+
@@ -247,7 +197,7 @@ const LandingPage = () => {
                   Active Students
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>

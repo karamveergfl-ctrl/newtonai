@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +19,6 @@ import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import { AdsterraBanner } from "@/components/AdsterraBanner";
-import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
 
 const tools = [
   {
@@ -153,24 +151,15 @@ const Tools = () => {
 
       {/* Hero Section */}
       <section className="relative py-16 overflow-hidden">
-        <OptimizedBackgroundBlobs variant="hero" />
+        <div className="absolute top-20 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-bl from-secondary/20 to-accent/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20"
-            >
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
               <Sparkles className="w-4 h-4" />
               7 Powerful AI Tools
-            </motion.div>
+            </div>
             
             <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">
               AI-Powered Study Tools
@@ -191,21 +180,15 @@ const Tools = () => {
                 <Link to="/pricing">View Pricing</Link>
               </Button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Tools Grid */}
       <section className="container mx-auto px-4 pb-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tools.map((tool, index) => (
-            <motion.div
-              key={tool.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
+          {tools.map((tool) => (
+            <div key={tool.id}>
               <Link to={tool.href}>
                 <Card className="h-full group cursor-pointer hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
                   <CardHeader>
@@ -243,7 +226,7 @@ const Tools = () => {
                   </CardContent>
                 </Card>
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
@@ -257,12 +240,7 @@ const Tools = () => {
       {/* CTA Section */}
       <section className="bg-primary text-primary-foreground py-16">
         <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
+          <div>
             <h2 className="font-display text-3xl font-bold mb-4">
               Ready to Transform Your Study Habits?
             </h2>
@@ -280,7 +258,7 @@ const Tools = () => {
                 <Link to="/pricing">Compare Plans</Link>
               </Button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 

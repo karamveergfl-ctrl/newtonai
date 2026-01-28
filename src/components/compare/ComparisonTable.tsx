@@ -1,5 +1,4 @@
-import { Check, X, Minus } from "lucide-react";
-import { motion } from "framer-motion";
+import { Check, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { featureComparison, competitors, CompetitorKey } from "@/pages/compare/competitorData";
 
@@ -21,13 +20,7 @@ const ComparisonTable = ({ competitor }: ComparisonTableProps) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="w-full overflow-x-auto"
-    >
+    <div className="w-full overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
@@ -59,7 +52,7 @@ const ComparisonTable = ({ competitor }: ComparisonTableProps) => {
           ))}
         </TableBody>
       </Table>
-    </motion.div>
+    </div>
   );
 };
 

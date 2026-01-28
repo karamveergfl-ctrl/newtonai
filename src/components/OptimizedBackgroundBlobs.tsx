@@ -14,7 +14,7 @@ const positionClasses = {
 
 const Blob = memo(({ className = "", position }: BlobProps) => (
   <div
-    className={`absolute rounded-full blur-3xl pointer-events-none will-change-transform gpu-accelerated animate-blob-slow motion-reduce:animate-none ${positionClasses[position]} ${className}`}
+    className={`absolute rounded-full blur-3xl pointer-events-none ${positionClasses[position]} ${className}`}
     aria-hidden="true"
   />
 ));

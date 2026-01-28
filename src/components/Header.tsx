@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CreditBalance } from "@/components/CreditBalance";
@@ -45,10 +45,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
 
   return (
     <>
-      <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
+      <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${headerBg}`}
       >
         <div className="container mx-auto px-4">
@@ -109,9 +106,9 @@ export const Header = ({ transparent = false }: HeaderProps) => {
             </div>
           </div>
         </div>
-      </motion.header>
+      </header>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Keep AnimatePresence for essential UX */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
