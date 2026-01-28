@@ -11,6 +11,7 @@ import { GradientBlob } from "@/components/GradientBlob";
 import { competitors, newtonFeatures } from "./competitorData";
 import { useCurrency } from "@/hooks/useCurrency";
 import { DISPLAY_PRICING, COMPETITOR_PRICING, CURRENCY_FLAGS, CurrencyCode } from "@/lib/currencyUtils";
+import { AdsterraBanner } from "@/components/AdsterraBanner";
 import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import {
   Select,
@@ -124,6 +125,7 @@ const Compare = () => {
 
         {/* Ad after highlights */}
         <div className="container">
+          <AdsterraBanner />
           <AdsterraNativeBanner instanceId="compare-hero" />
         </div>
 
@@ -212,6 +214,7 @@ const Compare = () => {
 
         {/* Ad before feature matrix */}
         <div className="container">
+          <AdsterraBanner />
           <AdsterraNativeBanner instanceId="compare-grid" />
         </div>
 

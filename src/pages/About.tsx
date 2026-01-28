@@ -5,6 +5,7 @@ import { BookOpen, Brain, Users, Zap, Sparkles, ArrowRight } from "lucide-react"
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { AdsterraBanner } from "@/components/AdsterraBanner";
 import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
 import SEOHead from "@/components/SEOHead";
@@ -87,6 +88,12 @@ const About = () => {
           </motion.p>
         </section>
 
+        {/* Ad after hero */}
+        <div className="container mx-auto px-4 py-8">
+          <AdsterraBanner />
+          <AdsterraNativeBanner />
+        </div>
+
         {/* Mission Section */}
         <section className="bg-muted/50 py-16 relative overflow-hidden">
           <OptimizedBackgroundBlobs variant="minimal" />
@@ -151,6 +158,7 @@ const About = () => {
 
         {/* Ad between values and CTA */}
         <div className="container">
+          <AdsterraBanner />
           <AdsterraNativeBanner instanceId="about-values" />
         </div>
 

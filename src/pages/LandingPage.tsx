@@ -136,9 +136,15 @@ const LandingPage = () => {
             
             {/* Floating Tools Showcase - now includes its own CTA */}
             <FloatingToolsShowcase />
-          </motion.div>
-        </div>
-      </section>
+        </motion.div>
+      </div>
+      
+      {/* Ad after hero */}
+      <div className="container mx-auto px-4 py-8 relative z-10">
+        <AdsterraBanner />
+        <AdsterraNativeBanner />
+      </div>
+    </section>
 
       {/* Features Section */}
       <section className="py-24 bg-muted/30 relative overflow-hidden">
@@ -248,6 +254,12 @@ const LandingPage = () => {
 
       {/* Testimonials */}
       <TestimonialsSection />
+
+      {/* Ad after testimonials */}
+      <div className="container mx-auto px-4 py-8">
+        <AdsterraBanner />
+        <AdsterraNativeBanner />
+      </div>
 
       {/* CTA Section */}
       <CTASection 
