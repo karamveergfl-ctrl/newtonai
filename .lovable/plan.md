@@ -1,46 +1,112 @@
 
+## Plan: Fix Native Ad Rendering - Remove Sandbox Blocking
 
-## Plan: Replace Native Banner with Iframe Banner Ad
+### Root Cause Analysis
 
-### Overview
+The current implementation uses `sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"` on the iframe. While this allows script execution, it still blocks:
 
-Replace the current Adsterra native banner configuration with the new iframe banner format (728x90 leaderboard) while maintaining all existing functionality.
+- External network requests to load the `invoke.js` script
+- The ad script's ability to create nested iframes
+- Cookie access required by the ad network
+
+The Adsterra script chain works like this:
+```text
+iframe (srcdoc) 
+  → loads invoke.js from lozengehelped.com
+    → invoke.js creates an inner iframe for the actual ad
+      → inner iframe loads ad creative from Adsterra CDN
+```
+
+When `sandbox` is present, step 1 (loading invoke.js) fails silently because the iframe can't make cross-origin requests even with `allow-same-origin`.
+
+---
+
+### Solution
+
+Remove the `sandbox` attribute entirely and apply proper iframe configuration as shown in successful implementations.
+
+---
+
+### File to Modify
+
+**`src/components/NativeAdBanner.tsx`**
 
 ---
 
 ### Changes Required
 
-**File: `src/components/NativeAdBanner.tsx`**
+#### 1. Remove sandbox attribute from iframe
 
-Update the ad configuration and HTML generation:
-
-#### Current Configuration
 ```tsx
-const ADSTERRA_SCRIPT_URL = "https://lozengehelped.com/i197tx31?key=79db3d2bc07f614676ed1e5d73f914c5";
-const ADSTERRA_CONTAINER_ID = "i197tx31";
+// BEFORE (current)
+<iframe
+  srcDoc={generateAdHtml()}
+  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+  ...
+/>
+
+// AFTER (fixed)
+<iframe
+  srcDoc={generateAdHtml()}
+  // No sandbox attribute - allows external script loading
+  ...
+/>
 ```
 
-#### New Configuration
+#### 2. Add explicit fixed dimensions
+
+Since the 728x90 banner has fixed dimensions, set them explicitly:
+
 ```tsx
-const ADSTERRA_KEY = "c5d398ab0a723a7cfa61f3c2d7960602";
-const ADSTERRA_SCRIPT_URL = `https://lozengehelped.com/${ADSTERRA_KEY}/invoke.js`;
-const AD_WIDTH = 728;
-const AD_HEIGHT = 90;
+<iframe
+  srcDoc={generateAdHtml()}
+  style={{
+    width: '728px',
+    height: '90px',
+    border: 'none',
+    overflow: 'hidden',
+    display: 'block',
+    background: 'transparent',
+  }}
+  scrolling="no"
+  frameBorder="0"
+  title="Sponsored content"
+  onLoad={handleIframeLoad}
+  onError={handleIframeError}
+/>
 ```
 
-#### Updated HTML Generation
+#### 3. Update container to handle responsive centering
 
-The `generateAdHtml` function will be updated to include the `atOptions` configuration:
+The container should center the fixed-size iframe while allowing it to be cropped on smaller screens:
+
+```tsx
+<div 
+  className={cn(
+    "w-full py-4 md:py-6 my-6 md:my-8",
+    "bg-background rounded-xl",
+    "flex flex-col items-center justify-center",
+    "overflow-hidden", // Add to handle 728px on small screens
+    ...
+  )}
+>
+```
+
+#### 4. Update generateAdHtml for compatibility
+
+Ensure the HTML document is properly structured for ad loading:
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { 
-      width: 100%; 
-      height: 100%;
+      width: 728px;
+      height: 90px;
       background: transparent; 
       overflow: hidden;
       display: flex;
@@ -50,7 +116,7 @@ The `generateAdHtml` function will be updated to include the `atOptions` configu
   </style>
 </head>
 <body>
-  <script>
+  <script type="text/javascript">
     atOptions = {
       'key' : 'c5d398ab0a723a7cfa61f3c2d7960602',
       'format' : 'iframe',
@@ -59,39 +125,55 @@ The `generateAdHtml` function will be updated to include the `atOptions` configu
       'params' : {}
     };
   </script>
-  <script src="https://lozengehelped.com/c5d398ab0a723a7cfa61f3c2d7960602/invoke.js"></script>
+  <script type="text/javascript" src="//lozengehelped.com/c5d398ab0a723a7cfa61f3c2d7960602/invoke.js"></script>
 </body>
 </html>
 ```
 
-#### Styling Updates
-
-Since this is a fixed-size banner (728x90), adjust the iframe container:
-
-| Property | Desktop | Mobile |
-|----------|---------|--------|
-| Min Height | `90px` | `90px` |
-| Max Width | `728px` | `100%` (responsive) |
-| Centering | Flex center | Flex center |
+Key changes in HTML:
+- Added `type="text/javascript"` to script tags
+- Changed script src to use protocol-relative URL (`//` instead of `https://`)
+- Set explicit body dimensions to match ad size
 
 ---
 
-### What Stays the Same
+### What This Preserves
 
-- Lazy loading for mid-page and footer placements
+- Lazy loading for mid-page and above-footer placements
 - Premium user suppression (`isPremium`)
 - Deep study mode suppression (`isInDeepStudy`)
-- Fail-safe timeout (5 seconds)
-- `useCanShowMidPageAd` hook
-- All page integrations
+- 5-second fail-safe timeout (collapses if ad doesn't load)
+- `useCanShowMidPageAd` hook for height checks
+- All existing page integrations
 
 ---
 
-### Mobile Responsiveness Note
+### Security Consideration
 
-The 728x90 banner is a standard desktop leaderboard size. On mobile devices narrower than 728px, the ad may:
-- Scale down proportionally
-- Or Adsterra may serve a mobile-optimized creative
+Removing `sandbox` allows the iframe to execute scripts freely. This is acceptable because:
+- The ad is from a trusted third-party (Adsterra)
+- The iframe content is generated by our code
+- The iframe cannot access the parent page's DOM or JavaScript context
+- This is the standard approach used by ad networks across the web
 
-The iframe will be centered and constrained to `max-width: 100%` to handle this gracefully.
+---
 
+### Technical Summary
+
+| Property | Before | After |
+|----------|--------|-------|
+| `sandbox` | `allow-scripts allow-same-origin allow-popups...` | (removed) |
+| Iframe width | `100%` | `728px` (fixed) |
+| Iframe height | `90px` (via minHeight) | `90px` (explicit) |
+| Script src | `https://lozengehelped.com/...` | `//lozengehelped.com/...` |
+| Container | No overflow handling | `overflow-hidden` |
+
+---
+
+### Expected Outcome
+
+After this fix:
+- The Adsterra `invoke.js` script will load successfully
+- The ad creative will render inside the iframe
+- Ads will display on all placements where they currently show "SPONSORED" but are empty
+- Mobile responsiveness maintained (728px banner centered, may crop on smaller screens)
