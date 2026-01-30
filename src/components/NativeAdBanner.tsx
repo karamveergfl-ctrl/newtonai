@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useCredits } from "@/hooks/useCredits";
 import { useStudyContext } from "@/contexts/StudyContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NativeAdBannerProps {
   placement: "below-action" | "mid-page" | "above-footer";
@@ -42,15 +43,44 @@ function useLazyAdLoad({ enabled, rootMargin = "300px" }: { enabled: boolean; ro
   return { ref, isVisible };
 }
 
+// Generate the iframe srcdoc HTML
+function generateAdHtml(): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { 
+      width: 100%; 
+      height: 100%;
+      background: transparent; 
+      overflow: hidden;
+    }
+    #container-${ADSTERRA_ZONE_ID} { 
+      width: 100%; 
+      min-height: 1px;
+    }
+  </style>
+</head>
+<body>
+  <script async data-cfasync="false" src="${ADSTERRA_SCRIPT_URL}"></script>
+  <div id="container-${ADSTERRA_ZONE_ID}"></div>
+</body>
+</html>`;
+}
+
 export function NativeAdBanner({ 
   placement, 
   className 
 }: NativeAdBannerProps) {
   const { isPremium } = useCredits();
   const { isInDeepStudy } = useStudyContext();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scriptLoadedRef = useRef(false);
+  const isMobile = useIsMobile();
   const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Lazy load for mid-page and above-footer only
   const shouldLazyLoad = placement !== "below-action";
@@ -65,59 +95,50 @@ export function NativeAdBanner({
   // Don't show ads during deep study mode (quiz, solutions, etc.)
   if (isInDeepStudy) return null;
 
-  // Load ad script when visible
+  // Set up timeout for iframe load failure detection
   useEffect(() => {
-    if (!isVisible || scriptLoadedRef.current || !containerRef.current) return;
+    if (!isVisible) return;
 
-    const container = containerRef.current;
-    const adContainerId = `container-${ADSTERRA_ZONE_ID}-${placement}-${Date.now()}`;
-
-    // Create unique container for this placement
-    const adContainer = document.createElement("div");
-    adContainer.id = adContainerId;
-    container.appendChild(adContainer);
-
-    // Load the script
-    const script = document.createElement("script");
-    script.async = true;
-    script.setAttribute("data-cfasync", "false");
-    script.src = ADSTERRA_SCRIPT_URL;
-    
-    script.onload = () => {
-      scriptLoadedRef.current = true;
-    };
-
-    script.onerror = () => {
-      // Silently fail - hide container on error
-      setHasError(true);
-    };
-
-    container.appendChild(script);
+    // Set a 5-second timeout for ad load
+    timeoutRef.current = setTimeout(() => {
+      if (!isLoaded) {
+        setHasError(true);
+      }
+    }, 5000);
 
     return () => {
-      // Cleanup on unmount
-      if (container) {
-        container.innerHTML = "";
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
-      scriptLoadedRef.current = false;
     };
-  }, [placement, isVisible]);
+  }, [isVisible, isLoaded]);
+
+  const handleIframeLoad = () => {
+    setIsLoaded(true);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  };
+
+  const handleIframeError = () => {
+    setHasError(true);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  };
 
   // Hide if there was an error loading
   if (hasError) return null;
 
+  // Determine iframe height based on device
+  const iframeMinHeight = isMobile ? "220px" : "280px";
+
   return (
     <div
-      ref={(node) => {
-        // Combine refs for lazy loading and container
-        if (shouldLazyLoad) {
-          (lazyRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-        }
-        (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-      }}
+      ref={lazyRef}
       className={cn(
-        // Base spacing - 24-32px margins
-        "w-full py-6 md:py-8 my-6 md:my-8",
+        // Base spacing
+        "w-full py-4 md:py-6 my-6 md:my-8",
         // Match page background
         "bg-background",
         // Match card border radius
@@ -137,7 +158,25 @@ export function NativeAdBanner({
       <span className="text-[10px] text-muted-foreground/60 mb-2 tracking-wide uppercase">
         Sponsored
       </span>
-      {/* Ad content will be injected here by the script */}
+      
+      {/* Only render iframe when visible (for lazy loading) */}
+      {isVisible && (
+        <iframe
+          srcDoc={generateAdHtml()}
+          sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+          title="Sponsored content"
+          className="w-full"
+          style={{
+            border: "none",
+            minHeight: iframeMinHeight,
+            background: "transparent",
+            display: "block",
+          }}
+          scrolling="no"
+          onLoad={handleIframeLoad}
+          onError={handleIframeError}
+        />
+      )}
     </div>
   );
 }
