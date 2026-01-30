@@ -9,9 +9,9 @@ interface NativeAdBannerProps {
   className?: string;
 }
 
-// Adsterra Native Banner Zone ID - SINGLE unit for all placements
-const ADSTERRA_ZONE_ID = "784f975abdd60c86610b3cf2654a25b5";
-const ADSTERRA_SCRIPT_URL = `https://lozengehelped.com/${ADSTERRA_ZONE_ID}/invoke.js`;
+// Adsterra Native Banner - SINGLE unit for all placements
+const ADSTERRA_SCRIPT_URL = "https://lozengehelped.com/i197tx31?key=79db3d2bc07f614676ed1e5d73f914c5";
+const ADSTERRA_CONTAINER_ID = "i197tx31";
 
 // Custom hook for lazy loading ads
 function useLazyAdLoad({ enabled, rootMargin = "300px" }: { enabled: boolean; rootMargin?: string }) {
@@ -58,7 +58,7 @@ function generateAdHtml(): string {
       background: transparent; 
       overflow: hidden;
     }
-    #container-${ADSTERRA_ZONE_ID} { 
+    #${ADSTERRA_CONTAINER_ID} { 
       width: 100%; 
       min-height: 1px;
     }
@@ -66,7 +66,7 @@ function generateAdHtml(): string {
 </head>
 <body>
   <script async data-cfasync="false" src="${ADSTERRA_SCRIPT_URL}"></script>
-  <div id="container-${ADSTERRA_ZONE_ID}"></div>
+  <div id="${ADSTERRA_CONTAINER_ID}"></div>
 </body>
 </html>`;
 }
