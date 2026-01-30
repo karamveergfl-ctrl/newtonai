@@ -9,9 +9,11 @@ interface NativeAdBannerProps {
   className?: string;
 }
 
-// Adsterra Native Banner - SINGLE unit for all placements
-const ADSTERRA_SCRIPT_URL = "https://lozengehelped.com/i197tx31?key=79db3d2bc07f614676ed1e5d73f914c5";
-const ADSTERRA_CONTAINER_ID = "i197tx31";
+// Adsterra Banner Ad - 728x90 Leaderboard
+const ADSTERRA_KEY = "c5d398ab0a723a7cfa61f3c2d7960602";
+const ADSTERRA_SCRIPT_URL = `https://lozengehelped.com/${ADSTERRA_KEY}/invoke.js`;
+const AD_WIDTH = 728;
+const AD_HEIGHT = 90;
 
 // Custom hook for lazy loading ads
 function useLazyAdLoad({ enabled, rootMargin = "300px" }: { enabled: boolean; rootMargin?: string }) {
@@ -57,16 +59,23 @@ function generateAdHtml(): string {
       height: 100%;
       background: transparent; 
       overflow: hidden;
-    }
-    #${ADSTERRA_CONTAINER_ID} { 
-      width: 100%; 
-      min-height: 1px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   </style>
 </head>
 <body>
-  <script async data-cfasync="false" src="${ADSTERRA_SCRIPT_URL}"></script>
-  <div id="${ADSTERRA_CONTAINER_ID}"></div>
+  <script>
+    atOptions = {
+      'key' : '${ADSTERRA_KEY}',
+      'format' : 'iframe',
+      'height' : ${AD_HEIGHT},
+      'width' : ${AD_WIDTH},
+      'params' : {}
+    };
+  </script>
+  <script src="${ADSTERRA_SCRIPT_URL}"></script>
 </body>
 </html>`;
 }
@@ -130,8 +139,8 @@ export function NativeAdBanner({
   // Hide if there was an error loading
   if (hasError) return null;
 
-  // Determine iframe height based on device
-  const iframeMinHeight = isMobile ? "220px" : "280px";
+  // Fixed height for 728x90 banner
+  const iframeMinHeight = `${AD_HEIGHT}px`;
 
   return (
     <div
