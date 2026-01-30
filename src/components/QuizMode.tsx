@@ -26,6 +26,7 @@ import jsPDF from "jspdf";
 import { useToast } from "@/hooks/use-toast";
 import { ConfettiCelebration } from "@/components/ConfettiCelebration";
 import { motion } from "framer-motion";
+import { useStudyContext } from "@/contexts/StudyContext";
 
 interface Question {
   id: string;
@@ -69,6 +70,13 @@ export const QuizMode = ({
   const [retryWrongQuestions, setRetryWrongQuestions] = useState<Question[] | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { setDeepStudy } = useStudyContext();
+
+  // Set deep study mode when quiz is active
+  useEffect(() => {
+    setDeepStudy(true);
+    return () => setDeepStudy(false);
+  }, [setDeepStudy]);
 
   // Animate progress bar while loading
   useEffect(() => {
