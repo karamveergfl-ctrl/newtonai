@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { blogPosts, BlogPost as BlogPostType } from "./Blog";
+import { NativeAdBanner } from "@/components/NativeAdBanner";
 
 // Blog post content - in a real app, this would come from a CMS
 const blogContent: Record<string, { content: string }> = {
@@ -655,6 +656,9 @@ const BlogPost = () => {
             ) : <div className="flex-1" />}
           </div>
         </div>
+
+        {/* Native Ad - Above CTA */}
+        <NativeAdBanner placement="above-footer" />
 
         {/* CTA */}
         <div className="mt-12 p-8 bg-primary/5 rounded-xl text-center">

@@ -7,6 +7,7 @@ import CTASection from "@/components/CTASection";
 import SEOHead from "@/components/SEOHead";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
 import StickyCTABar from "@/components/StickyCTABar";
+import { NativeAdBanner } from "@/components/NativeAdBanner";
 import { 
   BookOpen, 
   Brain, 
@@ -277,9 +278,12 @@ const LandingPage = () => {
       <TestimonialsSection />
 
 
+      {/* Native Ad - Above Footer */}
+      <NativeAdBanner placement="above-footer" />
+
       {/* CTA Section */}
       <div id="footer-cta-section">
-        <CTASection 
+        <CTASection
           title="Ready to Transform Your Study Habits?"
           description="Join thousands of students who are already studying smarter with AI."
           primaryButtonText="Get Started Free"
