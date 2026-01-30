@@ -17,6 +17,7 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { NativeAdBanner } from "@/components/NativeAdBanner";
 
 const tools = [
   {
@@ -229,6 +230,8 @@ const Tools = () => {
         </div>
       </section>
 
+      {/* Native Ad - Below Tools Grid */}
+      <NativeAdBanner placement="below-action" />
 
       {/* CTA Section */}
       <section className="bg-primary text-primary-foreground py-16">

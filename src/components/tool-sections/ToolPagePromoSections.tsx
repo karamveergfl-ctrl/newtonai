@@ -42,7 +42,7 @@ export function ToolPagePromoSections({
       <ToolPageFeatures features={data.features} />
       
       {/* Native Ad - Below Features (Placement A alternative) */}
-      <NativeAdBanner placement="below-action" lazyLoad={false} />
+      <NativeAdBanner placement="below-action" />
       
       {/* Trending Topics - Between Features and Subjects */}
       <ToolPageTrendingTopics />
@@ -52,7 +52,7 @@ export function ToolPagePromoSections({
       
       {/* Mid-page Ad - Only if page is tall enough */}
       {canShowMidPageAd && (
-        <NativeAdBanner placement="mid-page" lazyLoad={true} />
+        <NativeAdBanner placement="mid-page" />
       )}
       
       {/* Recents - Only if user is logged in */}
@@ -71,7 +71,7 @@ export function ToolPagePromoSections({
       />
       
       {/* Native Ad - Above Footer (Placement C) */}
-      <NativeAdBanner placement="above-footer" lazyLoad={true} />
+      <NativeAdBanner placement="above-footer" />
     </div>
   );
 }
