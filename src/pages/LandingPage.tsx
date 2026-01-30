@@ -6,6 +6,7 @@ import { TestimonialsSection } from "@/components/TestimonialsSection";
 import CTASection from "@/components/CTASection";
 import SEOHead from "@/components/SEOHead";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
+import StickyCTABar from "@/components/StickyCTABar";
 import { AdsterraBanner } from "@/components/AdsterraBanner";
 import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import { 
@@ -16,7 +17,11 @@ import {
   Sparkles, 
   Zap,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Users,
+  CreditCard,
+  Cpu,
+  FileCheck
 } from "lucide-react";
 
 const features = [
@@ -59,6 +64,13 @@ const benefits = [
   "Study smarter, not harder"
 ];
 
+const valueProps = [
+  { icon: CheckCircle, text: "Free Forever Tier" },
+  { icon: CreditCard, text: "No Credit Card" },
+  { icon: Cpu, text: "AI-Powered" },
+  { icon: FileCheck, text: "PDFs, Videos, Lectures" }
+];
+
 const LandingPage = () => {
   const breadcrumbs = [{ name: "Home", href: "/" }];
 
@@ -74,7 +86,7 @@ const LandingPage = () => {
       <Header transparent />
       
       {/* Hero Section */}
-      <section className="relative pt-20 pb-24 overflow-hidden">
+      <section id="hero-section" className="relative pt-20 pb-16 overflow-hidden">
         {/* Static gradient background */}
         <div className="absolute top-20 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-bl from-secondary/20 to-accent/10 rounded-full blur-3xl pointer-events-none" />
@@ -108,18 +120,63 @@ const LandingPage = () => {
               Transform any document, video, or lecture into flashcards, quizzes, summaries, and mind maps. 
               Your personal AI study assistant.
             </p>
+
+            {/* Primary CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+              <Button asChild size="lg" className="text-lg px-8 py-6 group">
+                <Link to="/auth">
+                  Get Started Free
+                  <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
+                <Link to="/pricing">See Pricing</Link>
+              </Button>
+            </div>
+
+            {/* Trust Line */}
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground mb-10">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle className="w-4 h-4 text-primary" />
+                No credit card required
+              </span>
+              <span className="hidden sm:inline text-border">•</span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle className="w-4 h-4 text-primary" />
+                Free tier available
+              </span>
+              <span className="hidden sm:inline text-border">•</span>
+              <span className="flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-primary" />
+                12K+ students
+              </span>
+            </div>
             
-            {/* Floating Tools Showcase - now includes its own CTA */}
+            {/* Floating Tools Showcase */}
             <FloatingToolsShowcase />
           </div>
         </div>
+      </section>
+
+      {/* Value Proposition Strip */}
+      <section className="py-6 bg-muted/50 border-y border-border">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
+            {valueProps.map((prop) => (
+              <div key={prop.text} className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <prop.icon className="w-4 h-4 text-primary" />
+                {prop.text}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
       
       {/* Ad after hero */}
       <div className="container mx-auto px-4 py-8 relative z-10">
         <AdsterraBanner />
         <AdsterraNativeBanner />
       </div>
-    </section>
 
       {/* Features Section */}
       <section className="py-24 bg-muted/30 relative overflow-hidden">
@@ -156,6 +213,24 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Mid-Page CTA */}
+      <section className="py-12 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
+        <div className="container mx-auto px-4 text-center">
+          <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+            Ready to boost your grades?
+          </h3>
+          <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+            Join thousands of students already studying smarter with AI.
+          </p>
+          <Button asChild size="lg" className="group">
+            <Link to="/auth">
+              Start Learning Free
+              <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </Button>
+        </div>
+      </section>
+
       {/* Ad Section */}
       <div className="container mx-auto px-4 py-8">
         <AdsterraBanner />
@@ -175,7 +250,7 @@ const LandingPage = () => {
               <p className="text-lg text-muted-foreground mb-8">
                 Join thousands of students who are already studying smarter with our AI-powered tools.
               </p>
-              <ul className="space-y-4">
+              <ul className="space-y-4 mb-8">
                 {benefits.map((benefit) => (
                   <li
                     key={benefit}
@@ -186,6 +261,14 @@ const LandingPage = () => {
                   </li>
                 ))}
               </ul>
+              
+              {/* Benefits Section CTA */}
+              <Button asChild size="lg" className="group">
+                <Link to="/auth">
+                  Start Learning Smarter
+                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
             </div>
             
             <div className="bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl p-8 aspect-square flex items-center justify-center relative overflow-hidden">
@@ -212,16 +295,21 @@ const LandingPage = () => {
       </div>
 
       {/* CTA Section */}
-      <CTASection 
-        title="Ready to Transform Your Study Habits?"
-        description="Join thousands of students who are already studying smarter with AI."
-        primaryButtonText="Get Started Free"
-        primaryButtonLink="/auth"
-        secondaryButtonText="Learn More"
-        secondaryButtonLink="/about"
-      />
+      <div id="footer-cta-section">
+        <CTASection 
+          title="Ready to Transform Your Study Habits?"
+          description="Join thousands of students who are already studying smarter with AI."
+          primaryButtonText="Get Started Free"
+          primaryButtonLink="/auth"
+          secondaryButtonText="Learn More"
+          secondaryButtonLink="/about"
+        />
+      </div>
 
       <Footer />
+      
+      {/* Sticky Mobile CTA Bar */}
+      <StickyCTABar />
     </div>
   );
 };
