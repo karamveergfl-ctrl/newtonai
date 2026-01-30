@@ -11,7 +11,6 @@ interface NativeAdBannerProps {
 
 // Adsterra Banner Ad - 728x90 Leaderboard
 const ADSTERRA_KEY = "c5d398ab0a723a7cfa61f3c2d7960602";
-const ADSTERRA_SCRIPT_URL = `https://lozengehelped.com/${ADSTERRA_KEY}/invoke.js`;
 const AD_WIDTH = 728;
 const AD_HEIGHT = 90;
 
@@ -55,8 +54,8 @@ function generateAdHtml(): string {
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { 
-      width: 100%; 
-      height: 100%;
+      width: ${AD_WIDTH}px;
+      height: ${AD_HEIGHT}px;
       background: transparent; 
       overflow: hidden;
       display: flex;
@@ -66,7 +65,7 @@ function generateAdHtml(): string {
   </style>
 </head>
 <body>
-  <script>
+  <script type="text/javascript">
     atOptions = {
       'key' : '${ADSTERRA_KEY}',
       'format' : 'iframe',
@@ -75,7 +74,7 @@ function generateAdHtml(): string {
       'params' : {}
     };
   </script>
-  <script src="${ADSTERRA_SCRIPT_URL}"></script>
+  <script type="text/javascript" src="//lozengehelped.com/${ADSTERRA_KEY}/invoke.js"></script>
 </body>
 </html>`;
 }
@@ -139,9 +138,6 @@ export function NativeAdBanner({
   // Hide if there was an error loading
   if (hasError) return null;
 
-  // Fixed height for 728x90 banner
-  const iframeMinHeight = `${AD_HEIGHT}px`;
-
   return (
     <div
       ref={lazyRef}
@@ -154,6 +150,8 @@ export function NativeAdBanner({
         "rounded-xl",
         // Center content
         "flex flex-col items-center justify-center",
+        // Handle overflow for fixed 728px banner on small screens
+        "overflow-hidden",
         // Placement-specific spacing
         placement === "below-action" && "mt-8",
         placement === "mid-page" && "my-10",
@@ -172,12 +170,12 @@ export function NativeAdBanner({
       {isVisible && (
         <iframe
           srcDoc={generateAdHtml()}
-          sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
           title="Sponsored content"
-          className="w-full"
           style={{
+            width: `${AD_WIDTH}px`,
+            height: `${AD_HEIGHT}px`,
             border: "none",
-            minHeight: iframeMinHeight,
+            overflow: "hidden",
             background: "transparent",
             display: "block",
           }}
