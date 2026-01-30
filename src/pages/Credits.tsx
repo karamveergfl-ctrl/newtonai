@@ -22,6 +22,7 @@ import { FEATURE_COSTS as FALLBACK_COSTS, FEATURE_NAMES, AD_REWARDS } from "@/li
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { AdButton, DailyProgress, RulesCard, SmartlinkTimer } from "@/components/earn-credits";
+import { NativeAdBanner } from "@/components/NativeAdBanner";
 
 
 export default function Credits() {
@@ -305,6 +306,11 @@ export default function Credits() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Native Ad Banner - Below Feature Costs (for non-premium only) */}
+        {!isPremium && (
+          <NativeAdBanner placement="above-footer" />
+        )}
 
         {/* Premium Benefits */}
         {!isPremium && (

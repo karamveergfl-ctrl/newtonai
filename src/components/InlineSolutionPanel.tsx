@@ -11,6 +11,7 @@ import { VideoGate } from './VideoGate';
 import { CreditBadge } from './CreditBadge';
 import { VideoPlayer } from './VideoPlayer';
 import { FEATURE_COSTS } from '@/lib/creditConfig';
+import { useStudyContext } from '@/contexts/StudyContext';
 
 interface Video {
   id: string;
@@ -53,19 +54,22 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
   const [hasMoreVideos, setHasMoreVideos] = useState(true);
   const solutionScrollRef = useRef<HTMLDivElement>(null);
   const videosScrollRef = useRef<HTMLDivElement>(null);
+  const { setDeepStudy } = useStudyContext();
   
   // Swipe gesture state
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const minSwipeDistance = 50;
 
-  // Lock body scroll when panel is open
+  // Lock body scroll when panel is open and set deep study mode
   useEffect(() => {
     document.body.style.overflow = 'hidden';
+    setDeepStudy(true);
     return () => {
       document.body.style.overflow = '';
+      setDeepStudy(false);
     };
-  }, []);
+  }, [setDeepStudy]);
 
   useEffect(() => {
     processProblem();
