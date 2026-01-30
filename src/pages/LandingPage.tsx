@@ -7,8 +7,6 @@ import CTASection from "@/components/CTASection";
 import SEOHead from "@/components/SEOHead";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
 import StickyCTABar from "@/components/StickyCTABar";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import { 
   BookOpen, 
   Brain, 
@@ -172,11 +170,6 @@ const LandingPage = () => {
         </div>
       </section>
       
-      {/* Ad after hero */}
-      <div className="container mx-auto px-4 py-8 relative z-10">
-        <AdsterraBanner />
-        <AdsterraNativeBanner />
-      </div>
 
       {/* Features Section */}
       <section className="py-24 bg-muted/30 relative overflow-hidden">
@@ -231,11 +224,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Ad Section */}
-      <div className="container mx-auto px-4 py-8">
-        <AdsterraBanner />
-        <AdsterraNativeBanner />
-      </div>
 
       {/* Benefits Section */}
       <section className="py-24 relative overflow-hidden">
@@ -288,11 +276,6 @@ const LandingPage = () => {
       {/* Testimonials */}
       <TestimonialsSection />
 
-      {/* Ad after testimonials */}
-      <div className="container mx-auto px-4 py-8">
-        <AdsterraBanner />
-        <AdsterraNativeBanner />
-      </div>
 
       {/* CTA Section */}
       <div id="footer-cta-section">

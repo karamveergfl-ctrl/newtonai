@@ -24,8 +24,6 @@ import {
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 
 type MindMapStyle = "radial" | "tree" | "cluster" | "timeline";
@@ -302,9 +300,6 @@ const MindMap = () => {
                       supportedFormats="PDF, TXT, Images; Max size: 20MB"
                     />
                     
-                    {/* Ad between input and recents */}
-                    <AdsterraBanner />
-                    <AdsterraNativeBanner instanceId="mindmap-input" />
                     
                     {/* Inline recents - just below input */}
                     <InlineRecents toolId="mind-map" />

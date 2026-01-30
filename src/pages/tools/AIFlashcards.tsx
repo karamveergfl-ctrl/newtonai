@@ -27,8 +27,6 @@ import {
 import { logGeneration } from "@/hooks/useGenerationHistory";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 
 interface FlashcardData {
@@ -309,9 +307,6 @@ const AIFlashcards = () => {
                       supportedFormats="PDF, TXT, Images; Max size: 20MB"
                     />
                     
-                    {/* Ad between input and recents */}
-                    <AdsterraBanner />
-                    <AdsterraNativeBanner instanceId="flashcards-input" />
                     
                     {/* Inline recents - just below input */}
                     <InlineRecents toolId="flashcards" />

@@ -9,8 +9,6 @@ import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 const Contact = () => {
   const breadcrumbs = [
@@ -130,8 +128,6 @@ const Contact = () => {
           </Card>
         </div>
 
-        <AdsterraBanner />
-        <AdsterraNativeBanner instanceId="contact-bottom" />
       </main>
 
       <Footer />

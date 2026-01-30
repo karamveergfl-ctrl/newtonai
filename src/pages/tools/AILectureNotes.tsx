@@ -28,8 +28,6 @@ import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { InlineRecents } from "@/components/InlineRecents";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 import { useDropzone } from "react-dropzone";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -829,10 +827,6 @@ const AILectureNotes = () => {
             </CardContent>
           </Card>
           
-          {/* Ad between input card and recents - show when no notes yet */}
-          {!notes && !isProcessing && !showTemplateSelection && (
-            <AdsterraNativeBanner instanceId="lecturenotes-input" />
-          )}
           
           {/* Inline recents - show when no notes yet */}
           {!notes && !isProcessing && !showTemplateSelection && (

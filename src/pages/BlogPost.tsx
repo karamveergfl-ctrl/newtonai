@@ -6,8 +6,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { blogPosts, BlogPost as BlogPostType } from "./Blog";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 // Blog post content - in a real app, this would come from a CMS
 const blogContent: Record<string, { content: string }> = {
@@ -635,11 +633,6 @@ const BlogPost = () => {
           })}
         </div>
 
-        {/* Ad after content */}
-        <div className="my-8">
-          <AdsterraBanner />
-          <AdsterraNativeBanner />
-        </div>
 
         {/* Navigation */}
         <div className="mt-12 pt-8 border-t border-border">

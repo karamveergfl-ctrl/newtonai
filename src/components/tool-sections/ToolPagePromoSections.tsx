@@ -9,8 +9,6 @@ import { ToolPageWhyUse } from "./ToolPageWhyUse";
 import { ToolPageFAQ } from "./ToolPageFAQ";
 import { FloatingScrollTop } from "./FloatingScrollTop";
 import { toolPromoData, ToolId } from "./toolPromoData";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
 
 interface ToolPagePromoSectionsProps {
   toolId: ToolId;
@@ -41,9 +39,6 @@ export function ToolPagePromoSections({
       {/* Features Grid */}
       <ToolPageFeatures features={data.features} />
       
-      {/* Ads between Features and Trending Topics */}
-      <AdsterraBanner />
-      <AdsterraNativeBanner instanceId={`${toolId}-features`} />
       
       {/* Trending Topics - Between Features and Subjects */}
       <ToolPageTrendingTopics />
@@ -51,8 +46,6 @@ export function ToolPagePromoSections({
       {/* Subjects Grid - Only for quiz, flashcards, homework-help */}
       {data.showSubjects && <ToolPageSubjects />}
       
-      {/* Ad between Subjects/Trending and Other Tools */}
-      <AdsterraNativeBanner instanceId={`${toolId}-subjects`} />
       
       {/* Recents - Only if user is logged in */}
       {showRecents && <ToolPageRecents toolId={toolId} />}

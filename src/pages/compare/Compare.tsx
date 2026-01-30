@@ -9,8 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { competitors, newtonFeatures } from "./competitorData";
 import { useCurrency } from "@/hooks/useCurrency";
 import { DISPLAY_PRICING, COMPETITOR_PRICING, CURRENCY_FLAGS, CurrencyCode } from "@/lib/currencyUtils";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import {
   Select,
   SelectContent,
@@ -116,11 +114,6 @@ const Compare = () => {
           </div>
         </section>
 
-        {/* Ad after highlights */}
-        <div className="container">
-          <AdsterraBanner />
-          <AdsterraNativeBanner instanceId="compare-hero" />
-        </div>
 
         {/* Competitor Grid */}
         <section className="py-16">
@@ -194,11 +187,6 @@ const Compare = () => {
           </div>
         </section>
 
-        {/* Ad before feature matrix */}
-        <div className="container">
-          <AdsterraBanner />
-          <AdsterraNativeBanner instanceId="compare-grid" />
-        </div>
 
         {/* Quick Feature Matrix */}
         <section className="py-16 bg-muted/30">
