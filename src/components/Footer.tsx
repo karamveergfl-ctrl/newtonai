@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import Logo from "@/components/Logo";
 import { Instagram, Youtube, Facebook, Twitter, Mail } from "lucide-react";
-import { AdsterraNativeBanner } from "./AdsterraNativeBanner";
+
 
 const Footer = () => {
   return (
@@ -132,10 +132,6 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Native Ad Banner */}
-        <div className="mb-8">
-          <AdsterraNativeBanner className="w-full" />
-        </div>
 
         {/* Bottom Section */}
         <div className="pt-8 border-t border-border">

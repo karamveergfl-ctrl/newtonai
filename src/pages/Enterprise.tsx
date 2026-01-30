@@ -11,8 +11,6 @@ import { z } from "zod";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 
 const enterpriseFormSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required").max(50, "First name too long"),
@@ -149,11 +147,6 @@ const Enterprise = () => {
           ))}
         </div>
 
-        {/* Ad after features */}
-        <div className="py-8">
-          <AdsterraBanner />
-          <AdsterraNativeBanner />
-        </div>
 
         {/* Contact Form */}
         <div className="max-w-3xl mx-auto">

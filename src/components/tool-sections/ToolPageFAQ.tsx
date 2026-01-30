@@ -4,7 +4,7 @@ import { HelpCircle, ChevronDown, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ToolId } from "./toolPromoData";
 import { toolFAQs, generalFAQs, FAQItem } from "@/components/ContextualFAQ";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
+
 
 interface ToolPageFAQProps {
   toolId: ToolId;
@@ -100,8 +100,6 @@ export function ToolPageFAQ({
         View all FAQs
       </a>
       
-      {/* Ad below View all FAQs */}
-      <AdsterraNativeBanner instanceId={`${toolId}-faq`} />
     </div>
   );
 }

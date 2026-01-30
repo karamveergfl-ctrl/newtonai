@@ -4,8 +4,6 @@ import { BookOpen, Brain, Users, Zap, Sparkles, ArrowRight } from "lucide-react"
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
-import { AdsterraNativeBanner } from "@/components/AdsterraNativeBanner";
 import SEOHead from "@/components/SEOHead";
 
 const values = [
@@ -72,11 +70,6 @@ const About = () => {
           </p>
         </section>
 
-        {/* Ad after hero */}
-        <div className="container mx-auto px-4 py-8">
-          <AdsterraBanner />
-          <AdsterraNativeBanner />
-        </div>
 
         {/* Mission Section */}
         <section className="bg-muted/50 py-16 relative overflow-hidden">
@@ -122,11 +115,6 @@ const About = () => {
           </div>
         </section>
 
-        {/* Ad between values and CTA */}
-        <div className="container">
-          <AdsterraBanner />
-          <AdsterraNativeBanner instanceId="about-values" />
-        </div>
 
         {/* CTA Section */}
         <section className="bg-primary text-primary-foreground py-16 relative overflow-hidden">
