@@ -201,8 +201,12 @@ const AISummarizer = () => {
     credits, 
     hasEnoughCredits, 
     spendCredits, 
-    isPremium 
+    isPremium: isPremiumCredits,
+    loading: creditsLoading 
   } = useCredits();
+
+  // Consider user premium if EITHER system says so (Ultra or Pro/Premium)
+  const isPremium = isPremiumCredits || subscription.tier === "ultra" || subscription.tier === "pro";
 
   const handleReadAloud = useCallback(async () => {
     if (isSpeaking) {
@@ -239,7 +243,11 @@ const AISummarizer = () => {
 
   // Helper function to check and spend credits
   const trySpendCredits = async (feature: string): Promise<boolean> => {
+    // Check premium from both systems - ultra/pro bypass credits
     if (isPremium) return true;
+    
+    // If credits system is still loading, fall back to subscription check
+    if (creditsLoading && subscription.tier !== "free") return true;
     
     if (!hasEnoughCredits(feature)) {
       setBlockedFeature(feature);

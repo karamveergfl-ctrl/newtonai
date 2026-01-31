@@ -226,12 +226,39 @@ const Index = () => {
     credits, 
     hasEnoughCredits, 
     spendCredits, 
-    isPremium 
+    isPremium: isPremiumCredits,
+    loading: creditsLoading 
   } = useCredits();
+
+  // Get subscription tier for reliable premium check
+  const [subscriptionTier, setSubscriptionTier] = useState<"free" | "pro" | "ultra">("free");
+  
+  useEffect(() => {
+    const fetchSubscriptionTier = async () => {
+      if (session?.user?.id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("subscription_tier")
+          .eq("id", session.user.id)
+          .single();
+        if (profile?.subscription_tier) {
+          setSubscriptionTier(profile.subscription_tier as "free" | "pro" | "ultra");
+        }
+      }
+    };
+    fetchSubscriptionTier();
+  }, [session?.user?.id]);
+
+  // Consider user premium if EITHER system says so (Ultra or Pro/Premium)
+  const isPremium = isPremiumCredits || subscriptionTier === "ultra" || subscriptionTier === "pro";
 
   // Helper function to check and spend credits
   const trySpendCredits = async (feature: string): Promise<boolean> => {
+    // Check premium from both systems - ultra/pro bypass credits
     if (isPremium) return true;
+    
+    // If credits system is still loading, fall back to subscription check
+    if (creditsLoading && subscriptionTier !== "free") return true;
     
     if (!hasEnoughCredits(feature)) {
       setBlockedFeature(feature);
