@@ -1,83 +1,103 @@
 
-## Plan: Fix Adsterra Ads - Switch from srcDoc Iframe to Direct Script Injection
+## Plan: Fix Adsterra Ads - Revert to srcDoc Iframe Approach
 
 ### Problem Identified
 
-The Adsterra dashboard shows 0 impressions today because **the `srcDoc` iframe approach cannot load external scripts**. This is a browser security restriction - iframes created with `srcDoc` have a unique "null" origin that blocks cross-origin script loading.
+The recent change from `srcDoc` iframe to direct script injection broke the Adsterra ads. The Adsterra dashboard shows the ads **were working** on previous days (01/27-01/30) but stopped working after the change.
 
-Current flow (broken):
-```text
-srcDoc iframe → tries to load invoke.js → BLOCKED by browser security → no ad loads → 0 impressions
-```
+**Why direct script injection fails:**
+- All three ad placements (`below-action`, `mid-page`, `above-footer`) set the same global `atOptions` variable
+- When components mount simultaneously, they overwrite each other's configuration
+- Only one ad (or none) loads properly
+- Console shows: `Adsterra ad failed to load for placement: below-action/mid-page/above-footer`
+
+**Why `srcDoc` iframes work:**
+- Each iframe has its **own isolated `window` object**
+- `atOptions` in iframe A ≠ `atOptions` in iframe B
+- No global variable conflicts
+- All ads can load simultaneously without race conditions
+
+---
 
 ### Solution
 
-Replace the `srcDoc` iframe approach with **direct script injection** into the page DOM, which is the standard method for ad integrations in React applications.
+Revert `NativeAdBanner.tsx` to use the `srcDoc` iframe approach, which provides complete JavaScript isolation for each ad placement.
 
 ---
 
-### File Changes Required
+### File Changes
 
 **File: `src/components/NativeAdBanner.tsx`**
 
-#### Complete Rewrite Strategy
+Replace the direct script injection with `srcDoc` iframe approach:
 
-1. **Remove the `generateAdHtml()` function and srcdoc iframe**
-2. **Add a container div with a unique ID for each placement**
-3. **Inject the Adsterra script directly into the DOM using `useEffect`**
-4. **Clean up the script on unmount to prevent memory leaks**
+1. **Remove the direct script injection `useEffect`** (lines 67-106)
+2. **Add a `generateAdHtml()` function** that creates a complete HTML document with:
+   - Proper DOCTYPE and HTML structure
+   - The `atOptions` configuration script
+   - The `invoke.js` script from Adsterra's CDN
+3. **Use an `<iframe srcDoc={...}>` element** instead of a div with injected scripts
+4. **Keep existing lazy loading and premium suppression logic**
 
-#### New Implementation Approach
+---
+
+### Implementation Details
+
+The new `generateAdHtml()` function will create:
 
 ```text
-Container div (unique ID per placement)
-  ↓
-useEffect injects Adsterra script into container
-  ↓
-Adsterra script loads invoke.js (works because it's in main document)
-  ↓
-Ad renders inside container → impressions tracked
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; padding: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; min-height: 100%; }
+  </style>
+</head>
+<body>
+  <script type="text/javascript">
+    atOptions = {
+      'key': 'c5d398ab0a723a7cfa61f3c2d7960602',
+      'format': 'iframe',
+      'height': 90,
+      'width': 728,
+      'params': {}
+    };
+  </script>
+  <script src="//lozengehelped.com/c5d398ab0a723a7cfa61f3c2d7960602/invoke.js"></script>
+</body>
+</html>
 ```
 
----
-
-### Technical Changes
-
-| Component | Before | After |
-|-----------|--------|-------|
-| Ad loading method | `srcDoc` iframe | Direct script injection |
-| Script execution context | Isolated iframe origin | Main document origin |
-| External script loading | Blocked | Allowed |
-| Impression tracking | Broken | Working |
+The iframe will be rendered with:
+- Fixed dimensions (728×90)
+- `scrolling="no"` to prevent scrollbars
+- `frameBorder="0"` for clean appearance
+- Proper `title` for accessibility
 
 ---
 
-### Key Implementation Details
+### Technical Comparison
 
-1. **Unique container IDs**: Each ad placement gets a unique ID based on placement name to prevent conflicts
-2. **Script cleanup**: Remove injected scripts on component unmount
-3. **Lazy loading preserved**: Keep the IntersectionObserver for mid-page/above-footer placements
-4. **Premium/study mode suppression**: Keep existing logic to hide ads for premium users and during deep study
-5. **Remove timeout logic**: The 5-second timeout was masking the underlying issue; remove it since ads will now load properly
+| Aspect | Direct Injection (Broken) | srcDoc Iframe (Fix) |
+|--------|---------------------------|---------------------|
+| JavaScript context | Main window | Isolated per iframe |
+| `atOptions` scope | Global (conflicts) | Per-iframe (isolated) |
+| Multiple ads | Only 1 loads | All load correctly |
+| Cross-origin scripts | May be blocked | Works in iframe |
 
 ---
 
 ### Files Modified
 
-1. **`src/components/NativeAdBanner.tsx`** - Complete rewrite of ad loading mechanism
+1. **`src/components/NativeAdBanner.tsx`** - Replace script injection with srcDoc iframe
 
 ---
 
 ### Expected Outcome
 
 After this fix:
-- Adsterra `invoke.js` script will load successfully from `lozengehelped.com`
-- Ad creatives will render in all placements (below-action, mid-page, above-footer)
-- Impressions and clicks will be tracked in the Adsterra dashboard
-- Revenue will be generated from ad views
-
----
-
-### Mobile Consideration
-
-The current 728x90 banner size will still be clipped on mobile screens. A follow-up improvement could add responsive ad sizes (300x250 or 320x50) for mobile devices, but the primary fix addresses the script loading issue first.
+- All three ad placements will render correctly
+- Each ad loads in its own isolated JavaScript environment
+- No global variable conflicts
+- Impressions and clicks will continue to be tracked in Adsterra dashboard
+- The fix aligns with the recommended approach from Adsterra integration guides
