@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useId } from "react";
 import { cn } from "@/lib/utils";
 import { useCredits } from "@/hooks/useCredits";
 import { useStudyContext } from "@/contexts/StudyContext";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NativeAdBannerProps {
   placement: "below-action" | "mid-page" | "above-footer";
@@ -44,51 +43,15 @@ function useLazyAdLoad({ enabled, rootMargin = "300px" }: { enabled: boolean; ro
   return { ref, isVisible };
 }
 
-// Generate the iframe srcdoc HTML
-function generateAdHtml(): string {
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { 
-      width: ${AD_WIDTH}px;
-      height: ${AD_HEIGHT}px;
-      background: transparent; 
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-  </style>
-</head>
-<body>
-  <script type="text/javascript">
-    atOptions = {
-      'key' : '${ADSTERRA_KEY}',
-      'format' : 'iframe',
-      'height' : ${AD_HEIGHT},
-      'width' : ${AD_WIDTH},
-      'params' : {}
-    };
-  </script>
-  <script type="text/javascript" src="//lozengehelped.com/${ADSTERRA_KEY}/invoke.js"></script>
-</body>
-</html>`;
-}
-
 export function NativeAdBanner({ 
   placement, 
   className 
 }: NativeAdBannerProps) {
   const { isPremium } = useCredits();
   const { isInDeepStudy } = useStudyContext();
-  const isMobile = useIsMobile();
-  const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const uniqueId = useId();
+  const adContainerRef = useRef<HTMLDivElement>(null);
+  const [adLoaded, setAdLoaded] = useState(false);
 
   // Lazy load for mid-page and above-footer only
   const shouldLazyLoad = placement !== "below-action";
@@ -97,46 +60,56 @@ export function NativeAdBanner({
     rootMargin: "300px" 
   });
 
+  // Generate unique container ID for this ad placement
+  const containerId = `adsterra-${placement}-${uniqueId.replace(/:/g, "")}`;
+
+  // Inject Adsterra script when visible
+  useEffect(() => {
+    if (!isVisible || isPremium || isInDeepStudy) return;
+    
+    const container = adContainerRef.current;
+    if (!container) return;
+
+    // Clear any existing content
+    container.innerHTML = "";
+
+    // Create and inject the atOptions script
+    const optionsScript = document.createElement("script");
+    optionsScript.type = "text/javascript";
+    optionsScript.text = `
+      atOptions = {
+        'key' : '${ADSTERRA_KEY}',
+        'format' : 'iframe',
+        'height' : ${AD_HEIGHT},
+        'width' : ${AD_WIDTH},
+        'params' : {}
+      };
+    `;
+    container.appendChild(optionsScript);
+
+    // Create and inject the invoke.js script
+    const invokeScript = document.createElement("script");
+    invokeScript.type = "text/javascript";
+    invokeScript.src = `//lozengehelped.com/${ADSTERRA_KEY}/invoke.js`;
+    invokeScript.async = true;
+    invokeScript.onload = () => setAdLoaded(true);
+    invokeScript.onerror = () => console.warn(`Adsterra ad failed to load for placement: ${placement}`);
+    container.appendChild(invokeScript);
+
+    // Cleanup on unmount
+    return () => {
+      if (container) {
+        container.innerHTML = "";
+      }
+      setAdLoaded(false);
+    };
+  }, [isVisible, isPremium, isInDeepStudy, placement, containerId]);
+
   // Don't show ads to premium users
   if (isPremium) return null;
 
   // Don't show ads during deep study mode (quiz, solutions, etc.)
   if (isInDeepStudy) return null;
-
-  // Set up timeout for iframe load failure detection
-  useEffect(() => {
-    if (!isVisible) return;
-
-    // Set a 5-second timeout for ad load
-    timeoutRef.current = setTimeout(() => {
-      if (!isLoaded) {
-        setHasError(true);
-      }
-    }, 5000);
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [isVisible, isLoaded]);
-
-  const handleIframeLoad = () => {
-    setIsLoaded(true);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-  };
-
-  const handleIframeError = () => {
-    setHasError(true);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-  };
-
-  // Hide if there was an error loading
-  if (hasError) return null;
 
   return (
     <div
@@ -166,22 +139,20 @@ export function NativeAdBanner({
         Sponsored
       </span>
       
-      {/* Only render iframe when visible (for lazy loading) */}
+      {/* Ad container - script will be injected here */}
       {isVisible && (
-        <iframe
-          srcDoc={generateAdHtml()}
-          title="Sponsored content"
+        <div
+          id={containerId}
+          ref={adContainerRef}
           style={{
             width: `${AD_WIDTH}px`,
             height: `${AD_HEIGHT}px`,
-            border: "none",
-            overflow: "hidden",
-            background: "transparent",
-            display: "block",
+            minWidth: `${AD_WIDTH}px`,
+            minHeight: `${AD_HEIGHT}px`,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
           }}
-          scrolling="no"
-          onLoad={handleIframeLoad}
-          onError={handleIframeError}
         />
       )}
     </div>
