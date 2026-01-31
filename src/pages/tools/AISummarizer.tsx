@@ -111,7 +111,7 @@ const AISummarizer = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const { toast } = useToast();
   const { incrementUsage } = useFeatureUsage();
-  const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("summary");
+  const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription, loading: subscriptionLoading } = useFeatureLimitGate("summary");
   const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
 
   // Handle ?action= query param for quick actions
@@ -246,8 +246,8 @@ const AISummarizer = () => {
     // Check premium from both systems - ultra/pro bypass credits
     if (isPremium) return true;
     
-    // If credits system is still loading, fall back to subscription check
-    if (creditsLoading && subscription.tier !== "free") return true;
+    // If EITHER system is still loading, don't block (premium check incomplete)
+    if (creditsLoading || subscriptionLoading) return true;
     
     if (!hasEnoughCredits(feature)) {
       setBlockedFeature(feature);

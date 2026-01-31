@@ -232,6 +232,7 @@ const Index = () => {
 
   // Get subscription tier for reliable premium check
   const [subscriptionTier, setSubscriptionTier] = useState<"free" | "pro" | "ultra">("free");
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   
   useEffect(() => {
     const fetchSubscriptionTier = async () => {
@@ -245,6 +246,7 @@ const Index = () => {
           setSubscriptionTier(profile.subscription_tier as "free" | "pro" | "ultra");
         }
       }
+      setSubscriptionLoading(false);
     };
     fetchSubscriptionTier();
   }, [session?.user?.id]);
@@ -257,8 +259,8 @@ const Index = () => {
     // Check premium from both systems - ultra/pro bypass credits
     if (isPremium) return true;
     
-    // If credits system is still loading, fall back to subscription check
-    if (creditsLoading && subscriptionTier !== "free") return true;
+    // If EITHER system is still loading, don't block (premium check incomplete)
+    if (creditsLoading || subscriptionLoading) return true;
     
     if (!hasEnoughCredits(feature)) {
       setBlockedFeature(feature);
