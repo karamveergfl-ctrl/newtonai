@@ -9,6 +9,7 @@ import { ToolPageWhyUse } from "./ToolPageWhyUse";
 import { ToolPageFAQ } from "./ToolPageFAQ";
 import { FloatingScrollTop } from "./FloatingScrollTop";
 import { toolPromoData, ToolId } from "./toolPromoData";
+import { PropellerAdBanner } from "@/components/PropellerAdBanner";
 
 
 interface ToolPagePromoSectionsProps {
@@ -39,6 +40,9 @@ export function ToolPagePromoSections({
       
       {/* Features Grid */}
       <ToolPageFeatures features={data.features} />
+      
+      {/* PropellerAds Banner - Single ad per page, loads after 50% scroll */}
+      <PropellerAdBanner adKey={import.meta.env.VITE_PROPELLER_AD_KEY || "placeholder"} />
       
       {/* Trending Topics - Between Features and Subjects */}
       <ToolPageTrendingTopics />

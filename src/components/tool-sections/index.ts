@@ -8,6 +8,7 @@ export { ToolPageRecents } from "./ToolPageRecents";
 export { ToolPageWhyUse } from "./ToolPageWhyUse";
 export { ToolPageFAQ } from "./ToolPageFAQ";
 export { FloatingScrollTop } from "./FloatingScrollTop";
+export { PropellerAdBanner } from "@/components/PropellerAdBanner";
 export { 
   FeatureSkeleton, 
   SubjectSkeleton, 
