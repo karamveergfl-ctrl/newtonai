@@ -41,8 +41,8 @@ export function ToolPagePromoSections({
       {/* Features Grid */}
       <ToolPageFeatures features={data.features} />
       
-      {/* PropellerAds Banner - Single ad per page, loads after 50% scroll */}
-      <PropellerAdBanner adKey={import.meta.env.VITE_PROPELLER_AD_KEY || "placeholder"} />
+      {/* Ezmob Banner - Single ad per page, loads after 50% scroll */}
+      <PropellerAdBanner adKey="327266" />
       
       {/* Trending Topics - Between Features and Subjects */}
       <ToolPageTrendingTopics />
