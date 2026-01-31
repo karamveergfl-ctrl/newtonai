@@ -1,78 +1,133 @@
 
-# Plan: Fix Free Tier Date Mismatch Bug
+
+# Plan: Fix Ultra Plan Access Not Working
 
 ## Problem Identified
 
-The free tier isn't working because of a **timezone bug** causing date mismatches between the frontend and database.
+Ultra users are incorrectly seeing the "Study Credits Needed" modal because there are **two separate gating systems** that aren't synchronized:
 
-### Root Cause
+| System | Hook | Premium Check | Used For |
+|--------|------|---------------|----------|
+| Feature Limits | `useFeatureLimitGate` | `subscription.tier === "ultra"` | Non-video content |
+| Credits | `useCredits` | `isPremium` from CreditsContext | Video-based generation |
 
-**Frontend (useFeatureUsage.ts line 105):**
-```javascript
-const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
-// Returns: "2025-12-31" (wrong - due to UTC conversion)
-```
+The video generation functions (`handleGenerateFlashcardsFromVideo`, `handleGenerateSummaryFromVideo`, etc.) use `trySpendCredits()` which relies on `isPremium` from `CreditsContext`. This value may be `false` even for Ultra users if:
 
-**Database (track_feature_usage function):**
-```sql
-v_period_start := date_trunc('month', now())::date;
--- Returns: "2026-01-01" (correct)
-```
-
-When a user in a timezone like IST (+5:30) creates a date for "January 1st midnight local time" and converts to ISO string (UTC), it shifts back to December 31st. The frontend then queries for records with `period_start=2025-12-31`, but the database has `period_start=2026-01-01`.
-
-**Result:** Usage data returns empty, making the system think users have 0 usage.
-
----
+1. The context hasn't finished loading
+2. There's any error in the profile fetch
+3. The user's session isn't fully established when the context initializes
 
 ## Solution
 
-Fix the date calculation in `useFeatureUsage.ts` to use **UTC-based dates** that match the database:
+**Unify the gating logic** by making the `trySpendCredits` function also check the subscription tier from `useFeatureUsage`, or alternatively, update all video generation functions to use `useFeatureLimitGate` for consistency.
 
-### File to Modify
+### Recommended Approach: Update `trySpendCredits` to use both systems
 
-**`src/hooks/useFeatureUsage.ts`**
-
-**Current Code (lines 104-105):**
-```javascript
-const today = new Date().toISOString().split("T")[0];
-const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
-```
-
-**Fixed Code:**
-```javascript
-// Use UTC dates to match database date_trunc behavior
-const now = new Date();
-const today = now.toISOString().split("T")[0];
-const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().split("T")[0];
-```
-
-This ensures:
-- `Date.UTC()` creates the date directly in UTC
-- No timezone offset is applied during conversion
-- The resulting string `2026-01-01` matches what the database stores
+This is the minimal change approach that fixes the issue without refactoring the entire flow.
 
 ---
 
-## Technical Details
+## Files to Modify
 
-| Component | Before (Bug) | After (Fix) |
-|-----------|-------------|-------------|
-| User timezone | IST (+5:30) | IST (+5:30) |
-| Local midnight | Jan 1, 00:00 IST | Jan 1, 00:00 IST |
-| UTC conversion | Dec 31, 18:30 UTC | Jan 1, 00:00 UTC |
-| String result | "2025-12-31" | "2026-01-01" |
-| DB query match | No | Yes |
+### 1. `src/pages/tools/AISummarizer.tsx`
+
+**Current code (lines 200-205):**
+```typescript
+const { 
+  credits, 
+  hasEnoughCredits, 
+  spendCredits, 
+  isPremium 
+} = useCredits();
+```
+
+**Updated code:**
+```typescript
+const { 
+  credits, 
+  hasEnoughCredits, 
+  spendCredits, 
+  isPremium: isPremiumCredits,
+  loading: creditsLoading 
+} = useCredits();
+
+// Get subscription tier from feature usage for reliable premium check
+const { subscription } = useFeatureUsage();
+
+// Consider user premium if EITHER system says so (Ultra or Pro/Premium)
+const isPremium = isPremiumCredits || subscription.tier === "ultra" || subscription.tier === "pro";
+```
+
+**Updated `trySpendCredits` function (around line 241):**
+```typescript
+// Helper function to check and spend credits
+const trySpendCredits = async (feature: string): Promise<boolean> => {
+  // Check premium from both systems - ultra/pro bypass credits
+  if (isPremium) return true;
+  
+  // If credits system is still loading, wait or use feature limit system
+  if (creditsLoading) {
+    // Fall back to subscription check
+    if (subscription.tier !== "free") return true;
+  }
+  
+  if (!hasEnoughCredits(feature)) {
+    setBlockedFeature(feature);
+    setShowCreditModal(true);
+    return false;
+  }
+  
+  const success = await spendCredits(feature);
+  if (success) {
+    const cost = FEATURE_COSTS[feature];
+    toast({
+      title: `${cost} credits used`,
+      description: FEATURE_NAMES[feature]
+    });
+  }
+  return success;
+};
+```
+
+### 2. `src/pages/Index.tsx`
+
+Apply the same changes to the Index page which has similar `trySpendCredits` logic for video generation features.
+
+### 3. `src/contexts/CreditsContext.tsx` (Alternative/Additional Fix)
+
+Add an else clause to explicitly set `isPremium` to false and also add a fallback when no subscription tier is found:
+
+**Current code (lines 72-76):**
+```typescript
+// Check for any paid tier (pro, premium, ultra)
+const paidTiers = ['pro', 'premium', 'ultra'];
+if (profile?.subscription_tier && paidTiers.includes(profile.subscription_tier)) {
+  setIsPremium(true);
+}
+```
+
+**Updated code:**
+```typescript
+// Check for any paid tier (pro, premium, ultra)
+const paidTiers = ['pro', 'premium', 'ultra'];
+if (profile?.subscription_tier && paidTiers.includes(profile.subscription_tier)) {
+  setIsPremium(true);
+} else {
+  setIsPremium(false);
+}
+```
 
 ---
 
 ## Testing Checklist
 
 After the fix:
-1. Free tier users should see their correct usage counts
-2. Usage limits should properly block features when limits are reached
-3. The usage limit modal should appear when a user hits their limit
-4. Works correctly regardless of user's timezone
+1. Log in as an Ultra user
+2. Navigate to AI Summarizer
+3. Load a YouTube video
+4. Click "Generate Summary" or any other study tool
+5. The modal should NOT appear for Ultra users
+6. The feature should generate directly without credit prompts
 
 ---
 
@@ -80,6 +135,9 @@ After the fix:
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/hooks/useFeatureUsage.ts` | Modify | Fix date calculation to use UTC |
+| `src/pages/tools/AISummarizer.tsx` | Modify | Add subscription tier check from useFeatureUsage |
+| `src/pages/Index.tsx` | Modify | Same changes for consistency |
+| `src/contexts/CreditsContext.tsx` | Modify | Add explicit else clause for isPremium |
 
-This is a one-line fix that resolves the timezone mismatch issue.
+This fix ensures that Ultra/Pro users are never blocked by the credits system, regardless of which hook loads first.
+
