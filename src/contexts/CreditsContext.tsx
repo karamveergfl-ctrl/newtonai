@@ -73,6 +73,8 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
       const paidTiers = ['pro', 'premium', 'ultra'];
       if (profile?.subscription_tier && paidTiers.includes(profile.subscription_tier)) {
         setIsPremium(true);
+      } else {
+        setIsPremium(false);
       }
 
       // Get or create credits record
