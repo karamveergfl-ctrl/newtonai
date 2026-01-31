@@ -10,6 +10,7 @@ import { ToolPageFAQ } from "./ToolPageFAQ";
 import { FloatingScrollTop } from "./FloatingScrollTop";
 import { toolPromoData, ToolId } from "./toolPromoData";
 import { PropellerAdBanner } from "@/components/PropellerAdBanner";
+import { AdsterraBanner } from "@/components/AdsterraBanner";
 
 
 interface ToolPagePromoSectionsProps {
@@ -58,6 +59,9 @@ export function ToolPagePromoSections({
       
       {/* FAQ Section - Above Why Use */}
       <ToolPageFAQ toolId={toolId} />
+      
+      {/* Adsterra Banner - After FAQ, before CTA */}
+      <AdsterraBanner />
       
       {/* Why Use Section (CTA) */}
       <ToolPageWhyUse 
