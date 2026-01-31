@@ -11,7 +11,7 @@ import { z } from "zod";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
-import { NativeAdBanner } from "@/components/NativeAdBanner";
+
 
 const enterpriseFormSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required").max(50, "First name too long"),
@@ -302,8 +302,6 @@ const Enterprise = () => {
           </Card>
         </div>
 
-        {/* Single Native Ad - Scroll triggered */}
-        <NativeAdBanner />
       </main>
 
       <Footer />

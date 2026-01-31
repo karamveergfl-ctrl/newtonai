@@ -9,7 +9,7 @@ import { ToolPageWhyUse } from "./ToolPageWhyUse";
 import { ToolPageFAQ } from "./ToolPageFAQ";
 import { FloatingScrollTop } from "./FloatingScrollTop";
 import { toolPromoData, ToolId } from "./toolPromoData";
-import { NativeAdBanner } from "@/components/NativeAdBanner";
+
 
 interface ToolPagePromoSectionsProps {
   toolId: ToolId;
@@ -61,8 +61,6 @@ export function ToolPagePromoSections({
         benefits={data.whyUseBenefits} 
       />
       
-      {/* Single Native Ad - Scroll triggered (50%+) */}
-      <NativeAdBanner />
     </div>
   );
 }

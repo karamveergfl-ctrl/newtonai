@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
-import { NativeAdBanner } from "@/components/NativeAdBanner";
+
 
 const Contact = () => {
   const breadcrumbs = [
@@ -129,8 +129,6 @@ const Contact = () => {
           </Card>
         </div>
 
-        {/* Single Native Ad - Scroll triggered */}
-        <NativeAdBanner />
       </main>
 
       <Footer />
