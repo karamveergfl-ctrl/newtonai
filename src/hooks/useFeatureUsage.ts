@@ -101,8 +101,10 @@ export function useFeatureUsage() {
     setSubscription({ tier, expiresAt, isActive });
 
     // Fetch current usage - need both daily and monthly data
-    const today = new Date().toISOString().split("T")[0];
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+    // Use UTC dates to match database date_trunc behavior
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().split("T")[0];
 
     // Fetch monthly usage
     const { data: monthlyUsageData } = await supabase
