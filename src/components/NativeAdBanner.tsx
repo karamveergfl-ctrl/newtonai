@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useId } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useCredits } from "@/hooks/useCredits";
 import { useStudyContext } from "@/contexts/StudyContext";
@@ -43,15 +43,45 @@ function useLazyAdLoad({ enabled, rootMargin = "300px" }: { enabled: boolean; ro
   return { ref, isVisible };
 }
 
+// Generate the HTML content for the ad iframe
+function generateAdHtml(): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { 
+      width: 100%; 
+      height: 100%; 
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: transparent;
+    }
+  </style>
+</head>
+<body>
+  <script type="text/javascript">
+    atOptions = {
+      'key' : '${ADSTERRA_KEY}',
+      'format' : 'iframe',
+      'height' : ${AD_HEIGHT},
+      'width' : ${AD_WIDTH},
+      'params' : {}
+    };
+  </script>
+  <script type="text/javascript" src="//lozengehelped.com/${ADSTERRA_KEY}/invoke.js"></script>
+</body>
+</html>`;
+}
+
 export function NativeAdBanner({ 
   placement, 
   className 
 }: NativeAdBannerProps) {
   const { isPremium } = useCredits();
   const { isInDeepStudy } = useStudyContext();
-  const uniqueId = useId();
-  const adContainerRef = useRef<HTMLDivElement>(null);
-  const [adLoaded, setAdLoaded] = useState(false);
 
   // Lazy load for mid-page and above-footer only
   const shouldLazyLoad = placement !== "below-action";
@@ -59,51 +89,6 @@ export function NativeAdBanner({
     enabled: shouldLazyLoad, 
     rootMargin: "300px" 
   });
-
-  // Generate unique container ID for this ad placement
-  const containerId = `adsterra-${placement}-${uniqueId.replace(/:/g, "")}`;
-
-  // Inject Adsterra script when visible
-  useEffect(() => {
-    if (!isVisible || isPremium || isInDeepStudy) return;
-    
-    const container = adContainerRef.current;
-    if (!container) return;
-
-    // Clear any existing content
-    container.innerHTML = "";
-
-    // Create and inject the atOptions script
-    const optionsScript = document.createElement("script");
-    optionsScript.type = "text/javascript";
-    optionsScript.text = `
-      atOptions = {
-        'key' : '${ADSTERRA_KEY}',
-        'format' : 'iframe',
-        'height' : ${AD_HEIGHT},
-        'width' : ${AD_WIDTH},
-        'params' : {}
-      };
-    `;
-    container.appendChild(optionsScript);
-
-    // Create and inject the invoke.js script
-    const invokeScript = document.createElement("script");
-    invokeScript.type = "text/javascript";
-    invokeScript.src = `//lozengehelped.com/${ADSTERRA_KEY}/invoke.js`;
-    invokeScript.async = true;
-    invokeScript.onload = () => setAdLoaded(true);
-    invokeScript.onerror = () => console.warn(`Adsterra ad failed to load for placement: ${placement}`);
-    container.appendChild(invokeScript);
-
-    // Cleanup on unmount
-    return () => {
-      if (container) {
-        container.innerHTML = "";
-      }
-      setAdLoaded(false);
-    };
-  }, [isVisible, isPremium, isInDeepStudy, placement, containerId]);
 
   // Don't show ads to premium users
   if (isPremium) return null;
@@ -139,20 +124,21 @@ export function NativeAdBanner({
         Sponsored
       </span>
       
-      {/* Ad container - script will be injected here */}
+      {/* Ad iframe with srcDoc for isolated JavaScript context */}
       {isVisible && (
-        <div
-          id={containerId}
-          ref={adContainerRef}
+        <iframe
+          srcDoc={generateAdHtml()}
+          width={AD_WIDTH}
+          height={AD_HEIGHT}
           style={{
             width: `${AD_WIDTH}px`,
             height: `${AD_HEIGHT}px`,
-            minWidth: `${AD_WIDTH}px`,
-            minHeight: `${AD_HEIGHT}px`,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
+            border: "none",
+            overflow: "hidden",
           }}
+          scrolling="no"
+          title={`Advertisement - ${placement}`}
+          sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
         />
       )}
     </div>
