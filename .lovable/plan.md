@@ -1,92 +1,85 @@
 
+# Plan: Fix Free Tier Date Mismatch Bug
 
-# Plan: Add Vignette Ad Script to Header
+## Problem Identified
 
-## Overview
+The free tier isn't working because of a **timezone bug** causing date mismatches between the frontend and database.
 
-Add the Ezmob vignette ad script (zone 10543352) to the `index.html` header for additional ad revenue.
+### Root Cause
 
-## Important Considerations
+**Frontend (useFeatureUsage.ts line 105):**
+```javascript
+const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+// Returns: "2025-12-31" (wrong - due to UTC conversion)
+```
 
-**Vignette ads behave differently from banner ads:**
-- They are full-screen interstitial ads that appear over your content
-- They load globally on ALL pages
-- They show to ALL users (including premium subscribers)
-- They are not controlled by the 50% scroll trigger
+**Database (track_feature_usage function):**
+```sql
+v_period_start := date_trunc('month', now())::date;
+-- Returns: "2026-01-01" (correct)
+```
 
-**Recommendation**: Consider implementing a React-based loader instead of putting it directly in the header, so you can:
-- Exclude premium users from seeing vignettes
-- Control when vignettes appear (e.g., only on specific pages)
-- Respect the "deep study" mode suppression
+When a user in a timezone like IST (+5:30) creates a date for "January 1st midnight local time" and converts to ISO string (UTC), it shifts back to December 31st. The frontend then queries for records with `period_start=2025-12-31`, but the database has `period_start=2026-01-01`.
+
+**Result:** Usage data returns empty, making the system think users have 0 usage.
 
 ---
 
-## Option A: Simple Header Implementation (Requested)
+## Solution
 
-Add the script directly to `index.html` - quick but shows to everyone.
+Fix the date calculation in `useFeatureUsage.ts` to use **UTC-based dates** that match the database:
 
 ### File to Modify
 
-**`index.html`**
+**`src/hooks/useFeatureUsage.ts`**
 
-Add the vignette script after the Google Analytics tag:
-
-```html
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-W67PH05SLY"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-W67PH05SLY');
-</script>
-
-<!-- Ezmob Vignette Ad (Zone: 10543352) -->
-<script>
-  (function(s){
-    s.dataset.zone='10543352';
-    s.src='https://gizokraijaw.net/vignette.min.js';
-  })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
-</script>
+**Current Code (lines 104-105):**
+```javascript
+const today = new Date().toISOString().split("T")[0];
+const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
 ```
+
+**Fixed Code:**
+```javascript
+// Use UTC dates to match database date_trunc behavior
+const now = new Date();
+const today = now.toISOString().split("T")[0];
+const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().split("T")[0];
+```
+
+This ensures:
+- `Date.UTC()` creates the date directly in UTC
+- No timezone offset is applied during conversion
+- The resulting string `2026-01-01` matches what the database stores
 
 ---
 
-## Option B: Controlled React Implementation (Recommended)
+## Technical Details
 
-Create a component that conditionally loads the vignette script based on user status.
-
-### Files to Create
-
-**`src/components/VignetteAdLoader.tsx`**
-
-```typescript
-// Only loads vignette script for non-premium users
-// Respects deep study mode
-// Can be placed in App.tsx to control globally
-```
-
-### Files to Modify
-
-**`src/App.tsx`**
-
-Add the VignetteAdLoader component inside the providers.
+| Component | Before (Bug) | After (Fix) |
+|-----------|-------------|-------------|
+| User timezone | IST (+5:30) | IST (+5:30) |
+| Local midnight | Jan 1, 00:00 IST | Jan 1, 00:00 IST |
+| UTC conversion | Dec 31, 18:30 UTC | Jan 1, 00:00 UTC |
+| String result | "2025-12-31" | "2026-01-01" |
+| DB query match | No | Yes |
 
 ---
 
-## Recommendation
+## Testing Checklist
 
-I recommend **Option B** for consistency with your existing ad strategy (premium exclusion, study mode suppression). However, if you want the quick implementation, Option A will work immediately.
+After the fix:
+1. Free tier users should see their correct usage counts
+2. Usage limits should properly block features when limits are reached
+3. The usage limit modal should appear when a user hits their limit
+4. Works correctly regardless of user's timezone
 
 ---
 
 ## File Summary
 
-| Option | File | Action | Notes |
-|--------|------|--------|-------|
-| A | `index.html` | Modify | Add script to head - shows to all users |
-| B | `src/components/VignetteAdLoader.tsx` | Create | Conditional loading component |
-| B | `src/App.tsx` | Modify | Add loader component |
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/hooks/useFeatureUsage.ts` | Modify | Fix date calculation to use UTC |
 
-Which option would you like me to implement?
-
+This is a one-line fix that resolves the timezone mismatch issue.
