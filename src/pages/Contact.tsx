@@ -129,8 +129,8 @@ const Contact = () => {
           </Card>
         </div>
 
-        {/* Native Ad - Above Footer */}
-        <NativeAdBanner placement="above-footer" />
+        {/* Single Native Ad - Scroll triggered */}
+        <NativeAdBanner />
       </main>
 
       <Footer />

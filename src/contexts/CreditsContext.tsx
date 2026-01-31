@@ -1,19 +1,14 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { FEATURE_COSTS as FALLBACK_COSTS, AD_REWARDS, DAILY_AD_LIMITS, SIGNUP_BONUS } from '@/lib/creditConfig';
-import { toast } from 'sonner';
+import { FEATURE_COSTS as FALLBACK_COSTS, SIGNUP_BONUS } from '@/lib/creditConfig';
 
 interface CreditsContextType {
   credits: number;
   loading: boolean;
   isPremium: boolean;
-  adsWatchedToday: number;
   hasEnoughCredits: (feature: string) => boolean;
   getFeatureCost: (feature: string) => number;
   spendCredits: (feature: string) => Promise<boolean>;
-  earnCredits: (adDuration: 30 | 60) => Promise<boolean>;
-  canWatchMoreAds: () => boolean;
-  getRemainingAds: () => number;
   refreshCredits: () => Promise<void>;
 }
 
@@ -22,13 +17,9 @@ const defaultContextValue: CreditsContextType = {
   credits: 0,
   loading: true,
   isPremium: false,
-  adsWatchedToday: 0,
   hasEnoughCredits: () => false,
   getFeatureCost: (feature: string) => FALLBACK_COSTS[feature] || 0,
   spendCredits: async () => false,
-  earnCredits: async () => false,
-  canWatchMoreAds: () => false,
-  getRemainingAds: () => 0,
   refreshCredits: async () => {},
 };
 
@@ -36,7 +27,6 @@ const CreditsContext = createContext<CreditsContextType>(defaultContextValue);
 
 export function CreditsProvider({ children }: { children: ReactNode }) {
   const [credits, setCredits] = useState<number>(0);
-  const [adsWatchedToday, setAdsWatchedToday] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
@@ -116,13 +106,6 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
       }
 
       if (creditsData) {
-        // Reset daily ads if new day
-        const today = new Date().toISOString().split('T')[0];
-        if (creditsData.last_ad_date !== today) {
-          setAdsWatchedToday(0);
-        } else {
-          setAdsWatchedToday(creditsData.ads_watched_today);
-        }
         setCredits(creditsData.credits);
       }
     } catch (error) {
@@ -181,76 +164,14 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
     }
   }, [credits, userId, isPremium, fetchCredits]);
 
-  const earnCredits = useCallback(async (adDuration: 30 | 60): Promise<boolean> => {
-    if (!userId) return false;
-
-    const dailyLimit = isPremium ? 0 : DAILY_AD_LIMITS.logged_in;
-    if (adsWatchedToday >= dailyLimit) {
-      toast.error('Daily ad limit reached');
-      return false;
-    }
-
-    try {
-      const reward = adDuration === 30 ? AD_REWARDS['30sec'] : AD_REWARDS['60sec'];
-      
-      // Add daily bonus if first ad of the day
-      const isFirstAd = adsWatchedToday === 0;
-      const totalReward = isFirstAd ? reward + AD_REWARDS.daily_bonus : reward;
-
-      // Use atomic RPC function for earning credits
-      const { data, error } = await supabase.rpc('earn_credits', {
-        p_ad_duration: adDuration,
-        p_credits_earned: totalReward
-      });
-
-      if (error) {
-        console.error('RPC error:', error);
-        return false;
-      }
-
-      const result = data as { success: boolean; balance?: number; error?: string };
-      
-      if (!result.success) {
-        if (result.error === 'Daily ad limit reached') {
-          toast.error('Daily ad limit reached');
-        }
-        console.error('Earn credits failed:', result.error);
-        return false;
-      }
-
-      setCredits(result.balance ?? credits + totalReward);
-      setAdsWatchedToday(prev => prev + 1);
-      
-      toast.success(`+${totalReward} Study Credits earned!${isFirstAd ? ' (includes daily bonus!)' : ''}`);
-      return true;
-    } catch (error) {
-      console.error('Error earning credits:', error);
-      return false;
-    }
-  }, [credits, userId, adsWatchedToday, isPremium]);
-
-  const canWatchMoreAds = useCallback((): boolean => {
-    const dailyLimit = isPremium ? 0 : DAILY_AD_LIMITS.logged_in;
-    return adsWatchedToday < dailyLimit;
-  }, [adsWatchedToday, isPremium]);
-
-  const getRemainingAds = useCallback((): number => {
-    const dailyLimit = isPremium ? 0 : DAILY_AD_LIMITS.logged_in;
-    return Math.max(0, dailyLimit - adsWatchedToday);
-  }, [adsWatchedToday, isPremium]);
-
   return (
     <CreditsContext.Provider value={{
       credits,
       loading,
       isPremium,
-      adsWatchedToday,
       hasEnoughCredits,
       getFeatureCost,
       spendCredits,
-      earnCredits,
-      canWatchMoreAds,
-      getRemainingAds,
       refreshCredits: fetchCredits,
     }}>
       {children}

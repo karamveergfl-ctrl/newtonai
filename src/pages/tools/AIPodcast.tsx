@@ -66,7 +66,7 @@ export default function AIPodcast() {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [showStylePresets, setShowStylePresets] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
-  const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
+  const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits } = useCredits();
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("ai_podcast");
   const { hasCompletedSetup } = usePodcastPreferences();
   
@@ -569,9 +569,6 @@ export default function AIPodcast() {
           requiredCredits={creditCost}
           currentCredits={credits}
           featureName="AI Podcast"
-          onWatchAd={earnCredits}
-          canWatchMoreAds={canWatchMoreAds()}
-          remainingAds={getRemainingAds()}
         />
 
         <PodcastStylePresets

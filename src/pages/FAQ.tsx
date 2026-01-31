@@ -139,8 +139,8 @@ const FAQ = () => {
           </Accordion>
         </div>
 
-        {/* Native Ad - Below Accordion */}
-        <NativeAdBanner placement="below-action" />
+        {/* Single Native Ad - Scroll triggered */}
+        <NativeAdBanner />
 
         {/* CTA Section */}
         <div className="text-center mt-16 p-8 bg-muted/50 rounded-2xl max-w-2xl mx-auto">

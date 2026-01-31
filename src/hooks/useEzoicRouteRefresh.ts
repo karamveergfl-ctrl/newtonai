@@ -13,8 +13,11 @@ declare global {
 
 /**
  * Hook to refresh Ezoic ads when navigating between pages in an SPA.
- * Calling ezstandalone.showAds() with no arguments will automatically
- * refresh all existing placeholders on the new page.
+ * 
+ * NOTE: This hook is intentionally disabled for Monetag compliance.
+ * Auto-refreshing ads on route changes violates traffic quality policies.
+ * 
+ * Keeping the hook structure for potential future Ezoic-only use.
  */
 export const useEzoicRouteRefresh = () => {
   const location = useLocation();
@@ -27,12 +30,14 @@ export const useEzoicRouteRefresh = () => {
       return;
     }
 
-    // On route change, trigger Ezoic to refresh all ad placements
-    if (window.ezstandalone) {
-      window.ezstandalone.cmd.push(() => {
-        window.ezstandalone?.showAds();
-      });
-    }
+    // DISABLED: Auto-refresh on route change violates Monetag policies
+    // Ads should only load based on user-initiated actions (e.g., 50% scroll)
+    // 
+    // if (window.ezstandalone) {
+    //   window.ezstandalone.cmd.push(() => {
+    //     window.ezstandalone?.showAds();
+    //   });
+    // }
   }, [location.pathname]);
 };
 

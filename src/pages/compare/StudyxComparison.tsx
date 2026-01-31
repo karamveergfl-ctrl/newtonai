@@ -69,9 +69,9 @@ const StudyxComparison = () => {
               <p>
                 Take photos of your handwritten notes and convert them to digital text instantly. NewtonAI's Google Lens-style OCR is a feature Studyx doesn't have.
               </p>
-              <h3>5. Ad-Supported Free Tier</h3>
+              <h3>5. Free Tier Available</h3>
               <p>
-                NewtonAI offers a complete free tier with video ads, giving students full access without payment. Studyx has more limited free access.
+                NewtonAI offers a complete free tier with usage limits, giving students access to all tools. Studyx has more limited free access.
               </p>
             </div>
           </div>

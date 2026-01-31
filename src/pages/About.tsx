@@ -117,8 +117,8 @@ const About = () => {
         </section>
 
 
-        {/* Native Ad - Above CTA */}
-        <NativeAdBanner placement="above-footer" />
+        {/* Single Native Ad - Scroll triggered */}
+        <NativeAdBanner />
 
         {/* CTA Section */}
         <section className="bg-primary text-primary-foreground py-16 relative overflow-hidden">

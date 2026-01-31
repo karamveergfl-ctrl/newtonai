@@ -128,9 +128,6 @@ const Blog = () => {
       </section>
 
 
-      {/* Native Ad - Below Hero */}
-      <NativeAdBanner placement="below-action" />
-
       {/* Blog Posts Grid */}
       <section className="container mx-auto px-4 pb-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -175,8 +172,8 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* Native Ad - Above Footer */}
-      <NativeAdBanner placement="above-footer" />
+      {/* Single Native Ad - Scroll triggered */}
+      <NativeAdBanner />
 
       <Footer />
     </div>

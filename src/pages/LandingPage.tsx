@@ -278,8 +278,8 @@ const LandingPage = () => {
       <TestimonialsSection />
 
 
-      {/* Native Ad - Above Footer */}
-      <NativeAdBanner placement="above-footer" />
+      {/* Single Native Ad - Scroll triggered */}
+      <NativeAdBanner />
 
       {/* CTA Section */}
       <div id="footer-cta-section">

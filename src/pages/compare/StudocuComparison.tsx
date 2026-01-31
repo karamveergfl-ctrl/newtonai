@@ -74,9 +74,9 @@ const StudocuComparison = () => {
               <p>
                 Studocu relies on other students' notes, which may be incomplete or not match your syllabus. NewtonAI's AI analyzes YOUR textbooks and lectures to create accurate, personalized study materials.
               </p>
-              <h3>6. Free Tier with Ads</h3>
+              <h3>6. Free Tier Available</h3>
               <p>
-                Studocu's free access is severely limited with upload requirements. NewtonAI offers a genuinely free tier where you can earn credits by watching optional video ads.
+                Studocu's free access is severely limited with upload requirements. NewtonAI offers a free tier with usage limits - try before you commit.
               </p>
             </div>
           </div>

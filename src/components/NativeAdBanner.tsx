@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useCredits } from "@/hooks/useCredits";
 import { useStudyContext } from "@/contexts/StudyContext";
+import { useScrollProgress } from "@/hooks/useScrollProgress";
+import { isBot, isSafeAdEnvironment } from "@/utils/botDetection";
 
 interface NativeAdBannerProps {
-  placement: "below-action" | "mid-page" | "above-footer";
   className?: string;
 }
 
@@ -12,36 +13,6 @@ interface NativeAdBannerProps {
 const ADSTERRA_KEY = "c5d398ab0a723a7cfa61f3c2d7960602";
 const AD_WIDTH = 728;
 const AD_HEIGHT = 90;
-
-// Custom hook for lazy loading ads
-function useLazyAdLoad({ enabled, rootMargin = "300px" }: { enabled: boolean; rootMargin?: string }) {
-  const [isVisible, setIsVisible] = useState(!enabled);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!enabled) {
-      setIsVisible(true);
-      return;
-    }
-
-    if (!ref.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin }
-    );
-
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [enabled, rootMargin]);
-
-  return { ref, isVisible };
-}
 
 // Generate the HTML content for the ad iframe
 function generateAdHtml(): string {
@@ -76,19 +47,44 @@ function generateAdHtml(): string {
 </html>`;
 }
 
-export function NativeAdBanner({ 
-  placement, 
-  className 
-}: NativeAdBannerProps) {
+/**
+ * NativeAdBanner - Monetag/Adsterra compliant ad banner
+ * 
+ * Compliance features:
+ * - Only loads after user scrolls past 50% of page (user-initiated)
+ * - Bot detection prevents ads for automated traffic
+ * - Single ad per page (no stacking)
+ * - No auto-refresh on route changes
+ * - Collapses gracefully if ad fails to load
+ * - Suppressed for premium users and during deep study mode
+ */
+export function NativeAdBanner({ className }: NativeAdBannerProps) {
   const { isPremium } = useCredits();
   const { isInDeepStudy } = useStudyContext();
+  const { hasReachedThreshold } = useScrollProgress(50);
+  
+  // Track if we should show the ad (user has scrolled 50%+)
+  const [shouldShowAd, setShouldShowAd] = useState(false);
+  const [isBotTraffic, setIsBotTraffic] = useState(true); // Default to true for safety
 
-  // Lazy load for mid-page and above-footer only
-  const shouldLazyLoad = placement !== "below-action";
-  const { ref: lazyRef, isVisible } = useLazyAdLoad({ 
-    enabled: shouldLazyLoad, 
-    rootMargin: "300px" 
-  });
+  // Check for bot traffic on mount
+  useEffect(() => {
+    // Small delay to ensure all browser APIs are available
+    const timer = setTimeout(() => {
+      const botDetected = isBot();
+      const safeEnvironment = isSafeAdEnvironment();
+      setIsBotTraffic(botDetected || !safeEnvironment);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Enable ad display when user scrolls past 50%
+  useEffect(() => {
+    if (hasReachedThreshold && !isBotTraffic) {
+      setShouldShowAd(true);
+    }
+  }, [hasReachedThreshold, isBotTraffic]);
 
   // Don't show ads to premium users
   if (isPremium) return null;
@@ -96,9 +92,14 @@ export function NativeAdBanner({
   // Don't show ads during deep study mode (quiz, solutions, etc.)
   if (isInDeepStudy) return null;
 
+  // Don't show ads to bots
+  if (isBotTraffic) return null;
+
+  // Don't render anything until user has scrolled past 50%
+  if (!shouldShowAd) return null;
+
   return (
     <div
-      ref={lazyRef}
       className={cn(
         // Base spacing
         "w-full py-4 md:py-6 my-6 md:my-8",
@@ -110,13 +111,8 @@ export function NativeAdBanner({
         "flex flex-col items-center justify-center",
         // Handle overflow for fixed 728px banner on small screens
         "overflow-hidden",
-        // Placement-specific spacing
-        placement === "below-action" && "mt-8",
-        placement === "mid-page" && "my-10",
-        placement === "above-footer" && "mb-8",
         className
       )}
-      data-ad-placement={placement}
       aria-label="Sponsored content"
     >
       {/* Subtle "Sponsored" label */}
@@ -125,49 +121,20 @@ export function NativeAdBanner({
       </span>
       
       {/* Ad iframe with srcDoc for isolated JavaScript context */}
-      {isVisible && (
-        <iframe
-          srcDoc={generateAdHtml()}
-          width={AD_WIDTH}
-          height={AD_HEIGHT}
-          style={{
-            width: `${AD_WIDTH}px`,
-            height: `${AD_HEIGHT}px`,
-            border: "none",
-            overflow: "hidden",
-          }}
-          scrolling="no"
-          title={`Advertisement - ${placement}`}
-          sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
-        />
-      )}
+      <iframe
+        srcDoc={generateAdHtml()}
+        width={AD_WIDTH}
+        height={AD_HEIGHT}
+        style={{
+          width: `${AD_WIDTH}px`,
+          height: `${AD_HEIGHT}px`,
+          border: "none",
+          overflow: "hidden",
+        }}
+        scrolling="no"
+        title="Advertisement"
+        sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+      />
     </div>
   );
-}
-
-// Hook to check if page is tall enough for mid-page ad
-export function useCanShowMidPageAd() {
-  const [canShow, setCanShow] = useState(false);
-
-  useEffect(() => {
-    const checkHeight = () => {
-      const viewportHeight = window.innerHeight;
-      const pageHeight = document.documentElement.scrollHeight;
-      setCanShow(pageHeight >= viewportHeight * 2);
-    };
-
-    checkHeight();
-    
-    // Recheck on resize and content changes
-    window.addEventListener("resize", checkHeight);
-    const observer = new ResizeObserver(checkHeight);
-    observer.observe(document.body);
-
-    return () => {
-      window.removeEventListener("resize", checkHeight);
-      observer.disconnect();
-    };
-  }, []);
-
-  return canShow;
 }

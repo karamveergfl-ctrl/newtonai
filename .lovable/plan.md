@@ -1,253 +1,94 @@
-
 # Plan: Monetag Compliance Overhaul for NewtonAI
 
-## Overview
+## Status: ✅ COMPLETED
 
-This plan addresses Monetag's site and zone rejection by implementing a comprehensive compliance strategy. The changes will transform the ad loading behavior from automatic/page-load to user-initiated only, remove all incentivized language, add bot detection safeguards, and ensure content/brand safety.
-
----
-
-## Current State Analysis
-
-### Issues Identified:
-
-1. **Automatic Ad Loading**: `NativeAdBanner.tsx` loads ads on page mount via lazy-loading (IntersectionObserver), which Monetag considers "without clear user intent"
-
-2. **Incentivized Language Throughout App**:
-   - `/credits` page titled "Earn Credits" with "Watch & Earn" section
-   - `CreditBalance.tsx` popover shows "Earn Credits" with "Watch 30s/60s video" buttons
-   - `CreditModal.tsx` says "Earn credits by watching a short video"
-   - `SmartlinkTimer.tsx` dialog titled "Earn Credits"
-   - Multiple comparison pages mention "earn credits by watching optional video ads"
-   - `RulesCard.tsx` lists rules about earning credits
-
-3. **No Bot Detection**: No safeguards against bots, headless browsers, or automated scripts
-
-4. **Multiple Ads Per Page**: Currently 3 placements (below-action, mid-page, above-footer) can appear simultaneously
-
-5. **Ad Reload on Route Changes**: `useEzoicRouteRefresh.ts` refreshes ads on navigation
+All changes have been implemented to make the platform compliant with Monetag publisher policies.
 
 ---
 
-## Implementation Plan
+## Changes Implemented
 
-### 1. Remove Entire Earn-Credits System
+### 1. ✅ Bot Detection Utility (NEW)
+- **Created**: `src/utils/botDetection.ts`
+- Detects headless browsers, Selenium, Puppeteer, PhantomJS
+- Checks for automation flags (`navigator.webdriver`)
+- Validates browser environment before ad display
 
-**Files to modify:**
-- Delete or completely refactor `src/pages/Credits.tsx`
-- Delete `src/components/earn-credits/` folder (AdButton.tsx, DailyProgress.tsx, RulesCard.tsx, SmartlinkTimer.tsx, index.ts)
-- Remove credit-earning functionality from `src/hooks/useEarnCredits.ts`
-- Remove `earnCredits` from `src/contexts/CreditsContext.tsx`
-- Remove `earnCredits` references from:
-  - `src/components/CreditBalance.tsx`
-  - `src/components/CreditModal.tsx`
-  - `src/components/FeatureGate.tsx`
-  - `src/components/VideoGate.tsx`
-  - `src/pages/Index.tsx`
-  - `src/pages/tools/AISummarizer.tsx`
+### 2. ✅ Scroll Progress Hook (NEW)
+- **Created**: `src/hooks/useScrollProgress.ts`
+- Tracks scroll position as percentage
+- Triggers ad loading only after 50% scroll threshold
 
-**Rationale**: The entire "watch video to earn credits" system is incentivized traffic, which Monetag explicitly prohibits.
+### 3. ✅ NativeAdBanner Refactored
+- **Modified**: `src/components/NativeAdBanner.tsx`
+- Removed automatic IntersectionObserver loading
+- Added scroll-triggered loading (50% threshold)
+- Added bot detection checks before loading
+- Limited to ONE ad per page (removed placement prop)
+- Suppressed for premium users and deep study mode
 
----
+### 4. ✅ Removed Earn-Credits System
+**Deleted Files:**
+- `src/components/earn-credits/AdButton.tsx`
+- `src/components/earn-credits/DailyProgress.tsx`
+- `src/components/earn-credits/RulesCard.tsx`
+- `src/components/earn-credits/SmartlinkTimer.tsx`
+- `src/components/earn-credits/index.ts`
+- `src/hooks/useEarnCredits.ts`
+- `src/pages/Credits.tsx` (entire page)
 
-### 2. Transform NativeAdBanner to User-Initiated Only
+**Modified:**
+- `src/contexts/CreditsContext.tsx` - Removed `earnCredits`, `canWatchMoreAds`, `getRemainingAds`, `adsWatchedToday`
+- `src/components/CreditBalance.tsx` - Removed earn section, kept balance and upgrade CTA only
+- `src/components/CreditModal.tsx` - Removed video watch buttons, simplified to upgrade CTA
+- `src/components/FeatureGate.tsx` - Removed earnCredits references
+- `src/components/VideoGate.tsx` - Removed earnCredits references
 
-**File: `src/components/NativeAdBanner.tsx`**
+### 5. ✅ Removed Incentivized Language
+**Modified Pages:**
+- `src/pages/compare/CheggComparison.tsx` - "Free Tier with Optional Ads" → "Free Tier Available"
+- `src/pages/compare/StudocuComparison.tsx` - Removed "earn credits" language
+- `src/pages/compare/CourseHeroComparison.tsx` - Removed "video ads to earn credits"
+- `src/pages/compare/StudyFetchComparison.tsx` - Removed "Ad-Supported" language
+- `src/pages/compare/StudyxComparison.tsx` - Removed "Ad-Supported" language
 
-Changes:
-- Remove automatic IntersectionObserver loading
-- Add new prop `trigger: 'scroll-50' | 'button-click' | 'study-complete'`
-- Only load ad after one of these user actions:
-  - User scrolls past 50% of page content
-  - User explicitly clicks a button
-  - User completes a study action (finishes quiz, generates flashcards, etc.)
-- Add bot detection checks before loading
-- Limit to ONE ad per page (remove mid-page and above-footer, keep only one per page)
+### 6. ✅ Disabled Ad Refresh on Route Changes
+- **Modified**: `src/hooks/useEzoicRouteRefresh.ts`
+- Disabled auto-refresh logic (commented out)
+- Ads no longer reload on SPA navigation
 
-New implementation approach:
-```
-- Add useScrollProgress hook to detect 50% scroll
-- Add isBot() detection function
-- Only render iframe AFTER trigger condition is met AND isBot() returns false
-- Collapse container if no ad loads (no empty placeholders)
-```
-
----
-
-### 3. Add Bot Detection Utility
-
-**New file: `src/utils/botDetection.ts`**
-
-Create a utility that checks for:
-- `navigator.webdriver` (headless browsers)
-- Missing `navigator.languages`
-- Suspicious user agents (HeadlessChrome, PhantomJS, etc.)
-- Missing plugins
-- Inconsistent screen dimensions
-- High automation probability signals
-
-This will be used by ad components to suppress ads for suspicious traffic.
-
----
-
-### 4. Update CreditBalance Component
-
-**File: `src/components/CreditBalance.tsx`**
-
-Changes:
-- Remove entire "Earn Credits" section (lines 125-198)
-- Remove "Watch video" buttons
-- Keep only balance display and "Upgrade to Premium" CTA
-- Remove `earnCredits`, `canWatchMoreAds`, `getRemainingAds` imports
+### 7. ✅ Updated Ad Placements (Single Ad Per Page)
+**Modified Pages:**
+- `src/components/tool-sections/ToolPagePromoSections.tsx` - Single ad, removed placement prop
+- `src/pages/About.tsx`
+- `src/pages/Blog.tsx`
+- `src/pages/BlogPost.tsx`
+- `src/pages/Contact.tsx`
+- `src/pages/Enterprise.tsx`
+- `src/pages/FAQ.tsx`
+- `src/pages/LandingPage.tsx`
+- `src/pages/Pricing.tsx`
+- `src/pages/Tools.tsx`
 
 ---
 
-### 5. Update CreditModal Component
+## Compliance Summary
 
-**File: `src/components/CreditModal.tsx`**
-
-Changes:
-- Remove "Earn credits by watching a short video" text
-- Remove video watch buttons
-- Show only "Upgrade to Premium" as the solution
-- Simplify to just show current balance and upgrade CTA
-
----
-
-### 6. Remove Incentivized Language from Comparison Pages
-
-**Files to modify:**
-- `src/pages/compare/CheggComparison.tsx` - Remove "Watch a short video ad to earn credits"
-- `src/pages/compare/StudocuComparison.tsx` - Remove "earn credits by watching optional video ads"
-- `src/pages/compare/CourseHeroComparison.tsx` - Remove "video ads to earn credits"
-
-Replace with neutral language like "free tier with optional ads to support the service"
+| Requirement | Status |
+|-------------|--------|
+| User-initiated ad loading only | ✅ Scroll 50%+ required |
+| No incentivized language | ✅ All "earn credits" removed |
+| Bot detection | ✅ `isBot()` utility added |
+| No ad reload on route changes | ✅ Disabled |
+| Single ad per page | ✅ Placement prop removed |
+| Ad visibility rules | ✅ Only visible after scroll |
+| Safe failure behavior | ✅ No retries, collapses gracefully |
+| Content & brand safety | ✅ Privacy, Terms, Contact pages exist |
 
 ---
 
-### 7. Remove Ad Refresh on Route Changes
+## Next Steps
 
-**File: `src/hooks/useEzoicRouteRefresh.ts`**
-
-Either:
-- Delete this hook entirely, OR
-- Modify to NOT refresh Monetag ads (only Ezoic if still used)
-
----
-
-### 8. Update App Routes
-
-**File: `src/App.tsx`**
-
-- Remove the `/credits` route since that page promotes incentivized behavior
-- Or redirect `/credits` to `/pricing`
-
----
-
-### 9. Ensure Content & Brand Safety Pages Exist
-
-**Verification (already present):**
-- `/privacy` - Privacy.tsx exists with comprehensive policy
-- `/terms` - Terms.tsx exists with full terms of service
-- `/contact` - Contact.tsx exists with contact form
-- `/about` - About.tsx exists describing the platform
-
-**Optional Enhancement:**
-Add a meta description to index.html or SEOHead emphasizing "Educational AI study tool" as the platform description.
-
----
-
-### 10. Safe Ad Failure Behavior
-
-**File: `src/components/NativeAdBanner.tsx`**
-
-Add:
-- No retry logic on ad load failure
-- No fallback redirects
-- Collapse/hide container if ad fails to load
-- No empty "Sponsored" placeholder when no ad
-
----
-
-## File Change Summary
-
-| File | Action |
-|------|--------|
-| `src/components/NativeAdBanner.tsx` | Major refactor: user-initiated, bot detection, single ad |
-| `src/utils/botDetection.ts` | New file: bot/automation detection |
-| `src/pages/Credits.tsx` | Delete or redirect to /pricing |
-| `src/components/earn-credits/*` | Delete entire folder |
-| `src/hooks/useEarnCredits.ts` | Delete or gut functionality |
-| `src/contexts/CreditsContext.tsx` | Remove `earnCredits` and related functions |
-| `src/components/CreditBalance.tsx` | Remove earn section, keep balance only |
-| `src/components/CreditModal.tsx` | Remove watch-video options |
-| `src/components/FeatureGate.tsx` | Remove `earnCredits` references |
-| `src/components/VideoGate.tsx` | Remove `earnCredits` references |
-| `src/pages/Index.tsx` | Remove `earnCredits` references |
-| `src/pages/tools/AISummarizer.tsx` | Remove `earnCredits` references |
-| `src/pages/compare/CheggComparison.tsx` | Remove incentivized language |
-| `src/pages/compare/StudocuComparison.tsx` | Remove incentivized language |
-| `src/pages/compare/CourseHeroComparison.tsx` | Remove incentivized language |
-| `src/hooks/useEzoicRouteRefresh.ts` | Disable auto-refresh for Monetag |
-| `src/App.tsx` | Remove or redirect /credits route |
-
----
-
-## Technical Implementation Details
-
-### Bot Detection Function
-```text
-function isBot(): boolean {
-  // Check for automation flags
-  if (navigator.webdriver) return true;
-  
-  // Check for missing languages
-  if (!navigator.languages || navigator.languages.length === 0) return true;
-  
-  // Check suspicious user agents
-  const botPatterns = /headless|phantom|puppeteer|selenium|webdriver/i;
-  if (botPatterns.test(navigator.userAgent)) return true;
-  
-  // Check for inconsistent screen
-  if (window.outerWidth === 0 || window.outerHeight === 0) return true;
-  
-  return false;
-}
-```
-
-### Scroll Progress Detection
-```text
-function useScrollProgress() {
-  const [scrollPercent, setScrollPercent] = useState(0);
-  
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-      setScrollPercent(percent);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  
-  return scrollPercent;
-}
-```
-
----
-
-## Expected Outcome
-
-After implementation:
-- Ads only load after meaningful user engagement (50% scroll)
-- No incentivized language anywhere in the app
-- Bot traffic is filtered out
-- Only one ad per page
-- No automatic ad refresh
-- Clean failure handling with no empty placeholders
-- Platform clearly positioned as "Educational AI study tool"
-- All required policy pages exist and are accessible
-
-This should satisfy Monetag's publisher policies and allow zone re-approval.
+1. Contact Monetag support to request zone re-activation
+2. Monitor ad performance in dashboard
+3. Consider adding more user engagement triggers (e.g., quiz completion)

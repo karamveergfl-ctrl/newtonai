@@ -69,9 +69,9 @@ const StudyFetchComparison = () => {
               <p>
                 NewtonAI automatically creates visual mind maps from your content. StudyFetch doesn't offer this feature.
               </p>
-              <h3>5. Ad-Supported Free Tier</h3>
+              <h3>5. Free Tier Available</h3>
               <p>
-                NewtonAI offers a generous free tier with all features accessible through video ads. No credit card required to get started.
+                NewtonAI offers a free tier with usage limits. No credit card required to get started.
               </p>
             </div>
           </div>
