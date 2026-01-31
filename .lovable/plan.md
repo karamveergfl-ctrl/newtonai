@@ -1,76 +1,89 @@
 
-
-# Plan: Fix Ultra Plan Access Not Working
+# Plan: Fix Feature Access for Ultra/Pro Users During Loading States
 
 ## Problem Identified
 
-Ultra users are incorrectly seeing the "Study Credits Needed" modal because there are **two separate gating systems** that aren't synchronized:
+The current implementation has a **race condition** where Ultra/Pro users may see the "Study Credits Needed" modal because both gating systems (`useCredits` and `useFeatureLimitGate`) default to `free` status while loading:
 
-| System | Hook | Premium Check | Used For |
-|--------|------|---------------|----------|
-| Feature Limits | `useFeatureLimitGate` | `subscription.tier === "ultra"` | Non-video content |
-| Credits | `useCredits` | `isPremium` from CreditsContext | Video-based generation |
+| State | isPremiumCredits | subscription.tier | isPremium (computed) | Result |
+|-------|-----------------|-------------------|---------------------|--------|
+| Both loading | false | "free" | false | ❌ Modal shown incorrectly |
+| Credits loaded first | true | "free" | true | ✅ Works |
+| Subscription loaded first | false | "ultra" | true | ✅ Works |
+| Both loaded | true | "ultra" | true | ✅ Works |
 
-The video generation functions (`handleGenerateFlashcardsFromVideo`, `handleGenerateSummaryFromVideo`, etc.) use `trySpendCredits()` which relies on `isPremium` from `CreditsContext`. This value may be `false` even for Ultra users if:
+The issue occurs when a user clicks a button before either system finishes loading.
 
-1. The context hasn't finished loading
-2. There's any error in the profile fetch
-3. The user's session isn't fully established when the context initializes
+---
 
 ## Solution
 
-**Unify the gating logic** by making the `trySpendCredits` function also check the subscription tier from `useFeatureUsage`, or alternatively, update all video generation functions to use `useFeatureLimitGate` for consistency.
+Update the premium check logic to:
+1. If **either** system is still loading, assume premium status until confirmed
+2. Only show the modal when **both** systems have finished loading AND confirm the user is not premium
 
-### Recommended Approach: Update `trySpendCredits` to use both systems
+### Technical Approach
 
-This is the minimal change approach that fixes the issue without refactoring the entire flow.
+Modify the `trySpendCredits` function in both `Index.tsx` and `AISummarizer.tsx` to wait for loading to complete before blocking:
+
+```typescript
+// If either system is still loading, don't block - assume premium
+if (creditsLoading || subscriptionLoading) {
+  // Could also check subscription tier from CreditsContext as backup
+  return true;
+}
+```
+
+Or alternatively, use a unified approach that properly handles loading states.
 
 ---
 
 ## Files to Modify
 
-### 1. `src/pages/tools/AISummarizer.tsx`
+### 1. `src/pages/Index.tsx`
 
-**Current code (lines 200-205):**
-```typescript
-const { 
-  credits, 
-  hasEnoughCredits, 
-  spendCredits, 
-  isPremium 
-} = useCredits();
-```
+**Location:** Lines 252-278 (trySpendCredits function)
+
+**Changes:**
+- Add `loading` from the feature usage hook
+- Update the premium check to also wait for feature usage to load
+- Only block users when both systems confirm free tier
 
 **Updated code:**
 ```typescript
-const { 
-  credits, 
-  hasEnoughCredits, 
-  spendCredits, 
-  isPremium: isPremiumCredits,
-  loading: creditsLoading 
-} = useCredits();
+// Get subscription tier for reliable premium check
+const [subscriptionTier, setSubscriptionTier] = useState<"free" | "pro" | "ultra">("free");
+const [subscriptionLoading, setSubscriptionLoading] = useState(true);
 
-// Get subscription tier from feature usage for reliable premium check
-const { subscription } = useFeatureUsage();
+useEffect(() => {
+  const fetchSubscriptionTier = async () => {
+    if (session?.user?.id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("subscription_tier")
+        .eq("id", session.user.id)
+        .single();
+      if (profile?.subscription_tier) {
+        setSubscriptionTier(profile.subscription_tier as "free" | "pro" | "ultra");
+      }
+    }
+    setSubscriptionLoading(false);
+  };
+  fetchSubscriptionTier();
+}, [session?.user?.id]);
 
 // Consider user premium if EITHER system says so (Ultra or Pro/Premium)
-const isPremium = isPremiumCredits || subscription.tier === "ultra" || subscription.tier === "pro";
-```
+const isPremium = isPremiumCredits || subscriptionTier === "ultra" || subscriptionTier === "pro";
 
-**Updated `trySpendCredits` function (around line 241):**
-```typescript
 // Helper function to check and spend credits
 const trySpendCredits = async (feature: string): Promise<boolean> => {
   // Check premium from both systems - ultra/pro bypass credits
   if (isPremium) return true;
   
-  // If credits system is still loading, wait or use feature limit system
-  if (creditsLoading) {
-    // Fall back to subscription check
-    if (subscription.tier !== "free") return true;
-  }
+  // If EITHER system is still loading, don't block (premium check incomplete)
+  if (creditsLoading || subscriptionLoading) return true;
   
+  // Both systems loaded and user is free tier - check credits
   if (!hasEnoughCredits(feature)) {
     setBlockedFeature(feature);
     setShowCreditModal(true);
@@ -89,33 +102,59 @@ const trySpendCredits = async (feature: string): Promise<boolean> => {
 };
 ```
 
-### 2. `src/pages/Index.tsx`
+### 2. `src/pages/tools/AISummarizer.tsx`
 
-Apply the same changes to the Index page which has similar `trySpendCredits` logic for video generation features.
+**Location:** Lines 200-270 (credits and trySpendCredits)
 
-### 3. `src/contexts/CreditsContext.tsx` (Alternative/Additional Fix)
-
-Add an else clause to explicitly set `isPremium` to false and also add a fallback when no subscription tier is found:
-
-**Current code (lines 72-76):**
-```typescript
-// Check for any paid tier (pro, premium, ultra)
-const paidTiers = ['pro', 'premium', 'ultra'];
-if (profile?.subscription_tier && paidTiers.includes(profile.subscription_tier)) {
-  setIsPremium(true);
-}
-```
+**Changes:**
+- Use `loading` from `useFeatureLimitGate` (already returned)
+- Update premium check to wait for both systems
 
 **Updated code:**
 ```typescript
-// Check for any paid tier (pro, premium, ultra)
-const paidTiers = ['pro', 'premium', 'ultra'];
-if (profile?.subscription_tier && paidTiers.includes(profile.subscription_tier)) {
-  setIsPremium(true);
-} else {
-  setIsPremium(false);
-}
+const { 
+  credits, 
+  hasEnoughCredits, 
+  spendCredits, 
+  isPremium: isPremiumCredits,
+  loading: creditsLoading 
+} = useCredits();
+
+// Get loading state from feature limit gate
+const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription, loading: subscriptionLoading } = useFeatureLimitGate("summary");
+
+// Consider user premium if EITHER system says so (Ultra or Pro/Premium)
+const isPremium = isPremiumCredits || subscription.tier === "ultra" || subscription.tier === "pro";
+
+// Helper function to check and spend credits
+const trySpendCredits = async (feature: string): Promise<boolean> => {
+  // Check premium from both systems - ultra/pro bypass credits
+  if (isPremium) return true;
+  
+  // If EITHER system is still loading, don't block (premium check incomplete)
+  if (creditsLoading || subscriptionLoading) return true;
+  
+  // Both systems loaded and user is free tier - check credits
+  if (!hasEnoughCredits(feature)) {
+    setBlockedFeature(feature);
+    setShowCreditModal(true);
+    return false;
+  }
+  
+  // ... rest of function
+};
 ```
+
+---
+
+## Summary
+
+| File | Change | Purpose |
+|------|--------|---------|
+| `src/pages/Index.tsx` | Add `subscriptionLoading` state, update `trySpendCredits` | Prevent blocking while loading |
+| `src/pages/tools/AISummarizer.tsx` | Use `loading` from `useFeatureLimitGate`, update `trySpendCredits` | Prevent blocking while loading |
+
+This ensures Ultra/Pro users are **never incorrectly blocked** due to loading race conditions. The worst case is that a free user might bypass one credit check while loading, which is acceptable compared to blocking paying users.
 
 ---
 
@@ -123,21 +162,8 @@ if (profile?.subscription_tier && paidTiers.includes(profile.subscription_tier))
 
 After the fix:
 1. Log in as an Ultra user
-2. Navigate to AI Summarizer
-3. Load a YouTube video
-4. Click "Generate Summary" or any other study tool
-5. The modal should NOT appear for Ultra users
-6. The feature should generate directly without credit prompts
-
----
-
-## File Summary
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/pages/tools/AISummarizer.tsx` | Modify | Add subscription tier check from useFeatureUsage |
-| `src/pages/Index.tsx` | Modify | Same changes for consistency |
-| `src/contexts/CreditsContext.tsx` | Modify | Add explicit else clause for isPremium |
-
-This fix ensures that Ultra/Pro users are never blocked by the credits system, regardless of which hook loads first.
-
+2. Immediately try to generate a summary from a YouTube video
+3. The modal should NOT appear
+4. The feature should work without any credit prompts
+5. Test with Pro users as well
+6. Test that free users still see the modal when they have 0 credits
