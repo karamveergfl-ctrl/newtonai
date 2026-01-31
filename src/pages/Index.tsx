@@ -226,9 +226,6 @@ const Index = () => {
     credits, 
     hasEnoughCredits, 
     spendCredits, 
-    earnCredits, 
-    canWatchMoreAds, 
-    getRemainingAds, 
     isPremium 
   } = useCredits();
 
@@ -2135,9 +2132,6 @@ const Index = () => {
             featureName={FEATURE_NAMES[blockedFeature] || blockedFeature}
             requiredCredits={FEATURE_COSTS[blockedFeature] || 0}
             currentCredits={credits}
-            onWatchAd={earnCredits}
-            canWatchMoreAds={canWatchMoreAds()}
-            remainingAds={getRemainingAds()}
           />
           
           {/* New User Welcome Modal */}

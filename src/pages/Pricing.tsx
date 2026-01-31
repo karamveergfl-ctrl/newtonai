@@ -403,8 +403,8 @@ const Pricing = () => {
           </div>
         </div>
 
-        {/* Native Ad - Below Payment Info */}
-        <NativeAdBanner placement="below-action" />
+        {/* Single Native Ad - Scroll triggered */}
+        <NativeAdBanner />
 
         {/* Enterprise CTA */}
         <div className="mt-16 text-center p-8 rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border border-primary/20">

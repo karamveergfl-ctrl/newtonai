@@ -9,7 +9,7 @@ import { ToolPageWhyUse } from "./ToolPageWhyUse";
 import { ToolPageFAQ } from "./ToolPageFAQ";
 import { FloatingScrollTop } from "./FloatingScrollTop";
 import { toolPromoData, ToolId } from "./toolPromoData";
-import { NativeAdBanner, useCanShowMidPageAd } from "@/components/NativeAdBanner";
+import { NativeAdBanner } from "@/components/NativeAdBanner";
 
 interface ToolPagePromoSectionsProps {
   toolId: ToolId;
@@ -23,7 +23,6 @@ export function ToolPagePromoSections({
   className 
 }: ToolPagePromoSectionsProps) {
   const data = toolPromoData[toolId];
-  const canShowMidPageAd = useCanShowMidPageAd();
   
   if (!data) {
     console.warn(`No promo data found for tool: ${toolId}`);
@@ -41,19 +40,11 @@ export function ToolPagePromoSections({
       {/* Features Grid */}
       <ToolPageFeatures features={data.features} />
       
-      {/* Native Ad - Below Features (Placement A alternative) */}
-      <NativeAdBanner placement="below-action" />
-      
       {/* Trending Topics - Between Features and Subjects */}
       <ToolPageTrendingTopics />
       
       {/* Subjects Grid - Only for quiz, flashcards, homework-help */}
       {data.showSubjects && <ToolPageSubjects />}
-      
-      {/* Mid-page Ad - Only if page is tall enough */}
-      {canShowMidPageAd && (
-        <NativeAdBanner placement="mid-page" />
-      )}
       
       {/* Recents - Only if user is logged in */}
       {showRecents && <ToolPageRecents toolId={toolId} />}
@@ -70,8 +61,8 @@ export function ToolPagePromoSections({
         benefits={data.whyUseBenefits} 
       />
       
-      {/* Native Ad - Above Footer (Placement C) */}
-      <NativeAdBanner placement="above-footer" />
+      {/* Single Native Ad - Scroll triggered (50%+) */}
+      <NativeAdBanner />
     </div>
   );
 }

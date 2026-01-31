@@ -70,9 +70,9 @@ const CourseHeroComparison = () => {
               <p>
                 Transform any textbook chapter, lecture notes, or YouTube video into an engaging audio podcast. Learn while commuting, exercising, or relaxing. Course Hero offers no audio learning options.
               </p>
-              <h3>5. Actually Free Tier</h3>
+              <h3>5. Free Tier Available</h3>
               <p>
-                Course Hero's "free" tier requires you to upload documents to unlock access. NewtonAI offers a genuine free tier with optional video ads to earn credits – no strings attached.
+                Course Hero's "free" tier requires you to upload documents to unlock access. NewtonAI offers a genuine free tier with usage limits – no strings attached.
               </p>
               <h3>6. 43% Cost Savings</h3>
               <p>

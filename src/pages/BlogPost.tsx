@@ -657,8 +657,8 @@ const BlogPost = () => {
           </div>
         </div>
 
-        {/* Native Ad - Above CTA */}
-        <NativeAdBanner placement="above-footer" />
+        {/* Single Native Ad - Scroll triggered */}
+        <NativeAdBanner />
 
         {/* CTA */}
         <div className="mt-12 p-8 bg-primary/5 rounded-xl text-center">

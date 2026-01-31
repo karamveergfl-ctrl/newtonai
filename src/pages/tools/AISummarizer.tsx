@@ -201,9 +201,6 @@ const AISummarizer = () => {
     credits, 
     hasEnoughCredits, 
     spendCredits, 
-    earnCredits, 
-    canWatchMoreAds, 
-    getRemainingAds, 
     isPremium 
   } = useCredits();
 
@@ -1152,9 +1149,6 @@ const AISummarizer = () => {
           featureName={FEATURE_NAMES[blockedFeature] || blockedFeature}
           requiredCredits={FEATURE_COSTS[blockedFeature] || 0}
           currentCredits={credits}
-          onWatchAd={earnCredits}
-          canWatchMoreAds={canWatchMoreAds()}
-          remainingAds={getRemainingAds()}
         />
 
         {/* Confused Newton for errors */}

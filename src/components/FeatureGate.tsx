@@ -11,7 +11,7 @@ interface FeatureGateProps {
 }
 
 export function FeatureGate({ featureName, children, onBlocked }: FeatureGateProps) {
-  const { hasEnoughCredits, isPremium, getFeatureCost, credits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
+  const { hasEnoughCredits, isPremium, getFeatureCost, credits } = useCredits();
   const [showModal, setShowModal] = useState(false);
 
   const canUse = isPremium || hasEnoughCredits(featureName);
@@ -35,9 +35,6 @@ export function FeatureGate({ featureName, children, onBlocked }: FeatureGatePro
           featureName={FEATURE_NAMES[featureName] || featureName}
           requiredCredits={cost}
           currentCredits={credits}
-          onWatchAd={earnCredits}
-          canWatchMoreAds={canWatchMoreAds()}
-          remainingAds={getRemainingAds()}
         />
       </>
     );
@@ -47,7 +44,7 @@ export function FeatureGate({ featureName, children, onBlocked }: FeatureGatePro
 }
 
 export function useFeatureGate(featureName: string) {
-  const { hasEnoughCredits, spendCredits, isPremium, getFeatureCost, credits, loading, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
+  const { hasEnoughCredits, spendCredits, isPremium, getFeatureCost, credits, loading } = useCredits();
   const [showModal, setShowModal] = useState(false);
 
   const cost = getFeatureCost(featureName);
@@ -86,9 +83,6 @@ export function useFeatureGate(featureName: string) {
       featureName={FEATURE_NAMES[featureName] || featureName}
       requiredCredits={cost}
       currentCredits={credits}
-      onWatchAd={earnCredits}
-      canWatchMoreAds={canWatchMoreAds()}
-      remainingAds={getRemainingAds()}
     />
   );
 

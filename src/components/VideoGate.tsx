@@ -23,7 +23,7 @@ interface VideoGateProps {
 }
 
 export function VideoGate({ videoId, videoTitle, onUnlock, children }: VideoGateProps) {
-  const { credits, isPremium, hasEnoughCredits, spendCredits, earnCredits, canWatchMoreAds, getRemainingAds } = useCredits();
+  const { credits, isPremium, hasEnoughCredits, spendCredits } = useCredits();
   const { incrementUsage } = useFeatureUsage();
   const [showConfirm, setShowConfirm] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
@@ -51,15 +51,6 @@ export function VideoGate({ videoId, videoTitle, onUnlock, children }: VideoGate
       setShowConfirm(false);
       onUnlock();
     }
-  };
-
-  const handleWatchAd = async (duration: 30 | 60) => {
-    const success = await earnCredits(duration);
-    if (success && credits + (duration === 30 ? 4 : 9) >= cost) {
-      setShowCreditModal(false);
-      setShowConfirm(true);
-    }
-    return success;
   };
 
   return (
@@ -105,9 +96,6 @@ export function VideoGate({ videoId, videoTitle, onUnlock, children }: VideoGate
         requiredCredits={cost}
         currentCredits={credits}
         featureName={FEATURE_NAMES.watch_video}
-        onWatchAd={handleWatchAd}
-        canWatchMoreAds={canWatchMoreAds()}
-        remainingAds={getRemainingAds()}
       />
     </>
   );

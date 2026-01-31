@@ -66,9 +66,9 @@ const CheggComparison = () => {
               <p>
                 Take photos of your handwritten notes and convert them to digital text instantly. Chegg has no handwriting recognition feature.
               </p>
-              <h3>4. Free Tier with Optional Ads</h3>
+              <h3>4. Free Tier Available</h3>
               <p>
-                Unlike Chegg's paywall, NewtonAI offers a generous free tier. Watch a short video ad to earn credits and access premium features without paying. No credit card required.
+                Unlike Chegg's paywall, NewtonAI offers a free tier with usage limits. Try before you buy, with no credit card required.
               </p>
               <h3>5. Nearly Half the Price</h3>
               <p>

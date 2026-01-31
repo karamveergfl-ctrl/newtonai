@@ -230,8 +230,8 @@ const Tools = () => {
         </div>
       </section>
 
-      {/* Native Ad - Below Tools Grid */}
-      <NativeAdBanner placement="below-action" />
+      {/* Single Native Ad - Scroll triggered */}
+      <NativeAdBanner />
 
       {/* CTA Section */}
       <section className="bg-primary text-primary-foreground py-16">
