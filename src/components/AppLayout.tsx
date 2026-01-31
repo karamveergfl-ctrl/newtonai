@@ -12,7 +12,8 @@ function ScrollableContent({ children, showFooter }: { children: React.ReactNode
   const { setScrollPosition } = useScrollContext();
   
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    setScrollPosition(e.currentTarget.scrollTop);
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    setScrollPosition(scrollTop, scrollHeight, clientHeight);
   };
 
   return (
