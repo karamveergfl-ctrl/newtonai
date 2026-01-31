@@ -1,31 +1,18 @@
 
-# Plan: Add Adsterra 300x250 Banner Ad
+# Plan: Add Adsterra Banner Script to Header
 
 ## Overview
 
-Create a new React component for the Adsterra banner ad (300x250) and integrate it into the tool pages. The Adsterra ad uses a different approach than Ezmob - it sets a global `atOptions` object and loads an invoke.js script.
+Add the Adsterra 300x250 banner ad script directly to the `index.html` header, alongside the existing Ezmob and Nap5k global ad scripts.
 
-## Files to Create/Modify
+## Changes
 
-### 1. Create `src/components/AdsterraBanner.tsx` (New File)
+### File: `index.html`
 
-A new component that:
-- Renders the Adsterra ad in an isolated iframe (same pattern as PropellerAdBanner)
-- Respects premium user exclusion
-- Respects deep study mode suppression
-- Uses 50% scroll trigger before loading
-- Size: 300x250 (matching the Adsterra code)
+Add the Adsterra script after the Nap5k ad (after line 27):
 
-```typescript
-// Key properties:
-// - adKey: 'f68fadee12d992a26443bfb050da5b07'
-// - format: iframe
-// - size: 300x250
-// - source: lozengehelped.com
-```
-
-The component will build an isolated HTML document containing:
 ```html
+<!-- Adsterra Banner Ad (Zone: f68fadee12d992a26443bfb050da5b07) -->
 <script>
   atOptions = {
     'key' : 'f68fadee12d992a26443bfb050da5b07',
@@ -38,27 +25,20 @@ The component will build an isolated HTML document containing:
 <script src="https://lozengehelped.com/f68fadee12d992a26443bfb050da5b07/invoke.js"></script>
 ```
 
-### 2. Modify `src/components/tool-sections/ToolPagePromoSections.tsx`
+## Result
 
-Add the Adsterra banner alongside or replacing the existing Ezmob banner. Place it in a strategic location in the promo sections.
+The `<head>` section will contain:
+1. Google Analytics (existing)
+2. Ezmob Vignette Ad - Zone 10543352 (existing)
+3. Nap5k Ad - Zone 10548751 (existing)
+4. **Adsterra Banner Ad** (new)
+5. Meta tags and other content (existing)
 
----
+## Technical Note
 
-## Technical Details
+Unlike the component-based `AdsterraBanner.tsx` which uses scroll-triggered lazy loading and premium suppression, this global header script will:
+- Load on every page immediately
+- Not be suppressed for premium users
+- Not respect deep study mode
 
-| Aspect | Implementation |
-|--------|----------------|
-| Isolation | srcDoc iframe to prevent global JS pollution |
-| Premium users | Hidden via `isPremium` check |
-| Deep study mode | Hidden via `isInDeepStudy` check |
-| Lazy loading | 50% scroll threshold trigger |
-| Error handling | Graceful fallback if ad fails |
-| Size | 300x250 (standard banner) |
-
-## Ad Placement Strategy
-
-The tool pages will have:
-1. **Ezmob Banner** (existing) - After Features section
-2. **Adsterra Banner** (new) - After FAQ section (before Why Use CTA)
-
-This spreads ads throughout the page without overwhelming users, while maximizing viewability.
+This is the same behavior as the existing Ezmob and Nap5k global scripts. The component version created earlier still exists for controlled placement within tool pages.
