@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
-import { NativeAdBanner } from "@/components/NativeAdBanner";
+
 
 const values = [
   {
@@ -117,8 +117,6 @@ const About = () => {
         </section>
 
 
-        {/* Single Native Ad - Scroll triggered */}
-        <NativeAdBanner />
 
         {/* CTA Section */}
         <section className="bg-primary text-primary-foreground py-16 relative overflow-hidden">

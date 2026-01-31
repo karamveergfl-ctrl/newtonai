@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
-import { NativeAdBanner } from "@/components/NativeAdBanner";
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -172,8 +172,6 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* Single Native Ad - Scroll triggered */}
-      <NativeAdBanner />
 
       <Footer />
     </div>

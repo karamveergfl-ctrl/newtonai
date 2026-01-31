@@ -16,4 +16,4 @@ export {
   RecentSkeleton 
 } from "./PromoSectionSkeleton";
 export * from "./toolPromoData";
-export { NativeAdBanner } from "@/components/NativeAdBanner";
+

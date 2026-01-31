@@ -7,7 +7,7 @@ import CTASection from "@/components/CTASection";
 import SEOHead from "@/components/SEOHead";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
 import StickyCTABar from "@/components/StickyCTABar";
-import { NativeAdBanner } from "@/components/NativeAdBanner";
+
 import { 
   BookOpen, 
   Brain, 
@@ -278,8 +278,6 @@ const LandingPage = () => {
       <TestimonialsSection />
 
 
-      {/* Single Native Ad - Scroll triggered */}
-      <NativeAdBanner />
 
       {/* CTA Section */}
       <div id="footer-cta-section">

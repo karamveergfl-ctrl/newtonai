@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { useEzoicRouteRefresh } from "@/hooks/useEzoicRouteRefresh";
+
 import { HelmetProvider } from "react-helmet-async";
 import { PodcastProvider } from "@/contexts/PodcastContext";
 import { ProcessingOverlayProvider } from "@/contexts/ProcessingOverlayContext";
@@ -73,8 +73,6 @@ const queryClient = new QueryClient();
 function AnimatedRoutes() {
   const location = useLocation();
   
-  // Refresh Ezoic ads on route change
-  useEzoicRouteRefresh();
   
   return (
     <AnimatePresence mode="wait">
