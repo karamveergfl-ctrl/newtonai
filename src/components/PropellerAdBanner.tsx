@@ -10,10 +10,10 @@ interface PropellerAdBannerProps {
 }
 
 /**
- * Builds isolated HTML document for PropellerAds script.
+ * Builds isolated HTML document for Ezmob ad script.
  * Uses srcDoc to contain ad JavaScript in its own context.
  */
-function buildPropellerAdHTML(adKey: string): string {
+function buildEzmobAdHTML(zoneId: string): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -24,15 +24,26 @@ function buildPropellerAdHTML(adKey: string): string {
           display: flex; 
           justify-content: center; 
           align-items: center;
-          min-height: 90px;
+          min-height: 250px;
           background: transparent;
         }
       </style>
     </head>
     <body>
-      <div id="container-${adKey}"></div>
-      <script async data-cfasync="false" 
-        src="//pl.profitablegatecpm.com/${adKey}.js">
+      <script type="text/javascript">
+        var __jscp = function() {
+          for (var b = 0, a = window; a != a.parent;) ++b, a = a.parent;
+          if (a = window.parent == window ? document.URL : document.referrer) {
+            var c = a.indexOf("://");
+            0 <= c && (a = a.substring(c + 3));
+            c = a.indexOf("/");
+            0 <= c && (a = a.substring(0, c))
+          }
+          var b = { pu: a, "if": b, rn: new Number(Math.floor(99999999 * Math.random()) + 1) }, a = [], d;
+          for (d in b) a.push(d + "=" + encodeURIComponent(b[d]));
+          return encodeURIComponent(a.join("&"))
+        };
+        document.write('<scr' + 'ipt type="text/javascript" src="//cpm.ezmob.com/tag?zone_id=${zoneId}&size=300x250&subid=&j=' + __jscp() + '"></scr' + 'ipt>');
       </script>
     </body>
     </html>
@@ -40,7 +51,7 @@ function buildPropellerAdHTML(adKey: string): string {
 }
 
 /**
- * PropellerAds Banner Component
+ * Ezmob Banner Component
  * 
  * Features:
  * - User-initiated loading (50% scroll trigger)
@@ -80,9 +91,9 @@ export function PropellerAdBanner({ className, adKey }: PropellerAdBannerProps) 
   return (
     <div className={cn("w-full flex justify-center my-8", className)}>
       <iframe
-        srcDoc={buildPropellerAdHTML(adKey)}
+        srcDoc={buildEzmobAdHTML(adKey)}
         sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
-        className="border-0 w-full max-w-[728px] h-[90px] md:h-[90px] overflow-hidden"
+        className="border-0 w-[300px] h-[250px] overflow-hidden"
         title="Advertisement"
         loading="lazy"
         onError={() => setAdError(true)}
