@@ -1,179 +1,83 @@
 
-## Plan: Fix Native Ad Rendering - Remove Sandbox Blocking
+## Plan: Fix Adsterra Ads - Switch from srcDoc Iframe to Direct Script Injection
 
-### Root Cause Analysis
+### Problem Identified
 
-The current implementation uses `sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"` on the iframe. While this allows script execution, it still blocks:
+The Adsterra dashboard shows 0 impressions today because **the `srcDoc` iframe approach cannot load external scripts**. This is a browser security restriction - iframes created with `srcDoc` have a unique "null" origin that blocks cross-origin script loading.
 
-- External network requests to load the `invoke.js` script
-- The ad script's ability to create nested iframes
-- Cookie access required by the ad network
-
-The Adsterra script chain works like this:
+Current flow (broken):
 ```text
-iframe (srcdoc) 
-  → loads invoke.js from lozengehelped.com
-    → invoke.js creates an inner iframe for the actual ad
-      → inner iframe loads ad creative from Adsterra CDN
+srcDoc iframe → tries to load invoke.js → BLOCKED by browser security → no ad loads → 0 impressions
 ```
-
-When `sandbox` is present, step 1 (loading invoke.js) fails silently because the iframe can't make cross-origin requests even with `allow-same-origin`.
-
----
 
 ### Solution
 
-Remove the `sandbox` attribute entirely and apply proper iframe configuration as shown in successful implementations.
+Replace the `srcDoc` iframe approach with **direct script injection** into the page DOM, which is the standard method for ad integrations in React applications.
 
 ---
 
-### File to Modify
+### File Changes Required
 
-**`src/components/NativeAdBanner.tsx`**
+**File: `src/components/NativeAdBanner.tsx`**
 
----
+#### Complete Rewrite Strategy
 
-### Changes Required
+1. **Remove the `generateAdHtml()` function and srcdoc iframe**
+2. **Add a container div with a unique ID for each placement**
+3. **Inject the Adsterra script directly into the DOM using `useEffect`**
+4. **Clean up the script on unmount to prevent memory leaks**
 
-#### 1. Remove sandbox attribute from iframe
+#### New Implementation Approach
 
-```tsx
-// BEFORE (current)
-<iframe
-  srcDoc={generateAdHtml()}
-  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-  ...
-/>
-
-// AFTER (fixed)
-<iframe
-  srcDoc={generateAdHtml()}
-  // No sandbox attribute - allows external script loading
-  ...
-/>
+```text
+Container div (unique ID per placement)
+  ↓
+useEffect injects Adsterra script into container
+  ↓
+Adsterra script loads invoke.js (works because it's in main document)
+  ↓
+Ad renders inside container → impressions tracked
 ```
 
-#### 2. Add explicit fixed dimensions
+---
 
-Since the 728x90 banner has fixed dimensions, set them explicitly:
+### Technical Changes
 
-```tsx
-<iframe
-  srcDoc={generateAdHtml()}
-  style={{
-    width: '728px',
-    height: '90px',
-    border: 'none',
-    overflow: 'hidden',
-    display: 'block',
-    background: 'transparent',
-  }}
-  scrolling="no"
-  frameBorder="0"
-  title="Sponsored content"
-  onLoad={handleIframeLoad}
-  onError={handleIframeError}
-/>
-```
-
-#### 3. Update container to handle responsive centering
-
-The container should center the fixed-size iframe while allowing it to be cropped on smaller screens:
-
-```tsx
-<div 
-  className={cn(
-    "w-full py-4 md:py-6 my-6 md:my-8",
-    "bg-background rounded-xl",
-    "flex flex-col items-center justify-center",
-    "overflow-hidden", // Add to handle 728px on small screens
-    ...
-  )}
->
-```
-
-#### 4. Update generateAdHtml for compatibility
-
-Ensure the HTML document is properly structured for ad loading:
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { 
-      width: 728px;
-      height: 90px;
-      background: transparent; 
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-  </style>
-</head>
-<body>
-  <script type="text/javascript">
-    atOptions = {
-      'key' : 'c5d398ab0a723a7cfa61f3c2d7960602',
-      'format' : 'iframe',
-      'height' : 90,
-      'width' : 728,
-      'params' : {}
-    };
-  </script>
-  <script type="text/javascript" src="//lozengehelped.com/c5d398ab0a723a7cfa61f3c2d7960602/invoke.js"></script>
-</body>
-</html>
-```
-
-Key changes in HTML:
-- Added `type="text/javascript"` to script tags
-- Changed script src to use protocol-relative URL (`//` instead of `https://`)
-- Set explicit body dimensions to match ad size
+| Component | Before | After |
+|-----------|--------|-------|
+| Ad loading method | `srcDoc` iframe | Direct script injection |
+| Script execution context | Isolated iframe origin | Main document origin |
+| External script loading | Blocked | Allowed |
+| Impression tracking | Broken | Working |
 
 ---
 
-### What This Preserves
+### Key Implementation Details
 
-- Lazy loading for mid-page and above-footer placements
-- Premium user suppression (`isPremium`)
-- Deep study mode suppression (`isInDeepStudy`)
-- 5-second fail-safe timeout (collapses if ad doesn't load)
-- `useCanShowMidPageAd` hook for height checks
-- All existing page integrations
-
----
-
-### Security Consideration
-
-Removing `sandbox` allows the iframe to execute scripts freely. This is acceptable because:
-- The ad is from a trusted third-party (Adsterra)
-- The iframe content is generated by our code
-- The iframe cannot access the parent page's DOM or JavaScript context
-- This is the standard approach used by ad networks across the web
+1. **Unique container IDs**: Each ad placement gets a unique ID based on placement name to prevent conflicts
+2. **Script cleanup**: Remove injected scripts on component unmount
+3. **Lazy loading preserved**: Keep the IntersectionObserver for mid-page/above-footer placements
+4. **Premium/study mode suppression**: Keep existing logic to hide ads for premium users and during deep study
+5. **Remove timeout logic**: The 5-second timeout was masking the underlying issue; remove it since ads will now load properly
 
 ---
 
-### Technical Summary
+### Files Modified
 
-| Property | Before | After |
-|----------|--------|-------|
-| `sandbox` | `allow-scripts allow-same-origin allow-popups...` | (removed) |
-| Iframe width | `100%` | `728px` (fixed) |
-| Iframe height | `90px` (via minHeight) | `90px` (explicit) |
-| Script src | `https://lozengehelped.com/...` | `//lozengehelped.com/...` |
-| Container | No overflow handling | `overflow-hidden` |
+1. **`src/components/NativeAdBanner.tsx`** - Complete rewrite of ad loading mechanism
 
 ---
 
 ### Expected Outcome
 
 After this fix:
-- The Adsterra `invoke.js` script will load successfully
-- The ad creative will render inside the iframe
-- Ads will display on all placements where they currently show "SPONSORED" but are empty
-- Mobile responsiveness maintained (728px banner centered, may crop on smaller screens)
+- Adsterra `invoke.js` script will load successfully from `lozengehelped.com`
+- Ad creatives will render in all placements (below-action, mid-page, above-footer)
+- Impressions and clicks will be tracked in the Adsterra dashboard
+- Revenue will be generated from ad views
+
+---
+
+### Mobile Consideration
+
+The current 728x90 banner size will still be clipped on mobile screens. A follow-up improvement could add responsive ad sizes (300x250 or 320x50) for mobile devices, but the primary fix addresses the script loading issue first.
