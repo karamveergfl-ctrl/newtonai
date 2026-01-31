@@ -1,34 +1,64 @@
 
-# Plan: Add Nap5k Ad Script to Header
+# Plan: Add Adsterra 300x250 Banner Ad
 
 ## Overview
 
-Add a new ad network script (Zone ID: 10548751) from nap5k.com to the `index.html` header, alongside the existing Ezmob vignette ad.
+Create a new React component for the Adsterra banner ad (300x250) and integrate it into the tool pages. The Adsterra ad uses a different approach than Ezmob - it sets a global `atOptions` object and loads an invoke.js script.
 
-## Changes
+## Files to Create/Modify
 
-### File: `index.html`
+### 1. Create `src/components/AdsterraBanner.tsx` (New File)
 
-Add the new ad script after the existing Ezmob vignette ad (after line 19):
+A new component that:
+- Renders the Adsterra ad in an isolated iframe (same pattern as PropellerAdBanner)
+- Respects premium user exclusion
+- Respects deep study mode suppression
+- Uses 50% scroll trigger before loading
+- Size: 300x250 (matching the Adsterra code)
 
-```html
-<!-- Nap5k Ad (Zone: 10548751) -->
-<script>
-  (function(s){
-    s.dataset.zone='10548751';
-    s.src='https://nap5k.com/tag.min.js';
-  })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
-</script>
+```typescript
+// Key properties:
+// - adKey: 'f68fadee12d992a26443bfb050da5b07'
+// - format: iframe
+// - size: 300x250
+// - source: lozengehelped.com
 ```
 
-## Result
+The component will build an isolated HTML document containing:
+```html
+<script>
+  atOptions = {
+    'key' : 'f68fadee12d992a26443bfb050da5b07',
+    'format' : 'iframe',
+    'height' : 250,
+    'width' : 300,
+    'params' : {}
+  };
+</script>
+<script src="https://lozengehelped.com/f68fadee12d992a26443bfb050da5b07/invoke.js"></script>
+```
 
-The `<head>` section will contain:
-1. Google Analytics (existing)
-2. Ezmob Vignette Ad - Zone 10543352 (existing)
-3. **Nap5k Ad - Zone 10548751** (new)
-4. Meta tags and other content (existing)
+### 2. Modify `src/components/tool-sections/ToolPagePromoSections.tsx`
 
-## Technical Note
+Add the Adsterra banner alongside or replacing the existing Ezmob banner. Place it in a strategic location in the promo sections.
 
-This script follows the same pattern as the existing Ezmob vignette: it dynamically creates a script element and loads the ad tag globally on every page.
+---
+
+## Technical Details
+
+| Aspect | Implementation |
+|--------|----------------|
+| Isolation | srcDoc iframe to prevent global JS pollution |
+| Premium users | Hidden via `isPremium` check |
+| Deep study mode | Hidden via `isInDeepStudy` check |
+| Lazy loading | 50% scroll threshold trigger |
+| Error handling | Graceful fallback if ad fails |
+| Size | 300x250 (standard banner) |
+
+## Ad Placement Strategy
+
+The tool pages will have:
+1. **Ezmob Banner** (existing) - After Features section
+2. **Adsterra Banner** (new) - After FAQ section (before Why Use CTA)
+
+This spreads ads throughout the page without overwhelming users, while maximizing viewability.
