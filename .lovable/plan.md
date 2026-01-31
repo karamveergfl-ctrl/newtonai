@@ -1,94 +1,154 @@
-# Plan: Monetag Compliance Overhaul for NewtonAI
 
-## Status: ✅ COMPLETED
 
-All changes have been implemented to make the platform compliant with Monetag publisher policies.
+## Plan: Remove All Monetag/Adsterra Ad Tags
 
----
+### Overview
 
-## Changes Implemented
-
-### 1. ✅ Bot Detection Utility (NEW)
-- **Created**: `src/utils/botDetection.ts`
-- Detects headless browsers, Selenium, Puppeteer, PhantomJS
-- Checks for automation flags (`navigator.webdriver`)
-- Validates browser environment before ad display
-
-### 2. ✅ Scroll Progress Hook (NEW)
-- **Created**: `src/hooks/useScrollProgress.ts`
-- Tracks scroll position as percentage
-- Triggers ad loading only after 50% scroll threshold
-
-### 3. ✅ NativeAdBanner Refactored
-- **Modified**: `src/components/NativeAdBanner.tsx`
-- Removed automatic IntersectionObserver loading
-- Added scroll-triggered loading (50% threshold)
-- Added bot detection checks before loading
-- Limited to ONE ad per page (removed placement prop)
-- Suppressed for premium users and deep study mode
-
-### 4. ✅ Removed Earn-Credits System
-**Deleted Files:**
-- `src/components/earn-credits/AdButton.tsx`
-- `src/components/earn-credits/DailyProgress.tsx`
-- `src/components/earn-credits/RulesCard.tsx`
-- `src/components/earn-credits/SmartlinkTimer.tsx`
-- `src/components/earn-credits/index.ts`
-- `src/hooks/useEarnCredits.ts`
-- `src/pages/Credits.tsx` (entire page)
-
-**Modified:**
-- `src/contexts/CreditsContext.tsx` - Removed `earnCredits`, `canWatchMoreAds`, `getRemainingAds`, `adsWatchedToday`
-- `src/components/CreditBalance.tsx` - Removed earn section, kept balance and upgrade CTA only
-- `src/components/CreditModal.tsx` - Removed video watch buttons, simplified to upgrade CTA
-- `src/components/FeatureGate.tsx` - Removed earnCredits references
-- `src/components/VideoGate.tsx` - Removed earnCredits references
-
-### 5. ✅ Removed Incentivized Language
-**Modified Pages:**
-- `src/pages/compare/CheggComparison.tsx` - "Free Tier with Optional Ads" → "Free Tier Available"
-- `src/pages/compare/StudocuComparison.tsx` - Removed "earn credits" language
-- `src/pages/compare/CourseHeroComparison.tsx` - Removed "video ads to earn credits"
-- `src/pages/compare/StudyFetchComparison.tsx` - Removed "Ad-Supported" language
-- `src/pages/compare/StudyxComparison.tsx` - Removed "Ad-Supported" language
-
-### 6. ✅ Disabled Ad Refresh on Route Changes
-- **Modified**: `src/hooks/useEzoicRouteRefresh.ts`
-- Disabled auto-refresh logic (commented out)
-- Ads no longer reload on SPA navigation
-
-### 7. ✅ Updated Ad Placements (Single Ad Per Page)
-**Modified Pages:**
-- `src/components/tool-sections/ToolPagePromoSections.tsx` - Single ad, removed placement prop
-- `src/pages/About.tsx`
-- `src/pages/Blog.tsx`
-- `src/pages/BlogPost.tsx`
-- `src/pages/Contact.tsx`
-- `src/pages/Enterprise.tsx`
-- `src/pages/FAQ.tsx`
-- `src/pages/LandingPage.tsx`
-- `src/pages/Pricing.tsx`
-- `src/pages/Tools.tsx`
+This plan removes all Monetag/Adsterra ad infrastructure from NewtonAI, including components, hooks, utilities, and external script references in index.html.
 
 ---
 
-## Compliance Summary
+### Files to Delete
 
-| Requirement | Status |
-|-------------|--------|
-| User-initiated ad loading only | ✅ Scroll 50%+ required |
-| No incentivized language | ✅ All "earn credits" removed |
-| Bot detection | ✅ `isBot()` utility added |
-| No ad reload on route changes | ✅ Disabled |
-| Single ad per page | ✅ Placement prop removed |
-| Ad visibility rules | ✅ Only visible after scroll |
-| Safe failure behavior | ✅ No retries, collapses gracefully |
-| Content & brand safety | ✅ Privacy, Terms, Contact pages exist |
+| File | Purpose |
+|------|---------|
+| `src/components/NativeAdBanner.tsx` | Main Adsterra banner ad component |
+| `src/components/EzoicAdPlaceholder.tsx` | Ezoic ad placeholder component |
+| `src/hooks/useEzoicRouteRefresh.ts` | Hook for refreshing Ezoic ads on route changes |
+| `src/hooks/useScrollProgress.ts` | Hook used only for ad loading trigger |
+| `src/utils/botDetection.ts` | Bot detection utility used only for ad compliance |
 
 ---
 
-## Next Steps
+### Files to Modify
 
-1. Contact Monetag support to request zone re-activation
-2. Monitor ad performance in dashboard
-3. Consider adding more user engagement triggers (e.g., quiz completion)
+#### 1. `index.html` - Remove External Ad Scripts
+
+Remove:
+- Lines 4-6: Gatekeeper Consent scripts (GDPR for ads)
+- Lines 8-13: Ezoic Ad Platform script and ezstandalone initialization
+- Line 27: Ezoic domain verification meta tag
+- Lines 39-41: Google AdSense meta tag and script
+
+Keep:
+- Google Analytics (gtag.js)
+- All SEO meta tags and structured data
+- Font preloads
+
+---
+
+#### 2. `src/App.tsx` - Remove Ezoic Hook
+
+Changes:
+- Remove import: `import { useEzoicRouteRefresh } from "@/hooks/useEzoicRouteRefresh";` (line 7)
+- Remove call: `useEzoicRouteRefresh();` (line 77)
+
+---
+
+#### 3. `src/components/tool-sections/ToolPagePromoSections.tsx` - Remove Ad Banner
+
+Changes:
+- Remove import: `import { NativeAdBanner } from "@/components/NativeAdBanner";` (line 12)
+- Remove JSX: `<NativeAdBanner />` (line 65)
+
+---
+
+#### 4. `src/components/tool-sections/index.ts` - Remove Export
+
+Changes:
+- Remove line 19: `export { NativeAdBanner } from "@/components/NativeAdBanner";`
+
+---
+
+#### 5. `src/pages/LandingPage.tsx` - Remove Ad Banner
+
+Changes:
+- Remove import: `import { NativeAdBanner } from "@/components/NativeAdBanner";` (line 10)
+- Remove JSX: `<NativeAdBanner />` (lines 281-282)
+
+---
+
+#### 6. `src/pages/BlogPost.tsx` - Remove Ad Banner
+
+Changes:
+- Remove import: `import { NativeAdBanner } from "@/components/NativeAdBanner";` (line 9)
+- Remove JSX: `<NativeAdBanner />` (lines 660-661)
+
+---
+
+#### 7. `src/pages/FAQ.tsx` - Remove Ad Banner
+
+Changes:
+- Remove import: `import { NativeAdBanner } from "@/components/NativeAdBanner";` (line 8)
+- Remove JSX: `<NativeAdBanner />` (lines 142-143)
+
+---
+
+#### 8. `src/pages/Pricing.tsx` - Remove Ad Banner
+
+Changes:
+- Remove import: `import { NativeAdBanner } from "@/components/NativeAdBanner";` (line 22)
+- Remove JSX: `<NativeAdBanner />` (lines 406-407)
+
+---
+
+#### 9. `src/pages/Contact.tsx` - Remove Ad Banner
+
+Changes:
+- Remove import: `import { NativeAdBanner } from "@/components/NativeAdBanner";` (line 12)
+- Remove JSX: `<NativeAdBanner />` (lines 132-133)
+
+---
+
+#### 10. `src/pages/Blog.tsx` - Remove Ad Banner
+
+Changes:
+- Remove import: `import { NativeAdBanner } from "@/components/NativeAdBanner";` (line 9)
+- Remove JSX: `<NativeAdBanner />` (lines 175-176)
+
+---
+
+#### 11. `src/pages/About.tsx` - Remove Ad Banner
+
+Changes:
+- Remove import: `import { NativeAdBanner } from "@/components/NativeAdBanner";` (line 8)
+- Remove JSX: `<NativeAdBanner />` (lines 120-121)
+
+---
+
+#### 12. `src/pages/Enterprise.tsx` - Remove Ad Banner
+
+Changes:
+- Remove import: `import { NativeAdBanner } from "@/components/NativeAdBanner";` (line 14)
+- Remove JSX: `<NativeAdBanner />` (lines 305-306)
+
+---
+
+#### 13. `src/pages/Tools.tsx` - Remove Ad Banner
+
+Changes:
+- Remove import: `import { NativeAdBanner } from "@/components/NativeAdBanner";` (line 20)
+- Remove JSX: `<NativeAdBanner />` (lines 233-234)
+
+---
+
+### Summary
+
+| Action | Count |
+|--------|-------|
+| Files to delete | 5 |
+| Files to modify | 13 |
+| External scripts removed | 4 (Gatekeeper CMP x2, Ezoic, AdSense) |
+| Ad components removed | 13 instances |
+
+---
+
+### Expected Outcome
+
+After implementation:
+- No ad scripts loading from external domains
+- No ad containers rendered anywhere in the app
+- Cleaner page load (faster performance)
+- No Monetag/Adsterra/Ezoic/AdSense code remaining
+- Bot detection and scroll progress hooks removed (only used for ads)
+
