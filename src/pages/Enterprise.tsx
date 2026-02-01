@@ -11,6 +11,7 @@ import { z } from "zod";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { AdBanner } from "@/components/AdBanner";
 
 
 const enterpriseFormSchema = z.object({
@@ -148,6 +149,7 @@ const Enterprise = () => {
           ))}
         </div>
 
+        <AdBanner />
 
         {/* Contact Form */}
         <div className="max-w-3xl mx-auto">
