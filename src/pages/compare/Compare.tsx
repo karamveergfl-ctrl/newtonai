@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { competitors, newtonFeatures } from "./competitorData";
 import { useCurrency } from "@/hooks/useCurrency";
 import { DISPLAY_PRICING, COMPETITOR_PRICING, CURRENCY_FLAGS, CurrencyCode } from "@/lib/currencyUtils";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 import {
   Select,
   SelectContent,
@@ -116,7 +116,7 @@ const Compare = () => {
         </section>
 
         {/* Banner Ad Placement A - After Highlights */}
-        <SmartBanner placement="A" className="container" />
+        <AdBanner className="container" />
 
         {/* Competitor Grid */}
         <section className="py-16">
@@ -191,7 +191,7 @@ const Compare = () => {
         </section>
 
         {/* Banner Ad Placement B - After Competitor Grid */}
-        <SmartBanner placement="B" className="container" />
+        <AdBanner className="container" />
 
         {/* Quick Feature Matrix */}
         <section className="py-16 bg-muted/30">
@@ -264,7 +264,7 @@ const Compare = () => {
         </section>
 
         {/* Banner Ad Placement C - Before CTA */}
-        <SmartBanner placement="C" className="container" />
+        <AdBanner className="container" />
 
         {/* CTA Section */}
         <section className="py-20">

@@ -8,7 +8,7 @@ import UniqueFeatures from "@/components/compare/UniqueFeatures";
 import CompetitorTestimonials from "@/components/compare/CompetitorTestimonials";
 import FeatureParitySection from "@/components/compare/FeatureParitySection";
 import { CTASection } from "@/components/CTASection";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 
 const StudyFetchComparison = () => {
   return (
@@ -37,7 +37,7 @@ const StudyFetchComparison = () => {
         </section>
 
         {/* Banner Ad Placement A - After Comparison Table */}
-        <SmartBanner placement="A" className="container" />
+        <AdBanner className="container" />
 
         <FeatureParitySection competitor="studyfetch" />
 
@@ -81,7 +81,7 @@ const StudyFetchComparison = () => {
         </section>
 
         {/* Banner Ad Placement C - Before CTA */}
-        <SmartBanner placement="C" className="container" />
+        <AdBanner className="container" />
 
         <CTASection
           title="Ready to Save 55% vs StudyFetch?"
