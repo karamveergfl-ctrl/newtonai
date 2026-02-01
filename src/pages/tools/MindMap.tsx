@@ -24,7 +24,7 @@ import {
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 
 
 type MindMapStyle = "radial" | "tree" | "cluster" | "timeline";
@@ -305,8 +305,8 @@ const MindMap = () => {
                     {/* Inline recents - just below input */}
                     <InlineRecents toolId="mind-map" />
                     
-                    {/* Smart Banner Placement A - Mandatory, below action area */}
-                    <SmartBanner placement="A" />
+                    {/* Ad Banner */}
+                    <AdBanner />
                     
                     {/* Promotional sections with FAQ included */}
                     <ToolPagePromoSections toolId="mind-map" />

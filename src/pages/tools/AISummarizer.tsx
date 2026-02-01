@@ -37,7 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 
 import {
   DropdownMenu,
@@ -1037,8 +1037,8 @@ const AISummarizer = () => {
             {/* Inline recents - just below input */}
             <InlineRecents toolId="summarizer" />
 
-            {/* Smart Banner Placement A - Mandatory, below action area */}
-            {!summary && <SmartBanner placement="A" />}
+            {/* Ad Banner */}
+            {!summary && <AdBanner />}
             
             {/* Promotional sections with FAQ included - show when no summary */}
             {!summary && (

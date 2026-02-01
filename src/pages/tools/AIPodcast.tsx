@@ -24,7 +24,7 @@ import { usePodcastPreferences } from "@/hooks/usePodcastPreferences";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
 import { StudyStreakWidget } from "@/components/StudyStreakWidget";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 
 
 interface PodcastSegment {
@@ -557,8 +557,8 @@ export default function AIPodcast() {
                 </div>
               </div>
 
-              {/* Smart Banner Placement A - Mandatory, below action area */}
-              <SmartBanner placement="A" />
+              {/* Ad Banner */}
+              <AdBanner />
 
               {/* Promotional sections with FAQ included */}
               <ToolPagePromoSections toolId="podcast" />
