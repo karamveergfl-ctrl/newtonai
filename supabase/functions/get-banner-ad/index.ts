@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ADSTERRA_KEY = "c5d398ab0a723a7cfa61f3c2d7960602";
+const ADSTERRA_KEY = "fe9d10672684b2efb3db57ecdb954f85";
 
 interface BannerAdResponse {
   provider: "adsterra" | null;
