@@ -25,7 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
-import { AdBanner } from "@/components/AdBanner";
+import { PrimaryAdBanner } from "@/components/PrimaryAdBanner";
 
 import {
   DropdownMenu,
@@ -319,8 +319,8 @@ const HomeworkHelp = () => {
             </CardContent>
           </Card>
 
-          {/* Ad Banner */}
-          {!solution && !isLoading && <AdBanner />}
+          {/* Ad Banner - Primary placement, always shows */}
+          {!solution && !isLoading && <PrimaryAdBanner />}
 
           {/* Promotional sections with FAQ included - show when no solution */}
           {!solution && !isLoading && (
