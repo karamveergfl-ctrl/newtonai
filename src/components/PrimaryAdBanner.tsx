@@ -22,14 +22,14 @@ const AD_HTML = `<!DOCTYPE html>
 <body>
   <script>
     atOptions = {
-      'key' : 'c5d398ab0a723a7cfa61f3c2d7960602',
+      'key' : 'fe9d10672684b2efb3db57ecdb954f85',
       'format' : 'iframe',
       'height' : 90,
       'width' : 728,
       'params' : {}
     };
   </script>
-  <script src="https://lozengehelped.com/c5d398ab0a723a7cfa61f3c2d7960602/invoke.js"></script>
+  <script src="https://lozengehelped.com/fe9d10672684b2efb3db57ecdb954f85/invoke.js"></script>
 </body>
 </html>`;
 
