@@ -1,161 +1,212 @@
 
 
-# Plan: Add Ad Banners Across All Pages
+# Plan: Fix Ads with 3-Second Delayed Loading
 
 ## Summary
 
-I'll ensure ad banners are properly placed across all pages of the NewtonAI application, including adding a new banner above the footer on the dashboard page as shown in your reference image.
+I'll rewrite the ad components to use **direct script injection** (which actually works with Adsterra) combined with a **3-second delay** after the user reaches the page, exactly like how it worked when you first connected Adsterra.
 
 ---
 
-## Current Ad Status Analysis
+## The Problem
 
-### Pages WITH Ads (Already Implemented)
+The current implementation has two issues:
 
-| Page | Ad Placements |
-|------|---------------|
-| `/` (LandingPage) | 3x `AdBanner` (after features, after benefits, before CTA) |
-| `/about` | 1x `AdBanner` (before CTA) |
-| `/faq` | 2x `AdBanner` (after FAQ list, before footer) |
-| `/compare` | 3x `AdBanner` (after highlights, after grid, before CTA) |
-| `/compare/chegg` | 2x `AdBanner` |
-| `/compare/quizlet` | 2x `AdBanner` |
-| `/compare/studocu` | 2x `AdBanner` |
-| `/compare/studyfetch` | 2x `AdBanner` |
-| `/compare/course-hero` | 2x `AdBanner` |
-| `/compare/chatgpt` | 2x `AdBanner` |
-| `/compare/studyx` | 2x `AdBanner` |
-| `/tools/quiz` | 1x `PrimaryAdBanner` + `ToolPagePromoSections` (contains 2x `AdBanner`) |
-| `/tools/flashcards` | 1x `PrimaryAdBanner` + `ToolPagePromoSections` |
-| `/tools/homework-help` | 1x `PrimaryAdBanner` + `ToolPagePromoSections` |
-| `/tools/summarizer` | 1x `PrimaryAdBanner` + `ToolPagePromoSections` |
-| `/tools/mind-map` | 1x `PrimaryAdBanner` + `ToolPagePromoSections` |
-| `/tools/ai-podcast` | 1x `PrimaryAdBanner` + `ToolPagePromoSections` |
-| `/tools/ai-notes` | 1x `PrimaryAdBanner` + `ToolPagePromoSections` |
-
-### Pages WITHOUT Ads (Need Adding)
-
-| Page | Current State | Proposed Ads |
-|------|---------------|--------------|
-| `/dashboard` (Index.tsx) | No ads | Add 1x `AdBanner` above footer in AppLayout |
-| `/pricing` | No ads | Add 1x `AdBanner` after pricing cards |
-| `/contact` | No ads | Add 1x `AdBanner` before footer |
-| `/enterprise` | No ads | Add 1x `AdBanner` before footer |
-| `/terms` | No ads | Add 1x `AdBanner` before footer |
-| `/privacy` | No ads | Add 1x `AdBanner` before footer |
-| `/refund` | No ads | Add 1x `AdBanner` before footer |
-| `/tools` (Tools.tsx) | No ads | Add 1x `AdBanner` mid-page |
+1. **iframe + srcDoc + sandbox** blocks Adsterra's script from creating its nested iframe (ads don't render)
+2. No delay mechanism - ads try to load immediately but fail silently
 
 ---
 
-## Implementation Plan
+## Solution
 
-### Phase 1: Add Global Footer Ad to AppLayout (Dashboard)
+Replace the iframe approach with **direct DOM script injection** using React hooks, wrapped in a **3-second setTimeout**.
 
-Modify `src/components/AppLayout.tsx` to include an `AdBanner` above the footer. This ensures ALL authenticated pages using `AppLayout` get a banner above the footer automatically.
+---
 
-**Files to Modify:**
-- `src/components/AppLayout.tsx`
-
-**Changes:**
-```tsx
-// Import AdBanner
-import { AdBanner } from "@/components/AdBanner";
-
-// Add AdBanner above Footer in ScrollableContent
-<AdBanner className="mb-0" />
-{showFooter && <Footer />}
-```
-
-### Phase 2: Add Ads to Missing Static Pages
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/Pricing.tsx` | Add 1x `AdBanner` after feature comparison table |
-| `src/pages/Contact.tsx` | Add 1x `AdBanner` before footer |
-| `src/pages/Enterprise.tsx` | Add 1x `AdBanner` after features, before form |
-| `src/pages/Terms.tsx` | Add 1x `AdBanner` before footer |
-| `src/pages/Privacy.tsx` | Add 1x `AdBanner` before footer |
-| `src/pages/Refund.tsx` | Add 1x `AdBanner` before footer |
-| `src/pages/Tools.tsx` | Add 1x `AdBanner` mid-page |
-
-### Phase 3: Ensure Instant Ad Loading with loading="eager"
-
-Both `AdBanner` and `PrimaryAdBanner` already use `loading="eager"` attribute which ensures ads load immediately when users navigate or scroll. No changes needed.
+| `src/components/AdBanner.tsx` | Complete rewrite with direct injection + 3s delay |
+| `src/components/PrimaryAdBanner.tsx` | Complete rewrite with direct injection + 3s delay |
 
 ---
 
-## Files to Modify (Complete List)
+## New Implementation
 
-| File | Action |
-|------|--------|
-| `src/components/AppLayout.tsx` | Add `AdBanner` above Footer for dashboard pages |
-| `src/pages/Pricing.tsx` | Add `AdBanner` import and placement |
-| `src/pages/Contact.tsx` | Add `AdBanner` import and placement |
-| `src/pages/Enterprise.tsx` | Add `AdBanner` import and placement |
-| `src/pages/Terms.tsx` | Add `AdBanner` import and placement |
-| `src/pages/Privacy.tsx` | Add `AdBanner` import and placement |
-| `src/pages/Refund.tsx` | Add `AdBanner` import and placement |
-| `src/pages/Tools.tsx` | Add `AdBanner` import and placement |
+### AdBanner.tsx
+
+```tsx
+import { useEffect, useRef, useState } from "react";
+import { useCreditsContext } from "@/contexts/CreditsContext";
+import { useStudyContext } from "@/contexts/StudyContext";
+import { cn } from "@/lib/utils";
+
+interface AdBannerProps {
+  className?: string;
+}
+
+export function AdBanner({ className }: AdBannerProps) {
+  const { isPremium } = useCreditsContext();
+  const { isInDeepStudy } = useStudyContext();
+  const adContainerRef = useRef<HTMLDivElement>(null);
+  const scriptLoaded = useRef(false);
+  const [showAd, setShowAd] = useState(false);
+
+  useEffect(() => {
+    // 3-second delay before loading ad
+    const timer = setTimeout(() => {
+      setShowAd(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!showAd || scriptLoaded.current || !adContainerRef.current) return;
+    if (isPremium || isInDeepStudy) return;
+    
+    scriptLoaded.current = true;
+
+    // Set atOptions on window BEFORE loading script
+    (window as any).atOptions = {
+      key: 'fe9d10672684b2efb3db57ecdb954f85',
+      format: 'iframe',
+      height: 90,
+      width: 728,
+      params: {}
+    };
+
+    // Create and inject script
+    const script = document.createElement('script');
+    script.src = 'https://lozengehelped.com/fe9d10672684b2efb3db57ecdb954f85/invoke.js';
+    script.async = true;
+    adContainerRef.current.appendChild(script);
+
+    return () => {
+      if (adContainerRef.current) {
+        adContainerRef.current.innerHTML = '';
+      }
+      scriptLoaded.current = false;
+    };
+  }, [showAd, isPremium, isInDeepStudy]);
+
+  // Hide for premium users or during deep study
+  if (isPremium || isInDeepStudy) return null;
+
+  return (
+    <div className={cn("w-full flex flex-col items-center my-6", className)}>
+      <span className="text-[10px] text-muted-foreground/60 mb-1 uppercase tracking-wider">
+        Sponsored
+      </span>
+      <div 
+        ref={adContainerRef}
+        className="w-[728px] max-w-full h-[90px] flex items-center justify-center rounded-lg"
+      />
+    </div>
+  );
+}
+```
+
+### PrimaryAdBanner.tsx
+
+Same pattern but without `isInDeepStudy` suppression (stays visible during loading to maximize fill rate):
+
+```tsx
+import { useEffect, useRef, useState } from "react";
+import { useCreditsContext } from "@/contexts/CreditsContext";
+import { cn } from "@/lib/utils";
+
+interface PrimaryAdBannerProps {
+  className?: string;
+}
+
+export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
+  const { isPremium, loading } = useCreditsContext();
+  const adContainerRef = useRef<HTMLDivElement>(null);
+  const scriptLoaded = useRef(false);
+  const [showAd, setShowAd] = useState(false);
+
+  useEffect(() => {
+    // 3-second delay before loading ad
+    const timer = setTimeout(() => {
+      setShowAd(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!showAd || scriptLoaded.current || !adContainerRef.current) return;
+    if (!loading && isPremium) return;
+    
+    scriptLoaded.current = true;
+
+    (window as any).atOptions = {
+      key: 'fe9d10672684b2efb3db57ecdb954f85',
+      format: 'iframe',
+      height: 90,
+      width: 728,
+      params: {}
+    };
+
+    const script = document.createElement('script');
+    script.src = 'https://lozengehelped.com/fe9d10672684b2efb3db57ecdb954f85/invoke.js';
+    script.async = true;
+    adContainerRef.current.appendChild(script);
+
+    return () => {
+      if (adContainerRef.current) {
+        adContainerRef.current.innerHTML = '';
+      }
+      scriptLoaded.current = false;
+    };
+  }, [showAd, isPremium, loading]);
+
+  if (!loading && isPremium) return null;
+
+  return (
+    <div className={cn("w-full flex flex-col items-center my-6 min-h-[106px]", className)}>
+      <span className="text-[10px] text-muted-foreground/60 mb-1 uppercase tracking-wider">
+        Sponsored
+      </span>
+      <div 
+        ref={adContainerRef}
+        className="w-[728px] max-w-full h-[90px] flex items-center justify-center rounded-lg"
+      />
+    </div>
+  );
+}
+```
 
 ---
 
-## Technical Details
+## How It Works
 
-### Ad Suppression Logic
-
-Both ad components already implement proper suppression:
-
-- **`AdBanner`**: Hidden for `isPremium` users OR during `isInDeepStudy`
-- **`PrimaryAdBanner`**: Only hidden for confirmed `isPremium` users (visible during loading to maximize fill rate)
-
-### Ad Key Configuration
-
-Using the newly whitelisted Adsterra key:
-- **Key:** `fe9d10672684b2efb3db57ecdb954f85`
-- **Domain:** `newtonai.lovable.app`
-- **Format:** 728x90 leaderboard
-
-### Instant Loading
-
-The iframe uses `loading="eager"` which bypasses lazy loading, ensuring ads appear immediately when users navigate to pages.
+1. **User lands on page** → Component mounts, starts 3-second timer
+2. **After 3 seconds** → `setShowAd(true)` triggers the second useEffect
+3. **Script injection** → Sets `window.atOptions` and appends the invoke.js script directly to the DOM
+4. **Adsterra renders** → The script creates its iframe inside the container div
+5. **Cleanup on unmount** → Properly removes script when navigating away
 
 ---
 
-## Ad Placement Examples
+## Why This Fixes the Issue
 
-### Dashboard Page (After Changes)
-
-```
-[Sidebar] | [Main Content Area]
-          | [Upload Section]
-          | [Topic-Based Video Search Card]
-          | [Screenshot to Solve Card]
-          |      ...
-          | [AdBanner] ← NEW (above footer)
-          | [Footer]
-```
-
-### Pricing Page (After Changes)
-
-```
-[Header]
-[Pricing Cards (Free/Pro/Ultra)]
-[Feature Comparison Table]
-[AdBanner] ← NEW
-[Enterprise CTA]
-[Footer]
-```
+| Problem | Solution |
+|---------|----------|
+| Sandbox blocking script execution | Direct injection bypasses sandbox |
+| No 3-second delay | setTimeout provides exact delay |
+| Silent failures | Script runs in main document context |
+| No ad appearing | Direct DOM injection is Adsterra's recommended method |
 
 ---
 
 ## Expected Result
 
-After implementing these changes:
-
-1. All pages will have at least one ad banner placement
-2. Dashboard page specifically will show an ad above the footer
-3. Ads will load instantly on navigation/scroll using `loading="eager"`
-4. Premium users and deep study mode will continue to hide ads
-5. Consistent ad experience across the entire application
+- User visits `/tools/quiz`
+- "Sponsored" label appears immediately (placeholder)
+- After exactly 3 seconds, the Adsterra ad loads and displays
+- Works on all pages across the app
+- Premium users and deep study mode still hide ads
 
