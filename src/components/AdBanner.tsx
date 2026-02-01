@@ -48,7 +48,7 @@ export function AdBanner({ className }: AdBannerProps) {
       </span>
       <iframe
         srcDoc={AD_HTML}
-        sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         className="border-0 w-[728px] max-w-full h-[90px] overflow-hidden rounded-lg"
         title="Advertisement"
       />
