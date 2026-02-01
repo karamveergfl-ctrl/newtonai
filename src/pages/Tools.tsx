@@ -17,6 +17,7 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { AdBanner } from "@/components/AdBanner";
 
 
 const tools = [
@@ -228,8 +229,9 @@ const Tools = () => {
             </div>
           ))}
         </div>
+        
+        <AdBanner />
       </section>
-
 
       {/* CTA Section */}
       <section className="bg-primary text-primary-foreground py-16">

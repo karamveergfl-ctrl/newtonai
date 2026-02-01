@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { AdBanner } from "@/components/AdBanner";
 import {
   Accordion,
   AccordionContent,
@@ -469,6 +470,8 @@ const Refund = () => {
             </AccordionItem>
           </Accordion>
         </div>
+        
+        <AdBanner />
       </main>
 
       <Footer />

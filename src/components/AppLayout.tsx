@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Footer from "@/components/Footer";
 import { TopStatsBar } from "@/components/TopStatsBar";
+import { AdBanner } from "@/components/AdBanner";
 import { useUsageLimitNotifications } from "@/hooks/useUsageLimitNotifications";
 import { FloatingUpgradeBanner } from "@/components/FloatingUpgradeBanner";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
@@ -22,7 +23,12 @@ function ScrollableContent({ children, showFooter }: { children: React.ReactNode
       onScroll={handleScroll}
     >
       {children}
-      {showFooter && <Footer />}
+      {showFooter && (
+        <>
+          <AdBanner className="mb-0" />
+          <Footer />
+        </>
+      )}
     </div>
   );
 }

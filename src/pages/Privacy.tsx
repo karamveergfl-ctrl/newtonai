@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import SEOHead from "@/components/SEOHead";
+import { AdBanner } from "@/components/AdBanner";
 import {
   Accordion,
   AccordionContent,
@@ -489,6 +490,8 @@ const Privacy = () => {
             </AccordionItem>
           </Accordion>
         </div>
+        
+        <AdBanner />
       </main>
 
       <Footer />

@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { PricingCard } from "@/components/pricing/PricingCard";
-
+import { AdBanner } from "@/components/AdBanner";
 
 // Feature comparison data for the table
 const featureLimits = [
@@ -403,6 +403,7 @@ const Pricing = () => {
           </div>
         </div>
 
+        <AdBanner />
 
         {/* Enterprise CTA */}
         <div className="mt-16 text-center p-8 rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border border-primary/20">
