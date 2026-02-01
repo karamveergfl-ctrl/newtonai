@@ -1,57 +1,59 @@
 
+# Plan: Simplify Adsterra Banner Ads
 
-# Plan: Load First Ad Immediately, Others After Delay
+## Current Status
 
-## Summary
-
-I'll modify the ad loading strategy so that:
-1. **`PrimaryAdBanner`** (the first/hero ad) loads **immediately** when user arrives on the page
-2. **`AdBanner`** (secondary ads) keeps the **3-second delay** to avoid overwhelming the page
-
-This approach prioritizes showing the most important ad slot instantly while keeping page performance smooth.
+The ad components are already using the correct **direct script injection** method. The implementation is sound, but I can simplify it further and ensure reliability.
 
 ---
 
-## Does Reducing Ad Count Affect Loading?
+## Simplifications
 
-**Answer:** Reducing the number of ads on a page has **minimal impact** on initial loading speed because:
+### 1. PrimaryAdBanner.tsx (Loads Immediately)
 
-- Each ad loads **asynchronously** (via `async` script tag)
-- Ads don't block each other or the main page content
-- The delay is artificial (setTimeout), not due to network congestion
+**Current complexity:** Checks both `loading` and `isPremium` states in useEffect dependencies, which can cause re-runs.
 
-**The real issue is the 3-second delay** - by removing it from `PrimaryAdBanner`, the first ad will appear instantly.
+**Simplified approach:**
+- Remove `loading` from the useEffect dependency
+- Only check premium status once the context is ready
+- Cleaner, more predictable behavior
+
+### 2. AdBanner.tsx (3-Second Delay)
+
+**Current complexity:** Uses two separate useEffects and a state variable.
+
+**Simplified approach:**
+- Combine into a single useEffect with setTimeout
+- Directly inject script after delay without intermediate state
 
 ---
 
-## Files to Modify
+## Simplified Code
 
-| File | Change |
-|------|--------|
-| `src/components/PrimaryAdBanner.tsx` | Remove 3-second delay - load immediately |
-| `src/components/AdBanner.tsx` | Keep 3-second delay for secondary ads |
-
----
-
-## Implementation
-
-### PrimaryAdBanner.tsx (Load Immediately)
-
-Remove the `showAd` state and setTimeout, inject script directly on mount:
+### PrimaryAdBanner.tsx
 
 ```tsx
+import { useEffect, useRef } from "react";
+import { useCreditsContext } from "@/contexts/CreditsContext";
+import { cn } from "@/lib/utils";
+
+interface PrimaryAdBannerProps {
+  className?: string;
+}
+
 export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
   const { isPremium, loading } = useCreditsContext();
   const adContainerRef = useRef<HTMLDivElement>(null);
   const scriptLoaded = useRef(false);
 
   useEffect(() => {
-    // Load immediately - no delay
+    // Skip if already loaded, no container, or premium user
     if (scriptLoaded.current || !adContainerRef.current) return;
     if (!loading && isPremium) return;
     
     scriptLoaded.current = true;
 
+    // Configure and inject Adsterra script
     (window as any).atOptions = {
       key: 'fe9d10672684b2efb3db57ecdb954f85',
       format: 'iframe',
@@ -73,40 +75,117 @@ export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
     };
   }, [isPremium, loading]);
 
-  // ... rest stays the same
+  if (!loading && isPremium) return null;
+
+  return (
+    <div className={cn("w-full flex flex-col items-center my-6 min-h-[106px]", className)}>
+      <span className="text-[10px] text-muted-foreground/60 mb-1 uppercase tracking-wider">
+        Sponsored
+      </span>
+      <div 
+        ref={adContainerRef}
+        className="w-[728px] max-w-full h-[90px] flex items-center justify-center rounded-lg"
+      />
+    </div>
+  );
 }
 ```
 
-### AdBanner.tsx (Keep 3-Second Delay)
+### AdBanner.tsx
 
-No changes needed - keeps the current 3-second delay for secondary placements.
+```tsx
+import { useEffect, useRef } from "react";
+import { useCreditsContext } from "@/contexts/CreditsContext";
+import { useStudyContext } from "@/contexts/StudyContext";
+import { cn } from "@/lib/utils";
+
+interface AdBannerProps {
+  className?: string;
+}
+
+export function AdBanner({ className }: AdBannerProps) {
+  const { isPremium } = useCreditsContext();
+  const { isInDeepStudy } = useStudyContext();
+  const adContainerRef = useRef<HTMLDivElement>(null);
+  const scriptLoaded = useRef(false);
+
+  useEffect(() => {
+    // Skip for premium users or deep study mode
+    if (isPremium || isInDeepStudy) return;
+    
+    // 3-second delay before loading ad
+    const timer = setTimeout(() => {
+      if (scriptLoaded.current || !adContainerRef.current) return;
+      
+      scriptLoaded.current = true;
+
+      // Configure and inject Adsterra script
+      (window as any).atOptions = {
+        key: 'fe9d10672684b2efb3db57ecdb954f85',
+        format: 'iframe',
+        height: 90,
+        width: 728,
+        params: {}
+      };
+
+      const script = document.createElement('script');
+      script.src = 'https://lozengehelped.com/fe9d10672684b2efb3db57ecdb954f85/invoke.js';
+      script.async = true;
+      adContainerRef.current.appendChild(script);
+    }, 3000);
+
+    return () => {
+      clearTimeout(timer);
+      if (adContainerRef.current) {
+        adContainerRef.current.innerHTML = '';
+      }
+      scriptLoaded.current = false;
+    };
+  }, [isPremium, isInDeepStudy]);
+
+  // Hide for premium users or during deep study
+  if (isPremium || isInDeepStudy) return null;
+
+  return (
+    <div className={cn("w-full flex flex-col items-center my-6", className)}>
+      <span className="text-[10px] text-muted-foreground/60 mb-1 uppercase tracking-wider">
+        Sponsored
+      </span>
+      <div 
+        ref={adContainerRef}
+        className="w-[728px] max-w-full h-[90px] flex items-center justify-center rounded-lg"
+      />
+    </div>
+  );
+}
+```
 
 ---
 
-## Loading Strategy
+## Key Changes
 
-| Component | When It Loads | Where It's Used |
-|-----------|---------------|-----------------|
-| `PrimaryAdBanner` | **Immediately** (0s) | Hero slot below upload areas on tool pages |
-| `AdBanner` | After 3 seconds | Footer areas, mid-page, promo sections |
-
----
-
-## Why This Works
-
-1. **User sees first ad instantly** - no wait time for the primary slot
-2. **Secondary ads load smoothly** - 3-second delay prevents layout shifts
-3. **No performance impact** - async loading doesn't block anything
-4. **Better fill rate** - immediate impressions for the hero ad slot
+| Component | Change | Benefit |
+|-----------|--------|---------|
+| `AdBanner` | Combine two useEffects into one | Simpler logic, fewer re-renders |
+| `AdBanner` | Remove `showAd` state | Less complexity, direct injection |
+| Both | Keep script injection method | This is what works with Adsterra |
 
 ---
 
-## Expected Behavior
+## Why Ads May Not Show in Preview
 
-| Time | What User Sees |
-|------|----------------|
-| 0s | Page loads, `PrimaryAdBanner` starts loading immediately |
-| ~0.5s | First ad appears in primary slot |
-| 3s | Secondary `AdBanner` ads start loading |
-| ~3.5s | All remaining ads visible |
+The ads work correctly but **Adsterra blocks non-whitelisted domains**:
 
+- Preview domain (`lovableproject.com`) → Blocked
+- Production domain (`newtonai.lovable.app`) → Whitelisted, ads will show
+
+**To verify ads work:** Publish to production and test on `newtonai.lovable.app`
+
+---
+
+## Files to Modify
+
+| File | Action |
+|------|--------|
+| `src/components/AdBanner.tsx` | Simplify to single useEffect |
+| `src/components/PrimaryAdBanner.tsx` | Already minimal, keep as-is |
