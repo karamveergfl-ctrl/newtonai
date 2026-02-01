@@ -12,12 +12,15 @@ export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
   const scriptLoaded = useRef(false);
 
   useEffect(() => {
-    // Load immediately - no delay for primary ad slot
+    // Don't load if already loaded or no container
     if (scriptLoaded.current || !adContainerRef.current) return;
+    
+    // Only skip for confirmed premium users (not during loading)
     if (!loading && isPremium) return;
     
     scriptLoaded.current = true;
 
+    // Configure Adsterra options
     (window as any).atOptions = {
       key: 'fe9d10672684b2efb3db57ecdb954f85',
       format: 'iframe',
@@ -26,6 +29,7 @@ export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
       params: {}
     };
 
+    // Inject Adsterra script
     const script = document.createElement('script');
     script.src = 'https://lozengehelped.com/fe9d10672684b2efb3db57ecdb954f85/invoke.js';
     script.async = true;
@@ -39,6 +43,7 @@ export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
     };
   }, [isPremium, loading]);
 
+  // Only hide for confirmed premium users
   if (!loading && isPremium) return null;
 
   return (
