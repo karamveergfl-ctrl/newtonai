@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useCreditsContext } from "@/contexts/CreditsContext";
 import { cn } from "@/lib/utils";
 
@@ -10,19 +10,10 @@ export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
   const { isPremium, loading } = useCreditsContext();
   const adContainerRef = useRef<HTMLDivElement>(null);
   const scriptLoaded = useRef(false);
-  const [showAd, setShowAd] = useState(false);
 
   useEffect(() => {
-    // 3-second delay before loading ad
-    const timer = setTimeout(() => {
-      setShowAd(true);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!showAd || scriptLoaded.current || !adContainerRef.current) return;
+    // Load immediately - no delay for primary ad slot
+    if (scriptLoaded.current || !adContainerRef.current) return;
     if (!loading && isPremium) return;
     
     scriptLoaded.current = true;
@@ -46,7 +37,7 @@ export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
       }
       scriptLoaded.current = false;
     };
-  }, [showAd, isPremium, loading]);
+  }, [isPremium, loading]);
 
   if (!loading && isPremium) return null;
 
