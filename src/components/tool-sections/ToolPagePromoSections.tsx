@@ -9,8 +9,7 @@ import { ToolPageWhyUse } from "./ToolPageWhyUse";
 import { ToolPageFAQ } from "./ToolPageFAQ";
 import { FloatingScrollTop } from "./FloatingScrollTop";
 import { toolPromoData, ToolId } from "./toolPromoData";
-import { PropellerAdBanner } from "@/components/PropellerAdBanner";
-import { AdsterraBanner } from "@/components/AdsterraBanner";
+import { SmartBanner } from "@/components/SmartBanner";
 
 
 interface ToolPagePromoSectionsProps {
@@ -42,8 +41,8 @@ export function ToolPagePromoSections({
       {/* Features Grid */}
       <ToolPageFeatures features={data.features} />
       
-      {/* Ezmob Banner - Single ad per page, loads after 50% scroll */}
-      <PropellerAdBanner adKey="327266" />
+      {/* Smart Banner Placement B - Mid-page, requires A success + long page */}
+      <SmartBanner placement="B" />
       
       {/* Trending Topics - Between Features and Subjects */}
       <ToolPageTrendingTopics />
@@ -60,8 +59,8 @@ export function ToolPagePromoSections({
       {/* FAQ Section - Above Why Use */}
       <ToolPageFAQ toolId={toolId} />
       
-      {/* Adsterra Banner - After FAQ, before CTA */}
-      <AdsterraBanner />
+      {/* Smart Banner Placement C - Above footer, requires A success */}
+      <SmartBanner placement="C" />
       
       {/* Why Use Section (CTA) */}
       <ToolPageWhyUse 

@@ -27,6 +27,7 @@ import {
 import { logGeneration } from "@/hooks/useGenerationHistory";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
+import { SmartBanner } from "@/components/SmartBanner";
 
 
 interface FlashcardData {
@@ -312,6 +313,9 @@ const AIFlashcards = () => {
                     <InlineRecents toolId="flashcards" />
                   </CardContent>
                 </Card>
+
+                {/* Smart Banner Placement A - Mandatory, below action area */}
+                <SmartBanner placement="A" />
 
                 {/* Promotional sections with FAQ included */}
                 <ToolPagePromoSections toolId="flashcards" />

@@ -9,6 +9,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { PodcastProvider } from "@/contexts/PodcastContext";
 import { ProcessingOverlayProvider } from "@/contexts/ProcessingOverlayContext";
 import { StudyProvider } from "@/contexts/StudyContext";
+import { BannerAdProvider } from "@/contexts/BannerAdContext";
 import { PodcastMiniPlayer } from "@/components/PodcastMiniPlayer";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { PageTransition } from "./components/PageTransition";
@@ -136,21 +137,23 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <ProcessingOverlayProvider>
         <StudyProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            {/* Global video preloader - forces browser to download & decode video at app startup */}
-            <VideoPreloader />
-            <BrowserRouter>
-              <ScrollToTop />
-              <PodcastProvider>
-                <AnimatedRoutes />
-                <PodcastMiniPlayer />
-                <CookieConsent />
-                <GlobalNewtonAssistant />
-              </PodcastProvider>
-            </BrowserRouter>
-          </TooltipProvider>
+          <BannerAdProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              {/* Global video preloader - forces browser to download & decode video at app startup */}
+              <VideoPreloader />
+              <BrowserRouter>
+                <ScrollToTop />
+                <PodcastProvider>
+                  <AnimatedRoutes />
+                  <PodcastMiniPlayer />
+                  <CookieConsent />
+                  <GlobalNewtonAssistant />
+                </PodcastProvider>
+              </BrowserRouter>
+            </TooltipProvider>
+          </BannerAdProvider>
         </StudyProvider>
       </ProcessingOverlayProvider>
     </QueryClientProvider>
