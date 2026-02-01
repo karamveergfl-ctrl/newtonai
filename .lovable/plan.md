@@ -1,109 +1,125 @@
 
-# Plan: Fix Adsterra Banner Ads Not Showing Instantly
+# Plan: Remove Monetag Ads Completely
 
-## Problem Analysis
+## Overview
 
-Based on code review, there are two issues preventing ads from showing instantly:
+Clean up all Monetag ad references from the codebase. Since the ad system has been simplified to use the inline `AdBanner` component (which only uses Adsterra), the Monetag fallback code and legacy components are no longer needed.
 
-### Issue 1: Incomplete Migration
-Several pages still use the old `SmartBanner` component which relies on the `get-banner-ad` edge function:
-- `LandingPage.tsx` (3 placements)
-- `FAQ.tsx` (2 placements)
-- `Compare.tsx` (3 placements)
-- `ChatGPTComparison.tsx` (2 placements)
-- `StudyFetchComparison.tsx` (2 placements)
+## Files to Modify/Delete
 
-### Issue 2: Missing Iframe Sandbox Permission
-The current `AdBanner` component uses:
+### 1. Delete Legacy Ad Files
+
+These files are no longer used since the migration to the simplified `AdBanner`:
+
+| File | Action | Reason |
+|------|--------|--------|
+| `src/components/SmartBanner.tsx` | DELETE | Replaced by simplified AdBanner |
+| `src/components/AdsterraBanner.tsx` | DELETE | Legacy, no longer imported |
+| `src/components/PropellerAdBanner.tsx` | DELETE | Legacy Ezmob component, unused |
+| `src/contexts/BannerAdContext.tsx` | DELETE | No longer needed - AdBanner is self-contained |
+
+### 2. Update App.tsx
+
+Remove the `BannerAdProvider` wrapper since it's no longer used:
+
+**Current:**
 ```tsx
-sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+import { BannerAdProvider } from "@/contexts/BannerAdContext";
+// ...
+<BannerAdProvider>
+  <TooltipProvider>
+    // ...
+  </TooltipProvider>
+</BannerAdProvider>
 ```
 
-Adsterra scripts require `allow-same-origin` to:
-- Access cookies for ad targeting/tracking
-- Use localStorage for frequency capping
-- Execute cross-origin script callbacks properly
-
-Without this permission, the Adsterra script loads but cannot properly fetch and render ad content.
-
----
-
-## Solution
-
-### 1. Fix AdBanner Sandbox Permissions
-
-Add `allow-same-origin` to the iframe sandbox attribute:
-
-**File:** `src/components/AdBanner.tsx`
-
+**Updated:**
 ```tsx
-<iframe
-  srcDoc={AD_HTML}
-  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-  className="border-0 w-[728px] max-w-full h-[90px] overflow-hidden rounded-lg"
-  title="Advertisement"
-/>
+// Remove BannerAdProvider import and wrapper
+<TooltipProvider>
+  // ...
+</TooltipProvider>
 ```
 
-### 2. Complete Migration to AdBanner
+### 3. Simplify Edge Function (Optional)
 
-Replace remaining `SmartBanner` usages with the simplified `AdBanner`:
+Clean up `supabase/functions/get-banner-ad/index.ts` to remove Monetag fallback code. Note: This edge function is technically unused now since `AdBanner` embeds the ad HTML directly, but cleaning it up ensures no confusion.
 
-| File | Current | Change To |
-|------|---------|-----------|
-| `src/pages/LandingPage.tsx` | 3x SmartBanner | 3x AdBanner |
-| `src/pages/FAQ.tsx` | 2x SmartBanner | 2x AdBanner |
-| `src/pages/compare/Compare.tsx` | 3x SmartBanner | 3x AdBanner |
-| `src/pages/compare/ChatGPTComparison.tsx` | 2x SmartBanner | 2x AdBanner |
-| `src/pages/compare/StudyFetchComparison.tsx` | 2x SmartBanner | 2x AdBanner |
+**Remove:**
+- `MONETAG_ZONE_ID` constant
+- `getMontagBannerHtml()` function
+- Monetag fallback logic in the serve handler
+- `"monetag"` from the provider type
 
-### 3. Optional Cleanup (After Verification)
+**Simplified version:**
+```typescript
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-Once ads work correctly, remove unused files:
-- `src/components/SmartBanner.tsx`
-- `src/components/AdsterraBanner.tsx`  
-- `src/contexts/BannerAdContext.tsx`
-- Remove `BannerAdProvider` from `App.tsx`
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
----
+const ADSTERRA_KEY = "c5d398ab0a723a7cfa61f3c2d7960602";
 
-## Technical Details
+interface BannerAdResponse {
+  provider: "adsterra" | null;
+  ad_html: string | null;
+}
 
-### Why `allow-same-origin` is Required
+function getAdsterraBannerHtml(): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { display: flex; justify-content: center; align-items: center; min-height: 90px; background: transparent; }
+  </style>
+</head>
+<body>
+  <script>
+    atOptions = { 'key': '${ADSTERRA_KEY}', 'format': 'iframe', 'height': 90, 'width': 728, 'params': {} };
+  </script>
+  <script src="https://lozengehelped.com/${ADSTERRA_KEY}/invoke.js"></script>
+</body>
+</html>`;
+}
 
-The Adsterra ad script (`invoke.js`) dynamically creates an internal iframe to display ads. Without `allow-same-origin`:
-- The script cannot access the parent frame's origin
-- Cookie-based ad targeting fails
-- The dynamically created ad iframe may be blocked
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
-### Security Considerations
+  try {
+    const response: BannerAdResponse = {
+      provider: "adsterra",
+      ad_html: getAdsterraBannerHtml(),
+    };
+    return new Response(JSON.stringify(response), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Banner ad error:", error);
+    return new Response(
+      JSON.stringify({ provider: null, ad_html: null }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+```
 
-Using `allow-same-origin` with `allow-scripts` does give the iframe full script execution capabilities with access to the parent's origin. However, since:
-1. The ad content comes from a trusted ad network (Adsterra)
-2. The iframe is sandboxed from other DOM elements
-3. This is standard practice for display advertising
+## Summary
 
-This is an acceptable trade-off for functional ad delivery.
+| Action | Files |
+|--------|-------|
+| DELETE | `SmartBanner.tsx`, `AdsterraBanner.tsx`, `PropellerAdBanner.tsx`, `BannerAdContext.tsx` |
+| UPDATE | `App.tsx` - remove BannerAdProvider |
+| SIMPLIFY | `get-banner-ad/index.ts` - remove Monetag code |
 
----
+## Result
 
-## Files to Modify
-
-| File | Action |
-|------|--------|
-| `src/components/AdBanner.tsx` | Add `allow-same-origin` to sandbox |
-| `src/pages/LandingPage.tsx` | Replace SmartBanner with AdBanner |
-| `src/pages/FAQ.tsx` | Replace SmartBanner with AdBanner |
-| `src/pages/compare/Compare.tsx` | Replace SmartBanner with AdBanner |
-| `src/pages/compare/ChatGPTComparison.tsx` | Replace SmartBanner with AdBanner |
-| `src/pages/compare/StudyFetchComparison.tsx` | Replace SmartBanner with AdBanner |
-
----
-
-## Expected Result
-
-After implementation:
-1. Adsterra scripts can properly execute and fetch ad creatives
-2. Ads load faster without edge function network round-trip
-3. Consistent ad behavior across all pages
-4. Premium users and deep study mode still hide ads correctly
+After cleanup:
+- Zero Monetag references in the codebase
+- Cleaner, simpler ad architecture
+- Only the self-contained `AdBanner` component remains
+- Reduced bundle size by removing unused code
