@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { useCreditsContext } from "@/contexts/CreditsContext";
 import { cn } from "@/lib/utils";
 
@@ -5,39 +6,48 @@ interface PrimaryAdBannerProps {
   className?: string;
 }
 
-const AD_HTML = `<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      display: flex; 
-      justify-content: center; 
-      align-items: center;
-      min-height: 90px;
-      background: transparent;
-    }
-  </style>
-</head>
-<body>
-  <script>
-    atOptions = {
-      'key' : 'fe9d10672684b2efb3db57ecdb954f85',
-      'format' : 'iframe',
-      'height' : 90,
-      'width' : 728,
-      'params' : {}
-    };
-  </script>
-  <script src="https://lozengehelped.com/fe9d10672684b2efb3db57ecdb954f85/invoke.js"></script>
-</body>
-</html>`;
-
 export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
   const { isPremium, loading } = useCreditsContext();
+  const adContainerRef = useRef<HTMLDivElement>(null);
+  const scriptLoaded = useRef(false);
+  const [showAd, setShowAd] = useState(false);
 
-  // Only hide for confirmed premium users (not during loading)
-  // This ensures the first ad ALWAYS appears until we confirm premium status
+  useEffect(() => {
+    // 3-second delay before loading ad
+    const timer = setTimeout(() => {
+      setShowAd(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!showAd || scriptLoaded.current || !adContainerRef.current) return;
+    if (!loading && isPremium) return;
+    
+    scriptLoaded.current = true;
+
+    (window as any).atOptions = {
+      key: 'fe9d10672684b2efb3db57ecdb954f85',
+      format: 'iframe',
+      height: 90,
+      width: 728,
+      params: {}
+    };
+
+    const script = document.createElement('script');
+    script.src = 'https://lozengehelped.com/fe9d10672684b2efb3db57ecdb954f85/invoke.js';
+    script.async = true;
+    adContainerRef.current.appendChild(script);
+
+    return () => {
+      if (adContainerRef.current) {
+        adContainerRef.current.innerHTML = '';
+      }
+      scriptLoaded.current = false;
+    };
+  }, [showAd, isPremium, loading]);
+
   if (!loading && isPremium) return null;
 
   return (
@@ -45,12 +55,9 @@ export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
       <span className="text-[10px] text-muted-foreground/60 mb-1 uppercase tracking-wider">
         Sponsored
       </span>
-      <iframe
-        srcDoc={AD_HTML}
-        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-        className="border-0 w-[728px] max-w-full h-[90px] overflow-hidden rounded-lg"
-        title="Advertisement"
-        loading="eager"
+      <div 
+        ref={adContainerRef}
+        className="w-[728px] max-w-full h-[90px] flex items-center justify-center rounded-lg"
       />
     </div>
   );
