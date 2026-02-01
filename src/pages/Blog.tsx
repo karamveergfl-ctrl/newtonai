@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { OptimizedBackgroundBlobs } from "@/components/OptimizedBackgroundBlobs";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 
 export interface BlogPost {
   slug: string;
@@ -128,8 +128,8 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* Banner Ad Placement A - After Hero */}
-      <SmartBanner placement="A" className="container mx-auto" />
+      {/* Ad Banner - After Hero */}
+      <AdBanner className="container mx-auto" />
 
       {/* Blog Posts Grid */}
       <section className="container mx-auto px-4 pb-16">
@@ -175,8 +175,8 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* Banner Ad Placement C - Before Footer */}
-      <SmartBanner placement="C" className="container mx-auto" />
+      {/* Ad Banner - Before Footer */}
+      <AdBanner className="container mx-auto" />
 
       <Footer />
     </div>

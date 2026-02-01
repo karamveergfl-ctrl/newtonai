@@ -25,7 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 
 import {
   DropdownMenu,
@@ -319,8 +319,8 @@ const HomeworkHelp = () => {
             </CardContent>
           </Card>
 
-          {/* Smart Banner Placement A - Mandatory, below action area */}
-          {!solution && !isLoading && <SmartBanner placement="A" />}
+          {/* Ad Banner */}
+          {!solution && !isLoading && <AdBanner />}
 
           {/* Promotional sections with FAQ included - show when no solution */}
           {!solution && !isLoading && (

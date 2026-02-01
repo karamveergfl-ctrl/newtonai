@@ -8,7 +8,7 @@ import UniqueFeatures from "@/components/compare/UniqueFeatures";
 import CompetitorTestimonials from "@/components/compare/CompetitorTestimonials";
 import FeatureParitySection from "@/components/compare/FeatureParitySection";
 import { CTASection } from "@/components/CTASection";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 
 const CourseHeroComparison = () => {
   return (
@@ -36,8 +36,8 @@ const CourseHeroComparison = () => {
           <ComparisonTable competitor="course-hero" />
         </section>
 
-        {/* Banner Ad Placement A - After Comparison Table */}
-        <SmartBanner placement="A" className="container" />
+        {/* Ad Banner */}
+        <AdBanner className="container" />
 
         <FeatureParitySection competitor="course-hero" />
 
@@ -85,8 +85,8 @@ const CourseHeroComparison = () => {
           </div>
         </section>
 
-        {/* Banner Ad Placement C - Before CTA */}
-        <SmartBanner placement="C" className="container" />
+        {/* Ad Banner */}
+        <AdBanner className="container" />
 
         <CTASection
           title="Get More for Less"

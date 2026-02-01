@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { InlineRecents } from "@/components/InlineRecents";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 
 import { useDropzone } from "react-dropzone";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -834,9 +834,9 @@ const AILectureNotes = () => {
             <InlineRecents toolId="notes" className="mt-0 pt-0 border-t-0" />
           )}
           
-          {/* Smart Banner Placement A - Mandatory, below action area */}
+          {/* Ad Banner */}
           {!notes && !isProcessing && !showTemplateSelection && (
-            <SmartBanner placement="A" />
+            <AdBanner />
           )}
           
           {/* Promotional sections - show when no notes yet */}

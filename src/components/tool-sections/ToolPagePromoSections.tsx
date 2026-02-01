@@ -9,7 +9,7 @@ import { ToolPageWhyUse } from "./ToolPageWhyUse";
 import { ToolPageFAQ } from "./ToolPageFAQ";
 import { FloatingScrollTop } from "./FloatingScrollTop";
 import { toolPromoData, ToolId } from "./toolPromoData";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 
 
 interface ToolPagePromoSectionsProps {
@@ -41,8 +41,8 @@ export function ToolPagePromoSections({
       {/* Features Grid */}
       <ToolPageFeatures features={data.features} />
       
-      {/* Smart Banner Placement B - Mid-page, requires A success + long page */}
-      <SmartBanner placement="B" />
+      {/* Ad Banner - Mid-page */}
+      <AdBanner />
       
       {/* Trending Topics - Between Features and Subjects */}
       <ToolPageTrendingTopics />
@@ -59,8 +59,8 @@ export function ToolPagePromoSections({
       {/* FAQ Section - Above Why Use */}
       <ToolPageFAQ toolId={toolId} />
       
-      {/* Smart Banner Placement C - Above footer, requires A success */}
-      <SmartBanner placement="C" />
+      {/* Ad Banner - Above footer */}
+      <AdBanner />
       
       {/* Why Use Section (CTA) */}
       <ToolPageWhyUse 

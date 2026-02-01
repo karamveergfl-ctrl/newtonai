@@ -8,7 +8,7 @@ import UniqueFeatures from "@/components/compare/UniqueFeatures";
 import CompetitorTestimonials from "@/components/compare/CompetitorTestimonials";
 import FeatureParitySection from "@/components/compare/FeatureParitySection";
 import { CTASection } from "@/components/CTASection";
-import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 
 const QuizletComparison = () => {
   return (
@@ -36,8 +36,8 @@ const QuizletComparison = () => {
           <ComparisonTable competitor="quizlet" />
         </section>
 
-        {/* Banner Ad Placement A - After Comparison Table */}
-        <SmartBanner placement="A" className="container" />
+        {/* Ad Banner */}
+        <AdBanner className="container" />
 
         <FeatureParitySection competitor="quizlet" />
 
@@ -81,8 +81,8 @@ const QuizletComparison = () => {
           </div>
         </section>
 
-        {/* Banner Ad Placement C - Before CTA */}
-        <SmartBanner placement="C" className="container" />
+        {/* Ad Banner */}
+        <AdBanner className="container" />
 
         <CTASection
           title="Upgrade from Quizlet Today"
