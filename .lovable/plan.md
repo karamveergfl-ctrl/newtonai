@@ -1,182 +1,251 @@
 
-# Plan: Smart Banner Ad System with Routing
+# Plan: Extend SmartBanner to Landing Pages and Fix Empty Container Issue
 
 ## Overview
 
-Implement a comprehensive banner ad system with Adsterra as primary and Monetag as fallback, featuring smart routing logic, placement hierarchy, and study-mode safety rules.
+This plan addresses two requirements:
+1. **Fix**: Ensure ad containers and "SPONSORED" label only appear when an actual ad loads
+2. **Extend**: Add SmartBanner placements to landing page, blog, compare pages, and other content pages
 
-## Architecture
+## Part 1: Fix SmartBanner Empty Container Issue
 
+### File: `src/components/SmartBanner.tsx`
+
+**Current Problem:**
+- Loading skeleton shows for Placement A (lines 160-163)
+- Container can render before ad confirmation
+- "Sponsored" label may show prematurely
+
+**Solution:**
+
+1. **Add iframe content confirmation state**
+   - New state: `isAdConfirmed` to track successful iframe load
+   - Use `onLoad` event on iframe to confirm content
+
+2. **Add 2500ms timeout safety**
+   - Start timer when `adHtml` is set
+   - If iframe doesn't load within timeout, collapse entirely
+
+3. **Remove loading skeleton**
+   - Delete lines 160-163 (the skeleton div)
+   - No height reservation before ad loads
+
+4. **Defer all rendering until confirmed**
+   - Only show container + label AFTER `isAdConfirmed === true`
+   - Return `null` during loading phase
+
+**Updated Logic Flow:**
 ```text
-┌──────────────────────────────────────────────────────────────────┐
-│                        FRONTEND                                  │
-├──────────────────────────────────────────────────────────────────┤
-│  SmartBannerContext (Global State)                               │
-│  ├─ placementALoaded: boolean                                    │
-│  ├─ cachedAdResponse: { provider, ad_html } | null               │
-│  └─ setPlacementALoaded()                                        │
-├──────────────────────────────────────────────────────────────────┤
-│  SmartBanner Component                                           │
-│  ├─ placement: "A" | "B" | "C"                                   │
-│  ├─ Placement A: Always loads immediately                        │
-│  ├─ Placement B: Lazy + requires A success + 2x viewport height  │
-│  └─ Placement C: Lazy + requires A success                       │
-└──────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                   EDGE FUNCTION: get-banner-ad                   │
-├──────────────────────────────────────────────────────────────────┤
-│  1. Try Adsterra banner (primary)                                │
-│  2. If fail → Try Monetag banner (fallback)                      │
-│  3. Return { provider, ad_html } or null                         │
-└──────────────────────────────────────────────────────────────────┘
+1. loadBannerAd() → backend returns ad_html
+2. Set adHtml state
+3. Start 2500ms timeout
+4. Render hidden iframe
+5. Wait for onLoad event
+   - If onLoad fires → set isAdConfirmed = true → show container
+   - If timeout expires first → set adHtml = null → render nothing
 ```
 
-## Files to Create
+## Part 2: Extend SmartBanner to Additional Pages
 
-### 1. Edge Function: `supabase/functions/get-banner-ad/index.ts`
+### Target Pages for Banner Ads
 
-Backend endpoint for ad routing logic:
-- Accepts no authentication (public banners)
-- Tries Adsterra first, then Monetag fallback
-- Returns standardized response: `{ provider: "adsterra" | "monetag", ad_html: string }`
-- Returns `{ provider: null, ad_html: null }` if both fail
+| Page | Placements | Location Details |
+|------|------------|------------------|
+| LandingPage.tsx | A, B, C | After features, after benefits, before footer |
+| Blog.tsx | A, C | After hero, before footer |
+| BlogPost.tsx | A, B, C | After title, mid-content, before footer |
+| FAQ.tsx | A, C | After FAQ list, before footer |
+| About.tsx | A, C | After values section, before footer |
+| Compare.tsx | A, B, C | After hero, mid-page, before CTA |
+| CheggComparison.tsx | A, C | After comparison table, before footer |
+| StudocuComparison.tsx | A, C | After comparison table, before footer |
+| QuizletComparison.tsx | A, C | After comparison table, before footer |
+| ChatGPTComparison.tsx | A, C | After comparison table, before footer |
+| CourseHeroComparison.tsx | A, C | After comparison table, before footer |
+| StudyFetchComparison.tsx | A, C | After comparison table, before footer |
+| StudyxComparison.tsx | A, C | After comparison table, before footer |
 
-```typescript
-// Response format
-{
-  provider: "adsterra" | "monetag" | null,
-  ad_html: string | null
-}
-```
+### Placement Guidelines
 
-### 2. Context: `src/contexts/BannerAdContext.tsx`
+**Placement A** (Mandatory - highest priority):
+- Position: After hero section OR first major content block
+- Always attempts to load
+- Must succeed for B/C to render
 
-Global state for banner ad coordination:
-- Tracks if Placement A successfully loaded
-- Caches ad response to avoid duplicate requests
-- Provides `loadBannerAd()` function
-- Exposes `placementALoaded` state for B/C placements
+**Placement B** (Optional):
+- Position: Mid-page natural break point
+- Only renders if: Placement A succeeded AND page height ≥ 2x viewport
+- Lazy loaded via IntersectionObserver
 
-### 3. Component: `src/components/SmartBanner.tsx`
+**Placement C** (Optional):
+- Position: Above footer / CTA section
+- Only renders if: Placement A succeeded
+- Lazy loaded via IntersectionObserver
 
-Unified banner component with placement logic:
+## Detailed File Changes
 
-| Placement | Location | Load Trigger | Conditions |
-|-----------|----------|--------------|------------|
-| A | Below action button | Immediate | Always attempts |
-| B | Mid-page | Scroll (IntersectionObserver) | A loaded + page height ≥ 2x viewport |
-| C | Above footer | Scroll (IntersectionObserver) | A loaded |
-
-Features:
-- Iframe isolation (srcDoc pattern from existing components)
-- Premium user suppression (`isPremium` check)
-- Deep study mode suppression (`isInDeepStudy` check)
-- "Sponsored" label only after successful load
-- Graceful collapse if no ad returned
-- 300x250 primary size, responsive sizing support
-
-### 4. Hook: `src/hooks/usePageHeight.ts`
-
-Utility hook to detect page height for Placement B visibility:
-- Returns `{ isLongPage: boolean }` (true if page ≥ 2x viewport)
-- Uses ResizeObserver for dynamic content
-
-## Files to Modify
-
-### 5. Tool Pages (All 7 files)
-
-Add Placement A immediately below the primary action button:
-
-**Files:**
-- `src/pages/tools/AIQuiz.tsx`
-- `src/pages/tools/AIFlashcards.tsx`
-- `src/pages/tools/AISummarizer.tsx`
-- `src/pages/tools/AILectureNotes.tsx`
-- `src/pages/tools/HomeworkHelp.tsx`
-- `src/pages/tools/MindMap.tsx`
-- `src/pages/tools/AIPodcast.tsx`
-
-**Pattern:**
-```tsx
-<ContentInputTabs ... />
-<SmartBanner placement="A" />  {/* NEW - Below input/action */}
-<InlineRecents ... />
-```
-
-### 6. Promo Sections: `src/components/tool-sections/ToolPagePromoSections.tsx`
-
-Replace existing ad components with SmartBanner placements B and C:
+### 1. `src/components/SmartBanner.tsx` (Fix)
 
 **Changes:**
-- Replace `PropellerAdBanner` with `<SmartBanner placement="B" />`
-- Replace `AdsterraBanner` with `<SmartBanner placement="C" />`
+- Add `isAdConfirmed` state (boolean, default false)
+- Add `timeoutRef` to track confirmation timeout
+- Add `handleIframeLoad` callback for iframe onLoad
+- Remove loading skeleton completely (lines 160-163)
+- Add timeout logic (2500ms) to cancel if no content
+- Update render logic to return `null` until `isAdConfirmed === true`
+- Move `setPlacementALoaded(true)` to onLoad handler
 
-### 7. App Provider: `src/App.tsx`
+### 2. `src/pages/LandingPage.tsx`
 
-Wrap app with `BannerAdProvider` for global state coordination.
-
-### 8. Config File: `supabase/config.toml`
-
-Add configuration for the new edge function:
-```toml
-[functions.get-banner-ad]
-verify_jwt = false
+**Add imports:**
+```tsx
+import { SmartBanner } from "@/components/SmartBanner";
 ```
 
-## Suppression Rules (Inherited)
+**Add placements:**
+- Placement A: After Features section (line ~208)
+- Placement B: After Benefits section (line ~275)
+- Placement C: Before CTASection (line ~283)
 
-The SmartBanner component will NOT render when:
-1. `isPremium === true` (from CreditsContext)
-2. `isInDeepStudy === true` (from StudyContext)
-3. Inside PDF viewer (no banner placements there)
-4. Inside quiz questions (Placement A only on initial form)
-5. Inside step-by-step solutions (no banners during solution display)
+### 3. `src/pages/Blog.tsx`
 
-## Ad HTML Templates
+**Add imports and placements:**
+- Placement A: After hero section, before blog grid (line ~128)
+- Placement C: Before Footer (line ~176)
 
-### Adsterra (Primary)
-```html
-<script>
-  atOptions = {
-    'key': 'f68fadee12d992a26443bfb050da5b07',
-    'format': 'iframe',
-    'height': 250,
-    'width': 300,
-    'params': {}
-  };
-</script>
-<script src="https://lozengehelped.com/f68fadee12d992a26443bfb050da5b07/invoke.js"></script>
+### 4. `src/pages/BlogPost.tsx`
+
+**Add imports and placements:**
+- Placement A: After post header/meta (after title and date)
+- Placement B: Mid-content (after ~50% of blog content)
+- Placement C: Before related posts or footer
+
+### 5. `src/pages/FAQ.tsx`
+
+**Add imports and placements:**
+- Placement A: After FAQ accordion (line ~141)
+- Placement C: Before CTA section (line ~144)
+
+### 6. `src/pages/About.tsx`
+
+**Add imports and placements:**
+- Placement A: After Values section (line ~117)
+- Placement C: Before CTA section (line ~122)
+
+### 7. `src/pages/compare/Compare.tsx`
+
+**Add imports and placements:**
+- Placement A: After NewtonAI highlights (line ~116)
+- Placement B: After competitor grid (line ~188)
+- Placement C: Before CTA section (line ~261)
+
+### 8. Individual Compare Pages (7 files)
+
+Files:
+- `src/pages/compare/CheggComparison.tsx`
+- `src/pages/compare/StudocuComparison.tsx`
+- `src/pages/compare/QuizletComparison.tsx`
+- `src/pages/compare/ChatGPTComparison.tsx`
+- `src/pages/compare/CourseHeroComparison.tsx`
+- `src/pages/compare/StudyFetchComparison.tsx`
+- `src/pages/compare/StudyxComparison.tsx`
+
+**Pattern for each:**
+- Placement A: After ComparisonTable section
+- Placement C: Before CTASection
+
+## Pages Excluded from Ads
+
+These pages should NOT have ads (sensitive or transactional):
+- Auth.tsx (login/signup flow)
+- Pricing.tsx (purchase decisions)
+- Profile.tsx (user settings)
+- Onboarding.tsx (new user flow)
+- PDFChat.tsx (deep study mode)
+- Index.tsx (main app - has tool-specific ads)
+- Tools.tsx (tool index - navigational)
+- Privacy.tsx, Terms.tsx, Refund.tsx (legal pages)
+- Contact.tsx, Enterprise.tsx (business pages)
+- Payment Success/Failure pages
+
+## Technical Implementation
+
+### SmartBanner Fix Code Structure
+
+```tsx
+// New states
+const [isAdConfirmed, setIsAdConfirmed] = useState(false);
+const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+// Handle iframe load confirmation
+const handleIframeLoad = useCallback(() => {
+  clearTimeout(timeoutRef.current);
+  setIsAdConfirmed(true);
+  if (placement === "A") {
+    setPlacementALoaded(true);
+  }
+}, [placement, setPlacementALoaded]);
+
+// In useEffect after setting adHtml:
+if (response.ad_html) {
+  setAdHtml(response.ad_html);
+  
+  // Start timeout - collapse if no load in 2500ms
+  timeoutRef.current = setTimeout(() => {
+    if (!isAdConfirmed) {
+      setAdHtml(null); // Force collapse
+    }
+  }, 2500);
+}
+
+// Cleanup
+useEffect(() => {
+  return () => clearTimeout(timeoutRef.current);
+}, []);
+
+// Render logic - ONLY when confirmed
+if (!isAdConfirmed || !adHtml) return null;
 ```
 
-### Monetag (Fallback)
-Requires Monetag zone ID to be configured. Will use similar iframe-based pattern.
+### Page Integration Pattern
 
-## Technical Details
+```tsx
+// Import at top
+import { SmartBanner } from "@/components/SmartBanner";
 
-| Aspect | Implementation |
-|--------|----------------|
-| Isolation | srcDoc iframe prevents JS pollution |
-| Caching | Single request per page load, cached in context |
-| Lazy loading | IntersectionObserver for B/C placements |
-| Error handling | Collapse container if ad fails |
-| Frequency | Same ad unit ID across all placements |
-| Sizing | 300x250 primary, responsive containers |
-| Labels | "Sponsored" appears only after ad loads |
-| Max per page | 3 banners maximum (A, B, C) |
+// In JSX - after major section
+<section className="py-16">
+  {/* Section content */}
+</section>
 
-## Secrets Required
+<SmartBanner placement="A" />
 
-The Monetag fallback will require a Monetag API key or zone ID. This can be added later when the user provides it. The system will work with Adsterra only until Monetag is configured.
+<section className="py-16">
+  {/* Next section */}
+</section>
+```
 
-## Summary
+## Context Provider Check
 
-1. Create edge function `get-banner-ad` for routing logic
-2. Create `BannerAdContext` for global coordination
-3. Create `SmartBanner` component with placement hierarchy
-4. Create `usePageHeight` hook for mid-page detection
-5. Update all 7 tool pages to add Placement A
-6. Update `ToolPagePromoSections` with Placements B and C
-7. Wrap app with `BannerAdProvider`
-8. Remove global Adsterra script from `index.html` (now component-based)
+The `BannerAdProvider` is already wrapped in `App.tsx`, so all pages will have access to the banner ad context.
+
+## Summary of Changes
+
+| Category | Files | Changes |
+|----------|-------|---------|
+| Fix | SmartBanner.tsx | Add confirmation state, timeout, remove skeleton |
+| Landing | LandingPage.tsx | Add 3 placements (A, B, C) |
+| Blog | Blog.tsx, BlogPost.tsx | Add 2-3 placements each |
+| Info | FAQ.tsx, About.tsx | Add 2 placements each |
+| Compare | Compare.tsx + 7 comparison pages | Add 2-3 placements each |
+
+**Total files to modify:** 12 files
+**Total new banner placements:** ~25 placements across all pages
+
+## Result
+
+1. Ad containers only appear when an actual ad successfully loads
+2. No empty "Sponsored" labels or placeholder containers
+3. Banner ads appear naturally on landing and content pages
+4. Premium users never see ads (existing suppression works)
+5. Ads never interrupt study flow or sensitive pages
