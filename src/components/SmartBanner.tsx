@@ -42,6 +42,7 @@ export function SmartBanner({ placement, className }: SmartBannerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const isConfirmedRef = useRef(false);
 
   // Determine if this placement should attempt to load
   const shouldAttempt = (() => {
@@ -60,6 +61,7 @@ export function SmartBanner({ placement, className }: SmartBannerProps) {
   // Handle iframe load confirmation
   const handleIframeLoad = useCallback(() => {
     clearTimeout(timeoutRef.current);
+    isConfirmedRef.current = true;
     setIsAdConfirmed(true);
     if (placement === "A") {
       setPlacementALoaded(true);
@@ -107,8 +109,8 @@ export function SmartBanner({ placement, className }: SmartBannerProps) {
           
           // Start 2500ms timeout - collapse if iframe doesn't load in time
           timeoutRef.current = setTimeout(() => {
-            // If ad hasn't confirmed by now, collapse entirely
-            if (!isAdConfirmed) {
+            // Check ref, not state (avoids stale closure)
+            if (!isConfirmedRef.current) {
               setAdHtml(null);
             }
           }, 2500);
@@ -152,24 +154,23 @@ export function SmartBanner({ placement, className }: SmartBannerProps) {
     return <div ref={containerRef} className="h-0 w-0" />;
   }
 
-  // CRITICAL: Only render container when ad is CONFIRMED loaded
-  // This prevents empty "Sponsored" labels and empty containers
-  if (!isAdConfirmed || !adHtml) return null;
+  // No ad content yet - render nothing
+  if (!adHtml) return null;
 
+  // Render iframe - but hide container until confirmed
   return (
     <div
       ref={containerRef}
       className={cn(
         "w-full flex flex-col items-center my-6",
+        !isAdConfirmed && "opacity-0 h-0 overflow-hidden",
         className
       )}
     >
-      {/* Sponsored label - only shown after ad confirmed */}
       <span className="text-[10px] text-muted-foreground/60 mb-1 uppercase tracking-wider">
         Sponsored
       </span>
       
-      {/* Ad iframe - isolated execution */}
       <iframe
         srcDoc={adHtml}
         onLoad={handleIframeLoad}
