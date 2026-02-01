@@ -7,8 +7,9 @@ import CTASection from "@/components/CTASection";
 import SEOHead from "@/components/SEOHead";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
 import StickyCTABar from "@/components/StickyCTABar";
+import { SmartBanner } from "@/components/SmartBanner";
 
-import { 
+import {
   BookOpen, 
   Brain, 
   FileText, 
@@ -207,6 +208,9 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Banner Ad Placement A - After Features */}
+      <SmartBanner placement="A" />
+
       {/* Mid-Page CTA */}
       <section className="py-12 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
         <div className="container mx-auto px-4 text-center">
@@ -274,10 +278,14 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Banner Ad Placement B - After Benefits */}
+      <SmartBanner placement="B" />
+
       {/* Testimonials */}
       <TestimonialsSection />
 
-
+      {/* Banner Ad Placement C - Before CTA */}
+      <SmartBanner placement="C" />
 
       {/* CTA Section */}
       <div id="footer-cta-section">

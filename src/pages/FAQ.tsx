@@ -5,6 +5,7 @@ import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { SmartBanner } from "@/components/SmartBanner";
 
 
 const faqs = [
@@ -139,6 +140,8 @@ const FAQ = () => {
           </Accordion>
         </div>
 
+        {/* Banner Ad Placement A - After FAQ List */}
+        <SmartBanner placement="A" className="max-w-3xl mx-auto" />
 
         {/* CTA Section */}
         <div className="text-center mt-16 p-8 bg-muted/50 rounded-2xl max-w-2xl mx-auto">
@@ -151,6 +154,8 @@ const FAQ = () => {
           </Link>
         </div>
 
+        {/* Banner Ad Placement C - Before Footer */}
+        <SmartBanner placement="C" className="max-w-3xl mx-auto" />
       </main>
 
       <Footer />

@@ -8,6 +8,7 @@ import UniqueFeatures from "@/components/compare/UniqueFeatures";
 import CompetitorTestimonials from "@/components/compare/CompetitorTestimonials";
 import FeatureParitySection from "@/components/compare/FeatureParitySection";
 import { CTASection } from "@/components/CTASection";
+import { SmartBanner } from "@/components/SmartBanner";
 
 const StudocuComparison = () => {
   return (
@@ -35,6 +36,8 @@ const StudocuComparison = () => {
           <ComparisonTable competitor="studocu" />
         </section>
 
+        {/* Banner Ad Placement A - After Comparison Table */}
+        <SmartBanner placement="A" className="container" />
 
         <FeatureParitySection competitor="studocu" />
 
@@ -81,6 +84,9 @@ const StudocuComparison = () => {
             </div>
           </div>
         </section>
+
+        {/* Banner Ad Placement C - Before CTA */}
+        <SmartBanner placement="C" className="container" />
 
         <CTASection
           title="Stop Searching, Start Creating"

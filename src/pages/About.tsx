@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { SmartBanner } from "@/components/SmartBanner";
 
 
 const values = [
@@ -116,7 +117,11 @@ const About = () => {
           </div>
         </section>
 
+        {/* Banner Ad Placement A - After Values */}
+        <SmartBanner placement="A" className="container mx-auto" />
 
+        {/* Banner Ad Placement C - Before CTA */}
+        <SmartBanner placement="C" className="container mx-auto" />
 
         {/* CTA Section */}
         <section className="bg-primary text-primary-foreground py-16 relative overflow-hidden">
