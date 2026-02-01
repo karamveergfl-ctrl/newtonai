@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 // Ad configuration - Adsterra primary, Monetag fallback
-const ADSTERRA_KEY = "f68fadee12d992a26443bfb050da5b07";
+const ADSTERRA_KEY = "c5d398ab0a723a7cfa61f3c2d7960602";
 const MONETAG_ZONE_ID = Deno.env.get("MONETAG_ZONE_ID") || "";
 
 interface BannerAdResponse {
@@ -29,7 +29,7 @@ function getAdsterraBannerHtml(): string {
       display: flex; 
       justify-content: center; 
       align-items: center;
-      min-height: 250px;
+      min-height: 90px;
       background: transparent;
     }
   </style>
@@ -39,8 +39,8 @@ function getAdsterraBannerHtml(): string {
     atOptions = {
       'key' : '${ADSTERRA_KEY}',
       'format' : 'iframe',
-      'height' : 250,
-      'width' : 300,
+      'height' : 90,
+      'width' : 728,
       'params' : {}
     };
   </script>
@@ -66,7 +66,7 @@ function getMontagBannerHtml(): string | null {
       display: flex; 
       justify-content: center; 
       align-items: center;
-      min-height: 250px;
+      min-height: 90px;
       background: transparent;
     }
   </style>
