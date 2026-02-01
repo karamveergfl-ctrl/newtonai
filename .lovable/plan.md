@@ -1,106 +1,109 @@
 
-# Plan: Fix SmartBanner Ads Not Showing
+# Plan: Replace Adsterra Banner with 728x90 Leaderboard Format
 
-## Root Cause Analysis
+## Overview
 
-The Adsterra banner ads are not displaying due to **two critical bugs** in the SmartBanner component:
+Replace the current 300x250 Adsterra banner with the new 728x90 leaderboard banner format. This requires updates to both the backend edge function and frontend component.
 
-### Bug 1: Iframe Never Renders (Main Issue)
-The component returns `null` at line 157 when `!isAdConfirmed` is true:
-```javascript
-if (!isAdConfirmed || !adHtml) return null;
+## Changes Required
+
+### 1. Edge Function: `supabase/functions/get-banner-ad/index.ts`
+
+**Current:**
+- Key: `f68fadee12d992a26443bfb050da5b07`
+- Dimensions: 300x250
+
+**Updated:**
+- Key: `c5d398ab0a723a7cfa61f3c2d7960602`
+- Dimensions: 728x90
+
+```typescript
+// Update key constant
+const ADSTERRA_KEY = "c5d398ab0a723a7cfa61f3c2d7960602";
+
+// Update HTML template
+function getAdsterraBannerHtml(): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      min-height: 90px;
+      background: transparent;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    atOptions = {
+      'key' : '${ADSTERRA_KEY}',
+      'format' : 'iframe',
+      'height' : 90,
+      'width' : 728,
+      'params' : {}
+    };
+  </script>
+  <script src="https://lozengehelped.com/${ADSTERRA_KEY}/invoke.js"></script>
+</body>
+</html>`;
+}
 ```
-This means:
-- When `adHtml` is received, the component still returns `null` because `isAdConfirmed` is `false`
-- The iframe never gets rendered
-- The `onLoad` event never fires
-- `isAdConfirmed` stays `false` forever
-- The ad never appears
 
-### Bug 2: Stale Closure in Timeout
-The timeout callback captures `isAdConfirmed` at creation time (always `false`), so even if `onLoad` fired, the timeout would still collapse the ad.
+### 2. Frontend Component: `src/components/SmartBanner.tsx`
 
-## Solution
+**Current:**
+- Iframe dimensions: `w-[300px] h-[250px]`
 
-Render the iframe as soon as `adHtml` is available, but keep it **visually hidden** until `onLoad` confirms the content loaded. Use a ref to track confirmation state for the timeout check.
+**Updated:**
+- Iframe dimensions: `w-[728px] h-[90px]`
+- Add max-width for mobile responsiveness
 
-### Changes to `src/components/SmartBanner.tsx`
+```tsx
+<iframe
+  srcDoc={adHtml}
+  onLoad={handleIframeLoad}
+  sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+  className="border-0 w-[728px] max-w-full h-[90px] overflow-hidden rounded-lg"
+  title="Advertisement"
+  loading={placement === "A" ? "eager" : "lazy"}
+/>
+```
 
-1. **Add a ref to track confirmation** (avoids closure issues)
-   ```typescript
-   const isConfirmedRef = useRef(false);
-   ```
+### 3. Legacy Component: `src/components/AdsterraBanner.tsx`
 
-2. **Update handleIframeLoad to set the ref**
-   ```typescript
-   const handleIframeLoad = useCallback(() => {
-     clearTimeout(timeoutRef.current);
-     isConfirmedRef.current = true;  // Set ref first
-     setIsAdConfirmed(true);         // Then state
-     if (placement === "A") {
-       setPlacementALoaded(true);
-     }
-   }, [placement, setPlacementALoaded]);
-   ```
+Also update the legacy component in case it's still used anywhere:
 
-3. **Fix timeout to use ref instead of state**
-   ```typescript
-   timeoutRef.current = setTimeout(() => {
-     if (!isConfirmedRef.current) {  // Check ref, not state
-       setAdHtml(null);
-     }
-   }, 2500);
-   ```
+**Current:**
+- Key: `f68fadee12d992a26443bfb050da5b07`
+- Dimensions: 300x250
 
-4. **Fix render logic - render iframe when adHtml available, hide until confirmed**
-   ```typescript
-   // For B/C placements waiting for visibility
-   if (placement !== "A" && !isVisible && !hasAttempted) {
-     return <div ref={containerRef} className="h-0 w-0" />;
-   }
-
-   // No ad content yet - render nothing
-   if (!adHtml) return null;
-
-   // Render iframe - but hide container until confirmed
-   return (
-     <div
-       ref={containerRef}
-       className={cn(
-         "w-full flex flex-col items-center my-6",
-         !isAdConfirmed && "opacity-0 h-0 overflow-hidden", // Hidden until confirmed
-         className
-       )}
-     >
-       <span className="text-[10px] text-muted-foreground/60 mb-1 uppercase tracking-wider">
-         Sponsored
-       </span>
-       <iframe
-         srcDoc={adHtml}
-         onLoad={handleIframeLoad}
-         sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
-         className="border-0 w-[300px] h-[250px] overflow-hidden rounded-lg"
-         title="Advertisement"
-         loading={placement === "A" ? "eager" : "lazy"}
-       />
-     </div>
-   );
-   ```
+**Updated:**
+- Key: `c5d398ab0a723a7cfa61f3c2d7960602`
+- Dimensions: 728x90
 
 ## Summary of File Changes
 
 | File | Changes |
 |------|---------|
-| `src/components/SmartBanner.tsx` | Add `isConfirmedRef`, fix timeout closure, fix render logic to show iframe while hidden until confirmed |
+| `supabase/functions/get-banner-ad/index.ts` | Update key, change dimensions to 728x90 |
+| `src/components/SmartBanner.tsx` | Update iframe dimensions to 728x90, add responsive max-width |
+| `src/components/AdsterraBanner.tsx` | Update key and dimensions for consistency |
 
-## Expected Result
+## Mobile Responsiveness
 
-1. Edge function returns ad HTML (verified working)
-2. SmartBanner receives `adHtml`
-3. Iframe renders (hidden via CSS)
-4. Adsterra script loads in iframe
-5. `onLoad` fires → `isAdConfirmed` becomes true
-6. Container becomes visible with "Sponsored" label
-7. Timeout is cleared, no collapse occurs
+The 728x90 leaderboard format may be too wide for mobile devices. The `max-w-full` class will ensure:
+- On desktop: Full 728px width displays
+- On mobile: Banner scales down proportionally to fit viewport
 
-The ads will now display properly on all pages including `/tools/quiz`.
+## Result
+
+After these changes:
+1. Edge function returns the new 728x90 banner HTML
+2. Frontend renders the wider leaderboard format
+3. Banner scales responsively on mobile devices
+4. All existing placements (A, B, C) work with new format
