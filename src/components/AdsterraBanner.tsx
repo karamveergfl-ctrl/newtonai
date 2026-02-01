@@ -23,7 +23,7 @@ function buildAdsterraAdHTML(adKey: string): string {
           display: flex; 
           justify-content: center; 
           align-items: center;
-          min-height: 250px;
+          min-height: 90px;
           background: transparent;
         }
       </style>
@@ -33,8 +33,8 @@ function buildAdsterraAdHTML(adKey: string): string {
         atOptions = {
           'key' : '${adKey}',
           'format' : 'iframe',
-          'height' : 250,
-          'width' : 300,
+          'height' : 90,
+          'width' : 728,
           'params' : {}
         };
       </script>
@@ -62,7 +62,7 @@ export function AdsterraBanner({ className }: AdsterraBannerProps) {
   const [shouldRender, setShouldRender] = useState(false);
   const hasTriggered = useRef(false);
 
-  const adKey = "f68fadee12d992a26443bfb050da5b07";
+  const adKey = "c5d398ab0a723a7cfa61f3c2d7960602";
 
   // Only trigger once when threshold is first reached
   useEffect(() => {
@@ -89,7 +89,7 @@ export function AdsterraBanner({ className }: AdsterraBannerProps) {
       <iframe
         srcDoc={buildAdsterraAdHTML(adKey)}
         sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
-        className="border-0 w-[300px] h-[250px] overflow-hidden"
+        className="border-0 w-[728px] max-w-full h-[90px] overflow-hidden"
         title="Advertisement"
         loading="lazy"
         onError={() => setAdError(true)}

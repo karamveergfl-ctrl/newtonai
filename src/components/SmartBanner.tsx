@@ -175,7 +175,7 @@ export function SmartBanner({ placement, className }: SmartBannerProps) {
         srcDoc={adHtml}
         onLoad={handleIframeLoad}
         sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
-        className="border-0 w-[300px] h-[250px] overflow-hidden rounded-lg"
+        className="border-0 w-[728px] max-w-full h-[90px] overflow-hidden rounded-lg"
         title="Advertisement"
         loading={placement === "A" ? "eager" : "lazy"}
       />
