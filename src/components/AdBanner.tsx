@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useCreditsContext } from "@/contexts/CreditsContext";
 import { useStudyContext } from "@/contexts/StudyContext";
 import { cn } from "@/lib/utils";
@@ -12,45 +12,40 @@ export function AdBanner({ className }: AdBannerProps) {
   const { isInDeepStudy } = useStudyContext();
   const adContainerRef = useRef<HTMLDivElement>(null);
   const scriptLoaded = useRef(false);
-  const [showAd, setShowAd] = useState(false);
 
   useEffect(() => {
-    // 3-second delay before loading ad
-    const timer = setTimeout(() => {
-      setShowAd(true);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!showAd || scriptLoaded.current || !adContainerRef.current) return;
+    // Skip for premium users or deep study mode
     if (isPremium || isInDeepStudy) return;
     
-    scriptLoaded.current = true;
+    // 3-second delay before loading ad
+    const timer = setTimeout(() => {
+      if (scriptLoaded.current || !adContainerRef.current) return;
+      
+      scriptLoaded.current = true;
 
-    // Set atOptions on window BEFORE loading script
-    (window as any).atOptions = {
-      key: 'fe9d10672684b2efb3db57ecdb954f85',
-      format: 'iframe',
-      height: 90,
-      width: 728,
-      params: {}
-    };
+      // Configure and inject Adsterra script
+      (window as any).atOptions = {
+        key: 'fe9d10672684b2efb3db57ecdb954f85',
+        format: 'iframe',
+        height: 90,
+        width: 728,
+        params: {}
+      };
 
-    // Create and inject script
-    const script = document.createElement('script');
-    script.src = 'https://lozengehelped.com/fe9d10672684b2efb3db57ecdb954f85/invoke.js';
-    script.async = true;
-    adContainerRef.current.appendChild(script);
+      const script = document.createElement('script');
+      script.src = 'https://lozengehelped.com/fe9d10672684b2efb3db57ecdb954f85/invoke.js';
+      script.async = true;
+      adContainerRef.current.appendChild(script);
+    }, 3000);
 
     return () => {
+      clearTimeout(timer);
       if (adContainerRef.current) {
         adContainerRef.current.innerHTML = '';
       }
       scriptLoaded.current = false;
     };
-  }, [showAd, isPremium, isInDeepStudy]);
+  }, [isPremium, isInDeepStudy]);
 
   // Hide for premium users or during deep study
   if (isPremium || isInDeepStudy) return null;
