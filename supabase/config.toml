@@ -128,3 +128,6 @@ verify_jwt = false
 
 [functions.ads-complete]
 verify_jwt = false
+
+[functions.get-banner-ad]
+verify_jwt = false
