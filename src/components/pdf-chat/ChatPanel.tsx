@@ -120,7 +120,11 @@ export function ChatPanel({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const isReady = processingStatus === 'completed' || processingProgress > 50;
+  // Enable chat when processing has started or completed
+  const isReady = 
+    processingStatus === 'completed' || 
+    processingStatus === 'processing' ||
+    processingProgress > 0;
   const isProcessingDoc = processingStatus === 'processing';
 
   return (
