@@ -4,7 +4,6 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { 
   X, 
-  Upload, 
   ArrowLeft, 
   ChevronDown,
   Brain,
@@ -12,20 +11,17 @@ import {
   FileText,
   Network,
   Settings2,
-  Podcast,
-  MessageSquare,
-  Lightbulb
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { PDFViewerWithHighlight } from './PDFViewerWithHighlight';
 import { ChatPanel } from './ChatPanel';
 import { PDFStudyToolsBar } from './PDFStudyToolsBar';
+import { PDFChatUploadView } from './PDFChatUploadView';
 import { usePDFChat } from '@/hooks/usePDFChat';
 import { usePDFDocument } from '@/hooks/usePDFDocument';
 import { usePDFStudyTools, StudyToolType } from '@/hooks/usePDFStudyTools';
@@ -410,30 +406,23 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
 
   const isDocumentReady = document?.processingStatus === 'completed' || processingProgress >= 50;
 
-  // No file uploaded yet
+  // No file uploaded yet - show full upload UI
   if (!file) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-background p-8">
-        <div className="text-center max-w-md">
-          <Upload className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Upload a PDF to chat</h2>
-          <p className="text-muted-foreground mb-6">
-            Upload a PDF document and ask questions about its content. 
-            Generate quizzes, flashcards, summaries, and mind maps.
-          </p>
-          <label>
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Button asChild>
-              <span>Choose PDF</span>
-            </Button>
-          </label>
-        </div>
-      </div>
+      <PDFChatUploadView
+        onFileSelected={async (selectedFile) => {
+          setFile(selectedFile);
+          await createDocument(selectedFile.name);
+        }}
+        onTextContent={(text, fileName) => {
+          // For text-based content, we could create a virtual document
+          // For now, show a toast that PDF is preferred
+          toast({
+            title: "PDF Preferred",
+            description: "For best results with citations and page references, please upload a PDF document.",
+          });
+        }}
+      />
     );
   }
 

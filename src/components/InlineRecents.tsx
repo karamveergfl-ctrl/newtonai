@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-type ToolId = "quiz" | "flashcards" | "podcast" | "mind-map" | "notes" | "summarizer" | "homework-help";
+type ToolId = "quiz" | "flashcards" | "podcast" | "mind-map" | "notes" | "summarizer" | "homework-help" | "pdf-chat";
 
 interface RecentItem {
   id: string;
@@ -31,6 +31,7 @@ const toolIdToDbName: Record<ToolId, string> = {
   "notes": "lecture_notes",
   "summarizer": "summary",
   "homework-help": "homework_help",
+  "pdf-chat": "pdf_chat",
 };
 
 // Tool icons and gradients
@@ -42,6 +43,7 @@ const toolConfig: Record<string, { icon: React.ElementType; gradient: string }> 
   "lecture_notes": { icon: FileText, gradient: "from-emerald-500 to-green-500" },
   "summary": { icon: BookOpen, gradient: "from-indigo-500 to-purple-500" },
   "homework_help": { icon: HelpCircle, gradient: "from-yellow-500 to-orange-500" },
+  "pdf_chat": { icon: FileText, gradient: "from-blue-500 to-cyan-500" },
 };
 
 const containerVariants = {

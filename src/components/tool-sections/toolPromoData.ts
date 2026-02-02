@@ -60,7 +60,7 @@ export interface OtherToolItem {
   gradient: string;
 }
 
-export type ToolId = "quiz" | "flashcards" | "podcast" | "mind-map" | "notes" | "summarizer" | "homework-help";
+export type ToolId = "quiz" | "flashcards" | "podcast" | "mind-map" | "notes" | "summarizer" | "homework-help" | "pdf-chat";
 
 export const subjectsList: SubjectItem[] = [
   { name: "Mathematics", icon: "📐", color: "from-blue-500 to-cyan-500" },
@@ -85,6 +85,7 @@ export const allTools: OtherToolItem[] = [
   { id: "notes", name: "AI Lecture Notes", description: "Generate structured study notes", path: "/tools/lecture-notes", icon: FileText, gradient: "from-blue-500 to-indigo-600" },
   { id: "summarizer", name: "AI Summarizer", description: "Summarize documents and videos", path: "/tools/summarizer", icon: List, gradient: "from-emerald-500 to-green-600" },
   { id: "homework-help", name: "Homework Help", description: "Get step-by-step solutions", path: "/tools/homework-help", icon: GraduationCap, gradient: "from-fuchsia-500 to-purple-600" },
+  { id: "pdf-chat", name: "Chat with PDF", description: "Ask questions about any document", path: "/pdf-chat", icon: MessageCircle, gradient: "from-blue-500 to-cyan-600" },
 ];
 
 export const toolPromoData: Record<ToolId, {
@@ -219,5 +220,23 @@ export const toolPromoData: Record<ToolId, {
     showSubjects: true,
     whyUseTitle: "Why use NewtonAI's Homework Help?",
     whyUseBenefits: ["Step-by-step solutions", "Image problem upload", "All subjects covered", "Learning-focused explanations"],
+  },
+  "pdf-chat": {
+    stats: [
+      { value: "RAG", label: "AI Powered", icon: Brain },
+      { value: "Cite", label: "Source Links", icon: FileText },
+      { value: "Study", label: "Tools Built-in", icon: BookOpen },
+    ],
+    features: [
+      { icon: MessageCircle, title: "AI-Powered Chat", description: "Ask questions and get accurate answers grounded in your document", gradient: "from-blue-500 to-cyan-500" },
+      { icon: FileText, title: "Citation Support", description: "See exactly where answers come from with page references", gradient: "from-purple-500 to-violet-500" },
+      { icon: Brain, title: "Generate Quizzes", description: "Create practice quizzes from your PDF content", gradient: "from-amber-500 to-orange-500" },
+      { icon: Layers, title: "Create Flashcards", description: "Turn key concepts into study flashcards", gradient: "from-emerald-500 to-green-500" },
+      { icon: Lightbulb, title: "Smart Summaries", description: "Get concise summaries of complex documents", gradient: "from-rose-500 to-pink-500" },
+      { icon: Network, title: "Mind Maps", description: "Visualize document concepts as interactive mind maps", gradient: "from-indigo-500 to-blue-500" },
+    ],
+    showSubjects: false,
+    whyUseTitle: "Why use NewtonAI's Chat with PDF?",
+    whyUseBenefits: ["Accurate AI answers", "Source citations", "Integrated study tools", "Multi-format support"],
   },
 };

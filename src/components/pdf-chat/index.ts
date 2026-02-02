@@ -1,4 +1,5 @@
 export { PDFChatSplitView } from './PDFChatSplitView';
+export { PDFChatUploadView } from './PDFChatUploadView';
 export { ChatPanel } from './ChatPanel';
 export { CitationChip } from './CitationChip';
 export { ContextModeSelector } from './ContextModeSelector';

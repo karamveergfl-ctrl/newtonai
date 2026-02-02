@@ -21,6 +21,7 @@ const toolIdToRoute: Record<ToolId, string> = {
   "notes": "/tools/lecture-notes",
   "summarizer": "/tools/summarizer",
   "homework-help": "/tools/homework-help",
+  "pdf-chat": "/pdf-chat",
 };
 
 export function ToolPageFAQ({ 

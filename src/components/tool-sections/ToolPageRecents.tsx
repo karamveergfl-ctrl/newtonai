@@ -30,6 +30,7 @@ const toolIdToDbName: Record<ToolId, string> = {
   "notes": "lecture_notes",
   "summarizer": "summary",
   "homework-help": "homework_help",
+  "pdf-chat": "pdf_chat",
 };
 
 const containerVariants = {
