@@ -15,4 +15,12 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    target: "es2022", // Required for PDF.js v4 ESM worker
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: "es2022", // Consistent with build target
+    },
+  },
 }));

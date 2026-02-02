@@ -19,11 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-// Configure PDF.js worker from node_modules
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Worker is configured globally in src/lib/pdfjsWorker.ts (imported in main.tsx)
 
 interface OCRSplitViewProps {
   file: File;
