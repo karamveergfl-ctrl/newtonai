@@ -6,34 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Generate embedding using Lovable AI
-async function generateEmbedding(text: string, apiKey: string): Promise<number[] | null> {
-  try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "text-embedding-3-small",
-        input: text.slice(0, 8000),
-        dimensions: 768,
-      }),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.data?.[0]?.embedding || null;
-  } catch (error) {
-    console.error("Error generating embedding:", error);
-    return null;
-  }
-}
-
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -45,6 +17,34 @@ interface RetrievedChunk {
   content: string;
   heading: string | null;
   similarity: number;
+}
+
+// Simple keyword-based relevance scoring
+function scoreChunk(chunk: string, query: string): number {
+  const chunkLower = chunk.toLowerCase();
+  const queryWords = query.toLowerCase()
+    .split(/\s+/)
+    .filter(w => w.length > 2)
+    .filter(w => !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'was', 'her', 'were', 'one', 'our', 'out', 'has', 'have', 'been', 'this', 'that', 'what', 'when', 'where', 'which', 'with', 'from'].includes(w));
+  
+  if (queryWords.length === 0) return 0;
+  
+  let matchCount = 0;
+  let exactPhraseBonus = 0;
+  
+  // Check for exact phrase match
+  if (chunkLower.includes(query.toLowerCase().slice(0, 50))) {
+    exactPhraseBonus = 0.3;
+  }
+  
+  // Count word matches
+  for (const word of queryWords) {
+    if (chunkLower.includes(word)) {
+      matchCount++;
+    }
+  }
+  
+  return (matchCount / queryWords.length) + exactPhraseBonus;
 }
 
 serve(async (req) => {
@@ -145,51 +145,61 @@ serve(async (req) => {
         similarity: 1.0,
       }];
     } else {
-      // Perform semantic search
-      const queryEmbedding = await generateEmbedding(question, LOVABLE_API_KEY);
-      
-      if (!queryEmbedding) {
+      // Fetch chunks and use keyword-based search
+      let query = supabase
+        .from('document_chunks')
+        .select('id, page_number, content, heading')
+        .eq('document_id', documentId)
+        .order('page_number', { ascending: true })
+        .order('chunk_index', { ascending: true });
+
+      // Filter by page if current_page mode
+      if (contextMode === 'current_page' && currentPage) {
+        query = query.eq('page_number', currentPage);
+      }
+
+      const { data: chunks, error: fetchError } = await query;
+
+      if (fetchError) {
+        console.error("Fetch error:", fetchError);
         return new Response(
-          JSON.stringify({ error: 'Failed to process question' }),
+          JSON.stringify({ error: 'Failed to fetch document chunks' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      const pageFilter = contextMode === 'current_page' ? currentPage : null;
-
-      const { data: chunks, error: searchError } = await supabase.rpc(
-        'search_document_chunks',
-        {
-          p_document_id: documentId,
-          p_query_embedding: `[${queryEmbedding.join(',')}]`,
-          p_limit: 6,
-          p_page_filter: pageFilter,
-        }
-      );
-
-      if (searchError) {
-        console.error("Search error:", searchError);
+      if (!chunks || chunks.length === 0) {
+        // No chunks found, but we can still try to answer if we have extractedText
         return new Response(
-          JSON.stringify({ error: 'Failed to search document' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ 
+            answer: "I don't have any content from this document yet. Please wait for the document to finish processing.",
+            citations: [],
+            confidence: 'not_found',
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      retrievedChunks = (chunks || []).map((chunk: any) => ({
-        chunkId: chunk.chunk_id,
+      // Score chunks by keyword relevance
+      const scoredChunks = chunks.map(chunk => ({
+        chunkId: chunk.id,
         pageNumber: chunk.page_number,
         content: chunk.content,
         heading: chunk.heading,
-        similarity: chunk.similarity,
+        similarity: scoreChunk(chunk.content, question),
       }));
+
+      // Sort by score and take top chunks
+      scoredChunks.sort((a, b) => b.similarity - a.similarity);
+      retrievedChunks = scoredChunks.slice(0, 6);
     }
 
     // Check if we found relevant content
     const hasRelevantContent = retrievedChunks.length > 0 && 
-      (contextMode === 'selected_text' || retrievedChunks[0].similarity > 0.3);
+      (contextMode === 'selected_text' || retrievedChunks[0].similarity > 0.2);
 
     // Build context from retrieved chunks
-    const contextParts = retrievedChunks.map((chunk, idx) => 
+    const contextParts = retrievedChunks.map((chunk) => 
       `[Page ${chunk.pageNumber}]${chunk.heading ? ` (${chunk.heading})` : ''}\n${chunk.content}`
     );
     const context = contextParts.join('\n\n---\n\n');
