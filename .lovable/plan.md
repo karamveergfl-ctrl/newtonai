@@ -1,51 +1,33 @@
 
-
-# Plan: Fix Black Space in Header from CreditBalance Component
+# Plan: Hide Credit Balance on Landing Page
 
 ## Problem
-The `CreditBalance` component shows a black rectangular space in the header between "About" and the theme toggle. This happens because:
-
-1. The component has an `isAuthenticated` state that starts as `null`
-2. While `null`, the component continues to render the loading skeleton
-3. The Skeleton component shows even when not authenticated
-
-## Root Cause
-In `CreditBalance.tsx`, the auth check flow is:
-1. `isAuthenticated` starts as `null`
-2. Auth check runs asynchronously
-3. While `isAuthenticated === null`, it proceeds to show `<Skeleton />` during loading
-4. This creates the visible black box
+The CreditBalance component shows in the header on the landing page, which isn't desired for the public-facing homepage.
 
 ## Solution
-Update `CreditBalance.tsx` to return `null` when authentication state is still being determined (`null`) OR when not authenticated (`false`).
+Add a simple conditional check to hide `CreditBalance` when the user is on the landing page route (`/`).
 
 ## File to Modify
-`src/components/CreditBalance.tsx`
+`src/components/Header.tsx`
 
 ## Change
-Update the conditional check from:
-```typescript
-if (isAuthenticated === false) {
-  return null;
-}
+On line 168, wrap the CreditBalance in a conditional:
+
+**Before:**
+```tsx
+<CreditBalance />
 ```
 
-To:
-```typescript
-// Don't render if not authenticated or still checking auth
-if (isAuthenticated !== true) {
-  return null;
-}
+**After:**
+```tsx
+{location.pathname !== "/" && <CreditBalance />}
 ```
 
-This ensures the component renders nothing during:
-- Initial load (when `isAuthenticated === null`)
-- When user is not logged in (when `isAuthenticated === false`)
-
-The component will only render when `isAuthenticated === true`.
+## Why This Works
+- The `location` variable is already available from `useLocation()` hook on line 70
+- No additional imports or state needed
+- Simple, clean conditional rendering
 
 ## Result
-- No black box will appear in the header for unauthenticated users
-- Credit balance will only show after user is confirmed logged in
-- Clean header appearance for all visitors
-
+- Landing page (`/`): No credit balance shown
+- All other pages: Credit balance shows for logged-in users (existing auth check in CreditBalance still applies)
