@@ -20,12 +20,9 @@ import {
 } from "@/utils/contentProcessing";
 import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { usePDFDocument } from "@/hooks/usePDFDocument";
+import { ensurePdfWorkerConfigured } from "@/lib/pdfjsWorker";
 
-// Use locally bundled worker (avoids CDN/CORS issues and "fake worker" failures)
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString();
+// Worker is configured globally in src/lib/pdfjsWorker.ts (imported in main.tsx)
 
 interface PDFChatUploadViewProps {
   onFileSelected: (file: File, documentId: string) => void;
@@ -52,6 +49,9 @@ export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUplo
 
   // Extract text from PDF using pdfjs-dist
   const extractTextFromPDF = useCallback(async (file: File): Promise<Array<{ pageNumber: number; text: string }>> => {
+    // Safety reset: ensure worker is configured (prevents CDN fallback)
+    ensurePdfWorkerConfigured();
+    
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const pages: Array<{ pageNumber: number; text: string }> = [];
