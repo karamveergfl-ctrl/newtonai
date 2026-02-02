@@ -84,35 +84,6 @@ function chunkText(text: string, pageNumber: number): ChunkData[] {
   return chunks;
 }
 
-// Generate embedding using Lovable AI
-async function generateEmbedding(text: string, apiKey: string): Promise<number[] | null> {
-  try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "text-embedding-3-small",
-        input: text.slice(0, 8000), // Limit input size
-        dimensions: 768,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Embedding API error:", await response.text());
-      return null;
-    }
-
-    const data = await response.json();
-    return data.data?.[0]?.embedding || null;
-  } catch (error) {
-    console.error("Error generating embedding:", error);
-    return null;
-  }
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -155,11 +126,6 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY not configured");
-    }
-
     // Update document status to processing
     await supabase
       .from('pdf_documents')
@@ -180,26 +146,21 @@ serve(async (req) => {
 
     console.log(`Processing ${allChunks.length} chunks for document ${documentId}`);
 
-    // Generate embeddings and insert chunks in batches
-    const BATCH_SIZE = 10;
+    // Insert chunks in batches (without embeddings - we'll use keyword search)
+    const BATCH_SIZE = 20;
     let processedCount = 0;
 
     for (let i = 0; i < allChunks.length; i += BATCH_SIZE) {
       const batch = allChunks.slice(i, i + BATCH_SIZE);
       
-      // Generate embeddings for batch
-      const embeddings = await Promise.all(
-        batch.map(chunk => generateEmbedding(chunk.content, LOVABLE_API_KEY))
-      );
-
-      // Prepare insert data
-      const insertData = batch.map((chunk, idx) => ({
+      // Prepare insert data without embeddings
+      const insertData = batch.map((chunk) => ({
         document_id: documentId,
         page_number: chunk.pageNumber,
         chunk_index: chunk.chunkIndex,
         content: chunk.content,
         heading: chunk.heading,
-        embedding: embeddings[idx] ? `[${embeddings[idx]!.join(',')}]` : null,
+        embedding: null, // Skip embeddings - not supported
         token_count: chunk.tokenCount,
       }));
 
