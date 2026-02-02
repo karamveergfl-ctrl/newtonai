@@ -208,9 +208,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Banner Ad Placement A - After Features */}
-      <AdBanner />
-
       {/* Mid-Page CTA */}
       <section className="py-12 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
         <div className="container mx-auto px-4 text-center">
@@ -278,14 +275,11 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Banner Ad Placement B - After Benefits */}
+      {/* Single Ad Banner - After Benefits (reduced from 3 to 1) */}
       <AdBanner />
 
       {/* Testimonials */}
       <TestimonialsSection />
-
-      {/* Banner Ad Placement C - Before CTA */}
-      <AdBanner />
 
       {/* CTA Section */}
       <div id="footer-cta-section">

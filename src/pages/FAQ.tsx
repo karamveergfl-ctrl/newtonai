@@ -140,9 +140,6 @@ const FAQ = () => {
           </Accordion>
         </div>
 
-        {/* Banner Ad Placement A - After FAQ List */}
-        <AdBanner className="max-w-3xl mx-auto" />
-
         {/* CTA Section */}
         <div className="text-center mt-16 p-8 bg-muted/50 rounded-2xl max-w-2xl mx-auto">
           <h2 className="font-display text-2xl font-bold text-foreground mb-4">Still have questions?</h2>
@@ -154,7 +151,7 @@ const FAQ = () => {
           </Link>
         </div>
 
-        {/* Banner Ad Placement C - Before Footer */}
+        {/* Single Ad Banner - After CTA (reduced from 2 to 1) */}
         <AdBanner className="max-w-3xl mx-auto" />
       </main>
 
