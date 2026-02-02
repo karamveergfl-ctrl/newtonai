@@ -78,6 +78,9 @@ export function usePDFDocument() {
 
     setIsProcessing(true);
     setProcessingProgress(0);
+    
+    // Mark as processing immediately so chat can be enabled
+    setDocument(prev => prev ? { ...prev, processingStatus: 'processing' } : null);
 
     try {
       // Process in batches of 20 pages
