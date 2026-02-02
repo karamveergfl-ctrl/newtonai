@@ -1,72 +1,105 @@
 
-Goal
-- Stop the recurring “Setting up fake worker failed: Failed to fetch dynamically imported module …cdnjs…pdf.worker.min.mjs?import” error permanently.
-- Ensure the PDF worker is always loaded from the same origin (your app), never from a CDN, across:
-  - PDF upload text extraction (pdfjs-dist)
-  - PDF rendering (react-pdf)
+# Plan: Fix PDF.js Worker Version Mismatch
 
-What’s actually happening (root cause)
-- The error message indicates PDF.js is still trying to load its worker from the default CDN URL (cdnjs).
-- Even though we updated some components to use a “local worker” with `new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url)`, in Vite this pattern can still fail depending on how the module is bundled/loaded and when the assignment executes.
-- When worker loading fails or the workerSrc isn’t set early enough, PDF.js falls back to its default workerSrc (cdnjs), which then fails due to dynamic ESM import + CORS/MIME constraints, producing the exact error you see.
+## Problem Identified
 
-High-confidence fix strategy
-1) Configure the PDF.js worker once, globally, at app startup
-- Create a single “pdf worker config” module that:
-  - imports the worker as a URL using Vite’s `?url` asset handling (most reliable)
-  - sets workerSrc for both:
-    - `pdfjs-dist` (used for extraction)
-    - `react-pdf`’s `pdfjs` (used for rendering)
-- Import this module in `src/main.tsx` (or the earliest possible entry) so it runs before any PDF code executes.
+The console log reveals the root cause:
+```
+The API version "4.8.69" does not match the Worker version "4.9.155"
+```
 
-Why `?url` instead of `new URL(..., import.meta.url)` everywhere
-- `?url` forces Vite to treat the worker file as a static asset URL, which avoids edge cases where PDF.js treats the worker as an externally imported ESM module.
-- This removes the “dynamic import from cdnjs” path entirely and makes worker loading deterministic in dev + production.
+**What's happening:**
+- `react-pdf@9.2.1` bundles and uses `pdfjs-dist@4.8.69` internally for its API
+- Your project has `pdfjs-dist@4.9.155` installed as a direct dependency  
+- Our worker config loads from `pdfjs-dist@4.9.155` (the worker version)
+- But `react-pdf` calls the API from `pdfjs-dist@4.8.69`
+- This version mismatch causes "Failed to load PDF"
 
-2) Remove all scattered workerSrc assignments
-- Delete (or replace) the repeated `GlobalWorkerOptions.workerSrc = ...` lines in:
-  - `src/components/PDFReader.tsx`
-  - `src/components/pdf-chat/PDFViewerWithHighlight.tsx`
-  - `src/components/pdf-chat/PDFChatUploadView.tsx`
-  - `src/components/OCRSplitView.tsx`
-- This prevents “last imported file wins” order issues and guarantees the workerSrc isn’t accidentally changed later.
+## Solution
 
-3) Add a runtime “safety reset” (belt-and-suspenders)
-- In `PDFChatUploadView.extractTextFromPDF` (right before `getDocument(...)`), add a tiny guard:
-  - If `pdfjsLib.GlobalWorkerOptions.workerSrc` is empty or contains “cdnjs”, reset it to the correct local URL.
-- This makes the upload flow resilient even if something unexpected changes workerSrc.
+**Use `react-pdf`'s bundled pdfjs-dist for the worker instead of the standalone package.**
 
-4) Make Vite target modern enough for PDF.js v4 ESM worker
-- Update `vite.config.ts`:
-  - `build.target = "es2022"`
-  - `optimizeDeps.esbuildOptions.target = "es2022"`
-- This aligns with PDF.js v4’s ESM expectations and prevents bundling/downleveling edge cases.
+`react-pdf` already exports a properly configured `pdfjs` object. We should use that consistently and load the worker from its bundled location to ensure version alignment.
 
-Files that will be changed
-- Add:
-  - `src/lib/pdfjsWorker.ts` (or similarly named) to centralize worker setup
-- Edit:
-  - `src/main.tsx` to import the worker config once at startup
-  - `src/components/PDFReader.tsx` remove local workerSrc assignment
-  - `src/components/pdf-chat/PDFViewerWithHighlight.tsx` remove local workerSrc assignment
-  - `src/components/pdf-chat/PDFChatUploadView.tsx` remove local workerSrc assignment + add safety reset
-  - `src/components/OCRSplitView.tsx` remove local workerSrc assignment
-  - `vite.config.ts` set targets to es2022
+---
 
-Validation checklist (end-to-end)
-- In the preview:
-  1. Hard refresh once (to ensure the latest bundle is loaded).
-  2. Go to /pdf-chat upload screen.
-  3. Upload a PDF.
-  4. Confirm:
-     - Newton processing overlay appears
-     - No “fake worker failed” toast
-     - Chat opens only after processing completes
-  5. Open browser DevTools → Network:
-     - Verify the worker file is requested from your app’s domain (not cdnjs/unpkg).
+## Implementation
 
-Edge cases covered
-- Mobile + desktop routes: global setup guarantees worker is ready regardless of which PDF component loads first.
-- If any dependency resets workerSrc later: the safety reset in upload flow prevents regressions for the most visible failing path.
+### 1. Update `src/lib/pdfjsWorker.ts`
 
-If you approve this plan, I’ll implement it and the worker error should stop completely (no CDN fallback, no dynamic-import failure).
+Change from importing from `pdfjs-dist` to using the version bundled with `react-pdf`:
+
+```typescript
+/**
+ * Centralized PDF.js worker configuration.
+ * 
+ * CRITICAL: react-pdf bundles its own version of pdfjs-dist internally.
+ * We MUST use the worker that matches react-pdf's bundled version,
+ * NOT the standalone pdfjs-dist package in node_modules.
+ */
+import { pdfjs } from 'react-pdf';
+
+// Use react-pdf's bundled pdfjs version for the worker
+// This ensures API version matches worker version
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
+
+// Export for components that need direct pdfjs access
+export { pdfjs };
+
+// Safety check function
+export function ensurePdfWorkerConfigured(): void {
+  if (!pdfjs.GlobalWorkerOptions.workerSrc || 
+      pdfjs.GlobalWorkerOptions.workerSrc.includes('cdnjs')) {
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url
+    ).toString();
+  }
+}
+```
+
+### 2. Update `src/components/pdf-chat/PDFChatUploadView.tsx`
+
+Instead of importing `pdfjs-dist` directly, use the `pdfjs` object from `react-pdf` (via our worker config):
+
+```typescript
+// Replace:
+import * as pdfjsLib from 'pdfjs-dist';
+
+// With:
+import { pdfjs } from '@/lib/pdfjsWorker';
+```
+
+Then update the text extraction to use `pdfjs.getDocument()` instead of `pdfjsLib.getDocument()`.
+
+### 3. Update `src/components/OCRSplitView.tsx`
+
+Same pattern - use `pdfjs` from react-pdf instead of standalone `pdfjs-dist`.
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/lib/pdfjsWorker.ts` | Use `pdfjs` from react-pdf, export it for other components |
+| `src/components/pdf-chat/PDFChatUploadView.tsx` | Import `pdfjs` from our worker config instead of `pdfjs-dist` |
+| `src/components/OCRSplitView.tsx` | Same - use unified `pdfjs` export |
+
+---
+
+## Why This Works
+
+1. **Single source of truth**: All PDF operations use `react-pdf`'s bundled `pdfjs-dist`
+2. **Version alignment**: API version and worker version will always match since they come from the same package
+3. **No CDN fallback**: Worker loads from your app's origin via Vite's bundling
+4. **Backward compatible**: The `pdfjs` object from `react-pdf` has the same API as `pdfjs-dist`
+
+---
+
+## Technical Note
+
+The standalone `pdfjs-dist@4.9.155` in `package.json` can optionally be removed later since we're using react-pdf's bundled version. However, keeping it doesn't cause harm - we just won't use it for the viewer components.
