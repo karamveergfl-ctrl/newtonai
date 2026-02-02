@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from '@/components/UniversalStudySettingsDialog';
 import { TextSelectionToolbar } from '@/components/TextSelectionToolbar';
 import { MobileTextSelectionDrawer } from '@/components/MobileTextSelectionDrawer';
+import { ProcessingOverlay } from '@/components/ProcessingOverlay';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -443,10 +444,22 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     );
   }
 
+  // Show processing overlay while PDF is being processed
+  const showProcessingOverlay = isProcessing && processingProgress < 100;
+
   // Mobile layout with tabs
   if (isMobile) {
     return (
       <div className="flex flex-col h-full">
+        {/* Newton Processing Overlay */}
+        <ProcessingOverlay
+          isVisible={showProcessingOverlay}
+          message="Processing your PDF..."
+          subMessage={`Extracting text and preparing for chat (${Math.round(processingProgress)}%)`}
+          variant="overlay"
+          progress={processingProgress}
+          isIndeterminate={processingProgress === 0}
+        />
         {/* Mobile Text Selection Drawer */}
         <MobileTextSelectionDrawer
           open={showMobileDrawer}
@@ -565,6 +578,15 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   // Desktop layout with split view
   return (
     <div className="flex flex-col h-full">
+      {/* Newton Processing Overlay */}
+      <ProcessingOverlay
+        isVisible={showProcessingOverlay}
+        message="Processing your PDF..."
+        subMessage={`Extracting text and preparing for chat (${Math.round(processingProgress)}%)`}
+        variant="overlay"
+        progress={processingProgress}
+        isIndeterminate={processingProgress === 0}
+      />
       {/* Selection Toolbar - Full study tools + Ask/Explain */}
       {showSelectionToolbar && selectedText && (
         <TextSelectionToolbar
