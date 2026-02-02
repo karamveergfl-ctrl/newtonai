@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,8 @@ import {
   FileText,
   Network,
   Settings2,
+  Podcast,
+  File,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -70,7 +72,7 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [isGeneratingMindMap, setIsGeneratingMindMap] = useState(false);
-  const extractedTextRef = useRef<string>('');
+  const [extractedText, setExtractedText] = useState<string>('');
 
   const {
     document,
@@ -107,7 +109,7 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     closeToolDialog,
   } = usePDFStudyTools({
     documentId: document?.id || null,
-    extractedText: extractedTextRef.current,
+    extractedText: extractedText,
     totalPages: document?.totalPages || 1,
     fileName: document?.fileName || file?.name || 'Document',
   });
@@ -153,7 +155,8 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   }, [selectedText, isMobile]);
 
   const handleTextExtracted = useCallback(async (pages: Array<{ pageNumber: number; text: string }>) => {
-    extractedTextRef.current = pages.map(p => p.text).join('\n\n');
+    const text = pages.map(p => p.text).join('\n\n');
+    setExtractedText(text);
     
     if (document?.id && pages.length > 0) {
       await processPages(document.id, pages);
@@ -183,7 +186,7 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
 
   const handleNewFile = () => {
     setFile(null);
-    extractedTextRef.current = '';
+    setExtractedText('');
     clearMessages();
   };
 
@@ -407,7 +410,7 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     }
   }, [document?.fileName, navigate, toast]);
 
-  const isDocumentReady = document?.processingStatus === 'completed' || processingProgress >= 50;
+  const isDocumentReady = document?.processingStatus === 'completed' || extractedText.length > 0;
 
   // Text-based chat mode (for YouTube, recordings, text input)
   if (textContent && !file) {
@@ -497,6 +500,10 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
                 <Network className="w-4 h-4 mr-2 text-rose-500" />
                 Generate Mind Map
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToolGenerate('podcast')} disabled={!isDocumentReady || isGenerating}>
+                <Podcast className="w-4 h-4 mr-2 text-emerald-500" />
+                Generate Podcast
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -579,17 +586,18 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
 
       {/* Header */}
       <div className="flex items-center justify-between p-2 border-b bg-background gap-2">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handleNewFile} className="gap-1.5">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={handleNewFile} className="gap-1.5">
             <ArrowLeft className="w-4 h-4" />
             <span>New File</span>
           </Button>
           
-          <span className="text-muted-foreground">|</span>
-          
-          <h1 className="font-semibold truncate max-w-[300px]">
-            {document?.fileName || file.name}
-          </h1>
+          <div className="flex items-center gap-2">
+            <File className="w-4 h-4 text-muted-foreground" />
+            <h1 className="font-medium text-sm truncate max-w-[300px]">
+              {document?.fileName || file.name}
+            </h1>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -617,6 +625,10 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
               <DropdownMenuItem onClick={() => handleToolGenerate('mind_map')} disabled={!isDocumentReady || isGenerating}>
                 <Network className="w-4 h-4 mr-2 text-rose-500" />
                 Generate Mind Map
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToolGenerate('podcast')} disabled={!isDocumentReady || isGenerating}>
+                <Podcast className="w-4 h-4 mr-2 text-emerald-500" />
+                Generate Podcast
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

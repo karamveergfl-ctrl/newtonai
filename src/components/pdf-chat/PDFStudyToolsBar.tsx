@@ -59,8 +59,8 @@ export function PDFStudyToolsBar({
       "flex items-center gap-2 p-2 bg-card/50 border-b overflow-x-auto scrollbar-hide",
       className
     )}>
-      <span className="text-xs font-semibold text-primary uppercase tracking-wide mr-2 whitespace-nowrap">
-        Tools
+      <span className="text-xs font-medium text-muted-foreground mr-2 whitespace-nowrap">
+        Study Tools:
       </span>
       
       {/* Quiz */}

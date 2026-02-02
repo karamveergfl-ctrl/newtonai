@@ -120,7 +120,7 @@ export function ChatPanel({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const isReady = processingStatus === 'completed';
+  const isReady = processingStatus === 'completed' || processingProgress > 50;
   const isProcessingDoc = processingStatus === 'processing';
 
   return (
@@ -128,8 +128,6 @@ export function ChatPanel({
       {/* Header with context mode */}
       <div className="flex items-center justify-between p-3 border-b bg-muted/30">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <span className="font-medium text-sm">Chat with PDF</span>
           {messages.length > 0 && onClearMessages && (
             <Button
               variant="ghost"
@@ -138,7 +136,7 @@ export function ChatPanel({
               className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="w-3 h-3" />
-              New
+              New Chat
             </Button>
           )}
         </div>
@@ -154,7 +152,7 @@ export function ChatPanel({
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-12 px-4">
-            <LottieNewton state="thinking" size="lg" />
+            <LottieNewton state="thinking" size="md" />
             <h3 className="font-semibold text-lg mt-4">Ask anything about this document</h3>
             <p className="text-muted-foreground text-sm mt-2 max-w-xs">
               Answers are generated only from its content. No external knowledge will be used.
