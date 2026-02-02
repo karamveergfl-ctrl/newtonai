@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
-import { AdBanner } from "@/components/AdBanner";
 
 
 const Contact = () => {
@@ -130,7 +129,7 @@ const Contact = () => {
           </Card>
         </div>
 
-        <AdBanner />
+        
       </main>
 
       <Footer />

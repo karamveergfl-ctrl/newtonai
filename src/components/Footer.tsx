@@ -59,14 +59,17 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Guides */}
+          {/* Resources */}
           <div>
             <h3 className="font-display font-semibold text-foreground mb-4">
-              Study Guides
+              Resources
             </h3>
             <ul className="space-y-3">
               {[
-                { to: "/guides", label: "All Guides" },
+                { to: "/guides", label: "Study Guides" },
+                { to: "/features", label: "Features" },
+                { to: "/how-it-works", label: "How It Works" },
+                { to: "/ai-for-students", label: "AI for Students" },
                 { to: "/guides/how-ai-learning-works", label: "AI Learning Guide" },
                 { to: "/guides/spaced-repetition-guide", label: "Spaced Repetition" },
                 { to: "/guides/responsible-ai-use", label: "Responsible AI Use" },

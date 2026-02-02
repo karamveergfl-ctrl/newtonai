@@ -38,6 +38,9 @@ import Guides from "./pages/Guides";
 import HowAILearningWorks from "./pages/guides/HowAILearningWorks";
 import SpacedRepetitionGuide from "./pages/guides/SpacedRepetitionGuide";
 import ResponsibleAIUse from "./pages/guides/ResponsibleAIUse";
+import HowItWorks from "./pages/HowItWorks";
+import Features from "./pages/Features";
+import AIForStudents from "./pages/AIForStudents";
 
 // Tool pages
 import HomeworkHelp from "./pages/tools/HomeworkHelp";
@@ -102,6 +105,11 @@ function AnimatedRoutes() {
         <Route path="/guides/how-ai-learning-works" element={<PageTransition><HowAILearningWorks /></PageTransition>} />
         <Route path="/guides/spaced-repetition-guide" element={<PageTransition><SpacedRepetitionGuide /></PageTransition>} />
         <Route path="/guides/responsible-ai-use" element={<PageTransition><ResponsibleAIUse /></PageTransition>} />
+        
+        {/* New Content Pages */}
+        <Route path="/how-it-works" element={<PageTransition><HowItWorks /></PageTransition>} />
+        <Route path="/features" element={<PageTransition><Features /></PageTransition>} />
+        <Route path="/ai-for-students" element={<PageTransition><AIForStudents /></PageTransition>} />
         
         {/* Payment Routes */}
         <Route path="/payment/success" element={<PageTransition><ProtectedRoute><OnboardingGate><PaymentSuccess /></OnboardingGate></ProtectedRoute></PageTransition>} />
