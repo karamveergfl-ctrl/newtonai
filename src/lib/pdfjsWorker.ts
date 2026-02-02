@@ -1,33 +1,37 @@
 /**
  * Centralized PDF.js worker configuration.
- * This module configures the worker ONCE at app startup for both:
- * - pdfjs-dist (used for text extraction)
- * - react-pdf (used for rendering)
  * 
- * Using Vite's ?url import ensures the worker is treated as a static asset,
- * avoiding CDN fallbacks and dynamic ESM import failures.
+ * CRITICAL: react-pdf bundles its own version of pdfjs-dist internally.
+ * We MUST use the pdfjs object from react-pdf and configure the worker
+ * to match that version. This ensures API version matches worker version.
+ * 
+ * DO NOT import from 'pdfjs-dist' directly for PDF operations - always
+ * use the pdfjs export from this module or from react-pdf.
  */
-import * as pdfjsLib from 'pdfjs-dist';
 import { pdfjs } from 'react-pdf';
 
-// Import worker as a static asset URL (Vite ?url suffix)
-// This ensures deterministic loading from the app's origin, not CDN
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+// Configure worker using react-pdf's bundled pdfjs version
+// This ensures the worker version matches the API version
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
-// Configure both pdfjs-dist and react-pdf to use the same local worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+// Export pdfjs for components that need direct access (text extraction, etc.)
+export { pdfjs };
 
-// Export the URL for safety resets if needed
-export const pdfWorkerUrl = workerUrl;
+// Export the worker URL for reference
+export const pdfWorkerUrl = pdfjs.GlobalWorkerOptions.workerSrc;
 
-// Export a function to verify/reset worker config (belt-and-suspenders)
+// Safety function to verify/reset worker config
 export function ensurePdfWorkerConfigured(): void {
-  const currentSrc = pdfjsLib.GlobalWorkerOptions.workerSrc;
+  const currentSrc = pdfjs.GlobalWorkerOptions.workerSrc;
   
   // If workerSrc is empty or pointing to CDN, reset it
   if (!currentSrc || currentSrc.includes('cdnjs') || currentSrc.includes('unpkg')) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url
+    ).toString();
   }
 }

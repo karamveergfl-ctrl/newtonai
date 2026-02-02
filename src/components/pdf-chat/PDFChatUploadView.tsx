@@ -2,7 +2,6 @@ import { useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { MessageSquare, X } from "lucide-react";
-import * as pdfjsLib from "pdfjs-dist";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppLayout } from "@/components/AppLayout";
@@ -20,7 +19,7 @@ import {
 } from "@/utils/contentProcessing";
 import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { usePDFDocument } from "@/hooks/usePDFDocument";
-import { ensurePdfWorkerConfigured } from "@/lib/pdfjsWorker";
+import { pdfjs, ensurePdfWorkerConfigured } from "@/lib/pdfjsWorker";
 
 // Worker is configured globally in src/lib/pdfjsWorker.ts (imported in main.tsx)
 
@@ -47,13 +46,13 @@ export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUplo
     { name: "Chat with PDF", href: "/pdf-chat" },
   ];
 
-  // Extract text from PDF using pdfjs-dist
+  // Extract text from PDF using react-pdf's bundled pdfjs (version-aligned)
   const extractTextFromPDF = useCallback(async (file: File): Promise<Array<{ pageNumber: number; text: string }>> => {
     // Safety reset: ensure worker is configured (prevents CDN fallback)
     ensurePdfWorkerConfigured();
     
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
     const pages: Array<{ pageNumber: number; text: string }> = [];
     
     for (let i = 1; i <= pdf.numPages; i++) {

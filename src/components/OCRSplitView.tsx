@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { X, Download, Loader2, ChevronLeft, ChevronRight, FileText, FileType, Search, Camera, Play, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import * as pdfjsLib from "pdfjs-dist";
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -18,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { pdfjs } from "@/lib/pdfjsWorker";
 
 // Worker is configured globally in src/lib/pdfjsWorker.ts (imported in main.tsx)
 
@@ -129,7 +129,7 @@ export const OCRSplitView = ({ file, onClose, onTextSelect }: OCRSplitViewProps)
       console.log("PDF size:", arrayBuffer.byteLength, "bytes");
       
       console.log("Initializing PDF.js...");
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
       const numPages = pdf.numPages;
       console.log("PDF loaded, pages:", numPages);
