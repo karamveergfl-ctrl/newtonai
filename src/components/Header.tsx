@@ -165,7 +165,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
-              <CreditBalance />
+              {location.pathname !== "/" && <CreditBalance />}
               <ThemeToggle />
               <Button asChild variant="ghost" size="sm">
                 <Link to="/auth">Log in</Link>
