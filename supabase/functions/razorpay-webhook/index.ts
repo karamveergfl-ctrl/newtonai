@@ -83,12 +83,13 @@ serve(async (req) => {
       }
 
       // Store webhook ID before processing to prevent race conditions
+      // Only store minimal data - no sensitive payload data
       const { error: insertError } = await supabaseAdmin
         .from('webhook_events')
         .insert({
           id: webhookId,
           event_type: event,
-          payload: payload
+          payload: {} // Empty payload - only ID needed for replay protection
         });
 
       if (insertError) {
