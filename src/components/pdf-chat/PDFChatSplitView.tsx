@@ -22,6 +22,7 @@ import { PDFViewerWithHighlight } from './PDFViewerWithHighlight';
 import { ChatPanel } from './ChatPanel';
 import { PDFStudyToolsBar } from './PDFStudyToolsBar';
 import { PDFChatUploadView } from './PDFChatUploadView';
+import { TextChatView } from './TextChatView';
 import { usePDFChat } from '@/hooks/usePDFChat';
 import { usePDFDocument } from '@/hooks/usePDFDocument';
 import { usePDFStudyTools, StudyToolType } from '@/hooks/usePDFStudyTools';
@@ -55,6 +56,8 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(initialFile || null);
+  const [textContent, setTextContent] = useState<string | null>(null);
+  const [textDocumentName, setTextDocumentName] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [highlight, setHighlight] = useState<HighlightInfo | null>(null);
   const [mobileTab, setMobileTab] = useState<'pdf' | 'chat'>('pdf');
@@ -406,6 +409,21 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
 
   const isDocumentReady = document?.processingStatus === 'completed' || processingProgress >= 50;
 
+  // Text-based chat mode (for YouTube, recordings, text input)
+  if (textContent && !file) {
+    return (
+      <TextChatView
+        textContent={textContent}
+        documentName={textDocumentName}
+        onClose={handleClose}
+        onNewDocument={() => {
+          setTextContent(null);
+          setTextDocumentName('');
+        }}
+      />
+    );
+  }
+
   // No file uploaded yet - show full upload UI
   if (!file) {
     return (
@@ -415,12 +433,8 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
           await createDocument(selectedFile.name);
         }}
         onTextContent={(text, fileName) => {
-          // For text-based content, we could create a virtual document
-          // For now, show a toast that PDF is preferred
-          toast({
-            title: "PDF Preferred",
-            description: "For best results with citations and page references, please upload a PDF document.",
-          });
+          setTextContent(text);
+          setTextDocumentName(fileName);
         }}
       />
     );

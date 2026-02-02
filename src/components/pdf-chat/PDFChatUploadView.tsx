@@ -12,7 +12,11 @@ import { PrimaryAdBanner } from "@/components/PrimaryAdBanner";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { processUploadedFile } from "@/utils/contentProcessing";
+import { 
+  processUploadedFile, 
+  getYouTubeTranscript,
+  transcribeAudio 
+} from "@/utils/contentProcessing";
 import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 
 interface PDFChatUploadViewProps {
@@ -36,7 +40,7 @@ export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUplo
   const handleContentReady = async (
     content: string,
     type: string,
-    metadata?: { videoId?: string; file?: File; language?: string }
+    metadata?: { videoId?: string; videoTitle?: string; file?: File; language?: string }
   ) => {
     // For PDF files, pass directly to the split view
     if (type === "upload" && metadata?.file) {
@@ -94,6 +98,97 @@ export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUplo
       return;
     }
 
+    // For YouTube content - fetch transcript
+    if (type === "youtube" && metadata?.videoId) {
+      abortControllerRef.current = new AbortController();
+      setIsProcessing(true);
+      showProcessing({
+        message: "Fetching video transcript...",
+        subMessage: metadata.videoTitle || "Processing YouTube video",
+        variant: "overlay",
+        canCancel: true,
+        onCancel: handleCancelProcessing,
+      });
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error("Not authenticated");
+
+        const transcript = await getYouTubeTranscript(metadata.videoId, session.access_token);
+        
+        if (!transcript?.trim()) {
+          throw new Error("No transcript available for this video");
+        }
+
+        hideProcessing();
+        setIsProcessing(false);
+        
+        if (onTextContent) {
+          const title = metadata.videoTitle || `YouTube Video (${metadata.videoId})`;
+          onTextContent(transcript, title);
+        }
+      } catch (error) {
+        hideProcessing();
+        setIsProcessing(false);
+        
+        if ((error as Error).name === 'AbortError') {
+          return;
+        }
+        
+        toast({
+          title: "Transcript Error",
+          description: error instanceof Error ? error.message : "Failed to fetch video transcript",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // For audio recordings - transcribe
+    if (type === "recording" && content) {
+      abortControllerRef.current = new AbortController();
+      setIsProcessing(true);
+      showProcessing({
+        message: "Transcribing audio...",
+        subMessage: "Converting speech to text",
+        variant: "overlay",
+        canCancel: true,
+        onCancel: handleCancelProcessing,
+      });
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error("Not authenticated");
+
+        const transcript = await transcribeAudio(content, session.access_token, undefined, metadata?.language);
+        
+        if (!transcript?.trim()) {
+          throw new Error("No speech detected in the recording");
+        }
+
+        hideProcessing();
+        setIsProcessing(false);
+        
+        if (onTextContent) {
+          onTextContent(transcript, "Audio Recording");
+        }
+      } catch (error) {
+        hideProcessing();
+        setIsProcessing(false);
+        
+        if ((error as Error).name === 'AbortError') {
+          return;
+        }
+        
+        toast({
+          title: "Transcription Error",
+          description: error instanceof Error ? error.message : "Failed to transcribe audio",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
     // For text content directly
     if (type === "text" && content.trim()) {
       if (onTextContent) {
@@ -102,19 +197,9 @@ export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUplo
       return;
     }
 
-    // For YouTube or other types, show not supported message
-    if (type === "youtube") {
-      toast({
-        title: "Not Supported",
-        description: "YouTube videos are not supported for PDF Chat. Please upload a document or paste text.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     toast({
       title: "Invalid Input",
-      description: "Please upload a PDF document or paste text content.",
+      description: "Please provide content to chat about.",
       variant: "destructive",
     });
   };
@@ -157,7 +242,7 @@ export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUplo
               Chat with PDF
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-2 font-sans px-2 sm:px-0">
-              Upload a document and ask questions about its content
+              Upload a document, paste text, or use YouTube videos
             </p>
           </div>
 
@@ -171,8 +256,6 @@ export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUplo
                     isProcessing={isProcessing}
                     placeholder="Paste your document text here..."
                     supportedFormats="PDF, DOCX, TXT, Images; Max size: 20MB"
-                    showYouTube={false}
-                    showRecording={false}
                   />
                   
                   {/* Inline recents */}
