@@ -39,6 +39,26 @@
     <priority>0.6</priority>
   </url>
   
+  <!-- New Content Pages -->
+  <url>
+    <loc>https://newtonai.lovable.app/how-it-works</loc>
+    <lastmod>2026-02-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://newtonai.lovable.app/features</loc>
+    <lastmod>2026-02-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://newtonai.lovable.app/ai-for-students</loc>
+    <lastmod>2026-02-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
   <!-- Legal Pages -->
   <url>
     <loc>https://newtonai.lovable.app/privacy</loc>

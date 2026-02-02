@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useCreditsContext } from "@/contexts/CreditsContext";
 import { useStudyContext } from "@/contexts/StudyContext";
 import { cn } from "@/lib/utils";
+import { AD_CONFIG } from "@/lib/adConfig";
 
 interface AdBannerProps {
   className?: string;
@@ -14,6 +15,9 @@ export function AdBanner({ className }: AdBannerProps) {
   const scriptLoaded = useRef(false);
 
   useEffect(() => {
+    // Skip if ads are disabled globally
+    if (!AD_CONFIG.enabled) return;
+    
     // Skip for premium users or deep study mode
     if (isPremium || isInDeepStudy) return;
     
@@ -47,8 +51,8 @@ export function AdBanner({ className }: AdBannerProps) {
     };
   }, [isPremium, isInDeepStudy]);
 
-  // Hide for premium users or during deep study
-  if (isPremium || isInDeepStudy) return null;
+  // Hide if ads disabled, or for premium users, or during deep study
+  if (!AD_CONFIG.enabled || isPremium || isInDeepStudy) return null;
 
   return (
     <div className={cn("w-full flex flex-col items-center my-6", className)}>

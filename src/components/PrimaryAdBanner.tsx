@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useCreditsContext } from "@/contexts/CreditsContext";
 import { cn } from "@/lib/utils";
+import { AD_CONFIG } from "@/lib/adConfig";
 
 interface PrimaryAdBannerProps {
   className?: string;
@@ -12,6 +13,9 @@ export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
   const scriptLoaded = useRef(false);
 
   useEffect(() => {
+    // Skip if ads are disabled globally
+    if (!AD_CONFIG.enabled) return;
+    
     // Don't load if already loaded or no container
     if (scriptLoaded.current || !adContainerRef.current) return;
     
@@ -43,8 +47,8 @@ export function PrimaryAdBanner({ className }: PrimaryAdBannerProps) {
     };
   }, [isPremium, loading]);
 
-  // Only hide for confirmed premium users
-  if (!loading && isPremium) return null;
+  // Hide if ads disabled globally, or for confirmed premium users
+  if (!AD_CONFIG.enabled || (!loading && isPremium)) return null;
 
   return (
     <div className={cn("w-full flex flex-col items-center my-6 min-h-[106px]", className)}>
