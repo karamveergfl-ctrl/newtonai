@@ -21,8 +21,11 @@ import {
 import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { usePDFDocument } from "@/hooks/usePDFDocument";
 
-// Configure PDF.js worker - use unpkg CDN for reliable ESM worker loading
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+// Use locally bundled worker (avoids CDN/CORS issues and "fake worker" failures)
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 interface PDFChatUploadViewProps {
   onFileSelected: (file: File, documentId: string) => void;
