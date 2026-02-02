@@ -50,8 +50,8 @@ export function CreditBalance({ className, showLabel = false }: CreditBalancePro
     prevCreditsRef.current = credits;
   }, [credits]);
 
-  // Don't render if not authenticated
-  if (isAuthenticated === false) {
+  // Don't render if not authenticated or still checking auth
+  if (isAuthenticated !== true) {
     return null;
   }
 
