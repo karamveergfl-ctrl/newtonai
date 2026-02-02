@@ -33,12 +33,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from '@/components/UniversalStudySettingsDialog';
 import { TextSelectionToolbar } from '@/components/TextSelectionToolbar';
 import { MobileTextSelectionDrawer } from '@/components/MobileTextSelectionDrawer';
-import { ProcessingOverlay } from '@/components/ProcessingOverlay';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface PDFChatSplitViewProps {
   initialFile?: File | null;
+  initialDocumentId?: string | null;
   onClose?: () => void;
 }
 
@@ -54,7 +54,7 @@ interface SelectionPosition {
   right: number;
 }
 
-export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps) {
+export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PDFChatSplitViewProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { toast } = useToast();
@@ -78,11 +78,17 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   const {
     document,
     sessionId,
-    isProcessing,
-    processingProgress,
     createDocument,
     processPages,
+    loadExistingDocument,
   } = usePDFDocument();
+
+  // Load existing document if documentId is provided (pre-processed)
+  useEffect(() => {
+    if (initialDocumentId && !document) {
+      loadExistingDocument(initialDocumentId);
+    }
+  }, [initialDocumentId, document, loadExistingDocument]);
 
   const {
     messages,
@@ -115,12 +121,12 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     fileName: document?.fileName || file?.name || 'Document',
   });
 
-  // Initialize document when file is provided
+  // Initialize document when file is provided but no documentId
   useEffect(() => {
-    if (initialFile && !document) {
+    if (initialFile && !initialDocumentId && !document) {
       createDocument(initialFile.name);
     }
-  }, [initialFile, document, createDocument]);
+  }, [initialFile, initialDocumentId, document, createDocument]);
 
   // Update chat hook's current page
   useEffect(() => {
@@ -432,9 +438,12 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   if (!file) {
     return (
       <PDFChatUploadView
-        onFileSelected={async (selectedFile) => {
+        onFileSelected={(selectedFile, documentId) => {
           setFile(selectedFile);
-          await createDocument(selectedFile.name);
+          // Load the pre-processed document
+          if (documentId) {
+            loadExistingDocument(documentId);
+          }
         }}
         onTextContent={(text, fileName) => {
           setTextContent(text);
@@ -444,22 +453,10 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
     );
   }
 
-  // Show processing overlay while PDF is being processed
-  const showProcessingOverlay = isProcessing && processingProgress < 100;
-
   // Mobile layout with tabs
   if (isMobile) {
     return (
       <div className="flex flex-col h-full">
-        {/* Newton Processing Overlay */}
-        <ProcessingOverlay
-          isVisible={showProcessingOverlay}
-          message="Processing your PDF..."
-          subMessage={`Extracting text and preparing for chat (${Math.round(processingProgress)}%)`}
-          variant="overlay"
-          progress={processingProgress}
-          isIndeterminate={processingProgress === 0}
-        />
         {/* Mobile Text Selection Drawer */}
         <MobileTextSelectionDrawer
           open={showMobileDrawer}
@@ -552,7 +549,6 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
               onCitationClick={handleCitationClick}
               onClearMessages={clearMessages}
               processingStatus={document?.processingStatus}
-              processingProgress={processingProgress}
               streamingContent={streamingContent}
               isStreaming={isStreaming}
             />
@@ -578,15 +574,6 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
   // Desktop layout with split view
   return (
     <div className="flex flex-col h-full">
-      {/* Newton Processing Overlay */}
-      <ProcessingOverlay
-        isVisible={showProcessingOverlay}
-        message="Processing your PDF..."
-        subMessage={`Extracting text and preparing for chat (${Math.round(processingProgress)}%)`}
-        variant="overlay"
-        progress={processingProgress}
-        isIndeterminate={processingProgress === 0}
-      />
       {/* Selection Toolbar - Full study tools + Ask/Explain */}
       {showSelectionToolbar && selectedText && (
         <TextSelectionToolbar
@@ -701,7 +688,6 @@ export function PDFChatSplitView({ initialFile, onClose }: PDFChatSplitViewProps
             onCitationClick={handleCitationClick}
             onClearMessages={clearMessages}
             processingStatus={document?.processingStatus}
-            processingProgress={processingProgress}
             streamingContent={streamingContent}
             isStreaming={isStreaming}
           />

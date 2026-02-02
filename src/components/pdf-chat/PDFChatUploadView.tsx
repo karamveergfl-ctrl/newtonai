@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { MessageSquare, X } from "lucide-react";
+import * as pdfjsLib from "pdfjs-dist";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppLayout } from "@/components/AppLayout";
@@ -18,18 +19,27 @@ import {
   transcribeAudio 
 } from "@/utils/contentProcessing";
 import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
+import { usePDFDocument } from "@/hooks/usePDFDocument";
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface PDFChatUploadViewProps {
-  onFileSelected: (file: File) => void;
+  onFileSelected: (file: File, documentId: string) => void;
   onTextContent?: (text: string, fileName: string) => void;
 }
 
 export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUploadViewProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { showProcessing, hideProcessing } = useProcessingOverlay();
+  const { showProcessing, hideProcessing, updateProgress, updateMessage } = useProcessingOverlay();
   const [isProcessing, setIsProcessing] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  
+  const {
+    createDocument,
+    processPages,
+  } = usePDFDocument();
 
   const breadcrumbs = [
     { name: "Home", href: "/" },
@@ -37,19 +47,107 @@ export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUplo
     { name: "Chat with PDF", href: "/pdf-chat" },
   ];
 
+  // Extract text from PDF using pdfjs-dist
+  const extractTextFromPDF = useCallback(async (file: File): Promise<Array<{ pageNumber: number; text: string }>> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pages: Array<{ pageNumber: number; text: string }> = [];
+    
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const text = textContent.items
+        .map((item: any) => item.str)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      pages.push({ pageNumber: i, text });
+      
+      // Update progress during extraction
+      const extractProgress = Math.round((i / pdf.numPages) * 50);
+      updateProgress(extractProgress);
+      updateMessage("Processing your PDF...", `Extracting text from page ${i} of ${pdf.numPages}`);
+    }
+    
+    return pages;
+  }, [updateProgress, updateMessage]);
+
+  // Handle PDF upload with full processing before navigation
+  const handlePDFUpload = useCallback(async (file: File) => {
+    abortControllerRef.current = new AbortController();
+    setIsProcessing(true);
+    
+    showProcessing({
+      message: "Processing your PDF...",
+      subMessage: "Preparing document for chat",
+      variant: "overlay",
+      canCancel: true,
+      onCancel: handleCancelProcessing,
+    });
+
+    try {
+      // Step 1: Create document record
+      updateMessage("Processing your PDF...", "Creating document record");
+      const documentId = await createDocument(file.name);
+      
+      if (!documentId) {
+        throw new Error("Failed to create document record");
+      }
+
+      // Step 2: Extract text from PDF
+      updateMessage("Processing your PDF...", "Extracting text content");
+      const pages = await extractTextFromPDF(file);
+      
+      if (pages.length === 0) {
+        throw new Error("No text content could be extracted from PDF");
+      }
+
+      // Step 3: Process pages into chunks
+      updateMessage("Processing your PDF...", "Preparing document for chat");
+      updateProgress(60);
+      await processPages(documentId, pages);
+      
+      updateProgress(100);
+      updateMessage("Processing complete!", "Opening chat view");
+      
+      // Brief delay to show completion
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      hideProcessing();
+      setIsProcessing(false);
+      
+      // Navigate to split view with processed document
+      onFileSelected(file, documentId);
+    } catch (error) {
+      hideProcessing();
+      setIsProcessing(false);
+      
+      if ((error as Error).name === 'AbortError') {
+        return;
+      }
+      
+      toast({
+        title: "Processing Error",
+        description: error instanceof Error ? error.message : "Failed to process PDF",
+        variant: "destructive",
+      });
+    }
+  }, [createDocument, extractTextFromPDF, processPages, showProcessing, hideProcessing, updateProgress, updateMessage, onFileSelected, toast]);
+
   const handleContentReady = async (
     content: string,
     type: string,
     metadata?: { videoId?: string; videoTitle?: string; file?: File; language?: string }
   ) => {
-    // For PDF files, pass directly to the split view
+    // For PDF files, use the new processing flow
     if (type === "upload" && metadata?.file) {
       const file = metadata.file;
       const fileType = file.type;
       
-      // Check if it's a PDF
+      // Check if it's a PDF - use new processing flow
       if (fileType === "application/pdf") {
-        onFileSelected(file);
+        await handlePDFUpload(file);
         return;
       }
 

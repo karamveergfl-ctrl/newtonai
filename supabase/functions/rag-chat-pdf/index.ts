@@ -297,8 +297,12 @@ ${hasRelevantContent ? context : '(No relevant content found for this question)'
     );
   } catch (error) {
     console.error("Error in RAG chat:", error);
+    console.error("Error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return new Response(
-      JSON.stringify({ error: "Failed to process chat request" }),
+      JSON.stringify({ 
+        error: "Failed to process chat request", 
+        details: error instanceof Error ? error.message : String(error) 
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
