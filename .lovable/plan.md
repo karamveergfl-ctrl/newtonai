@@ -1,113 +1,127 @@
 
-# Plan: Fix Chat with PDF Input - Not Working
+# Plan: Full-Screen Newton Processing Before PDF Chat Opens
 
-## Problem
+## Current Behavior
 
-The chat input shows "Processing document..." and is disabled even when the PDF is visible and loaded. Looking at the screenshot:
-- PDF shows page 1/8 with content visible
-- Chat panel shows "Processing document..." placeholder
-- Input is disabled, preventing any interaction
+Right now, when a user uploads a PDF:
+1. The PDF viewer immediately opens showing the document
+2. A `ProcessingOverlay` appears on top while text is being extracted
+3. The chat input is disabled until processing completes
 
-## Root Cause
+## Requested Behavior
 
-The `isReady` check in `ChatPanel.tsx` is too strict:
+Match the pattern of other study tools (Quiz, Flashcards, etc.):
+1. User uploads a PDF on the upload page
+2. **Full-screen Newton processing animation** plays while the PDF is being processed
+3. Once processing is complete, navigate to the split view with the PDF ready to chat
+
+This provides a cleaner UX where users see a focused animation during processing, then get a fully-ready PDF chat experience.
+
+---
+
+## Technical Implementation
+
+### 1. Update PDFChatUploadView - Handle PDF Processing with Overlay
+
+**File: `src/components/pdf-chat/PDFChatUploadView.tsx`**
+
+Currently, when a PDF is selected, it calls `onFileSelected(file)` immediately, which transitions to the split view. Instead:
+
+1. When PDF is uploaded, show the global `ProcessingOverlay` 
+2. Create the document in the database via `usePDFDocument` hook
+3. Extract text from PDF pages using `pdfjs-dist`
+4. Process pages (store chunks) while showing progress
+5. Only call `onFileSelected(file)` after processing completes
 
 ```tsx
-const isReady = processingStatus === 'completed' || processingProgress > 50;
-```
-
-**Timeline of what happens:**
-1. User uploads PDF → document created with status `'pending'`
-2. PDF viewer starts loading pages one by one
-3. User sees the PDF content (page 1/8)
-4. Text extraction only triggers `onTextExtracted` after ALL pages load
-5. `processPages` is called, updating `processingProgress` in batches
-6. Only after processing passes 50% does the input become enabled
-
-**The issue:** Steps 1-3 happen fast, but steps 4-6 take time for large documents. The user is stuck waiting.
-
-## Solution
-
-Make the chat input available earlier by improving the `isReady` logic:
-
-### File 1: `src/components/pdf-chat/ChatPanel.tsx`
-
-**Current (line 123):**
-```tsx
-const isReady = processingStatus === 'completed' || processingProgress > 50;
-```
-
-**Fixed:**
-```tsx
-// Enable chat when:
-// 1. Processing is complete, OR
-// 2. Progress > 50%, OR  
-// 3. Status is processing (meaning we've started), OR
-// 4. Status is pending but progress has started (> 0)
-const isReady = 
-  processingStatus === 'completed' || 
-  processingStatus === 'processing' ||
-  processingProgress > 0;
-```
-
-This allows the input to be enabled as soon as any processing begins.
-
-### File 2: `src/components/pdf-chat/PDFChatSplitView.tsx`
-
-**Current:** `processingStatus` starts as `'pending'` and jumps to `'completed'`.
-
-**Fix:** Update the document status to `'processing'` when text extraction begins.
-
-Add status update in `handleTextExtracted`:
-```tsx
-const handleTextExtracted = useCallback(async (pages) => {
-  const text = pages.map(p => p.text).join('\n\n');
-  setExtractedText(text);
+// New flow in handleContentReady when type === "upload" and file is PDF
+const handlePDFUpload = async (file: File) => {
+  showProcessing({
+    message: "Processing your PDF...",
+    subMessage: "Extracting text and preparing for chat",
+    variant: "overlay",
+    canCancel: true,
+    onCancel: handleCancelProcessing,
+  });
   
-  // Update local document state to show processing has started
-  // This will enable the chat input immediately
-  
-  if (document?.id && pages.length > 0) {
-    await processPages(document.id, pages);
-  }
-}, [document?.id, processPages]);
-```
-
-### File 3: `src/hooks/usePDFDocument.ts`
-
-**Current:** Status only updates at the very end of processing.
-
-**Fix:** Set status to `'processing'` at the start of `processPages`:
-
-```tsx
-const processPages = useCallback(async (documentId: string, pages: PageData[]) => {
-  if (!documentId || pages.length === 0) return;
-
-  setIsProcessing(true);
-  setProcessingProgress(0);
-  
-  // Mark as processing immediately so chat can be enabled
-  setDocument(prev => prev ? { ...prev, processingStatus: 'processing' } : null);
-
   try {
-    // ... rest of processing
+    // Create document record
+    const documentId = await createDocument(file.name);
+    
+    // Load PDF and extract text from all pages
+    const pdfDoc = await pdfjsLib.getDocument(url).promise;
+    const pages = [];
+    
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+      const page = await pdfDoc.getPage(i);
+      const textContent = await page.getTextContent();
+      // Extract text...
+      pages.push({ pageNumber: i, text: extractedText });
+      
+      // Update progress
+      updateProgress(Math.round((i / pdfDoc.numPages) * 100));
+    }
+    
+    // Process pages into chunks
+    await processPages(documentId, pages);
+    
+    // Processing complete - now open the split view
+    hideProcessing();
+    onFileSelected(file);
+  } catch (error) {
+    hideProcessing();
+    toast({ title: "Error", description: "Failed to process PDF" });
   }
-}, [toast]);
+};
 ```
 
-## Summary of Changes
+### 2. Update PDFChatSplitView - Remove Internal Processing Overlay
 
-| File | Change |
-|------|--------|
-| `ChatPanel.tsx` | Update `isReady` logic to be less restrictive |
-| `usePDFDocument.ts` | Set `processingStatus` to `'processing'` at the start |
+**File: `src/components/pdf-chat/PDFChatSplitView.tsx`**
 
-## Expected Result
+Since processing now happens BEFORE entering the split view:
+- Remove the `ProcessingOverlay` component from both mobile and desktop layouts
+- The document will already be processed when this view opens
+- Keep the `isDocumentReady` check for edge cases
 
-After these changes:
-1. User uploads PDF
-2. PDF viewer loads first page
-3. Once `processPages` is called, status becomes `'processing'`
-4. Chat input is immediately enabled
-5. User can start asking questions while processing continues in background
-6. Full RAG answers become available as processing completes
+### 3. Pass Pre-Processed State to Split View
+
+Update the props to accept pre-processed document state:
+- Pass `documentId` and `extractedText` from the upload view
+- This allows the split view to skip reprocessing
+
+### 4. Fix Edge Function Error Handling
+
+**File: `supabase/functions/rag-chat-pdf/index.ts`**
+
+Add more detailed error logging to help debug:
+
+```typescript
+catch (error) {
+  console.error("Error in RAG chat:", error);
+  console.error("Error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  return new Response(
+    JSON.stringify({ error: "Failed to process question", details: String(error) }),
+    { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+```
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/pdf-chat/PDFChatUploadView.tsx` | Add PDF processing with global overlay before navigating to split view |
+| `src/components/pdf-chat/PDFChatSplitView.tsx` | Remove internal `ProcessingOverlay`, accept pre-processed state |
+| `supabase/functions/rag-chat-pdf/index.ts` | Improve error logging |
+
+---
+
+## Summary
+
+1. **Processing happens on upload page** - User sees Newton animation while PDF is being processed
+2. **Split view opens when ready** - No more overlay inside the chat view
+3. **Matches other tools** - Same UX pattern as Quiz, Flashcards, Summarizer
+4. **Better error handling** - Edge function provides more debugging info
