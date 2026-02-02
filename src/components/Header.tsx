@@ -5,20 +5,60 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CreditBalance } from "@/components/CreditBalance";
 import Logo from "@/components/Logo";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/features", label: "Features" },
-  { href: "/how-it-works", label: "How It Works" },
-  { href: "/tools", label: "Tools" },
-  { href: "/guides", label: "Guides", badge: "NEW" },
-  { href: "/compare", label: "Compare" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/blog", label: "Blog" },
-  { href: "/about", label: "About" },
-  { href: "/faq", label: "FAQ" },
+type NavChild = {
+  href: string;
+  label: string;
+  badge?: string;
+};
+
+type NavLink = {
+  href?: string;
+  label: string;
+  type: "link" | "dropdown";
+  children?: NavChild[];
+  badge?: string;
+};
+
+const navLinks: NavLink[] = [
+  { href: "/", label: "Home", type: "link" },
+  {
+    label: "Features",
+    type: "dropdown",
+    children: [
+      { href: "/features", label: "Features" },
+      { href: "/how-it-works", label: "How It Works" },
+      { href: "/compare", label: "Compare" },
+    ],
+  },
+  { href: "/tools", label: "Tools", type: "link" },
+  {
+    label: "Resources",
+    type: "dropdown",
+    children: [
+      { href: "/guides", label: "Guides", badge: "NEW" },
+      { href: "/blog", label: "Blog" },
+      { href: "/faq", label: "FAQ" },
+    ],
+  },
+  { href: "/pricing", label: "Pricing", type: "link" },
+  { href: "/about", label: "About", type: "link" },
 ];
+
+// Flatten navLinks for mobile menu
+const mobileNavLinks: NavChild[] = navLinks.flatMap((link) => {
+  if (link.type === "dropdown" && link.children) {
+    return link.children;
+  }
+  return [{ href: link.href!, label: link.label, badge: link.badge }];
+});
 
 interface HeaderProps {
   transparent?: boolean;
@@ -46,6 +86,10 @@ export const Header = ({ transparent = false }: HeaderProps) => {
     ? "bg-transparent"
     : "bg-background/80 backdrop-blur-lg border-b border-border/50";
 
+  const isActiveDropdown = (children: NavChild[]) => {
+    return children.some((child) => location.pathname === child.href);
+  };
+
   return (
     <>
       <header
@@ -60,24 +104,63 @@ export const Header = ({ transparent = false }: HeaderProps) => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                    location.pathname === link.href
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  }`}
-                >
-                  {link.label}
-                  {link.badge && (
-                    <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary animate-pulse">
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
+              {navLinks.map((link) =>
+                link.type === "link" ? (
+                  <Link
+                    key={link.href}
+                    to={link.href!}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                      location.pathname === link.href
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    {link.label}
+                    {link.badge && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary animate-pulse">
+                        {link.badge}
+                      </span>
+                    )}
+                  </Link>
+                ) : (
+                  <DropdownMenu key={link.label}>
+                    <DropdownMenuTrigger
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 outline-none ${
+                        isActiveDropdown(link.children || [])
+                          ? "text-primary bg-primary/10"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      {link.label}
+                      <ChevronDown className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="start"
+                      className="min-w-[180px] bg-popover border border-border"
+                    >
+                      {link.children?.map((child) => (
+                        <DropdownMenuItem key={child.href} asChild>
+                          <Link
+                            to={child.href}
+                            className={`flex items-center gap-2 cursor-pointer ${
+                              location.pathname === child.href
+                                ? "text-primary"
+                                : ""
+                            }`}
+                          >
+                            {child.label}
+                            {child.badge && (
+                              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary animate-pulse">
+                                {child.badge}
+                              </span>
+                            )}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )
+              )}
             </nav>
 
             {/* Desktop Actions */}
@@ -122,7 +205,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
             className="fixed inset-x-0 top-16 z-40 md:hidden bg-background border-b border-border shadow-lg"
           >
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
-              {navLinks.map((link) => (
+              {mobileNavLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
