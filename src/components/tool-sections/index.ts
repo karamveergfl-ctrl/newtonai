@@ -7,6 +7,7 @@ export { ToolPageOtherTools } from "./ToolPageOtherTools";
 export { ToolPageRecents } from "./ToolPageRecents";
 export { ToolPageWhyUse } from "./ToolPageWhyUse";
 export { ToolPageFAQ } from "./ToolPageFAQ";
+export { ToolPageEducationalContent } from "./ToolPageEducationalContent";
 export { FloatingScrollTop } from "./FloatingScrollTop";
 export { 
   FeatureSkeleton, 

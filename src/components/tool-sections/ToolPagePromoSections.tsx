@@ -8,6 +8,7 @@ import { ToolPageRecents } from "./ToolPageRecents";
 import { ToolPageWhyUse } from "./ToolPageWhyUse";
 import { ToolPageFAQ } from "./ToolPageFAQ";
 import { FloatingScrollTop } from "./FloatingScrollTop";
+import { ToolPageEducationalContent } from "./ToolPageEducationalContent";
 import { toolPromoData, ToolId } from "./toolPromoData";
 import { AdBanner } from "@/components/AdBanner";
 
@@ -35,13 +36,16 @@ export function ToolPagePromoSections({
       {/* Floating Scroll to Top Button */}
       <FloatingScrollTop />
       
+      {/* EDUCATIONAL CONTENT FIRST - Before any ads */}
+      <ToolPageEducationalContent toolId={toolId} />
+      
       {/* Stats Bar */}
       <ToolPageStatsBar stats={data.stats} />
       
       {/* Features Grid */}
       <ToolPageFeatures features={data.features} />
       
-      {/* Ad Banner - Mid-page */}
+      {/* Ad Banner - Mid-page (only 1 per tool page now) */}
       <AdBanner />
       
       {/* Trending Topics - Between Features and Subjects */}
@@ -58,9 +62,6 @@ export function ToolPagePromoSections({
       
       {/* FAQ Section - Above Why Use */}
       <ToolPageFAQ toolId={toolId} />
-      
-      {/* Ad Banner - Above footer */}
-      <AdBanner />
       
       {/* Why Use Section (CTA) */}
       <ToolPageWhyUse 

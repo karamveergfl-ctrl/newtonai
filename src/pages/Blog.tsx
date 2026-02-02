@@ -128,9 +128,6 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* Ad Banner - After Hero */}
-      <AdBanner className="container mx-auto" />
-
       {/* Blog Posts Grid */}
       <section className="container mx-auto px-4 pb-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

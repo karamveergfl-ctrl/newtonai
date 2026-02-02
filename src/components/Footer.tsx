@@ -59,18 +59,18 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Compare */}
+          {/* Guides */}
           <div>
             <h3 className="font-display font-semibold text-foreground mb-4">
-              Compare
+              Study Guides
             </h3>
             <ul className="space-y-3">
               {[
-                { to: "/compare/chegg", label: "vs Chegg" },
-                { to: "/compare/quizlet", label: "vs Quizlet" },
-                { to: "/compare/studocu", label: "vs Studocu" },
-                { to: "/compare/course-hero", label: "vs Course Hero" },
-                { to: "/compare/chatgpt", label: "vs ChatGPT" },
+                { to: "/guides", label: "All Guides" },
+                { to: "/guides/how-ai-learning-works", label: "AI Learning Guide" },
+                { to: "/guides/spaced-repetition-guide", label: "Spaced Repetition" },
+                { to: "/guides/responsible-ai-use", label: "Responsible AI Use" },
+                { to: "/blog", label: "Blog Articles" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
@@ -95,6 +95,7 @@ const Footer = () => {
                 { to: "/pricing", label: "Pricing" },
                 { to: "/faq", label: "FAQ" },
                 { to: "/contact", label: "Contact Us" },
+                { to: "/compare", label: "Compare Tools" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
@@ -132,6 +133,15 @@ const Footer = () => {
           </div>
         </div>
 
+        {/* Educational Disclaimer */}
+        <div className="border-t border-border pt-8 mb-8">
+          <p className="text-xs text-muted-foreground leading-relaxed max-w-4xl">
+            <strong className="text-foreground">Educational Use Disclaimer:</strong> NewtonAI is designed to assist with 
+            learning and studying. AI-generated content should be used as a study aid and verified against authoritative 
+            sources. Users are responsible for ensuring compliance with their institution's academic integrity policies. 
+            NewtonAI does not encourage or condone academic dishonesty.
+          </p>
+        </div>
 
         {/* Bottom Section */}
         <div className="pt-8 border-t border-border">

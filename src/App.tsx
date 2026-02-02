@@ -34,6 +34,10 @@ import Enterprise from "./pages/Enterprise";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Tools from "./pages/Tools";
+import Guides from "./pages/Guides";
+import HowAILearningWorks from "./pages/guides/HowAILearningWorks";
+import SpacedRepetitionGuide from "./pages/guides/SpacedRepetitionGuide";
+import ResponsibleAIUse from "./pages/guides/ResponsibleAIUse";
 
 // Tool pages
 import HomeworkHelp from "./pages/tools/HomeworkHelp";
@@ -92,6 +96,12 @@ function AnimatedRoutes() {
         <Route path="/enterprise" element={<PageTransition><Enterprise /></PageTransition>} />
         <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
         <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
+        
+        {/* Guide Routes */}
+        <Route path="/guides" element={<PageTransition><Guides /></PageTransition>} />
+        <Route path="/guides/how-ai-learning-works" element={<PageTransition><HowAILearningWorks /></PageTransition>} />
+        <Route path="/guides/spaced-repetition-guide" element={<PageTransition><SpacedRepetitionGuide /></PageTransition>} />
+        <Route path="/guides/responsible-ai-use" element={<PageTransition><ResponsibleAIUse /></PageTransition>} />
         
         {/* Payment Routes */}
         <Route path="/payment/success" element={<PageTransition><ProtectedRoute><OnboardingGate><PaymentSuccess /></OnboardingGate></ProtectedRoute></PageTransition>} />
