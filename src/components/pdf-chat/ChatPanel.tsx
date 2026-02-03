@@ -2,12 +2,12 @@ import { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Mic, Copy, Check, Loader2, Sparkles, StopCircle, RotateCcw } from 'lucide-react';
+import { Send, Mic, Copy, Check, Loader2, StopCircle, RotateCcw } from 'lucide-react';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { CitationChip } from './CitationChip';
 import { ContextModeSelector } from './ContextModeSelector';
 import { SuggestedQuestions } from './SuggestedQuestions';
-import { ConfidenceIndicator } from './ConfidenceIndicator';
+import { ConfidenceIndicator, SpellCorrectionNotice, SuggestedTopics } from './ConfidenceIndicator';
 import { LottieNewton } from '@/components/newton/LottieNewton';
 import { AudioRecorder, blobToBase64 } from '@/utils/audioRecorder';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,7 @@ interface ChatPanelProps {
   onContextModeChange: (mode: ContextMode) => void;
   onCitationClick: (pageNumber: number, quote: string) => void;
   onClearMessages?: () => void;
+  onSuggestedTopicClick?: (topic: string) => void;
   disabled?: boolean;
   processingStatus?: 'pending' | 'processing' | 'completed' | 'failed';
   processingProgress?: number;
@@ -41,6 +42,7 @@ export function ChatPanel({
   onContextModeChange,
   onCitationClick,
   onClearMessages,
+  onSuggestedTopicClick,
   disabled = false,
   processingStatus,
   processingProgress = 0,
@@ -75,6 +77,14 @@ export function ChatPanel({
 
   const handleSuggestionSelect = (question: string) => {
     onSendMessage(question);
+  };
+
+  const handleTopicClick = (topic: string) => {
+    if (onSuggestedTopicClick) {
+      onSuggestedTopicClick(topic);
+    } else {
+      onSendMessage(`Tell me about "${topic}"`);
+    }
   };
 
   const handleVoiceRecord = async () => {
@@ -126,6 +136,16 @@ export function ChatPanel({
     processingStatus === 'processing' ||
     processingProgress > 0;
   const isProcessingDoc = processingStatus === 'processing';
+
+  // Get the last user message for spell correction display
+  const getLastUserQuery = (index: number): string | null => {
+    for (let i = index - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        return messages[i].content;
+      }
+    }
+    return null;
+  };
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -186,12 +206,22 @@ export function ChatPanel({
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((msg) => (
+            {messages.map((msg, index) => (
               <div
                 key={msg.id}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-2' : ''}`}>
+                  {/* Spell correction notice for assistant messages */}
+                  {msg.role === 'assistant' && msg.correctedQuery && (
+                    <div className="mb-2">
+                      <SpellCorrectionNotice
+                        originalQuery={getLastUserQuery(index) || ''}
+                        correctedQuery={msg.correctedQuery}
+                      />
+                    </div>
+                  )}
+
                   <div
                     className={`p-3 rounded-lg ${
                       msg.role === 'user'
@@ -206,12 +236,25 @@ export function ChatPanel({
                     )}
                   </div>
 
+                  {/* Suggested topics for clarification */}
+                  {msg.role === 'assistant' && msg.confidence === 'clarify' && msg.suggestedTopics && (
+                    <div className="mt-2">
+                      <SuggestedTopics
+                        topics={msg.suggestedTopics}
+                        onTopicClick={handleTopicClick}
+                      />
+                    </div>
+                  )}
+
                   {/* Citations, confidence, and actions for assistant messages */}
                   {msg.role === 'assistant' && (
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       {/* Confidence indicator */}
                       {msg.confidence && (
-                        <ConfidenceIndicator level={msg.confidence} />
+                        <ConfidenceIndicator 
+                          level={msg.confidence} 
+                          correctedQuery={msg.correctedQuery}
+                        />
                       )}
                       
                       {msg.citations && msg.citations.length > 0 && (

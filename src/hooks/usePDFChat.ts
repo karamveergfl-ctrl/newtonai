@@ -8,7 +8,7 @@ export interface Citation {
   quote: string;
 }
 
-export type ConfidenceLevel = 'high' | 'medium' | 'low' | 'not_found';
+export type ConfidenceLevel = 'high' | 'medium' | 'low' | 'clarify' | 'not_found';
 
 export interface ChatMessage {
   id: string;
@@ -16,6 +16,8 @@ export interface ChatMessage {
   content: string;
   citations?: Citation[];
   confidence?: ConfidenceLevel;
+  correctedQuery?: string;
+  suggestedTopics?: string[];
   createdAt: Date;
 }
 
@@ -105,15 +107,8 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
 
       if (error) throw error;
 
-      // Determine confidence level from response
-      let confidence: ConfidenceLevel = 'high';
-      if (data.confidence === 'not_found') {
-        confidence = 'not_found';
-      } else if (data.citations && data.citations.length === 0) {
-        confidence = 'low';
-      } else if (data.citations && data.citations.length <= 2) {
-        confidence = 'medium';
-      }
+      // Use the confidence returned from the backend
+      const confidence: ConfidenceLevel = data.confidence || 'high';
 
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
@@ -121,6 +116,8 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
         content: data.answer,
         citations: data.citations || [],
         confidence,
+        correctedQuery: data.correctedQuery,
+        suggestedTopics: data.suggestedTopics,
         createdAt: new Date(),
       };
       setMessages(prev => [...prev, assistantMessage]);
@@ -146,6 +143,11 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
       abortControllerRef.current = null;
     }
   }, [documentId, sessionId, messages, contextMode, currentPage, selectedText, isLoading, toast]);
+
+  // Handle clicking on a suggested topic
+  const sendSuggestedTopic = useCallback((topic: string) => {
+    sendMessage(`Tell me about "${topic}"`);
+  }, [sendMessage]);
 
   const cancelRequest = useCallback(() => {
     if (abortControllerRef.current) {
@@ -180,6 +182,7 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
     streamingContent,
     isStreaming,
     sendMessage,
+    sendSuggestedTopic,
     cancelRequest,
     clearMessages,
     setContextMode: updateContextMode,

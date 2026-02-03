@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, HelpCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, HelpCircle, MessageCircleQuestion } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -7,10 +7,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-type ConfidenceLevel = 'high' | 'medium' | 'low' | 'not_found';
+type ConfidenceLevel = 'high' | 'medium' | 'low' | 'clarify' | 'not_found';
 
 interface ConfidenceIndicatorProps {
   level: ConfidenceLevel;
+  correctedQuery?: string;
   className?: string;
 }
 
@@ -24,8 +25,8 @@ const config = {
   },
   medium: {
     icon: HelpCircle,
-    label: 'Medium confidence',
-    description: 'Partially supported by the document',
+    label: 'Interpreted query',
+    description: 'Answer based on interpreted meaning',
     color: 'text-amber-500',
     bg: 'bg-amber-500/10',
   },
@@ -36,6 +37,13 @@ const config = {
     color: 'text-orange-500',
     bg: 'bg-orange-500/10',
   },
+  clarify: {
+    icon: MessageCircleQuestion,
+    label: 'Clarification needed',
+    description: 'Please clarify your question for better results',
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
+  },
   not_found: {
     icon: AlertTriangle,
     label: 'Not found',
@@ -45,7 +53,7 @@ const config = {
   },
 };
 
-export function ConfidenceIndicator({ level, className }: ConfidenceIndicatorProps) {
+export function ConfidenceIndicator({ level, correctedQuery, className }: ConfidenceIndicatorProps) {
   const { icon: Icon, label, description, color, bg } = config[level];
 
   return (
@@ -64,10 +72,64 @@ export function ConfidenceIndicator({ level, className }: ConfidenceIndicatorPro
             <span>{label}</span>
           </div>
         </TooltipTrigger>
-        <TooltipContent side="top">
+        <TooltipContent side="top" className="max-w-xs">
           <p className="text-xs">{description}</p>
+          {correctedQuery && (
+            <p className="text-xs mt-1 opacity-80">
+              Searched for: "{correctedQuery}"
+            </p>
+          )}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  );
+}
+
+interface SpellCorrectionNoticeProps {
+  originalQuery: string;
+  correctedQuery: string;
+}
+
+export function SpellCorrectionNotice({ originalQuery, correctedQuery }: SpellCorrectionNoticeProps) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 text-sm">
+      <span className="text-primary">✨</span>
+      <span>
+        Showing results for <span className="font-medium">"{correctedQuery}"</span>
+        <span className="text-muted-foreground ml-1">(searched for "{originalQuery}")</span>
+      </span>
+    </div>
+  );
+}
+
+interface SuggestedTopicsProps {
+  topics: string[];
+  onTopicClick: (topic: string) => void;
+}
+
+export function SuggestedTopics({ topics, onTopicClick }: SuggestedTopicsProps) {
+  if (!topics || topics.length === 0) return null;
+
+  return (
+    <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
+      <div className="flex items-center gap-2 mb-2">
+        <MessageCircleQuestion className="w-4 h-4 text-blue-500" />
+        <span className="text-sm font-medium">Did you mean one of these?</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {topics.map((topic, idx) => (
+          <button
+            key={idx}
+            onClick={() => onTopicClick(topic)}
+            className="px-3 py-1.5 rounded-full text-xs font-medium bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 dark:text-blue-300 transition-colors"
+          >
+            {topic}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        Click a topic or rephrase your question.
+      </p>
+    </div>
   );
 }
