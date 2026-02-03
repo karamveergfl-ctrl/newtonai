@@ -19,15 +19,35 @@ interface RetrievedChunk {
   similarity: number;
 }
 
+// Check if query is a general/summarization query that needs all content
+function isGeneralQuery(query: string): boolean {
+  const generalPatterns = [
+    /summariz/i,
+    /summar[yi]/i,
+    /overview/i,
+    /explain\s+(the\s+)?document/i,
+    /what\s+is\s+this\s+(document|pdf|file)\s+(about|regarding)/i,
+    /tell\s+me\s+about/i,
+    /main\s+(points?|ideas?|topics?)/i,
+    /key\s+(points?|concepts?|takeaways?)/i,
+    /describe/i,
+    /outline/i,
+  ];
+  return generalPatterns.some(pattern => pattern.test(query));
+}
+
 // Simple keyword-based relevance scoring
 function scoreChunk(chunk: string, query: string): number {
   const chunkLower = chunk.toLowerCase();
+  const stopWords = new Set(['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'was', 'her', 'were', 'one', 'our', 'out', 'has', 'have', 'been', 'this', 'that', 'what', 'when', 'where', 'which', 'with', 'from', 'document', 'pdf', 'file', 'summarize', 'summary', 'explain', 'tell', 'about', 'few', 'paragraphs', 'please', 'could', 'would']);
+  
   const queryWords = query.toLowerCase()
     .split(/\s+/)
     .filter(w => w.length > 2)
-    .filter(w => !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'was', 'her', 'were', 'one', 'our', 'out', 'has', 'have', 'been', 'this', 'that', 'what', 'when', 'where', 'which', 'with', 'from'].includes(w));
+    .filter(w => !stopWords.has(w));
   
-  if (queryWords.length === 0) return 0;
+  // For general queries with no meaningful keywords, return a base score
+  if (queryWords.length === 0) return 0.5;
   
   let matchCount = 0;
   let exactPhraseBonus = 0;
@@ -180,6 +200,9 @@ serve(async (req) => {
         );
       }
 
+      // Check if this is a general/summarization query
+      const isGeneral = isGeneralQuery(question);
+      
       // Score chunks by keyword relevance
       const scoredChunks = chunks.map(chunk => ({
         chunkId: chunk.id,
@@ -189,14 +212,31 @@ serve(async (req) => {
         similarity: scoreChunk(chunk.content, question),
       }));
 
-      // Sort by score and take top chunks
-      scoredChunks.sort((a, b) => b.similarity - a.similarity);
-      retrievedChunks = scoredChunks.slice(0, 6);
+      // For general queries, take chunks from across the document
+      if (isGeneral) {
+        // For summarization, take evenly distributed chunks to cover the whole document
+        const maxChunks = 10;
+        if (chunks.length <= maxChunks) {
+          retrievedChunks = scoredChunks;
+        } else {
+          // Take chunks from beginning, middle, and end
+          const step = Math.floor(chunks.length / maxChunks);
+          retrievedChunks = [];
+          for (let i = 0; i < chunks.length && retrievedChunks.length < maxChunks; i += step) {
+            retrievedChunks.push(scoredChunks[i]);
+          }
+        }
+      } else {
+        // Sort by score and take top chunks
+        scoredChunks.sort((a, b) => b.similarity - a.similarity);
+        retrievedChunks = scoredChunks.slice(0, 6);
+      }
     }
 
-    // Check if we found relevant content
+    // Check if we found relevant content - be more lenient for general queries
+    const isGeneral = isGeneralQuery(question);
     const hasRelevantContent = retrievedChunks.length > 0 && 
-      (contextMode === 'selected_text' || retrievedChunks[0].similarity > 0.2);
+      (contextMode === 'selected_text' || isGeneral || retrievedChunks[0].similarity > 0.15);
 
     // Build context from retrieved chunks
     const contextParts = retrievedChunks.map((chunk) => 
