@@ -1,147 +1,182 @@
 
-# Fix PDF Chat - Text Not Responding & Microphone Issues
+# Zero-Silent-Failures Fix for PDF Chat
 
-## Problem Analysis
+## Problem Summary
 
-Based on code analysis and network request logs, I've identified two distinct issues:
+Based on code analysis, I've identified **critical gaps** in the chat pipeline where responses can silently fail without any UI feedback. The current system doesn't enforce a strict response contract.
 
-### Issue 1: Text Questions Not Responding to UI
-**Observed:** Network logs show successful API calls (status 200) with valid responses, but messages may not display properly.
+## Root Cause Analysis
 
-**Root Cause Analysis:**
-1. The `isReady` state check in ChatPanel may be blocking input
-2. The `disabled` prop combination with `isReady` state creates edge cases where input is blocked
+### Issue 1: Frontend Catches Error But Doesn't Display Fallback Message
 
-Looking at ChatPanel line 144-148:
+In `src/hooks/usePDFChat.ts` lines 156-162:
 ```typescript
-const isReady = 
-  processingStatus === 'completed' || 
-  processingStatus === 'processing' ||
-  processingProgress > 0;
+} catch (error: any) {
+  console.error('Chat error:', error);
+  toast({
+    title: 'Error',
+    description: error.message || 'Failed to get response',
+    variant: 'destructive',
+  });
+  // NO assistant message added to chat! Silent failure in UI
+}
 ```
 
-And line 398:
+The error only shows a toast, but NO message appears in the chat. User's message is visible, but no response appears - this looks broken.
+
+### Issue 2: Backend Can Return Error Objects That Frontend Doesn't Handle
+
+When the edge function returns `{ error: "..." }` with status 200 (e.g., in some code paths), the frontend doesn't check for the error property:
+
 ```typescript
-disabled={isLoading || isListening || disabled || !isReady}
+const { data, error } = await supabase.functions.invoke('rag-chat-pdf', {...});
+if (error) throw error; // Only catches Supabase errors, not {error: "..."} in data
 ```
 
-The issue is that if `processingStatus` is undefined (when document is still initializing), `isReady` becomes `false` and input is disabled, even though `document?.id` might exist.
+### Issue 3: No Timeout Handling
 
-### Issue 2: Microphone Not Working
-**Root Cause:** The Web Speech API and `getUserMedia` require direct invocation from a user gesture. The current async/await pattern loses the gesture context.
+If the backend takes too long or hangs, there's no timeout and no fallback message.
 
-Looking at useSpeechRecognition.ts:
-```typescript
-const startListening = useCallback(async () => {
-  // ... code in try/catch
-  if (isSupported) {
-    try {
-      recognitionRef.current = initWebSpeech();
-      if (recognitionRef.current) {
-        recognitionRef.current.start(); // This loses gesture context
-        setIsListening(true);
-      }
-    } catch (err: any) {
-      // Falls back to recording
-    }
-  }
-}, [...]);
-```
+### Issue 4: Voice Chat Doesn't Sync With Message State
 
-The issue is the async wrapping loses the user gesture context required by browsers for microphone access.
+The `useVoiceChat` hook sends transcript to parent via `onTranscript`, but doesn't add error messages if something fails during processing.
 
 ---
 
-## Solution Plan
+## Comprehensive Fix Plan
 
-### Fix 1: Improve isReady Logic to Be Less Restrictive
+### Fix 1: Add Error Message to Chat (Never Leave Empty)
+
+**File:** `src/hooks/usePDFChat.ts`
+
+Update the catch block to add a visible error message to the chat:
+
+```typescript
+} catch (error: any) {
+  console.error('Chat error:', error);
+  
+  // CRITICAL: Always add a visible error message to the chat
+  const errorMessage: ChatMessage = {
+    id: crypto.randomUUID(),
+    role: 'assistant',
+    content: error.message?.includes('Rate limit') 
+      ? 'You\'ve sent too many questions. Please wait a minute and try again.'
+      : 'Something went wrong while searching the document. Please try again.',
+    confidence: 'not_found' as ConfidenceLevel,
+    createdAt: new Date(),
+  };
+  setMessages(prev => [...prev, errorMessage]);
+  
+  toast({
+    title: 'Error',
+    description: error.message || 'Failed to get response',
+    variant: 'destructive',
+  });
+}
+```
+
+### Fix 2: Handle Backend Error Responses in Data
+
+**File:** `src/hooks/usePDFChat.ts`
+
+Add validation that checks if `data.error` exists:
+
+```typescript
+const { data, error } = await supabase.functions.invoke('rag-chat-pdf', {...});
+
+if (error) throw error;
+
+// Check for error in response body (backend returned error object)
+if (data?.error) {
+  throw new Error(data.error);
+}
+
+// Check for missing answer
+if (!data?.answer) {
+  throw new Error('No response received from the document. Please try again.');
+}
+```
+
+### Fix 3: Add Timeout With Fallback Message
+
+**File:** `src/hooks/usePDFChat.ts`
+
+Wrap the API call in a timeout:
+
+```typescript
+// Create timeout promise
+const timeoutPromise = new Promise((_, reject) => {
+  setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000);
+});
+
+// Race the API call against timeout
+const result = await Promise.race([
+  supabase.functions.invoke('rag-chat-pdf', {...}),
+  timeoutPromise,
+]) as { data: any; error: any };
+```
+
+### Fix 4: Backend Must Return Standard Response Contract
+
+**File:** `supabase/functions/rag-chat-pdf/index.ts`
+
+Wrap the entire handler in a try-catch that ALWAYS returns a valid response:
+
+```typescript
+// At the very end of the catch block (lines 775-784)
+return new Response(
+  JSON.stringify({ 
+    answer: "Something went wrong while searching the document. Please try again.",
+    citations: [],
+    confidence: 'not_found',
+    status: 'ERROR',
+    debug_id: crypto.randomUUID(),
+  }),
+  { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+);
+```
+
+Note: Return status 200 with error message so frontend can display it, not just HTTP error codes that get swallowed.
+
+### Fix 5: Add "Still Thinking" Fallback UI
 
 **File:** `src/components/pdf-chat/ChatPanel.tsx`
 
-Update the `isReady` calculation to also consider if `documentId` is available:
+Add a timeout effect that shows a fallback message if loading takes too long:
 
 ```typescript
-// Enable chat when document ID exists OR processing has started
-const isReady = 
-  !!documentId ||  // Add this - if we have a document ID, we're ready
-  processingStatus === 'completed' || 
-  processingStatus === 'processing' ||
-  processingProgress > 0;
-```
+// Add state for delayed loading message
+const [loadingTooLong, setLoadingTooLong] = useState(false);
 
-This ensures that if a document ID is passed (meaning processing started), the input is enabled.
-
-### Fix 2: Fix Gesture Context for Microphone Access
-
-**File:** `src/hooks/useSpeechRecognition.ts`
-
-The issue is that `startListening` is async, which can lose the gesture context. We need to ensure the critical browser APIs are called synchronously from the click handler:
-
-**Current (problematic):**
-```typescript
-const startListening = useCallback(async () => {
-  // async loses gesture context
-  recognitionRef.current = initWebSpeech();
-  recognitionRef.current.start();
-}, []);
-```
-
-**Fixed:**
-```typescript
-const startListening = useCallback(async () => {
-  // Clear any errors
-  setError(null);
-  finalTranscriptRef.current = '';
-  setTranscript('');
-  setInterimTranscript('');
-  
-  if (isSupported) {
-    // CRITICAL: Start recognition synchronously to preserve gesture context
-    const recognition = initWebSpeech();
-    if (recognition) {
-      recognitionRef.current = recognition;
-      recognitionRef.current.start(); // Synchronous call preserves gesture
-      setIsListening(true);
-      return; // Exit early on success
-    }
+useEffect(() => {
+  let timer: NodeJS.Timeout;
+  if (isLoading) {
+    timer = setTimeout(() => setLoadingTooLong(true), 5000);
+  } else {
+    setLoadingTooLong(false);
   }
-  
-  // Fallback: Use audio recorder (also needs synchronous start for gesture)
-  if (!audioRecorderRef.current) {
-    audioRecorderRef.current = new AudioRecorder();
-  }
-  await audioRecorderRef.current.start(); // getUserMedia here - still okay as it's the first await
-  setIsListening(true);
-}, [isSupported, initWebSpeech]);
-```
+  return () => clearTimeout(timer);
+}, [isLoading]);
 
-### Fix 3: Update AudioRecorder to Handle Gesture Context Better
-
-**File:** `src/utils/audioRecorder.ts`
-
-Ensure the `start()` method is called immediately on user gesture:
-
-The current implementation is fine, but we need to ensure errors are caught properly and not silently swallowed.
-
-### Fix 4: Add Better Error Handling in Voice Chat
-
-**File:** `src/hooks/useVoiceChat.ts`
-
-Add error state visibility so users know when something fails:
-
-```typescript
-const startListening = useCallback(async () => {
-  try {
-    await startSpeechRecognition();
-  } catch (err: any) {
-    console.error('Microphone access error:', err);
-    toast({
-      title: 'Microphone Error',
-      description: err.message || 'Please allow microphone access to use voice chat.',
-      variant: 'destructive',
-    });
-  }
-}, [startSpeechRecognition, toast]);
+// In the loading indicator JSX:
+{isLoading && !isStreaming && (
+  <div className="flex justify-start">
+    <div className="bg-muted p-3 rounded-lg flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <LottieNewton state="thinking" size="sm" />
+        <span className="text-sm text-muted-foreground">
+          {loadingTooLong ? 'Still searching the document...' : 'Thinking...'}
+        </span>
+        <Button {...} />
+      </div>
+      {loadingTooLong && (
+        <span className="text-xs text-muted-foreground">
+          This is taking longer than usual. You can cancel and try again.
+        </span>
+      )}
+    </div>
+  </div>
+)}
 ```
 
 ---
@@ -150,9 +185,27 @@ const startListening = useCallback(async () => {
 
 | File | Changes |
 |------|---------|
-| `src/components/pdf-chat/ChatPanel.tsx` | Fix `isReady` logic to include documentId check |
-| `src/hooks/useSpeechRecognition.ts` | Fix gesture context preservation for mic access |
-| `src/hooks/useVoiceChat.ts` | Improve error handling and logging |
+| `src/hooks/usePDFChat.ts` | Add error message to chat, validate response, add timeout |
+| `supabase/functions/rag-chat-pdf/index.ts` | Return proper error response (status 200 with error message) |
+| `src/components/pdf-chat/ChatPanel.tsx` | Add "still loading" fallback UI |
+
+---
+
+## Standard Response Contract (Enforced)
+
+Every response from `rag-chat-pdf` will follow this structure:
+
+```typescript
+{
+  answer: string;          // Always present, even for errors
+  citations: Citation[];   // Always array, can be empty
+  confidence: ConfidenceLevel; // 'high' | 'medium' | 'low' | 'clarify' | 'not_found'
+  status?: 'ANSWERED' | 'NOT_FOUND' | 'ERROR'; // Optional for debugging
+  debug_id?: string;       // For debugging
+  correctedQuery?: string; // If spell correction was applied
+  suggestedTopics?: string[]; // For clarification requests
+}
+```
 
 ---
 
@@ -160,18 +213,16 @@ const startListening = useCallback(async () => {
 
 After implementation, verify:
 
-1. **Text Chat:**
-   - Type a question → Message appears in chat
-   - Response is received and displayed
-   - Input is enabled when document processing starts
-   
-2. **Voice Chat:**
-   - Click microphone → Browser permission prompt appears
-   - After granting permission → Listening state activates
-   - Speak → Transcript appears
-   - Stop → Message is sent to chat
+1. Type question + get answer with sources
+2. Type misspelled question + get corrected answer
+3. Type unrelated question + get "not found" message (NOT silence)
+4. Simulate backend error + get visible error message in chat
+5. Simulate slow response + see "still thinking" message
+6. Voice question + see response appear in chat
+7. Cancel request mid-flight + no UI hang
 
-3. **Edge Cases:**
-   - Voice chat works on mobile browsers
-   - Voice chat works on Safari (strict gesture requirements)
-   - Input remains enabled during document processing
+---
+
+## Summary
+
+The key fix is ensuring the frontend **ALWAYS adds a message to the chat**, even on errors. Currently, errors only show toasts while leaving the chat visually empty. This creates a perception that the app is broken when it's actually just failing silently.
