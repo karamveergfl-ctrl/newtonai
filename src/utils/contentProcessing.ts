@@ -149,6 +149,36 @@ export const readTextFile = (file: File): Promise<string> => {
 };
 
 /**
+ * Extract text from a DOCX file using the extract-docx-text edge function
+ */
+export const extractTextFromDOCX = async (
+  file: File,
+  accessToken: string
+): Promise<string> => {
+  const base64 = await fileToBase64(file);
+  
+  const response = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-docx-text`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ docxContent: base64 }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Failed to extract DOCX text" }));
+    throw new Error(error.error || "Failed to extract DOCX text");
+  }
+
+  const { text } = await response.json();
+  return text;
+};
+
+/**
  * Process uploaded file and extract text content
  */
 export const processUploadedFile = async (
@@ -165,6 +195,16 @@ export const processUploadedFile = async (
   
   if (file.type.startsWith("text/") || file.name.endsWith(".txt") || file.name.endsWith(".md")) {
     return readTextFile(file);
+  }
+  
+  // Handle DOCX files
+  if (
+    file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    file.type === "application/msword" ||
+    file.name.endsWith(".docx") ||
+    file.name.endsWith(".doc")
+  ) {
+    return extractTextFromDOCX(file, accessToken);
   }
   
   throw new Error(`Unsupported file type: ${file.type}`);
