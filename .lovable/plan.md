@@ -1,234 +1,191 @@
 
-# Fix Voice Listening & Add Full-Screen Buttons
+# Fix Voice Chat: "Listening but Not Responding" (PDF Chat & Newton AI)
 
-## Problem Analysis
+## Problem Summary
 
-### Issue 1: Voice Recognition Not Working Properly
+The voice chat feature appears stuck in "Listening..." state because:
+1. Speech is captured as interim results but never finalized
+2. When user stops, the system returns an empty transcript
+3. No message is sent to the chat
 
-Based on code analysis, the voice recording flow has these issues:
+## Root Causes Identified
 
-1. **Web Speech API `continuous: false`** - In `useVoiceChat.ts` line 109, the speech recognition is configured to stop after speech ends. This can cause the recognition to stop prematurely on brief pauses.
+| Issue | Location | Problem |
+|-------|----------|---------|
+| Interim results not committed | `useSpeechRecognition.ts` line 64-86 | Only `isFinal` results are saved; interim speech is lost |
+| Empty transcript on stop | `useSpeechRecognition.ts` line 192-214 | Promise resolves with empty string if no final speech detected |
+| No auto-stop on silence | Missing feature | Users must manually click to stop; no timeout |
+| No fallback transcript | `useSpeechRecognition.ts` | Should use interim transcript if final is empty |
 
-2. **Missing auto-restart on silence** - When the browser's Web Speech API times out due to no speech detected (event.error = 'no-speech'), there's no auto-restart mechanism while the user still intends to speak.
+## Solution Overview
 
-3. **Transcript not being sent** - The flow is:
-   - User clicks mic → `startListening()` → recognition starts
-   - User stops → `stopListening()` → returns `finalTranscript`
-   - `processVoiceQuery(finalTranscript)` → calls `onTranscript(query)`
-   - `ChatPanel` receives via `onTranscript` callback → calls `onSendMessage(text)`
-   
-   **The problem**: If `finalTranscriptRef.current` is empty when `stopListening` is called (because Web Speech API didn't finalize speech), the message is never sent.
+Implement a robust voice state machine with:
+1. Auto-stop after 2 seconds of silence
+2. Force finalization of interim transcript on stop
+3. Auto-send transcript to chat without manual intervention
+4. Visual feedback during all states
+5. Error handling with user-visible messages
 
-### Issue 2: No Full-Screen Buttons
+## Implementation Details
 
-Neither Newton Chat nor PDF Chat have buttons to open in full-screen mode.
+### File 1: `src/hooks/useSpeechRecognition.ts`
 
----
+**Changes:**
 
-## Solution Plan
+1. **Add silence detection timer** - Track when last speech was detected and auto-stop after 2 seconds of silence
 
-### Fix 1: Improve Voice Recognition Reliability
+2. **Force commit interim transcript on stop** - If `finalTranscriptRef` is empty but `interimTranscript` has content, use that
 
-**File: `src/hooks/useSpeechRecognition.ts`**
-
-1. Keep `continuous: true` to allow continuous listening
-2. Add auto-restart on timeout (when recognition ends due to silence but user hasn't clicked stop)
-3. Track user intent with a ref: `isIntentionallyListening`
-4. Implement the recommended pattern from the Stack Overflow solution:
+3. **Add pending transcript ref** - Keep track of the latest interim result to use as fallback
 
 ```typescript
-// Add auto-restart when browser stops due to silence
-recognition.onend = () => {
-  // Auto-restart if user is still intending to listen
-  if (isListeningRef.current && !recognitionStopped.current) {
-    try {
-      recognition.start();
-    } catch (e) {
-      // Already started or can't restart
-      setIsListening(false);
+// New refs to add
+const lastSpeechTimeRef = useRef<number>(Date.now());
+const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+const pendingInterimRef = useRef<string>('');
+
+// In onresult handler - track last speech time
+recognition.onresult = (event) => {
+  lastSpeechTimeRef.current = Date.now();
+  // ... existing logic
+  
+  // Save interim as pending (fallback)
+  if (interim) {
+    pendingInterimRef.current = interim;
+  }
+};
+
+// Start silence detection in startListening
+const checkSilence = () => {
+  const silenceDuration = Date.now() - lastSpeechTimeRef.current;
+  if (silenceDuration > 2000 && isIntentionallyListeningRef.current) {
+    // Auto-stop after 2s silence
+    autoStopListening();
+  }
+};
+silenceTimerRef.current = setInterval(checkSilence, 500);
+
+// In stopListening - commit pending interim if final is empty
+const stopListening = async (): Promise<string> => {
+  // If no final transcript, use pending interim
+  if (!finalTranscriptRef.current && pendingInterimRef.current) {
+    finalTranscriptRef.current = pendingInterimRef.current;
+  }
+  // ... rest of existing logic
+};
+```
+
+4. **Add auto-stop callback** - New optional callback prop `onAutoStop` to notify parent when voice auto-stops
+
+### File 2: `src/hooks/useVoiceChat.ts`
+
+**Changes:**
+
+1. **Handle auto-stop event** - When speech recognition auto-stops, automatically send the transcript
+
+2. **Add processing timeout** - If processing takes >4s, show feedback; if >6s, show error
+
+3. **Validate minimum transcript length** - If transcript is <3 characters, show "Didn't catch that" message
+
+```typescript
+// Add onAutoStop handler to useSpeechRecognition call
+const {
+  // ... existing
+} = useSpeechRecognition({
+  // ... existing options
+  onAutoStop: (transcript) => {
+    // Auto-send when voice stops due to silence
+    if (transcript.trim().length >= 3) {
+      processVoiceQuery(transcript);
+    } else {
+      toast({
+        title: "Didn't catch that",
+        description: "Please try speaking again.",
+      });
     }
-  } else {
-    setIsListening(false);
-  }
-};
-
-recognition.onerror = (event) => {
-  if (event.error === 'no-speech') {
-    // This is normal timeout, will auto-restart via onend
-    return;
-  }
-  // Handle other errors...
-};
+  },
+});
 ```
 
-**File: `src/hooks/useVoiceChat.ts`**
+### File 3: `src/components/pdf-chat/ChatPanel.tsx`
 
-1. Change `continuous: true` to allow natural speech pauses
-2. Ensure transcript is accumulated properly before sending
+**Changes:**
 
-### Fix 2: Add Full-Screen Button to Newton Chat
+1. **Update voice transcript preview** - Show both interim and final transcript in real-time
 
-**File: `src/components/GlobalNewtonAssistant.tsx`**
+2. **Add processing state indicator** - Show "Processing your question..." when voice is being converted
 
-Add a fullscreen toggle button and state:
-- Add `isFullScreen` state
-- When fullscreen, change the panel container from `w-[380px] h-[520px]` to `fixed inset-4 w-auto h-auto`
-- Add a Maximize2/Minimize2 button in the header of NewtonChatPanel
+3. **Show error states visibly** - Display voice errors in the chat, not just console
 
-**File: `src/components/newton-assistant/NewtonChatPanel.tsx`**
-
-Add props and button for fullscreen toggle:
-```tsx
-interface NewtonChatPanelProps {
-  // ... existing props
-  isFullScreen?: boolean;
-  onToggleFullScreen?: () => void;
-}
-```
-
-Add button in header:
-```tsx
-{onToggleFullScreen && (
-  <Button variant="ghost" size="icon" onClick={onToggleFullScreen}>
-    {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-  </Button>
+```typescript
+// Enhanced voice transcript display
+{(isListening || isVoiceProcessing) && (
+  <div className="px-3 py-2 bg-primary/5 border-t">
+    <div className="flex items-center gap-2">
+      <VoiceWaveform isActive={isListening} type="listening" className="w-12" />
+      <span className="text-sm">
+        {isVoiceProcessing 
+          ? "Processing your question..." 
+          : interimTranscript || transcript || "Listening..."}
+      </span>
+    </div>
+  </div>
 )}
 ```
 
-### Fix 3: Add Full-Screen Button to PDF Chat Panel
+### File 4: `src/components/newton-assistant/NewtonChatPanel.tsx`
 
-**File: `src/components/pdf-chat/ChatPanel.tsx`**
+**Changes:**
 
-Add fullscreen props:
-```tsx
-interface ChatPanelProps {
-  // ... existing props
-  isFullScreen?: boolean;
-  onToggleFullScreen?: () => void;
-}
+1. **Add auto-stop handling** - Same as PDF Chat, handle auto-stop and auto-send
+
+2. **Show processing feedback** - Visual indicator during transcript processing
+
+3. **Validate transcript before sending** - Check minimum length
+
+## Voice State Machine
+
+```text
++-------+     click mic     +-----------+
+| IDLE  | ----------------> | LISTENING |
++-------+                   +-----------+
+    ^                            |
+    |                            | (silence 2s OR click mic OR 10s max)
+    |                            v
+    |                     +------------+
+    |                     | PROCESSING |
+    |                     +------------+
+    |                            |
+    |                            | (send to chat)
+    |                            v
+    |                     +------------+
+    +---------------------| RESPONDING |
+                          +------------+
 ```
-
-Add button in header next to the context mode selector.
-
-**File: `src/components/pdf-chat/PDFChatSplitView.tsx`**
-
-Add fullscreen state and pass to ChatPanel:
-```tsx
-const [isChatFullScreen, setIsChatFullScreen] = useState(false);
-```
-
-When fullscreen, show only the ChatPanel, hide the PDF viewer panel.
-
----
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useSpeechRecognition.ts` | Add auto-restart on silence timeout, improve reliability |
-| `src/hooks/useVoiceChat.ts` | Set `continuous: true`, ensure transcript accumulates |
-| `src/components/GlobalNewtonAssistant.tsx` | Add fullscreen state and toggle |
-| `src/components/newton-assistant/NewtonChatPanel.tsx` | Add fullscreen button to header |
-| `src/components/pdf-chat/ChatPanel.tsx` | Add fullscreen button to header |
-| `src/components/pdf-chat/PDFChatSplitView.tsx` | Handle fullscreen state for chat panel |
-
----
-
-## Technical Implementation Details
-
-### Voice Recognition Fix
-
-The key change is to use a proper auto-restart pattern:
-
-```typescript
-// In useSpeechRecognition.ts
-const isIntentionallyListeningRef = useRef(false);
-
-const startListening = useCallback(async () => {
-  isIntentionallyListeningRef.current = true;
-  // ... start recognition
-}, []);
-
-const stopListening = useCallback(async (): Promise<string> => {
-  isIntentionallyListeningRef.current = false;
-  // ... stop and return transcript
-}, []);
-
-// In initWebSpeech:
-recognition.onend = () => {
-  if (isIntentionallyListeningRef.current) {
-    // Browser stopped recognition due to silence - restart
-    try {
-      recognition.start();
-      return; // Don't set isListening to false
-    } catch (e) {
-      // Can't restart
-    }
-  }
-  
-  setIsListening(false);
-  // Resolve promise with transcript
-};
-```
-
-### Full-Screen Newton Chat
-
-```tsx
-// GlobalNewtonAssistant.tsx
-const [isFullScreen, setIsFullScreen] = useState(false);
-
-const panelClass = isFullScreen 
-  ? "fixed inset-4 w-auto h-auto z-50"
-  : "w-[380px] h-[520px]";
-
-<motion.div className={panelClass}>
-  <NewtonChatPanel
-    ...
-    isFullScreen={isFullScreen}
-    onToggleFullScreen={() => setIsFullScreen(prev => !prev)}
-  />
-</motion.div>
-```
-
-### Full-Screen PDF Chat
-
-```tsx
-// PDFChatSplitView.tsx
-const [isChatFullScreen, setIsChatFullScreen] = useState(false);
-
-{isChatFullScreen ? (
-  // Show only chat panel
-  <div className="h-full">
-    <ChatPanel
-      ...
-      isFullScreen={true}
-      onToggleFullScreen={() => setIsChatFullScreen(false)}
-    />
-  </div>
-) : (
-  // Normal split view
-  <ResizablePanelGroup>
-    ...
-  </ResizablePanelGroup>
-)}
-```
-
----
+| `src/hooks/useSpeechRecognition.ts` | Add silence detection, force interim commit, auto-stop callback |
+| `src/hooks/useVoiceChat.ts` | Handle auto-stop, add processing timeout, validate transcript |
+| `src/components/pdf-chat/ChatPanel.tsx` | Enhanced voice UI feedback, error display |
+| `src/components/newton-assistant/NewtonChatPanel.tsx` | Add auto-stop handling, processing feedback |
 
 ## Testing Checklist
 
-1. **Voice Recording:**
-   - Click mic button → should show "Listening..."
-   - Speak a question → should show interim transcript
-   - Click mic again to stop → transcript should be sent to chat
-   - Wait silently → recognition should auto-restart (not stop)
+1. **Normal flow**: Click mic → speak → click mic → message sent automatically
+2. **Silence auto-stop**: Click mic → speak → stop talking → auto-sends after 2s
+3. **No speech**: Click mic → don't speak → auto-stops with "Didn't catch that"
+4. **Short phrase**: Click mic → say "Hi" → click mic → validates and sends
+5. **Long speech**: Click mic → speak for 10s → auto-stops and sends
+6. **Error handling**: Deny mic permission → shows visible error message
 
-2. **Newton Chat Full Screen:**
-   - Click Newton trigger button
-   - Click maximize button → panel expands to near full screen
-   - Click minimize → returns to normal size
+## Edge Cases Handled
 
-3. **PDF Chat Full Screen:**
-   - Upload PDF
-   - Click maximize button on chat panel → PDF viewer hides, chat takes full width
-   - Click minimize → returns to split view
+- **Empty transcript**: Falls back to interim transcript
+- **Very short speech**: Shows "Didn't catch that" message
+- **Long silence**: Auto-stops after 2 seconds
+- **Max duration**: Force-stops after 10 seconds
+- **API errors**: Visible error messages in UI
+- **Browser compatibility**: Fallback to audio recorder transcription
