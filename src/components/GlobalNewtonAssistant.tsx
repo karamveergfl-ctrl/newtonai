@@ -18,6 +18,7 @@ import {
  */
 export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const isMobile = useIsMobile();
   const { messages, isLoading, error, sendMessage, cancelRequest, clearHistory } =
     useNewtonChat();
@@ -45,6 +46,10 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
+  }, []);
+
+  const handleToggleFullScreen = useCallback(() => {
+    setIsFullScreen((prev) => !prev);
   }, []);
 
   // Mobile: Use drawer
@@ -80,12 +85,12 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
 
   // Desktop: Floating panel
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
+    <div className={`fixed z-50 ${isFullScreen ? 'inset-4' : 'bottom-4 right-4'} flex flex-col items-end gap-3`}>
       {/* Chat panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="w-[380px] h-[520px]"
+            className={isFullScreen ? "w-full h-full" : "w-[380px] h-[520px]"}
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
@@ -98,13 +103,17 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
               onSend={sendMessage}
               onCancel={cancelRequest}
               onClear={clearHistory}
+              isFullScreen={isFullScreen}
+              onToggleFullScreen={handleToggleFullScreen}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Trigger button */}
-      <NewtonTriggerButton isOpen={isOpen} onClick={handleToggle} />
+      {/* Trigger button - hide when fullscreen */}
+      {!isFullScreen && (
+        <NewtonTriggerButton isOpen={isOpen} onClick={handleToggle} />
+      )}
     </div>
   );
 });

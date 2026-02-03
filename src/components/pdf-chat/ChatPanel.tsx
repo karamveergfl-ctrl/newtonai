@@ -2,7 +2,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Mic, Copy, Check, Loader2, StopCircle, RotateCcw, Volume2, VolumeX, MicOff } from 'lucide-react';
+import { Send, Mic, Copy, Check, Loader2, StopCircle, RotateCcw, Volume2, VolumeX, MicOff, Maximize2, Minimize2 } from 'lucide-react';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { CitationChip } from './CitationChip';
 import { ContextModeSelector } from './ContextModeSelector';
@@ -35,6 +35,8 @@ interface ChatPanelProps {
   isStreaming?: boolean;
   documentId?: string | null;
   sessionId?: string | null;
+  isFullScreen?: boolean;
+  onToggleFullScreen?: () => void;
 }
 
 export function ChatPanel({
@@ -55,6 +57,8 @@ export function ChatPanel({
   isStreaming,
   documentId,
   sessionId,
+  isFullScreen,
+  onToggleFullScreen,
 }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -234,12 +238,25 @@ export function ChatPanel({
             </Button>
           )}
         </div>
-        <ContextModeSelector
-          mode={contextMode}
-          onChange={onContextModeChange}
-          hasSelection={!!selectedText}
-          disabled={disabled || !isReady}
-        />
+        <div className="flex items-center gap-2">
+          <ContextModeSelector
+            mode={contextMode}
+            onChange={onContextModeChange}
+            hasSelection={!!selectedText}
+            disabled={disabled || !isReady}
+          />
+          {onToggleFullScreen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleFullScreen}
+              className="h-8 w-8"
+              title={isFullScreen ? "Exit full screen" : "Full screen chat"}
+            >
+              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Messages */}

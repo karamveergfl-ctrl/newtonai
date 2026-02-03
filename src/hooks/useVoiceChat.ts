@@ -106,7 +106,7 @@ export function useVoiceChat({
     setLanguage: setSpeechLanguage,
   } = useSpeechRecognition({
     language: currentLanguage,
-    continuous: false, // Stop after speech ends
+    continuous: true, // Keep listening until user stops
     interimResults: true,
   });
 
