@@ -74,9 +74,19 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
   }, [sessionId]);
 
   const sendMessage = useCallback(async (question: string) => {
-    if (!documentId || !question.trim() || isLoading) return;
+    // Validate question
+    if (!question.trim()) return;
+    
+    // Check if already loading
+    if (isLoading) {
+      toast({
+        title: 'Please wait',
+        description: 'Processing your previous question...',
+      });
+      return;
+    }
 
-    // Add user message
+    // Add user message immediately (always show user's message)
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -84,6 +94,20 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
       createdAt: new Date(),
     };
     setMessages(prev => [...prev, userMessage]);
+    
+    // Check if document is ready
+    if (!documentId) {
+      // Add system message explaining the issue
+      const systemMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: "I'm still processing your document. Please wait a moment and try again.",
+        createdAt: new Date(),
+      };
+      setMessages(prev => [...prev, systemMessage]);
+      return;
+    }
+    
     setIsLoading(true);
     setStreamingContent('');
 

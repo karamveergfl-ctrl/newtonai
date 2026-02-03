@@ -78,6 +78,8 @@ export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PD
   const {
     document,
     sessionId,
+    isProcessing,
+    processingProgress,
     createDocument,
     processPages,
     loadExistingDocument,
@@ -549,6 +551,7 @@ export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PD
               onCitationClick={handleCitationClick}
               onClearMessages={clearMessages}
               processingStatus={document?.processingStatus}
+              processingProgress={processingProgress}
               streamingContent={streamingContent}
               isStreaming={isStreaming}
               documentId={document?.id}
@@ -690,6 +693,7 @@ export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PD
             onCitationClick={handleCitationClick}
             onClearMessages={clearMessages}
             processingStatus={document?.processingStatus}
+            processingProgress={processingProgress}
             streamingContent={streamingContent}
             isStreaming={isStreaming}
             documentId={document?.id}
