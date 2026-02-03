@@ -90,9 +90,15 @@ export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PD
 
   // Load existing document if documentId is provided (pre-processed)
   useEffect(() => {
-    if (initialDocumentId && !document) {
-      loadExistingDocument(initialDocumentId);
-    }
+    const loadDocument = async () => {
+      if (initialDocumentId && !document) {
+        const text = await loadExistingDocument(initialDocumentId);
+        if (text) {
+          setExtractedText(text);
+        }
+      }
+    };
+    loadDocument();
   }, [initialDocumentId, document, loadExistingDocument]);
 
   const {

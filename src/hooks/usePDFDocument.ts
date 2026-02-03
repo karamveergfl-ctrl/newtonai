@@ -121,7 +121,7 @@ export function usePDFDocument() {
     }
   }, [toast]);
 
-  const loadExistingDocument = useCallback(async (documentId: string) => {
+  const loadExistingDocument = useCallback(async (documentId: string): Promise<string | null> => {
     try {
       const { data, error } = await supabase
         .from('pdf_documents')
@@ -141,7 +141,7 @@ export function usePDFDocument() {
 
       // Get existing session or create new one
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) return null;
 
       const { data: sessions } = await supabase
         .from('pdf_chat_sessions')
@@ -162,8 +162,29 @@ export function usePDFDocument() {
         
         if (newSession) setSessionId(newSession.id);
       }
+
+      // Fetch existing chunks to get the extracted text
+      const { data: chunks, error: chunksError } = await supabase
+        .from('document_chunks')
+        .select('content, page_number')
+        .eq('document_id', documentId)
+        .order('page_number', { ascending: true })
+        .order('chunk_index', { ascending: true });
+
+      if (chunksError) {
+        console.error('Error loading chunks:', chunksError);
+        return null;
+      }
+
+      if (chunks && chunks.length > 0) {
+        const extractedText = chunks.map(c => c.content).join('\n\n');
+        return extractedText;
+      }
+
+      return null;
     } catch (error) {
       console.error('Error loading document:', error);
+      return null;
     }
   }, []);
 
