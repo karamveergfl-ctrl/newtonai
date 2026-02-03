@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -25,12 +25,22 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { ConfidenceIndicator } from './ConfidenceIndicator';
 import { UniversalStudySettingsDialog, UniversalGenerationSettings } from '@/components/UniversalStudySettingsDialog';
 import { useProcessingOverlay } from '@/contexts/ProcessingOverlayContext';
+
+type ConfidenceLevel = 'high' | 'medium' | 'low' | 'not_found';
+
+interface Citation {
+  sectionIndex: number;
+  quote: string;
+}
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  confidence?: ConfidenceLevel;
+  citations?: Citation[];
 }
 
 interface TextChatViewProps {
@@ -58,6 +68,13 @@ export function TextChatView({
   const [activeToolDialog, setActiveToolDialog] = useState<StudyToolType | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Memoize conversation history for API calls
+  const conversationHistory = useMemo(() => 
+    messages.slice(-6).map(m => ({
+      role: m.role,
+      content: m.content,
+    })), [messages]);
+
   const handleClose = () => {
     if (onClose) {
       onClose();
@@ -81,18 +98,24 @@ export function TextChatView({
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('chat-with-pdf', {
+      // Use the new unified chat-with-content function
+      const { data, error } = await supabase.functions.invoke('chat-with-content', {
         body: {
           question: text,
-          pdfContext: textContent.slice(0, 15000),
-          pdfName: documentName,
-          conversationHistory: messages.slice(-6),
+          textContent: textContent.slice(0, 30000), // Limit to 30k chars
+          contentName: documentName,
+          conversationHistory,
         },
       });
 
       if (error) throw error;
 
-      setMessages(prev => [...prev, { role: 'assistant', content: data.answer }]);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: data.answer,
+        confidence: data.confidence || 'high',
+        citations: data.citations || [],
+      }]);
     } catch (error) {
       console.error('Chat error:', error);
       toast({
@@ -103,7 +126,7 @@ export function TextChatView({
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, textContent, documentName, messages, toast]);
+  }, [input, isLoading, textContent, documentName, conversationHistory, toast]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -154,7 +177,6 @@ export function TextChatView({
         case 'mindmap':
           endpoint = 'generate-mindmap';
           body.style = settings.mindMapStyle || 'radial';
-          break;
           break;
       }
 
@@ -252,7 +274,7 @@ export function TextChatView({
             </div>
             <h2 className="text-lg font-semibold mb-2">Ask about "{documentName}"</h2>
             <p className="text-muted-foreground text-sm mb-6 max-w-md">
-              Ask questions about the content and get AI-powered answers.
+              Ask questions about the content and get AI-powered answers grounded in your document.
             </p>
             <div className="flex flex-wrap justify-center gap-2 max-w-lg">
               {suggestedQuestions.map((q, i) => (
@@ -275,19 +297,32 @@ export function TextChatView({
                 key={idx}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <Card
-                  className={`p-3 max-w-[85%] ${
-                    msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  }`}
-                >
-                  {msg.role === 'assistant' ? (
-                    <MarkdownRenderer content={msg.content} />
-                  ) : (
-                    <p className="text-sm">{msg.content}</p>
+                <div className="flex flex-col gap-1.5 max-w-[85%]">
+                  <Card
+                    className={`p-3 ${
+                      msg.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted'
+                    }`}
+                  >
+                    {msg.role === 'assistant' ? (
+                      <MarkdownRenderer content={msg.content} />
+                    ) : (
+                      <p className="text-sm">{msg.content}</p>
+                    )}
+                  </Card>
+                  {/* Show confidence indicator for assistant messages */}
+                  {msg.role === 'assistant' && msg.confidence && (
+                    <div className="flex items-center gap-2 px-1">
+                      <ConfidenceIndicator level={msg.confidence} />
+                      {msg.citations && msg.citations.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {msg.citations.length} source{msg.citations.length > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
                   )}
-                </Card>
+                </div>
               </div>
             ))}
             {isLoading && (
@@ -308,7 +343,7 @@ export function TextChatView({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask a question..."
+            placeholder="Ask a question about this document..."
             disabled={isLoading}
             className="flex-1"
           />

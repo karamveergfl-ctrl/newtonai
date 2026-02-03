@@ -129,11 +129,34 @@ export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUplo
         return;
       }
       
-      toast({
-        title: "Processing Error",
-        description: error instanceof Error ? error.message : "Failed to process PDF",
-        variant: "destructive",
-      });
+      // Enhanced error handling with specific messages
+      const errorMessage = error instanceof Error ? error.message : "Failed to process PDF";
+      
+      if (errorMessage.includes('version') || errorMessage.includes('API')) {
+        toast({
+          title: "PDF Processing Error",
+          description: "Please refresh the page and try again. If the issue persists, try a different PDF.",
+          variant: "destructive",
+        });
+      } else if (errorMessage.includes('password') || errorMessage.includes('encrypted')) {
+        toast({
+          title: "Protected PDF",
+          description: "This PDF is password protected. Please upload an unlocked version.",
+          variant: "destructive",
+        });
+      } else if (errorMessage.includes('No text')) {
+        toast({
+          title: "Empty Document",
+          description: "No text could be extracted. This may be a scanned document - try using an image instead.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Processing Error",
+          description: "We couldn't read this file. Please try a different document or paste the text directly.",
+          variant: "destructive",
+        });
+      }
     }
   }, [createDocument, extractTextFromPDF, processPages, showProcessing, hideProcessing, updateProgress, updateMessage, onFileSelected, toast]);
 
