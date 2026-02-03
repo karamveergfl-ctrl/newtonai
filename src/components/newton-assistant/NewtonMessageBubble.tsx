@@ -1,8 +1,10 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { NewtonResponseSection, parseNewtonSections } from "./NewtonResponseSection";
+import { supabase } from "@/integrations/supabase/client";
 import newtonChatAvatar from "@/assets/newton-chat-avatar.png";
 import type { NewtonMessage } from "@/hooks/useNewtonChat";
 
@@ -16,6 +18,43 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
   isStreaming = false,
 }: NewtonMessageBubbleProps) {
   const isUser = message.role === "user";
+  
+  // Handle explain button click
+  const handleExplain = useCallback(async (heading: string, content: string): Promise<string> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('newton-chat', {
+        body: {
+          messages: [
+            {
+              role: "system",
+              content: "You are Newton, a helpful AI tutor. Give a simple, clear explanation that a student can easily understand. Use examples when helpful. Use proper LaTeX notation for any math formulas (wrap in $...$ for inline or $$...$$ for block). Keep the explanation brief but thorough."
+            },
+            {
+              role: "user",
+              content: `Explain this topic in simple terms:\n\n**${heading}**\n\n${content.slice(0, 1000)}`
+            }
+          ],
+          stream: false
+        }
+      });
+
+      if (error) throw error;
+      
+      // Handle non-streaming response
+      if (data?.choices?.[0]?.message?.content) {
+        return data.choices[0].message.content;
+      }
+      
+      return 'Unable to generate explanation.';
+    } catch (err) {
+      console.error('Newton explain error:', err);
+      throw err;
+    }
+  }, []);
+
+  // Parse content into sections for assistant messages
+  const sections = !isUser && message.content ? parseNewtonSections(message.content) : [];
+  const hasSections = sections.length > 1 || (sections.length === 1 && sections[0].heading !== null);
 
   return (
     <motion.div
@@ -45,18 +84,40 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
       {/* Message bubble */}
       <div
         className={cn(
-          "flex-1 max-w-[85%] rounded-2xl px-3.5 py-2.5",
+          "flex-1 max-w-[90%] rounded-2xl",
           isUser
-            ? "bg-primary text-primary-foreground rounded-br-md"
-            : "bg-muted/60 text-foreground rounded-bl-md"
+            ? "bg-primary text-primary-foreground rounded-br-md px-3.5 py-2.5"
+            : "bg-muted/40 text-foreground rounded-bl-md px-3 py-2"
         )}
       >
         {isUser ? (
           <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
         ) : (
-          <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
+          <div className="text-sm">
             {message.content ? (
-              <MarkdownRenderer content={message.content} />
+              hasSections && !isStreaming ? (
+                // Render structured sections with cards
+                <div className="space-y-1">
+                  {sections.map((section, idx) => (
+                    section.heading ? (
+                      <NewtonResponseSection
+                        key={idx}
+                        section={section}
+                        onExplain={handleExplain}
+                      />
+                    ) : (
+                      <div key={idx} className="prose prose-sm dark:prose-invert max-w-none mb-3">
+                        <MarkdownRenderer content={section.content} />
+                      </div>
+                    )
+                  ))}
+                </div>
+              ) : (
+                // Fallback to simple markdown rendering during streaming
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <MarkdownRenderer content={message.content} />
+                </div>
+              )
             ) : isStreaming ? (
               <motion.span
                 className="inline-flex gap-1"

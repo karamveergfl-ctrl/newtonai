@@ -110,24 +110,47 @@ export function autoDetectLatex(text: string): string {
 
   // Pattern 2: Capital letter followed by lowercase subscript (Vz, If, Rb, Ic not in COMMON_VARS)
   // Match single capital + single lowercase that makes sense as a variable
+  // CRITICAL: Skip common English words that look like technical variables
+  const commonEnglishWords = [
+    "In", "It", "Is", "If", "We", "Re", "Vs", "Ie", "Pa", "We", "Be", "He", "Me", 
+    "La", "Ma", "Va", "Ca", "Ra", "Le", "Ce", "Pe", "De", "Te", "We", "Li", "Vi",
+    "Pi", "Lo", "Co", "So", "To", "Do", "Go", "No", "Vs", "Wi", "Ri", "Wa", "Ra"
+  ];
+  
   result = result.replace(
-    /(?<!\$)\b([VIRPCELW])([a-z])(?![a-zA-Z$_])/g,
+    /(?<!\$)\b([VIRPCELWMHDBSTGN])([a-z])(?![a-zA-Z$_\{])/g,
     (match, base, subscript, offset) => {
-      // Skip if already processed or common words
-      const commonWords = ["In", "It", "Is", "If", "We", "Re", "Vs", "Ie", "Pa"];
-      if (commonWords.includes(match)) {
-        // Check context - if followed by space and lowercase, it's probably a word
-        const nextChars = result.substring(offset + match.length, offset + match.length + 2);
-        if (/^\s+[a-z]/.test(nextChars)) {
-          return match; // Keep as word
+      // Skip common English words
+      if (commonEnglishWords.includes(match)) {
+        return match; // Keep as word
+      }
+      
+      // Check context - if followed by space and lowercase word, it's likely English
+      const nextChars = result.substring(offset + match.length, offset + match.length + 10);
+      if (/^\s+[a-z]{2,}/.test(nextChars)) {
+        // Look for more context - is it in a sentence?
+        const prevChars = result.substring(Math.max(0, offset - 20), offset);
+        // If preceded by common sentence words, keep as word
+        if (/\b(the|a|an|this|that|my|our|it|is|was|be|since|because|as|so|and|or|but)\s*$/i.test(prevChars)) {
+          return match;
         }
       }
-      // Check if in code block
+      
+      // Check if in code block or already LaTeX
       const beforeContext = result.substring(Math.max(0, offset - 10), offset);
       if (beforeContext.includes("`") || beforeContext.includes("$")) {
         return match;
       }
-      return `$${base}_{${subscript}}$`;
+      
+      // Only convert if it looks like a technical context
+      const surroundingText = result.substring(Math.max(0, offset - 50), Math.min(result.length, offset + 50));
+      const hasTechIndicators = /\b(circuit|voltage|current|resistance|diode|transistor|equation|formula|=|\+|\-|\*|×|÷)\b/i.test(surroundingText);
+      
+      if (hasTechIndicators) {
+        return `$${base}_{${subscript}}$`;
+      }
+      
+      return match; // Default to keeping as text
     }
   );
 
