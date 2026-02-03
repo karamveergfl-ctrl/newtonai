@@ -41,7 +41,10 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
     }
   }, [messages]);
 
