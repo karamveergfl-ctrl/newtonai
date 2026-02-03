@@ -140,8 +140,9 @@ export function ChatPanel({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Enable chat when processing has started or completed
+  // Enable chat when document ID exists OR processing has started/completed
   const isReady = 
+    !!documentId ||  // If we have a document ID, we're ready
     processingStatus === 'completed' || 
     processingStatus === 'processing' ||
     processingProgress > 0;

@@ -141,30 +141,30 @@ export function useSpeechRecognition({
     setInterimTranscript('');
     
     if (isSupported) {
-      // Use Web Speech API
-      try {
-        recognitionRef.current = initWebSpeech();
-        if (recognitionRef.current) {
-          recognitionRef.current.start();
+      // CRITICAL: Start recognition synchronously to preserve gesture context
+      // The async wrapper is fine, but recognition.start() must be called
+      // synchronously in the same tick as the user gesture
+      const recognition = initWebSpeech();
+      if (recognition) {
+        recognitionRef.current = recognition;
+        try {
+          recognitionRef.current.start(); // Synchronous call preserves gesture
           setIsListening(true);
+          return; // Exit early on success
+        } catch (err: any) {
+          console.warn('Web Speech API failed to start:', err);
+          // Fall through to audio recorder fallback
         }
-      } catch (err: any) {
-        // If Web Speech fails, fall back to recording
-        console.warn('Web Speech API failed, using fallback:', err);
-        if (!audioRecorderRef.current) {
-          audioRecorderRef.current = new AudioRecorder();
-        }
-        await audioRecorderRef.current.start();
-        setIsListening(true);
       }
-    } else {
-      // Use fallback recording
-      if (!audioRecorderRef.current) {
-        audioRecorderRef.current = new AudioRecorder();
-      }
-      await audioRecorderRef.current.start();
-      setIsListening(true);
     }
+    
+    // Fallback: Use audio recorder for transcription via edge function
+    // getUserMedia must be called immediately on user gesture
+    if (!audioRecorderRef.current) {
+      audioRecorderRef.current = new AudioRecorder();
+    }
+    await audioRecorderRef.current.start();
+    setIsListening(true);
   }, [isSupported, initWebSpeech]);
 
   const stopListening = useCallback(async (): Promise<string> => {
