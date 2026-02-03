@@ -8,6 +8,9 @@ interface UseSpeechRecognitionOptions {
   interimResults?: boolean;
   onResult?: (transcript: string, isFinal: boolean) => void;
   onError?: (error: string) => void;
+  onAutoStop?: (transcript: string) => void; // Called when auto-stopped due to silence
+  silenceTimeout?: number; // ms before auto-stop (default 2000)
+  maxListeningTime?: number; // ms max recording time (default 10000)
 }
 
 interface UseSpeechRecognitionReturn {
@@ -33,6 +36,9 @@ export function useSpeechRecognition({
   interimResults = true,
   onResult,
   onError,
+  onAutoStop,
+  silenceTimeout = 2000,
+  maxListeningTime = 10000,
 }: UseSpeechRecognitionOptions = {}): UseSpeechRecognitionReturn {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -44,11 +50,89 @@ export function useSpeechRecognition({
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const transcriptResolverRef = useRef<((value: string) => void) | null>(null);
   const finalTranscriptRef = useRef('');
+  const pendingInterimRef = useRef(''); // Fallback for uncommitted interim results
   const isIntentionallyListeningRef = useRef(false);
   const manualStopRef = useRef(false);
   
+  // Silence detection refs
+  const lastSpeechTimeRef = useRef<number>(Date.now());
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const maxTimeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
   // Check if Web Speech API is supported
   const isSupported = getSpeechRecognition() !== null;
+
+  // Clean up timers
+  const clearTimers = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearInterval(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (maxTimeTimerRef.current) {
+      clearTimeout(maxTimeTimerRef.current);
+      maxTimeTimerRef.current = null;
+    }
+  }, []);
+
+  // Auto-stop function
+  const autoStopListening = useCallback(async () => {
+    if (!isIntentionallyListeningRef.current) return;
+    
+    console.log('Auto-stopping due to silence or max time');
+    isIntentionallyListeningRef.current = false;
+    manualStopRef.current = true;
+    clearTimers();
+    
+    // Force commit pending interim if final is empty
+    if (!finalTranscriptRef.current && pendingInterimRef.current) {
+      finalTranscriptRef.current = pendingInterimRef.current;
+      setTranscript(finalTranscriptRef.current);
+    }
+    
+    // Stop recognition
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.warn('Error stopping recognition:', e);
+      }
+    }
+    
+    if (audioRecorderRef.current?.isRecording()) {
+      setIsListening(false);
+      try {
+        const audioBlob = await audioRecorderRef.current.stop();
+        const base64Audio = await blobToBase64(audioBlob);
+        
+        const { data, error } = await supabase.functions.invoke('transcribe-audio', {
+          body: { 
+            audio: base64Audio,
+            language: currentLanguage.split('-')[0],
+          },
+        });
+        
+        if (!error && data?.text) {
+          finalTranscriptRef.current = data.text;
+          setTranscript(data.text);
+        }
+      } catch (err) {
+        console.error('Transcription error:', err);
+      }
+    }
+    
+    setIsListening(false);
+    setInterimTranscript('');
+    
+    // Notify parent via callback
+    const finalText = finalTranscriptRef.current;
+    onAutoStop?.(finalText);
+    
+    // Resolve any pending promise
+    if (transcriptResolverRef.current) {
+      transcriptResolverRef.current(finalText);
+      transcriptResolverRef.current = null;
+    }
+  }, [clearTimers, currentLanguage, onAutoStop]);
 
   // Initialize Web Speech API
   const initWebSpeech = useCallback(() => {
@@ -62,6 +146,9 @@ export function useSpeechRecognition({
     recognition.lang = currentLanguage;
     
     recognition.onresult = (event: any) => {
+      // Track last speech time for silence detection
+      lastSpeechTimeRef.current = Date.now();
+      
       let interim = '';
       let final = '';
       
@@ -77,11 +164,14 @@ export function useSpeechRecognition({
       if (final) {
         finalTranscriptRef.current += (finalTranscriptRef.current ? ' ' : '') + final;
         setTranscript(finalTranscriptRef.current);
+        pendingInterimRef.current = ''; // Clear pending since we got final
         onResult?.(final, true);
       }
       
-      setInterimTranscript(interim);
+      // Save interim as pending fallback
       if (interim) {
+        pendingInterimRef.current = interim;
+        setInterimTranscript(interim);
         onResult?.(interim, false);
       }
     };
@@ -119,7 +209,9 @@ export function useSpeechRecognition({
       
       // Resolve the promise with final transcript
       if (transcriptResolverRef.current) {
-        transcriptResolverRef.current(finalTranscriptRef.current);
+        // Use pending interim as fallback if no final
+        const result = finalTranscriptRef.current || pendingInterimRef.current;
+        transcriptResolverRef.current(result);
         transcriptResolverRef.current = null;
       }
     };
@@ -157,15 +249,33 @@ export function useSpeechRecognition({
   const startListening = useCallback(async () => {
     setError(null);
     finalTranscriptRef.current = '';
+    pendingInterimRef.current = '';
     setTranscript('');
     setInterimTranscript('');
     isIntentionallyListeningRef.current = true;
     manualStopRef.current = false;
+    lastSpeechTimeRef.current = Date.now();
+    
+    // Start silence detection timer
+    clearTimers();
+    silenceTimerRef.current = setInterval(() => {
+      const silenceDuration = Date.now() - lastSpeechTimeRef.current;
+      if (silenceDuration > silenceTimeout && isIntentionallyListeningRef.current) {
+        console.log(`Silence detected for ${silenceDuration}ms, auto-stopping`);
+        autoStopListening();
+      }
+    }, 500);
+    
+    // Start max listening time timer
+    maxTimeTimerRef.current = setTimeout(() => {
+      if (isIntentionallyListeningRef.current) {
+        console.log('Max listening time reached, auto-stopping');
+        autoStopListening();
+      }
+    }, maxListeningTime);
     
     if (isSupported) {
       // CRITICAL: Start recognition synchronously to preserve gesture context
-      // The async wrapper is fine, but recognition.start() must be called
-      // synchronously in the same tick as the user gesture
       const recognition = initWebSpeech();
       if (recognition) {
         recognitionRef.current = recognition;
@@ -181,18 +291,24 @@ export function useSpeechRecognition({
     }
     
     // Fallback: Use audio recorder for transcription via edge function
-    // getUserMedia must be called immediately on user gesture
     if (!audioRecorderRef.current) {
       audioRecorderRef.current = new AudioRecorder();
     }
     await audioRecorderRef.current.start();
     setIsListening(true);
-  }, [isSupported, initWebSpeech]);
+  }, [isSupported, initWebSpeech, clearTimers, silenceTimeout, maxListeningTime, autoStopListening]);
 
   const stopListening = useCallback(async (): Promise<string> => {
     // Mark that user intentionally stopped
     isIntentionallyListeningRef.current = false;
     manualStopRef.current = true;
+    clearTimers();
+    
+    // Force commit pending interim if final is empty
+    if (!finalTranscriptRef.current && pendingInterimRef.current) {
+      finalTranscriptRef.current = pendingInterimRef.current;
+      setTranscript(finalTranscriptRef.current);
+    }
     
     return new Promise(async (resolve) => {
       if (recognitionRef.current) {
@@ -212,7 +328,7 @@ export function useSpeechRecognition({
         resolve(finalTranscriptRef.current);
       }
     });
-  }, [transcribeWithEdgeFunction, onResult]);
+  }, [transcribeWithEdgeFunction, onResult, clearTimers]);
 
   const setLanguage = useCallback((lang: string) => {
     setCurrentLanguage(lang);
@@ -224,11 +340,12 @@ export function useSpeechRecognition({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      clearTimers();
       if (recognitionRef.current) {
         recognitionRef.current.abort();
       }
     };
-  }, []);
+  }, [clearTimers]);
 
   return {
     isListening,
