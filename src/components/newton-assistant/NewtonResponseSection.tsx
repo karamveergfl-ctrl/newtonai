@@ -65,7 +65,7 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
   );
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden my-3 group shadow-sm">
+    <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden my-3 group shadow-sm w-full">
       {/* Section Header with top Explain button */}
       <div className="flex items-center justify-between gap-2 p-3 bg-muted/30 border-b border-border/40">
         <button
@@ -95,8 +95,10 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
         "transition-all duration-200 overflow-hidden",
         isExpanded ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0"
       )}>
-        <div className="p-4 text-sm">
-          <MarkdownRenderer content={section.content} />
+        <div className="p-4 text-sm break-words overflow-x-auto">
+          <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:break-words [&_li]:break-words">
+            <MarkdownRenderer content={section.content} />
+          </div>
         </div>
 
         {/* AI Explanation */}
