@@ -44,6 +44,8 @@ export function useSpeechRecognition({
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const transcriptResolverRef = useRef<((value: string) => void) | null>(null);
   const finalTranscriptRef = useRef('');
+  const isIntentionallyListeningRef = useRef(false);
+  const manualStopRef = useRef(false);
   
   // Check if Web Speech API is supported
   const isSupported = getSpeechRecognition() !== null;
@@ -88,14 +90,32 @@ export function useSpeechRecognition({
       // Ignore aborted errors (happens when we manually stop)
       if (event.error === 'aborted') return;
       
+      // no-speech is normal - will auto-restart via onend
+      if (event.error === 'no-speech') {
+        console.log('No speech detected, will auto-restart');
+        return;
+      }
+      
       const errorMsg = `Speech recognition error: ${event.error}`;
       setError(errorMsg);
       onError?.(errorMsg);
     };
     
     recognition.onend = () => {
-      setIsListening(false);
       setInterimTranscript('');
+      
+      // Auto-restart if user is still intending to listen (not manually stopped)
+      if (isIntentionallyListeningRef.current && !manualStopRef.current) {
+        try {
+          console.log('Auto-restarting speech recognition...');
+          recognition.start();
+          return; // Don't set isListening to false, we're still listening
+        } catch (e) {
+          console.warn('Could not auto-restart recognition:', e);
+        }
+      }
+      
+      setIsListening(false);
       
       // Resolve the promise with final transcript
       if (transcriptResolverRef.current) {
@@ -139,6 +159,8 @@ export function useSpeechRecognition({
     finalTranscriptRef.current = '';
     setTranscript('');
     setInterimTranscript('');
+    isIntentionallyListeningRef.current = true;
+    manualStopRef.current = false;
     
     if (isSupported) {
       // CRITICAL: Start recognition synchronously to preserve gesture context
@@ -168,6 +190,10 @@ export function useSpeechRecognition({
   }, [isSupported, initWebSpeech]);
 
   const stopListening = useCallback(async (): Promise<string> => {
+    // Mark that user intentionally stopped
+    isIntentionallyListeningRef.current = false;
+    manualStopRef.current = true;
+    
     return new Promise(async (resolve) => {
       if (recognitionRef.current) {
         // Store resolver for when onend fires

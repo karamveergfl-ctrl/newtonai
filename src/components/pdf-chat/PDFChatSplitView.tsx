@@ -13,6 +13,8 @@ import {
   Settings2,
   Podcast,
   File,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -74,6 +76,7 @@ export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PD
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [isGeneratingMindMap, setIsGeneratingMindMap] = useState(false);
   const [extractedText, setExtractedText] = useState<string>('');
+  const [isChatFullScreen, setIsChatFullScreen] = useState(false);
 
   const {
     document,
@@ -666,22 +669,9 @@ export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PD
         onSearchChange={setSearchQuery}
       />
 
-      {/* Split View */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel defaultSize={55} minSize={30}>
-          <PDFViewerWithHighlight
-            file={file}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-            onTextExtracted={handleTextExtracted}
-            onTextSelected={handleTextSelected}
-            highlight={highlight}
-          />
-        </ResizablePanel>
-        
-        <ResizableHandle withHandle />
-        
-        <ResizablePanel defaultSize={45} minSize={25}>
+      {/* Split View / Full Screen Chat */}
+      {isChatFullScreen ? (
+        <div className="flex-1 min-h-0">
           <ChatPanel
             messages={messages}
             isLoading={isLoading}
@@ -698,9 +688,48 @@ export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PD
             isStreaming={isStreaming}
             documentId={document?.id}
             sessionId={sessionId}
+            isFullScreen={true}
+            onToggleFullScreen={() => setIsChatFullScreen(false)}
           />
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </div>
+      ) : (
+        <ResizablePanelGroup direction="horizontal" className="flex-1">
+          <ResizablePanel defaultSize={55} minSize={30}>
+            <PDFViewerWithHighlight
+              file={file}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+              onTextExtracted={handleTextExtracted}
+              onTextSelected={handleTextSelected}
+              highlight={highlight}
+            />
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          <ResizablePanel defaultSize={45} minSize={25}>
+            <ChatPanel
+              messages={messages}
+              isLoading={isLoading}
+              contextMode={contextMode}
+              selectedText={selectedText}
+              onSendMessage={sendMessage}
+              onCancelRequest={cancelRequest}
+              onContextModeChange={setContextMode}
+              onCitationClick={handleCitationClick}
+              onClearMessages={clearMessages}
+              processingStatus={document?.processingStatus}
+              processingProgress={processingProgress}
+              streamingContent={streamingContent}
+              isStreaming={isStreaming}
+              documentId={document?.id}
+              sessionId={sessionId}
+              isFullScreen={false}
+              onToggleFullScreen={() => setIsChatFullScreen(true)}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      )}
 
       {/* Settings Dialog - Universal for all tools */}
       {activeToolDialog && activeToolDialog !== 'podcast' && (

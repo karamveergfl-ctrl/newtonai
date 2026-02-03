@@ -1,6 +1,6 @@
 import { memo, useRef, useEffect, useState, KeyboardEvent } from "react";
 import { motion } from "framer-motion";
-import { Send, Trash2, Sparkles, StopCircle } from "lucide-react";
+import { Send, Trash2, Sparkles, StopCircle, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,6 +17,8 @@ interface NewtonChatPanelProps {
   onSend: (message: string) => void;
   onCancel: () => void;
   onClear: () => void;
+  isFullScreen?: boolean;
+  onToggleFullScreen?: () => void;
 }
 
 const SUGGESTIONS = [
@@ -33,6 +35,8 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   onSend,
   onCancel,
   onClear,
+  isFullScreen,
+  onToggleFullScreen,
 }: NewtonChatPanelProps) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -102,16 +106,29 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             <p className="text-xs text-muted-foreground">Ask me anything</p>
           </div>
         </div>
-        {messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClear}
-            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {onToggleFullScreen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleFullScreen}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              title={isFullScreen ? "Minimize" : "Maximize"}
+            >
+              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </Button>
+          )}
+          {messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClear}
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Messages */}
