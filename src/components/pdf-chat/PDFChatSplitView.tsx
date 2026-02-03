@@ -182,11 +182,15 @@ export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PD
   const handleCitationClick = useCallback((pageNumber: number, quote: string) => {
     setCurrentPage(pageNumber);
     setHighlight({ pageNumber, text: quote });
+    // Exit full-screen chat mode to show the PDF with the citation
+    if (isChatFullScreen) {
+      setIsChatFullScreen(false);
+    }
     if (isMobile) {
       setMobileTab('pdf');
     }
     setTimeout(() => setHighlight(null), 5000);
-  }, [isMobile]);
+  }, [isMobile, isChatFullScreen]);
 
   const handleClose = () => {
     if (onClose) {
