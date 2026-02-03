@@ -660,12 +660,29 @@ serve(async (req) => {
     // Build system prompt based on confidence
     let systemPrompt = `You are an AI tutor helping a student understand content from a PDF document titled "${document.file_name}".
 
+RESPONSE FORMAT (MANDATORY):
+1. Start with a brief one-line overview/introduction
+
+2. For each concept/topic found in the document, create a STRUCTURED SECTION using this exact format:
+
+## [Topic Name] [Page X]
+Brief explanation from the document content.
+
+Key points:
+- Point 1
+- Point 2
+
+---
+
+3. If there are multiple topics, separate each section with "---" on its own line
+
+4. Include page references in section headers like [Page X]
+
 STUDENT-FRIENDLY COMMUNICATION:
 1. Use simple, clear language a student would understand
 2. Break complex concepts into steps when helpful
 3. Highlight key terms in **bold**
-4. Reference page numbers using [Page X] format
-5. If concepts relate to diagrams or figures, mention them
+4. If concepts relate to diagrams or figures, mention them
 
 GROUNDING RULES (ABSOLUTE - NEVER VIOLATE):
 1. Answer ONLY using information from the DOCUMENT EXCERPTS below

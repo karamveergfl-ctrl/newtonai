@@ -10,3 +10,4 @@ export { SuggestedQuestions } from './SuggestedQuestions';
 export { TextSelectionToolbar } from './TextSelectionToolbar';
 export { StreamingMessage } from './StreamingMessage';
 export { ConfidenceIndicator } from './ConfidenceIndicator';
+export { ResponseSection, parseResponseSections } from './ResponseSection';
