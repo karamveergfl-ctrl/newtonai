@@ -57,8 +57,20 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [loadingTooLong, setLoadingTooLong] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Track when loading takes too long (5 seconds)
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isLoading) {
+      timer = setTimeout(() => setLoadingTooLong(true), 5000);
+    } else {
+      setLoadingTooLong(false);
+    }
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   // Voice chat integration
   const {
@@ -318,17 +330,26 @@ export function ChatPanel({
             {/* Loading indicator */}
             {isLoading && !isStreaming && (
               <div className="flex justify-start">
-                <div className="bg-muted p-3 rounded-lg flex items-center gap-2">
-                  <LottieNewton state="thinking" size="sm" />
-                  <span className="text-sm text-muted-foreground">Thinking...</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2"
-                    onClick={onCancelRequest}
-                  >
-                    <StopCircle className="w-3 h-3" />
-                  </Button>
+                <div className="bg-muted p-3 rounded-lg flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <LottieNewton state="thinking" size="sm" />
+                    <span className="text-sm text-muted-foreground">
+                      {loadingTooLong ? 'Still searching the document...' : 'Thinking...'}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2"
+                      onClick={onCancelRequest}
+                    >
+                      <StopCircle className="w-3 h-3" />
+                    </Button>
+                  </div>
+                  {loadingTooLong && (
+                    <span className="text-xs text-muted-foreground">
+                      This is taking longer than usual. You can cancel and try again.
+                    </span>
+                  )}
                 </div>
               </div>
             )}

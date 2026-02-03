@@ -114,22 +114,43 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
     try {
       abortControllerRef.current = new AbortController();
 
-      const { data, error } = await supabase.functions.invoke('rag-chat-pdf', {
-        body: {
-          documentId,
-          sessionId,
-          question,
-          conversationHistory: messages.slice(-6).map(m => ({
-            role: m.role,
-            content: m.content,
-          })),
-          contextMode,
-          currentPage: contextMode === 'current_page' ? currentPage : null,
-          selectedText: contextMode === 'selected_text' ? selectedText : null,
-        },
+      // Create timeout promise (15 seconds)
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000);
       });
 
+      // Race the API call against timeout
+      const result = await Promise.race([
+        supabase.functions.invoke('rag-chat-pdf', {
+          body: {
+            documentId,
+            sessionId,
+            question,
+            conversationHistory: messages.slice(-6).map(m => ({
+              role: m.role,
+              content: m.content,
+            })),
+            contextMode,
+            currentPage: contextMode === 'current_page' ? currentPage : null,
+            selectedText: contextMode === 'selected_text' ? selectedText : null,
+          },
+        }),
+        timeoutPromise,
+      ]) as { data: any; error: any };
+
+      const { data, error } = result;
+
       if (error) throw error;
+
+      // Check for error in response body (backend returned error object)
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      // Check for missing answer
+      if (!data?.answer) {
+        throw new Error('No response received from the document. Please try again.');
+      }
 
       // Use the confidence returned from the backend
       const confidence: ConfidenceLevel = data.confidence || 'high';
@@ -155,6 +176,23 @@ export function usePDFChat({ documentId, sessionId }: UsePDFChatOptions) {
       return data;
     } catch (error: any) {
       console.error('Chat error:', error);
+      
+      // CRITICAL: Always add a visible error message to the chat
+      const errorContent = error.message?.includes('Rate limit') 
+        ? 'You\'ve sent too many questions. Please wait a minute and try again.'
+        : error.message?.includes('timed out')
+          ? 'The request took too long. Please try again.'
+          : 'Something went wrong while searching the document. Please try again.';
+      
+      const errorMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: errorContent,
+        confidence: 'not_found' as ConfidenceLevel,
+        createdAt: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      
       toast({
         title: 'Error',
         description: error.message || 'Failed to get response',
