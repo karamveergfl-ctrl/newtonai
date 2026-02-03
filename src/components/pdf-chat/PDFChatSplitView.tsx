@@ -551,6 +551,8 @@ export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PD
               processingStatus={document?.processingStatus}
               streamingContent={streamingContent}
               isStreaming={isStreaming}
+              documentId={document?.id}
+              sessionId={sessionId}
             />
           </TabsContent>
         </Tabs>
@@ -690,6 +692,8 @@ export function PDFChatSplitView({ initialFile, initialDocumentId, onClose }: PD
             processingStatus={document?.processingStatus}
             streamingContent={streamingContent}
             isStreaming={isStreaming}
+            documentId={document?.id}
+            sessionId={sessionId}
           />
         </ResizablePanel>
       </ResizablePanelGroup>

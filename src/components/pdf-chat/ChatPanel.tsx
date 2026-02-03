@@ -2,15 +2,16 @@ import { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Mic, Copy, Check, Loader2, StopCircle, RotateCcw } from 'lucide-react';
+import { Send, Mic, Copy, Check, Loader2, StopCircle, RotateCcw, Volume2, VolumeX, MicOff } from 'lucide-react';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { CitationChip } from './CitationChip';
 import { ContextModeSelector } from './ContextModeSelector';
 import { SuggestedQuestions } from './SuggestedQuestions';
 import { ConfidenceIndicator, SpellCorrectionNotice, SuggestedTopics } from './ConfidenceIndicator';
+import { SpeakingIndicator } from './SpeakingIndicator';
+import { VoiceWaveform } from './VoiceWaveform';
 import { LottieNewton } from '@/components/newton/LottieNewton';
-import { AudioRecorder, blobToBase64 } from '@/utils/audioRecorder';
-import { supabase } from '@/integrations/supabase/client';
+import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { useToast } from '@/hooks/use-toast';
 import type { ChatMessage, ContextMode } from '@/hooks/usePDFChat';
 
@@ -30,6 +31,8 @@ interface ChatPanelProps {
   processingProgress?: number;
   streamingContent?: string;
   isStreaming?: boolean;
+  documentId?: string | null;
+  sessionId?: string | null;
 }
 
 export function ChatPanel({
@@ -48,13 +51,40 @@ export function ChatPanel({
   processingProgress = 0,
   streamingContent,
   isStreaming,
+  documentId,
+  sessionId,
 }: ChatPanelProps) {
   const [input, setInput] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const audioRecorder = useRef<AudioRecorder>(new AudioRecorder());
   const { toast } = useToast();
+
+  // Voice chat integration
+  const {
+    isListening,
+    isSpeaking,
+    isProcessing: isVoiceProcessing,
+    transcript,
+    interimTranscript,
+    voiceEnabled,
+    startListening,
+    stopListening,
+    stopSpeaking,
+    toggleVoiceMode,
+    replayLastAnswer,
+  } = useVoiceChat({
+    documentId: documentId || null,
+    sessionId: sessionId || null,
+    onCitationFound: (pageNumber, quote) => {
+      onCitationClick(pageNumber, quote);
+    },
+    onTranscript: (text) => {
+      // When voice transcript is ready, send it as a message
+      if (text.trim()) {
+        onSendMessage(text);
+      }
+    },
+  });
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -88,36 +118,15 @@ export function ChatPanel({
   };
 
   const handleVoiceRecord = async () => {
-    if (isRecording) {
-      try {
-        const audioBlob = await audioRecorder.current.stop();
-        setIsRecording(false);
-        
-        const base64Audio = await blobToBase64(audioBlob);
-        const { data, error } = await supabase.functions.invoke('transcribe-audio', {
-          body: { audio: base64Audio },
-        });
-
-        if (error) throw error;
-        if (data.text) {
-          onSendMessage(data.text);
-        }
-      } catch (error) {
-        console.error('Transcription error:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to transcribe audio',
-          variant: 'destructive',
-        });
-      }
+    if (isListening) {
+      await stopListening();
     } else {
       try {
-        await audioRecorder.current.start();
-        setIsRecording(true);
+        await startListening();
       } catch (error) {
         toast({
-          title: 'Error',
-          description: 'Failed to access microphone',
+          title: 'Microphone Error',
+          description: 'Please allow microphone access to use voice chat.',
           variant: 'destructive',
         });
       }
@@ -329,15 +338,48 @@ export function ChatPanel({
         </div>
       )}
 
+      {/* Speaking indicator */}
+      {isSpeaking && (
+        <div className="px-3 py-2 border-t">
+          <SpeakingIndicator isSpeaking={isSpeaking} onStop={stopSpeaking} />
+        </div>
+      )}
+
+      {/* Voice transcript preview */}
+      {(isListening || interimTranscript) && (
+        <div className="px-3 py-2 bg-primary/5 border-t">
+          <div className="flex items-center gap-2">
+            <VoiceWaveform isActive={isListening} type="listening" className="w-12" />
+            <span className="text-sm text-muted-foreground">
+              {interimTranscript || 'Listening...'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Input */}
       <div className="p-3 border-t flex gap-2">
+        {/* Voice toggle button */}
+        <Button
+          onClick={toggleVoiceMode}
+          size="icon"
+          variant={voiceEnabled ? 'default' : 'ghost'}
+          title={voiceEnabled ? 'Voice responses on' : 'Voice responses off'}
+        >
+          {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+        </Button>
+        
         <Button
           onClick={handleVoiceRecord}
-          disabled={isLoading || disabled || !isReady}
+          disabled={isLoading || disabled || !isReady || isVoiceProcessing}
           size="icon"
-          variant={isRecording ? 'destructive' : 'outline'}
+          variant={isListening ? 'destructive' : 'outline'}
         >
-          <Mic className={`w-4 h-4 ${isRecording ? 'animate-pulse' : ''}`} />
+          {isListening ? (
+            <MicOff className="w-4 h-4 animate-pulse" />
+          ) : (
+            <Mic className="w-4 h-4" />
+          )}
         </Button>
         <Input
           value={input}
@@ -348,12 +390,12 @@ export function ChatPanel({
               ? 'Processing document...' 
               : 'Ask a question about this document...'
           }
-          disabled={isLoading || isRecording || disabled || !isReady}
+          disabled={isLoading || isListening || disabled || !isReady}
           className="flex-1"
         />
         <Button 
           onClick={handleSend} 
-          disabled={isLoading || !input.trim() || isRecording || disabled || !isReady} 
+          disabled={isLoading || !input.trim() || isListening || disabled || !isReady} 
           size="icon"
         >
           {isLoading ? (
