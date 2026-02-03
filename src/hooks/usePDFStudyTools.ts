@@ -40,7 +40,27 @@ export function usePDFStudyTools({
     tool: StudyToolType,
     settings?: UniversalGenerationSettings
   ) => {
-    if (!extractedText || isGenerating) {
+    // Check if we have text - if not but have documentId, fetch from chunks
+    let content = extractedText;
+    
+    if (!content && documentId) {
+      try {
+        const { data: chunks } = await supabase
+          .from('document_chunks')
+          .select('content')
+          .eq('document_id', documentId)
+          .order('page_number', { ascending: true })
+          .order('chunk_index', { ascending: true });
+        
+        if (chunks && chunks.length > 0) {
+          content = chunks.map(c => c.content).join('\n\n');
+        }
+      } catch (error) {
+        console.error('Error fetching chunks:', error);
+      }
+    }
+    
+    if (!content || isGenerating) {
       toast({
         title: 'No Content',
         description: 'Please wait for the PDF to finish loading.',
@@ -60,8 +80,6 @@ export function usePDFStudyTools({
     });
 
     try {
-      let content = extractedText;
-      
       // If settings have page range, slice the content (approximation)
       if (settings?.pageStart && settings?.pageEnd && totalPages > 1) {
         const startRatio = (settings.pageStart - 1) / totalPages;
