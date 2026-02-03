@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,6 +11,7 @@ import { ConfidenceIndicator, SpellCorrectionNotice, SuggestedTopics } from './C
 import { SpeakingIndicator } from './SpeakingIndicator';
 import { VoiceWaveform } from './VoiceWaveform';
 import { LottieNewton } from '@/components/newton/LottieNewton';
+import { ResponseSection, parseResponseSections } from './ResponseSection';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { useToast } from '@/hooks/use-toast';
 import newtonCharacter from '@/assets/newton-character.png';
@@ -58,7 +59,9 @@ export function ChatPanel({
   const [input, setInput] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [loadingTooLong, setLoadingTooLong] = useState(false);
+  const [prevMessageCount, setPrevMessageCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastAssistantRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Track when loading takes too long (5 seconds)
@@ -99,14 +102,30 @@ export function ChatPanel({
     },
   });
 
+  // Scroll to TOP of new assistant message when response arrives
   useEffect(() => {
-    if (scrollRef.current) {
+    // Only trigger when a new message is added and loading just finished
+    if (!isLoading && messages.length > prevMessageCount) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.role === 'assistant' && lastAssistantRef.current) {
+        // Small delay to ensure DOM is updated
+        setTimeout(() => {
+          lastAssistantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }
+    setPrevMessageCount(messages.length);
+  }, [messages, isLoading, prevMessageCount]);
+
+  // Scroll during streaming to keep content visible
+  useEffect(() => {
+    if (isStreaming && streamingContent && scrollRef.current) {
       const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (viewport) {
         viewport.scrollTop = viewport.scrollHeight;
       }
     }
-  }, [messages, isLoading, streamingContent]);
+  }, [streamingContent, isStreaming]);
 
   const handleSend = () => {
     if (!input.trim() || isLoading || disabled) return;
@@ -133,21 +152,46 @@ export function ChatPanel({
     }
   };
 
-  const handleVoiceRecord = async () => {
+  const handleVoiceRecord = useCallback(async () => {
     if (isListening) {
-      await stopListening();
+      try {
+        await stopListening();
+      } catch (error) {
+        console.error('Error stopping voice:', error);
+      }
     } else {
       try {
         await startListening();
-      } catch (error) {
         toast({
-          title: 'Microphone Error',
-          description: 'Please allow microphone access to use voice chat.',
-          variant: 'destructive',
+          title: 'Listening...',
+          description: 'Speak now. Click the mic button again to stop.',
         });
+      } catch (error: any) {
+        console.error('Voice recording error:', error);
+        const errorMessage = error?.message || 'Unknown error';
+        
+        if (errorMessage.includes('Permission') || errorMessage.includes('NotAllowedError')) {
+          toast({
+            title: 'Microphone Access Denied',
+            description: 'Please allow microphone access in your browser settings to use voice chat.',
+            variant: 'destructive',
+          });
+        } else if (errorMessage.includes('NotFoundError')) {
+          toast({
+            title: 'No Microphone Found',
+            description: 'Please connect a microphone to use voice chat.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Voice Error',
+            description: 'Could not start voice recording. Please try again or type your question.',
+            variant: 'destructive',
+          });
+        }
       }
     }
-  };
+  }, [isListening, startListening, stopListening, toast]);
 
   const handleCopy = async (content: string, messageId: string) => {
     await navigator.clipboard.writeText(content);
@@ -236,35 +280,57 @@ export function ChatPanel({
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((msg, index) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-2' : ''}`}>
-                  {/* Spell correction notice for assistant messages */}
-                  {msg.role === 'assistant' && msg.correctedQuery && (
-                    <div className="mb-2">
-                      <SpellCorrectionNotice
-                        originalQuery={getLastUserQuery(index) || ''}
-                        correctedQuery={msg.correctedQuery}
-                      />
-                    </div>
-                  )}
+            {messages.map((msg, index) => {
+              const isLastAssistant = msg.role === 'assistant' && index === messages.length - 1;
+              const sections = msg.role === 'assistant' ? parseResponseSections(msg.content) : [];
+              const hasStructuredSections = sections.length > 1 || (sections.length === 1 && sections[0].heading);
 
-                  <div
-                    className={`p-3 rounded-lg ${
-                      msg.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
-                  >
-                    {msg.role === 'assistant' ? (
-                      <MarkdownRenderer content={msg.content} />
-                    ) : (
-                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              return (
+                <div
+                  key={msg.id}
+                  ref={isLastAssistant ? lastAssistantRef : undefined}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-2' : ''}`}>
+                    {/* Spell correction notice for assistant messages */}
+                    {msg.role === 'assistant' && msg.correctedQuery && (
+                      <div className="mb-2">
+                        <SpellCorrectionNotice
+                          originalQuery={getLastUserQuery(index) || ''}
+                          correctedQuery={msg.correctedQuery}
+                        />
+                      </div>
                     )}
-                  </div>
+
+                    <div
+                      className={`p-3 rounded-lg ${
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      {msg.role === 'assistant' ? (
+                        hasStructuredSections ? (
+                          // Render structured sections with Explain by AI buttons
+                          <div className="space-y-1">
+                            {sections.map((section, sectionIndex) => (
+                              <ResponseSection
+                                key={sectionIndex}
+                                section={section}
+                                documentId={documentId || null}
+                                sessionId={sessionId || null}
+                                onCitationClick={onCitationClick}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          // Render as plain markdown
+                          <MarkdownRenderer content={msg.content} />
+                        )
+                      ) : (
+                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      )}
+                    </div>
 
                   {/* Suggested topics for clarification */}
                   {msg.role === 'assistant' && msg.confidence === 'clarify' && msg.suggestedTopics && (
@@ -314,9 +380,10 @@ export function ChatPanel({
                       </Button>
                     </div>
                   )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Streaming message */}
             {isStreaming && streamingContent && (
