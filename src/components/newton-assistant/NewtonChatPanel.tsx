@@ -44,8 +44,28 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
+  const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
 
-  // Speech recognition for voice mode
+  // Process voice query with validation
+  const processVoiceQuery = useCallback((query: string) => {
+    const trimmed = query.trim();
+    
+    if (trimmed.length < 3) {
+      toast({
+        title: "Didn't catch that",
+        description: "Please try speaking again.",
+      });
+      setIsVoiceProcessing(false);
+      return;
+    }
+    
+    setIsVoiceProcessing(true);
+    onSend(trimmed);
+    setInput("");
+    setIsVoiceProcessing(false);
+  }, [onSend, toast]);
+
+  // Speech recognition for voice mode with auto-stop
   const {
     isListening,
     transcript,
@@ -56,6 +76,13 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
     language: 'en-IN',
     continuous: true,
     interimResults: true,
+    silenceTimeout: 2000, // Auto-stop after 2s silence
+    maxListeningTime: 10000, // Max 10s recording
+    onAutoStop: (finalTranscript) => {
+      // Auto-send when voice stops due to silence
+      console.log('Newton voice auto-stopped with transcript:', finalTranscript);
+      processVoiceQuery(finalTranscript);
+    },
   });
 
   // Auto-scroll to bottom on new messages
@@ -86,12 +113,10 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   // Handle voice recording toggle
   const handleVoiceToggle = useCallback(async () => {
     if (isListening) {
-      // Stop listening and send if there's a transcript
+      // Stop listening - auto-stop callback will handle sending
       const finalTranscript = await stopListening();
-      if (finalTranscript.trim()) {
-        onSend(finalTranscript.trim());
-        setInput("");
-      }
+      // Manual stop - process the transcript
+      processVoiceQuery(finalTranscript);
     } else {
       // Start listening
       try {
@@ -108,7 +133,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
         });
       }
     }
-  }, [isListening, startListening, stopListening, onSend, toast]);
+  }, [isListening, startListening, stopListening, processVoiceQuery, toast]);
 
   const handleSend = () => {
     if (input.trim() && !isLoading) {
@@ -259,7 +284,13 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isListening ? "Listening..." : "Ask Newton anything..."}
+            placeholder={
+              isVoiceProcessing 
+                ? "Processing..." 
+                : isListening 
+                  ? "Listening... (auto-sends when you pause)" 
+                  : "Ask Newton anything..."
+            }
             className={cn(
               "min-h-[42px] max-h-[120px] resize-none text-sm",
               "bg-background border-muted-foreground/20",
@@ -267,7 +298,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
               isListening && "border-red-500/50"
             )}
             rows={1}
-            disabled={isLoading}
+            disabled={isLoading || isVoiceProcessing}
           />
           {isLoading ? (
             <Button

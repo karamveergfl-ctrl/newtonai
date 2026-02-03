@@ -94,8 +94,31 @@ export function useVoiceChat({
   const conversationHistoryRef = useRef<Array<{ role: string; content: string }>>([]);
   
   const { toast } = useToast();
+
+  // Process voice query - validate and send to parent
+  const processVoiceQuery = useCallback(async (query: string) => {
+    const trimmed = query.trim();
+    
+    // Validate minimum length
+    if (trimmed.length < 3) {
+      toast({
+        title: "Didn't catch that",
+        description: "Please try speaking again.",
+      });
+      setIsProcessing(false);
+      return;
+    }
+    
+    setIsProcessing(true);
+    
+    // Send transcript to parent's sendMessage (which handles the RAG call)
+    onTranscript?.(trimmed);
+    
+    // Processing is done - parent handles the rest
+    setIsProcessing(false);
+  }, [onTranscript, toast]);
   
-  // Speech recognition hook
+  // Speech recognition hook with auto-stop handling
   const {
     isListening,
     transcript,
@@ -106,25 +129,16 @@ export function useVoiceChat({
     setLanguage: setSpeechLanguage,
   } = useSpeechRecognition({
     language: currentLanguage,
-    continuous: true, // Keep listening until user stops
+    continuous: true,
     interimResults: true,
+    silenceTimeout: 2000, // Auto-stop after 2s silence
+    maxListeningTime: 10000, // Max 10s recording
+    onAutoStop: (finalTranscript) => {
+      // Auto-send when voice stops due to silence
+      console.log('Voice auto-stopped with transcript:', finalTranscript);
+      processVoiceQuery(finalTranscript);
+    },
   });
-
-  // Send transcript to parent - let parent handle the RAG call to avoid duplicates
-  // Send transcript to parent - parent's sendMessage handles the RAG call
-  // Voice chat hook only handles STT input and TTS output
-  const processVoiceQuery = useCallback(async (query: string) => {
-    if (!query.trim()) return;
-    
-    setIsProcessing(true);
-    
-    // Send transcript to parent's sendMessage (which handles the RAG call)
-    // The parent will add the message to the chat and get the response
-    onTranscript?.(query);
-    
-    // Processing is done - parent handles the rest
-    setIsProcessing(false);
-  }, [onTranscript]);
 
   // Text-to-speech using ElevenLabs
   const speakAnswer = useCallback(async (text: string) => {

@@ -459,15 +459,22 @@ export function ChatPanel({
         </div>
       )}
 
-      {/* Voice transcript preview */}
-      {(isListening || interimTranscript) && (
+      {/* Voice transcript preview - enhanced with processing state */}
+      {(isListening || interimTranscript || isVoiceProcessing) && (
         <div className="px-3 py-2 bg-primary/5 border-t">
           <div className="flex items-center gap-2">
-            <VoiceWaveform isActive={isListening} type="listening" className="w-12" />
+            <VoiceWaveform isActive={isListening && !isVoiceProcessing} type="listening" className="w-12" />
             <span className="text-sm text-muted-foreground">
-              {interimTranscript || 'Listening...'}
+              {isVoiceProcessing 
+                ? "Processing your question..." 
+                : transcript || interimTranscript || 'Listening...'}
             </span>
           </div>
+          {isListening && !interimTranscript && !transcript && (
+            <p className="text-xs text-muted-foreground mt-1 ml-14">
+              Speak now. Will auto-send when you pause.
+            </p>
+          )}
         </div>
       )}
 
