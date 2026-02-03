@@ -110,74 +110,21 @@ export function useVoiceChat({
     interimResults: true,
   });
 
-  // Send transcript to RAG system and get answer
+  // Send transcript to parent - let parent handle the RAG call to avoid duplicates
+  // Send transcript to parent - parent's sendMessage handles the RAG call
+  // Voice chat hook only handles STT input and TTS output
   const processVoiceQuery = useCallback(async (query: string) => {
-    if (!documentId || !query.trim()) return;
+    if (!query.trim()) return;
     
     setIsProcessing(true);
+    
+    // Send transcript to parent's sendMessage (which handles the RAG call)
+    // The parent will add the message to the chat and get the response
     onTranscript?.(query);
     
-    try {
-      // Add to conversation history
-      conversationHistoryRef.current.push({ role: 'user', content: query });
-      
-      // Call the RAG chat endpoint with voice mode flag
-      const { data, error } = await supabase.functions.invoke('rag-chat-pdf', {
-        body: {
-          documentId,
-          sessionId,
-          question: query,
-          conversationHistory: conversationHistoryRef.current.slice(-6),
-          voiceMode: true, // Flag for TTS-optimized response
-        },
-      });
-      
-      if (error) throw error;
-      
-      const answer = data.answer || "I couldn't find an answer in your document.";
-      setCurrentAnswer(answer);
-      lastAnswerRef.current = answer;
-      onAnswer?.(answer);
-      
-      // Add to conversation history
-      conversationHistoryRef.current.push({ role: 'assistant', content: answer });
-      
-      // Extract and report citations
-      if (data.citations && onCitationFound) {
-        for (const citation of data.citations) {
-          onCitationFound(citation.pageNumber, citation.quote);
-        }
-      }
-      
-      // Also extract page references from the answer text
-      const pageRefs = extractPageReferences(answer);
-      if (pageRefs.length > 0 && onCitationFound) {
-        onCitationFound(pageRefs[0].pageNumber, pageRefs[0].context);
-      }
-      
-      // Speak the answer if voice mode is enabled
-      if (voiceEnabled) {
-        await speakAnswer(answer);
-      }
-      
-    } catch (err: any) {
-      console.error('Voice chat error:', err);
-      const errorMsg = "I'm sorry, I had trouble processing your question. Please try again.";
-      setCurrentAnswer(errorMsg);
-      
-      if (voiceEnabled) {
-        await speakAnswer(errorMsg);
-      }
-      
-      toast({
-        title: 'Error',
-        description: err.message || 'Failed to process voice query',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [documentId, sessionId, voiceEnabled, onCitationFound, onTranscript, onAnswer, toast]);
+    // Processing is done - parent handles the rest
+    setIsProcessing(false);
+  }, [onTranscript]);
 
   // Text-to-speech using ElevenLabs
   const speakAnswer = useCallback(async (text: string) => {
