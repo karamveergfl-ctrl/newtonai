@@ -101,15 +101,14 @@ export function PDFViewerWithHighlight({
     }
   }, [highlight]);
 
-  // Calculate page width based on auto-fit or manual scale
+  // Calculate page width based on auto-fit or manual scale (width-first approach)
   const getPageWidth = useCallback(() => {
     if (!containerDimensions.width) return 600;
     
     if (isAutoFit) {
-      const availableWidth = containerDimensions.width - 32;
-      const availableHeight = containerDimensions.height - 32;
-      const heightBasedWidth = availableHeight * 0.77;
-      return Math.min(availableWidth, heightBasedWidth, 900);
+      // Width-first approach - fill 95% of available width for better readability
+      const availableWidth = (containerDimensions.width - 32) * 0.95;
+      return Math.max(availableWidth, 400); // Minimum 400px width
     }
     
     return 600 * scale;
