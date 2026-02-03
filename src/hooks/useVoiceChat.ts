@@ -209,9 +209,13 @@ export function useVoiceChat({
     try {
       await startSpeechRecognition();
     } catch (err: any) {
+      console.error('Microphone access error:', err);
+      const errorMessage = err?.name === 'NotAllowedError' 
+        ? 'Microphone access was denied. Please allow microphone access in your browser settings.'
+        : err?.message || 'Please allow microphone access to use voice chat.';
       toast({
         title: 'Microphone Error',
-        description: 'Please allow microphone access to use voice chat.',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
