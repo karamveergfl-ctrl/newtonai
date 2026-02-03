@@ -775,12 +775,19 @@ ${retrievalResult.chunks.length > 0 ? context : '(No relevant content found for 
   } catch (error) {
     console.error("Error in RAG chat:", error);
     console.error("Error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    
+    // CRITICAL: Always return a valid response with status 200
+    // This ensures the frontend can display the error message in the chat
+    // rather than having a silent failure
     return new Response(
       JSON.stringify({ 
-        error: "Failed to process chat request", 
-        details: error instanceof Error ? error.message : String(error) 
+        answer: "Something went wrong while searching the document. Please try again.",
+        citations: [],
+        confidence: 'not_found',
+        status: 'ERROR',
+        debug_id: crypto.randomUUID(),
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
