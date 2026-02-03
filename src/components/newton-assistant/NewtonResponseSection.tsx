@@ -95,8 +95,8 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
         "transition-all duration-200 overflow-hidden",
         isExpanded ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0"
       )}>
-        <div className="p-4 text-sm break-words overflow-x-auto">
-          <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:break-words [&_li]:break-words">
+        <div className="p-4 text-sm min-w-0">
+          <div className="prose prose-sm dark:prose-invert max-w-none break-words [overflow-wrap:anywhere] [&_.katex-display]:overflow-x-auto [&_.katex]:max-w-full">
             <MarkdownRenderer content={section.content} />
           </div>
         </div>

@@ -162,7 +162,7 @@ export const MarkdownRenderer = ({ content, className, enableAutoLatex = true }:
         // Tables
         "prose-table:border-collapse prose-th:bg-muted/50 prose-th:p-3 prose-td:p-3 prose-td:border-border",
         // KaTeX
-        "[&_.katex]:text-base [&_.katex-display]:my-6 [&_.katex-display]:overflow-x-auto [&_.katex-display]:py-2",
+        "[&_.katex]:text-base [&_.katex-display]:my-6 [&_.katex-display]:overflow-x-auto [&_.katex-display]:py-2 [&_.katex-display]:max-w-full [&_.katex]:break-words",
         className
       )}
     >
