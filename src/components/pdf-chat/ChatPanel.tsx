@@ -13,6 +13,7 @@ import { VoiceWaveform } from './VoiceWaveform';
 import { LottieNewton } from '@/components/newton/LottieNewton';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { useToast } from '@/hooks/use-toast';
+import newtonCharacter from '@/assets/newton-character.png';
 import type { ChatMessage, ContextMode } from '@/hooks/usePDFChat';
 
 interface ChatPanelProps {
@@ -185,7 +186,11 @@ export function ChatPanel({
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-12 px-4">
-            <LottieNewton state="thinking" size="md" />
+            <img 
+              src={newtonCharacter} 
+              alt="Newton AI" 
+              className="w-24 h-24 object-contain"
+            />
             <h3 className="font-semibold text-lg mt-4">Ask anything about this document</h3>
             <p className="text-muted-foreground text-sm mt-2 max-w-xs">
               Answers are generated only from its content. No external knowledge will be used.
