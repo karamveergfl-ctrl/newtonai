@@ -84,10 +84,10 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
       {/* Message bubble */}
       <div
         className={cn(
-          "flex-1 max-w-[90%] rounded-2xl overflow-hidden",
+          "flex-1 rounded-2xl",
           isUser
-            ? "bg-primary text-primary-foreground rounded-br-md px-3.5 py-2.5"
-            : "bg-muted/40 text-foreground rounded-bl-md px-3 py-2 overflow-x-auto"
+            ? "max-w-[85%] bg-primary text-primary-foreground rounded-br-md px-3.5 py-2.5"
+            : "bg-muted/40 text-foreground rounded-bl-md px-3 py-2 min-w-0"
         )}
       >
         {isUser ? (
@@ -97,7 +97,7 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
             {message.content ? (
               hasSections && !isStreaming ? (
                 // Render structured sections with cards
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   {sections.map((section, idx) => (
                     section.heading ? (
                       <NewtonResponseSection
@@ -106,7 +106,7 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
                         onExplain={handleExplain}
                       />
                     ) : (
-                      <div key={idx} className="prose prose-sm dark:prose-invert max-w-none mb-3">
+                      <div key={idx} className="prose prose-sm dark:prose-invert max-w-none mb-3 break-words [overflow-wrap:anywhere]">
                         <MarkdownRenderer content={section.content} />
                       </div>
                     )
@@ -114,7 +114,7 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
                 </div>
               ) : (
                 // Fallback to simple markdown rendering during streaming
-                <div className="prose prose-sm dark:prose-invert max-w-none">
+                <div className="prose prose-sm dark:prose-invert max-w-none break-words [overflow-wrap:anywhere]">
                   <MarkdownRenderer content={message.content} />
                 </div>
               )
