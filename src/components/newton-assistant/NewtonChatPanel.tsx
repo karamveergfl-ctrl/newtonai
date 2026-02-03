@@ -1,12 +1,14 @@
-import { memo, useRef, useEffect, useState, KeyboardEvent } from "react";
+import { memo, useRef, useEffect, useState, useCallback, KeyboardEvent } from "react";
 import { motion } from "framer-motion";
-import { Send, Trash2, Sparkles, StopCircle, Maximize2, Minimize2 } from "lucide-react";
+import { Send, Trash2, Sparkles, StopCircle, Maximize2, Minimize2, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { NewtonMessageBubble } from "./NewtonMessageBubble";
 import { LottieNewton } from "@/components/newton/LottieNewton";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useToast } from "@/hooks/use-toast";
 import type { NewtonMessage } from "@/hooks/useNewtonChat";
 import newtonChatAvatar from "@/assets/newton-chat-avatar.png";
 
@@ -41,6 +43,20 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { toast } = useToast();
+
+  // Speech recognition for voice mode
+  const {
+    isListening,
+    transcript,
+    interimTranscript,
+    startListening,
+    stopListening,
+  } = useSpeechRecognition({
+    language: 'en-IN',
+    continuous: true,
+    interimResults: true,
+  });
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -56,6 +72,43 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
+
+  // Update input with transcript while listening
+  useEffect(() => {
+    if (isListening) {
+      const currentText = transcript + (interimTranscript ? ` ${interimTranscript}` : '');
+      if (currentText.trim()) {
+        setInput(currentText.trim());
+      }
+    }
+  }, [transcript, interimTranscript, isListening]);
+
+  // Handle voice recording toggle
+  const handleVoiceToggle = useCallback(async () => {
+    if (isListening) {
+      // Stop listening and send if there's a transcript
+      const finalTranscript = await stopListening();
+      if (finalTranscript.trim()) {
+        onSend(finalTranscript.trim());
+        setInput("");
+      }
+    } else {
+      // Start listening
+      try {
+        await startListening();
+      } catch (err: any) {
+        console.error('Voice recording error:', err);
+        const errorMessage = err?.name === 'NotAllowedError' 
+          ? 'Microphone access denied. Please allow microphone access.'
+          : 'Unable to start voice recording. Please try again.';
+        toast({
+          title: 'Voice Error',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
+    }
+  }, [isListening, startListening, stopListening, onSend, toast]);
 
   const handleSend = () => {
     if (input.trim() && !isLoading) {
@@ -182,16 +235,36 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
       {/* Input */}
       <div className="p-3 border-t bg-muted/30">
         <div className="flex items-end gap-2">
+          {/* Voice button */}
+          <Button
+            onClick={handleVoiceToggle}
+            variant={isListening ? "default" : "outline"}
+            size="icon"
+            className={cn(
+              "h-[42px] w-[42px] shrink-0 transition-all",
+              isListening && "bg-red-500 hover:bg-red-600 animate-pulse"
+            )}
+            disabled={isLoading}
+            title={isListening ? "Stop recording" : "Start voice input"}
+          >
+            {isListening ? (
+              <MicOff className="w-4 h-4" />
+            ) : (
+              <Mic className="w-4 h-4" />
+            )}
+          </Button>
+          
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Newton anything..."
+            placeholder={isListening ? "Listening..." : "Ask Newton anything..."}
             className={cn(
               "min-h-[42px] max-h-[120px] resize-none text-sm",
               "bg-background border-muted-foreground/20",
-              "focus-visible:ring-primary/50"
+              "focus-visible:ring-primary/50",
+              isListening && "border-red-500/50"
             )}
             rows={1}
             disabled={isLoading}
@@ -217,7 +290,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
           )}
         </div>
         <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
-          Press Enter to send • Shift+Enter for new line
+          {isListening ? "Tap mic again to stop and send" : "Press Enter to send • Shift+Enter for new line"}
         </p>
       </div>
     </motion.div>
