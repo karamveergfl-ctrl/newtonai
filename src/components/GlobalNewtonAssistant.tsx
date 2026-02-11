@@ -1,67 +1,67 @@
 import { useState, useEffect, useCallback, memo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNewtonChat } from "@/hooks/useNewtonChat";
+import { supabase } from "@/integrations/supabase/client";
 import { NewtonTriggerButton } from "./newton-assistant/NewtonTriggerButton";
 import { NewtonChatPanel } from "./newton-assistant/NewtonChatPanel";
+import { SignInRequiredModal } from "./SignInRequiredModal";
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
 
-
-/**
- * Global Newton AI Assistant - Fixed to bottom-right corner
- * Accessible from every page for asking questions
- */
 export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(false);
   const isMobile = useIsMobile();
   const { messages, isLoading, error, sendMessage, cancelRequest, clearHistory } =
     useNewtonChat();
 
-  // Keyboard shortcut: Ctrl+Shift+N or Cmd+Shift+N
+  // Auth state tracking
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Keyboard shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "N") {
         e.preventDefault();
+        if (!isAuthenticated) { setShowSignIn(true); return; }
         setIsOpen((prev) => !prev);
       }
-      // Escape to close
-      if (e.key === "Escape" && isOpen) {
-        setIsOpen(false);
-      }
+      if (e.key === "Escape" && isOpen) setIsOpen(false);
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, isAuthenticated]);
 
   const handleToggle = useCallback(() => {
+    if (!isAuthenticated) { setShowSignIn(true); return; }
     setIsOpen((prev) => !prev);
-  }, []);
+  }, [isAuthenticated]);
 
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-  }, []);
+  const handleClose = useCallback(() => setIsOpen(false), []);
 
-  const handleToggleFullScreen = useCallback(() => {
-    setIsFullScreen((prev) => !prev);
-  }, []);
-
-  // Mobile: Use drawer
+  // Mobile: drawer
   if (isMobile) {
     return (
       <>
-        {/* Trigger button */}
         <div className="fixed bottom-4 right-4 z-50">
           <NewtonTriggerButton isOpen={isOpen} onClick={handleToggle} />
         </div>
-
-        {/* Mobile drawer */}
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
           <DrawerContent className="h-[85vh] max-h-[85vh]">
             <DrawerHeader className="sr-only">
@@ -75,27 +75,37 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
                 onSend={sendMessage}
                 onCancel={cancelRequest}
                 onClear={clearHistory}
+                isFullScreen={true}
               />
             </div>
           </DrawerContent>
         </Drawer>
+        <SignInRequiredModal open={showSignIn} onOpenChange={setShowSignIn} />
       </>
     );
   }
 
-  // Desktop: Floating panel
+  // Desktop: always full screen
   return (
-    <div className={`fixed z-50 ${isFullScreen ? 'inset-4' : 'bottom-4 right-4'} flex flex-col items-end gap-3`}>
-      {/* Chat panel */}
+    <>
+      {/* Full screen chat panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className={isFullScreen ? "w-full h-full" : "w-[380px] h-[520px]"}
+            className="fixed inset-4 z-50"
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClose}
+              className="absolute top-2 right-2 z-[51] h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm"
+            >
+              <X className="w-4 h-4" />
+            </Button>
             <NewtonChatPanel
               messages={messages}
               isLoading={isLoading}
@@ -103,18 +113,21 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
               onSend={sendMessage}
               onCancel={cancelRequest}
               onClear={clearHistory}
-              isFullScreen={isFullScreen}
-              onToggleFullScreen={handleToggleFullScreen}
+              isFullScreen={true}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Trigger button - hide when fullscreen */}
-      {!isFullScreen && (
-        <NewtonTriggerButton isOpen={isOpen} onClick={handleToggle} />
+      {/* Trigger button - only when closed */}
+      {!isOpen && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <NewtonTriggerButton isOpen={isOpen} onClick={handleToggle} />
+        </div>
       )}
-    </div>
+
+      <SignInRequiredModal open={showSignIn} onOpenChange={setShowSignIn} />
+    </>
   );
 });
 
