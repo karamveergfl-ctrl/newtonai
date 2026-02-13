@@ -140,12 +140,12 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
       collapsible="icon"
       className="border-r border-sidebar-border bg-sidebar"
     >
-      <SidebarHeader className="p-0 px-1 pt-1">
+      <SidebarHeader className="p-2">
         <div className={cn(
           "flex items-center",
           isCollapsed ? "justify-center" : "justify-between"
         )}>
-          {!isCollapsed && <Logo size="md" />}
+          {!isCollapsed && <Logo size="sm" showText={true} />}
           <Button
             variant="ghost"
             size="icon"
