@@ -22,7 +22,7 @@ interface SEOHeadProps {
   };
 }
 
-const SITE_URL = "https://newtonai.lovable.app";
+const SITE_URL = "https://newtonai.site";
 const SITE_NAME = "NewtonAI";
 const DEFAULT_IMAGE = `${SITE_URL}/logo.png`;
 

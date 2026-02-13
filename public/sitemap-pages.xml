@@ -1,118 +1,156 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Updated: 2026-01-22 -->
+<!-- Updated: 2026-02-13 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Main Pages -->
   <url>
-    <loc>https://newtonai.lovable.app/</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/pricing</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/pricing</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/about</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/about</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/faq</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/faq</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/contact</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/contact</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/enterprise</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/enterprise</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
-  <!-- New Content Pages -->
+  <!-- Content Pages -->
   <url>
-    <loc>https://newtonai.lovable.app/how-it-works</loc>
-    <lastmod>2026-02-02</lastmod>
+    <loc>https://newtonai.site/how-it-works</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/features</loc>
-    <lastmod>2026-02-02</lastmod>
+    <loc>https://newtonai.site/features</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/ai-for-students</loc>
-    <lastmod>2026-02-02</lastmod>
+    <loc>https://newtonai.site/ai-for-students</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
+  <!-- SEO Content Pages -->
+  <url>
+    <loc>https://newtonai.site/ai-study-assistant</loc>
+    <lastmod>2026-02-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://newtonai.site/ai-notes-generator</loc>
+    <lastmod>2026-02-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://newtonai.site/pdf-study-tool</loc>
+    <lastmod>2026-02-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://newtonai.site/ai-quiz-generator</loc>
+    <lastmod>2026-02-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://newtonai.site/exam-preparation-ai</loc>
+    <lastmod>2026-02-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://newtonai.site/about-newtonai-for-ai</loc>
+    <lastmod>2026-02-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
   <!-- Legal Pages -->
   <url>
-    <loc>https://newtonai.lovable.app/privacy</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/privacy</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/terms</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/terms</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/refund</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/refund</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   
   <!-- Compare Pages -->
   <url>
-    <loc>https://newtonai.lovable.app/compare</loc>
-    <lastmod>2026-01-22</lastmod>
+    <loc>https://newtonai.site/compare</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/compare/chegg</loc>
-    <lastmod>2026-01-22</lastmod>
+    <loc>https://newtonai.site/compare/chegg</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/compare/quizlet</loc>
-    <lastmod>2026-01-22</lastmod>
+    <loc>https://newtonai.site/compare/quizlet</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/compare/studocu</loc>
-    <lastmod>2026-01-22</lastmod>
+    <loc>https://newtonai.site/compare/studocu</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/compare/course-hero</loc>
-    <lastmod>2026-01-22</lastmod>
+    <loc>https://newtonai.site/compare/course-hero</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://newtonai.lovable.app/compare/chatgpt</loc>
-    <lastmod>2026-01-22</lastmod>
+    <loc>https://newtonai.site/compare/chatgpt</loc>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

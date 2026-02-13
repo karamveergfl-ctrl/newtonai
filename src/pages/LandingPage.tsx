@@ -78,10 +78,10 @@ const LandingPage = () => {
     <div className="min-h-screen flex flex-col bg-background overflow-x-hidden">
       <SEOHead
         title="Home"
-        description="Transform any document, video, or lecture into flashcards, quizzes, summaries, and mind maps. Your personal AI study assistant for smarter learning."
+        description="NewtonAI is an AI-powered study assistant for students that converts notes, PDFs and study materials into summaries, quizzes and flashcards for faster exam preparation."
         canonicalPath="/"
         breadcrumbs={breadcrumbs}
-        keywords="AI study assistant, flashcards, quiz generator, PDF summarizer, mind maps, student tools"
+        keywords="AI study assistant, AI notes generator, PDF summarizer, quiz generator, flashcard maker, exam preparation, AI for students, study tools, AI homework helper"
       />
       <Header transparent />
       
@@ -205,6 +205,39 @@ const LandingPage = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* What is NewtonAI - SEO Content Section */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6 text-center">What is NewtonAI?</h2>
+          <p className="text-lg text-muted-foreground leading-relaxed mb-8 text-center max-w-3xl mx-auto">
+            NewtonAI is an AI-powered study assistant designed specifically for students. It transforms any study material — PDFs, notes, textbooks, lectures, and videos — into interactive learning tools that help you study smarter and prepare for exams more effectively.
+          </p>
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mb-3">Who is NewtonAI For?</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                NewtonAI serves students at every level — from high school board exam preparation to college finals and competitive entrance tests like JEE, NEET, GRE, and GMAT. Whether you're a self-learner or a university student with heavy course loads, NewtonAI adapts to your study workflow.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mb-3">Key AI Study Tools</h3>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-primary flex-shrink-0" /> <Link to="/pdf-study-tool" className="hover:text-primary transition-colors">AI PDF Summarizer</Link></li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-primary flex-shrink-0" /> <Link to="/ai-notes-generator" className="hover:text-primary transition-colors">AI Notes Generator</Link></li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-primary flex-shrink-0" /> <Link to="/ai-quiz-generator" className="hover:text-primary transition-colors">AI Quiz Generator</Link></li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-primary flex-shrink-0" /> AI Flashcard Maker & Mind Maps</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-primary flex-shrink-0" /> <Link to="/exam-preparation-ai" className="hover:text-primary transition-colors">AI Exam Preparation</Link></li>
+              </ul>
+            </div>
+          </div>
+          <p className="text-center">
+            <Button asChild variant="outline" size="lg">
+              <Link to="/ai-study-assistant">Learn More About NewtonAI</Link>
+            </Button>
+          </p>
         </div>
       </section>
 
