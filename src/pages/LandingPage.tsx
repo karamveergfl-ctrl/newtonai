@@ -153,43 +153,58 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Problem Section */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4 max-w-3xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-10">
-            Why Students Struggle Today
-          </h2>
-          <ul className="space-y-4 text-left max-w-lg mx-auto mb-8">
-            {problems.map((item) =>
-            <li key={item} className="flex items-center gap-3 text-lg text-muted-foreground">
-                <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-                {item}
-              </li>
-            )}
-          </ul>
-          <p className="text-lg font-semibold text-destructive">
-            Result: More time wasted, less learning.
-          </p>
-        </div>
-      </section>
+      {/* Problem + Solution Combined Section */}
+      <section className="py-20 md:py-28">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
+            {/* Problem Card */}
+            <div className="relative rounded-2xl border border-destructive/20 bg-destructive/5 p-8 md:p-10 overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-destructive/60 to-destructive/20" />
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                  <XCircle className="w-5 h-5 text-destructive" />
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground font-serif">
+                  The Problem
+                </h2>
+              </div>
+              <ul className="space-y-5 mb-8">
+                {problems.map((item) =>
+                <li key={item} className="flex items-start gap-3">
+                    <XCircle className="w-5 h-5 text-destructive/70 flex-shrink-0 mt-0.5" />
+                    <span className="text-base md:text-lg text-muted-foreground leading-relaxed">{item}</span>
+                  </li>
+                )}
+              </ul>
+              <p className="text-sm font-semibold text-destructive tracking-wide uppercase">
+                Result: More time wasted, less learning.
+              </p>
+            </div>
 
-      {/* Solution Section */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 max-w-3xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-10">
-            NewtonAI Solves Everything in One Place
-          </h2>
-          <ul className="space-y-4 text-left max-w-lg mx-auto mb-8">
-            {solutions.map((item) =>
-            <li key={item} className="flex items-center gap-3 text-lg text-muted-foreground">
-                <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                {item}
-              </li>
-            )}
-          </ul>
-          <p className="text-lg font-semibold text-primary">
-            No switching apps. No distractions. Just learning.
-          </p>
+            {/* Solution Card */}
+            <div className="relative rounded-2xl border border-primary/20 bg-primary/5 p-8 md:p-10 overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/60 to-secondary/40" />
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-primary" />
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground font-serif">
+                  The Solution
+                </h2>
+              </div>
+              <ul className="space-y-5 mb-8">
+                {solutions.map((item) =>
+                <li key={item} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-primary/70 flex-shrink-0 mt-0.5" />
+                    <span className="text-base md:text-lg text-muted-foreground leading-relaxed">{item}</span>
+                  </li>
+                )}
+              </ul>
+              <p className="text-sm font-semibold text-primary tracking-wide uppercase">
+                No switching apps. No distractions. Just learning.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
