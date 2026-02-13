@@ -1,127 +1,123 @@
 
-# Newton AI Chat: Gemini-Style Redesign
+# SEO and AI Search Engine Optimization for NewtonAI.site
 
 ## Overview
 
-Transform the Newton AI chat into a Gemini-like experience with a sidebar for chat history, document upload support, voice input, and a close button inside the panel header. This is a significant UI overhaul involving new database tables, new components, and modifications to existing ones.
+Comprehensive SEO overhaul covering meta tags, structured data, new content pages, landing page content, LLM discovery page, domain references update, and performance optimizations.
 
-## What Changes
+## 1. Domain References Update (Critical)
 
-### 1. Close Button Moved Inside Header
-Move the floating close button from `GlobalNewtonAssistant.tsx` into the `NewtonChatPanel` header bar, replacing the external overlay button for cleaner UX.
+All sitemaps, structured data, and SEO references currently point to `newtonai.lovable.app`. These must be updated to `newtonai.site`:
 
-### 2. Chat History Sidebar (Gemini-style)
-A collapsible left sidebar showing past conversations, grouped by recency ("Today", "Yesterday", "Previous 7 days"). Users can:
-- Start a new chat (+ button)
-- Click a past conversation to load it
-- Delete old conversations
+**Files affected:**
+- `src/components/SEOHead.tsx` -- change `SITE_URL` to `https://newtonai.site`
+- `index.html` -- update all `og:url`, `og:image`, schema URLs
+- `public/robots.txt` -- update sitemap URL
+- `public/sitemap.xml` -- update all `<loc>` URLs
+- `public/sitemap-index.xml` -- same
+- `public/sitemap-pages.xml` -- same
+- `public/sitemap-tools.xml` -- same
+- `public/sitemap-blog.xml` -- same
 
-### 3. Persistent Chat Storage in Database
-Replace localStorage with database-backed conversation storage:
-- **New table: `newton_conversations`** -- stores conversation metadata (title, user_id, timestamps)
-- **New table: `newton_messages`** -- stores individual messages per conversation
-- Auto-generate conversation titles from the first user message
+## 2. Meta SEO Updates
 
-### 4. Document Upload in Chat
-Add a "+" attachment button in the input area that lets users upload documents (PDF, images, DOCX). The uploaded file is:
-- Extracted to text via the existing `extract-text` edge function
-- Injected as context into the AI conversation
-- Shown as an attachment chip in the chat
+**File: `index.html`**
+- Title: `NewtonAI - AI Study Assistant for Students | Notes, PDF Summaries, Quiz Generator`
+- Description: `NewtonAI is an AI-powered study assistant for students that converts notes, PDFs and study materials into summaries, quizzes and flashcards for faster exam preparation.`
+- Add keywords meta tag: `AI study assistant, AI notes generator, PDF summarizer, quiz generator, flashcard maker, exam preparation, AI for students, study tools`
 
-### 5. Voice Input (Already Exists)
-Voice input via microphone is already implemented. No changes needed -- just ensure it remains visible and functional in the new layout.
+**File: `src/pages/LandingPage.tsx`**
+- Update SEOHead title/description to match the optimized versions above
 
-### 6. Gemini-Style Empty State
-When no messages exist, show a centered "What can I help you with?" heading with the input bar below, matching the Gemini aesthetic from the reference image.
+## 3. Structured Data Enhancement
 
----
+**File: `index.html`** -- Replace existing schemas with richer versions:
 
-## Technical Details
+- **SoftwareApplication** with `EducationalApplication` category, audience `Student`, features list, offers (free tier)
+- **Organization** with updated `newtonai.site` URLs
+- **WebSite** with SearchAction pointing to `newtonai.site`
+- **New: FAQPage schema** on the landing page with common questions
+- **New: ItemList schema** listing the key tools
 
-### Database Migration
+## 4. Landing Page SEO Content Section
 
-```sql
--- Conversations table
-CREATE TABLE public.newton_conversations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
-  title TEXT NOT NULL DEFAULT 'New Chat',
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+**File: `src/pages/LandingPage.tsx`** -- Add a new "What is NewtonAI" section between the features grid and the mid-page CTA:
 
--- Messages table
-CREATE TABLE public.newton_messages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID NOT NULL REFERENCES public.newton_conversations(id) ON DELETE CASCADE,
-  role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
-  content TEXT NOT NULL,
-  attachments JSONB DEFAULT '[]',
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+- H2: "What is NewtonAI?"
+- Paragraph explaining it is an AI study assistant for students
+- H3: "Who is NewtonAI For?" -- targeting students, exam prep, self-learners
+- H3: "Key Features" -- PDF summarizer, notes generator, quiz maker, flashcards, mind maps, podcasts
+- Proper semantic HTML hierarchy (h1 already exists in hero)
+- ~300 words of natural, keyword-rich content
 
--- RLS policies (auth required, own data only)
-ALTER TABLE public.newton_conversations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.newton_messages ENABLE ROW LEVEL SECURITY;
+## 5. New SEO Pages (5 pages + 1 LLM page)
 
-CREATE POLICY "Users manage own conversations" ON public.newton_conversations
-  FOR ALL USING (auth.uid() = user_id);
+Create 6 new page components, each with 800+ words, FAQ sections, and internal links:
 
-CREATE POLICY "Users manage own messages" ON public.newton_messages
-  FOR ALL USING (
-    conversation_id IN (
-      SELECT id FROM public.newton_conversations WHERE user_id = auth.uid()
-    )
-  );
+| Route | File | Topic |
+|-------|------|-------|
+| `/ai-study-assistant` | `src/pages/seo/AIStudyAssistant.tsx` | What is an AI Study Assistant |
+| `/ai-notes-generator` | `src/pages/seo/AINotesGenerator.tsx` | AI Notes Generator tool |
+| `/pdf-study-tool` | `src/pages/seo/PDFStudyTool.tsx` | PDF Study Tool overview |
+| `/ai-quiz-generator` | `src/pages/seo/AIQuizGenerator.tsx` | AI Quiz Generator tool |
+| `/exam-preparation-ai` | `src/pages/seo/ExamPreparationAI.tsx` | AI for Exam Preparation |
+| `/about-newtonai-for-ai` | `src/pages/seo/AboutNewtonAIForAI.tsx` | LLM Discovery Page |
 
--- Index for fast lookups
-CREATE INDEX idx_newton_conversations_user ON public.newton_conversations(user_id, updated_at DESC);
-CREATE INDEX idx_newton_messages_conversation ON public.newton_messages(conversation_id, created_at);
-```
+Each page will include:
+- SEOHead with optimized title, description, keywords, canonical, breadcrumbs
+- H1/H2/H3 semantic hierarchy
+- 800+ words of educational content
+- FAQ section with 5-6 questions using `details`/`summary` elements
+- Internal links to related tools and the signup page
+- CTA section at the bottom
 
-### New Files
+## 6. LLM Discovery Page (`/about-newtonai-for-ai`)
 
-1. **`src/hooks/useNewtonConversations.ts`** -- Hook to manage conversations list (CRUD via Supabase), load/save messages, auto-title generation
-2. **`src/components/newton-assistant/NewtonSidebar.tsx`** -- Sidebar component showing conversation history grouped by date, "New Chat" button, delete option
-3. **`src/components/newton-assistant/NewtonAttachmentButton.tsx`** -- "+" button that opens file picker, processes uploads via `extract-text`, shows attachment chips
+Special page designed for AI crawlers:
+- Neutral, factual definition of NewtonAI
+- Structured use cases for students
+- How it differs from generic chatbots (domain-specific, study-focused, curriculum-aware)
+- Machine-readable format with clear headings
 
-### Modified Files
+## 7. Route Registration and Navigation
 
-4. **`src/hooks/useNewtonChat.ts`** -- Refactor to work with database instead of localStorage; accept `conversationId`, save messages to DB after streaming completes, support attachments in context
-5. **`src/components/newton-assistant/NewtonChatPanel.tsx`**:
-   - Add `onClose` prop and render close button (X) inside the header
-   - Add attachment button ("+") to the left of the input area
-   - Update empty state to Gemini-style "What can I help you with?" centered text
-   - Accept sidebar toggle callback
-6. **`src/components/GlobalNewtonAssistant.tsx`**:
-   - Remove the external floating close button
-   - Pass `onClose` to `NewtonChatPanel`
-   - Integrate the sidebar layout: sidebar on the left, chat panel on the right
-   - Manage active conversation state
+**File: `src/App.tsx`** -- Add 6 new routes
 
-### Layout Structure (Desktop)
+**File: `src/components/Footer.tsx`** -- Add links to new SEO pages under a "Learn More" column
 
-```text
-+--------------------------------------------------+
-| [Sidebar]         |  [Chat Panel]                 |
-| New Chat btn      |  Header: Newton AI | X close  |
-| Today             |                               |
-|   - Chat title 1  |  "What can I help you with?"  |
-|   - Chat title 2  |                               |
-| Yesterday         |  [+ attach] [input] [mic] [>] |
-|   - Chat title 3  |                               |
-+--------------------------------------------------+
-```
+**File: `public/sitemap-pages.xml`** -- Add all 6 new URLs
 
-### Auto-Title Generation
-After the first assistant response in a new conversation, generate a short title by sending a quick non-streaming request to `newton-chat` with the prompt: "Summarize this conversation in 3-5 words as a title". Update the conversation record.
+## 8. Social SEO / Open Graph
 
-### Document Upload Flow
-1. User clicks "+" button
-2. File picker opens (PDF, images, DOCX -- up to 20MB)
-3. File uploaded to Supabase storage or processed via `extract-text` edge function
-4. Extracted text appended to the next message as context
-5. Attachment chip shown in the message bubble
+**File: `index.html`** -- Update OG tags with optimized title/description, ensure `og:image` points to `newtonai.site/logo.png`
 
-### Migration from localStorage
-On first load, check if localStorage has old Newton chat history. If found, create a conversation in the DB and migrate messages, then clear localStorage.
+Twitter card tags already exist -- update to match new title/description.
+
+## 9. Performance SEO
+
+- **Lazy loading**: Wrap new SEO page imports in `React.lazy()` with `Suspense` fallback in `App.tsx`
+- **Image optimization**: Add `loading="lazy"` to any images in new pages
+- **Semantic HTML**: All new pages use `article`, `section`, `header`, `nav` elements
+- **Mobile-first**: All new pages use existing Tailwind responsive classes
+
+## Summary of All Files
+
+**Modified (10 files):**
+1. `index.html` -- meta tags, structured data, domain URLs
+2. `src/components/SEOHead.tsx` -- SITE_URL update
+3. `src/pages/LandingPage.tsx` -- SEO content section, updated SEOHead props
+4. `src/App.tsx` -- 6 new routes
+5. `src/components/Footer.tsx` -- new links
+6. `public/robots.txt` -- domain update
+7. `public/sitemap.xml` -- domain update
+8. `public/sitemap-index.xml` -- domain update
+9. `public/sitemap-pages.xml` -- domain update + new URLs
+10. `public/sitemap-tools.xml` -- domain update
+
+**Created (6 files):**
+1. `src/pages/seo/AIStudyAssistant.tsx`
+2. `src/pages/seo/AINotesGenerator.tsx`
+3. `src/pages/seo/PDFStudyTool.tsx`
+4. `src/pages/seo/AIQuizGenerator.tsx`
+5. `src/pages/seo/ExamPreparationAI.tsx`
+6. `src/pages/seo/AboutNewtonAIForAI.tsx`
