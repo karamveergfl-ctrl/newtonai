@@ -488,7 +488,7 @@ export const LectureRecorder = ({
   }
   return <div className="w-full h-full">
       <motion.div 
-        className="relative border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all duration-300 backdrop-blur-sm min-h-[320px] h-full flex items-center justify-center group border-primary/40 bg-gradient-to-br from-card/80 via-card/60 to-primary/5 hover:border-primary hover:bg-primary/5 hover:shadow-xl hover:shadow-primary/10"
+        className="relative border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all duration-300 backdrop-blur-sm min-h-[320px] h-full flex items-center justify-center group border-primary/40 bg-gradient-to-br from-card/80 via-card/60 to-primary/5 hover:border-primary hover:bg-primary/5 hover:shadow-xl hover:shadow-primary/10 overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
@@ -676,7 +676,7 @@ export const LectureRecorder = ({
               )}
             </AnimatePresence>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center w-full">
               <input id="audio-file-input" type="file" accept="audio/*" onChange={handleFileUpload} className="hidden" />
               
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
