@@ -23,7 +23,7 @@ export const NewtonSidebar = memo(function NewtonSidebar({
   isLoading,
 }: NewtonSidebarProps) {
   return (
-    <div className="flex flex-col h-full w-64 border-r bg-muted/30">
+    <div className="flex flex-col h-full w-full sm:w-64 border-r bg-muted/30">
       {/* New Chat button */}
       <div className="p-3 border-b">
         <Button
