@@ -244,25 +244,34 @@ const LandingPage = () => {
       </section>
 
       {/* Competitor Comparison */}
-      <section className="py-20 bg-background">
+      <section className="py-20 md:py-28 bg-muted/30">
         <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-10 text-center">
-            Why NewtonAI &gt; Other Platforms
-          </h2>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="text-center font-semibold text-muted-foreground py-3">Other Platforms</div>
-            <div className="text-center font-semibold text-primary py-3">NewtonAI</div>
+          <div className="text-center mb-12">
+            <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4 border border-primary/20">
+              Side-by-Side
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground font-serif">
+              Why NewtonAI Wins
+            </h2>
           </div>
-          <div className="space-y-3">
-            {comparisonRows.map((row) =>
-            <div key={row.other} className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-4 text-muted-foreground">
-                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0" />
+          <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="grid grid-cols-2">
+              <div className="text-center font-semibold text-muted-foreground py-4 px-3 bg-destructive/5 border-b border-border text-sm md:text-base">
+                Other Platforms
+              </div>
+              <div className="text-center font-semibold text-primary py-4 px-3 bg-primary/5 border-b border-border border-l border-l-border text-sm md:text-base">
+                NewtonAI
+              </div>
+            </div>
+            {comparisonRows.map((row, i) =>
+            <div key={row.other} className={`grid grid-cols-2 ${i < comparisonRows.length - 1 ? 'border-b border-border' : ''}`}>
+                <div className="flex items-center gap-2.5 p-4 md:p-5 text-muted-foreground text-sm md:text-base">
+                  <XCircle className="w-4 h-4 text-destructive/60 flex-shrink-0" />
                   <span>{row.other}</span>
                 </div>
-                <div className="flex items-center gap-2 bg-primary/5 rounded-lg p-4 text-foreground border border-primary/20">
+                <div className="flex items-center gap-2.5 p-4 md:p-5 text-foreground border-l border-border bg-primary/[0.02] text-sm md:text-base">
                   <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
-                  <span>{row.newton}</span>
+                  <span className="font-medium">{row.newton}</span>
                 </div>
               </div>
             )}
