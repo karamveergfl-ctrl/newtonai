@@ -65,7 +65,7 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
   );
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden my-2 group shadow-sm w-full">
+    <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden my-2 group shadow-sm w-full min-w-0">
       {/* Section Header with top Explain button */}
       <div className="flex items-center justify-between gap-2 p-3 bg-muted/30 border-b border-border/40">
         <button

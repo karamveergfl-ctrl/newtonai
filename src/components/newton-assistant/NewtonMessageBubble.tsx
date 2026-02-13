@@ -87,7 +87,7 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
           "flex-1 rounded-2xl overflow-hidden",
           isUser
             ? "max-w-[85%] bg-primary text-primary-foreground rounded-br-md px-3.5 py-2.5"
-            : "bg-muted/40 text-foreground rounded-bl-md px-3 py-2 min-w-0 max-w-full"
+            : "bg-muted/40 text-foreground rounded-bl-md px-3 py-2 min-w-0 max-w-full overflow-hidden"
         )}
       >
         {isUser ? (
