@@ -109,28 +109,27 @@ const LandingPage = () => {
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
-              Study Smarter with{" "}
+              The Only Study App You'll Ever Need —{" "}
               <span className="text-primary bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                AI-Powered
+                Learn Faster, Smarter,
               </span>
-              {" "}Tools
+              {" "}Distraction-Free
             </h1>
             
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Transform any document, video, or lecture into flashcards, quizzes, summaries, and mind maps. 
-              Your personal AI study assistant.
+              Stop jumping between YouTube, random AI tools, and scattered notes. NewtonAI brings everything into one focused learning platform — AI chat, PDFs, videos, quizzes, notes, podcasts, mind maps, and advanced study tools — built purely for students.
             </p>
 
             {/* Primary CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
               <Button asChild size="lg" className="text-lg px-8 py-6 group">
                 <Link to="/auth">
-                  Get Started Free
+                  Start Studying Free
                   <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
-                <Link to="/pricing">See Pricing</Link>
+                <Link to="/dashboard">Upload Your Study Material</Link>
               </Button>
             </div>
 
