@@ -204,7 +204,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0 w-full">
             {messages.map((message, index) => (
               <NewtonMessageBubble
                 key={message.id}
