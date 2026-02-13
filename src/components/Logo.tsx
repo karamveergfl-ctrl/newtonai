@@ -18,9 +18,9 @@ const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
   const { icon, text } = sizeMap[size];
 
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`flex items-center gap-0 ${className}`}>
       <motion.div
-        className="flex-shrink-0 overflow-hidden aspect-square rounded-lg"
+        className="flex-shrink-0 overflow-hidden aspect-square rounded-lg -ml-2 -mr-1"
         style={{ width: icon, height: icon }}
         whileHover={{ scale: 1.05 }}
         transition={{ duration: 0.2 }}>
