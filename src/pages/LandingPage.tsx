@@ -109,24 +109,23 @@ const LandingPage = () => {
               AI-Powered Study Tools
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
-              The Only Study App You'll Ever Need —{" "}
+              Stop Switching Apps.{" "}
               <span className="text-primary bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Learn Faster, Smarter,
+                Start Mastering Subjects.
               </span>
-              {" "}Distraction-Free
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Stop jumping between YouTube, random AI tools, and scattered notes. NewtonAI brings everything into one focused learning platform — AI chat, PDFs, videos, quizzes, notes, podcasts, mind maps, and advanced study tools — built purely for students.
+              Why juggle YouTube, AI tools, notes apps, and random resources? NewtonAI unifies everything into one intelligent learning ecosystem — designed to help you <span className="font-semibold text-foreground">focus, retain more, and perform better.</span>
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
               <Button asChild size="lg" className="text-lg px-8 py-6 group">
                 <Link to="/auth">
-                  Start Studying Free
+                  Start Free
                   <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
-                <Link to="/dashboard">Upload Your Study Material</Link>
+                <Link to="/features">Explore Features</Link>
               </Button>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground mb-10">
