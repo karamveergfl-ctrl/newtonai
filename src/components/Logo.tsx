@@ -9,7 +9,7 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  sm: { icon: 96, text: "text-xl" },
+  sm: { icon: 48, text: "text-xl" },
   md: { icon: 160, text: "text-3xl" },
   lg: { icon: 220, text: "text-4xl" }
 };
@@ -18,7 +18,7 @@ const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
   const { icon, text } = sizeMap[size];
 
   return (
-    <div className={`flex items-center gap-0 ${className}`}>
+    <div className={`flex items-center gap-1 ${className}`}>
       <motion.div
         className="flex-shrink-0 overflow-hidden aspect-square rounded-lg"
         style={{ width: icon, height: icon }}
@@ -28,7 +28,10 @@ const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
         <img
           src={newtonLogo}
           alt="NewtonAI Logo"
-          className="w-full h-full object-cover" />
+          loading="eager"
+          decoding="sync"
+          className="w-full h-full object-contain"
+          style={{ imageRendering: 'auto' }} />
 
       </motion.div>
       {showText &&
