@@ -391,7 +391,7 @@ export default function AIPodcast() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 sm:mb-8 relative"
+          className="mb-6 sm:mb-8 text-center relative"
         >
           <Button
             variant="ghost"
@@ -401,17 +401,12 @@ export default function AIPodcast() {
           >
             <X className="h-5 w-5" />
           </Button>
-          <div className="flex items-center gap-2 sm:gap-3 mb-2">
-            <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20">
-              <Podcast className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              AI Podcast
-            </h1>
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+            <Podcast className="h-7 w-7 text-primary" />
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground px-1 sm:px-0">
-            Transform your study materials into an engaging podcast with professional AI voices. 
-            Raise your hand anytime to ask questions!
+          <h1 className="text-2xl sm:text-3xl font-display font-bold">AI Podcast</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Turn study materials into engaging podcasts with AI voices
           </p>
         </motion.div>
 
