@@ -115,7 +115,7 @@ const LandingPage = () => {
                 Start Mastering Subjects.
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed font-extrabold text-center font-serif">
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed font-extrabold text-center font-sans">
               Why juggle YouTube, AI tools, notes apps, and random resources?
               <br className="hidden md:block" />
               NewtonAI unifies everything into one intelligent learning ecosystem — designed to help you{" "}
