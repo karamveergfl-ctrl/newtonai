@@ -53,24 +53,24 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
       variant="ghost"
       onClick={handleExplainClick}
       disabled={isExplaining}
-      className="h-7 px-2 text-xs gap-1 shrink-0 opacity-80 hover:opacity-100 transition-opacity bg-primary/5 hover:bg-primary/10"
+      className="h-7 px-2 text-xs gap-1 shrink-0 whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity bg-primary/5 hover:bg-primary/10"
     >
       {isExplaining ? (
         <Loader2 className="w-3 h-3 animate-spin" />
       ) : (
         <Sparkles className="w-3 h-3 text-primary" />
       )}
-      Explain by AI
+      Explain<span className="hidden sm:inline"> by AI</span>
     </Button>
   );
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden my-3 group shadow-sm w-full">
+    <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden my-2 group shadow-sm w-full">
       {/* Section Header with top Explain button */}
       <div className="flex items-center justify-between gap-2 p-3 bg-muted/30 border-b border-border/40">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 text-left flex-1 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2 text-left flex-1 min-w-0 hover:opacity-80 transition-opacity"
         >
           {section.sectionNumber !== null && (
             <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shrink-0">
@@ -114,10 +114,6 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
           </div>
         )}
 
-        {/* Bottom Explain button */}
-        <div className="flex justify-end p-3 pt-0 border-t border-border/30 bg-muted/10">
-          <ExplainButton />
-        </div>
       </div>
     </div>
   );

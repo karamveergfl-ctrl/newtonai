@@ -291,7 +291,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             </Button>
           )}
         </div>
-        <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
+        <p className="text-[10px] text-muted-foreground mt-1.5 text-center hidden sm:block">
           {isListening ? "Tap mic again to stop and send" : "Press Enter to send • Shift+Enter for new line"}
         </p>
       </div>
