@@ -106,7 +106,7 @@ const LandingPage = () => {
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8 border border-primary/20 tracking-wide">
               <Sparkles className="w-4 h-4" />
-              AI-Powered Study Tools
+              AI-Powered Learning Assistant
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-7xl text-foreground mb-8 leading-[1.1] tracking-tight font-serif font-semibold text-center md:text-7xl">
               Stop Switching Apps.
