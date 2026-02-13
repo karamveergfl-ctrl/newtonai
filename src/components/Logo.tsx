@@ -20,7 +20,7 @@ const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
   return (
     <div className={`flex items-center gap-0 ${className}`}>
       <motion.div
-        className="flex-shrink-0 overflow-hidden aspect-square rounded-lg"
+        className="flex-shrink-0 overflow-hidden"
         style={{ width: icon, height: icon }}
         whileHover={{ scale: 1.05 }}
         transition={{ duration: 0.2 }}>
@@ -28,7 +28,7 @@ const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
         <img
           src={newtonLogo}
           alt="NewtonAI Logo"
-          className="w-full h-full object-cover" />
+          className="w-[80%] h-[80%] object-contain -m-[20%]" />
 
       </motion.div>
       {showText &&
