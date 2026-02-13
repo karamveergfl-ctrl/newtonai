@@ -37,7 +37,7 @@ const Contact = () => {
       />
       <Header />
 
-      <main className="container mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-10">
         <div className="text-center mb-12">
           <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">
             Get in Touch

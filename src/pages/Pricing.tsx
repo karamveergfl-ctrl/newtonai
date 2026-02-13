@@ -211,7 +211,7 @@ const Pricing = () => {
       
       <Header />
 
-      <main className="container mx-auto px-4 py-12 sm:py-16 relative z-10">
+      <main className="container mx-auto px-4 py-10 sm:py-12 relative z-10">
         {/* Header Section */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">

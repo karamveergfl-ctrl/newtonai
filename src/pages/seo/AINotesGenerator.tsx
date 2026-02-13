@@ -23,7 +23,7 @@ const AINotesGenerator = () => {
       <Header />
 
       <main className="flex-1">
-        <section className="pt-24 pb-16 bg-gradient-to-b from-primary/5 to-background">
+        <section className="pt-20 pb-10 bg-gradient-to-b from-primary/5 to-background">
           <div className="container mx-auto px-4 max-w-4xl text-center">
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" /> AI Note Taking
@@ -40,7 +40,7 @@ const AINotesGenerator = () => {
           </div>
         </section>
 
-        <article className="py-16">
+        <article className="py-10">
           <div className="container mx-auto px-4 max-w-4xl prose prose-lg dark:prose-invert">
             <h2 className="text-3xl font-bold text-foreground">What is an AI Notes Generator?</h2>
             <p className="text-muted-foreground leading-relaxed">
@@ -96,7 +96,7 @@ const AINotesGenerator = () => {
         </article>
 
         {/* FAQ */}
-        <section className="py-16 bg-muted/30">
+        <section className="py-10 bg-muted/30">
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Frequently Asked Questions</h2>
             <div className="space-y-4">
@@ -120,7 +120,7 @@ const AINotesGenerator = () => {
         </section>
 
         {/* CTA */}
-        <section className="py-16 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
+        <section className="py-10 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold text-foreground mb-4">Generate Your First Notes in Seconds</h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">Upload any document and let AI create structured study notes for you. No credit card required.</p>

@@ -27,7 +27,7 @@ const CompareHero = ({ competitor }: CompareHeroProps) => {
   const savings = ((competitorPriceValue - newtonPriceValue) / competitorPriceValue * 100).toFixed(0);
 
   return (
-    <section className="relative py-20 overflow-hidden">
+    <section className="relative py-12 overflow-hidden">
       <GradientBlob color="primary" size="xl" className="-top-40 -right-40 opacity-20" />
       <GradientBlob color="secondary" size="lg" className="top-1/2 -left-20 opacity-15" />
 

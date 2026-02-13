@@ -77,7 +77,7 @@ const testimonials: Testimonial[] = [
 
 export const TestimonialsSection = () => {
   return (
-    <section className="py-24 px-4 bg-muted/30 relative overflow-hidden">
+    <section className="py-12 px-4 bg-muted/30 relative overflow-hidden">
       {/* Static background decorations */}
       <div className="absolute top-40 -right-32 w-72 h-72 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-20 left-0 w-64 h-64 bg-gradient-to-tr from-secondary/10 to-transparent rounded-full blur-3xl pointer-events-none" />

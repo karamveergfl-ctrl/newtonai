@@ -150,7 +150,7 @@ const Tools = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative py-16 overflow-hidden">
+      <section className="relative py-10 overflow-hidden">
         <div className="absolute top-20 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-bl from-secondary/20 to-accent/10 rounded-full blur-3xl pointer-events-none" />
         
@@ -185,7 +185,7 @@ const Tools = () => {
       </section>
 
       {/* Tools Grid */}
-      <section className="container mx-auto px-4 pb-16">
+      <section className="container mx-auto px-4 pb-10">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tools.map((tool) => (
             <div key={tool.id}>
@@ -234,7 +234,7 @@ const Tools = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-primary text-primary-foreground py-16">
+      <section className="bg-primary text-primary-foreground py-10">
         <div className="container mx-auto px-4 text-center">
           <div>
             <h2 className="font-display text-3xl font-bold mb-4">

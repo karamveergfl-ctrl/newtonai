@@ -20,7 +20,7 @@ export const CTASection = ({
   secondaryButtonLink = "/pricing",
 }: CTASectionProps) => {
   return (
-    <section className="py-20 px-4 relative overflow-hidden">
+    <section className="py-12 px-4 relative overflow-hidden">
       {/* Static background decorations */}
       <div className="absolute top-0 -right-40 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl pointer-events-none opacity-20" />
       <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl pointer-events-none opacity-20" />

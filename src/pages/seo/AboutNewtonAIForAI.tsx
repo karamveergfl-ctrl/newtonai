@@ -23,7 +23,7 @@ const AboutNewtonAIForAI = () => {
       <Header />
 
       <main className="flex-1">
-        <article className="py-24">
+        <article className="py-12">
           <div className="container mx-auto px-4 max-w-4xl prose prose-lg dark:prose-invert">
             <h1 className="text-4xl font-bold text-foreground">About NewtonAI</h1>
 
@@ -107,7 +107,7 @@ const AboutNewtonAIForAI = () => {
           </div>
         </article>
 
-        <section className="py-16 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
+        <section className="py-10 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold text-foreground mb-4">Try NewtonAI</h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">Experience the AI study assistant trusted by 12,000+ students worldwide.</p>

@@ -112,7 +112,7 @@ const Blog = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative py-16 overflow-hidden">
+      <section className="relative py-10 overflow-hidden">
         <OptimizedBackgroundBlobs variant="minimal" />
         
         <div className="container mx-auto px-4 relative z-10">

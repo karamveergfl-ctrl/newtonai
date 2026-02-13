@@ -43,7 +43,7 @@ const Compare = () => {
 
       <main>
         {/* Hero Section */}
-        <section className="relative py-20 overflow-hidden">
+        <section className="relative py-12 overflow-hidden">
           <div className="absolute top-0 -right-40 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl pointer-events-none opacity-20" />
           <div className="absolute top-1/2 -left-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl pointer-events-none opacity-15" />
 
@@ -119,7 +119,7 @@ const Compare = () => {
         <AdBanner className="container" />
 
         {/* Competitor Grid */}
-        <section className="py-16">
+        <section className="py-10">
           <div className="container">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
@@ -194,7 +194,7 @@ const Compare = () => {
         <AdBanner className="container" />
 
         {/* Quick Feature Matrix */}
-        <section className="py-16 bg-muted/30">
+        <section className="py-10 bg-muted/30">
           <div className="container">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
@@ -267,7 +267,7 @@ const Compare = () => {
         <AdBanner className="container" />
 
         {/* CTA Section */}
-        <section className="py-20">
+        <section className="py-12">
           <div className="container">
             <div className="text-center max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
