@@ -91,44 +91,48 @@ const LandingPage = () => {
       <Header transparent />
       
       {/* Hero Section */}
-      <section id="hero-section" className="relative pt-20 pb-16 overflow-hidden">
+      <section id="hero-section" className="relative pt-28 pb-20 md:pt-36 md:pb-28 overflow-hidden">
         <div className="absolute top-20 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-bl from-secondary/20 to-accent/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.08]"
+          className="absolute inset-0 pointer-events-none opacity-[0.06]"
           style={{
             backgroundImage: 'radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
+            backgroundSize: '28px 28px',
           }}
         />
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8 border border-primary/20 tracking-wide">
               <Sparkles className="w-4 h-4" />
               AI-Powered Study Tools
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
-              Stop Switching Apps.{" "}
-              <span className="text-primary bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-8 leading-[1.1] tracking-tight">
+              Stop Switching Apps.
+              <br />
+              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 Start Mastering Subjects.
               </span>
             </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Why juggle YouTube, AI tools, notes apps, and random resources? NewtonAI unifies everything into one intelligent learning ecosystem — designed to help you <span className="font-semibold text-foreground">focus, retain more, and perform better.</span>
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+              Why juggle YouTube, AI tools, notes apps, and random resources?
+              <br className="hidden md:block" />
+              NewtonAI unifies everything into one intelligent learning ecosystem — designed to help you{" "}
+              <span className="font-semibold text-foreground">focus, retain more, and perform better.</span>
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-              <Button asChild size="lg" className="text-lg px-8 py-6 group">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              <Button asChild size="lg" className="text-lg px-10 py-6 rounded-xl group font-semibold">
                 <Link to="/auth">
                   Start Free
                   <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
+              <Button asChild variant="outline" size="lg" className="text-lg px-10 py-6 rounded-xl font-semibold">
                 <Link to="/features">Explore Features</Link>
               </Button>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground mb-10">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground mb-12">
               <span className="flex items-center gap-1.5">
                 <CheckCircle className="w-4 h-4 text-primary" />
                 No credit card required
