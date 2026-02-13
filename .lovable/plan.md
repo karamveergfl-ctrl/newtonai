@@ -1,123 +1,83 @@
 
-# SEO and AI Search Engine Optimization for NewtonAI.site
 
-## Overview
+# Fix Newton AI Chat UI/UX + Mobile Optimization
 
-Comprehensive SEO overhaul covering meta tags, structured data, new content pages, landing page content, LLM discovery page, domain references update, and performance optimizations.
+## Issues Identified
 
-## 1. Domain References Update (Critical)
+### 1. "Explain by AI" Button Text Cut Off
+In the screenshot, the "Explain by AI" buttons on section cards are clipped, showing only "E..." on the right edge. This happens because:
+- The section header uses `flex items-center justify-between` but the heading text uses `truncate` which fights with the Explain button for space
+- The Explain button needs guaranteed minimum width
+- On narrower containers, the button label gets clipped by the card's `overflow-hidden`
 
-All sitemaps, structured data, and SEO references currently point to `newtonai.lovable.app`. These must be updated to `newtonai.site`:
+### 2. Empty Content Below Section Headers
+The section cards show large blank gaps below the header. The expanded content area (`max-h-[3000px]`) renders fine, but the bottom "Explain" button section has a `border-t` and padding even when there is minimal content, creating visual dead space.
 
-**Files affected:**
-- `src/components/SEOHead.tsx` -- change `SITE_URL` to `https://newtonai.site`
-- `index.html` -- update all `og:url`, `og:image`, schema URLs
-- `public/robots.txt` -- update sitemap URL
-- `public/sitemap.xml` -- update all `<loc>` URLs
-- `public/sitemap-index.xml` -- same
-- `public/sitemap-pages.xml` -- same
-- `public/sitemap-tools.xml` -- same
-- `public/sitemap-blog.xml` -- same
+### 3. Mobile UX Issues Across the App
+- Newton sidebar (w-64 / 256px) takes too much space on mobile, leaving almost no room for the chat panel
+- Section cards overflow on small screens
+- Input bar buttons crowd together on narrow viewports
 
-## 2. Meta SEO Updates
+---
 
-**File: `index.html`**
-- Title: `NewtonAI - AI Study Assistant for Students | Notes, PDF Summaries, Quiz Generator`
-- Description: `NewtonAI is an AI-powered study assistant for students that converts notes, PDFs and study materials into summaries, quizzes and flashcards for faster exam preparation.`
-- Add keywords meta tag: `AI study assistant, AI notes generator, PDF summarizer, quiz generator, flashcard maker, exam preparation, AI for students, study tools`
+## Changes
 
-**File: `src/pages/LandingPage.tsx`**
-- Update SEOHead title/description to match the optimized versions above
+### File 1: `src/components/newton-assistant/NewtonResponseSection.tsx`
 
-## 3. Structured Data Enhancement
+**Fix Explain button visibility:**
+- Change the section header layout so the heading text gets `min-w-0` and `truncate` while the Explain button is always fully visible with `shrink-0` and `whitespace-nowrap`
+- On mobile (small screens), show a shorter "Explain" label instead of "Explain by AI" to save space
+- Remove the duplicate bottom Explain button entirely -- it adds clutter and the top one is sufficient
+- Reduce vertical padding/margins for tighter cards
 
-**File: `index.html`** -- Replace existing schemas with richer versions:
+**Specific changes:**
+- Header: wrap heading in a `min-w-0 flex-1` container so it truncates, keep Explain button as `shrink-0`
+- ExplainButton: add `whitespace-nowrap` class, use shorter text on mobile via responsive classes (`hidden sm:inline` for "by AI" part)
+- Remove the bottom `<div className="flex justify-end p-3 pt-0 ...">` with the second ExplainButton
+- Change `my-3` on the card container to `my-2`
 
-- **SoftwareApplication** with `EducationalApplication` category, audience `Student`, features list, offers (free tier)
-- **Organization** with updated `newtonai.site` URLs
-- **WebSite** with SearchAction pointing to `newtonai.site`
-- **New: FAQPage schema** on the landing page with common questions
-- **New: ItemList schema** listing the key tools
+### File 2: `src/components/newton-assistant/NewtonMessageBubble.tsx`
 
-## 4. Landing Page SEO Content Section
+**Fix assistant message bubble width:**
+- The assistant bubble currently uses `flex-1` which can cause it to stretch and push content wide
+- Add `max-w-full` and ensure `overflow-hidden` on the bubble to prevent section cards from overflowing
+- On section cards container, add `overflow-hidden` to prevent any child overflow
 
-**File: `src/pages/LandingPage.tsx`** -- Add a new "What is NewtonAI" section between the features grid and the mid-page CTA:
+### File 3: `src/components/newton-assistant/NewtonChatPanel.tsx`
 
-- H2: "What is NewtonAI?"
-- Paragraph explaining it is an AI study assistant for students
-- H3: "Who is NewtonAI For?" -- targeting students, exam prep, self-learners
-- H3: "Key Features" -- PDF summarizer, notes generator, quiz maker, flashcards, mind maps, podcasts
-- Proper semantic HTML hierarchy (h1 already exists in hero)
-- ~300 words of natural, keyword-rich content
+**Mobile input bar optimization:**
+- Stack attachment/voice buttons more compactly on mobile
+- Ensure 44x44px touch targets are maintained
+- On mobile, hide the "Press Enter to send" hint text (not relevant on mobile keyboards)
 
-## 5. New SEO Pages (5 pages + 1 LLM page)
+### File 4: `src/components/newton-assistant/NewtonSidebar.tsx`
 
-Create 6 new page components, each with 800+ words, FAQ sections, and internal links:
+**Mobile sidebar optimization:**
+- Change width from fixed `w-64` to responsive: `w-full sm:w-64` so on mobile it takes full width as an overlay
+- Add absolute positioning on mobile so it overlays the chat instead of squeezing it
+- Add a semi-transparent backdrop on mobile
 
-| Route | File | Topic |
-|-------|------|-------|
-| `/ai-study-assistant` | `src/pages/seo/AIStudyAssistant.tsx` | What is an AI Study Assistant |
-| `/ai-notes-generator` | `src/pages/seo/AINotesGenerator.tsx` | AI Notes Generator tool |
-| `/pdf-study-tool` | `src/pages/seo/PDFStudyTool.tsx` | PDF Study Tool overview |
-| `/ai-quiz-generator` | `src/pages/seo/AIQuizGenerator.tsx` | AI Quiz Generator tool |
-| `/exam-preparation-ai` | `src/pages/seo/ExamPreparationAI.tsx` | AI for Exam Preparation |
-| `/about-newtonai-for-ai` | `src/pages/seo/AboutNewtonAIForAI.tsx` | LLM Discovery Page |
+### File 5: `src/components/GlobalNewtonAssistant.tsx`
 
-Each page will include:
-- SEOHead with optimized title, description, keywords, canonical, breadcrumbs
-- H1/H2/H3 semantic hierarchy
-- 800+ words of educational content
-- FAQ section with 5-6 questions using `details`/`summary` elements
-- Internal links to related tools and the signup page
-- CTA section at the bottom
+**Mobile layout fix:**
+- On mobile drawer, when sidebar is shown, render it as a full-width overlay instead of side-by-side flex
+- Ensure the drawer content properly handles the sidebar overlay pattern
 
-## 6. LLM Discovery Page (`/about-newtonai-for-ai`)
+### File 6: `src/components/MarkdownRenderer.tsx`
 
-Special page designed for AI crawlers:
-- Neutral, factual definition of NewtonAI
-- Structured use cases for students
-- How it differs from generic chatbots (domain-specific, study-focused, curriculum-aware)
-- Machine-readable format with clear headings
+**Mobile text sizing:**
+- The prose classes use `prose-sm md:prose-base lg:prose-lg` which is too large inside Newton chat cards
+- When rendered inside Newton sections (which already have `prose-sm`), the parent `prose-sm` class should take precedence -- no change needed here, but ensure the Newton-specific wrapper classes override correctly
 
-## 7. Route Registration and Navigation
+---
 
-**File: `src/App.tsx`** -- Add 6 new routes
+## Summary of Changes
 
-**File: `src/components/Footer.tsx`** -- Add links to new SEO pages under a "Learn More" column
+| File | What Changes |
+|------|-------------|
+| `NewtonResponseSection.tsx` | Fix Explain button clipping, remove duplicate bottom button, tighter spacing, mobile-friendly label |
+| `NewtonMessageBubble.tsx` | Add overflow protection on assistant bubbles |
+| `NewtonChatPanel.tsx` | Mobile input bar cleanup, hide desktop-only hint text on mobile |
+| `NewtonSidebar.tsx` | Responsive width, mobile overlay pattern |
+| `GlobalNewtonAssistant.tsx` | Mobile sidebar as overlay instead of side-by-side |
 
-**File: `public/sitemap-pages.xml`** -- Add all 6 new URLs
-
-## 8. Social SEO / Open Graph
-
-**File: `index.html`** -- Update OG tags with optimized title/description, ensure `og:image` points to `newtonai.site/logo.png`
-
-Twitter card tags already exist -- update to match new title/description.
-
-## 9. Performance SEO
-
-- **Lazy loading**: Wrap new SEO page imports in `React.lazy()` with `Suspense` fallback in `App.tsx`
-- **Image optimization**: Add `loading="lazy"` to any images in new pages
-- **Semantic HTML**: All new pages use `article`, `section`, `header`, `nav` elements
-- **Mobile-first**: All new pages use existing Tailwind responsive classes
-
-## Summary of All Files
-
-**Modified (10 files):**
-1. `index.html` -- meta tags, structured data, domain URLs
-2. `src/components/SEOHead.tsx` -- SITE_URL update
-3. `src/pages/LandingPage.tsx` -- SEO content section, updated SEOHead props
-4. `src/App.tsx` -- 6 new routes
-5. `src/components/Footer.tsx` -- new links
-6. `public/robots.txt` -- domain update
-7. `public/sitemap.xml` -- domain update
-8. `public/sitemap-index.xml` -- domain update
-9. `public/sitemap-pages.xml` -- domain update + new URLs
-10. `public/sitemap-tools.xml` -- domain update
-
-**Created (6 files):**
-1. `src/pages/seo/AIStudyAssistant.tsx`
-2. `src/pages/seo/AINotesGenerator.tsx`
-3. `src/pages/seo/PDFStudyTool.tsx`
-4. `src/pages/seo/AIQuizGenerator.tsx`
-5. `src/pages/seo/ExamPreparationAI.tsx`
-6. `src/pages/seo/AboutNewtonAIForAI.tsx`
