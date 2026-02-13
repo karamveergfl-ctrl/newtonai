@@ -6,6 +6,7 @@ interface LogoProps {
   showText?: boolean;
   className?: string;
   animate?: boolean;
+  compact?: boolean;
 }
 
 const sizeMap = {
@@ -14,13 +15,14 @@ const sizeMap = {
   lg: { icon: 220, text: "text-4xl" }
 };
 
-const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
+const Logo = ({ size = "md", showText = false, className = "", compact = false }: LogoProps) => {
   const { icon, text } = sizeMap[size];
+  const margins = compact ? "-ml-2 -mr-1 -mt-1 -mb-1" : "-ml-6 -mr-5 -mt-4 -mb-4";
 
   return (
     <div className={`flex items-center gap-0 ${className}`}>
       <motion.div
-        className="flex-shrink-0 overflow-hidden aspect-square rounded-lg -ml-6 -mr-5 -mt-4 -mb-4"
+        className={`flex-shrink-0 overflow-hidden aspect-square rounded-lg ${margins}`}
         style={{ width: icon, height: icon }}
         whileHover={{ scale: 1.05 }}
         transition={{ duration: 0.2 }}>

@@ -99,7 +99,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center">
-              <Logo size="md" />
+              <Logo size="md" compact />
             </Link>
 
             {/* Desktop Navigation */}
