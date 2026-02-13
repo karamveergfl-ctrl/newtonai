@@ -28,7 +28,7 @@ const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
         <img
           src={newtonLogo}
           alt="NewtonAI Logo"
-          className="w-[130%] h-[130%] object-contain -m-[15%]" />
+          className="w-[160%] h-[160%] object-contain -m-[30%]" />
 
       </motion.div>
       {showText &&
