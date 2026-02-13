@@ -1,24 +1,38 @@
 
+# Standardize Tool Page Headers to Match Screenshot Design
 
-## Fix Logo: Zoom Out, Reduce Margins
+## Problem
+Two tool pages (AI Summarizer and AI Podcast) use a left-aligned header layout, while the rest (Quiz, Flashcards, MindMap, Homework Help, Lecture Notes) already use the centered icon-on-top layout shown in the reference screenshot.
 
-### Issues (from screenshots)
-1. Logo is clipped on the left side in the sidebar -- the crop is too aggressive
-2. Too much space between the wooden frame and "NewtonAI" text
-3. Too much space between the logo and the top edge of the sidebar
+## Changes Required
 
-### Changes
+### 1. AI Summarizer (`src/pages/tools/AISummarizer.tsx`)
+- Replace the left-aligned header (inline icon + title) with the centered pattern:
+  - Centered icon in a rounded container with `bg-primary/10`
+  - Centered title below
+  - Centered subtitle below the title
+  - X close button stays absolute top-right
+- Update container padding from `container mx-auto px-4 py-8` to `min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8` for consistency
 
-**1. `src/components/Logo.tsx`**
-- Dial back the crop from `w-[160%] h-[160%] -m-[30%]` to approximately `w-[140%] h-[140%] -m-[20%]` so the full wooden frame is visible without clipping
-- Reduce the sidebar sizes: sm from 120px to about 56px so it fits properly in the sidebar without overflow
-- Keep `gap-0` between logo and text
+### 2. AI Podcast (`src/pages/tools/AIPodcast.tsx`)
+- Replace the left-aligned header (inline icon + gradient title + long description) with the centered pattern:
+  - Centered Podcast icon in `bg-primary/10` rounded container
+  - Centered "AI Podcast" title
+  - Short centered subtitle
+  - X close button stays absolute top-right
 
-**2. `src/components/AppSidebar.tsx`**
-- Reduce SidebarHeader top padding further (use `px-1 pt-0 pb-0` or similar) to push the logo closer to the top edge of the sidebar
+## Technical Details
 
-### Result
-- Full wooden frame visible, no clipping on the left
-- "NewtonAI" text tight against the logo
-- Logo sits closer to the top of the sidebar
+**Target header pattern (already used by Quiz, Flashcards, etc.):**
+```text
+[centered icon in rounded bg]
+[centered title - text-2xl sm:text-3xl font-display font-bold]
+[centered subtitle - text-sm text-muted-foreground]
+[absolute top-right X close button]
+```
 
+**Files to modify:**
+- `src/pages/tools/AISummarizer.tsx` (lines ~888-909) - header section
+- `src/pages/tools/AIPodcast.tsx` (lines ~390-416) - header section + outer container
+
+No new dependencies or components needed. This is purely a styling/layout alignment change.
