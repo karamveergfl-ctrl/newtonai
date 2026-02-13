@@ -9,9 +9,9 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  sm: { icon: 44, text: "text-lg" },
-  md: { icon: 64, text: "text-2xl" },
-  lg: { icon: 120, text: "text-4xl" }
+  sm: { icon: 72, text: "text-xl" },
+  md: { icon: 104, text: "text-3xl" },
+  lg: { icon: 144, text: "text-4xl" }
 };
 
 const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
