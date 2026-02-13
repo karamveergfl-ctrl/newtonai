@@ -141,7 +141,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex flex-col h-full bg-background rounded-2xl border shadow-2xl overflow-hidden">
+    <div className="flex flex-col h-full bg-background rounded-2xl border shadow-2xl overflow-hidden min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center gap-2.5">
@@ -178,7 +178,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 px-4 py-3" ref={scrollRef}>
+      <ScrollArea className="flex-1 px-4 py-3 min-w-0" ref={scrollRef}>
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full py-8 text-center">
             <LottieNewton state="sleeping" size="sm" />

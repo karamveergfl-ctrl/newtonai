@@ -127,7 +127,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
                   </div>
                 </>
               )}
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-hidden min-w-0">
                 <NewtonChatPanel
                   messages={messages}
                   isLoading={isLoading}
@@ -173,7 +173,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
             )}
 
             {/* Chat panel */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden min-w-0">
               <NewtonChatPanel
                 messages={messages}
                 isLoading={isLoading}
