@@ -58,15 +58,13 @@ export const NewtonAttachmentButton = memo(function NewtonAttachmentButton({
         // Use extract-text edge function
         const { data, error } = await supabase.functions.invoke("extract-text", {
           body: {
-            file: base64,
-            fileName: file.name,
+            imageBase64: base64,
             mimeType: file.type,
-            isImage,
           },
         });
 
         if (error) throw error;
-        extractedText = data?.text || data?.content || "";
+        extractedText = data?.extractedText || data?.text || data?.content || "";
       }
 
       if (!extractedText.trim()) {
