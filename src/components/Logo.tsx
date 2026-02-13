@@ -17,7 +17,7 @@ const sizeMap = {
 
 const Logo = ({ size = "md", showText = false, className = "", compact = false }: LogoProps) => {
   const { icon, text } = sizeMap[size];
-  const margins = compact ? "-ml-2 -mr-1 -mt-1 -mb-1" : "-ml-6 -mr-5 -mt-4 -mb-4";
+  const margins = compact ? "-ml-2 -mr-1 mt-0 -mb-1" : "-ml-6 -mr-5 -mt-4 -mb-4";
 
   return (
     <div className={`flex items-center gap-0 ${className}`}>
