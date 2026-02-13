@@ -63,7 +63,7 @@ const Guides = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative py-16 overflow-hidden">
+      <section className="relative py-10 overflow-hidden">
         <OptimizedBackgroundBlobs variant="minimal" />
         
         <div className="container mx-auto px-4 relative z-10">
@@ -84,7 +84,7 @@ const Guides = () => {
       </section>
 
       {/* Guides Grid */}
-      <section className="container mx-auto px-4 pb-16">
+      <section className="container mx-auto px-4 pb-10">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {guides.map((guide) => (
             <Link key={guide.slug} to={`/guides/${guide.slug}`}>
@@ -124,7 +124,7 @@ const Guides = () => {
       </section>
 
       {/* Why Read Our Guides Section */}
-      <section className="bg-muted/50 py-16">
+      <section className="bg-muted/50 py-10">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-6">

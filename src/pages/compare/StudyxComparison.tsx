@@ -29,7 +29,7 @@ const StudyxComparison = () => {
       <main>
         <CompareHero competitor="studyx" />
 
-        <section className="py-16 container">
+        <section className="py-10 container">
           <h2 className="text-3xl font-display font-bold text-center mb-8">
             Feature-by-Feature Comparison
           </h2>
@@ -47,7 +47,7 @@ const StudyxComparison = () => {
         <CompetitorTestimonials competitor="studyx" />
         <UniqueFeatures />
 
-        <section className="py-16 bg-muted/30">
+        <section className="py-10 bg-muted/30">
           <div className="container max-w-4xl">
             <h2 className="text-3xl font-display font-bold mb-6">
               Why Students Choose NewtonAI Over Studyx

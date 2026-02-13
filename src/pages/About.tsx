@@ -76,7 +76,7 @@ const About = () => {
 
       <main className="relative z-10">
         {/* Hero Section */}
-        <section className="container mx-auto px-4 py-16 text-center">
+        <section className="container mx-auto px-4 py-10 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
             <Sparkles className="w-4 h-4" />
             About NewtonAI
@@ -117,7 +117,7 @@ const About = () => {
         </section>
 
         {/* Mission Section */}
-        <section className="bg-muted/50 py-16 relative overflow-hidden">
+        <section className="bg-muted/50 py-10 relative overflow-hidden">
           <div className="absolute top-40 -right-32 w-64 h-64 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
           
           <div className="container mx-auto px-4 relative z-10">
@@ -137,7 +137,7 @@ const About = () => {
         </section>
 
         {/* Values Section */}
-        <section className="container mx-auto px-4 py-16">
+        <section className="container mx-auto px-4 py-10">
           <h2 className="font-display text-3xl font-bold text-foreground text-center mb-12">
             What Drives Us
           </h2>
@@ -163,7 +163,7 @@ const About = () => {
         </section>
 
         {/* Team Section */}
-        <section className="container mx-auto px-4 py-16">
+        <section className="container mx-auto px-4 py-10">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-8 justify-center">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -193,7 +193,7 @@ const About = () => {
         </section>
 
         {/* Our Approach Section */}
-        <section className="bg-muted/50 py-16">
+        <section className="bg-muted/50 py-10">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <div className="flex items-center gap-3 mb-6">
@@ -220,7 +220,7 @@ const About = () => {
         </section>
 
         {/* Data & Privacy Section */}
-        <section className="container mx-auto px-4 py-16">
+        <section className="container mx-auto px-4 py-10">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -271,7 +271,7 @@ const About = () => {
         </section>
 
         {/* CTA Section - No ads on this page */}
-        <section className="bg-primary text-primary-foreground py-16 relative overflow-hidden">
+        <section className="bg-primary text-primary-foreground py-10 relative overflow-hidden">
           <div className="container mx-auto px-4 text-center relative z-10">
             <h2 className="font-display text-3xl font-bold mb-4">
               Ready to Transform Your Learning?
