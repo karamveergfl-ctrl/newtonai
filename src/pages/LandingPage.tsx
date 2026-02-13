@@ -3,72 +3,77 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
-import CTASection from "@/components/CTASection";
 import SEOHead from "@/components/SEOHead";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
 import StickyCTABar from "@/components/StickyCTABar";
 import { AdBanner } from "@/components/AdBanner";
 
 import {
-  BookOpen, 
-  Brain, 
-  FileText, 
-  Video, 
-  Sparkles, 
+  BookOpen,
+  Brain,
+  FileText,
+  Video,
+  Sparkles,
   Zap,
   CheckCircle,
   ArrowRight,
   Users,
-  CreditCard,
-  Cpu,
-  FileCheck
+  XCircle,
+  Headphones,
+  Map,
+  MessageSquare,
+  GraduationCap,
+  Target,
 } from "lucide-react";
 
+const problems = [
+  "Too many apps for studying",
+  "YouTube distractions & ads",
+  "Notes scattered everywhere",
+  "Generic AI not optimized for learning",
+  "No structured study workflow",
+];
+
+const solutions = [
+  "AI chat built specifically for learning",
+  "Unlimited study videos without distractions",
+  "Instant notes, summaries, flashcards, quizzes",
+  "Mind maps, podcasts & document chat",
+  "Study-focused AI (better than general AI tools)",
+];
+
 const features = [
-  {
-    icon: Brain,
-    title: "AI-Powered Flashcards",
-    description: "Generate smart flashcards from any document. Up to 90/month on Pro!"
-  },
-  {
-    icon: FileText,
-    title: "PDF Summarizer",
-    description: "Extract key insights from lengthy PDFs. 20 summaries/month on Pro."
-  },
-  {
-    icon: Video,
-    title: "Video Summarizer",
-    description: "Turn YouTube videos into concise, actionable study notes."
-  },
-  {
-    icon: BookOpen,
-    title: "AI Quiz Generator",
-    description: "Create personalized quizzes. Free gets 3/month, Pro gets 90!"
-  },
-  {
-    icon: Sparkles,
-    title: "Mind Maps",
-    description: "Visualize complex topics with auto-generated mind maps. 90/month on Pro."
-  },
-  {
-    icon: Zap,
-    title: "Homework Help",
-    description: "Get step-by-step solutions. Unlimited on Pro & Ultra plans!"
-  }
+  { icon: Brain, title: "Smart AI Study Assistant", description: "Custom AI tuned only for education." },
+  { icon: MessageSquare, title: "Chat With Any Document", description: "PDFs, notes, lectures, research papers." },
+  { icon: Video, title: "Learn From Videos Without Distraction", description: "Study content only — no ads, no recommended junk." },
+  { icon: Headphones, title: "AI Podcasts From Notes", description: "Listen and revise anywhere." },
+  { icon: Map, title: "Mind Maps & Visual Learning", description: "Understand faster with structure." },
+  { icon: FileText, title: "Instant Notes & Summaries", description: "Save hours of manual work." },
+  { icon: BookOpen, title: "Quiz & Practice Mode", description: "Test instantly after learning." },
 ];
 
-const benefits = [
-  "Save hours of study time with AI assistance",
-  "Learn faster with personalized content",
-  "Retain more with active recall techniques",
-  "Study smarter, not harder"
+const comparisonRows = [
+  { other: "Multiple apps needed", newton: "Everything in one" },
+  { other: "Distracting content", newton: "Focus-only learning" },
+  { other: "Generic AI answers", newton: "Education-tuned AI" },
+  { other: "Ads & recommendations", newton: "Clean study environment" },
+  { other: "Limited tools", newton: "Full study ecosystem" },
 ];
 
-const valueProps = [
-  { icon: CheckCircle, text: "Free Forever Tier" },
-  { icon: CreditCard, text: "No Credit Card" },
-  { icon: Cpu, text: "AI-Powered" },
-  { icon: FileCheck, text: "PDFs, Videos, Lectures" }
+const studentValueProps = [
+  "Optimized explanations",
+  "Academic accuracy focus",
+  "Structured learning workflow",
+  "Faster revision tools",
+  "Better concept clarity",
+];
+
+const usedFor = [
+  "Exams preparation",
+  "Engineering & science studies",
+  "Competitive exams",
+  "Research learning",
+  "Skill development",
 ];
 
 const LandingPage = () => {
@@ -87,18 +92,14 @@ const LandingPage = () => {
       
       {/* Hero Section */}
       <section id="hero-section" className="relative pt-20 pb-16 overflow-hidden">
-        {/* Static gradient background */}
         <div className="absolute top-20 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-bl from-secondary/20 to-accent/10 rounded-full blur-3xl pointer-events-none" />
-        
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
-        
-        {/* Subtle dot matrix pattern */}
-        <div 
+        <div
           className="absolute inset-0 pointer-events-none opacity-[0.08]"
           style={{
             backgroundImage: 'radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px)',
-            backgroundSize: '24px 24px'
+            backgroundSize: '24px 24px',
           }}
         />
         <div className="container mx-auto px-4 relative z-10">
@@ -107,7 +108,6 @@ const LandingPage = () => {
               <Sparkles className="w-4 h-4" />
               AI-Powered Study Tools
             </div>
-            
             <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
               The Only Study App You'll Ever Need —{" "}
               <span className="text-primary bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -115,12 +115,9 @@ const LandingPage = () => {
               </span>
               {" "}Distraction-Free
             </h1>
-            
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Stop jumping between YouTube, random AI tools, and scattered notes. NewtonAI brings everything into one focused learning platform — AI chat, PDFs, videos, quizzes, notes, podcasts, mind maps, and advanced study tools — built purely for students.
             </p>
-
-            {/* Primary CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
               <Button asChild size="lg" className="text-lg px-8 py-6 group">
                 <Link to="/auth">
@@ -132,8 +129,6 @@ const LandingPage = () => {
                 <Link to="/dashboard">Upload Your Study Material</Link>
               </Button>
             </div>
-
-            {/* Trust Line */}
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground mb-10">
               <span className="flex items-center gap-1.5">
                 <CheckCircle className="w-4 h-4 text-primary" />
@@ -150,42 +145,60 @@ const LandingPage = () => {
                 12K+ students
               </span>
             </div>
-            
-            {/* Floating Tools Showcase */}
             <FloatingToolsShowcase />
           </div>
         </div>
       </section>
 
-      {/* Value Proposition Strip */}
-      <section className="py-6 bg-muted/50 border-y border-border">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
-            {valueProps.map((prop) => (
-              <div key={prop.text} className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <prop.icon className="w-4 h-4 text-primary" />
-                {prop.text}
-              </div>
+      {/* Problem Section */}
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-4 max-w-3xl text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-10">
+            Why Students Struggle Today
+          </h2>
+          <ul className="space-y-4 text-left max-w-lg mx-auto mb-8">
+            {problems.map((item) => (
+              <li key={item} className="flex items-center gap-3 text-lg text-muted-foreground">
+                <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                {item}
+              </li>
             ))}
-          </div>
+          </ul>
+          <p className="text-lg font-semibold text-destructive">
+            Result: More time wasted, less learning.
+          </p>
         </div>
       </section>
-      
+
+      {/* Solution Section */}
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4 max-w-3xl text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-10">
+            NewtonAI Solves Everything in One Place
+          </h2>
+          <ul className="space-y-4 text-left max-w-lg mx-auto mb-8">
+            {solutions.map((item) => (
+              <li key={item} className="flex items-center gap-3 text-lg text-muted-foreground">
+                <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="text-lg font-semibold text-primary">
+            No switching apps. No distractions. Just learning.
+          </p>
+        </div>
+      </section>
 
       {/* Features Section */}
       <section className="py-24 bg-muted/30 relative overflow-hidden">
         <div className="absolute top-40 -right-32 w-72 h-72 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
-        
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Everything You Need to Study Effectively
+              Everything Students Need — One Platform
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our AI-powered tools help you learn faster and retain more information.
-            </p>
           </div>
-          
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature) => (
               <div
@@ -198,136 +211,110 @@ const LandingPage = () => {
                 <h3 className="text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
                   {feature.title}
                 </h3>
-                <p className="text-muted-foreground">
-                  {feature.description}
-                </p>
+                <p className="text-muted-foreground">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* What is NewtonAI - SEO Content Section */}
+      {/* Competitor Comparison */}
       <section className="py-20 bg-background">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6 text-center">What is NewtonAI?</h2>
-          <p className="text-lg text-muted-foreground leading-relaxed mb-8 text-center max-w-3xl mx-auto">
-            NewtonAI is an AI-powered study assistant designed specifically for students. It transforms any study material — PDFs, notes, textbooks, lectures, and videos — into interactive learning tools that help you study smarter and prepare for exams more effectively.
-          </p>
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
-            <div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">Who is NewtonAI For?</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                NewtonAI serves students at every level — from high school board exam preparation to college finals and competitive entrance tests like JEE, NEET, GRE, and GMAT. Whether you're a self-learner or a university student with heavy course loads, NewtonAI adapts to your study workflow.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">Key AI Study Tools</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-primary flex-shrink-0" /> <Link to="/pdf-study-tool" className="hover:text-primary transition-colors">AI PDF Summarizer</Link></li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-primary flex-shrink-0" /> <Link to="/ai-notes-generator" className="hover:text-primary transition-colors">AI Notes Generator</Link></li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-primary flex-shrink-0" /> <Link to="/ai-quiz-generator" className="hover:text-primary transition-colors">AI Quiz Generator</Link></li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-primary flex-shrink-0" /> AI Flashcard Maker & Mind Maps</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-primary flex-shrink-0" /> <Link to="/exam-preparation-ai" className="hover:text-primary transition-colors">AI Exam Preparation</Link></li>
-              </ul>
-            </div>
+        <div className="container mx-auto px-4 max-w-3xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-10 text-center">
+            Why NewtonAI &gt; Other Platforms
+          </h2>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="text-center font-semibold text-muted-foreground py-3">Other Platforms</div>
+            <div className="text-center font-semibold text-primary py-3">NewtonAI</div>
           </div>
-          <p className="text-center">
-            <Button asChild variant="outline" size="lg">
-              <Link to="/ai-study-assistant">Learn More About NewtonAI</Link>
-            </Button>
-          </p>
-        </div>
-      </section>
-
-      {/* Mid-Page CTA */}
-      <section className="py-12 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
-        <div className="container mx-auto px-4 text-center">
-          <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-            Ready to boost your grades?
-          </h3>
-          <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-            Join thousands of students already studying smarter with AI.
-          </p>
-          <Button asChild size="lg" className="group">
-            <Link to="/auth">
-              Start Learning Free
-              <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </Button>
-        </div>
-      </section>
-
-
-      {/* Benefits Section */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute top-40 -right-32 w-64 h-64 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-                Why Students Love Our Platform
-              </h2>
-              <p className="text-lg text-muted-foreground mb-8">
-                Join thousands of students who are already studying smarter with our AI-powered tools.
-              </p>
-              <ul className="space-y-4 mb-8">
-                {benefits.map((benefit) => (
-                  <li
-                    key={benefit}
-                    className="flex items-center gap-3"
-                  >
-                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span className="text-foreground">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              {/* Benefits Section CTA */}
-              <Button asChild size="lg" className="group">
-                <Link to="/auth">
-                  Start Learning Smarter
-                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Button>
-            </div>
-            
-            <div className="bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl p-8 aspect-square flex items-center justify-center relative overflow-hidden">
-              <div className="text-center relative z-10">
-                <div className="text-6xl font-bold text-primary mb-2">
-                  10K+
+          <div className="space-y-3">
+            {comparisonRows.map((row) => (
+              <div key={row.other} className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-4 text-muted-foreground">
+                  <XCircle className="w-4 h-4 text-destructive flex-shrink-0" />
+                  <span>{row.other}</span>
                 </div>
-                <div className="text-xl text-muted-foreground">
-                  Active Students
+                <div className="flex items-center gap-2 bg-primary/5 rounded-lg p-4 text-foreground border border-primary/20">
+                  <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span>{row.newton}</span>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Single Ad Banner - After Benefits (reduced from 3 to 1) */}
+      {/* Value Proposition */}
+      <section className="py-16 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
+        <div className="container mx-auto px-4 max-w-3xl text-center">
+          <GraduationCap className="w-10 h-10 text-primary mx-auto mb-4" />
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-8">
+            Designed Only For Students
+          </h2>
+          <p className="text-muted-foreground mb-6">Unlike general AI tools:</p>
+          <ul className="space-y-3 text-left max-w-md mx-auto mb-8">
+            {studentValueProps.map((item) => (
+              <li key={item} className="flex items-center gap-3 text-foreground">
+                <Target className="w-5 h-5 text-primary flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="text-lg font-semibold text-foreground">
+            This is not just AI.<br />
+            <span className="text-primary">This is an AI learning system.</span>
+          </p>
+        </div>
+      </section>
+
+      {/* Trust / Authority */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4 max-w-3xl text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-10">
+            Used By Students For
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-4 max-w-lg mx-auto">
+            {usedFor.map((item) => (
+              <div key={item} className="flex items-center gap-3 bg-card rounded-lg p-4 border border-border">
+                <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                <span className="text-foreground">{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Ad Banner */}
       <AdBanner />
 
       {/* Testimonials */}
       <TestimonialsSection />
 
-      {/* CTA Section */}
-      <div id="footer-cta-section">
-        <CTASection
-          title="Ready to Transform Your Study Habits?"
-          description="Join thousands of students who are already studying smarter with AI."
-          primaryButtonText="Get Started Free"
-          primaryButtonLink="/auth"
-          secondaryButtonText="Learn More"
-          secondaryButtonLink="/about"
-        />
-      </div>
+      {/* Final CTA */}
+      <section className="py-20 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
+        <div className="container mx-auto px-4 text-center max-w-2xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Start Studying Smarter Today
+          </h2>
+          <p className="text-lg text-muted-foreground mb-8">
+            One platform. Zero distractions. Unlimited learning.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild size="lg" className="text-lg px-8 py-6 group">
+              <Link to="/auth">
+                Start Free Now
+                <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
+              <Link to="/dashboard">Upload Your First Study Material</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
 
       <Footer />
-      
-      {/* Sticky Mobile CTA Bar */}
       <StickyCTABar />
     </div>
   );
