@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { CreditBalance } from "@/components/CreditBalance";
 import Logo from "@/components/Logo";
 import { Menu, X, ChevronDown } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,6 +69,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -99,7 +101,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center">
-              <Logo size="md" compact />
+              <Logo size={isMobile ? "xs" : "md"} compact />
             </Link>
 
             {/* Desktop Navigation */}

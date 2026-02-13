@@ -2,7 +2,7 @@ import newtonLogo from "@/assets/newton-logo.png";
 import { motion } from "framer-motion";
 
 interface LogoProps {
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   showText?: boolean;
   className?: string;
   animate?: boolean;
@@ -10,6 +10,7 @@ interface LogoProps {
 }
 
 const sizeMap = {
+  xs: { icon: 80, text: "text-lg" },
   sm: { icon: 120, text: "text-xl" },
   md: { icon: 160, text: "text-3xl" },
   lg: { icon: 220, text: "text-4xl" }
