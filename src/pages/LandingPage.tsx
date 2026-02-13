@@ -23,58 +23,58 @@ import {
   Map,
   MessageSquare,
   GraduationCap,
-  Target,
-} from "lucide-react";
+  Target } from
+"lucide-react";
 
 const problems = [
-  "Too many apps for studying",
-  "YouTube distractions & ads",
-  "Notes scattered everywhere",
-  "Generic AI not optimized for learning",
-  "No structured study workflow",
-];
+"Too many apps for studying",
+"YouTube distractions & ads",
+"Notes scattered everywhere",
+"Generic AI not optimized for learning",
+"No structured study workflow"];
+
 
 const solutions = [
-  "AI chat built specifically for learning",
-  "Unlimited study videos without distractions",
-  "Instant notes, summaries, flashcards, quizzes",
-  "Mind maps, podcasts & document chat",
-  "Study-focused AI (better than general AI tools)",
-];
+"AI chat built specifically for learning",
+"Unlimited study videos without distractions",
+"Instant notes, summaries, flashcards, quizzes",
+"Mind maps, podcasts & document chat",
+"Study-focused AI (better than general AI tools)"];
+
 
 const features = [
-  { icon: Brain, title: "Smart AI Study Assistant", description: "Custom AI tuned only for education." },
-  { icon: MessageSquare, title: "Chat With Any Document", description: "PDFs, notes, lectures, research papers." },
-  { icon: Video, title: "Learn From Videos Without Distraction", description: "Study content only — no ads, no recommended junk." },
-  { icon: Headphones, title: "AI Podcasts From Notes", description: "Listen and revise anywhere." },
-  { icon: Map, title: "Mind Maps & Visual Learning", description: "Understand faster with structure." },
-  { icon: FileText, title: "Instant Notes & Summaries", description: "Save hours of manual work." },
-  { icon: BookOpen, title: "Quiz & Practice Mode", description: "Test instantly after learning." },
-];
+{ icon: Brain, title: "Smart AI Study Assistant", description: "Custom AI tuned only for education." },
+{ icon: MessageSquare, title: "Chat With Any Document", description: "PDFs, notes, lectures, research papers." },
+{ icon: Video, title: "Learn From Videos Without Distraction", description: "Study content only — no ads, no recommended junk." },
+{ icon: Headphones, title: "AI Podcasts From Notes", description: "Listen and revise anywhere." },
+{ icon: Map, title: "Mind Maps & Visual Learning", description: "Understand faster with structure." },
+{ icon: FileText, title: "Instant Notes & Summaries", description: "Save hours of manual work." },
+{ icon: BookOpen, title: "Quiz & Practice Mode", description: "Test instantly after learning." }];
+
 
 const comparisonRows = [
-  { other: "Multiple apps needed", newton: "Everything in one" },
-  { other: "Distracting content", newton: "Focus-only learning" },
-  { other: "Generic AI answers", newton: "Education-tuned AI" },
-  { other: "Ads & recommendations", newton: "Clean study environment" },
-  { other: "Limited tools", newton: "Full study ecosystem" },
-];
+{ other: "Multiple apps needed", newton: "Everything in one" },
+{ other: "Distracting content", newton: "Focus-only learning" },
+{ other: "Generic AI answers", newton: "Education-tuned AI" },
+{ other: "Ads & recommendations", newton: "Clean study environment" },
+{ other: "Limited tools", newton: "Full study ecosystem" }];
+
 
 const studentValueProps = [
-  "Optimized explanations",
-  "Academic accuracy focus",
-  "Structured learning workflow",
-  "Faster revision tools",
-  "Better concept clarity",
-];
+"Optimized explanations",
+"Academic accuracy focus",
+"Structured learning workflow",
+"Faster revision tools",
+"Better concept clarity"];
+
 
 const usedFor = [
-  "Exams preparation",
-  "Engineering & science studies",
-  "Competitive exams",
-  "Research learning",
-  "Skill development",
-];
+"Exams preparation",
+"Engineering & science studies",
+"Competitive exams",
+"Research learning",
+"Skill development"];
+
 
 const LandingPage = () => {
   const breadcrumbs = [{ name: "Home", href: "/" }];
@@ -86,8 +86,8 @@ const LandingPage = () => {
         description="NewtonAI is an AI-powered study assistant for students that converts notes, PDFs and study materials into summaries, quizzes and flashcards for faster exam preparation."
         canonicalPath="/"
         breadcrumbs={breadcrumbs}
-        keywords="AI study assistant, AI notes generator, PDF summarizer, quiz generator, flashcard maker, exam preparation, AI for students, study tools, AI homework helper"
-      />
+        keywords="AI study assistant, AI notes generator, PDF summarizer, quiz generator, flashcard maker, exam preparation, AI for students, study tools, AI homework helper" />
+
       <Header transparent />
       
       {/* Hero Section */}
@@ -99,16 +99,16 @@ const LandingPage = () => {
           className="absolute inset-0 pointer-events-none opacity-[0.06]"
           style={{
             backgroundImage: 'radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-          }}
-        />
+            backgroundSize: '28px 28px'
+          }} />
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8 border border-primary/20 tracking-wide">
               <Sparkles className="w-4 h-4" />
               AI-Powered Study Tools
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-8 leading-[1.1] tracking-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground mb-8 leading-[1.1] tracking-tight font-serif font-semibold text-center">
               Stop Switching Apps.
               <br />
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -160,12 +160,12 @@ const LandingPage = () => {
             Why Students Struggle Today
           </h2>
           <ul className="space-y-4 text-left max-w-lg mx-auto mb-8">
-            {problems.map((item) => (
-              <li key={item} className="flex items-center gap-3 text-lg text-muted-foreground">
+            {problems.map((item) =>
+            <li key={item} className="flex items-center gap-3 text-lg text-muted-foreground">
                 <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
                 {item}
               </li>
-            ))}
+            )}
           </ul>
           <p className="text-lg font-semibold text-destructive">
             Result: More time wasted, less learning.
@@ -180,12 +180,12 @@ const LandingPage = () => {
             NewtonAI Solves Everything in One Place
           </h2>
           <ul className="space-y-4 text-left max-w-lg mx-auto mb-8">
-            {solutions.map((item) => (
-              <li key={item} className="flex items-center gap-3 text-lg text-muted-foreground">
+            {solutions.map((item) =>
+            <li key={item} className="flex items-center gap-3 text-lg text-muted-foreground">
                 <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                 {item}
               </li>
-            ))}
+            )}
           </ul>
           <p className="text-lg font-semibold text-primary">
             No switching apps. No distractions. Just learning.
@@ -203,11 +203,11 @@ const LandingPage = () => {
             </h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="bg-card rounded-xl p-6 border border-border hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer group"
-              >
+            {features.map((feature) =>
+            <div
+              key={feature.title}
+              className="bg-card rounded-xl p-6 border border-border hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer group">
+
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
                   <feature.icon className="w-6 h-6 text-primary" />
                 </div>
@@ -216,7 +216,7 @@ const LandingPage = () => {
                 </h3>
                 <p className="text-muted-foreground">{feature.description}</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -232,8 +232,8 @@ const LandingPage = () => {
             <div className="text-center font-semibold text-primary py-3">NewtonAI</div>
           </div>
           <div className="space-y-3">
-            {comparisonRows.map((row) => (
-              <div key={row.other} className="grid grid-cols-2 gap-4">
+            {comparisonRows.map((row) =>
+            <div key={row.other} className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-4 text-muted-foreground">
                   <XCircle className="w-4 h-4 text-destructive flex-shrink-0" />
                   <span>{row.other}</span>
@@ -243,7 +243,7 @@ const LandingPage = () => {
                   <span>{row.newton}</span>
                 </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -257,12 +257,12 @@ const LandingPage = () => {
           </h2>
           <p className="text-muted-foreground mb-6">Unlike general AI tools:</p>
           <ul className="space-y-3 text-left max-w-md mx-auto mb-8">
-            {studentValueProps.map((item) => (
-              <li key={item} className="flex items-center gap-3 text-foreground">
+            {studentValueProps.map((item) =>
+            <li key={item} className="flex items-center gap-3 text-foreground">
                 <Target className="w-5 h-5 text-primary flex-shrink-0" />
                 {item}
               </li>
-            ))}
+            )}
           </ul>
           <p className="text-lg font-semibold text-foreground">
             This is not just AI.<br />
@@ -278,12 +278,12 @@ const LandingPage = () => {
             Used By Students For
           </h2>
           <div className="grid sm:grid-cols-2 gap-4 max-w-lg mx-auto">
-            {usedFor.map((item) => (
-              <div key={item} className="flex items-center gap-3 bg-card rounded-lg p-4 border border-border">
+            {usedFor.map((item) =>
+            <div key={item} className="flex items-center gap-3 bg-card rounded-lg p-4 border border-border">
                 <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                 <span className="text-foreground">{item}</span>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -319,8 +319,8 @@ const LandingPage = () => {
 
       <Footer />
       <StickyCTABar />
-    </div>
-  );
+    </div>);
+
 };
 
 export default LandingPage;
