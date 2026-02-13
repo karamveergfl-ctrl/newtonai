@@ -111,11 +111,11 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
             <DrawerHeader className="sr-only">
               <DrawerTitle>Newton AI Assistant</DrawerTitle>
             </DrawerHeader>
-            <div className="flex-1 overflow-hidden relative">
+            <div className="flex flex-col flex-1 overflow-hidden relative h-full">
               {showSidebar && (
                 <>
                   <div className="absolute inset-0 bg-black/40 z-10" onClick={() => setShowSidebar(false)} />
-                  <div className="absolute inset-y-0 left-0 z-20 w-[80%] max-w-[300px]">
+                  <div className="absolute inset-y-0 left-0 z-20 w-[80%] max-w-[300px] h-full">
                     <NewtonSidebar
                       groupedConversations={groupedConversations}
                       activeConversationId={activeConversationId}
@@ -127,7 +127,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
                   </div>
                 </>
               )}
-              <div className="flex-1 overflow-hidden min-w-0">
+              <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">
                 <NewtonChatPanel
                   messages={messages}
                   isLoading={isLoading}
