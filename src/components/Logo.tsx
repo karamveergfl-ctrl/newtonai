@@ -9,16 +9,16 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  sm: { icon: 72, text: "text-xl" },
-  md: { icon: 104, text: "text-3xl" },
-  lg: { icon: 144, text: "text-4xl" }
+  sm: { icon: 96, text: "text-xl" },
+  md: { icon: 120, text: "text-3xl" },
+  lg: { icon: 160, text: "text-4xl" }
 };
 
 const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
   const { icon, text } = sizeMap[size];
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-0.5 ${className}`}>
       <motion.div
         className="flex-shrink-0"
         style={{ width: icon, height: icon }}
