@@ -8,27 +8,26 @@ interface LogoProps {
   animate?: boolean;
 }
 
-const sizeMap = {
-  sm: { icon: 96, text: "text-xl" },
-  md: { icon: 120, text: "text-3xl" },
-  lg: { icon: 160, text: "text-4xl" }
+const sizeClasses = {
+  sm: { img: "h-14 w-14", text: "text-xl" },
+  md: { img: "h-20 w-20", text: "text-3xl" },
+  lg: { img: "h-28 w-28", text: "text-4xl" }
 };
 
 const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
-  const { icon, text } = sizeMap[size];
+  const { img, text } = sizeClasses[size];
 
   return (
     <div className={`flex items-center gap-0.5 ${className}`}>
       <motion.div
         className="flex-shrink-0"
-        style={{ width: icon, height: icon }}
         whileHover={{ scale: 1.05 }}
         transition={{ duration: 0.2 }}>
 
         <img
           src={newtonLogo}
           alt="NewtonAI Logo"
-          className="w-full h-full object-contain" />
+          className={`${img} object-contain`} />
 
       </motion.div>
       {showText &&
