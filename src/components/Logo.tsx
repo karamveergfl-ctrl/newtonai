@@ -20,7 +20,7 @@ const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
   return (
     <div className={`flex items-center gap-0 ${className}`}>
       <motion.div
-        className="flex-shrink-0 overflow-hidden aspect-square rounded-lg -ml-6 -mr-5"
+        className="flex-shrink-0 overflow-hidden aspect-square rounded-lg -ml-6 -mr-5 -mt-4 -mb-4"
         style={{ width: icon, height: icon }}
         whileHover={{ scale: 1.05 }}
         transition={{ duration: 0.2 }}>
