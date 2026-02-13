@@ -1,65 +1,195 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Attachment } from "@/components/newton-assistant/NewtonAttachmentButton";
 
 export interface NewtonMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  attachments?: Attachment[];
 }
 
-const STORAGE_KEY = "newton-chat-history";
-const MAX_MESSAGES = 50;
-
-export function useNewtonChat() {
+export function useNewtonChat(conversationId: string | null) {
   const [messages, setMessages] = useState<NewtonMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const titleGeneratedRef = useRef<Set<string>>(new Set());
 
-  // Load history from localStorage on mount
+  // Load messages when conversationId changes
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from("newton_messages")
+          .select("id, role, content, attachments, created_at")
+          .eq("conversation_id", conversationId)
+          .order("created_at", { ascending: true });
+
+        if (cancelled) return;
+        if (fetchError) throw fetchError;
+
         setMessages(
-          parsed.map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
+          (data || []).map((m: any) => ({
+            id: m.id,
+            role: m.role as "user" | "assistant",
+            content: m.content,
+            timestamp: new Date(m.created_at),
+            attachments: m.attachments || [],
           }))
         );
+      } catch (e) {
+        console.error("Failed to load messages:", e);
       }
+    })();
+
+    return () => { cancelled = true; };
+  }, [conversationId]);
+
+  // Migrate old localStorage history on mount (one-time)
+  useEffect(() => {
+    const STORAGE_KEY = "newton-chat-history";
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return;
+
+    (async () => {
+      try {
+        const parsed = JSON.parse(stored);
+        if (!Array.isArray(parsed) || parsed.length === 0) return;
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Create a conversation for the old messages
+        const { data: conv, error: convErr } = await supabase
+          .from("newton_conversations")
+          .insert({ user_id: user.id, title: "Previous Chat" })
+          .select("id")
+          .single();
+
+        if (convErr || !conv) return;
+
+        const rows = parsed.map((m: any) => ({
+          conversation_id: conv.id,
+          role: m.role,
+          content: m.content,
+          created_at: m.timestamp || new Date().toISOString(),
+        }));
+
+        await supabase.from("newton_messages").insert(rows);
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // Silently fail migration
+      }
+    })();
+  }, []);
+
+  const saveMessageToDB = useCallback(async (
+    convId: string,
+    role: "user" | "assistant",
+    content: string,
+    attachments?: Attachment[]
+  ) => {
+    try {
+      await supabase.from("newton_messages").insert({
+        conversation_id: convId,
+        role,
+        content,
+        attachments: attachments ? JSON.parse(JSON.stringify(attachments.map(a => ({ name: a.name, type: a.type })))) : [],
+      });
+      // Touch conversation updated_at
+      await supabase
+        .from("newton_conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", convId);
     } catch (e) {
-      console.error("Failed to load Newton chat history:", e);
+      console.error("Failed to save message:", e);
     }
   }, []);
 
-  // Persist messages to localStorage
-  useEffect(() => {
-    if (messages.length > 0) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-MAX_MESSAGES)));
-      } catch (e) {
-        console.error("Failed to save Newton chat history:", e);
-      }
-    }
-  }, [messages]);
+  const generateTitle = useCallback(async (convId: string, firstUserMsg: string) => {
+    if (titleGeneratedRef.current.has(convId)) return;
+    titleGeneratedRef.current.add(convId);
 
-  const sendMessage = useCallback(async (content: string) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/newton-chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            messages: [
+              { role: "system", content: "Generate a short 3-5 word title for this conversation. Reply with ONLY the title, no quotes." },
+              { role: "user", content: firstUserMsg.slice(0, 200) },
+            ],
+            stream: false,
+          }),
+        }
+      );
+
+      if (!response.ok) return;
+      const data = await response.json();
+      const title = data?.choices?.[0]?.message?.content?.trim();
+      if (title && title.length < 60) {
+        await supabase
+          .from("newton_conversations")
+          .update({ title })
+          .eq("id", convId);
+      }
+    } catch {
+      // Silent fail for title generation
+    }
+  }, []);
+
+  const sendMessage = useCallback(async (
+    content: string,
+    createConversation: () => Promise<string | null>,
+    attachment?: Attachment | null
+  ) => {
     if (!content.trim() || isLoading) return;
 
     setError(null);
+    let convId = conversationId;
+
+    // Create conversation if needed
+    if (!convId) {
+      convId = await createConversation();
+      if (!convId) {
+        setError("Failed to create conversation");
+        return;
+      }
+    }
+
     const userMessage: NewtonMessage = {
       id: crypto.randomUUID(),
       role: "user",
       content: content.trim(),
       timestamp: new Date(),
+      attachments: attachment ? [attachment] : undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Prepare assistant message for streaming
+    // Save user message to DB
+    await saveMessageToDB(convId, "user", content.trim(), attachment ? [attachment] : undefined);
+
+    // Generate title after first user message
+    const isFirstMsg = messages.length === 0;
+    if (isFirstMsg) {
+      generateTitle(convId, content.trim());
+    }
+
     const assistantMessage: NewtonMessage = {
       id: crypto.randomUUID(),
       role: "assistant",
@@ -72,10 +202,18 @@ export function useNewtonChat() {
     try {
       abortControllerRef.current = new AbortController();
 
-      const apiMessages = messages.concat(userMessage).map((m) => ({
+      // Build API messages with attachment context
+      const apiMessages: { role: string; content: string }[] = messages.concat(userMessage).map((m) => ({
         role: m.role,
         content: m.content,
       }));
+
+      if (attachment) {
+        apiMessages.splice(apiMessages.length - 1, 0, {
+          role: "system",
+          content: `The user has attached a document named "${attachment.name}". Here is the extracted text content:\n\n${attachment.extractedText}`,
+        });
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/newton-chat`,
@@ -95,9 +233,7 @@ export function useNewtonChat() {
         throw new Error(errorData.error || `Request failed with status ${response.status}`);
       }
 
-      if (!response.body) {
-        throw new Error("No response body");
-      }
+      if (!response.body) throw new Error("No response body");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -134,14 +270,13 @@ export function useNewtonChat() {
               );
             }
           } catch {
-            // Partial JSON, put back and wait
             textBuffer = line + "\n" + textBuffer;
             break;
           }
         }
       }
 
-      // Final update with complete content
+      // Save assistant message to DB
       if (assistantContent) {
         setMessages((prev) =>
           prev.map((m) =>
@@ -150,10 +285,10 @@ export function useNewtonChat() {
               : m
           )
         );
+        await saveMessageToDB(convId, "assistant", assistantContent);
       }
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        // Cancelled by user
         setMessages((prev) => prev.filter((m) => m.id !== assistantMessage.id));
       } else {
         console.error("Newton chat error:", err);
@@ -170,7 +305,7 @@ export function useNewtonChat() {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, conversationId, saveMessageToDB, generateTitle]);
 
   const cancelRequest = useCallback(() => {
     if (abortControllerRef.current) {
@@ -180,7 +315,6 @@ export function useNewtonChat() {
 
   const clearHistory = useCallback(() => {
     setMessages([]);
-    localStorage.removeItem(STORAGE_KEY);
   }, []);
 
   return {
