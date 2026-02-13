@@ -108,7 +108,7 @@ const LandingPage = () => {
               <Sparkles className="w-4 h-4" />
               AI-Powered Study Tools
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground mb-8 leading-[1.1] tracking-tight font-serif font-semibold text-center">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl text-foreground mb-8 leading-[1.1] tracking-tight font-serif font-semibold text-center md:text-7xl">
               Stop Switching Apps.
               <br />
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
