@@ -676,18 +676,18 @@ export const LectureRecorder = ({
               )}
             </AnimatePresence>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center w-full">
+            <div className="flex flex-col sm:flex-row gap-2 justify-center w-full max-w-full">
               <input id="audio-file-input" type="file" accept="audio/*" onChange={handleFileUpload} className="hidden" />
               
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button variant="outline" size="lg" className="gap-2 px-6 w-full sm:w-auto" onClick={() => document.getElementById("audio-file-input")?.click()}>
-                  <Upload className="w-5 h-5" />
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="min-w-0">
+                <Button variant="outline" size="default" className="gap-2 px-4 w-full sm:w-auto text-sm" onClick={() => document.getElementById("audio-file-input")?.click()}>
+                  <Upload className="w-4 h-4 shrink-0" />
                   Upload Audio
                 </Button>
               </motion.div>
 
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button size="lg" data-action="record-lecture" className={`gap-2 px-8 w-full sm:w-auto ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-primary to-secondary hover:opacity-90'}`} onClick={isRecording ? stopRecording : startRecording}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="min-w-0">
+                <Button size="default" data-action="record-lecture" className={`gap-2 px-4 w-full sm:w-auto text-sm ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-primary to-secondary hover:opacity-90'}`} onClick={isRecording ? stopRecording : startRecording}>
                   {isRecording ? <>
                       <MicOff className="w-5 h-5" />
                       Stop Recording
