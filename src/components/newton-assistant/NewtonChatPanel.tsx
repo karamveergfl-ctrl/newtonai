@@ -1,11 +1,12 @@
 import { memo, useRef, useEffect, useState, useCallback, KeyboardEvent } from "react";
 import { motion } from "framer-motion";
-import { Send, Trash2, Sparkles, StopCircle, Maximize2, Minimize2, Mic, MicOff } from "lucide-react";
+import { Send, Trash2, Sparkles, StopCircle, X, Mic, MicOff, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { NewtonMessageBubble } from "./NewtonMessageBubble";
+import { NewtonAttachmentButton, type Attachment } from "./NewtonAttachmentButton";
 import { LottieNewton } from "@/components/newton/LottieNewton";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useToast } from "@/hooks/use-toast";
@@ -16,11 +17,12 @@ interface NewtonChatPanelProps {
   messages: NewtonMessage[];
   isLoading: boolean;
   error: string | null;
-  onSend: (message: string) => void;
+  onSend: (message: string, attachment?: Attachment | null) => void;
   onCancel: () => void;
   onClear: () => void;
-  isFullScreen?: boolean;
-  onToggleFullScreen?: () => void;
+  onClose?: () => void;
+  onToggleSidebar?: () => void;
+  showSidebarToggle?: boolean;
 }
 
 const SUGGESTIONS = [
@@ -37,35 +39,31 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   onSend,
   onCancel,
   onClear,
-  isFullScreen,
-  onToggleFullScreen,
+  onClose,
+  onToggleSidebar,
+  showSidebarToggle,
 }: NewtonChatPanelProps) {
   const [input, setInput] = useState("");
+  const [attachment, setAttachment] = useState<Attachment | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
 
-  // Process voice query with validation
   const processVoiceQuery = useCallback((query: string) => {
     const trimmed = query.trim();
-    
     if (trimmed.length < 3) {
-      toast({
-        title: "Didn't catch that",
-        description: "Please try speaking again.",
-      });
+      toast({ title: "Didn't catch that", description: "Please try speaking again." });
       setIsVoiceProcessing(false);
       return;
     }
-    
     setIsVoiceProcessing(true);
-    onSend(trimmed);
+    onSend(trimmed, attachment);
     setInput("");
+    setAttachment(null);
     setIsVoiceProcessing(false);
-  }, [onSend, toast]);
+  }, [onSend, toast, attachment]);
 
-  // Speech recognition for voice mode with auto-stop
   const {
     isListening,
     transcript,
@@ -76,59 +74,44 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
     language: 'en-IN',
     continuous: true,
     interimResults: true,
-    silenceTimeout: 2000, // Auto-stop after 2s silence
-    maxListeningTime: 10000, // Max 10s recording
+    silenceTimeout: 2000,
+    maxListeningTime: 10000,
     onAutoStop: (finalTranscript) => {
-      // Auto-send when voice stops due to silence
-      console.log('Newton voice auto-stopped with transcript:', finalTranscript);
       processVoiceQuery(finalTranscript);
     },
   });
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
       const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-      }
+      if (viewport) viewport.scrollTop = viewport.scrollHeight;
     }
   }, [messages]);
 
-  // Focus textarea on mount
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
 
-  // Update input with transcript while listening
   useEffect(() => {
     if (isListening) {
       const currentText = transcript + (interimTranscript ? ` ${interimTranscript}` : '');
-      if (currentText.trim()) {
-        setInput(currentText.trim());
-      }
+      if (currentText.trim()) setInput(currentText.trim());
     }
   }, [transcript, interimTranscript, isListening]);
 
-  // Handle voice recording toggle
   const handleVoiceToggle = useCallback(async () => {
     if (isListening) {
-      // Stop listening - auto-stop callback will handle sending
       const finalTranscript = await stopListening();
-      // Manual stop - process the transcript
       processVoiceQuery(finalTranscript);
     } else {
-      // Start listening
       try {
         await startListening();
       } catch (err: any) {
-        console.error('Voice recording error:', err);
-        const errorMessage = err?.name === 'NotAllowedError' 
-          ? 'Microphone access denied. Please allow microphone access.'
-          : 'Unable to start voice recording. Please try again.';
         toast({
           title: 'Voice Error',
-          description: errorMessage,
+          description: err?.name === 'NotAllowedError'
+            ? 'Microphone access denied.'
+            : 'Unable to start voice recording.',
           variant: 'destructive',
         });
       }
@@ -137,8 +120,9 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
 
   const handleSend = () => {
     if (input.trim() && !isLoading) {
-      onSend(input.trim());
+      onSend(input.trim(), attachment);
       setInput("");
+      setAttachment(null);
     }
   };
 
@@ -157,27 +141,22 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   const isEmpty = messages.length === 0;
 
   return (
-    <motion.div
-      className="flex flex-col h-full bg-background rounded-2xl border shadow-2xl overflow-hidden"
-      initial={{ opacity: 0, x: 40, scale: 0.9 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 40, scale: 0.9 }}
-      transition={{ 
-        type: "spring", 
-        stiffness: 400, 
-        damping: 28,
-        mass: 0.8
-      }}
-    >
+    <div className="flex flex-col h-full bg-background rounded-2xl border shadow-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center gap-2.5">
+          {showSidebarToggle && onToggleSidebar && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleSidebar}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </Button>
+          )}
           <div className="w-9 h-9 rounded-full overflow-hidden shadow-sm">
-            <img
-              src={newtonChatAvatar}
-              alt="Newton"
-              className="w-full h-full object-cover scale-150"
-            />
+            <img src={newtonChatAvatar} alt="Newton" className="w-full h-full object-cover scale-150" />
           </div>
           <div>
             <h3 className="text-sm font-semibold">Newton AI</h3>
@@ -185,25 +164,14 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
           </div>
         </div>
         <div className="flex items-center gap-1">
-          {onToggleFullScreen && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleFullScreen}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              title={isFullScreen ? "Minimize" : "Maximize"}
-            >
-              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          {messages.length > 0 && (
+            <Button variant="ghost" size="icon" onClick={onClear} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+              <Trash2 className="w-4 h-4" />
             </Button>
           )}
-          {messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClear}
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
+          {onClose && (
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
             </Button>
           )}
         </div>
@@ -214,8 +182,10 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full py-8 text-center">
             <LottieNewton state="sleeping" size="sm" />
-            <h4 className="text-base font-medium mt-4 mb-1">Hi, I'm Newton!</h4>
-            <p className="text-sm text-muted-foreground mb-6 max-w-[260px]">
+            <h4 className="text-2xl font-semibold mt-6 mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              What can I help you with?
+            </h4>
+            <p className="text-sm text-muted-foreground mb-8 max-w-[300px]">
               Your AI study buddy. Ask me anything about homework, concepts, or study tips.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
@@ -239,27 +209,42 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
               <NewtonMessageBubble
                 key={message.id}
                 message={message}
-                isStreaming={
-                  isLoading &&
-                  index === messages.length - 1 &&
-                  message.role === "assistant"
-                }
+                isStreaming={isLoading && index === messages.length - 1 && message.role === "assistant"}
               />
             ))}
           </div>
         )}
       </ScrollArea>
 
-      {/* Error message */}
+      {/* Error */}
       {error && (
-        <div className="px-4 py-2 bg-destructive/10 text-destructive text-xs">
-          {error}
+        <div className="px-4 py-2 bg-destructive/10 text-destructive text-xs">{error}</div>
+      )}
+
+      {/* Attachment chip */}
+      {attachment && (
+        <div className="px-3 pt-2">
+          <NewtonAttachmentButton
+            onAttach={setAttachment}
+            currentAttachment={attachment}
+            onRemove={() => setAttachment(null)}
+          />
         </div>
       )}
 
       {/* Input */}
       <div className="p-3 border-t bg-muted/30">
         <div className="flex items-end gap-2">
+          {/* Attachment button */}
+          {!attachment && (
+            <NewtonAttachmentButton
+              onAttach={setAttachment}
+              disabled={isLoading}
+              currentAttachment={null}
+              onRemove={() => setAttachment(null)}
+            />
+          )}
+
           {/* Voice button */}
           <Button
             onClick={handleVoiceToggle}
@@ -272,23 +257,19 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             disabled={isLoading}
             title={isListening ? "Stop recording" : "Start voice input"}
           >
-            {isListening ? (
-              <MicOff className="w-4 h-4" />
-            ) : (
-              <Mic className="w-4 h-4" />
-            )}
+            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </Button>
-          
+
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={
-              isVoiceProcessing 
-                ? "Processing..." 
-                : isListening 
-                  ? "Listening... (auto-sends when you pause)" 
+              isVoiceProcessing
+                ? "Processing..."
+                : isListening
+                  ? "Listening... (auto-sends when you pause)"
                   : "Ask Newton anything..."
             }
             className={cn(
@@ -301,21 +282,11 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             disabled={isLoading || isVoiceProcessing}
           />
           {isLoading ? (
-            <Button
-              onClick={onCancel}
-              variant="outline"
-              size="icon"
-              className="h-[42px] w-[42px] shrink-0"
-            >
+            <Button onClick={onCancel} variant="outline" size="icon" className="h-[42px] w-[42px] shrink-0">
               <StopCircle className="w-5 h-5 text-destructive" />
             </Button>
           ) : (
-            <Button
-              onClick={handleSend}
-              disabled={!input.trim()}
-              size="icon"
-              className="h-[42px] w-[42px] shrink-0"
-            >
+            <Button onClick={handleSend} disabled={!input.trim()} size="icon" className="h-[42px] w-[42px] shrink-0">
               <Send className="w-4 h-4" />
             </Button>
           )}
@@ -324,6 +295,6 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
           {isListening ? "Tap mic again to stop and send" : "Press Enter to send • Shift+Enter for new line"}
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 });

@@ -1,27 +1,41 @@
 import { useState, useEffect, useCallback, memo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNewtonChat } from "@/hooks/useNewtonChat";
+import { useNewtonConversations } from "@/hooks/useNewtonConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { NewtonTriggerButton } from "./newton-assistant/NewtonTriggerButton";
 import { NewtonChatPanel } from "./newton-assistant/NewtonChatPanel";
+import { NewtonSidebar } from "./newton-assistant/NewtonSidebar";
 import { SignInRequiredModal } from "./SignInRequiredModal";
+import type { Attachment } from "./newton-assistant/NewtonAttachmentButton";
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { Button } from "@/components/ui/button";
 
 export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
   const isMobile = useIsMobile();
+
+  const {
+    groupedConversations,
+    activeConversationId,
+    setActiveConversationId,
+    isLoading: convsLoading,
+    createConversation,
+    deleteConversation,
+    startNewChat,
+    fetchConversations,
+  } = useNewtonConversations();
+
   const { messages, isLoading, error, sendMessage, cancelRequest, clearHistory } =
-    useNewtonChat();
+    useNewtonChat(activeConversationId);
 
   // Auth state tracking
   useEffect(() => {
@@ -55,6 +69,36 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
 
   const handleClose = useCallback(() => setIsOpen(false), []);
 
+  const handleSend = useCallback((content: string, attachment?: Attachment | null) => {
+    sendMessage(content, async () => {
+      const id = await createConversation();
+      return id;
+    }, attachment);
+  }, [sendMessage, createConversation]);
+
+  const handleSelectConversation = useCallback((id: string) => {
+    setActiveConversationId(id);
+    if (isMobile) setShowSidebar(false);
+  }, [setActiveConversationId, isMobile]);
+
+  const handleNewChat = useCallback(() => {
+    startNewChat();
+    clearHistory();
+    if (isMobile) setShowSidebar(false);
+  }, [startNewChat, clearHistory, isMobile]);
+
+  const handleDeleteConversation = useCallback(async (id: string) => {
+    await deleteConversation(id);
+    fetchConversations();
+  }, [deleteConversation, fetchConversations]);
+
+  // Refresh conversations when opening
+  useEffect(() => {
+    if (isOpen && isAuthenticated) {
+      fetchConversations();
+    }
+  }, [isOpen, isAuthenticated, fetchConversations]);
+
   // Mobile: drawer
   if (isMobile) {
     return (
@@ -67,16 +111,30 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
             <DrawerHeader className="sr-only">
               <DrawerTitle>Newton AI Assistant</DrawerTitle>
             </DrawerHeader>
-            <div className="flex-1 overflow-hidden">
-              <NewtonChatPanel
-                messages={messages}
-                isLoading={isLoading}
-                error={error}
-                onSend={sendMessage}
-                onCancel={cancelRequest}
-                onClear={clearHistory}
-                isFullScreen={true}
-              />
+            <div className="flex-1 overflow-hidden flex">
+              {showSidebar && (
+                <NewtonSidebar
+                  groupedConversations={groupedConversations}
+                  activeConversationId={activeConversationId}
+                  onSelect={handleSelectConversation}
+                  onNewChat={handleNewChat}
+                  onDelete={handleDeleteConversation}
+                  isLoading={convsLoading}
+                />
+              )}
+              <div className="flex-1 overflow-hidden">
+                <NewtonChatPanel
+                  messages={messages}
+                  isLoading={isLoading}
+                  error={error}
+                  onSend={handleSend}
+                  onCancel={cancelRequest}
+                  onClear={handleNewChat}
+                  onClose={handleClose}
+                  onToggleSidebar={() => setShowSidebar((p) => !p)}
+                  showSidebarToggle
+                />
+              </div>
             </div>
           </DrawerContent>
         </Drawer>
@@ -85,41 +143,49 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
     );
   }
 
-  // Desktop: always full screen
+  // Desktop: full screen with sidebar
   return (
     <>
-      {/* Full screen chat panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed inset-4 z-50"
+            className="fixed inset-4 z-50 flex rounded-2xl overflow-hidden border shadow-2xl bg-background"
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClose}
-              className="absolute top-2 right-2 z-[51] h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-            <NewtonChatPanel
-              messages={messages}
-              isLoading={isLoading}
-              error={error}
-              onSend={sendMessage}
-              onCancel={cancelRequest}
-              onClear={clearHistory}
-              isFullScreen={true}
-            />
+            {/* Sidebar */}
+            {showSidebar && (
+              <NewtonSidebar
+                groupedConversations={groupedConversations}
+                activeConversationId={activeConversationId}
+                onSelect={handleSelectConversation}
+                onNewChat={handleNewChat}
+                onDelete={handleDeleteConversation}
+                isLoading={convsLoading}
+              />
+            )}
+
+            {/* Chat panel */}
+            <div className="flex-1 overflow-hidden">
+              <NewtonChatPanel
+                messages={messages}
+                isLoading={isLoading}
+                error={error}
+                onSend={handleSend}
+                onCancel={cancelRequest}
+                onClear={handleNewChat}
+                onClose={handleClose}
+                onToggleSidebar={() => setShowSidebar((p) => !p)}
+                showSidebarToggle
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Trigger button - only when closed */}
+      {/* Trigger button */}
       {!isOpen && (
         <div className="fixed bottom-4 right-4 z-50">
           <NewtonTriggerButton isOpen={isOpen} onClick={handleToggle} />
