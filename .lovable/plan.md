@@ -1,30 +1,28 @@
 
 
-## Replace Logo With New Newton Character Image
+## Fix Logo Spacing: Remove Invisible Padding Around the Wooden Frame
 
-### What Changes
-Replace the current small icon-style logo with the uploaded Newton character image across the entire app, and remove the glowing white border effect.
+### Problem
+The logo image has invisible transparent space (padding) around the wooden frame, which creates an unwanted gap between the logo and the "NewtonAI" text. The wooden frame itself should stay -- we just need to crop out the empty space surrounding it.
 
-### Technical Details
+### Solution
+Use CSS to visually crop the transparent area around the logo so only the wooden frame badge is visible, bringing the text closer.
 
-**1. Copy the new logo asset**
-- Copy `user-uploads://image-332.png` to `src/assets/newton-logo.png` (overwriting the existing file)
+### Changes
 
-**2. Update `src/components/Logo.tsx`**
-- Remove the glowing ring/border (`blur-md opacity-70` gradient div)
-- Remove the `rounded-xl overflow-hidden` container that clips the image
-- Remove the `scale-150` on the image (the new logo already shows the full character)
-- Keep the image rendering clean with just `object-contain` instead of `object-cover`
-- Adjust size map to be slightly larger since this logo has more detail:
-  - sm: 36px, md: 52px, lg: 72px
-- Keep the `showText` prop but default it to `false` since the logo image itself contains "NewtonAI" text
-- Retain the hover scale animation
+**1. `src/components/Logo.tsx`**
+- Add `overflow-hidden` to the motion container
+- Apply a negative margin on the logo image (e.g., `m-[-15%]` or similar) combined with scaling (`scale-[1.15]`) to visually crop the transparent padding around the wooden frame
+- Alternatively, use `object-cover` with a slightly larger image scale so the transparent edges get clipped
+- Reduce `gap-0.5` to `gap-0` or even use a small negative margin on the text to pull it closer to the logo
+- Fine-tune the exact crop percentage to match the image's transparent border size
 
-**3. No other files need changes**
-All other files (`Header.tsx`, `Footer.tsx`, `Auth.tsx`, `AppSidebar.tsx`, etc.) import and use the `Logo` component, so they will automatically pick up the new design.
+**2. No asset changes needed**
+The logo image stays the same -- we're just using CSS to hide the invisible transparent area around the wooden frame.
 
 ### Result
-- Clean Newton character logo with no white border/glow
-- Consistent across all pages (Header, Footer, Sidebar, Auth, Onboarding, etc.)
-- The logo image itself contains the "NewtonAI" text, so the separate text span becomes optional
+- Wooden frame stays intact and visible
+- Transparent padding around the frame is cropped away
+- "NewtonAI" text sits much closer to the logo
+- Clean, tight layout everywhere the logo appears
 
