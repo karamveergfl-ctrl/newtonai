@@ -91,7 +91,7 @@ const LandingPage = () => {
       <Header transparent />
       
       {/* Hero Section */}
-      <section id="hero-section" className="relative pt-20 pb-12 md:pt-24 md:pb-16 overflow-hidden">
+      <section id="hero-section" className="relative pt-12 pb-12 md:pt-14 md:pb-16 overflow-hidden">
         <div className="absolute top-20 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-bl from-secondary/20 to-accent/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
