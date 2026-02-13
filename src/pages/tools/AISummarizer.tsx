@@ -885,11 +885,11 @@ const AISummarizer = () => {
         breadcrumbs={breadcrumbs}
         keywords="AI summarizer, text summarization, PDF summary, YouTube summary, study tools"
       />
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container max-w-4xl mx-auto px-3 py-4 sm:px-4 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 relative"
+          className="mb-6 sm:mb-8 text-center relative"
         >
           <Button
             variant="ghost"
@@ -899,12 +899,12 @@ const AISummarizer = () => {
           >
             <X className="h-5 w-5" />
           </Button>
-          <div className="flex items-center gap-3 mb-2">
-            <Sparkles className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">AI Summarizer</h1>
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+            <Sparkles className="h-7 w-7 text-primary" />
           </div>
-          <p className="text-muted-foreground">
-            Get summaries, flashcards, quizzes, and mind maps from PDFs, YouTube videos, audio recordings, or text
+          <h1 className="text-2xl sm:text-3xl font-display font-bold">AI Summarizer</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Summarize PDFs, YouTube videos, audio, or text instantly
           </p>
         </motion.div>
 
