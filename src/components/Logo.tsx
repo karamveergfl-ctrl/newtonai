@@ -9,9 +9,9 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  sm: { icon: 40, text: "text-lg" },
-  md: { icon: 56, text: "text-2xl" },
-  lg: { icon: 80, text: "text-3xl" },
+  sm: { icon: 36, text: "text-lg" },
+  md: { icon: 52, text: "text-2xl" },
+  lg: { icon: 72, text: "text-3xl" }
 };
 
 const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
@@ -23,21 +23,21 @@ const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
         className="flex-shrink-0"
         style={{ width: icon, height: icon }}
         whileHover={{ scale: 1.05 }}
-        transition={{ duration: 0.2 }}
-      >
+        transition={{ duration: 0.2 }}>
+
         <img
           src={newtonLogo}
           alt="NewtonAI Logo"
-          className="w-full h-full object-contain"
-        />
+          className="w-full h-full object-contain shadow-md" />
+
       </motion.div>
-      {showText && (
-        <span className={`font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent ${text}`}>
+      {showText &&
+      <span className={`font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent ${text}`}>
           NewtonAI
         </span>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default Logo;
