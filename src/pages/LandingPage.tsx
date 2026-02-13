@@ -91,7 +91,7 @@ const LandingPage = () => {
       <Header transparent />
       
       {/* Hero Section */}
-      <section id="hero-section" className="relative pt-20 pb-20 md:pt-24 md:pb-28 overflow-hidden">
+      <section id="hero-section" className="relative pt-20 pb-12 md:pt-24 md:pb-16 overflow-hidden">
         <div className="absolute top-20 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-bl from-secondary/20 to-accent/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
@@ -154,7 +154,7 @@ const LandingPage = () => {
       </section>
 
       {/* Problem + Solution Combined Section */}
-      <section className="py-20 md:py-28">
+      <section className="py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
             {/* Problem Card */}
@@ -209,7 +209,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 md:py-28 relative overflow-hidden">
+      <section className="py-12 md:py-16 relative overflow-hidden">
         <div className="absolute top-40 -right-32 w-72 h-72 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-20 -left-40 w-80 h-80 bg-gradient-to-tr from-secondary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
         <div className="container mx-auto px-4 relative z-10">
@@ -244,7 +244,7 @@ const LandingPage = () => {
       </section>
 
       {/* Competitor Comparison */}
-      <section className="py-20 md:py-28 bg-muted/30">
+      <section className="py-12 md:py-16 bg-muted/30">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4 border border-primary/20">
@@ -280,7 +280,7 @@ const LandingPage = () => {
       </section>
 
       {/* Value Proposition */}
-      <section className="py-16 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
+      <section className="py-12 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
         <div className="container mx-auto px-4 max-w-3xl text-center">
           <GraduationCap className="w-10 h-10 text-primary mx-auto mb-4" />
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-8">
@@ -303,7 +303,7 @@ const LandingPage = () => {
       </section>
 
       {/* Trust / Authority */}
-      <section className="py-20 bg-background">
+      <section className="py-12 bg-background">
         <div className="container mx-auto px-4 max-w-3xl text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-10">
             Used By Students For
@@ -326,7 +326,7 @@ const LandingPage = () => {
       <TestimonialsSection />
 
       {/* Final CTA */}
-      <section className="py-20 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
+      <section className="py-12 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
         <div className="container mx-auto px-4 text-center max-w-2xl">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Start Studying Smarter Today
