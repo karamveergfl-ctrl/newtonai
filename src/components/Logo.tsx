@@ -9,7 +9,7 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  sm: { icon: 120, text: "text-xl" },
+  sm: { icon: 56, text: "text-xl" },
   md: { icon: 160, text: "text-3xl" },
   lg: { icon: 220, text: "text-4xl" }
 };
@@ -28,7 +28,7 @@ const Logo = ({ size = "md", showText = false, className = "" }: LogoProps) => {
         <img
           src={newtonLogo}
           alt="NewtonAI Logo"
-          className="w-[160%] h-[160%] object-contain -m-[30%]" />
+          className="w-[140%] h-[140%] object-contain -m-[20%]" />
 
       </motion.div>
       {showText &&

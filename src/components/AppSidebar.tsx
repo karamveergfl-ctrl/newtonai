@@ -140,7 +140,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
       collapsible="icon"
       className="border-r border-sidebar-border bg-sidebar"
     >
-      <SidebarHeader className="p-1">
+      <SidebarHeader className="px-1 pt-0 pb-0">
         <div className={cn(
           "flex items-center",
           isCollapsed ? "justify-center" : "justify-between"
