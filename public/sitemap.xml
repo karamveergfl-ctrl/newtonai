@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://newtonai.lovable.app/sitemap-pages.xml</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/sitemap-pages.xml</loc>
+    <lastmod>2026-02-13</lastmod>
   </sitemap>
   <sitemap>
-    <loc>https://newtonai.lovable.app/sitemap-blog.xml</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/sitemap-blog.xml</loc>
+    <lastmod>2026-02-13</lastmod>
   </sitemap>
   <sitemap>
-    <loc>https://newtonai.lovable.app/sitemap-tools.xml</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://newtonai.site/sitemap-tools.xml</loc>
+    <lastmod>2026-02-13</lastmod>
   </sitemap>
 </sitemapindex>

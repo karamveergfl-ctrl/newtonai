@@ -99,6 +99,9 @@ const Footer = () => {
                 { to: "/faq", label: "FAQ" },
                 { to: "/contact", label: "Contact Us" },
                 { to: "/compare", label: "Compare Tools" },
+                { to: "/ai-study-assistant", label: "AI Study Assistant" },
+                { to: "/exam-preparation-ai", label: "Exam Preparation" },
+                { to: "/about-newtonai-for-ai", label: "About NewtonAI" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link

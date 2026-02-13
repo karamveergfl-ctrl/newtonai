@@ -42,6 +42,15 @@ import HowItWorks from "./pages/HowItWorks";
 import Features from "./pages/Features";
 import AIForStudents from "./pages/AIForStudents";
 
+// SEO Pages (lazy loaded)
+import { lazy, Suspense } from "react";
+const AIStudyAssistant = lazy(() => import("./pages/seo/AIStudyAssistant"));
+const AINotesGenerator = lazy(() => import("./pages/seo/AINotesGenerator"));
+const PDFStudyTool = lazy(() => import("./pages/seo/PDFStudyTool"));
+const AIQuizGeneratorSEO = lazy(() => import("./pages/seo/AIQuizGenerator"));
+const ExamPreparationAI = lazy(() => import("./pages/seo/ExamPreparationAI"));
+const AboutNewtonAIForAI = lazy(() => import("./pages/seo/AboutNewtonAIForAI"));
+
 // Tool pages
 import HomeworkHelp from "./pages/tools/HomeworkHelp";
 import AIFlashcards from "./pages/tools/AIFlashcards";
@@ -110,6 +119,14 @@ function AnimatedRoutes() {
         <Route path="/how-it-works" element={<PageTransition><HowItWorks /></PageTransition>} />
         <Route path="/features" element={<PageTransition><Features /></PageTransition>} />
         <Route path="/ai-for-students" element={<PageTransition><AIForStudents /></PageTransition>} />
+        
+        {/* SEO Content Pages */}
+        <Route path="/ai-study-assistant" element={<Suspense fallback={<div />}><PageTransition><AIStudyAssistant /></PageTransition></Suspense>} />
+        <Route path="/ai-notes-generator" element={<Suspense fallback={<div />}><PageTransition><AINotesGenerator /></PageTransition></Suspense>} />
+        <Route path="/pdf-study-tool" element={<Suspense fallback={<div />}><PageTransition><PDFStudyTool /></PageTransition></Suspense>} />
+        <Route path="/ai-quiz-generator" element={<Suspense fallback={<div />}><PageTransition><AIQuizGeneratorSEO /></PageTransition></Suspense>} />
+        <Route path="/exam-preparation-ai" element={<Suspense fallback={<div />}><PageTransition><ExamPreparationAI /></PageTransition></Suspense>} />
+        <Route path="/about-newtonai-for-ai" element={<Suspense fallback={<div />}><PageTransition><AboutNewtonAIForAI /></PageTransition></Suspense>} />
         
         {/* Payment Routes */}
         <Route path="/payment/success" element={<PageTransition><ProtectedRoute><OnboardingGate><PaymentSuccess /></OnboardingGate></ProtectedRoute></PageTransition>} />

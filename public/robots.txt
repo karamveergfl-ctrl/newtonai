@@ -10,6 +10,18 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
 User-agent: *
 Allow: /
 Disallow: /auth
@@ -20,4 +32,4 @@ Disallow: /credits
 Disallow: /admin/*
 
 # Sitemap
-Sitemap: https://newtonai.lovable.app/sitemap.xml
+Sitemap: https://newtonai.site/sitemap.xml
