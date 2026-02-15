@@ -74,12 +74,18 @@ serve(async (req) => {
         throw profilesError;
       }
 
-      // Get emails from auth
+      // Get emails from auth (masked for list view)
       const { data: authData } = await supabaseAdmin.auth.admin.listUsers();
       const emailMap: Record<string, string> = {};
+      const maskEmail = (email: string): string => {
+        const [local, domain] = email.split("@");
+        if (!domain) return "***";
+        const visible = local.slice(0, Math.min(2, local.length));
+        return `${visible}***@${domain}`;
+      };
       if (authData?.users) {
         for (const authUser of authData.users) {
-          emailMap[authUser.id] = authUser.email || "";
+          emailMap[authUser.id] = authUser.email ? maskEmail(authUser.email) : "";
         }
       }
 
