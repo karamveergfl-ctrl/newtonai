@@ -1,18 +1,29 @@
 
-
-# Increase Header Logo Size
+# Reduce Header Height and Remove Edge Spacing
 
 ## Problem
-After the previous fix, the logo is now too small (44px) to see clearly in the header.
+The header has too much vertical height (h-16 / h-20) and the container has horizontal padding (px-4) that creates visible gaps in the corners, especially around the logo area.
 
-## Solution
-Increase the `xs` and `sm` sizes in the Logo sizeMap to a middle ground that fits the header but is still clearly visible:
+## Changes
 
-- `xs`: 44 -> 52 (mobile header, fits within 64px height)
-- `sm`: 56 -> 64 (desktop header, fits within 80px height)
+### 1. Reduce header height (`src/components/Header.tsx`)
+- Change `h-16 md:h-20` to `h-12 md:h-14` on the inner flex container (line 101)
+- Update the spacer div from `h-16 md:h-20` to `h-12 md:h-14` (line 246)
+- Update mobile menu top offset from `top-16` to `top-12` (line 227)
 
-Adjust compact margins slightly to `-ml-2 -mr-1 mt-0 -mb-0.5` so the larger logo still sits snugly without extra whitespace.
+### 2. Remove edge padding
+- Change the container div from `container mx-auto px-4` to `px-2 md:px-4` to reduce horizontal gaps, especially in the left corner near the logo
 
-## Files to modify
-- `src/components/Logo.tsx` -- update `xs` to 52, `sm` to 64, and tweak compact margins
+### 3. Adjust logo margins for tighter header
+- In `src/components/Logo.tsx`, tighten the compact margins slightly to account for the shorter header
 
+## Technical Details
+
+**Header.tsx changes:**
+- Line 101: `h-16 md:h-20` -> `h-12 md:h-14`
+- Line 100: `container mx-auto px-4` -> `w-full px-2 md:px-4`
+- Line 227: `top-16` -> `top-12`
+- Line 246: `h-16 md:h-20` -> `h-12 md:h-14`
+
+**Files to modify:**
+- `src/components/Header.tsx`
