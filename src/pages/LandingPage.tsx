@@ -319,11 +319,64 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* How NewtonAI Helps Students — Educational Prose */}
+      <section className="py-12 md:py-16 bg-background">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="text-center mb-10">
+            <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4 border border-primary/20">
+              The Science of Learning
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground font-serif">
+              How NewtonAI Helps Students Learn
+            </h2>
+          </div>
+          <div className="prose prose-lg dark:prose-invert max-w-none text-muted-foreground leading-relaxed space-y-5">
+            <p>
+              Effective learning is not about the number of hours spent studying — it is about <strong className="text-foreground">how</strong> those hours are used. Decades of cognitive science research have identified a handful of techniques that dramatically outperform traditional study habits like re-reading and highlighting. Among the most powerful are <strong className="text-foreground">active recall</strong> (testing yourself on material rather than passively reviewing it), <strong className="text-foreground">spaced repetition</strong> (reviewing information at strategically increasing intervals), and <strong className="text-foreground">multi-modal learning</strong> (encoding information through multiple channels — visual, auditory, and textual — to create redundant memory traces).
+            </p>
+            <p>
+              The challenge is that implementing these techniques manually is time-consuming. Creating flashcards from a 40-page chapter takes hours. Writing practice quiz questions requires pedagogical expertise most students lack. Converting notes into visual mind maps or audio summaries is simply impractical without specialised tools. NewtonAI automates this preparation work so that students can spend their limited study time on what actually drives learning: active practice and retrieval.
+            </p>
+            <p>
+              When you upload a PDF, video, or set of notes to NewtonAI, the platform applies natural language processing to identify the most study-worthy concepts — key definitions, relationships, formulas, and arguments — and instantly generates a complete suite of study materials: flashcards for spaced retrieval practice, quizzes for self-testing, summaries for quick review, mind maps for structural understanding, and conversational AI podcasts for passive reinforcement during commutes or exercise.
+            </p>
+            <p>
+              This approach aligns with what researchers call <strong className="text-foreground">desirable difficulty</strong> — learning conditions that feel challenging in the moment but produce stronger long-term retention. By converting passive reading material into active study tools, NewtonAI ensures that every interaction with your study materials engages the cognitive processes that build durable, exam-ready knowledge.
+            </p>
+            <p>
+              The result is not just faster studying — it is <strong className="text-foreground">better</strong> studying. Students using evidence-based techniques like active recall and spaced repetition consistently retain 2-3 times more information compared to those who rely on re-reading and highlighting, according to research published in <em>Psychological Science in the Public Interest</em>. NewtonAI makes these techniques accessible to every student, regardless of their familiarity with learning science.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Ad Banner */}
       <AdBanner />
 
       {/* Testimonials */}
       <TestimonialsSection />
+
+      {/* Monetization Transparency */}
+      <section className="py-12 bg-muted/30">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground font-serif">
+              Our Commitment to Students
+            </h2>
+          </div>
+          <div className="prose dark:prose-invert max-w-none text-muted-foreground leading-relaxed space-y-4">
+            <p>
+              NewtonAI exists to make high-quality study tools accessible to every student. Our free plan provides full access to core AI study features — flashcards, quizzes, summaries, mind maps, and document chat — supported by optional, non-intrusive advertisements. We believe that financial constraints should never prevent a student from accessing effective learning tools.
+            </p>
+            <p>
+              For students who prefer an uninterrupted experience, our premium plans remove all advertisements and provide increased usage limits. Whether you use NewtonAI for free or as a premium subscriber, the educational experience and AI quality remain identical — because our mission is education first, not upselling.
+            </p>
+            <p>
+              We are transparent about how we sustain this platform: free users may see occasional banner advertisements between study sections, and premium subscriptions fund ongoing AI development and infrastructure. We never sell student data, and all AI processing is designed to enhance your learning — not to harvest your information.
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Final CTA */}
       <section className="py-12 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
