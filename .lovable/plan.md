@@ -1,38 +1,39 @@
 
-# Standardize Tool Page Headers to Match Screenshot Design
+
+# Fix Header Logo Size and Alignment
 
 ## Problem
-Two tool pages (AI Summarizer and AI Podcast) use a left-aligned header layout, while the rest (Quiz, Flashcards, MindMap, Homework Help, Lecture Notes) already use the centered icon-on-top layout shown in the reference screenshot.
+The logo in the header is oversized (80px on mobile, 160px on desktop) relative to the header height (64px / 80px), causing it to overflow and visually overlap with navigation items. The "NewtonAI" text also needs better alignment with the logo.
 
-## Changes Required
+## Changes
 
-### 1. AI Summarizer (`src/pages/tools/AISummarizer.tsx`)
-- Replace the left-aligned header (inline icon + title) with the centered pattern:
-  - Centered icon in a rounded container with `bg-primary/10`
-  - Centered title below
-  - Centered subtitle below the title
-  - X close button stays absolute top-right
-- Update container padding from `container mx-auto px-4 py-8` to `min-h-screen bg-background px-3 py-4 sm:px-4 md:px-6 md:py-8` for consistency
+### 1. Update Logo sizeMap (`src/components/Logo.tsx`)
+- Change `xs` icon size from 80 to 44 (for mobile header)
+- Add a new size variant or adjust existing ones so the header gets a properly sized logo
+- Keep `md` at 160 for non-header uses (tool pages, etc.)
+- Update compact margins to be tighter: `-ml-1 -mr-0.5 mt-0 -mb-1`
 
-### 2. AI Podcast (`src/pages/tools/AIPodcast.tsx`)
-- Replace the left-aligned header (inline icon + gradient title + long description) with the centered pattern:
-  - Centered Podcast icon in `bg-primary/10` rounded container
-  - Centered "AI Podcast" title
-  - Short centered subtitle
-  - X close button stays absolute top-right
+### 2. Update Header logo section (`src/components/Header.tsx`)
+- Use `xs` size on mobile (44px) and `sm` on desktop instead of `md` (which is 120px -- still fits within 80px header with compact margins)
+- Reduce `sm` sizeMap to ~56px so it fits neatly in the 80px desktop header
+- Increase gap between logo and "NewtonAI" text from `gap-1` to `gap-1.5`
+- Ensure the nav links have enough left margin so there's no visual collision
 
-## Technical Details
+### Technical Details
 
-**Target header pattern (already used by Quiz, Flashcards, etc.):**
-```text
-[centered icon in rounded bg]
-[centered title - text-2xl sm:text-3xl font-display font-bold]
-[centered subtitle - text-sm text-muted-foreground]
-[absolute top-right X close button]
+**Logo.tsx sizeMap changes:**
+```
+xs: { icon: 44, text: "text-lg" }    // was 80
+sm: { icon: 56, text: "text-xl" }    // was 120
 ```
 
-**Files to modify:**
-- `src/pages/tools/AISummarizer.tsx` (lines ~888-909) - header section
-- `src/pages/tools/AIPodcast.tsx` (lines ~390-416) - header section + outer container
+Compact margins: `-ml-1 -mr-0.5 mt-0 -mb-0.5`
 
-No new dependencies or components needed. This is purely a styling/layout alignment change.
+**Header.tsx logo link:**
+- `Logo size={isMobile ? "xs" : "sm"} compact` (was `xs`/`md`)
+- Gap: `gap-1.5` (was `gap-1`)
+
+**Files to modify:**
+- `src/components/Logo.tsx` -- sizeMap values and compact margins
+- `src/components/Header.tsx` -- logo size prop and link gap
+
