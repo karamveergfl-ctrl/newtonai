@@ -47,6 +47,7 @@ const navLinks: NavLink[] = [
       { href: "/guides", label: "Guides", badge: "NEW" },
       { href: "/blog", label: "Blog" },
       { href: "/faq", label: "FAQ" },
+      { href: "/contact", label: "Contact" },
     ],
   },
   { href: "/pricing", label: "Pricing", type: "link" },

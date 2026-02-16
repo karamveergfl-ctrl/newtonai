@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { ToolAuthGate } from "@/components/ToolAuthGate";
+import { ContentDisclaimer } from "@/components/ContentDisclaimer";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -294,21 +296,19 @@ const MindMap = () => {
                   </motion.div>
                 ) : (
                   <div className="space-y-6">
-                    <ContentInputTabs
-                      onContentReady={handleContentReady}
-                      isProcessing={isGenerating}
-                      placeholder="Paste your study content here (lecture notes, concepts, topics)..."
-                      supportedFormats="PDF, TXT, Images; Max size: 20MB"
-                    />
+                    <ToolAuthGate>
+                      <ContentInputTabs
+                        onContentReady={handleContentReady}
+                        isProcessing={isGenerating}
+                        placeholder="Paste your study content here (lecture notes, concepts, topics)..."
+                        supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                      />
+                      <InlineRecents toolId="mind-map" />
+                    </ToolAuthGate>
                     
-                    
-                    {/* Inline recents - just below input */}
-                    <InlineRecents toolId="mind-map" />
-                    
-                    {/* Ad Banner - Primary placement, always shows */}
                     <PrimaryAdBanner />
                     
-                    {/* Promotional sections with FAQ included */}
+                    <ContentDisclaimer />
                     <ToolPagePromoSections toolId="mind-map" />
                   </div>
                 )}

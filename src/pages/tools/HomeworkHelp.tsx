@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ToolAuthGate } from "@/components/ToolAuthGate";
+import { ContentDisclaimer } from "@/components/ContentDisclaimer";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle, Copy, Check, ImageIcon, Volume2, VolumeX, ChevronDown, Star, X } from "lucide-react";
@@ -304,27 +306,29 @@ const HomeworkHelp = () => {
             </p>
           </div>
 
-          <Card>
-            <CardContent className="pt-6">
-              <ContentInputTabs
-                onContentReady={handleContentReady}
-                isProcessing={isLoading}
-                placeholder="Type your homework question here..."
-                supportedFormats="Images, PDF, TXT; Max size: 20MB"
-              />
-              
-              
-              {/* Inline recents - just below input */}
-              <InlineRecents toolId="homework-help" />
-            </CardContent>
-          </Card>
+          <ToolAuthGate>
+            <Card>
+              <CardContent className="pt-6">
+                <ContentInputTabs
+                  onContentReady={handleContentReady}
+                  isProcessing={isLoading}
+                  placeholder="Type your homework question here..."
+                  supportedFormats="Images, PDF, TXT; Max size: 20MB"
+                />
+                <InlineRecents toolId="homework-help" />
+              </CardContent>
+            </Card>
+          </ToolAuthGate>
 
           {/* Ad Banner - Primary placement, always shows */}
           {!solution && !isLoading && <PrimaryAdBanner />}
 
-          {/* Promotional sections with FAQ included - show when no solution */}
+          {/* Educational content - visible to all visitors including crawlers */}
           {!solution && !isLoading && (
-            <ToolPagePromoSections toolId="homework-help" />
+            <>
+              <ContentDisclaimer />
+              <ToolPagePromoSections toolId="homework-help" />
+            </>
           )}
 
           {solution && (

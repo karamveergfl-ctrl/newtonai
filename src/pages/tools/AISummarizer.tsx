@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
+import { ToolAuthGate } from "@/components/ToolAuthGate";
+import { ContentDisclaimer } from "@/components/ContentDisclaimer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AppLayout } from "@/components/AppLayout";
@@ -1020,29 +1022,32 @@ const AISummarizer = () => {
           </motion.div>
         ) : (
           <div className="space-y-6">
-            <ContentInputTabs
-              onContentReady={handleContentReady}
-              isProcessing={isLoading}
-              acceptedFileTypes={{
-                "application/pdf": [".pdf"],
-                "image/*": [".png", ".jpg", ".jpeg", ".webp"],
-                "text/plain": [".txt"],
-              }}
-              placeholder="Drop a PDF, image, or text file here"
-              showLanguageSelector
-              defaultTab={defaultTab}
-            />
-            
-            
-            {/* Inline recents - just below input */}
-            <InlineRecents toolId="summarizer" />
+            <ToolAuthGate>
+              <ContentInputTabs
+                onContentReady={handleContentReady}
+                isProcessing={isLoading}
+                acceptedFileTypes={{
+                  "application/pdf": [".pdf"],
+                  "image/*": [".png", ".jpg", ".jpeg", ".webp"],
+                  "text/plain": [".txt"],
+                }}
+                placeholder="Drop a PDF, image, or text file here"
+                showLanguageSelector
+                defaultTab={defaultTab}
+              />
+              
+              <InlineRecents toolId="summarizer" />
+            </ToolAuthGate>
 
             {/* Ad Banner - Primary placement, always shows */}
             {!summary && <PrimaryAdBanner />}
             
-            {/* Promotional sections with FAQ included - show when no summary */}
+            {/* Educational content - visible to all visitors */}
             {!summary && (
-              <ToolPagePromoSections toolId="summarizer" />
+              <>
+                <ContentDisclaimer />
+                <ToolPagePromoSections toolId="summarizer" />
+              </>
             )}
 
             {summary && (

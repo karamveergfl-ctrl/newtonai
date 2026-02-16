@@ -132,16 +132,16 @@ function AnimatedRoutes() {
         <Route path="/payment/success" element={<PageTransition><ProtectedRoute><OnboardingGate><PaymentSuccess /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/payment/failure" element={<PageTransition><ProtectedRoute><OnboardingGate><PaymentFailure /></OnboardingGate></ProtectedRoute></PageTransition>} />
         
-        {/* Tool Routes - All protected */}
-        <Route path="/tools" element={<PageTransition><ProtectedRoute><OnboardingGate><Tools /></OnboardingGate></ProtectedRoute></PageTransition>} />
-        <Route path="/pdf-chat" element={<PageTransition><ProtectedRoute><OnboardingGate><PDFChat /></OnboardingGate></ProtectedRoute></PageTransition>} />
-        <Route path="/tools/homework-help" element={<PageTransition><ProtectedRoute><OnboardingGate><HomeworkHelp /></OnboardingGate></ProtectedRoute></PageTransition>} />
-        <Route path="/tools/flashcards" element={<PageTransition><ProtectedRoute><OnboardingGate><AIFlashcards /></OnboardingGate></ProtectedRoute></PageTransition>} />
-        <Route path="/tools/quiz" element={<PageTransition><ProtectedRoute><OnboardingGate><AIQuiz /></OnboardingGate></ProtectedRoute></PageTransition>} />
-        <Route path="/tools/summarizer" element={<PageTransition><ProtectedRoute><OnboardingGate><AISummarizer /></OnboardingGate></ProtectedRoute></PageTransition>} />
-        <Route path="/tools/lecture-notes" element={<PageTransition><ProtectedRoute><OnboardingGate><AILectureNotes /></OnboardingGate></ProtectedRoute></PageTransition>} />
-        <Route path="/tools/ai-podcast" element={<PageTransition><ProtectedRoute><OnboardingGate><AIPodcast /></OnboardingGate></ProtectedRoute></PageTransition>} />
-        <Route path="/tools/mind-map" element={<PageTransition><ProtectedRoute><OnboardingGate><MindMap /></OnboardingGate></ProtectedRoute></PageTransition>} />
+        {/* Tool Routes - Public for crawlability, auth checked inside components */}
+        <Route path="/tools" element={<PageTransition><Tools /></PageTransition>} />
+        <Route path="/pdf-chat" element={<PageTransition><PDFChat /></PageTransition>} />
+        <Route path="/tools/homework-help" element={<PageTransition><HomeworkHelp /></PageTransition>} />
+        <Route path="/tools/flashcards" element={<PageTransition><AIFlashcards /></PageTransition>} />
+        <Route path="/tools/quiz" element={<PageTransition><AIQuiz /></PageTransition>} />
+        <Route path="/tools/summarizer" element={<PageTransition><AISummarizer /></PageTransition>} />
+        <Route path="/tools/lecture-notes" element={<PageTransition><AILectureNotes /></PageTransition>} />
+        <Route path="/tools/ai-podcast" element={<PageTransition><AIPodcast /></PageTransition>} />
+        <Route path="/tools/mind-map" element={<PageTransition><MindMap /></PageTransition>} />
         
         {/* Compare Routes */}
         <Route path="/compare" element={<PageTransition><Compare /></PageTransition>} />
