@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ToolAuthGate } from "@/components/ToolAuthGate";
+import { ContentDisclaimer } from "@/components/ContentDisclaimer";
 import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { PodcastPlayer } from "@/components/PodcastPlayer";
@@ -488,74 +490,73 @@ export default function AIPodcast() {
                 </Card>
               )}
 
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Upload Your Study Material</h2>
-                  {!isPremium && (
-                    <span className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Sparkles className="w-4 h-4 text-primary" />
-                      {creditCost} credits
-                    </span>
-                  )}
-                </div>
-
-                <ContentInputTabs
-                  onContentReady={handleContentReady}
-                  isProcessing={isProcessing}
-                />
-                
-                
-                {/* Inline recents - just below input */}
-                <InlineRecents toolId="podcast" className="mt-6 pt-6" />
-
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm">
-                  <div className="p-4 rounded-lg bg-primary/5">
-                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-primary" />
-                    </div>
-                    <h3 className="font-medium">AI-Generated Script</h3>
-                    <p className="text-muted-foreground text-xs mt-1">
-                      Two hosts discuss your material naturally
-                    </p>
+              <ToolAuthGate>
+                <Card className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">Upload Your Study Material</h2>
+                    {!isPremium && (
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        {creditCost} credits
+                      </span>
+                    )}
                   </div>
-                  <div className="p-4 rounded-lg bg-secondary/5">
-                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-secondary/10 flex items-center justify-center">
-                      <Volume2 className="w-5 h-5 text-secondary" />
-                    </div>
-                    <h3 className="font-medium">Professional AI Voices</h3>
-                    <p className="text-muted-foreground text-xs mt-1">
-                      Studio-quality voices powered by ElevenLabs
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-lg bg-accent/5">
-                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-accent/10 flex items-center justify-center">
-                      <Podcast className="w-5 h-5 text-accent" />
-                    </div>
-                    <h3 className="font-medium">Interactive Learning</h3>
-                    <p className="text-muted-foreground text-xs mt-1">
-                      Raise your hand to ask questions
-                    </p>
-                  </div>
-                </div>
-              </Card>
 
-              {/* Study Streak Widget and Podcast History */}
-              <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  <PodcastHistory 
-                    onSelectPodcast={handleSelectSavedPodcast}
-                    refreshTrigger={historyRefresh}
+                  <ContentInputTabs
+                    onContentReady={handleContentReady}
+                    isProcessing={isProcessing}
                   />
-                </div>
-                <div className="lg:col-span-1">
-                  <StudyStreakWidget />
-                </div>
-              </div>
+                  
+                  <InlineRecents toolId="podcast" className="mt-6 pt-6" />
 
-              {/* Ad Banner - Primary placement, always shows */}
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm">
+                    <div className="p-4 rounded-lg bg-primary/5">
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                      </div>
+                      <h3 className="font-medium">AI-Generated Script</h3>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        Two hosts discuss your material naturally
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-secondary/5">
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-secondary/10 flex items-center justify-center">
+                        <Volume2 className="w-5 h-5 text-secondary" />
+                      </div>
+                      <h3 className="font-medium">Professional AI Voices</h3>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        Studio-quality voices powered by ElevenLabs
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-accent/5">
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-accent/10 flex items-center justify-center">
+                        <Podcast className="w-5 h-5 text-accent" />
+                      </div>
+                      <h3 className="font-medium">Interactive Learning</h3>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        Raise your hand to ask questions
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Study Streak Widget and Podcast History */}
+                <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2">
+                    <PodcastHistory 
+                      onSelectPodcast={handleSelectSavedPodcast}
+                      refreshTrigger={historyRefresh}
+                    />
+                  </div>
+                  <div className="lg:col-span-1">
+                    <StudyStreakWidget />
+                  </div>
+                </div>
+              </ToolAuthGate>
+
               <PrimaryAdBanner />
 
-              {/* Promotional sections with FAQ included */}
+              <ContentDisclaimer />
               <ToolPagePromoSections toolId="podcast" />
             </motion.div>
           )}

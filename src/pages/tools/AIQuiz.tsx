@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { ToolAuthGate } from "@/components/ToolAuthGate";
+import { ContentDisclaimer } from "@/components/ContentDisclaimer";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -308,25 +310,23 @@ const AIQuiz = () => {
           {questions.length === 0 ? (
             !isGenerating && (
               <div className="space-y-6">
-                <Card className="border-border/50 shadow-lg">
-                  <CardContent className="pt-6">
-                    <ContentInputTabs
-                      onContentReady={handleContentReady}
-                      isProcessing={isGenerating}
-                      placeholder="Paste your study content here..."
-                      supportedFormats="PDF, TXT, Images; Max size: 20MB"
-                    />
-                    
-                    
-                    {/* Inline recents - just below input */}
-                    <InlineRecents toolId="quiz" />
-                  </CardContent>
-                </Card>
+                <ToolAuthGate>
+                  <Card className="border-border/50 shadow-lg">
+                    <CardContent className="pt-6">
+                      <ContentInputTabs
+                        onContentReady={handleContentReady}
+                        isProcessing={isGenerating}
+                        placeholder="Paste your study content here..."
+                        supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                      />
+                      <InlineRecents toolId="quiz" />
+                    </CardContent>
+                  </Card>
+                </ToolAuthGate>
 
-                {/* Ad Banner - Primary placement, always shows */}
                 <PrimaryAdBanner />
 
-                {/* Promotional sections with FAQ included */}
+                <ContentDisclaimer />
                 <ToolPagePromoSections toolId="quiz" />
               </div>
             )

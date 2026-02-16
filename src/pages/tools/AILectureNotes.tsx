@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ToolAuthGate } from "@/components/ToolAuthGate";
+import { ContentDisclaimer } from "@/components/ContentDisclaimer";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -546,6 +548,7 @@ const AILectureNotes = () => {
             </p>
           </div>
 
+          <ToolAuthGate>
           <Card className="border-border/50 shadow-lg">
             <CardContent className="pt-6">
               {/* Tab Bar */}
@@ -833,15 +836,19 @@ const AILectureNotes = () => {
           {!notes && !isProcessing && !showTemplateSelection && (
             <InlineRecents toolId="notes" className="mt-0 pt-0 border-t-0" />
           )}
+          </ToolAuthGate>
           
           {/* Ad Banner - Primary placement, always shows */}
           {!notes && !isProcessing && !showTemplateSelection && (
             <PrimaryAdBanner />
           )}
           
-          {/* Promotional sections - show when no notes yet */}
+          {/* Educational content - visible to all visitors */}
           {!notes && !isProcessing && !showTemplateSelection && (
-            <ToolPagePromoSections toolId="notes" />
+            <>
+              <ContentDisclaimer />
+              <ToolPagePromoSections toolId="notes" />
+            </>
           )}
 
           {notes && (
