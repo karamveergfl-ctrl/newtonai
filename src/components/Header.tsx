@@ -100,8 +100,8 @@ export const Header = ({ transparent = false }: HeaderProps) => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-1.5">
-              <Logo size="xs" compact />
+            <Link to="/" className="flex items-center gap-1">
+              <Logo size={isMobile ? "xs" : "md"} compact />
               <span className="font-bold text-lg md:text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 NewtonAI
               </span>
