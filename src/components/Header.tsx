@@ -97,8 +97,8 @@ export const Header = ({ transparent = false }: HeaderProps) => {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${headerBg}`}
       >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 md:h-20">
+        <div className="w-full px-2 md:px-4">
+          <div className="flex items-center justify-between h-12 md:h-14">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-1.5">
               <Logo size={isMobile ? "xs" : "sm"} compact />
@@ -207,7 +207,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-16 z-40 md:hidden bg-background border-b border-border shadow-lg"
+            className="fixed inset-x-0 top-12 z-40 md:hidden bg-background border-b border-border shadow-lg"
           >
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
               {mobileNavLinks.map((link) => (
@@ -243,7 +243,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
       </AnimatePresence>
 
       {/* Spacer */}
-      <div className="h-16 md:h-20" />
+      <div className="h-12 md:h-14" />
     </>
   );
 };
