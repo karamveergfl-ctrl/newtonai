@@ -119,23 +119,38 @@ serve(async (req) => {
       // Continue anyway, subscription is already created
     }
 
-    // Record the code usage using the RPC function
-    const { error: redeemError } = await supabaseAdmin.rpc('apply_redeem_code', {
-      p_code_id: redeem_code_id,
-      p_payment_id: payment?.id || null,
-    });
-
-    if (redeemError) {
-      console.error('Failed to record code usage:', redeemError);
-      // Continue anyway, subscription is already active
-    }
-
-    // Fetch code details for notification check
+    // Fetch code details first (needed for recording and notifications)
     const { data: codeData } = await supabaseAdmin
       .from('redeem_codes')
       .select('code, discount_percent, current_uses, max_uses')
       .eq('id', redeem_code_id)
       .single();
+
+    // Record code usage with direct table operations (bypasses auth.uid() dependency)
+    const { error: redeemInsertError } = await supabaseAdmin
+      .from('redeemed_codes')
+      .insert({
+        user_id: user.id,
+        code_id: redeem_code_id,
+        discount_percent: 100,
+        applied_to_payment_id: payment?.id || null,
+      });
+
+    if (redeemInsertError) {
+      console.error('Failed to insert redeemed_codes record:', redeemInsertError);
+    }
+
+    // Increment usage counter on the redeem code
+    if (codeData) {
+      const { error: updateError } = await supabaseAdmin
+        .from('redeem_codes')
+        .update({ current_uses: codeData.current_uses + 1, updated_at: new Date().toISOString() })
+        .eq('id', redeem_code_id);
+
+      if (updateError) {
+        console.error('Failed to update redeem code usage:', updateError);
+      }
+    }
 
     // Send notifications for high-value or near-limit codes
     if (codeData) {
