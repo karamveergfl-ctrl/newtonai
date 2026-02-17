@@ -1,111 +1,82 @@
 
-# Fix Authentication: Sign Up and Sign In Broken
+
+# Fix: Authentication Redirect Loop
 
 ## Root Cause
 
-There are **two competing bugs** in the authentication flow:
+The auth logs show users being logged in and then **logged out within seconds** (email login at 11:27:10, logout at 11:27:11; Google login at 11:27:23, logout at 11:27:35). This points to a **deadlock** in the `onAuthStateChange` callback.
 
-### Bug 1: Race Condition - Dual Navigation After Login
-In `Auth.tsx`, when a user signs in:
-- `handleAuth` calls `navigate("/dashboard")` directly (line 223)
-- `onAuthStateChange` listener also fires and runs `checkOnboardingAndRedirect`, which navigates to either `/dashboard` or `/onboarding`
+### The Deadlock
 
-These two navigations conflict. The user briefly lands on `/dashboard`, where `ProtectedRoute` starts checking auth, but then gets redirected elsewhere.
+In `Auth.tsx` (line 158-160), the `onAuthStateChange` callback calls `checkOnboardingAndRedirect`, which makes a Supabase database query (`supabase.from("profiles").select(...)`). Making Supabase client calls **inside** an `onAuthStateChange` callback can deadlock because the client internally needs to resolve auth state while the auth state change is still being processed.
 
-### Bug 2: Profile Query Timing on Signup
-With auto-confirm enabled (confirmed via `immediate_login_after_signup: true` in auth logs), when a user signs up:
-1. Signup succeeds and user is immediately logged in
-2. `onAuthStateChange` fires with `SIGNED_IN` event
-3. `checkOnboardingAndRedirect` queries the `profiles` table
-4. But the `handle_new_user` database trigger may not have committed the new profile row yet
-5. Query returns no profile, so the code treats it as a "stale session" and calls `signOut()` -- logging the user out immediately
+When the deadlock occurs, the profile query hangs or fails, the retry loop exhausts, and the code hits the "stale session" path which calls `signOut()` -- immediately logging the user out.
 
-### Bug 3: Google OAuth uses wrong method
-The code calls `supabase.auth.signInWithOAuth()` directly instead of using the Lovable Cloud managed `lovable.auth.signInWithOAuth()`. This may cause Google sign-in to fail entirely.
+The same issue exists in `OnboardingGate.tsx` -- if the user manages to reach `/dashboard`, the OnboardingGate also queries profiles and may trigger the same deadlock-induced signout.
+
+### Google OAuth Landing Issue
+
+After Google OAuth completes, the user is redirected to `window.location.origin` (the root `/` landing page). There's no routing logic on the landing page to check onboarding status and redirect to `/dashboard`. The user lands on the homepage with a valid session but no onward navigation.
 
 ## Solution
 
-### Fix 1: Remove duplicate navigation from `handleAuth`
-The `handleAuth` login branch should NOT call `navigate("/dashboard")` directly. Instead, let the `onAuthStateChange` listener handle all post-login routing via `checkOnboardingAndRedirect`. This eliminates the race condition.
+### 1. Fix the deadlock in Auth.tsx
+Wrap the `checkOnboardingAndRedirect` call in `setTimeout(fn, 0)` when called from `onAuthStateChange`. This allows the auth state change to complete before making additional Supabase calls.
 
-### Fix 2: Add retry logic for new signups
-In `checkOnboardingAndRedirect`, if no profile is found, wait briefly and retry once before treating it as a stale session. This gives the database trigger time to create the profile row.
+### 2. Fix the deadlock in OnboardingGate.tsx  
+Use `setTimeout(fn, 0)` pattern for the profile query to prevent deadlock when triggered by auth state changes.
 
-### Fix 3: Fix Google OAuth
-Replace `supabase.auth.signInWithOAuth()` with `lovable.auth.signInWithOAuth("google", ...)`.
+### 3. Fix Google OAuth redirect
+Change the `redirect_uri` to `window.location.origin + '/auth'` so users return to the auth page where the routing logic lives.
 
-## Files to modify:
-- `src/pages/Auth.tsx` -- all three fixes in this single file
+### 4. Skip routing for password recovery events
+Guard the `onAuthStateChange` handler to skip the `PASSWORD_RECOVERY` event, which should not trigger redirect logic.
+
+## Files to Modify
+
+- `src/pages/Auth.tsx` -- fixes 1, 3, and 4
+- `src/components/OnboardingGate.tsx` -- fix 2
 
 ## Technical Details
 
-### Auth.tsx changes:
-
-1. **Import lovable module** for Google OAuth:
+### Auth.tsx changes (line 158-167):
 ```typescript
-import { lovable } from "@/integrations/lovable/index";
+const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+  // Skip password recovery events and non-login events
+  if (event === 'PASSWORD_RECOVERY' || event === 'TOKEN_REFRESHED') return;
+  if (session) {
+    // Use setTimeout to avoid deadlock -- Supabase client calls
+    // inside onAuthStateChange can deadlock the auth state resolution
+    setTimeout(() => checkOnboardingAndRedirect(session), 0);
+  }
+});
+
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session) checkOnboardingAndRedirect(session);
+});
 ```
 
-2. **Update `checkOnboardingAndRedirect`** with retry logic:
+### Auth.tsx Google OAuth (line 292-294):
 ```typescript
-const checkOnboardingAndRedirect = async (session: any) => {
-  if (!session) return;
-  
-  let profile = null;
-  let error = null;
-  
-  // Try up to 2 times (handles race with handle_new_user trigger)
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const result = await supabase
-      .from("profiles")
-      .select("onboarding_completed")
-      .eq("id", session.user.id)
-      .maybeSingle();
+const { error } = await lovable.auth.signInWithOAuth("google", {
+  redirect_uri: window.location.origin + '/auth',
+});
+```
+
+### OnboardingGate.tsx changes:
+Wrap the profile check to avoid deadlocking when triggered by `onAuthStateChange`:
+```typescript
+useEffect(() => {
+  const checkOnboarding = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setChecking(false); return; }
     
-    profile = result.data;
-    error = result.error;
+    // Delay slightly to avoid deadlock with onAuthStateChange
+    await new Promise(r => setTimeout(r, 100));
     
-    if (profile) break;
-    if (attempt === 0) await new Promise(r => setTimeout(r, 1500));
-  }
-  
-  if (error || !profile) {
-    console.warn("Stale session detected - signing out", error);
-    await supabase.auth.signOut();
-    return;
-  }
-  
-  if (profile.onboarding_completed) {
-    navigate("/dashboard");
-  } else {
-    navigate("/onboarding");
-  }
-};
+    // ... existing retry logic for profile query ...
+  };
+  checkOnboarding();
+}, [navigate]);
 ```
 
-3. **Remove `navigate("/dashboard")` from login handler** -- let `onAuthStateChange` handle it:
-```typescript
-// Login mode -- just sign in, let onAuthStateChange handle redirect
-const { error } = await supabase.auth.signInWithPassword({ email, password });
-if (error) throw error;
-toast({ title: "Welcome back!" });
-// DON'T navigate here -- onAuthStateChange will route correctly
-```
-
-4. **Remove `setMode("login")` from signup handler** -- since auto-confirm logs the user in immediately, the `onAuthStateChange` listener will route them to onboarding automatically.
-
-5. **Fix Google OAuth**:
-```typescript
-const handleGoogleSignIn = async () => {
-  setLoading(true);
-  try {
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (error) throw error;
-  } catch (error: any) {
-    toast({ title: "Error", description: error.message, variant: "destructive" });
-    setLoading(false);
-  }
-};
-```
