@@ -133,7 +133,10 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
         }
 
         console.log('Free subscription activated successfully:', data);
-        handleSuccess();
+        setShowProgress(false);
+        onPaymentEnd?.();
+        onSuccess?.();
+        navigate('/payment/success?method=code');
       } catch (err) {
         console.error('Error activating free subscription:', err);
         handleFailure();

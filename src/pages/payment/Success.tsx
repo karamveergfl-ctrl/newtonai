@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
 
 const Success: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showConfetti, setShowConfetti] = useState(true);
+
+  const isCodeRedemption = searchParams.get('method') === 'code';
 
   useEffect(() => {
     const timer = setTimeout(() => setShowConfetti(false), 5000);
@@ -71,12 +74,14 @@ const Success: React.FC = () => {
         >
           <h1 className="text-3xl font-bold mb-4 flex items-center justify-center gap-2">
             <Sparkles className="w-8 h-8 text-primary" />
-            Payment Successful!
+            {isCodeRedemption ? 'Subscription Activated!' : 'Payment Successful!'}
             <Sparkles className="w-8 h-8 text-primary" />
           </h1>
           
           <p className="text-muted-foreground text-lg mb-8">
-            Welcome to your premium experience! Your subscription is now active and you have access to all premium features.
+            {isCodeRedemption
+              ? 'Your promo code was applied successfully! You now have access to all premium features.'
+              : 'Welcome to your premium experience! Your subscription is now active and you have access to all premium features.'}
           </p>
         </motion.div>
 
