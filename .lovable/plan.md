@@ -1,172 +1,111 @@
 
+# Fix Authentication: Sign Up and Sign In Broken
 
-# Google AdSense Approval: Content Quality and Trust Signal Overhaul
+## Root Cause
 
-## Overview
+There are **two competing bugs** in the authentication flow:
 
-After thorough analysis, this site already has many required pages (About, Privacy, Terms, Contact, FAQ, Blog, How It Works, Features, etc.) but Google is rejecting it for **"Low value content"**. The core issues are:
+### Bug 1: Race Condition - Dual Navigation After Login
+In `Auth.tsx`, when a user signs in:
+- `handleAuth` calls `navigate("/dashboard")` directly (line 223)
+- `onAuthStateChange` listener also fires and runs `checkOnboardingAndRedirect`, which navigates to either `/dashboard` or `/onboarding`
 
-1. **Blog articles are thin** (300-500 words each instead of 1200+)
-2. **Tool pages are fully behind auth** -- Google crawler sees zero content on 7 major pages
-3. **Landing page is marketing-heavy** with minimal educational substance
-4. **Only 9 blog posts** -- need 15-20 for content depth
-5. **No monetization transparency section** explaining the free/premium/ads model
-6. **Missing AI content disclaimer** visible on content pages
+These two navigations conflict. The user briefly lands on `/dashboard`, where `ProtectedRoute` starts checking auth, but then gets redirected elsewhere.
 
----
+### Bug 2: Profile Query Timing on Signup
+With auto-confirm enabled (confirmed via `immediate_login_after_signup: true` in auth logs), when a user signs up:
+1. Signup succeeds and user is immediately logged in
+2. `onAuthStateChange` fires with `SIGNED_IN` event
+3. `checkOnboardingAndRedirect` queries the `profiles` table
+4. But the `handle_new_user` database trigger may not have committed the new profile row yet
+5. Query returns no profile, so the code treats it as a "stale session" and calls `signOut()` -- logging the user out immediately
 
-## Phase 1: Make Tool Pages Crawlable (Highest Impact)
+### Bug 3: Google OAuth uses wrong method
+The code calls `supabase.auth.signInWithOAuth()` directly instead of using the Lovable Cloud managed `lovable.auth.signInWithOAuth()`. This may cause Google sign-in to fail entirely.
 
-Currently all 7 tool routes are wrapped in `ProtectedRoute` + `OnboardingGate`, so Google's crawler gets redirected to `/auth` and indexes nothing.
+## Solution
 
-**Changes:**
-- Remove `ProtectedRoute`/`OnboardingGate` wrappers from tool routes in `src/App.tsx`
-- Inside each tool component (`HomeworkHelp.tsx`, `AIFlashcards.tsx`, `AIQuiz.tsx`, `AISummarizer.tsx`, `AILectureNotes.tsx`, `MindMap.tsx`, `AIPodcast.tsx`), add an auth check that:
-  - Shows the full educational content (ToolPagePromoSections, FAQs, features) to everyone
-  - Shows the interactive tool UI only to authenticated users
-  - Shows a "Sign in to use this tool" CTA for unauthenticated visitors
-- Also remove wrapper from `/pdf-chat` route
+### Fix 1: Remove duplicate navigation from `handleAuth`
+The `handleAuth` login branch should NOT call `navigate("/dashboard")` directly. Instead, let the `onAuthStateChange` listener handle all post-login routing via `checkOnboardingAndRedirect`. This eliminates the race condition.
 
-This instantly makes 500+ words of crawlable content available on each of 8 pages.
+### Fix 2: Add retry logic for new signups
+In `checkOnboardingAndRedirect`, if no profile is found, wait briefly and retry once before treating it as a stale session. This gives the database trigger time to create the profile row.
 
-**Files modified:** `src/App.tsx`, plus 8 tool page components
+### Fix 3: Fix Google OAuth
+Replace `supabase.auth.signInWithOAuth()` with `lovable.auth.signInWithOAuth("google", ...)`.
 
----
-
-## Phase 2: Expand Blog to 15+ Articles (1200+ Words Each)
-
-### 2a. Expand existing 9 blog posts
-Each article currently has 300-500 words. Expand every one to 1200-1500+ words with:
-- Research citations and statistics
-- Detailed step-by-step tutorials with examples
-- Subheadings every 150-200 words
-- Internal links to other blog posts and tool pages
-- Practical tips sections
-
-### 2b. Add 6 new blog articles
-New topics covering categories the user requested:
-
-| Slug | Title | Category |
-|------|-------|----------|
-| `best-study-techniques-engineering` | Best Study Techniques for Engineering Students | Study Tips |
-| `ai-flashcards-vs-traditional` | AI Flashcards vs Traditional Flashcards: A Detailed Comparison | AI Tools |
-| `top-mistakes-students-make-studying` | Top 10 Mistakes Students Make While Studying | Study Tips |
-| `how-ai-improves-pdf-studying` | How AI Improves Studying From PDFs | AI Tools |
-| `productivity-techniques-students` | Productivity Techniques Every Student Should Know | Productivity |
-| `educational-technology-insights-2026` | Educational Technology Trends Students Should Know in 2026 | EdTech |
-
-Each new article will be 1200+ words of substantive, human-readable content.
-
-**Files modified:** `src/pages/Blog.tsx` (add 6 new entries), `src/pages/BlogPost.tsx` (expand all 15 content objects)
-
----
-
-## Phase 3: Landing Page Educational Content
-
-Add a new "How NewtonAI Helps Students" educational prose section (400+ words) between the features grid and comparison table. This explains the learning science (spaced repetition, active recall, multi-modal learning) rather than just marketing bullets.
-
-Also add a "Monetization Transparency" section near the footer explaining:
-- Free plan with optional, non-intrusive ads
-- Premium ad-free experience
-- Educational mission comes first
-
-**File modified:** `src/pages/LandingPage.tsx`
-
----
-
-## Phase 4: Add AI Content Disclaimer Banner
-
-Add a small, professional disclaimer visible on Blog posts, tool educational sections, and the landing page:
-
-> "AI-generated learning insights are reviewed for accuracy and educational usefulness. Content is designed as a study aid and should be verified against authoritative sources."
-
-This will be a reusable `ContentDisclaimer` component.
-
-**Files:** New `src/components/ContentDisclaimer.tsx`, added to `BlogPost.tsx`, `LandingPage.tsx`
-
----
-
-## Phase 5: Enhance FAQ Page
-
-Expand FAQ answers from one-liners to 3-4 sentence detailed responses. Add 5 new FAQs covering:
-- How does AI generate study content?
-- What subjects does NewtonAI support?
-- How is NewtonAI different from ChatGPT for studying?
-- Is NewtonAI content accurate?
-- How does the free plan work with ads?
-
-**File modified:** `src/pages/FAQ.tsx`
-
----
-
-## Phase 6: Navigation and Header Updates
-
-Add "Contact" link to the header navigation (currently missing from nav). Ensure mobile menu includes all key pages.
-
-**File modified:** `src/components/Header.tsx`
-
----
-
-## Phase 7: Sitemap and SEO Updates
-
-- Add all tool pages to `sitemap-tools.xml` (they're now publicly accessible)
-- Add new blog post slugs to `sitemap-blog.xml`
-- Update `lastmod` dates
-- Ensure `robots.txt` removes `/tools` from Disallow (if present)
-
-**Files modified:** `public/sitemap-tools.xml`, `public/sitemap-blog.xml`, `public/sitemap-pages.xml`
-
----
+## Files to modify:
+- `src/pages/Auth.tsx` -- all three fixes in this single file
 
 ## Technical Details
 
-### Tool Page Auth Check Pattern
-```tsx
-// Inside each tool component
-const { data: { session } } = await supabase.auth.getSession();
+### Auth.tsx changes:
 
-// Educational content renders for everyone
-<ToolPagePromoSections tool="homework-help" />
-
-// Interactive UI checks auth
-{session ? (
-  <ToolUI />
-) : (
-  <SignInCTA message="Sign in to use AI Homework Help" />
-)}
+1. **Import lovable module** for Google OAuth:
+```typescript
+import { lovable } from "@/integrations/lovable/index";
 ```
 
-### Blog Content Structure (per article)
+2. **Update `checkOnboardingAndRedirect`** with retry logic:
+```typescript
+const checkOnboardingAndRedirect = async (session: any) => {
+  if (!session) return;
+  
+  let profile = null;
+  let error = null;
+  
+  // Try up to 2 times (handles race with handle_new_user trigger)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    
+    profile = result.data;
+    error = result.error;
+    
+    if (profile) break;
+    if (attempt === 0) await new Promise(r => setTimeout(r, 1500));
+  }
+  
+  if (error || !profile) {
+    console.warn("Stale session detected - signing out", error);
+    await supabase.auth.signOut();
+    return;
+  }
+  
+  if (profile.onboarding_completed) {
+    navigate("/dashboard");
+  } else {
+    navigate("/onboarding");
+  }
+};
 ```
-- Introduction (100-150 words)
-- Section 1 with subheadings (200-300 words)
-- Section 2 with examples (200-300 words)
-- Step-by-step tutorial (200-300 words)
-- Tips and best practices (150-200 words)
-- Conclusion with CTA (100-150 words)
-Total: 1200-1500 words
+
+3. **Remove `navigate("/dashboard")` from login handler** -- let `onAuthStateChange` handle it:
+```typescript
+// Login mode -- just sign in, let onAuthStateChange handle redirect
+const { error } = await supabase.auth.signInWithPassword({ email, password });
+if (error) throw error;
+toast({ title: "Welcome back!" });
+// DON'T navigate here -- onAuthStateChange will route correctly
 ```
 
-### Files to modify (total ~20 files):
-- `src/App.tsx` -- remove auth wrappers from tool routes
-- `src/pages/tools/HomeworkHelp.tsx` -- add inline auth check
-- `src/pages/tools/AIFlashcards.tsx` -- add inline auth check
-- `src/pages/tools/AIQuiz.tsx` -- add inline auth check
-- `src/pages/tools/AISummarizer.tsx` -- add inline auth check
-- `src/pages/tools/AILectureNotes.tsx` -- add inline auth check
-- `src/pages/tools/MindMap.tsx` -- add inline auth check
-- `src/pages/tools/AIPodcast.tsx` -- add inline auth check
-- `src/pages/PDFChat.tsx` -- add inline auth check
-- `src/pages/Blog.tsx` -- add 6 new blog entries
-- `src/pages/BlogPost.tsx` -- expand all 15 articles to 1200+ words
-- `src/pages/LandingPage.tsx` -- add educational section + monetization transparency
-- `src/pages/FAQ.tsx` -- expand answers, add 5 new FAQs
-- `src/components/Header.tsx` -- add Contact to nav
-- `src/components/ContentDisclaimer.tsx` -- new component
-- `public/sitemap-tools.xml` -- add tool page URLs
-- `public/sitemap-blog.xml` -- add new blog URLs
-- `public/sitemap-pages.xml` -- update dates
+4. **Remove `setMode("login")` from signup handler** -- since auto-confirm logs the user in immediately, the `onAuthStateChange` listener will route them to onboarding automatically.
 
-### Estimated scope
-This is a large change set. Due to the volume of content writing (15 articles at 1200+ words = ~18,000 words), this will need to be implemented in multiple messages, likely 3-4 rounds.
-
+5. **Fix Google OAuth**:
+```typescript
+const handleGoogleSignIn = async () => {
+  setLoading(true);
+  try {
+    const { error } = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (error) throw error;
+  } catch (error: any) {
+    toast({ title: "Error", description: error.message, variant: "destructive" });
+    setLoading(false);
+  }
+};
+```
