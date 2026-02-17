@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -122,12 +123,23 @@ const Auth = () => {
     const checkOnboardingAndRedirect = async (session: any) => {
       if (!session) return;
       
-      // Check if user has completed onboarding
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("onboarding_completed")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      let profile = null;
+      let error = null;
+      
+      // Try up to 2 times (handles race with handle_new_user trigger)
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        
+        profile = result.data;
+        error = result.error;
+        
+        if (profile) break;
+        if (attempt === 0) await new Promise(r => setTimeout(r, 1500));
+      }
       
       // Handle stale session - user exists in JWT but not in database
       if (error || !profile) {
@@ -220,7 +232,7 @@ const Auth = () => {
         }
         
         toast({ title: "Welcome back!", description: "You've successfully logged in." });
-        navigate("/dashboard");
+        // Don't navigate here -- onAuthStateChange listener handles routing
       } else {
         // Signup mode
         if (password.length < 6) {
@@ -257,8 +269,9 @@ const Auth = () => {
           localStorage.setItem('newtonai_new_signup', 'true');
         }
 
-        toast({ title: "Account created!", description: "You can now log in with your credentials." });
-        setMode("login");
+        toast({ title: "Account created!", description: "Setting up your account..." });
+        // Don't setMode("login") -- auto-confirm logs user in immediately,
+        // onAuthStateChange will route to onboarding
       }
     } catch (error: any) {
       if (!passwordError) {
@@ -276,11 +289,8 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
       if (error) throw error;
     } catch (error: any) {

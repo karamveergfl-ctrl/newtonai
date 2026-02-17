@@ -20,11 +20,23 @@ export function OnboardingGate({ children }: OnboardingGateProps) {
         return;
       }
 
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("onboarding_completed")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      let profile = null;
+      let error = null;
+      
+      // Retry once to handle race with handle_new_user trigger
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        
+        profile = result.data;
+        error = result.error;
+        
+        if (profile) break;
+        if (attempt === 0) await new Promise(r => setTimeout(r, 1500));
+      }
 
       // Handle stale session - user exists in JWT but not in database
       if (error || !profile) {
