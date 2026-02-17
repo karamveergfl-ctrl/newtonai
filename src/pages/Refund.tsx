@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import Logo from "@/components/Logo";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 
@@ -27,29 +27,7 @@ const Refund = () => {
         breadcrumbs={breadcrumbs}
         keywords="refund policy, money back guarantee, subscription refund, NewtonAI refunds, cancellation policy"
       />
-      {/* Header */}
-      <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <Logo />
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              About
-            </Link>
-            <Link to="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Pricing
-            </Link>
-            <Link to="/contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Contact
-            </Link>
-            <Link to="/faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              FAQ
-            </Link>
-          </nav>
-          <Link to="/auth">
-            <Button>Sign In</Button>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="container py-12 max-w-4xl">
