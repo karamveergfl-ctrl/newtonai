@@ -156,7 +156,13 @@ const Auth = () => {
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) checkOnboardingAndRedirect(session);
+      // Skip events that shouldn't trigger redirect logic
+      if (event === 'PASSWORD_RECOVERY' || event === 'TOKEN_REFRESHED') return;
+      if (session) {
+        // Use setTimeout to avoid deadlock -- Supabase client calls
+        // inside onAuthStateChange can deadlock the auth state resolution
+        setTimeout(() => checkOnboardingAndRedirect(session), 0);
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -290,7 +296,7 @@ const Auth = () => {
     setLoading(true);
     try {
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: window.location.origin + '/auth',
       });
       if (error) throw error;
     } catch (error: any) {

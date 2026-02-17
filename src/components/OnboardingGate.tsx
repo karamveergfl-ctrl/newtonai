@@ -20,6 +20,9 @@ export function OnboardingGate({ children }: OnboardingGateProps) {
         return;
       }
 
+      // Delay slightly to avoid deadlock with onAuthStateChange
+      await new Promise(r => setTimeout(r, 100));
+
       let profile = null;
       let error = null;
       
