@@ -103,9 +103,15 @@ export const Header = ({ transparent = false }: HeaderProps) => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-1.5">
               <Logo size={isMobile ? "xs" : "sm"} compact />
-              <span className="font-display font-extrabold text-xl md:text-2xl tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                NewtonAI
-              </span>
+              <div className="flex items-baseline gap-0">
+                <span className="font-display font-extrabold text-xl md:text-2xl tracking-tight bg-gradient-to-r from-primary via-emerald-400 to-secondary bg-clip-text text-transparent">
+                  Newton
+                </span>
+                <span className="font-display font-black text-xl md:text-2xl tracking-tighter bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent relative">
+                  AI
+                  <span className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-gradient-to-r from-primary to-secondary rounded-full opacity-80" />
+                </span>
+              </div>
             </Link>
 
             {/* Desktop Navigation */}
