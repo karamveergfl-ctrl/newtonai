@@ -7,22 +7,15 @@
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-W67PH05SLY');
-      // Load gtag after page becomes interactive
-      if (typeof requestIdleCallback === 'function') {
-        requestIdleCallback(function() {
-          var s = document.createElement('script');
-          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-W67PH05SLY';
-          s.async = true;
-          document.head.appendChild(s);
-        });
-      } else {
+      // Load gtag 5s after load to avoid TBT impact
+      window.addEventListener('load', function() {
         setTimeout(function() {
           var s = document.createElement('script');
           s.src = 'https://www.googletagmanager.com/gtag/js?id=G-W67PH05SLY';
           s.async = true;
           document.head.appendChild(s);
-        }, 3000);
-      }
+        }, 5000);
+      });
     </script>
 
     <meta charset="UTF-8" />
