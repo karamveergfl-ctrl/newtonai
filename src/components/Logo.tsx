@@ -21,9 +21,9 @@ const Logo = ({ size = "md", showText = false, className = "", compact = false, 
   const margins = compact ? "ml-0" : "-ml-2 -mr-1";
 
   return (
-    <div className={`flex items-center gap-1.5 ${className}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
       <div
-        className={`flex-shrink-0 overflow-hidden aspect-square rounded-full ${margins} transition-transform duration-200 hover:scale-105`}
+        className={`flex-shrink-0 overflow-hidden aspect-square rounded-full ${margins} ring-2 ring-primary/30 transition-transform duration-200 hover:scale-105`}
         style={{ width: icon, height: icon }}>
         <img
           src={newtonLogo}
@@ -34,15 +34,9 @@ const Logo = ({ size = "md", showText = false, className = "", compact = false, 
           style={{ imageRendering: 'auto' }} />
       </div>
       {showText && (
-        <div className={`flex items-baseline gap-0 ${text}`}>
-          <span className="font-display font-extrabold tracking-tight bg-gradient-to-r from-primary via-emerald-400 to-secondary bg-clip-text text-transparent">
-            Newton
-          </span>
-          <span className="font-display font-black tracking-tighter bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent relative">
-            AI
-            <span className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-gradient-to-r from-primary to-secondary rounded-full opacity-80" />
-          </span>
-        </div>
+        <span className={`font-display font-extrabold tracking-tight bg-gradient-to-r from-primary via-emerald-400 to-secondary bg-clip-text text-transparent ${text}`}>
+          NewtonAI
+        </span>
       )}
     </div>
   );
