@@ -21,7 +21,8 @@ NewtonAI unifies everything into one intelligent learning ecosystem — designed
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"></noscript>
 
     <!-- Google Search Console Verification -->
     <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE" />
@@ -34,8 +35,7 @@ NewtonAI unifies everything into one intelligent learning ecosystem — designed
     <meta property="og:site_name" content="NewtonAI" />
     <link rel="icon" type="image/png" href="https://storage.googleapis.com/gpt-engineer-file-uploads/3zJNLswREFYmMNBKLzZInrerjNQ2/uploads/1771008785119-Screenshot_2026-02-14_001919.png">
 
-    <!-- Preload Newton video for instant display -->
-    <link rel="preload" as="video" href="/newton-processing.mp4" type="video/mp4">
+    <!-- Video preloaded lazily via JS after initial paint -->
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@newtonai" />
