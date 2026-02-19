@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
   Users,
   Crown,
@@ -124,11 +123,7 @@ export default function AdminAnalytics() {
     description?: string;
     trend?: string;
   }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className="animate-in fade-in duration-300">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -147,7 +142,7 @@ export default function AdminAnalytics() {
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 
   const getTierBadge = (tier: string) => {

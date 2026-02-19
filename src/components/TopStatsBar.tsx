@@ -16,7 +16,7 @@ export function TopStatsBar() {
             {/* Mobile hamburger menu */}
             <SidebarTrigger className="md:hidden h-8 w-8" />
             {/* Bracket-style separator - mobile only */}
-            <div className="md:hidden h-6 w-[3px] rounded-full bg-primary/20 shadow-[0_0_6px_hsl(var(--primary)/0.3)] animate-pulse" />
+            <div className="md:hidden h-6 w-[3px] rounded-full bg-primary/20" />
             <GamificationBadge />
           </div>
           <div className="flex items-center gap-1 bg-muted/50 rounded-full px-1 py-1">
