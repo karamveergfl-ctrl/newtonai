@@ -14,7 +14,7 @@ import { LottieNewton } from '@/components/newton/LottieNewton';
 import { ResponseSection, parseResponseSections } from './ResponseSection';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { useToast } from '@/hooks/use-toast';
-import newtonCharacter from '@/assets/newton-character.png';
+import newtonCharacter from '@/assets/newton-character.webp';
 import type { ChatMessage, ContextMode } from '@/hooks/usePDFChat';
 
 interface ChatPanelProps {

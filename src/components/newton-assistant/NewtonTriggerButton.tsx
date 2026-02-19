@@ -2,7 +2,7 @@ import { memo } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import newtonChatAvatar from "@/assets/newton-chat-avatar.png";
+import newtonChatAvatar from "@/assets/newton-chat-avatar.webp";
 
 interface NewtonTriggerButtonProps {
   isOpen: boolean;

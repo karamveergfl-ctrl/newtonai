@@ -39,7 +39,7 @@ export const VideoPreloader = memo(() => {
     <video
       ref={videoRef}
       src="/newton-processing.mp4"
-      poster="/newton-poster.webp"
+      poster=""
       preload="auto"
       muted
       playsInline
