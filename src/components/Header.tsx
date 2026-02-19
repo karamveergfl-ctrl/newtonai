@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CreditBalance } from "@/components/CreditBalance";
@@ -200,48 +200,42 @@ export const Header = ({ transparent = false }: HeaderProps) => {
         </div>
       </header>
 
-      {/* Mobile Menu - Keep AnimatePresence for essential UX */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-12 z-40 md:hidden bg-background border-b border-border shadow-lg"
-          >
-            <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
-              {mobileNavLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                    location.pathname === link.href
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  }`}
-                >
-                  {link.label}
-                  {link.badge && (
-                    <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary animate-pulse">
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
-              <div className="h-px bg-border my-2" />
-              <div className="flex gap-2">
-                <Button asChild variant="outline" className="flex-1">
-                  <Link to="/auth">Log in</Link>
-                </Button>
-                <Button asChild className="flex-1">
-                  <Link to="/auth">Sign up</Link>
-                </Button>
-              </div>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Mobile Menu - CSS animation for performance */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-x-0 top-12 z-40 md:hidden bg-background border-b border-border shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
+        >
+          <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+            {mobileNavLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                  location.pathname === link.href
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                {link.label}
+                {link.badge && (
+                  <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary animate-pulse">
+                    {link.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
+            <div className="h-px bg-border my-2" />
+            <div className="flex gap-2">
+              <Button asChild variant="outline" className="flex-1">
+                <Link to="/auth">Log in</Link>
+              </Button>
+              <Button asChild className="flex-1">
+                <Link to="/auth">Sign up</Link>
+              </Button>
+            </div>
+          </nav>
+        </div>
+      )}
 
       {/* Spacer */}
       <div className="h-12 md:h-14" />
