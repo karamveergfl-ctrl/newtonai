@@ -21,7 +21,7 @@ import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { usePDFDocument } from "@/hooks/usePDFDocument";
 import { pdfjs, ensurePdfWorkerConfigured } from "@/lib/pdfjsWorker";
 
-// Worker is configured globally in src/lib/pdfjsWorker.ts (imported in main.tsx)
+ensurePdfWorkerConfigured();
 
 interface PDFChatUploadViewProps {
   onFileSelected: (file: File, documentId: string) => void;

@@ -1,7 +1,8 @@
 import { createRoot } from "react-dom/client";
 
-// Configure PDF.js worker globally BEFORE any PDF components load
-import "./lib/pdfjsWorker";
+// Defer PDF.js worker configuration to avoid pulling pdfjs-dist into the critical chain.
+// It will be configured lazily when a PDF component first loads.
+// import "./lib/pdfjsWorker";
 
 import App from "./App.tsx";
 import "./index.css";
