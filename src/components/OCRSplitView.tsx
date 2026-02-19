@@ -17,9 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { pdfjs } from "@/lib/pdfjsWorker";
-
-// Worker is configured globally in src/lib/pdfjsWorker.ts (imported in main.tsx)
+import { pdfjs, ensurePdfWorkerConfigured } from "@/lib/pdfjsWorker";
+ensurePdfWorkerConfigured();
 
 interface OCRSplitViewProps {
   file: File;

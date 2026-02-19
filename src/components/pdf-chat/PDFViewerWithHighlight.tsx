@@ -8,7 +8,8 @@ import { cn } from '@/lib/utils';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Worker is configured globally in src/lib/pdfjsWorker.ts (imported in main.tsx)
+import { ensurePdfWorkerConfigured } from "@/lib/pdfjsWorker";
+ensurePdfWorkerConfigured();
 
 interface HighlightInfo {
   pageNumber: number;

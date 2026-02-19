@@ -12,7 +12,8 @@ import { UniversalGenerationSettings } from "@/components/UniversalStudySettings
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-// Worker is configured globally in src/lib/pdfjsWorker.ts (imported in main.tsx)
+import { ensurePdfWorkerConfigured } from "@/lib/pdfjsWorker";
+ensurePdfWorkerConfigured();
 
 interface PDFReaderProps {
   pdfUrl: string;
