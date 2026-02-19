@@ -79,10 +79,10 @@ const StudyFetchComparison = lazy(() => import("./pages/compare/StudyFetchCompar
 const PaymentSuccess = lazy(() => import("./pages/payment/Success"));
 const PaymentFailure = lazy(() => import("./pages/payment/Failure"));
 
-// Admin pages
-import { AdminRoute } from "./components/AdminRoute";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { OnboardingGate } from "./components/OnboardingGate";
+// Route guards - lazy loaded to reduce initial bundle
+const AdminRoute = lazy(() => import("./components/AdminRoute").then(m => ({ default: m.AdminRoute })));
+const ProtectedRoute = lazy(() => import("./components/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
+const OnboardingGate = lazy(() => import("./components/OnboardingGate").then(m => ({ default: m.OnboardingGate })));
 const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
 const AdminUsers = lazy(() => import("./pages/admin/Users"));
 const AdminInquiries = lazy(() => import("./pages/admin/Inquiries"));
