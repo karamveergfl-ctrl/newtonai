@@ -6,6 +6,7 @@ interface LogoProps {
   className?: string;
   animate?: boolean;
   compact?: boolean;
+  eager?: boolean;
 }
 
 const sizeMap = {
@@ -15,7 +16,7 @@ const sizeMap = {
   lg: { icon: 220, text: "text-4xl" }
 };
 
-const Logo = ({ size = "md", showText = false, className = "", compact = false }: LogoProps) => {
+const Logo = ({ size = "md", showText = false, className = "", compact = false, eager = true }: LogoProps) => {
   const { icon, text } = sizeMap[size];
   const margins = compact ? "-ml-3 -mr-1.5 -mt-1 -mb-1" : "-ml-6 -mr-5 -mt-4 -mb-4";
 
@@ -27,9 +28,9 @@ const Logo = ({ size = "md", showText = false, className = "", compact = false }
         <img
           src={newtonLogo}
           alt="NewtonAI Logo"
-          loading="eager"
+          loading={eager ? "eager" : "lazy"}
           decoding="async"
-          fetchPriority="high"
+          fetchPriority={eager ? "high" : undefined}
           className="w-full h-full object-contain"
           style={{ imageRendering: 'auto' }} />
       </div>

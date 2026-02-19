@@ -15,7 +15,7 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <div>
-              <Logo size="lg" className="mb-4" />
+              <Logo size="lg" className="mb-4" eager={false} />
               <p className="text-muted-foreground text-sm leading-relaxed mb-6 max-w-sm">
                 Transform your learning experience with AI-powered study tools.
                 Upload any document and let our AI create flashcards, summaries,
