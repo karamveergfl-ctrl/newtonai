@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { useGuestTrial } from "@/contexts/GuestTrialContext";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
@@ -77,7 +78,15 @@ const MindMap = () => {
     enabled: !!mindMapData 
   });
 
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
+    if (!isAuthenticated) {
+      incrementGuestUsage();
+      setShowTrialPrompt(true);
+      return;
+    }
+
     const allowed = await tryUseFeature();
     if (!allowed) return;
 

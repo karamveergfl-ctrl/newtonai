@@ -10,6 +10,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { PodcastProvider } from "@/contexts/PodcastContext";
 import { ProcessingOverlayProvider } from "@/contexts/ProcessingOverlayContext";
 import { StudyProvider } from "@/contexts/StudyContext";
+import { GuestTrialProvider } from "@/contexts/GuestTrialContext";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { PageTransition } from "./components/PageTransition";
 
@@ -194,10 +195,12 @@ const App = () => (
             {/* VideoPreloader moved to DeferredComponents */}
             <BrowserRouter>
               <ScrollToTop />
-              <PodcastProvider>
-                <AnimatedRoutes />
-                <DeferredComponents />
-              </PodcastProvider>
+              <GuestTrialProvider>
+                <PodcastProvider>
+                  <AnimatedRoutes />
+                  <DeferredComponents />
+                </PodcastProvider>
+              </GuestTrialProvider>
             </BrowserRouter>
           </TooltipProvider>
         </StudyProvider>

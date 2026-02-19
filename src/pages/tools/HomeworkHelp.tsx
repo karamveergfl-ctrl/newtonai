@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { StepBySolutionRenderer } from "@/components/StepBySolutionRenderer";
 import { InlineSolutionPanel } from "@/components/InlineSolutionPanel";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { useGuestTrial } from "@/contexts/GuestTrialContext";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
@@ -150,7 +151,16 @@ const HomeworkHelp = () => {
     toast({ title: "Copied!", description: "Solution copied to clipboard" });
   };
 
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
+    // Guest usage gate: if not authenticated, increment guest usage and prompt signup
+    if (!isAuthenticated) {
+      incrementGuestUsage();
+      setShowTrialPrompt(true);
+      return;
+    }
+
     const allowed = await tryUseFeature();
     if (!allowed) return;
 

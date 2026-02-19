@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { useGuestTrial } from "@/contexts/GuestTrialContext";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { CreditModal } from "@/components/CreditModal";
 import { usePodcastContext } from "@/contexts/PodcastContext";
@@ -115,11 +116,19 @@ export default function AIPodcast() {
     };
   }, [podcast, isPlaying, setIsMinimized]);
 
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+
   const handleContentReady = async (
     content: string,
     type: "upload" | "recording" | "youtube" | "text",
     metadata?: { videoId?: string; videoTitle?: string; file?: File; language?: string }
   ) => {
+    if (!isAuthenticated) {
+      incrementGuestUsage();
+      setShowTrialPrompt(true);
+      return;
+    }
+
     // Check feature limits first
     const allowed = await tryUseFeature();
     if (!allowed) return;
