@@ -103,7 +103,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-1.5">
               <Logo size={isMobile ? "xs" : "sm"} compact />
-              <span className="font-bold text-lg md:text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <span className="font-display font-extrabold text-xl md:text-2xl tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 NewtonAI
               </span>
             </Link>
