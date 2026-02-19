@@ -18,12 +18,12 @@ const sizeMap = {
 
 const Logo = ({ size = "md", showText = false, className = "", compact = false, eager = true }: LogoProps) => {
   const { icon, text } = sizeMap[size];
-  const margins = compact ? "-ml-3 -mr-1.5 -mt-1 -mb-1" : "-ml-6 -mr-5 -mt-4 -mb-4";
+  const margins = compact ? "-ml-1 -mr-0.5" : "-ml-2 -mr-1";
 
   return (
     <div className={`flex items-center gap-0 ${className}`}>
       <div
-        className={`flex-shrink-0 overflow-hidden aspect-square rounded-lg ${margins} transition-transform duration-200 hover:scale-105`}
+        className={`flex-shrink-0 overflow-hidden aspect-square rounded-full ${margins} transition-transform duration-200 hover:scale-105`}
         style={{ width: icon, height: icon }}>
         <img
           src={newtonLogo}
