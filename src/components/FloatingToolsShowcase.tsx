@@ -158,7 +158,8 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
                 <img 
                   src={newtonCharacter} 
                   alt="Newton AI mascot" 
-                  loading="lazy"
+                  loading="eager"
+                  fetchPriority="high"
                   width={80}
                   height={120}
                   className="w-full h-full object-contain"
