@@ -33,6 +33,7 @@ const Logo = ({ size = "md", showText = false, className = "", compact = false }
           alt="NewtonAI Logo"
           loading="eager"
           decoding="sync"
+          fetchPriority="high"
           className="w-full h-full object-contain"
           style={{ imageRendering: 'auto' }} />
 
