@@ -1,109 +1,92 @@
 
+## Analysis and Fixes for NewtonAI Auth and Guest Trial Issues
 
-## Progressive Signup Gate for NewtonAI Tools
+### Problems Found
 
-### Overview
-Transform the current `ToolAuthGate` from a hard auth wall into a progressive trial system. Unauthenticated visitors get 2 free tool uses tracked via localStorage, then see a conversion modal prompting signup.
+**Problem 1: Guest trial blocks ALL tool usage for unauthenticated users immediately**
+In every tool page (HomeworkHelp, AIQuiz, AIFlashcards, etc.), the guest usage gate fires on the FIRST interaction -- it calls `incrementGuestUsage()` AND `setShowTrialPrompt(true)` together, then returns early. This means:
+- On the very first use, the trial prompt modal pops up AND the count goes to 1 (blocking the actual generation)
+- The user never actually gets to USE the tool -- they see the signup modal right away
+- The intent was "2 free uses THEN block", but the current code blocks BEFORE any generation happens
 
-### Architecture
+**Problem 2: `returnTo` query param is ignored after login/signup**
+The `GuestTrialLimitModal` correctly passes `?returnTo=/tools/homework-help` when navigating to `/auth`. However, `Auth.tsx`'s `checkOnboardingAndRedirect` always navigates to `/dashboard` -- it never reads the `returnTo` query parameter. So after signing up from a tool page, the user lands on `/dashboard` instead of being returned to the tool they were using.
 
-**Key Principle**: Minimal changes to existing tool pages. The `ToolAuthGate` component is already wrapped around the interactive parts of every tool page. We modify it to allow guest access with usage tracking instead of immediately blocking.
+**Problem 3: `fetchPriority` React warning in Logo component**
+The console shows: `React does not recognize the fetchPriority prop on a DOM element`. React expects `fetchpriority` (lowercase) on native HTML elements, but the code uses `fetchPriority` (camelCase). This is a known React 18 issue -- the prop should be passed differently.
 
-### Changes
+### Fixes
 
-#### 1. New Hook: `src/hooks/useGuestUsage.ts`
-- Manages guest trial state using localStorage
-- Generates a `guest_session_id` (UUID) stored in localStorage
-- Tracks `guest_usage_count` per tool (stored as JSON object)
-- `MAX_GUEST_USES = 2` (total across all tools)
-- Exposes: `{ canUseAsGuest, incrementGuestUsage, guestUsageCount, maxUses, guestSessionId }`
-- On auth state change (user signs up), clears guest tracking from localStorage
+**Fix 1: Let guests actually use tools before blocking**
+Change the guest gate logic in all 7 tool pages so that:
+- If `guestLimitReached` is already true, show the prompt and return (block)
+- If NOT reached, let the generation proceed. After successful generation, THEN increment and optionally show a soft prompt
+- This gives users 2 real generations before being blocked
 
-#### 2. New Component: `src/components/GuestTrialLimitModal.tsx`
-- Shown when guest hits the 2-use limit
-- Title: "Save Your Progress -- Create Your Free Account"
-- Message emphasizing value: save materials, unlimited tools, sync across devices
-- Buttons: "Create Free Account", "Sign In", "Maybe Later" (closes modal but tools remain locked)
-- Uses the same `framer-motion` animation style as `SignInRequiredModal`
-- Passes `returnTo` for post-auth redirection
+Current (broken) pattern in all tool pages:
+```typescript
+if (!isAuthenticated) {
+  incrementGuestUsage();      // Always increments
+  setShowTrialPrompt(true);   // Always shows modal
+  return;                     // Always blocks
+}
+```
 
-#### 3. Modify: `src/components/ToolAuthGate.tsx`
-Current behavior: If no session, show sign-in CTA immediately.
-New behavior:
-- If authenticated: show children (unchanged)
-- If not authenticated AND guest has remaining uses: show children (allow tool usage)
-- If not authenticated AND guest has exhausted uses: show the limit modal/CTA
-- Expose a `onToolUsed` callback that tool pages call after successful generation to increment guest count
+Fixed pattern:
+```typescript
+if (!isAuthenticated && guestLimitReached) {
+  setShowTrialPrompt(true);
+  return; // Block -- trial exhausted
+}
+// ... proceed with generation ...
+// After successful generation:
+if (!isAuthenticated) {
+  incrementGuestUsage();
+}
+```
 
-#### 4. New Context: `src/contexts/GuestTrialContext.tsx`
-- Wraps the app to provide guest usage state globally
-- Provides `incrementGuestUsage()` that tool pages call after a successful generation
-- Provides `guestLimitReached` boolean
-- On `onAuthStateChange` detecting a new signup, clears guest localStorage data
+Files to update:
+- `src/pages/tools/HomeworkHelp.tsx`
+- `src/pages/tools/AIQuiz.tsx`
+- `src/pages/tools/AIFlashcards.tsx`
+- `src/pages/tools/AISummarizer.tsx`
+- `src/pages/tools/AILectureNotes.tsx`
+- `src/pages/tools/MindMap.tsx`
+- `src/pages/tools/AIPodcast.tsx`
 
-#### 5. Modify Tool Pages (minimal touch)
-Each tool page (HomeworkHelp, AIQuiz, AIFlashcards, AISummarizer, AILectureNotes, MindMap, AIPodcast) already calls `useFeatureLimitGate` for authenticated usage tracking. For guest users:
-- After a successful generation, call `incrementGuestUsage()` from the context
-- The `ToolAuthGate` wrapper automatically handles showing/hiding based on remaining uses
-- No structural changes to tool page layouts
+Also update `useGuestTrial` destructuring to include `guestLimitReached`.
 
-#### 6. Guest Content Persistence (Simplified)
-- Generated content (quiz results, flashcards, summaries) is already rendered client-side in component state
-- No server-side guest session table needed initially -- localStorage tracking is sufficient
-- Content is ephemeral for guests (displayed in-session, lost on page refresh)
-- On signup, the user starts fresh with their authenticated account and full limits
-- A subtle banner warns guests: "Sign up to save your generated content"
+**Fix 2: Honor `returnTo` after auth in Auth.tsx**
+In `checkOnboardingAndRedirect`, read the `returnTo` search param and navigate there instead of always going to `/dashboard`:
 
-### What We Are NOT Doing (Keeping It Simple)
-- No server-side `guest_sessions` table (localStorage is sufficient for trial gating)
-- No migration of guest-generated content to authenticated accounts (complex, low ROI)
-- No changes to edge functions or backend
-- No database migrations needed
+```typescript
+const params = new URLSearchParams(window.location.search);
+const returnTo = params.get('returnTo');
 
-### SEO and Ad Compliance
-- Educational content, FAQs, and promo sections remain fully visible (they're outside `ToolAuthGate`)
-- The interactive tool input area is what gets progressively gated
-- Crawlers see all educational content unchanged
-- Landing page remains fully accessible
+if (profile.onboarding_completed) {
+  navigate(returnTo || "/dashboard");
+} else {
+  navigate("/onboarding");
+}
+```
+
+File: `src/pages/Auth.tsx` (lines ~151-155)
+
+**Fix 3: Fix `fetchPriority` React warning in Logo**
+Change `fetchPriority={eager ? "high" : undefined}` to use a lowercase attribute via spread or remove it since `loading="eager"` already handles priority.
+
+File: `src/components/Logo.tsx` (line ~33)
 
 ### Technical Details
 
-**`useGuestUsage.ts` core logic:**
-```typescript
-const STORAGE_KEY = "newton_guest_trial";
-const MAX_USES = 2;
-
-// Stored shape: { id: string, count: number, expiry: number }
-// Expiry: 7 days from first use (auto-reset)
-```
-
-**`ToolAuthGate.tsx` updated logic:**
-```typescript
-if (session) return children;
-if (!guestLimitReached) return children; // Allow guest usage
-return <GuestTrialLimitModal />; // Show conversion modal
-```
-
-**Guest usage increment** -- called from each tool's generation success handler:
-```typescript
-const { incrementGuestUsage } = useGuestTrial();
-// After successful generation:
-if (!session) incrementGuestUsage();
-```
-
-### File Summary
-| File | Action |
+| File | Change |
 |------|--------|
-| `src/hooks/useGuestUsage.ts` | Create |
-| `src/contexts/GuestTrialContext.tsx` | Create |
-| `src/components/GuestTrialLimitModal.tsx` | Create |
-| `src/components/ToolAuthGate.tsx` | Modify |
-| `src/App.tsx` | Wrap with GuestTrialProvider |
-| `src/pages/tools/HomeworkHelp.tsx` | Add guest increment call |
-| `src/pages/tools/AIQuiz.tsx` | Add guest increment call |
-| `src/pages/tools/AIFlashcards.tsx` | Add guest increment call |
-| `src/pages/tools/AISummarizer.tsx` | Add guest increment call |
-| `src/pages/tools/AILectureNotes.tsx` | Add guest increment call |
-| `src/pages/tools/MindMap.tsx` | Add guest increment call |
-| `src/pages/tools/AIPodcast.tsx` | Add guest increment call |
-
+| `src/pages/tools/HomeworkHelp.tsx` | Fix guest gate: check `guestLimitReached` before blocking, increment after successful generation |
+| `src/pages/tools/AIQuiz.tsx` | Same fix |
+| `src/pages/tools/AIFlashcards.tsx` | Same fix |
+| `src/pages/tools/AISummarizer.tsx` | Same fix |
+| `src/pages/tools/AILectureNotes.tsx` | Same fix |
+| `src/pages/tools/MindMap.tsx` | Same fix |
+| `src/pages/tools/AIPodcast.tsx` | Same fix |
+| `src/pages/Auth.tsx` | Read `returnTo` param and navigate there after login/signup |
+| `src/components/Logo.tsx` | Remove or fix `fetchPriority` prop to eliminate React warning |
