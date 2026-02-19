@@ -1,41 +1,44 @@
 
-## Fix Logo Overflow and Upgrade Branding Text
 
-### Problem
-The logo icon is 60px (mobile) / 72px (desktop) but the header is only 48px / 56px tall, causing the logo to overflow and get clipped by the screen boundary. The "NewtonAI" text also needs a more refined, professional appearance.
+## Make "NewtonAI" Header Text Extraordinary
 
-### Changes
+The current branding text uses a simple gradient with basic font styling. We'll elevate it with a multi-layered visual treatment that feels premium and distinctive.
 
-**1. Reduce logo sizes in `src/components/Logo.tsx`**
-- Change `xs` icon from 60px to 36px (fits within 48px header with padding)
-- Change `sm` icon from 72px to 42px (fits within 56px header with padding)
-- Remove negative margins for the compact variant since the image no longer needs compensation
-- Keep `md` and `lg` sizes unchanged (used on landing page, not header)
+### Design Approach
 
-**2. Upgrade "NewtonAI" branding text in `src/components/Header.tsx`**
-- Switch to the `font-display` family (Plus Jakarta Sans) for a more editorial feel
-- Use `font-extrabold` with tighter letter-spacing (`tracking-tight`)
-- Keep the gradient but refine it for a cleaner look
-- Slightly increase the desktop size to `text-xl md:text-2xl` for better presence
+Split the text into two styled parts -- "Newton" and "AI" -- to create visual hierarchy and interest:
+
+- **"Newton"** -- bold, clean, uses the display font with the existing gradient
+- **"AI"** -- highlighted with a distinct accent treatment (e.g., a glowing badge-like feel or contrasting color weight)
+- Add a subtle shimmer animation across the full text for a premium, dynamic feel
+- Use a richer multi-stop gradient (primary -> secondary -> accent teal) for more depth
+
+### Changes in `src/components/Header.tsx`
+
+Replace the single `<span>` with a styled composite:
+
+```tsx
+<div className="flex items-baseline gap-0">
+  <span className="font-display font-extrabold text-xl md:text-2xl tracking-tight bg-gradient-to-r from-primary via-emerald-400 to-secondary bg-clip-text text-transparent">
+    Newton
+  </span>
+  <span className="font-display font-black text-xl md:text-2xl tracking-tighter bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent relative">
+    AI
+    <span className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-gradient-to-r from-primary to-secondary rounded-full opacity-80" />
+  </span>
+</div>
+```
+
+Key visual upgrades:
+1. **Multi-stop gradient** with a `via-emerald-400` middle stop for richer color depth
+2. **Split styling** -- "Newton" is extrabold, "AI" is black weight with tighter tracking for contrast
+3. **Underline accent** -- a thin gradient underline beneath "AI" to make it pop as a badge/highlight
+4. **No shimmer animation** to stay consistent with the project's preference for minimal animations in the header
 
 ### Technical Details
 
-**Logo.tsx** -- update `sizeMap` and margins:
-```ts
-const sizeMap = {
-  xs: { icon: 36, text: "text-lg" },
-  sm: { icon: 42, text: "text-xl" },
-  md: { icon: 160, text: "text-3xl" },
-  lg: { icon: 220, text: "text-4xl" }
-};
-```
-Compact margins changed from `"-ml-1 -mr-0.5"` to `"ml-0"` (no negative offset needed).
+- Only `src/components/Header.tsx` needs editing (line ~106, the branding span)
+- No new dependencies or CSS needed -- uses existing Tailwind utilities
+- The `items-baseline` alignment keeps both parts on the same text baseline
+- `emerald-400` complements the existing primary/secondary teal palette
 
-**Header.tsx** -- update the branding span:
-```tsx
-<span className="font-display font-extrabold text-xl md:text-2xl tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-  NewtonAI
-</span>
-```
-
-These two edits will keep the logo fully inside the header and give the brand name a sharper, more designed feel.
