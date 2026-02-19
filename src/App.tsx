@@ -10,12 +10,14 @@ import { HelmetProvider } from "react-helmet-async";
 import { PodcastProvider } from "@/contexts/PodcastContext";
 import { ProcessingOverlayProvider } from "@/contexts/ProcessingOverlayContext";
 import { StudyProvider } from "@/contexts/StudyContext";
-import { PodcastMiniPlayer } from "@/components/PodcastMiniPlayer";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { PageTransition } from "./components/PageTransition";
-import CookieConsent from "./components/CookieConsent";
-import { VideoPreloader } from "./components/VideoPreloader";
-import { GlobalNewtonAssistant } from "./components/GlobalNewtonAssistant";
+
+// Non-critical global components lazy-loaded to reduce main thread blocking
+const PodcastMiniPlayer = lazy(() => import("@/components/PodcastMiniPlayer").then(m => ({ default: m.PodcastMiniPlayer })));
+const CookieConsent = lazy(() => import("./components/CookieConsent"));
+const VideoPreloader = lazy(() => import("./components/VideoPreloader").then(m => ({ default: m.VideoPreloader })));
+const GlobalNewtonAssistant = lazy(() => import("./components/GlobalNewtonAssistant").then(m => ({ default: m.GlobalNewtonAssistant })));
 
 // Landing page loaded eagerly (critical for FCP)
 import LandingPage from "./pages/LandingPage";
@@ -178,15 +180,15 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            {/* Global video preloader - forces browser to download & decode video at app startup */}
-            <VideoPreloader />
+            {/* Global video preloader - lazy loaded to reduce main thread blocking */}
+            <Suspense fallback={null}><VideoPreloader /></Suspense>
             <BrowserRouter>
               <ScrollToTop />
               <PodcastProvider>
                 <AnimatedRoutes />
-                <PodcastMiniPlayer />
-                <CookieConsent />
-                <GlobalNewtonAssistant />
+                <Suspense fallback={null}><PodcastMiniPlayer /></Suspense>
+                <Suspense fallback={null}><CookieConsent /></Suspense>
+                <Suspense fallback={null}><GlobalNewtonAssistant /></Suspense>
               </PodcastProvider>
             </BrowserRouter>
           </TooltipProvider>
