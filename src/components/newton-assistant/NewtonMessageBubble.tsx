@@ -1,8 +1,8 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+const MarkdownRenderer = lazy(() => import("@/components/MarkdownRenderer").then(m => ({ default: m.MarkdownRenderer })));
 import { NewtonResponseSection, parseNewtonSections } from "./NewtonResponseSection";
 import { supabase } from "@/integrations/supabase/client";
 import newtonChatAvatar from "@/assets/newton-chat-avatar-sm.webp";
@@ -107,7 +107,9 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
                       />
                     ) : (
                       <div key={idx} className="prose prose-sm dark:prose-invert max-w-none mb-3 break-words [overflow-wrap:anywhere]">
-                        <MarkdownRenderer content={section.content} />
+                        <Suspense fallback={<span className="text-muted-foreground text-xs">Loading…</span>}>
+                          <MarkdownRenderer content={section.content} />
+                        </Suspense>
                       </div>
                     )
                   ))}
@@ -115,7 +117,9 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
               ) : (
                 // Fallback to simple markdown rendering during streaming
                 <div className="prose prose-sm dark:prose-invert max-w-none break-words [overflow-wrap:anywhere]">
-                  <MarkdownRenderer content={message.content} />
+                  <Suspense fallback={<span className="text-muted-foreground text-xs">Loading…</span>}>
+                    <MarkdownRenderer content={message.content} />
+                  </Suspense>
                 </div>
               )
             ) : isStreaming ? (

@@ -1,6 +1,6 @@
-import { useState, memo } from 'react';
+import { useState, memo, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+const MarkdownRenderer = lazy(() => import('@/components/MarkdownRenderer').then(m => ({ default: m.MarkdownRenderer })));
 import { Sparkles, Loader2, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -42,7 +42,7 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
   if (!section.heading) {
     return (
       <div className="text-sm">
-        <MarkdownRenderer content={section.content} />
+        <Suspense fallback={null}><MarkdownRenderer content={section.content} /></Suspense>
       </div>
     );
   }
@@ -97,7 +97,7 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
       )}>
         <div className="p-4 text-sm min-w-0">
           <div className="prose prose-sm dark:prose-invert max-w-none break-words [overflow-wrap:anywhere] [&_.katex-display]:overflow-x-auto [&_.katex]:max-w-full">
-            <MarkdownRenderer content={section.content} />
+            <Suspense fallback={null}><MarkdownRenderer content={section.content} /></Suspense>
           </div>
         </div>
 
@@ -109,7 +109,7 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
               AI Explanation
             </div>
             <div className="text-sm">
-              <MarkdownRenderer content={aiExplanation} />
+              <Suspense fallback={null}><MarkdownRenderer content={aiExplanation} /></Suspense>
             </div>
           </div>
         )}

@@ -19,8 +19,8 @@ const CookieConsent = lazy(() => import("./components/CookieConsent"));
 const VideoPreloader = lazy(() => import("./components/VideoPreloader").then(m => ({ default: m.VideoPreloader })));
 const GlobalNewtonAssistant = lazy(() => import("./components/GlobalNewtonAssistant").then(m => ({ default: m.GlobalNewtonAssistant })));
 
-// Landing page loaded eagerly (critical for FCP)
-import LandingPage from "./pages/LandingPage";
+// Landing page lazy-loaded to break up main thread long task (improves Max Potential FID)
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 
 // All other pages lazy-loaded
 const Dashboard = lazy(() => import("./pages/Index"));
@@ -171,7 +171,7 @@ function AnimatedRoutes() {
 }
 
 function DeferredComponents() {
-  const ready = useDeferredLoad(2500);
+  const ready = useDeferredLoad(4000);
   if (!ready) return null;
   return (
     <>
