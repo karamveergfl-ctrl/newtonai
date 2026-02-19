@@ -171,10 +171,11 @@ function AnimatedRoutes() {
 }
 
 function DeferredComponents() {
-  const ready = useDeferredLoad(4000);
+  const ready = useDeferredLoad(8000);
   if (!ready) return null;
   return (
     <>
+      <Suspense fallback={null}><VideoPreloader /></Suspense>
       <Suspense fallback={null}><PodcastMiniPlayer /></Suspense>
       <Suspense fallback={null}><CookieConsent /></Suspense>
       <Suspense fallback={null}><GlobalNewtonAssistant /></Suspense>
@@ -190,8 +191,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            {/* Global video preloader - lazy loaded to reduce main thread blocking */}
-            <Suspense fallback={null}><VideoPreloader /></Suspense>
+            {/* VideoPreloader moved to DeferredComponents */}
             <BrowserRouter>
               <ScrollToTop />
               <PodcastProvider>
