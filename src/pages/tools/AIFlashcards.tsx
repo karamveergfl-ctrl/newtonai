@@ -77,11 +77,10 @@ const AIFlashcards = () => {
     enabled: flashcards.length > 0 
   });
 
-  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt, guestLimitReached } = useGuestTrial();
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
-    if (!isAuthenticated) {
-      incrementGuestUsage();
+    if (!isAuthenticated && guestLimitReached) {
       setShowTrialPrompt(true);
       return;
     }
@@ -171,6 +170,10 @@ const AIFlashcards = () => {
         result_preview: { cardCount: data.flashcards.length },
       });
       
+      // Increment guest usage after successful generation
+      if (!isAuthenticated) {
+        incrementGuestUsage();
+      }
       // Hide processing and show results immediately
       hideProcessing();
       setIsGenerating(false);

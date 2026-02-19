@@ -148,8 +148,11 @@ const Auth = () => {
         return; // Stay on auth page after sign out
       }
       
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get('returnTo');
+
       if (profile.onboarding_completed) {
-        navigate("/dashboard");
+        navigate(returnTo || "/dashboard");
       } else {
         navigate("/onboarding");
       }

@@ -151,12 +151,11 @@ const HomeworkHelp = () => {
     toast({ title: "Copied!", description: "Solution copied to clipboard" });
   };
 
-  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt, guestLimitReached } = useGuestTrial();
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
-    // Guest usage gate: if not authenticated, increment guest usage and prompt signup
-    if (!isAuthenticated) {
-      incrementGuestUsage();
+    // Guest usage gate: block only if limit is reached
+    if (!isAuthenticated && guestLimitReached) {
       setShowTrialPrompt(true);
       return;
     }
@@ -253,6 +252,10 @@ const HomeworkHelp = () => {
       }
 
       hideProcessing();
+      // Increment guest usage after successful generation
+      if (!isAuthenticated) {
+        incrementGuestUsage();
+      }
       toast({
         title: "Solution Ready! ✨",
         description: "Your homework has been solved",

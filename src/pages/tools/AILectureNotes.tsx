@@ -274,12 +274,11 @@ const AILectureNotes = () => {
     setIsHighlightMode(false);
   };
 
-  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt, guestLimitReached } = useGuestTrial();
 
   // Extract content from Upload/YouTube/Text tabs and show template selection
   const handleExtractContent = async () => {
-    if (!isAuthenticated) {
-      incrementGuestUsage();
+    if (!isAuthenticated && guestLimitReached) {
       setShowTrialPrompt(true);
       return;
     }
@@ -368,6 +367,10 @@ const AILectureNotes = () => {
 
       // Track usage
       await confirmUsage();
+      // Increment guest usage after successful generation
+      if (!isAuthenticated) {
+        incrementGuestUsage();
+      }
 
       setProgress(100);
       handleNotesGenerated(notesData.notes, notesData.title || template?.name || "Lecture Notes");
