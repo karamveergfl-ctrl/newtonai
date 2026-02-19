@@ -1,49 +1,68 @@
 
 
-## Fix Lag and Slow Page Loading
+## Fix App-Wide Lag and Loading Performance
 
-### Root Causes Identified
+### Problems Found
 
-1. **Infinite framer-motion animation running constantly**: The `GamificationBadge` component (visible on every authenticated page via `TopStatsBar`) has a flame icon with an infinite `scale + y` animation that continuously updates `transform: scale()` on every frame. The session replay confirms rapid, non-stop DOM updates from this animation.
+1. **GamificationBadge useEffect has `xp` in its dependency array** (line 123), which means every time XP state updates, the entire effect re-runs -- re-reading localStorage, re-calculating streak, and re-attaching event listeners. This creates a cascading re-render loop.
 
-2. **1-second polling interval in GamificationBadge**: A `setInterval` runs every 1 second to check localStorage for XP changes, causing unnecessary re-renders on every tick. Combined with the infinite animation, this creates constant main-thread work.
+2. **FloatingToolsShowcase auto-rotates every 4 seconds** with `setInterval`, causing re-renders on the landing page and auth page even when off-screen. The `key={selectedTool}` on the inner content forces unnecessary DOM teardown/rebuild on each tick.
 
-3. **framer-motion on admin Analytics page**: The Analytics page uses `motion.div` for stat cards (entrance animations), pulling the heavy framer-motion library into a critical page.
+3. **Header badge `animate-pulse`** classes (lines 123, 156, 218) -- three instances of infinite CSS animation on "NEW" badges in the navigation. These run continuously on every page.
 
-4. **TopStatsBar separator has `animate-pulse`**: A small CSS `animate-pulse` on a border separator adds minor continuous work.
+4. **CreditBalance checks auth on every mount** by calling `supabase.auth.getSession()` and subscribing to `onAuthStateChange` -- duplicating what GuestTrialContext already does.
+
+5. **GuestTrialContext and CreditBalance both subscribe to `onAuthStateChange`** independently, creating redundant auth listeners.
+
+6. **PageTransition wraps every route** with `animate-in fade-in duration-200`, adding animation overhead to every navigation.
+
+---
 
 ### Fixes
 
-#### 1. `src/components/GamificationBadge.tsx` -- Remove infinite animation and polling
+#### 1. Fix GamificationBadge infinite re-render loop
+**File:** `src/components/GamificationBadge.tsx`
 
-- **Replace the infinite `motion.div` animation** on the Flame icon (lines 229-241) with a simple static `<Flame>` icon. The bounce/scale animation runs on every frame and is the primary source of lag.
-- **Remove the 1-second `setInterval`** polling (line 120). Instead, only listen for the `storage` event, which fires when another tab updates localStorage. For same-tab XP updates, dispatch a custom event (`xp-update`) from wherever XP is awarded.
-- Remove `framer-motion` import from this component entirely.
+- Remove `xp` from the useEffect dependency array (change `[xp]` to `[]`). The effect only needs to run once on mount.
+- Use a ref to track the current XP value inside the event handler instead of relying on the stale closure over `xp`.
+- Move the achievements array outside the component (it's recreated on every render since it depends on state -- memoize it with `useMemo`).
 
-#### 2. `src/components/TopStatsBar.tsx` -- Remove animate-pulse
+#### 2. Remove auto-rotate interval from FloatingToolsShowcase
+**File:** `src/components/FloatingToolsShowcase.tsx`
 
-- Remove `animate-pulse` from the separator div (line 19). Replace with a static style.
+- Remove the 4-second `setInterval` auto-rotation (lines 82-87). Users can still click tool badges to switch. This eliminates a re-render every 4 seconds on the landing page.
+- Remove the `key={selectedTool}` from the inner indicator div to prevent forced DOM teardown.
 
-#### 3. `src/pages/admin/Analytics.tsx` -- Replace motion.div with CSS
+#### 3. Remove `animate-pulse` from Header navigation badges
+**File:** `src/components/Header.tsx`
 
-- Replace `motion.div` stat card wrapper with a plain `div` using CSS `animate-in fade-in` for the entrance effect. This eliminates the framer-motion dependency from this page.
+- Remove `animate-pulse` from the three "NEW" badge instances (lines 123, 156, 218). Replace with a static style. These infinite CSS animations run on every page where the Header is rendered.
 
-#### 4. `src/components/AnimatedCreditCounter.tsx` -- Optimize scale animation
+#### 4. Simplify PageTransition to zero-cost wrapper
+**File:** `src/components/PageTransition.tsx`
 
-- The `animate` prop with `scale: [1, 1.1, 1]` re-triggers correctly only on credit changes, so this is fine. No changes needed here.
+- Remove the `animate-in fade-in duration-200` class. This CSS animation fires on every route change and adds layout work. Replace with a simple static wrapper.
+
+#### 5. Remove redundant auth check in CreditBalance
+**File:** `src/components/CreditBalance.tsx`
+
+- The `useCredits` hook already handles auth state. Remove the duplicate `supabase.auth.getSession()` call and `onAuthStateChange` subscription. Use the existing `loading` state from `useCredits` to determine if the component should render.
+
+---
 
 ### Technical Details
 
-| File | Change |
-|------|--------|
-| `src/components/GamificationBadge.tsx` | Remove infinite `motion.div` animation on Flame icon; replace with static icon. Remove 1-second `setInterval` polling; keep `storage` event listener only. Remove `framer-motion` import. |
-| `src/components/TopStatsBar.tsx` | Remove `animate-pulse` from separator div on line 19 |
-| `src/pages/admin/Analytics.tsx` | Replace `motion.div` stat cards with plain `div` + CSS `animate-in fade-in` classes. Remove `framer-motion` import. |
+| File | Change | Impact |
+|------|--------|--------|
+| `src/components/GamificationBadge.tsx` | Fix `useEffect` deps from `[xp]` to `[]`; use ref for XP tracking; memoize achievements | Eliminates cascading re-render loop |
+| `src/components/FloatingToolsShowcase.tsx` | Remove auto-rotate `setInterval`; remove `key={selectedTool}` | Eliminates landing page re-renders every 4s |
+| `src/components/Header.tsx` | Remove `animate-pulse` from 3 badge instances | Stops 3 infinite CSS animations on every page |
+| `src/components/PageTransition.tsx` | Remove `animate-in fade-in` class | Eliminates animation work on every navigation |
+| `src/components/CreditBalance.tsx` | Remove duplicate auth check and `onAuthStateChange` listener | Reduces redundant async calls and listeners |
 
 ### Expected Impact
-
-- Eliminates the continuous `transform: scale()` DOM updates visible in the session replay
-- Removes 1-second polling interval that causes unnecessary re-renders
-- Reduces main-thread work significantly on all authenticated pages
-- Faster page interactions and reduced input delay
+- Eliminates the re-render loop that was the primary source of jank
+- Removes 4+ continuous animations/intervals running on every page
+- Reduces redundant auth listeners
+- Pages should feel instant on navigation with no fade-in delay
 
