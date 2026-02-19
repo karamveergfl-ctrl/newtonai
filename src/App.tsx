@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { lazy, Suspense } from "react";
 
 import { HelmetProvider } from "react-helmet-async";
 import { PodcastProvider } from "@/contexts/PodcastContext";
@@ -16,34 +17,35 @@ import CookieConsent from "./components/CookieConsent";
 import { VideoPreloader } from "./components/VideoPreloader";
 import { GlobalNewtonAssistant } from "./components/GlobalNewtonAssistant";
 
-// Pages
+// Landing page loaded eagerly (critical for FCP)
 import LandingPage from "./pages/LandingPage";
-import Dashboard from "./pages/Index";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-import Pricing from "./pages/Pricing";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import FAQ from "./pages/FAQ";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import Refund from "./pages/Refund";
-import Profile from "./pages/Profile";
-import Onboarding from "./pages/Onboarding";
-import Enterprise from "./pages/Enterprise";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import Tools from "./pages/Tools";
-import Guides from "./pages/Guides";
-import HowAILearningWorks from "./pages/guides/HowAILearningWorks";
-import SpacedRepetitionGuide from "./pages/guides/SpacedRepetitionGuide";
-import ResponsibleAIUse from "./pages/guides/ResponsibleAIUse";
-import HowItWorks from "./pages/HowItWorks";
-import Features from "./pages/Features";
-import AIForStudents from "./pages/AIForStudents";
 
-// SEO Pages (lazy loaded)
-import { lazy, Suspense } from "react";
+// All other pages lazy-loaded
+const Dashboard = lazy(() => import("./pages/Index"));
+const Auth = lazy(() => import("./pages/Auth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Refund = lazy(() => import("./pages/Refund"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Enterprise = lazy(() => import("./pages/Enterprise"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Tools = lazy(() => import("./pages/Tools"));
+const Guides = lazy(() => import("./pages/Guides"));
+const HowAILearningWorks = lazy(() => import("./pages/guides/HowAILearningWorks"));
+const SpacedRepetitionGuide = lazy(() => import("./pages/guides/SpacedRepetitionGuide"));
+const ResponsibleAIUse = lazy(() => import("./pages/guides/ResponsibleAIUse"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const Features = lazy(() => import("./pages/Features"));
+const AIForStudents = lazy(() => import("./pages/AIForStudents"));
+
+// SEO Pages
 const AIStudyAssistant = lazy(() => import("./pages/seo/AIStudyAssistant"));
 const AINotesGenerator = lazy(() => import("./pages/seo/AINotesGenerator"));
 const PDFStudyTool = lazy(() => import("./pages/seo/PDFStudyTool"));
@@ -52,37 +54,37 @@ const ExamPreparationAI = lazy(() => import("./pages/seo/ExamPreparationAI"));
 const AboutNewtonAIForAI = lazy(() => import("./pages/seo/AboutNewtonAIForAI"));
 
 // Tool pages
-import HomeworkHelp from "./pages/tools/HomeworkHelp";
-import AIFlashcards from "./pages/tools/AIFlashcards";
-import AIQuiz from "./pages/tools/AIQuiz";
-import AISummarizer from "./pages/tools/AISummarizer";
-import AILectureNotes from "./pages/tools/AILectureNotes";
-import MindMap from "./pages/tools/MindMap";
-import AIPodcast from "./pages/tools/AIPodcast";
-import PDFChat from "./pages/PDFChat";
+const HomeworkHelp = lazy(() => import("./pages/tools/HomeworkHelp"));
+const AIFlashcards = lazy(() => import("./pages/tools/AIFlashcards"));
+const AIQuiz = lazy(() => import("./pages/tools/AIQuiz"));
+const AISummarizer = lazy(() => import("./pages/tools/AISummarizer"));
+const AILectureNotes = lazy(() => import("./pages/tools/AILectureNotes"));
+const MindMap = lazy(() => import("./pages/tools/MindMap"));
+const AIPodcast = lazy(() => import("./pages/tools/AIPodcast"));
+const PDFChat = lazy(() => import("./pages/PDFChat"));
 
 // Compare pages
-import Compare from "./pages/compare/Compare";
-import CheggComparison from "./pages/compare/CheggComparison";
-import QuizletComparison from "./pages/compare/QuizletComparison";
-import StudocuComparison from "./pages/compare/StudocuComparison";
-import CourseHeroComparison from "./pages/compare/CourseHeroComparison";
-import ChatGPTComparison from "./pages/compare/ChatGPTComparison";
-import StudyxComparison from "./pages/compare/StudyxComparison";
-import StudyFetchComparison from "./pages/compare/StudyFetchComparison";
+const Compare = lazy(() => import("./pages/compare/Compare"));
+const CheggComparison = lazy(() => import("./pages/compare/CheggComparison"));
+const QuizletComparison = lazy(() => import("./pages/compare/QuizletComparison"));
+const StudocuComparison = lazy(() => import("./pages/compare/StudocuComparison"));
+const CourseHeroComparison = lazy(() => import("./pages/compare/CourseHeroComparison"));
+const ChatGPTComparison = lazy(() => import("./pages/compare/ChatGPTComparison"));
+const StudyxComparison = lazy(() => import("./pages/compare/StudyxComparison"));
+const StudyFetchComparison = lazy(() => import("./pages/compare/StudyFetchComparison"));
 
 // Payment pages
-import PaymentSuccess from "./pages/payment/Success";
-import PaymentFailure from "./pages/payment/Failure";
+const PaymentSuccess = lazy(() => import("./pages/payment/Success"));
+const PaymentFailure = lazy(() => import("./pages/payment/Failure"));
 
 // Admin pages
 import { AdminRoute } from "./components/AdminRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { OnboardingGate } from "./components/OnboardingGate";
-import AdminAnalytics from "./pages/admin/Analytics";
-import AdminUsers from "./pages/admin/Users";
-import AdminInquiries from "./pages/admin/Inquiries";
-import AdminRedeemCodes from "./pages/admin/RedeemCodes";
+const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
+const AdminUsers = lazy(() => import("./pages/admin/Users"));
+const AdminInquiries = lazy(() => import("./pages/admin/Inquiries"));
+const AdminRedeemCodes = lazy(() => import("./pages/admin/RedeemCodes"));
 
 const queryClient = new QueryClient();
 
@@ -91,9 +93,9 @@ function AnimatedRoutes() {
   
   
   return (
+    <Suspense fallback={<div />}>
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
         <Route path="/dashboard" element={<PageTransition><ProtectedRoute><OnboardingGate><Dashboard /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
         <Route path="/onboarding" element={<PageTransition><ProtectedRoute><Onboarding /></ProtectedRoute></PageTransition>} />
@@ -121,12 +123,12 @@ function AnimatedRoutes() {
         <Route path="/ai-for-students" element={<PageTransition><AIForStudents /></PageTransition>} />
         
         {/* SEO Content Pages */}
-        <Route path="/ai-study-assistant" element={<Suspense fallback={<div />}><PageTransition><AIStudyAssistant /></PageTransition></Suspense>} />
-        <Route path="/ai-notes-generator" element={<Suspense fallback={<div />}><PageTransition><AINotesGenerator /></PageTransition></Suspense>} />
-        <Route path="/pdf-study-tool" element={<Suspense fallback={<div />}><PageTransition><PDFStudyTool /></PageTransition></Suspense>} />
-        <Route path="/ai-quiz-generator" element={<Suspense fallback={<div />}><PageTransition><AIQuizGeneratorSEO /></PageTransition></Suspense>} />
-        <Route path="/exam-preparation-ai" element={<Suspense fallback={<div />}><PageTransition><ExamPreparationAI /></PageTransition></Suspense>} />
-        <Route path="/about-newtonai-for-ai" element={<Suspense fallback={<div />}><PageTransition><AboutNewtonAIForAI /></PageTransition></Suspense>} />
+        <Route path="/ai-study-assistant" element={<PageTransition><AIStudyAssistant /></PageTransition>} />
+        <Route path="/ai-notes-generator" element={<PageTransition><AINotesGenerator /></PageTransition>} />
+        <Route path="/pdf-study-tool" element={<PageTransition><PDFStudyTool /></PageTransition>} />
+        <Route path="/ai-quiz-generator" element={<PageTransition><AIQuizGeneratorSEO /></PageTransition>} />
+        <Route path="/exam-preparation-ai" element={<PageTransition><ExamPreparationAI /></PageTransition>} />
+        <Route path="/about-newtonai-for-ai" element={<PageTransition><AboutNewtonAIForAI /></PageTransition>} />
         
         {/* Payment Routes */}
         <Route path="/payment/success" element={<PageTransition><ProtectedRoute><OnboardingGate><PaymentSuccess /></OnboardingGate></ProtectedRoute></PageTransition>} />
@@ -163,6 +165,7 @@ function AnimatedRoutes() {
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
+    </Suspense>
   );
 }
 
