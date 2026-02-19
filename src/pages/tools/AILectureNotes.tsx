@@ -23,6 +23,7 @@ import { LectureRecorder } from "@/components/LectureRecorder";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { StudySectionRenderer } from "@/components/StudySectionRenderer";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { useGuestTrial } from "@/contexts/GuestTrialContext";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
@@ -273,8 +274,16 @@ const AILectureNotes = () => {
     setIsHighlightMode(false);
   };
 
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+
   // Extract content from Upload/YouTube/Text tabs and show template selection
   const handleExtractContent = async () => {
+    if (!isAuthenticated) {
+      incrementGuestUsage();
+      setShowTrialPrompt(true);
+      return;
+    }
+
     setIsProcessing(true);
     setProgress(0);
     

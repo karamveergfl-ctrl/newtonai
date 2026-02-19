@@ -15,6 +15,7 @@ import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { StudySectionRenderer } from "@/components/StudySectionRenderer";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
+import { useGuestTrial } from "@/contexts/GuestTrialContext";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { VideoCardWithTools } from "@/components/VideoCardWithTools";
@@ -347,11 +348,20 @@ const AISummarizer = () => {
     }
   };
 
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+
   const handleContentReady = async (
     content: string,
     type: "upload" | "recording" | "youtube" | "text",
     metadata?: { file?: File; videoId?: string; videoTitle?: string; language?: string }
   ) => {
+    // Guest usage gate
+    if (!isAuthenticated) {
+      incrementGuestUsage();
+      setShowTrialPrompt(true);
+      return;
+    }
+
     // Store language for later use
     if (metadata?.language) {
       setSelectedLanguage(metadata.language);
