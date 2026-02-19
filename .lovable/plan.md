@@ -1,21 +1,18 @@
 
 
-## Regenerate Logo: Circular Badge Only, No White Frame
+## Use Uploaded Logo Image Directly
 
-The current `newton-logo-clean.png` still has a white rectangular background surrounding the circular wooden badge. The logo needs to be regenerated as just the circular Newton character badge with its wooden frame on a fully transparent background.
+The user has provided the exact logo image they want to use. It's already properly cropped to the circular wooden badge with transparent background -- no white frame.
 
 ### What will change
 
-1. **Regenerate the logo image** using AI image generation -- create the NewtonAI circular wooden badge logo with the Newton apple character and "NewtonAI" banner, on a transparent background with no white or colored rectangular frame around it.
+1. **Copy the uploaded image** (`ChatGPT_Image_Feb_19_2026_10_04_32_PM.png`) to `src/assets/newton-logo-clean.png`, replacing the current file.
 
-2. **Save as** `src/assets/newton-logo-clean.png`, replacing the current file.
-
-3. **Update Logo component** -- add `rounded-full` to the container so the circular logo displays cleanly at all sizes, and remove the negative margins that were compensating for the old rectangular frame.
+2. **No code changes needed** -- `Logo.tsx` already imports from `@/assets/newton-logo-clean.png` and uses `rounded-full` with `object-contain`, so it will display the new image correctly at all sizes.
 
 ### Technical Details
 
-- Use `imagegen--edit_image` with the current logo as source, instructing: "Remove the white rectangular background completely. Keep only the circular wooden badge with the Newton apple character and NewtonAI banner. Output on a fully transparent background, tightly cropped to the circle."
-- If the result still has a frame, will attempt a second pass with a more explicit prompt
-- The Logo component container will get `rounded-full` class to match the circular shape
-- Negative margins will be reduced since the transparent circular image won't need as much compensation
+- Use `lov-copy` to copy `user-uploads://ChatGPT_Image_Feb_19_2026_10_04_32_PM.png` to `src/assets/newton-logo-clean.png`
+- The image is already on a transparent background with no white frame, so no editing is needed
+- The existing Logo component styling (`rounded-full`, `aspect-square`, `object-contain`) will handle proper display
 
