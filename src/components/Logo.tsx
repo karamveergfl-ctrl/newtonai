@@ -10,15 +10,15 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  xs: { icon: 60, text: "text-lg" },
-  sm: { icon: 72, text: "text-xl" },
+  xs: { icon: 36, text: "text-lg" },
+  sm: { icon: 42, text: "text-xl" },
   md: { icon: 160, text: "text-3xl" },
   lg: { icon: 220, text: "text-4xl" }
 };
 
 const Logo = ({ size = "md", showText = false, className = "", compact = false, eager = true }: LogoProps) => {
   const { icon, text } = sizeMap[size];
-  const margins = compact ? "-ml-1 -mr-0.5" : "-ml-2 -mr-1";
+  const margins = compact ? "ml-0" : "-ml-2 -mr-1";
 
   return (
     <div className={`flex items-center gap-0 ${className}`}>
