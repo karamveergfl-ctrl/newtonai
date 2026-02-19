@@ -23,15 +23,17 @@ const Logo = ({ size = "md", showText = false, className = "", compact = false, 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div
-        className={`flex-shrink-0 overflow-hidden aspect-square rounded-full ${margins} ring-2 ring-primary/30 transition-transform duration-200 hover:scale-105`}
+        className={`flex-shrink-0 aspect-square rounded-full ${margins} ring-2 ring-primary/30 transition-transform duration-200 hover:scale-105`}
         style={{ width: icon, height: icon }}>
-        <img
-          src={newtonLogo}
-          alt="NewtonAI Logo"
-          loading={eager ? "eager" : "lazy"}
-          decoding="async"
-          className="w-full h-full object-contain"
-          style={{ imageRendering: 'auto' }} />
+        <div className="overflow-hidden rounded-full w-full h-full">
+          <img
+            src={newtonLogo}
+            alt="NewtonAI Logo"
+            loading={eager ? "eager" : "lazy"}
+            decoding="async"
+            className="w-full h-full object-contain"
+            style={{ imageRendering: 'auto' }} />
+        </div>
       </div>
       {showText && (
         <span className={`font-display font-extrabold tracking-tight bg-gradient-to-r from-primary via-emerald-400 to-secondary bg-clip-text text-transparent ${text}`}>
