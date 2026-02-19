@@ -120,7 +120,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
                   >
                     {link.label}
                     {link.badge && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary animate-pulse">
+                    <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary">
                         {link.badge}
                       </span>
                     )}
@@ -153,7 +153,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
                           >
                             {child.label}
                             {child.badge && (
-                              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary animate-pulse">
+                              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary">
                                 {child.badge}
                               </span>
                             )}
@@ -215,7 +215,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
               >
                 {link.label}
                 {link.badge && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary animate-pulse">
+                  <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/15 text-primary">
                     {link.badge}
                   </span>
                 )}

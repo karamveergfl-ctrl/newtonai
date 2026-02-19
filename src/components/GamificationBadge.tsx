@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Popover,
   PopoverContent,
@@ -38,6 +38,7 @@ export const GamificationBadge = () => {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [newLevel, setNewLevel] = useState(1);
   const prevLevelRef = useRef(1);
+  const xpRef = useRef(0);
   const [activeDays, setActiveDays] = useState<string[]>([]);
   const [stats, setStats] = useState({
     flashcardsCompleted: 0,
@@ -52,7 +53,11 @@ export const GamificationBadge = () => {
     const savedStats = localStorage.getItem('smartreader_stats');
     const lastActive = localStorage.getItem('smartreader_last_active');
     
-    if (savedXp) setXp(parseInt(savedXp, 10));
+    if (savedXp) {
+      const val = parseInt(savedXp, 10);
+      xpRef.current = val;
+      setXp(val);
+    }
     if (savedStats) setStats(JSON.parse(savedStats));
     
     // Load active days
@@ -97,7 +102,7 @@ export const GamificationBadge = () => {
         const newXpValue = parseInt(newXp, 10);
         const currentLevel = Math.floor(newXpValue / 100) + 1;
         
-        if (newXpValue > xp) {
+        if (newXpValue > xpRef.current) {
           setIsGlowing(true);
           setTimeout(() => setIsGlowing(false), 1500);
           
@@ -109,6 +114,7 @@ export const GamificationBadge = () => {
         }
         
         prevLevelRef.current = currentLevel;
+        xpRef.current = newXpValue;
         setXp(newXpValue);
       }
     };
@@ -120,7 +126,7 @@ export const GamificationBadge = () => {
       window.removeEventListener('storage', handleXpUpdate);
       window.removeEventListener('xp-update', handleXpUpdate);
     };
-  }, [xp]);
+  }, []);
 
   const level = Math.floor(xp / 100) + 1;
   const xpToNextLevel = 100 - (xp % 100);
@@ -131,14 +137,14 @@ export const GamificationBadge = () => {
     prevLevelRef.current = level;
   }, [level]);
 
-  const achievements: Achievement[] = [
+  const achievements: Achievement[] = useMemo(() => [
     {
       id: 'first_steps',
       name: 'First Steps',
       description: 'Earn your first 50 XP',
       icon: <Star className="w-5 h-5" />,
       requirement: 50,
-      type: 'xp',
+      type: 'xp' as const,
       unlocked: xp >= 50,
     },
     {
@@ -147,7 +153,7 @@ export const GamificationBadge = () => {
       description: 'Reach Level 5',
       icon: <Award className="w-5 h-5" />,
       requirement: 500,
-      type: 'xp',
+      type: 'xp' as const,
       unlocked: xp >= 400,
     },
     {
@@ -156,7 +162,7 @@ export const GamificationBadge = () => {
       description: '3 day study streak',
       icon: <Flame className="w-5 h-5" />,
       requirement: 3,
-      type: 'streak',
+      type: 'streak' as const,
       unlocked: streak >= 3,
     },
     {
@@ -165,7 +171,7 @@ export const GamificationBadge = () => {
       description: '7 day study streak',
       icon: <Zap className="w-5 h-5" />,
       requirement: 7,
-      type: 'streak',
+      type: 'streak' as const,
       unlocked: streak >= 7,
     },
     {
@@ -174,7 +180,7 @@ export const GamificationBadge = () => {
       description: 'Complete 5 quizzes',
       icon: <Brain className="w-5 h-5" />,
       requirement: 5,
-      type: 'quizzes',
+      type: 'quizzes' as const,
       unlocked: stats.quizzesCompleted >= 5,
     },
     {
@@ -183,10 +189,10 @@ export const GamificationBadge = () => {
       description: 'Study 10 flashcard decks',
       icon: <BookOpen className="w-5 h-5" />,
       requirement: 10,
-      type: 'flashcards',
+      type: 'flashcards' as const,
       unlocked: stats.flashcardsCompleted >= 10,
     },
-  ];
+  ], [xp, streak, stats.quizzesCompleted, stats.flashcardsCompleted]);
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
