@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { useDeferredLoad } from "@/hooks/useDeferredLoad";
 
 import { HelmetProvider } from "react-helmet-async";
 import { PodcastProvider } from "@/contexts/PodcastContext";
@@ -169,6 +170,18 @@ function AnimatedRoutes() {
   );
 }
 
+function DeferredComponents() {
+  const ready = useDeferredLoad(2500);
+  if (!ready) return null;
+  return (
+    <>
+      <Suspense fallback={null}><PodcastMiniPlayer /></Suspense>
+      <Suspense fallback={null}><CookieConsent /></Suspense>
+      <Suspense fallback={null}><GlobalNewtonAssistant /></Suspense>
+    </>
+  );
+}
+
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
@@ -183,9 +196,7 @@ const App = () => (
               <ScrollToTop />
               <PodcastProvider>
                 <AnimatedRoutes />
-                <Suspense fallback={null}><PodcastMiniPlayer /></Suspense>
-                <Suspense fallback={null}><CookieConsent /></Suspense>
-                <Suspense fallback={null}><GlobalNewtonAssistant /></Suspense>
+                <DeferredComponents />
               </PodcastProvider>
             </BrowserRouter>
           </TooltipProvider>
