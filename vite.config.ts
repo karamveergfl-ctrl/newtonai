@@ -16,11 +16,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    target: "es2022", // Required for PDF.js v4 ESM worker
+    target: "esnext",
   },
   optimizeDeps: {
     esbuildOptions: {
-      target: "es2022", // Consistent with build target
+      target: "esnext",
     },
   },
 }));
