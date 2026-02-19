@@ -1,4 +1,4 @@
-import newtonLogo from "@/assets/newton-logo-sm.webp";
+import newtonLogo from "@/assets/newton-logo-clean.png";
 
 interface LogoProps {
   size?: "xs" | "sm" | "md" | "lg";
