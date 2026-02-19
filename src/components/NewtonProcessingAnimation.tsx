@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import type { ProcessingPhase } from "@/hooks/useProcessingState";
 import { useNewtonPoses } from "@/hooks/useNewtonPoses";
-import newtonCharacter from "@/assets/newton-character.webp";
+import newtonCharacter from "@/assets/newton-character-sm.webp";
 
 interface NewtonProcessingAnimationProps {
   /** Current animation state */

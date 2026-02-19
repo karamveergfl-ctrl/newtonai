@@ -11,7 +11,7 @@ import { LottieNewton } from "@/components/newton/LottieNewton";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useToast } from "@/hooks/use-toast";
 import type { NewtonMessage } from "@/hooks/useNewtonChat";
-import newtonChatAvatar from "@/assets/newton-chat-avatar.webp";
+import newtonChatAvatar from "@/assets/newton-chat-avatar-sm.webp";
 
 interface NewtonChatPanelProps {
   messages: NewtonMessage[];

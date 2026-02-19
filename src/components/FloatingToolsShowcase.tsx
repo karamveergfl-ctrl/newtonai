@@ -13,7 +13,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import newtonCharacter from "@/assets/newton-character.webp";
+import newtonCharacter from "@/assets/newton-character-sm.webp";
 
 interface Tool {
   icon: LucideIcon;
@@ -158,6 +158,9 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
                 <img 
                   src={newtonCharacter} 
                   alt="Newton AI mascot" 
+                  loading="lazy"
+                  width={80}
+                  height={120}
                   className="w-full h-full object-contain"
                 />
               </div>

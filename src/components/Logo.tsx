@@ -1,4 +1,4 @@
-import newtonLogo from "@/assets/newton-logo.webp";
+import newtonLogo from "@/assets/newton-logo-sm.webp";
 import { motion } from "framer-motion";
 
 interface LogoProps {
