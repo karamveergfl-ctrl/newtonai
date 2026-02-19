@@ -1,31 +1,29 @@
 
 
-## Polish Logo: Unified Horizontal Logo with Border Ring
+## Fix: Logo Icon Clipped by Container
 
-### What Changes
+### Problem
+The circular logo icon has `overflow-hidden` AND `ring-2 ring-primary/30` on the same container. CSS `ring` renders **outside** the element's border box, but `overflow-hidden` clips everything outside the box -- so the ring gets cut off, making the logo appear clipped on the left and top edges.
 
-The reference image shows:
-- The circular mascot icon with a subtle border/ring around it
-- "NewtonAI" as a single cohesive text (not split into two separate gradient styles)
-- Clean teal/green color matching the brand
-- Everything on the same tight horizontal line
+### Fix in `src/components/Logo.tsx`
 
-### Changes to `src/components/Logo.tsx`
+Separate the ring from the overflow container by nesting two divs:
+- **Outer div**: carries the `ring-2 ring-primary/30`, `rounded-full`, sizing, and margins -- NO `overflow-hidden`
+- **Inner div**: carries `overflow-hidden rounded-full w-full h-full` to clip the image
 
-1. **Add a border ring** to the icon container: `ring-2 ring-primary/30` gives the icon a subtle branded outline, matching the reference.
+This lets the ring paint outside the image boundary without being clipped.
 
-2. **Unify the text** into a single "NewtonAI" word instead of split "Newton" + "AI" with different gradients:
-   - "Newton" keeps the primary-to-emerald gradient, extrabold
-   - "AI" uses the same gradient direction (not reversed) and same weight, so it reads as one cohesive word
-   - Remove the underline accent bar under "AI" -- the reference doesn't have it
-   - Use `gap-0` with no tracking difference between the two spans so they look like one word
-
-3. **Tighten gap** between icon and text from `gap-1.5` to `gap-2` for better visual spacing.
+```
+Outer: ring-2, rounded-full, sized (no overflow-hidden)
+  Inner: overflow-hidden, rounded-full (clips image only)
+    img
+```
 
 ### Technical Details
 
 | File | Change |
 |------|--------|
-| `src/components/Logo.tsx` | Add `ring-2 ring-primary/30` to icon container; unify text gradient direction; remove AI underline accent; adjust spacing |
+| `src/components/Logo.tsx` (line 25-27) | Split the icon container into outer (ring + sizing) and inner (overflow-hidden + image) divs |
 
-No changes needed in Header.tsx or AppSidebar.tsx -- they already use the Logo component.
+No other files need changes -- Header and Sidebar both use the Logo component.
+
