@@ -348,16 +348,15 @@ const AISummarizer = () => {
     }
   };
 
-  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt, guestLimitReached } = useGuestTrial();
 
   const handleContentReady = async (
     content: string,
     type: "upload" | "recording" | "youtube" | "text",
     metadata?: { file?: File; videoId?: string; videoTitle?: string; language?: string }
   ) => {
-    // Guest usage gate
-    if (!isAuthenticated) {
-      incrementGuestUsage();
+    // Guest usage gate: block only if limit reached
+    if (!isAuthenticated && guestLimitReached) {
       setShowTrialPrompt(true);
       return;
     }
@@ -475,6 +474,10 @@ const AISummarizer = () => {
       setSummary(summaryData.summary);
       setContentTitle(pendingSummaryContent.title);
       setPendingSummaryContent(null);
+      // Increment guest usage after successful generation
+      if (!isAuthenticated) {
+        incrementGuestUsage();
+      }
     } catch (error: any) {
       console.error("Error generating summary:", error);
       setErrorState("confused");

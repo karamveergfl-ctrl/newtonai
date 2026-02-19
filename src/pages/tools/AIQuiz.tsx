@@ -91,11 +91,10 @@ const AIQuiz = () => {
     enabled: questions.length > 0 && !quizCompleted
   });
 
-  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt, guestLimitReached } = useGuestTrial();
 
   const handleContentReady = async (content: string, type: string, metadata?: { videoId?: string; file?: File; language?: string }) => {
-    if (!isAuthenticated) {
-      incrementGuestUsage();
+    if (!isAuthenticated && guestLimitReached) {
       setShowTrialPrompt(true);
       return;
     }
@@ -187,6 +186,10 @@ const AIQuiz = () => {
         result_preview: { questionCount: data.questions.length, difficulty: settings.difficulty },
       });
 
+      // Increment guest usage after successful generation
+      if (!isAuthenticated) {
+        incrementGuestUsage();
+      }
       // Hide processing and show results immediately
       hideProcessing();
       setIsGenerating(false);

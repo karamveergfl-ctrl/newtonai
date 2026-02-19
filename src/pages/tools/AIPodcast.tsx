@@ -116,15 +116,14 @@ export default function AIPodcast() {
     };
   }, [podcast, isPlaying, setIsMinimized]);
 
-  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt } = useGuestTrial();
+  const { incrementGuestUsage, isAuthenticated, setShowTrialPrompt, guestLimitReached } = useGuestTrial();
 
   const handleContentReady = async (
     content: string,
     type: "upload" | "recording" | "youtube" | "text",
     metadata?: { videoId?: string; videoTitle?: string; file?: File; language?: string }
   ) => {
-    if (!isAuthenticated) {
-      incrementGuestUsage();
+    if (!isAuthenticated && guestLimitReached) {
       setShowTrialPrompt(true);
       return;
     }
@@ -288,6 +287,10 @@ export default function AIPodcast() {
       setProgress(90);
       updateProgress(90);
 
+      // Increment guest usage after successful generation
+      if (!isAuthenticated) {
+        incrementGuestUsage();
+      }
       // Track usage after successful generation (credits are optional on top of limits)
       await confirmUsage();
       if (!isPremium) {
