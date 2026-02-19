@@ -13,7 +13,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import newtonCharacter from "@/assets/newton-character.png";
+import newtonCharacter from "@/assets/newton-character.webp";
 
 interface Tool {
   icon: LucideIcon;

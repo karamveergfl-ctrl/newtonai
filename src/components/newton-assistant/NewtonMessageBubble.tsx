@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { NewtonResponseSection, parseNewtonSections } from "./NewtonResponseSection";
 import { supabase } from "@/integrations/supabase/client";
-import newtonChatAvatar from "@/assets/newton-chat-avatar.png";
+import newtonChatAvatar from "@/assets/newton-chat-avatar.webp";
 import type { NewtonMessage } from "@/hooks/useNewtonChat";
 
 interface NewtonMessageBubbleProps {
