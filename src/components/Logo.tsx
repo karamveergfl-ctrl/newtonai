@@ -1,5 +1,4 @@
 import newtonLogo from "@/assets/newton-logo-sm.webp";
-import { motion } from "framer-motion";
 
 interface LogoProps {
   size?: "xs" | "sm" | "md" | "lg";
@@ -22,29 +21,24 @@ const Logo = ({ size = "md", showText = false, className = "", compact = false }
 
   return (
     <div className={`flex items-center gap-0 ${className}`}>
-      <motion.div
-        className={`flex-shrink-0 overflow-hidden aspect-square rounded-lg ${margins}`}
-        style={{ width: icon, height: icon }}
-        whileHover={{ scale: 1.05 }}
-        transition={{ duration: 0.2 }}>
-
+      <div
+        className={`flex-shrink-0 overflow-hidden aspect-square rounded-lg ${margins} transition-transform duration-200 hover:scale-105`}
+        style={{ width: icon, height: icon }}>
         <img
           src={newtonLogo}
           alt="NewtonAI Logo"
           loading="eager"
-          decoding="sync"
+          decoding="async"
           fetchPriority="high"
           className="w-full h-full object-contain"
           style={{ imageRendering: 'auto' }} />
-
-      </motion.div>
+      </div>
       {showText &&
       <span className={`font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent ${text}`}>
           NewtonAI
         </span>
       }
     </div>);
-
 };
 
 export default Logo;
