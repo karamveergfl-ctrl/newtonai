@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNewtonChat } from "@/hooks/useNewtonChat";
 import { useNewtonConversations } from "@/hooks/useNewtonConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { NewtonTriggerButton } from "./newton-assistant/NewtonTriggerButton";
-import { NewtonChatPanel } from "./newton-assistant/NewtonChatPanel";
-import { NewtonSidebar } from "./newton-assistant/NewtonSidebar";
+const NewtonChatPanel = lazy(() => import("./newton-assistant/NewtonChatPanel").then(m => ({ default: m.NewtonChatPanel })));
+const NewtonSidebar = lazy(() => import("./newton-assistant/NewtonSidebar").then(m => ({ default: m.NewtonSidebar })));
 import { SignInRequiredModal } from "./SignInRequiredModal";
 import type { Attachment } from "./newton-assistant/NewtonAttachmentButton";
 import {
@@ -112,33 +112,37 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
               <DrawerTitle>Newton AI Assistant</DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col flex-1 overflow-hidden relative h-full">
-              {showSidebar && (
-                <>
-                  <div className="absolute inset-0 bg-black/40 z-10" onClick={() => setShowSidebar(false)} />
-                  <div className="absolute inset-y-0 left-0 z-20 w-[80%] max-w-[300px] h-full">
-                    <NewtonSidebar
-                      groupedConversations={groupedConversations}
-                      activeConversationId={activeConversationId}
-                      onSelect={handleSelectConversation}
-                      onNewChat={handleNewChat}
-                      onDelete={handleDeleteConversation}
-                      isLoading={convsLoading}
-                    />
-                  </div>
-                </>
-              )}
+              <Suspense fallback={null}>
+                {showSidebar && (
+                  <>
+                    <div className="absolute inset-0 bg-black/40 z-10" onClick={() => setShowSidebar(false)} />
+                    <div className="absolute inset-y-0 left-0 z-20 w-[80%] max-w-[300px] h-full">
+                      <NewtonSidebar
+                        groupedConversations={groupedConversations}
+                        activeConversationId={activeConversationId}
+                        onSelect={handleSelectConversation}
+                        onNewChat={handleNewChat}
+                        onDelete={handleDeleteConversation}
+                        isLoading={convsLoading}
+                      />
+                    </div>
+                  </>
+                )}
+              </Suspense>
               <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">
-                <NewtonChatPanel
-                  messages={messages}
-                  isLoading={isLoading}
-                  error={error}
-                  onSend={handleSend}
-                  onCancel={cancelRequest}
-                  onClear={handleNewChat}
-                  onClose={handleClose}
-                  onToggleSidebar={() => setShowSidebar((p) => !p)}
-                  showSidebarToggle
-                />
+                <Suspense fallback={null}>
+                  <NewtonChatPanel
+                    messages={messages}
+                    isLoading={isLoading}
+                    error={error}
+                    onSend={handleSend}
+                    onCancel={cancelRequest}
+                    onClear={handleNewChat}
+                    onClose={handleClose}
+                    onToggleSidebar={() => setShowSidebar((p) => !p)}
+                    showSidebarToggle
+                  />
+                </Suspense>
               </div>
             </div>
           </DrawerContent>
@@ -160,32 +164,34 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
-            {/* Sidebar */}
-            {showSidebar && (
-              <NewtonSidebar
-                groupedConversations={groupedConversations}
-                activeConversationId={activeConversationId}
-                onSelect={handleSelectConversation}
-                onNewChat={handleNewChat}
-                onDelete={handleDeleteConversation}
-                isLoading={convsLoading}
-              />
-            )}
+            <Suspense fallback={null}>
+              {/* Sidebar */}
+              {showSidebar && (
+                <NewtonSidebar
+                  groupedConversations={groupedConversations}
+                  activeConversationId={activeConversationId}
+                  onSelect={handleSelectConversation}
+                  onNewChat={handleNewChat}
+                  onDelete={handleDeleteConversation}
+                  isLoading={convsLoading}
+                />
+              )}
 
-            {/* Chat panel */}
-            <div className="flex-1 overflow-hidden min-w-0">
-              <NewtonChatPanel
-                messages={messages}
-                isLoading={isLoading}
-                error={error}
-                onSend={handleSend}
-                onCancel={cancelRequest}
-                onClear={handleNewChat}
-                onClose={handleClose}
-                onToggleSidebar={() => setShowSidebar((p) => !p)}
-                showSidebarToggle
-              />
-            </div>
+              {/* Chat panel */}
+              <div className="flex-1 overflow-hidden min-w-0">
+                <NewtonChatPanel
+                  messages={messages}
+                  isLoading={isLoading}
+                  error={error}
+                  onSend={handleSend}
+                  onCancel={cancelRequest}
+                  onClear={handleNewChat}
+                  onClose={handleClose}
+                  onToggleSidebar={() => setShowSidebar((p) => !p)}
+                  showSidebarToggle
+                />
+              </div>
+            </Suspense>
           </motion.div>
         )}
       </AnimatePresence>
