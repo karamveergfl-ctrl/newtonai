@@ -31,9 +31,8 @@ export function useNewtonConversations() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
+  // Conversations are fetched lazily when the panel opens, not on mount,
+  // to avoid extending the critical network dependency chain.
 
   const createConversation = useCallback(async (title = "New Chat"): Promise<string | null> => {
     try {
