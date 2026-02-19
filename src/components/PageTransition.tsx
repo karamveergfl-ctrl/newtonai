@@ -6,7 +6,7 @@ interface PageTransitionProps {
 
 export function PageTransition({ children }: PageTransitionProps) {
   return (
-    <div className="min-h-screen animate-in fade-in duration-200">
+    <div className="min-h-screen">
       {children}
     </div>
   );

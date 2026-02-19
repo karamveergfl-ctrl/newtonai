@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/popover";
 import { AnimatedCreditCounter } from "@/components/AnimatedCreditCounter";
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface CreditBalanceProps {
   className?: string;
@@ -23,23 +22,7 @@ export function CreditBalance({ className, showLabel = false }: CreditBalancePro
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [isGlowing, setIsGlowing] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const prevCreditsRef = useRef(credits);
-
-  // Check auth state
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-    };
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Watch for credit changes and trigger glow
   useEffect(() => {
@@ -49,11 +32,6 @@ export function CreditBalance({ className, showLabel = false }: CreditBalancePro
     }
     prevCreditsRef.current = credits;
   }, [credits]);
-
-  // Don't render if not authenticated or still checking auth
-  if (isAuthenticated !== true) {
-    return null;
-  }
 
   if (loading) {
     return <Skeleton className="h-8 w-20" />;

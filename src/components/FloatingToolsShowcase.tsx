@@ -78,13 +78,6 @@ const ToolBadge = ({ tool, isSelected, onSelect }: { tool: Tool; isSelected: boo
 const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) => {
   const [selectedTool, setSelectedTool] = useState<number>(0);
   
-  // Auto-rotate through tools
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSelectedTool((prev) => (prev + 1) % tools.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
   
   const currentTool = tools[selectedTool];
   const CurrentIcon = currentTool.icon;
@@ -116,7 +109,6 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
               
               {/* Dynamic active tool indicator */}
               <div 
-                key={selectedTool}
                 className="flex items-center gap-2 bg-slate-800/80 rounded-xl px-3 py-2 mb-3 border border-primary/30"
               >
                 <div className={`w-5 h-5 rounded-lg ${currentTool.color} flex items-center justify-center`}>
