@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import {
   Popover,
   PopoverContent,
@@ -91,7 +90,7 @@ export const GamificationBadge = () => {
       setActiveDays(filteredDays);
     }
 
-    // Listen for XP updates
+    // Listen for XP updates (storage event for cross-tab, custom event for same-tab)
     const handleXpUpdate = () => {
       const newXp = localStorage.getItem('smartreader_xp');
       if (newXp) {
@@ -99,11 +98,9 @@ export const GamificationBadge = () => {
         const currentLevel = Math.floor(newXpValue / 100) + 1;
         
         if (newXpValue > xp) {
-          // Trigger glow animation when XP increases
           setIsGlowing(true);
           setTimeout(() => setIsGlowing(false), 1500);
           
-          // Check for level up
           if (currentLevel > prevLevelRef.current) {
             setNewLevel(currentLevel);
             setShowConfetti(true);
@@ -117,11 +114,11 @@ export const GamificationBadge = () => {
     };
     
     window.addEventListener('storage', handleXpUpdate);
-    const interval = setInterval(handleXpUpdate, 1000);
+    window.addEventListener('xp-update', handleXpUpdate);
     
     return () => {
       window.removeEventListener('storage', handleXpUpdate);
-      clearInterval(interval);
+      window.removeEventListener('xp-update', handleXpUpdate);
     };
   }, [xp]);
 
@@ -226,19 +223,7 @@ export const GamificationBadge = () => {
           </div>
           {streak > 0 && (
             <div className="flex items-center gap-1">
-              <motion.div
-                animate={{ 
-                  y: [0, -2, 0],
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              >
-                <Flame className="w-4 h-4 text-orange-500" />
-              </motion.div>
+              <Flame className="w-4 h-4 text-orange-500" />
               <span className="text-xs font-bold text-foreground">{streak}</span>
             </div>
           )}
