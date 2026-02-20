@@ -1,40 +1,61 @@
 
 
-## Instant Logo Loading Across the App
+## Smooth Mobile Scrolling for Low-End Devices
 
 ### Problem
-The logo image (`newton-logo-clean.png`) is imported as a Vite ES module from `src/assets/`. This means the browser can only start downloading it **after** the JavaScript bundle loads, parses, and executes -- causing a visible delay where the logo area appears empty.
+On low-end mobile devices with slow processors, scrolling can feel janky because the browser struggles to composite layers and repaint during scroll events.
 
 ### Solution
-Move the logo reference to the `public/` folder and preload it in `index.html` so the browser starts fetching it **immediately** with the HTML, before any JavaScript runs.
+Apply mobile-only CSS optimizations that leverage GPU-accelerated scrolling and reduce paint/layout work during scroll. These are purely CSS changes that won't affect desktop behavior.
 
 ### Changes
 
-| File | Change |
-|------|--------|
-| `public/newton-logo-clean.png` | Copy the logo from `src/assets/` to `public/` so it has a stable, predictable URL |
-| `index.html` | Add `<link rel="preload" as="image" href="/newton-logo-clean.png">` in the `<head>` |
-| `src/components/Logo.tsx` | Replace the ES module import with a direct `/newton-logo-clean.png` path; set `fetchPriority="high"` and `decoding="sync"` for instant rendering |
+**File: `src/index.css`** -- Add a mobile-only media query block with these optimizations:
 
-### Why This Works
-- **Preload link**: The browser starts downloading the image as soon as it parses the HTML `<head>`, before any JS loads
-- **Static public path**: No Vite hashing means the preload URL matches the actual URL used by the `<img>` tag
-- **`fetchPriority="high"`**: Tells the browser to prioritize this image over other resources
-- **`decoding="sync"`**: Ensures the image is decoded synchronously so it paints immediately when available, with no flicker
+1. **`-webkit-overflow-scrolling: touch`** -- Enables momentum (inertial) scrolling on older iOS Safari, making scroll feel native and fluid.
+
+2. **`scroll-behavior: smooth`** -- Enables smooth programmatic scrolling (e.g., scroll-to-top) on mobile only. Not applied to desktop to keep instant scroll behavior there.
+
+3. **`will-change: scroll-position`** on the main scrollable container -- Hints to the browser to promote the scroll container to its own compositing layer, reducing repaints.
+
+4. **`content-visibility: auto`** on heavy content sections -- Allows the browser to skip rendering off-screen content entirely, dramatically reducing layout/paint cost on low-end devices.
+
+5. **`contain: layout style paint`** on cards and repeated elements -- Tells the browser that layout changes inside these elements don't affect siblings, reducing recalculation scope during scroll.
+
+**File: `src/components/AppLayout.tsx`** -- Add a CSS class `mobile-scroll-container` to the `ScrollableContent` div so the CSS optimizations target it specifically.
+
+### What This Fixes
+- Janky/stuttering scroll on budget Android phones
+- Scroll lag when many cards or images are on screen
+- Unnecessary off-screen rendering that wastes CPU/GPU on low-end devices
 
 ### Technical Details
 
-**index.html** -- add after the font preload:
-```html
-<link rel="preload" as="image" href="/newton-logo-clean.png">
+```css
+/* Mobile-only scroll optimizations (index.css) */
+@media (max-width: 767px) {
+  .mobile-scroll-container {
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+    scroll-behavior: smooth;
+  }
+
+  /* Skip rendering off-screen content */
+  .mobile-scroll-container > div > section,
+  .mobile-scroll-container > div > div {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+}
 ```
 
-**Logo.tsx** -- remove import, use static path:
 ```tsx
-const LOGO_SRC = "/newton-logo-clean.png";
-// Remove: import newtonLogo from "@/assets/newton-logo-clean.png";
-// Use LOGO_SRC in <img src={LOGO_SRC} ...>
-// Change decoding="async" to decoding="sync"
-// Add fetchPriority="high"
+// AppLayout.tsx - ScrollableContent div
+<div 
+  className="flex-1 flex flex-col overflow-auto min-h-0 mobile-scroll-container"
+  onScroll={handleScroll}
+>
 ```
+
+No JavaScript changes beyond adding a CSS class name. All optimizations are pure CSS, zero runtime cost.
 
