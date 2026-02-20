@@ -9,6 +9,7 @@ import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { ScrollProvider, useScrollContext } from "@/contexts/ScrollContext";
 
+
 function ScrollableContent({ children, showFooter }: { children: React.ReactNode; showFooter: boolean }) {
   const { setScrollPosition } = useScrollContext();
   
@@ -48,7 +49,7 @@ export function AppLayout({
   onSignOut,
   showSidebar = true,
   showFooter = true,
-  showTopStats = true
+  showTopStats = true,
 }: AppLayoutProps) {
   // Show notifications when users are approaching their feature limits
   useUsageLimitNotifications();
@@ -86,11 +87,14 @@ export function AppLayout({
           <main className="flex-1 flex flex-col overflow-hidden min-h-0">
             {showTopStats && <TopStatsBar />}
             <ScrollableContent showFooter={showFooter}>
-              {children}
+              <div className="pb-16 md:pb-0">
+                {children}
+              </div>
             </ScrollableContent>
           </main>
         </div>
         <FloatingUpgradeBanner />
+        
         {/* Global Processing Overlay - always mounted for instant video playback */}
         <ProcessingOverlay
           isVisible={overlayState.isVisible}
