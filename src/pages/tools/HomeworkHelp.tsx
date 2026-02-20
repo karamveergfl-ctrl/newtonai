@@ -313,7 +313,7 @@ const HomeworkHelp = () => {
             <p className="text-sm sm:text-base text-muted-foreground mt-2 font-sans px-2 sm:px-0">
               Get step-by-step solutions to your homework problems
             </p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
+            <p className="hidden md:flex text-xs text-muted-foreground mt-1 items-center justify-center gap-1">
               <ImageIcon className="h-3 w-3" />
               Tip: Paste an image directly with Ctrl+V / Cmd+V
             </p>
