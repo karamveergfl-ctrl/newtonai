@@ -270,7 +270,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                               <>
                                 <span className="flex-1">{link.label}</span>
                                 {link.isNew && (
-                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
                                     NEW
                                   </span>
                                 )}
