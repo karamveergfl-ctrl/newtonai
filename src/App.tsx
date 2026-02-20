@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useDeferredLoad } from "@/hooks/useDeferredLoad";
 
 import { HelmetProvider } from "react-helmet-async";
@@ -94,6 +94,18 @@ const queryClient = new QueryClient();
 function AnimatedRoutes() {
   const location = useLocation();
   
+  useEffect(() => {
+    const start = () => {
+      import("@/lib/prefetchRoutes").then(m => m.prefetchAllRoutes());
+    };
+    if ('requestIdleCallback' in window) {
+      const id = (window as any).requestIdleCallback(start, { timeout: 5000 });
+      return () => (window as any).cancelIdleCallback(id);
+    } else {
+      const id = setTimeout(start, 3000);
+      return () => clearTimeout(id);
+    }
+  }, []);
   
   return (
     <Suspense fallback={<div />}>

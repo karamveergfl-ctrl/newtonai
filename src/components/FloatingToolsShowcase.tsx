@@ -13,6 +13,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { prefetchRoute } from "@/lib/prefetchRoutes";
 import newtonCharacter from "@/assets/newton-character-sm.webp";
 
 interface Tool {
@@ -59,6 +60,7 @@ const ToolBadge = ({ tool, isSelected, onSelect }: { tool: Tool; isSelected: boo
       <Link
         to={tool.route}
         onClick={onSelect}
+        onMouseEnter={() => prefetchRoute(tool.route)}
         className={`flex items-center gap-2.5 backdrop-blur-md rounded-2xl px-3.5 py-2.5 shadow-xl shadow-black/25 border transition-all duration-300 cursor-pointer group
           ${isSelected 
             ? 'bg-slate-700/90 border-primary/50 ring-2 ring-primary/30 scale-110' 
