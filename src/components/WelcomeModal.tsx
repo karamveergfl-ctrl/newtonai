@@ -94,11 +94,11 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div 
-              className="w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto bg-gradient-to-br from-card via-card to-card/95 border border-border/50 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden pointer-events-auto"
+              className="w-full max-w-lg max-h-[calc(100dvh-2rem)] flex flex-col bg-gradient-to-br from-card via-card to-card/95 border border-border/50 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header with gradient */}
-              <div className="relative bg-gradient-to-br from-primary/20 via-primary/10 to-transparent px-4 py-5 sm:px-6 sm:py-8 text-center overflow-hidden">
+              <div className="relative bg-gradient-to-br from-primary/20 via-primary/10 to-transparent px-4 py-3 sm:px-6 sm:py-8 text-center overflow-hidden">
                 {/* Background decoration */}
                 <div className="absolute inset-0 overflow-hidden">
                   <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
@@ -120,16 +120,16 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.1, type: "spring", damping: 15 }}
-                  className="relative mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 mb-4"
+                  className="relative mx-auto w-10 h-10 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 mb-2 sm:mb-4"
                 >
-                  <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" />
+                  <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 text-primary-foreground" />
                 </motion.div>
 
                 <motion.h2
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 }}
-                  className="relative text-lg sm:text-xl font-bold text-foreground mb-2"
+                  className="relative text-base sm:text-xl font-bold text-foreground mb-1 sm:mb-2"
                 >
                   Welcome to Newton AI! 🎉
                 </motion.h2>
@@ -137,36 +137,36 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="relative text-sm text-muted-foreground"
+                  className="relative text-xs sm:text-sm text-muted-foreground"
                 >
                   Your AI-powered study companion is ready
                 </motion.p>
               </div>
 
               {/* Features list */}
-              <div className="px-6 py-4 border-b border-border/30">
-                <div className="grid grid-cols-2 gap-2">
+              <div className="px-4 py-2 sm:px-6 sm:py-4 border-b border-border/30">
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                   {features.map((feature, index) => (
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.25 + index * 0.05 }}
-                      className="flex items-center gap-2 text-sm text-muted-foreground"
+                      className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground"
                     >
-                      <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary">
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary shrink-0">
                         {feature.icon}
                       </div>
-                      <span>{feature.text}</span>
+                      <span className="truncate">{feature.text}</span>
                     </motion.div>
                   ))}
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              <div className="p-4 sm:p-6">
-                <h3 className="text-sm font-medium text-foreground mb-3">Get Started</h3>
-                <div className="space-y-2">
+              {/* Quick Actions + Footer merged */}
+              <div className="p-3 sm:p-6 flex flex-col gap-3">
+                <h3 className="text-sm font-medium text-foreground hidden sm:block">Get Started</h3>
+                <div className="space-y-1.5 sm:space-y-2">
                   {quickActions.map((action, index) => (
                     <motion.button
                       key={index}
@@ -174,9 +174,9 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.35 + index * 0.05 }}
                       onClick={() => handleQuickAction(action.action)}
-                      className={`w-full flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-xl bg-gradient-to-r ${action.color} border border-border/30 hover:border-primary/30 transition-all duration-200 group text-left`}
+                      className={`w-full flex items-center gap-2.5 sm:gap-4 p-2 sm:p-3 rounded-xl bg-gradient-to-r ${action.color} border border-border/30 hover:border-primary/30 transition-all duration-200 group text-left`}
                     >
-                      <div className="w-10 h-10 rounded-lg bg-background/50 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-background/50 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shrink-0">
                         {action.icon}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -190,20 +190,20 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
                     </motion.button>
                   ))}
                 </div>
-              </div>
 
-              {/* Footer */}
-              <div className="px-6 py-4 bg-muted/20 border-t border-border/30 flex items-center justify-between">
-                <p className="text-xs text-muted-foreground hidden sm:block">
-                  Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">Esc</kbd> to close
-                </p>
-                <Button
-                  size="sm"
-                  onClick={handleClose}
-                  className="h-8 text-xs"
-                >
-                  Start Exploring
-                </Button>
+                {/* Inline footer */}
+                <div className="flex items-center justify-between pt-1 sm:pt-2">
+                  <p className="text-xs text-muted-foreground hidden sm:block">
+                    Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">Esc</kbd> to close
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={handleClose}
+                    className="h-8 text-xs w-full sm:w-auto"
+                  >
+                    Start Exploring
+                  </Button>
+                </div>
               </div>
             </div>
           </motion.div>
