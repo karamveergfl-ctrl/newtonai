@@ -1,23 +1,21 @@
 
 
-## Make Newton Character Image Circular
+## Make Tool Badges Navigate to Their Pages
 
-### Problem
-The Newton character image in the FloatingToolsShowcase (bottom-right of the phone mockup) renders as a rectangular image. The user wants it displayed in a circular frame instead.
+### Current Behavior
+The tool badges (Notes, Quiz, Flashcards, PDF, Mind Map, Summary, Videos, Podcast) around the phone mockup are buttons that only change the selected tool visually. They don't navigate anywhere.
 
-### Fix in `src/components/FloatingToolsShowcase.tsx`
+### Fix
+**File:** `src/components/FloatingToolsShowcase.tsx`
 
-Change the Newton character container (lines 149-159) to:
-- Make the container square (equal width/height) instead of taller than wide
-- Add `rounded-full` and `overflow-hidden` to clip the image into a circle
-- Add a subtle border ring for polish (`ring-2 ring-primary/20`)
-- Use `object-cover` instead of `object-contain` so the image fills the circle
-- Adjust sizing to `w-14 h-14 md:w-18 md:h-18` (square dimensions)
+- Wrap each `ToolBadge` button with a `Link` from react-router-dom, using the tool's existing `route` property
+- Change the `<button>` element to a `<Link>` element with `to={tool.route}`
+- Keep the visual selection behavior via `onClick` but add navigation
+- The "Podcast" route is currently `/tools/podcast` but the correct route is `/tools/ai-podcast` -- fix this mapping
 
 ### Technical Details
 
 | File | Change |
 |------|--------|
-| `src/components/FloatingToolsShowcase.tsx` (lines 149-159) | Make the Newton image container circular with `rounded-full`, `overflow-hidden`, square sizing, and `object-cover` |
+| `src/components/FloatingToolsShowcase.tsx` | Change `ToolBadge` from `<button>` to `<Link to={tool.route}>` so clicking navigates to the tool page. Fix Podcast route from `/tools/podcast` to `/tools/ai-podcast`. |
 
-Single file change, no other files affected.
