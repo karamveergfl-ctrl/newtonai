@@ -1,52 +1,40 @@
 
 
-## Fix All Study Tools to Fit Mobile Screen
+## Instant Logo Loading Across the App
 
 ### Problem
-On mobile, the bottom action buttons (Submit, Next, Flip, etc.) in Quiz, Flashcards, and other full-screen study tools are hidden behind the MobileBottomNav. Both use `z-50`, and the tool footers use `z-10` (globally positioned via `fixed`), so the bottom nav wins and covers the buttons.
-
-### Root Cause
-The study tools use `fixed inset-0 z-50` for the overlay, but their internal fixed footers use `z-10`. Since `fixed` elements are positioned in the viewport stacking context, `z-10` is below the bottom nav's `z-50`. The bottom nav also renders later in the DOM, winning any z-index ties.
+The logo image (`newton-logo-clean.png`) is imported as a Vite ES module from `src/assets/`. This means the browser can only start downloading it **after** the JavaScript bundle loads, parses, and executes -- causing a visible delay where the logo area appears empty.
 
 ### Solution
-Bump all full-screen study tool containers from `z-50` to `z-[60]` so they fully cover the bottom nav. This is the cleanest fix -- these are intentionally full-screen overlays that should sit above all app chrome.
+Move the logo reference to the `public/` folder and preload it in `index.html` so the browser starts fetching it **immediately** with the HTML, before any JavaScript runs.
 
-### Files to Change
+### Changes
 
 | File | Change |
 |------|--------|
-| `src/components/QuizMode.tsx` | Change all `z-50` containers to `z-[60]`; change footer `z-10` to `z-[61]` |
-| `src/components/FlashcardDeck.tsx` | Change all `z-50` containers to `z-[60]`; change footer `z-10` to `z-[61]` |
-| `src/components/QuizReviewMode.tsx` | Change `z-50` container to `z-[60]` |
-| `src/components/VisualMindMap.tsx` | Change `z-50` container to `z-[60]` |
-| `src/components/FullScreenStudyTool.tsx` | Change `z-50` container to `z-[60]` |
+| `public/newton-logo-clean.png` | Copy the logo from `src/assets/` to `public/` so it has a stable, predictable URL |
+| `index.html` | Add `<link rel="preload" as="image" href="/newton-logo-clean.png">` in the `<head>` |
+| `src/components/Logo.tsx` | Replace the ES module import with a direct `/newton-logo-clean.png` path; set `fetchPriority="high"` and `decoding="sync"` for instant rendering |
 
-### What This Fixes
-- Quiz: Submit/Next/Skip buttons will be fully visible and tappable on mobile
-- Flashcards: Flip/Prev/Next/Done buttons will be fully visible
-- Mind Map: Full screen view won't have bottom nav peeking through
-- Study Guide/Summary: Full screen view clean on mobile
-- All loading/skeleton states and completion screens also fixed
+### Why This Works
+- **Preload link**: The browser starts downloading the image as soon as it parses the HTML `<head>`, before any JS loads
+- **Static public path**: No Vite hashing means the preload URL matches the actual URL used by the `<img>` tag
+- **`fetchPriority="high"`**: Tells the browser to prioritize this image over other resources
+- **`decoding="sync"`**: Ensures the image is decoded synchronously so it paints immediately when available, with no flicker
 
 ### Technical Details
 
-Each component has a main container like:
-```
-<div className="fixed inset-0 z-50 ...">
-```
-This changes to:
-```
-<div className="fixed inset-0 z-[60] ...">
+**index.html** -- add after the font preload:
+```html
+<link rel="preload" as="image" href="/newton-logo-clean.png">
 ```
 
-For QuizMode and FlashcardDeck, the fixed footer also changes:
+**Logo.tsx** -- remove import, use static path:
+```tsx
+const LOGO_SRC = "/newton-logo-clean.png";
+// Remove: import newtonLogo from "@/assets/newton-logo-clean.png";
+// Use LOGO_SRC in <img src={LOGO_SRC} ...>
+// Change decoding="async" to decoding="sync"
+// Add fetchPriority="high"
 ```
-// Before
-<div className="fixed bottom-0 ... z-10">
-
-// After
-<div className="fixed bottom-0 ... z-[61]">
-```
-
-This ensures the footer sits above both the bottom nav (z-50) and the tool's own scrollable content area.
 
