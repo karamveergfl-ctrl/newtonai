@@ -179,7 +179,7 @@ export const FlashcardDeck = ({
   // Loading state with skeleton
   if (isLoading || cards.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+      <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex flex-col">
         {/* Header */}
         <div className="p-4 border-b bg-card/50">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
@@ -275,7 +275,7 @@ export const FlashcardDeck = ({
 
   if (showCongrats) {
     return (
-      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-6 animate-fade-in">
           <div className="relative">
             <Trophy className="w-24 h-24 mx-auto text-yellow-500 animate-bounce" />
@@ -303,7 +303,7 @@ export const FlashcardDeck = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex flex-col">
       {/* Header - Compact on mobile */}
       <div className="shrink-0 p-2 md:p-4 border-b bg-card/50">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-2">
@@ -354,7 +354,7 @@ export const FlashcardDeck = ({
       </div>
 
       {/* Controls - Fixed at bottom, always visible */}
-      <div className="shrink-0 fixed bottom-0 left-0 right-0 p-2 md:p-4 border-t bg-card/95 backdrop-blur-sm safe-area-pb z-10">
+      <div className="shrink-0 fixed bottom-0 left-0 right-0 p-2 md:p-4 border-t bg-card/95 backdrop-blur-sm safe-area-pb z-[61]">
         <div className="max-w-lg mx-auto space-y-2 md:space-y-3">
           {/* Flip Button */}
           <div className="flex justify-center">

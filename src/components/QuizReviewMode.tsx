@@ -185,7 +185,7 @@ export const QuizReviewMode = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex flex-col">
       {/* Header */}
       <div className="p-4 border-b bg-card/50">
         <div className="max-w-2xl mx-auto">
