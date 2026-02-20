@@ -165,6 +165,10 @@ const Profile = () => {
         >
           <Tabs value={currentTab} onValueChange={handleTabChange}>
             <TabsList className="w-full grid grid-cols-4 mb-6">
+              <TabsTrigger value="settings" className="gap-1.5">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Settings</span>
+              </TabsTrigger>
               <TabsTrigger value="history" className="gap-1.5">
                 <History className="h-4 w-4" />
                 <span className="hidden sm:inline">History</span>
@@ -178,23 +182,11 @@ const Profile = () => {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-1.5">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Settings</span>
-              </TabsTrigger>
               <TabsTrigger value="usage" className="gap-1.5">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Usage</span>
               </TabsTrigger>
             </TabsList>
-
-            <TabsContent value="history" className="mt-0">
-              <GenerationHistory />
-            </TabsContent>
-
-            <TabsContent value="notifications" className="mt-0">
-              <UserNotifications />
-            </TabsContent>
 
             <TabsContent value="settings" className="mt-0">
               <SettingsPanel
@@ -202,6 +194,14 @@ const Profile = () => {
                 email={email}
                 onProfileUpdate={(updates) => setProfile(prev => prev ? { ...prev, ...updates } : prev)}
               />
+            </TabsContent>
+
+            <TabsContent value="history" className="mt-0">
+              <GenerationHistory />
+            </TabsContent>
+
+            <TabsContent value="notifications" className="mt-0">
+              <UserNotifications />
             </TabsContent>
 
             <TabsContent value="usage" className="mt-0">

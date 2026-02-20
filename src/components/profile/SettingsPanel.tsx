@@ -17,7 +17,14 @@ import {
   Presentation,
   Eye,
   EyeOff,
-  ShieldCheck
+  ShieldCheck,
+  Coins,
+  Crown,
+  HelpCircle,
+  MessageSquare,
+  Trash2,
+  FileText,
+  Shield
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -328,8 +335,57 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
 
   const displayId = profile.id.slice(0, 10) + '...';
 
+  const handleClearSearchHistory = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { error } = await supabase
+        .from('search_history')
+        .delete()
+        .eq('user_id', user.id);
+      if (error) throw error;
+      toast.success('Search history cleared');
+    } catch (error) {
+      toast.error('Failed to clear search history');
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Quick Access Section */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="px-4 py-3 border-b">
+            <div className="flex items-center gap-2">
+              <IndicatorDot color="green" />
+              <h3 className="font-semibold">Quick Access</h3>
+            </div>
+          </div>
+          <div className="px-4 divide-y divide-border">
+            <SettingRow
+              label="My Credits"
+              value={<Coins className="h-4 w-4" />}
+              onClick={() => navigate('/profile?tab=usage')}
+            />
+            <SettingRow
+              label="Pricing / Upgrade"
+              value={<Crown className="h-4 w-4" />}
+              onClick={() => navigate('/pricing')}
+            />
+            <SettingRow
+              label="Help & FAQ"
+              value={<HelpCircle className="h-4 w-4" />}
+              onClick={() => navigate('/faq')}
+            />
+            <SettingRow
+              label="Contact Support"
+              value={<MessageSquare className="h-4 w-4" />}
+              onClick={() => navigate('/contact')}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Account Section */}
       <Card>
         <CardContent className="p-0">
@@ -656,6 +712,35 @@ export function SettingsPanel({ profile, email, onProfileUpdate }: SettingsPanel
                 </svg>
               </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Data & Privacy Section */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="px-4 py-3 border-b">
+            <div className="flex items-center gap-2">
+              <IndicatorDot color="blue" />
+              <h3 className="font-semibold">Data & Privacy</h3>
+            </div>
+          </div>
+          <div className="px-4 divide-y divide-border">
+            <SettingRow
+              label="Clear Search History"
+              value={<Trash2 className="h-4 w-4" />}
+              onClick={handleClearSearchHistory}
+            />
+            <SettingRow
+              label="Privacy Policy"
+              value={<Shield className="h-4 w-4" />}
+              onClick={() => navigate('/privacy')}
+            />
+            <SettingRow
+              label="Terms of Service"
+              value={<FileText className="h-4 w-4" />}
+              onClick={() => navigate('/terms')}
+            />
           </div>
         </CardContent>
       </Card>
