@@ -163,7 +163,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
 
       <SidebarContent className="flex flex-col">
         {/* Home - Fixed */}
-        <SidebarGroup className="py-0 shrink-0">
+        <SidebarGroup className="pt-2 shrink-0">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
