@@ -92,13 +92,19 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
         <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-orange-500/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* Central Phone/App Mockup */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-72 md:w-56 md:h-80 rounded-[2.5rem] bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 border border-slate-600/50 shadow-2xl shadow-black/50 overflow-hidden z-20">
-          {/* Notch */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-5 bg-slate-900 rounded-full z-20" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-[21rem] md:w-56 md:h-[24rem] rounded-[3rem] bg-gradient-to-b from-slate-600/80 via-slate-700/90 to-slate-800 border border-slate-500/30 shadow-2xl shadow-black/60 overflow-hidden z-20">
+          {/* Titanium frame highlight */}
+          <div className="absolute inset-0 rounded-[3rem] ring-1 ring-inset ring-white/10 pointer-events-none z-30" />
           
-          {/* Inner bezel with screen content */}
-          <div className="absolute inset-[3px] rounded-[2.3rem] bg-slate-900 overflow-hidden">
-            <div className="absolute inset-3 flex flex-col pt-6">
+          {/* Screen area - thin bezels */}
+          <div className="absolute inset-[2.5px] rounded-[2.8rem] bg-slate-900 overflow-hidden">
+            {/* Dynamic Island */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[5.5rem] h-[1.6rem] bg-black rounded-full z-20 shadow-inner flex items-center justify-center">
+              <div className="w-2 h-2 rounded-full bg-slate-800/80 mr-4" />
+            </div>
+            
+            {/* Screen content */}
+            <div className="absolute inset-3 flex flex-col pt-10">
               {/* App header with logo */}
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-teal-600 flex items-center justify-center shadow-lg">
@@ -108,9 +114,7 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
               </div>
               
               {/* Dynamic active tool indicator */}
-              <div 
-                className="flex items-center gap-2 bg-slate-800/80 rounded-xl px-3 py-2 mb-3 border border-primary/30"
-              >
+              <div className="flex items-center gap-2 bg-slate-800/80 rounded-xl px-3 py-2 mb-3 border border-primary/30">
                 <div className={`w-5 h-5 rounded-lg ${currentTool.color} flex items-center justify-center`}>
                   <CurrentIcon className="w-3 h-3 text-white" />
                 </div>
@@ -145,7 +149,7 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
                 ))}
               </div>
               
-              {/* Newton character at bottom - static image */}
+              {/* Newton character */}
               <div className="absolute bottom-3 right-3 w-14 h-14 md:w-[4.5rem] md:h-[4.5rem] rounded-full overflow-hidden ring-2 ring-primary/20">
                 <img 
                   src={newtonCharacter} 
@@ -160,8 +164,11 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
             </div>
           </div>
           
-          {/* Screen reflection/shine */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none rounded-[2.5rem]" />
+          {/* Glass reflection */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/[0.07] via-transparent to-transparent pointer-events-none rounded-[3rem]" />
+          
+          {/* Home indicator bar */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-1 bg-white/20 rounded-full z-30" />
         </div>
 
         {/* Static Tool Badges */}
