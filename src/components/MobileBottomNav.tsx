@@ -105,8 +105,14 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
               )}
               aria-label={item.label}
             >
-              {item.icon}
+              <div className={cn("transition-transform duration-200", isActive && "scale-110")}>
+                {item.icon}
+              </div>
               <span className="text-[10px] font-medium">{item.label}</span>
+              <div className={cn(
+                "w-1 h-1 rounded-full bg-primary transition-all duration-200",
+                isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
+              )} />
             </button>
           );
         })}
