@@ -245,7 +245,7 @@ export const QuizMode = ({
   // Loading state with skeleton
   if (isLoading || questions.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+      <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex flex-col">
         {/* Header */}
         <div className="p-4 border-b bg-card/50">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
@@ -354,7 +354,7 @@ export const QuizMode = ({
     ).length;
 
     return (
-      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
         {/* Confetti celebration */}
         <ConfettiCelebration isActive={isComplete} />
         
@@ -446,7 +446,7 @@ export const QuizMode = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex flex-col">
       {/* Header - Compact on mobile */}
       <div className="shrink-0 p-2 md:p-4 border-b bg-card/50">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-2">
@@ -591,7 +591,7 @@ export const QuizMode = ({
       </div>
 
       {/* Footer - Fixed at bottom, always visible */}
-      <div className="shrink-0 fixed bottom-0 left-0 right-0 p-2 md:p-4 border-t bg-card/95 backdrop-blur-sm safe-area-pb z-10">
+      <div className="shrink-0 fixed bottom-0 left-0 right-0 p-2 md:p-4 border-t bg-card/95 backdrop-blur-sm safe-area-pb z-[61]">
         <div className="max-w-2xl mx-auto flex gap-2 md:gap-3 justify-between items-center">
           {/* Skip Button */}
           {!showResult && (

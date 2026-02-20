@@ -657,7 +657,7 @@ export const VisualMindMap = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-background flex flex-col">
       {/* Header */}
       <div className="p-4 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between gap-4 flex-wrap sticky top-0 z-10">
         <div className="flex items-center gap-3">

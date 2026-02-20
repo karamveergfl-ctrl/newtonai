@@ -93,7 +93,7 @@ export const FullScreenStudyTool = ({
   };
 
   return (
-    <div className={cn("fixed inset-0 z-50 bg-background flex flex-col", showVideoSlide && "sm:pr-80")}>
+    <div className={cn("fixed inset-0 z-[60] bg-background flex flex-col", showVideoSlide && "sm:pr-80")}>
       {/* Header */}
       <div className="p-3 md:p-4 border-b bg-background flex flex-col sm:flex-row items-start sm:items-center justify-between sticky top-0 z-10 gap-3">
         <div className="flex items-center gap-3 min-w-0">
