@@ -5,7 +5,7 @@ import { ContentDisclaimer } from "@/components/ContentDisclaimer";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle, Copy, Check, ImageIcon, Volume2, VolumeX, ChevronDown, Star, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,6 +56,7 @@ const stripMarkdown = (text: string): string => {
 
 const HomeworkHelp = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [solution, setSolution] = useState("");
   const [copied, setCopied] = useState(false);
@@ -143,6 +144,16 @@ const HomeworkHelp = () => {
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
   }, [tryUseFeature]);
+
+  // Pick up camera capture from MobileBottomNav navigation state
+  useEffect(() => {
+    const state = location.state as { capturedImage?: { imageBase64: string; mimeType: string } } | null;
+    if (state?.capturedImage) {
+      setCapturedScreenshot(state.capturedImage);
+      // Clear state to prevent re-trigger on navigation
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(solution);
