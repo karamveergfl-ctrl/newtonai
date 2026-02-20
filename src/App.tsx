@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
 import { useDeferredLoad } from "@/hooks/useDeferredLoad";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { newtonOpenRef } from "@/lib/newtonOpenRef";
 
 import { HelmetProvider } from "react-helmet-async";
 import { PodcastProvider } from "@/contexts/PodcastContext";
@@ -183,6 +185,9 @@ function AnimatedRoutes() {
   );
 }
 
+
+
+
 function DeferredComponents() {
   const ready = useDeferredLoad(8000);
   if (!ready) return null;
@@ -191,7 +196,8 @@ function DeferredComponents() {
       <Suspense fallback={null}><VideoPreloader /></Suspense>
       <Suspense fallback={null}><PodcastMiniPlayer /></Suspense>
       <Suspense fallback={null}><CookieConsent /></Suspense>
-      <Suspense fallback={null}><GlobalNewtonAssistant /></Suspense>
+      <Suspense fallback={null}><GlobalNewtonAssistant onRegisterOpen={(fn) => { newtonOpenRef.current = fn; }} /></Suspense>
+      <MobileBottomNav />
     </>
   );
 }

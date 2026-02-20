@@ -17,7 +17,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 
-export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
+export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onRegisterOpen }: { onRegisterOpen?: (openFn: () => void) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
@@ -65,6 +65,16 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, isAuthenticated]);
 
+  // Register the open function so external components (e.g. MobileBottomNav) can trigger it
+  useEffect(() => {
+    if (onRegisterOpen) {
+      onRegisterOpen(() => {
+        if (!isAuthenticated) { setShowSignIn(true); return; }
+        setIsOpen(true);
+      });
+    }
+  }, [onRegisterOpen, isAuthenticated]);
+
   const handleToggle = useCallback(() => {
     if (!isAuthenticated) { setShowSignIn(true); return; }
     setIsOpen((prev) => !prev);
@@ -102,15 +112,10 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
     }
   }, [isOpen, isAuthenticated, fetchConversations]);
 
-  // Mobile: drawer
+  // Mobile: drawer (trigger button hidden — bottom nav handles it)
   if (isMobile) {
     return (
       <>
-        {!isLandingPage && (
-          <div className="fixed bottom-4 right-4 z-50">
-            <NewtonTriggerButton isOpen={isOpen} onClick={handleToggle} />
-          </div>
-        )}
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
           <DrawerContent className="h-[85vh] max-h-[85vh]">
             <DrawerHeader className="sr-only">
