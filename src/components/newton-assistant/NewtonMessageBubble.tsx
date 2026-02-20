@@ -58,7 +58,7 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
 
   return (
     <motion.div
-      className={cn("flex gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}
+      className={cn("flex gap-1.5 sm:gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
@@ -66,7 +66,7 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
       {/* Avatar */}
       <div
         className={cn(
-          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden",
+          "flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center overflow-hidden",
           isUser ? "bg-primary" : ""
         )}
       >
@@ -86,7 +86,7 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
         className={cn(
           "flex-1 rounded-2xl overflow-hidden",
           isUser
-            ? "max-w-[85%] bg-primary text-primary-foreground rounded-br-md px-3.5 py-2.5"
+            ? "max-w-[85%] bg-primary text-primary-foreground rounded-br-md px-3 py-2 sm:px-3.5 sm:py-2.5"
             : "bg-muted/40 text-foreground rounded-bl-md px-3 py-2 min-w-0 max-w-full overflow-hidden"
         )}
       >
