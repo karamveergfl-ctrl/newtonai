@@ -45,7 +45,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [email, setEmail] = useState("");
   
-  const currentTab = searchParams.get("tab") || "history";
+  const currentTab = searchParams.get("tab") || "settings";
 
   useEffect(() => {
     const fetchProfile = async () => {
