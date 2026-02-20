@@ -5,14 +5,18 @@ import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import Logo from "@/components/Logo";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function TopStatsBar() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   let sidebarOpen = false;
   try {
     const sidebar = useSidebar();
     sidebarOpen = sidebar.open;
   } catch {}
+
+  const showLogo = isMobile || !sidebarOpen;
 
   return (
     <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
@@ -20,7 +24,7 @@ export function TopStatsBar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="hidden md:flex h-8 w-8" />
-            {!sidebarOpen && <Logo size="xs" showText compact />}
+            {showLogo && <Logo size="xs" showText compact />}
           </div>
           <div className="flex items-center gap-2">
             <GamificationBadge />
