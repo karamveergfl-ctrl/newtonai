@@ -101,23 +101,23 @@ export function FeatureShowcase({ compact = false, className }: FeatureShowcaseP
       <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500 rounded-xl" />
       
       {/* Inner content */}
-      <div className="relative m-[1px] bg-card/95 backdrop-blur-sm rounded-xl p-4">
+      <div className="relative m-[1px] bg-card/95 backdrop-blur-sm rounded-xl p-3 sm:p-4">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-            <Lock className="w-4 h-4 text-white" />
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+            <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
           </div>
-          <h3 className="font-semibold text-foreground">Unlock all features</h3>
+          <h3 className="font-semibold text-sm sm:text-base text-foreground">Unlock all features</h3>
         </div>
 
         {/* Feature categories */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {displayCategories.map((category) => (
             <div key={category.title}>
               <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
                 {category.title}
               </h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
                 {category.features.map((feature, idx) => (
                   <div 
                     key={idx}

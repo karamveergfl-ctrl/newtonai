@@ -61,7 +61,7 @@ export function NewUserWelcomeModal({ isOpen, onClose, userName }: NewUserWelcom
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-gradient-to-br from-background via-background to-primary/5 border-primary/20">
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-gradient-to-br from-background via-background to-primary/5 border-primary/20 max-h-[85dvh]">
         <AnimatePresence mode="wait">
           {currentStep === 0 ? (
             <motion.div
@@ -69,19 +69,19 @@ export function NewUserWelcomeModal({ isOpen, onClose, userName }: NewUserWelcom
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="p-6"
+              className="p-4 sm:p-6"
             >
               {/* Header */}
-              <div className="text-center mb-6">
+              <div className="text-center mb-4 sm:mb-6">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', delay: 0.2 }}
-                  className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary to-purple-600 mb-4"
+                  className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary to-purple-600 mb-3 sm:mb-4"
                 >
-                  <Sparkles className="w-8 h-8 text-white" />
+                  <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </motion.div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
                   Welcome{userName ? `, ${userName}` : ''}! 🎉
                 </h2>
                 <p className="text-muted-foreground">
@@ -90,7 +90,7 @@ export function NewUserWelcomeModal({ isOpen, onClose, userName }: NewUserWelcom
               </div>
 
               {/* Free Plan Badge */}
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-center mb-4 sm:mb-6">
                 <Badge variant="secondary" className="px-4 py-2 text-sm bg-green-500/10 text-green-500 border-green-500/20">
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   Free Plan Activated
@@ -98,14 +98,14 @@ export function NewUserWelcomeModal({ isOpen, onClose, userName }: NewUserWelcom
               </div>
 
               {/* Features Grid */}
-              <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
                 {freePlanFeatures.map((feature, index) => (
                   <motion.div
                     key={feature.label}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 + index * 0.05 }}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-card/50 border border-border/50"
+                    className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-card/50 border border-border/50"
                   >
                     <feature.icon className={`w-5 h-5 ${feature.color} flex-shrink-0 mt-0.5`} />
                     <div>
@@ -136,19 +136,19 @@ export function NewUserWelcomeModal({ isOpen, onClose, userName }: NewUserWelcom
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="p-6"
+              className="p-4 sm:p-6"
             >
               {/* Header */}
-              <div className="text-center mb-6">
+              <div className="text-center mb-4 sm:mb-6">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', delay: 0.2 }}
-                  className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 mb-4"
+                  className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 mb-3 sm:mb-4"
                 >
-                  <Crown className="w-8 h-8 text-white" />
+                  <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </motion.div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
                   Want More Power? 💪
                 </h2>
                 <p className="text-muted-foreground">
@@ -157,7 +157,7 @@ export function NewUserWelcomeModal({ isOpen, onClose, userName }: NewUserWelcom
               </div>
 
               {/* Upgrade Benefits */}
-              <div className="space-y-3 mb-6">
+              <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                 {upgradeHighlights.map((benefit, index) => (
                   <motion.div
                     key={benefit}
@@ -173,7 +173,7 @@ export function NewUserWelcomeModal({ isOpen, onClose, userName }: NewUserWelcom
               </div>
 
               {/* Pricing Teaser */}
-              <div className="text-center mb-6 p-4 rounded-lg bg-card/50 border border-border/50">
+              <div className="text-center mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg bg-card/50 border border-border/50">
                 <p className="text-sm text-muted-foreground mb-1">Pro plans starting at</p>
                 <p className="text-2xl font-bold text-foreground">₹149<span className="text-sm font-normal text-muted-foreground">/month</span></p>
               </div>

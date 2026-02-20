@@ -25,7 +25,7 @@ export function LevelUpModal({ isOpen, level, onClose }: LevelUpModalProps) {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 15, stiffness: 300 }}
-            className="bg-gradient-to-br from-card via-card to-primary/10 border border-primary/30 rounded-2xl p-8 shadow-2xl max-w-sm mx-4 text-center"
+            className="bg-gradient-to-br from-card via-card to-primary/10 border border-primary/30 rounded-2xl p-6 sm:p-8 shadow-2xl max-w-sm mx-4 mb-20 sm:mb-0 text-center"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Celebrating Newton animation */}
@@ -33,7 +33,7 @@ export function LevelUpModal({ isOpen, level, onClose }: LevelUpModalProps) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", damping: 10 }}
-              className="relative mx-auto w-32 h-32 mb-4"
+              className="relative mx-auto w-24 h-24 sm:w-32 sm:h-32 mb-4"
             >
               <LottieNewton state="celebrating" className="w-full h-full" />
             </motion.div>
