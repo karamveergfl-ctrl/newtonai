@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/SEOHead";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { 
-  ArrowLeft, 
   Loader2,
   History,
   Bell,
@@ -21,6 +20,7 @@ import { UserNotifications } from "@/components/profile/UserNotifications";
 import { SettingsPanel } from "@/components/profile/SettingsPanel";
 import { UsageTab } from "@/components/profile/UsageTab";
 import { useUserNotifications } from "@/hooks/useUserNotifications";
+import { AppLayout } from "@/components/AppLayout";
 
 interface ProfileData {
   id: string;
@@ -117,7 +117,7 @@ const Profile = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <AppLayout showFooter={false}>
       <SEOHead
         title="Profile"
         description="Manage your NewtonAI profile, view usage statistics, and track your study credits."
@@ -132,17 +132,7 @@ const Profile = () => {
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center justify-between mb-6"
         >
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/")}
-              className="shrink-0"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-semibold text-foreground">Profile</h1>
-          </div>
+          <h1 className="text-xl font-semibold text-foreground">Profile</h1>
           <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground">
             <LogOut className="h-4 w-4 mr-2" />
             Sign Out
@@ -220,7 +210,7 @@ const Profile = () => {
           </Tabs>
         </motion.div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
