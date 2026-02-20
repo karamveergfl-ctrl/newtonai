@@ -150,7 +150,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="pt-8 border-t border-border">
+        <div className="pt-8 border-t border-border pb-16 md:pb-0">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-muted-foreground text-sm">
               © {new Date().getFullYear()} NewtonAI. All rights reserved.

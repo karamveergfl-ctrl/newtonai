@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, memo, lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNewtonChat } from "@/hooks/useNewtonChat";
 import { useNewtonConversations } from "@/hooks/useNewtonConversations";
@@ -22,6 +23,8 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const isLandingPage = location.pathname === "/";
 
   const {
     groupedConversations,
@@ -103,9 +106,11 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
   if (isMobile) {
     return (
       <>
-        <div className="fixed bottom-4 right-4 z-50">
-          <NewtonTriggerButton isOpen={isOpen} onClick={handleToggle} />
-        </div>
+        {!isLandingPage && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <NewtonTriggerButton isOpen={isOpen} onClick={handleToggle} />
+          </div>
+        )}
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
           <DrawerContent className="h-[85vh] max-h-[85vh]">
             <DrawerHeader className="sr-only">
@@ -197,7 +202,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant() {
       </AnimatePresence>
 
       {/* Trigger button */}
-      {!isOpen && (
+      {!isOpen && !isLandingPage && (
         <div className="fixed bottom-4 right-4 z-50">
           <NewtonTriggerButton isOpen={isOpen} onClick={handleToggle} />
         </div>
