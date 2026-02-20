@@ -94,11 +94,11 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div 
-              className="w-full max-w-lg bg-gradient-to-br from-card via-card to-card/95 border border-border/50 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden pointer-events-auto"
+              className="w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto bg-gradient-to-br from-card via-card to-card/95 border border-border/50 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header with gradient */}
-              <div className="relative bg-gradient-to-br from-primary/20 via-primary/10 to-transparent px-6 py-8 text-center overflow-hidden">
+              <div className="relative bg-gradient-to-br from-primary/20 via-primary/10 to-transparent px-4 py-5 sm:px-6 sm:py-8 text-center overflow-hidden">
                 {/* Background decoration */}
                 <div className="absolute inset-0 overflow-hidden">
                   <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
@@ -120,16 +120,16 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.1, type: "spring", damping: 15 }}
-                  className="relative mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 mb-4"
+                  className="relative mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 mb-4"
                 >
-                  <Sparkles className="w-8 h-8 text-primary-foreground" />
+                  <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" />
                 </motion.div>
 
                 <motion.h2
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 }}
-                  className="relative text-xl font-bold text-foreground mb-2"
+                  className="relative text-lg sm:text-xl font-bold text-foreground mb-2"
                 >
                   Welcome to Newton AI! 🎉
                 </motion.h2>
@@ -164,7 +164,7 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
               </div>
 
               {/* Quick Actions */}
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <h3 className="text-sm font-medium text-foreground mb-3">Get Started</h3>
                 <div className="space-y-2">
                   {quickActions.map((action, index) => (
@@ -174,7 +174,7 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.35 + index * 0.05 }}
                       onClick={() => handleQuickAction(action.action)}
-                      className={`w-full flex items-center gap-4 p-3 rounded-xl bg-gradient-to-r ${action.color} border border-border/30 hover:border-primary/30 transition-all duration-200 group text-left`}
+                      className={`w-full flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-xl bg-gradient-to-r ${action.color} border border-border/30 hover:border-primary/30 transition-all duration-200 group text-left`}
                     >
                       <div className="w-10 h-10 rounded-lg bg-background/50 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                         {action.icon}
@@ -194,7 +194,7 @@ export function WelcomeModal({ onUploadClick, onRecordClick }: WelcomeModalProps
 
               {/* Footer */}
               <div className="px-6 py-4 bg-muted/20 border-t border-border/30 flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground hidden sm:block">
                   Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">Esc</kbd> to close
                 </p>
                 <Button

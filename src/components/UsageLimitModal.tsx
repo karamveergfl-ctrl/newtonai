@@ -50,7 +50,7 @@ export function UsageLimitModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <motion.div
             initial={{ scale: 0 }}
@@ -84,7 +84,8 @@ export function UsageLimitModal({
           </div>
 
           {/* Feature showcase */}
-          <FeatureShowcase className="my-4" />
+          <FeatureShowcase compact className="my-4 hidden sm:block" />
+          <FeatureShowcase compact className="my-2 sm:hidden" />
 
           <div className="space-y-2">
             <Button 
