@@ -13,13 +13,12 @@ export function TopStatsBar() {
       <div className="container mx-auto px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {/* Mobile hamburger menu */}
-            <SidebarTrigger className="md:hidden h-8 w-8" />
-            {/* Bracket-style separator - mobile only */}
-            <div className="md:hidden h-6 w-[3px] rounded-full bg-primary/20" />
+            {/* Sidebar trigger - desktop only (bottom nav handles mobile) */}
+            <SidebarTrigger className="hidden md:flex h-8 w-8" />
             <GamificationBadge />
           </div>
-          <div className="flex items-center gap-1 bg-muted/50 rounded-full px-1 py-1">
+          {/* Theme & profile controls - desktop only (bottom nav handles mobile) */}
+          <div className="hidden md:flex items-center gap-1 bg-muted/50 rounded-full px-1 py-1">
             <ThemeToggle />
             <Button
               variant="ghost"
