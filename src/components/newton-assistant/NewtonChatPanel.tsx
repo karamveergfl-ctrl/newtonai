@@ -141,9 +141,9 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex flex-col h-full bg-background rounded-2xl border shadow-2xl overflow-hidden min-w-0">
+    <div className="flex flex-col h-full bg-background rounded-none border-0 shadow-none sm:rounded-2xl sm:border sm:shadow-2xl overflow-hidden min-w-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
+      <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center gap-2.5">
           {showSidebarToggle && onToggleSidebar && (
             <Button
@@ -155,7 +155,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
               <PanelLeft className="w-4 h-4" />
             </Button>
           )}
-          <div className="w-9 h-9 rounded-full overflow-hidden shadow-sm">
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full overflow-hidden shadow-sm">
             <img src={newtonChatAvatar} alt="Newton" className="w-full h-full object-cover scale-150" />
           </div>
           <div>
@@ -182,10 +182,10 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full py-8 text-center">
             <LottieNewton state="sleeping" size="sm" />
-            <h4 className="text-2xl font-semibold mt-6 mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <h4 className="text-lg sm:text-2xl font-semibold mt-3 sm:mt-6 mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               What can I help you with?
             </h4>
-            <p className="text-sm text-muted-foreground mb-8 max-w-[300px]">
+            <p className="text-sm text-muted-foreground mb-4 sm:mb-8 max-w-[300px]">
               Your AI study buddy. Ask me anything about homework, concepts, or study tips.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
@@ -233,7 +233,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
       )}
 
       {/* Input */}
-      <div className="p-3 border-t bg-muted/30">
+      <div className="p-2 sm:p-3 border-t bg-muted/30 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:pb-3">
         <div className="flex items-end gap-2">
           {/* Attachment button */}
           {!attachment && (
@@ -251,7 +251,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             variant={isListening ? "default" : "outline"}
             size="icon"
             className={cn(
-              "h-[42px] w-[42px] shrink-0 transition-all",
+              "h-9 w-9 sm:h-[42px] sm:w-[42px] shrink-0 transition-all",
               isListening && "bg-red-500 hover:bg-red-600 animate-pulse"
             )}
             disabled={isLoading}
@@ -273,7 +273,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
                   : "Ask Newton anything..."
             }
             className={cn(
-              "min-h-[42px] max-h-[120px] resize-none text-sm",
+              "min-h-[36px] sm:min-h-[42px] max-h-[120px] resize-none text-sm",
               "bg-background border-muted-foreground/20",
               "focus-visible:ring-primary/50",
               isListening && "border-red-500/50"
@@ -282,11 +282,11 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             disabled={isLoading || isVoiceProcessing}
           />
           {isLoading ? (
-            <Button onClick={onCancel} variant="outline" size="icon" className="h-[42px] w-[42px] shrink-0">
+            <Button onClick={onCancel} variant="outline" size="icon" className="h-9 w-9 sm:h-[42px] sm:w-[42px] shrink-0">
               <StopCircle className="w-5 h-5 text-destructive" />
             </Button>
           ) : (
-            <Button onClick={handleSend} disabled={!input.trim()} size="icon" className="h-[42px] w-[42px] shrink-0">
+            <Button onClick={handleSend} disabled={!input.trim()} size="icon" className="h-9 w-9 sm:h-[42px] sm:w-[42px] shrink-0">
               <Send className="w-4 h-4" />
             </Button>
           )}

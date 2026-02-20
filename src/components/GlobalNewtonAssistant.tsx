@@ -117,7 +117,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onReg
     return (
       <>
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
-          <DrawerContent className="h-[100dvh] max-h-[100dvh]">
+          <DrawerContent className="h-[100dvh] max-h-[100dvh] [&>div:first-child]:hidden">
             <DrawerHeader className="sr-only">
               <DrawerTitle>Newton AI Assistant</DrawerTitle>
             </DrawerHeader>

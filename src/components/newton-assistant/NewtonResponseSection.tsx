@@ -67,13 +67,13 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
   return (
     <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden my-2 group shadow-sm w-full min-w-0">
       {/* Section Header with top Explain button */}
-      <div className="flex items-center justify-between gap-2 p-3 bg-muted/30 border-b border-border/40">
+      <div className="flex items-center justify-between gap-2 p-2 sm:p-3 bg-muted/30 border-b border-border/40">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex items-center gap-2 text-left flex-1 min-w-0 hover:opacity-80 transition-opacity"
         >
           {section.sectionNumber !== null && (
-            <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shrink-0">
+            <span className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-primary text-primary-foreground text-[10px] sm:text-xs font-semibold shrink-0">
               {section.sectionNumber}
             </span>
           )}
@@ -95,7 +95,7 @@ export const NewtonResponseSection = memo(function NewtonResponseSection({
         "transition-all duration-200 overflow-hidden",
         isExpanded ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0"
       )}>
-        <div className="p-4 text-sm min-w-0">
+        <div className="p-3 sm:p-4 text-sm min-w-0">
           <div className="prose prose-sm dark:prose-invert max-w-none break-words [overflow-wrap:anywhere] [&_.katex-display]:overflow-x-auto [&_.katex]:max-w-full">
             <Suspense fallback={null}><MarkdownRenderer content={section.content} /></Suspense>
           </div>
