@@ -32,7 +32,7 @@ const tools: Tool[] = [
   { icon: Sparkles, label: "Mind Map", description: "Visual Mind Maps", color: "bg-gradient-to-br from-fuchsia-400 to-fuchsia-600", position: "bottom-left", route: "/tools/mind-map" },
   { icon: FileQuestion, label: "Summary", description: "Content Summary", color: "bg-gradient-to-br from-amber-400 to-amber-600", position: "bottom", route: "/tools/summarizer" },
   { icon: Video, label: "Videos", description: "Video Summarizer", color: "bg-gradient-to-br from-blue-400 to-blue-600", position: "bottom-right", route: "/tools/summarizer" },
-  { icon: Mic, label: "Podcast", description: "AI Podcast", color: "bg-gradient-to-br from-orange-400 to-orange-600", position: "top", route: "/tools/podcast" },
+  { icon: Mic, label: "Podcast", description: "AI Podcast", color: "bg-gradient-to-br from-orange-400 to-orange-600", position: "top", route: "/tools/ai-podcast" },
 ];
 
 // Static position classes
@@ -56,7 +56,8 @@ const ToolBadge = ({ tool, isSelected, onSelect }: { tool: Tool; isSelected: boo
   
   return (
     <div className={`absolute ${positionClasses[tool.position]} z-10`}>
-      <button
+      <Link
+        to={tool.route}
         onClick={onSelect}
         className={`flex items-center gap-2.5 backdrop-blur-md rounded-2xl px-3.5 py-2.5 shadow-xl shadow-black/25 border transition-all duration-300 cursor-pointer group
           ${isSelected 
@@ -70,7 +71,7 @@ const ToolBadge = ({ tool, isSelected, onSelect }: { tool: Tool; isSelected: boo
         <span className="text-sm font-semibold text-white whitespace-nowrap tracking-tight">
           {tool.label}
         </span>
-      </button>
+      </Link>
     </div>
   );
 };
