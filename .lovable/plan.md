@@ -1,41 +1,46 @@
 
 
-## Fix WelcomeModal to Fit Mobile Screen Without Scrolling
+## Restructure Mobile Bottom Nav: Camera-Centric Layout
 
-### Problem
-The WelcomeModal content overflows the mobile viewport, forcing users to scroll down to find the "Start Exploring" button. The modal should fit entirely on screen.
+### What Changes
 
-### Solution
-Restructure the modal on mobile to be more compact so everything fits in one view:
+The bottom navigation bar will be reorganized to put the **Snap (Camera)** button in the center position with an elevated design, and the **Newton** button will move to where Snap currently is. Tapping Snap will directly open the device camera to capture a photo, then navigate to the Homework Help page with the captured image ready for processing.
 
-**File: `src/components/WelcomeModal.tsx`**
+### Layout Change
 
-1. **Reduce header padding and icon size further on mobile** -- `py-3` instead of `py-5`, icon `w-10 h-10`, smaller margin-bottom
-2. **Shrink the features grid** -- Use smaller icon containers (`w-5 h-5`), tighter `gap-1.5`, reduce section padding to `px-4 py-2`
-3. **Compact quick action cards** -- Reduce icon container to `w-8 h-8`, use `p-2` padding, tighter `space-y-1.5`
-4. **Merge footer into quick actions section** -- Move the "Start Exploring" button directly below the quick actions with minimal spacing, removing the separate footer section on mobile
-5. **Hide the "Get Started" heading on mobile** to save vertical space
-6. **Use `flex flex-col` with `max-h-[100dvh]`** on the modal container so it never exceeds the viewport
+```text
+Current:  Home | Snap | [Newton] | Tools | Profile
+New:      Home | Newton | [Snap/Camera] | Tools | Profile
+```
 
-### Key Layout Changes
+The center Camera button will have the elevated circular design (currently used by Newton), making it the primary action.
 
-| Section | Before (mobile) | After (mobile) |
-|---------|-----------------|----------------|
-| Header padding | `py-5` | `py-3` |
-| Icon size | `w-12 h-12` | `w-10 h-10` |
-| Features section | `px-6 py-4` | `px-4 py-2` |
-| Quick actions padding | `p-4` | `p-3` |
-| Quick action cards | `p-2.5`, `w-10 h-10` icon | `p-2`, `w-8 h-8` icon |
-| Footer | Separate section with border | Inline button below actions, full-width on mobile |
-| "Get Started" label | Visible | Hidden on mobile |
+### How the Camera Works
+
+When the user taps the center Camera button:
+1. A hidden file input with `accept="image/*" capture="environment"` is triggered
+2. This opens the device camera directly on mobile phones
+3. After capturing/selecting a photo, the user is navigated to `/tools/homework-help` with the image passed via React Router state
+4. The Homework Help page picks up the image from navigation state and processes it automatically
+
+### File Changes
+
+| File | Change |
+|------|--------|
+| `src/components/MobileBottomNav.tsx` | Swap Snap and Newton positions; add hidden file input for camera; Snap gets elevated center style, Newton gets regular tab style; on photo capture, navigate to homework help with image state |
+| `src/pages/tools/HomeworkHelp.tsx` | Read image from `location.state` on mount; if present, auto-trigger the solve flow with the captured image |
 
 ### Technical Details
 
-The modal container will use:
-```
-max-h-[calc(100dvh-2rem)] flex flex-col
-```
+**MobileBottomNav.tsx:**
+- Reorder NAV_ITEMS: Home, Newton, Snap (center), Tools, Profile
+- Change Newton from `action: "newton"` to a regular elevated-style center button that opens the assistant
+- Change Snap to `action: "camera"` with the elevated circular center design (gradient background, shadow, larger size)
+- Add a hidden `<input type="file" accept="image/*" capture="environment">` ref
+- On file select: convert to base64, navigate to `/tools/homework-help` with `state: { capturedImage: { imageBase64, mimeType } }`
+- Newton becomes a regular nav item that triggers the assistant drawer (same functionality, just regular tab style)
 
-The footer will be simplified on mobile -- just a full-width "Start Exploring" button with minimal padding, no Esc hint, no border-top decoration.
-
-**Files to edit:** `src/components/WelcomeModal.tsx` (single file change)
+**HomeworkHelp.tsx:**
+- Use `useLocation()` to check for `location.state?.capturedImage`
+- On mount, if `capturedImage` exists, set it as `capturedScreenshot` to trigger the `InlineSolutionPanel` flow automatically
+- Clear the state after consuming it to prevent re-triggering on navigation
