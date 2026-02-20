@@ -1,4 +1,4 @@
-import newtonLogo from "@/assets/newton-logo-clean.png";
+const LOGO_SRC = "/newton-logo-clean.png";
 
 interface LogoProps {
   size?: "xs" | "sm" | "md" | "lg";
@@ -27,12 +27,12 @@ const Logo = ({ size = "md", showText = false, className = "", compact = false, 
         style={{ width: icon, height: icon }}>
         <div className="overflow-hidden rounded-full w-full h-full">
           <img
-            src={newtonLogo}
+            src={LOGO_SRC}
             alt="NewtonAI Logo"
             loading={eager ? "eager" : "lazy"}
-            decoding="async"
-            className="w-full h-full object-contain"
-            style={{ imageRendering: 'auto' }} />
+            decoding="sync"
+            fetchPriority="high"
+            className="w-full h-full object-contain" />
         </div>
       </div>
       {showText && (
