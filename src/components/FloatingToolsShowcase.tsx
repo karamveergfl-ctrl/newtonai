@@ -146,15 +146,15 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
               </div>
               
               {/* Newton character at bottom - static image */}
-              <div className="absolute bottom-3 right-3 w-16 h-20 md:w-20 md:h-24">
+              <div className="absolute bottom-3 right-3 w-14 h-14 md:w-[4.5rem] md:h-[4.5rem] rounded-full overflow-hidden ring-2 ring-primary/20">
                 <img 
                   src={newtonCharacter} 
                   alt="Newton AI mascot" 
                   loading="eager"
                   fetchPriority="high"
-                  width={80}
-                  height={120}
-                  className="w-full h-full object-contain"
+                  width={72}
+                  height={72}
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
