@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Home, Camera, LayoutGrid, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
   path?: string;
-  action?: "newton";
+  action?: "newton" | "camera";
   match?: (path: string) => boolean;
 }
 
@@ -24,15 +24,15 @@ const NAV_ITEMS: NavItem[] = [
     match: (p) => p === "/dashboard" || p === "/index",
   },
   {
-    label: "Snap",
-    icon: <Camera className="w-5 h-5" />,
-    path: "/tools/homework-help",
-    match: (p) => p === "/tools/homework-help",
-  },
-  {
     label: "Newton",
     icon: null,
     action: "newton",
+  },
+  {
+    label: "Snap",
+    icon: <Camera className="w-5 h-5" />,
+    action: "camera",
+    match: (p) => p === "/tools/homework-help",
   },
   {
     label: "Tools",
@@ -48,14 +48,45 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
 export const MobileBottomNav = memo(function MobileBottomNav() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isPublicRoute = PUBLIC_ROUTES.some(
     (r) => location.pathname === r || (r !== "/" && location.pathname.startsWith(r + "/"))
   );
+
+  const handleCameraCapture = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const base64 = await fileToBase64(file);
+      navigate("/tools/homework-help", {
+        state: {
+          capturedImage: {
+            imageBase64: base64.split(",")[1],
+            mimeType: file.type,
+          },
+        },
+      });
+    } catch (err) {
+      console.error("Failed to process captured image:", err);
+    }
+
+    // Reset input so same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, [navigate]);
 
   if (!isMobile || isPublicRoute) return null;
 
@@ -66,31 +97,58 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-background/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
+      {/* Hidden file input for camera */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleCameraCapture}
+      />
+
       <div className="flex items-end justify-around h-16 px-1">
         {NAV_ITEMS.map((item) => {
           const isActive = item.match ? item.match(location.pathname) : false;
+          const isCamera = item.action === "camera";
           const isNewton = item.action === "newton";
 
+          {/* Center elevated Camera button */}
+          if (isCamera) {
+            return (
+              <button
+                key="camera"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center min-w-[56px] -mt-3 focus:outline-none"
+                aria-label="Open Camera"
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 mb-0.5">
+                  <Camera className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <span className="text-[10px] font-medium text-primary">Snap</span>
+              </button>
+            );
+          }
+
+          {/* Newton as regular tab */}
           if (isNewton) {
             return (
               <button
                 key="newton"
                 onClick={handleNewtonPress}
-                className="flex flex-col items-center justify-center min-w-[56px] -mt-3 focus:outline-none"
+                className="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] gap-0.5 focus:outline-none transition-colors text-muted-foreground"
                 aria-label="Open Newton AI"
               >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 mb-0.5">
-                  <div className="w-9 h-9 rounded-full overflow-hidden">
-                    <img
-                      src={newtonChatAvatar}
-                      alt="Newton"
-                      width={36}
-                      height={36}
-                      className="w-full h-full object-cover scale-150"
-                    />
-                  </div>
+                <div className="w-6 h-6 rounded-full overflow-hidden">
+                  <img
+                    src={newtonChatAvatar}
+                    alt="Newton"
+                    width={24}
+                    height={24}
+                    className="w-full h-full object-cover scale-150"
+                  />
                 </div>
-                <span className="text-[10px] font-medium text-primary">Newton</span>
+                <span className="text-[10px] font-medium">Newton</span>
               </button>
             );
           }
