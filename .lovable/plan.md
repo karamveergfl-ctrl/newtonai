@@ -1,55 +1,89 @@
 
 
-## Profile Page Tab Reorder and Quick-Access Enhancements
+## Mobile-Optimize All Modals, Banners, and Overlays
 
-### 1. Reorder Tabs: Settings First
+The screenshot shows the WelcomeModal overflowing on mobile with no scrolling, and the content gets cut off behind the bottom nav. This plan addresses all modal/banner/overlay components to ensure they fit and scroll properly on mobile screens.
 
-The current tab order is: History | Notifications | Settings | Usage
+### Problem
 
-Change to match the image: **Settings | History | Notifications | Usage**
+Several modals and overlays are not mobile-optimized:
+- **WelcomeModal**: Custom modal without scroll support, content overflows on small screens
+- **Dialog-based modals** (UsageLimitModal, CreditModal, GuestTrialLimitModal, SignInRequiredModal, NewUserWelcomeModal): The base `DialogContent` lacks `max-h` and `overflow-y-auto` on mobile, causing content to be cut off
+- **LevelUpModal**: Custom overlay, needs mobile padding for bottom nav
+- **FloatingUpgradeBanner**: Already has `bottom-20` for mobile, but could use minor refinements
+- **FeatureShowcase**: Dense grid can overflow inside modals on mobile
 
-This puts the most-used tab (Settings) in the primary position.
+### Changes
 
-**File: `src/pages/Profile.tsx`**
-- Swap the `TabsTrigger` order so Settings comes first, then History
-- Move the corresponding `TabsContent` blocks to match
+#### 1. `src/components/ui/dialog.tsx` -- Add mobile-safe scrolling to base DialogContent
 
-### 2. Add Quick-Access Shortcuts to Settings
+Add `max-h-[calc(100dvh-2rem)]` and `overflow-y-auto` to the base DialogContent class so ALL dialog-based modals automatically scroll on mobile. Also add proper margin so content clears the bottom nav.
 
-Add useful quick-access rows to the Settings panel for features users need frequently:
+#### 2. `src/components/WelcomeModal.tsx` -- Make scrollable and compact on mobile
 
-**File: `src/components/profile/SettingsPanel.tsx`**
+- Add `max-h-[calc(100dvh-2rem)] overflow-y-auto` to the modal container
+- Reduce header padding on mobile: `px-4 py-5 sm:px-6 sm:py-8`
+- Make the icon smaller on mobile: `w-12 h-12 sm:w-16 sm:h-16`
+- Reduce heading size: `text-lg sm:text-xl`
+- Compact the quick action cards: `p-2.5 sm:p-3`
+- Hide the Esc keyboard hint on mobile (not relevant for touch devices)
+- Reduce the "Get Started" section padding: `p-4 sm:p-6`
 
-Add a new "Quick Access" card at the top of Settings with:
-- **My Credits** -- navigate to `/profile?tab=usage` (shows credit balance inline)
-- **Pricing / Upgrade** -- navigate to `/pricing`
-- **Help & FAQ** -- navigate to `/faq`
-- **Contact Support** -- navigate to `/contact`
+#### 3. `src/components/NewUserWelcomeModal.tsx` -- Compact for mobile
 
-### 3. Add Data Management Section
+- Add `max-h-[85vh] overflow-y-auto` to the inner content div
+- Reduce heading: `text-xl sm:text-2xl`
+- Compact feature grid items: smaller padding on mobile
+- Reduce spacing between sections: `mb-4 sm:mb-6`
 
-Add a "Data & Privacy" card with:
-- **Clear Search History** -- button to delete all search history
-- **Privacy Policy** -- link to `/privacy`
-- **Terms of Service** -- link to `/terms`
+#### 4. `src/components/LevelUpModal.tsx` -- Add safe-area and mobile padding
 
-### Summary of Changes
+- Add `pb-20 sm:pb-0` to clear the mobile bottom nav
+- Reduce Newton animation size on mobile: `w-24 h-24 sm:w-32 sm:h-32`
+- Reduce padding: `p-6 sm:p-8`
+
+#### 5. `src/components/UsageLimitModal.tsx` -- Already has `max-h-[90vh]`, minor tweaks
+
+- The `FeatureShowcase` is heavy inside this modal; hide it on mobile or show compact version
+- Add `max-h-[85dvh]` instead of `90vh` to account for bottom nav
+
+#### 6. `src/components/FeatureShowcase.tsx` -- Mobile compact mode
+
+- Reduce padding and font sizes on mobile
+- Use single column on very small screens for the feature grid inside modals
+
+### Summary of File Changes
 
 | File | Change |
 |------|--------|
-| `src/pages/Profile.tsx` | Reorder tabs: Settings first, then History |
-| `src/components/profile/SettingsPanel.tsx` | Add Quick Access card and Data & Privacy card |
+| `src/components/ui/dialog.tsx` | Add `max-h-[calc(100dvh-2rem)] overflow-y-auto` to base DialogContent |
+| `src/components/WelcomeModal.tsx` | Scrollable container, reduced padding/sizes, hide Esc hint on mobile |
+| `src/components/NewUserWelcomeModal.tsx` | Scrollable inner content, compact spacing on mobile |
+| `src/components/LevelUpModal.tsx` | Safe-area padding, smaller animation on mobile |
+| `src/components/UsageLimitModal.tsx` | Use `85dvh`, show compact FeatureShowcase on mobile |
+| `src/components/FeatureShowcase.tsx` | Responsive grid and tighter spacing on mobile |
 
 ### Technical Details
 
-**Profile.tsx tab reorder:**
+**dialog.tsx base class update:**
 ```
-TabsList order: settings -> history -> notifications -> usage
-TabsContent order matches accordingly
+max-h-[calc(100dvh-2rem)] overflow-y-auto
+```
+This single change cascades to CreditModal, GuestTrialLimitModal, SignInRequiredModal, and UsageLimitModal automatically.
+
+**WelcomeModal mobile-first classes:**
+```
+px-4 py-5 sm:px-6 sm:py-8  (header)
+p-4 sm:p-6                  (quick actions section)
+w-12 h-12 sm:w-16 sm:h-16   (sparkle icon)
+text-lg sm:text-xl           (title)
+hidden sm:inline             (Esc hint)
 ```
 
-**SettingsPanel.tsx new cards:**
-- Quick Access card with navigation rows using `navigate()` and `ChevronRight` arrows
-- Data & Privacy card with Clear History action and policy links
-- Both use existing `SettingRow` and `IndicatorDot` components for consistency
+**LevelUpModal safe-area:**
+```
+p-6 sm:p-8                   (padding)
+w-24 h-24 sm:w-32 sm:h-32    (newton animation)
+mb-20 sm:mb-0                 (bottom nav clearance)
+```
 
