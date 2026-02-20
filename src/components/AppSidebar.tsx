@@ -196,7 +196,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         </SidebarGroup>
 
         {/* Study Tools - No scroll, all visible */}
-        <SidebarGroup className="mt-0 shrink-0">
+        <SidebarGroup className="mt-0 pt-0 shrink-0">
           {!isCollapsed && (
             <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Study Tools
