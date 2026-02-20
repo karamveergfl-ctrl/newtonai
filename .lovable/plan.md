@@ -1,46 +1,71 @@
 
 
-## Restructure Mobile Bottom Nav: Camera-Centric Layout
+## Mobile-Optimize Newton Chat
 
-### What Changes
+The Newton chat panel needs several mobile-specific optimizations to feel native and use screen space efficiently on small devices.
 
-The bottom navigation bar will be reorganized to put the **Snap (Camera)** button in the center position with an elevated design, and the **Newton** button will move to where Snap currently is. Tapping Snap will directly open the device camera to capture a photo, then navigate to the Homework Help page with the captured image ready for processing.
+### Changes
 
-### Layout Change
+**File: `src/components/newton-assistant/NewtonChatPanel.tsx`**
 
-```text
-Current:  Home | Snap | [Newton] | Tools | Profile
-New:      Home | Newton | [Snap/Camera] | Tools | Profile
-```
+1. **Remove border/shadow/rounded on mobile** -- The panel renders inside a full-screen drawer on mobile, so the outer `rounded-2xl border shadow-2xl` decorations waste space and look odd. Use `sm:rounded-2xl sm:border sm:shadow-2xl` instead.
 
-The center Camera button will have the elevated circular design (currently used by Newton), making it the primary action.
+2. **Compact the header on mobile** -- Reduce avatar size from `w-9 h-9` to `w-7 h-7` on mobile, tighten padding to `px-3 py-2 sm:px-4 sm:py-3`.
 
-### How the Camera Works
+3. **Shrink the empty state** -- The heading `text-2xl` is too large for mobile. Use `text-lg sm:text-2xl`. Reduce Lottie animation margins (`mt-3 sm:mt-6`, `mb-4 sm:mb-8`). This ensures suggestions are visible without scrolling.
 
-When the user taps the center Camera button:
-1. A hidden file input with `accept="image/*" capture="environment"` is triggered
-2. This opens the device camera directly on mobile phones
-3. After capturing/selecting a photo, the user is navigated to `/tools/homework-help` with the image passed via React Router state
-4. The Homework Help page picks up the image from navigation state and processes it automatically
+4. **Compact the input bar on mobile** -- Reduce button sizes from `42px` to `36px` on mobile (`h-9 w-9 sm:h-[42px] sm:w-[42px]`). Reduce textarea min-height similarly. Reduce input area padding to `p-2 sm:p-3`. This frees up vertical space for messages.
 
-### File Changes
+5. **Add safe-area padding** -- Add `pb-[env(safe-area-inset-bottom)]` to the input area for notched devices (iPhone).
+
+6. **Compact message bubbles on mobile** -- In `NewtonMessageBubble.tsx`, reduce gap and avatar size on mobile: `gap-1.5 sm:gap-2.5`, avatar `w-6 h-6 sm:w-8 sm:h-8`.
+
+7. **Compact response sections on mobile** -- In `NewtonResponseSection.tsx`, reduce section padding: `p-2 sm:p-3` for headers, `p-3 sm:p-4` for content. Shrink the section number badge to `w-5 h-5` on mobile.
+
+**File: `src/components/newton-assistant/NewtonMessageBubble.tsx`**
+
+- Avatar: `w-6 h-6 sm:w-8 sm:h-8`
+- Gap: `gap-1.5 sm:gap-2.5`
+- User bubble padding: `px-3 py-2 sm:px-3.5 sm:py-2.5`
+
+**File: `src/components/newton-assistant/NewtonResponseSection.tsx`**
+
+- Header padding: `p-2 sm:p-3`
+- Content padding: `p-3 sm:p-4`
+- Section number badge: `w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-xs`
+
+**File: `src/components/GlobalNewtonAssistant.tsx`**
+
+- Remove the drawer handle bar space by ensuring `DrawerContent` uses a tighter class without top padding/handle on mobile, so the chat panel header serves as the only top bar.
+
+### Summary of File Changes
 
 | File | Change |
 |------|--------|
-| `src/components/MobileBottomNav.tsx` | Swap Snap and Newton positions; add hidden file input for camera; Snap gets elevated center style, Newton gets regular tab style; on photo capture, navigate to homework help with image state |
-| `src/pages/tools/HomeworkHelp.tsx` | Read image from `location.state` on mount; if present, auto-trigger the solve flow with the captured image |
+| `src/components/newton-assistant/NewtonChatPanel.tsx` | Remove mobile border/shadow, compact header, shrink empty state, smaller input buttons, safe-area padding |
+| `src/components/newton-assistant/NewtonMessageBubble.tsx` | Smaller avatars and tighter gaps on mobile |
+| `src/components/newton-assistant/NewtonResponseSection.tsx` | Compact padding and badge sizes on mobile |
+| `src/components/GlobalNewtonAssistant.tsx` | Minor drawer content adjustments |
 
 ### Technical Details
 
-**MobileBottomNav.tsx:**
-- Reorder NAV_ITEMS: Home, Newton, Snap (center), Tools, Profile
-- Change Newton from `action: "newton"` to a regular elevated-style center button that opens the assistant
-- Change Snap to `action: "camera"` with the elevated circular center design (gradient background, shadow, larger size)
-- Add a hidden `<input type="file" accept="image/*" capture="environment">` ref
-- On file select: convert to base64, navigate to `/tools/homework-help` with `state: { capturedImage: { imageBase64, mimeType } }`
-- Newton becomes a regular nav item that triggers the assistant drawer (same functionality, just regular tab style)
+**ChatPanel container (mobile-first):**
+```
+rounded-none border-0 shadow-none sm:rounded-2xl sm:border sm:shadow-2xl
+```
 
-**HomeworkHelp.tsx:**
-- Use `useLocation()` to check for `location.state?.capturedImage`
-- On mount, if `capturedImage` exists, set it as `capturedScreenshot` to trigger the `InlineSolutionPanel` flow automatically
-- Clear the state after consuming it to prevent re-triggering on navigation
+**Input bar buttons (responsive):**
+```
+h-9 w-9 sm:h-[42px] sm:w-[42px]
+```
+
+**Empty state heading:**
+```
+text-lg sm:text-2xl mt-3 sm:mt-6 mb-4 sm:mb-8
+```
+
+**Message bubble avatars:**
+```
+w-6 h-6 sm:w-8 sm:h-8 gap-1.5 sm:gap-2.5
+```
+
