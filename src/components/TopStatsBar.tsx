@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import Logo from "@/components/Logo";
 
 export function TopStatsBar() {
   const navigate = useNavigate();
@@ -13,21 +14,22 @@ export function TopStatsBar() {
       <div className="container mx-auto px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {/* Sidebar trigger - desktop only (bottom nav handles mobile) */}
             <SidebarTrigger className="hidden md:flex h-8 w-8" />
-            <GamificationBadge />
+            <Logo size="xs" showText compact />
           </div>
-          {/* Theme & profile controls - desktop only (bottom nav handles mobile) */}
-          <div className="hidden md:flex items-center gap-1 bg-muted/50 rounded-full px-1 py-1">
-            <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/profile")}
-              className="h-8 w-8 rounded-full hover:bg-accent"
-            >
-              <User className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-2">
+            <GamificationBadge />
+            <div className="hidden md:flex items-center gap-1 bg-muted/50 rounded-full px-1 py-1">
+              <ThemeToggle />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/profile")}
+                className="h-8 w-8 rounded-full hover:bg-accent"
+              >
+                <User className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
