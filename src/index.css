@@ -327,6 +327,21 @@ All colors MUST be HSL.
   }
 }
 
+/* Mobile-only scroll optimizations for low-end devices */
+@media (max-width: 767px) {
+  .mobile-scroll-container {
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+    scroll-behavior: smooth;
+  }
+
+  .mobile-scroll-container > div > section,
+  .mobile-scroll-container > div > div {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+}
+
 /* Print styles for study content */
 @media print {
   /* Hide everything except the study content */
