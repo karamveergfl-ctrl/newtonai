@@ -20,7 +20,7 @@ function ScrollableContent({ children, showFooter }: { children: React.ReactNode
 
   return (
     <div 
-      className="flex-1 flex flex-col overflow-auto min-h-0"
+      className="flex-1 flex flex-col overflow-auto min-h-0 mobile-scroll-container"
       onScroll={handleScroll}
     >
       {children}
