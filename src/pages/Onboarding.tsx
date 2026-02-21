@@ -535,14 +535,14 @@ const Onboarding = () => {
                           id: "student" as const,
                           icon: GraduationCap,
                           label: "Student",
-                          description: "I want to learn and study",
+                          description: "Access AI study tools, flashcards, quizzes & more",
                           emoji: "📚",
                         },
                         {
                           id: "teacher" as const,
                           icon: BookOpen,
                           label: "Teacher",
-                          description: "I want to manage a classroom",
+                          description: "Create classes, assign work & track student progress",
                           emoji: "🏫",
                         },
                       ].map((role, i) => (
@@ -553,11 +553,14 @@ const Onboarding = () => {
                           initial="hidden"
                           animate="visible"
                           onClick={() => setFormData(prev => ({ ...prev, userRole: role.id }))}
-                          className={`p-6 rounded-xl border-2 text-left transition-all hover:border-primary/50 hover:scale-[1.02] relative ${
+                          className={`p-6 rounded-xl border-2 text-left transition-all hover:scale-[1.02] relative ${
                             formData.userRole === role.id
-                              ? "border-primary bg-primary/5 ring-2 ring-primary/30"
-                              : "border-border"
+                              ? "border-primary bg-primary/5 ring-2 ring-primary/30 shadow-[0_0_15px_-3px_hsl(var(--primary)/0.3)]"
+                              : "border-border hover:border-transparent hover:bg-gradient-to-br hover:from-primary/5 hover:to-secondary/5"
                           }`}
+                          style={formData.userRole !== role.id ? {
+                            backgroundImage: undefined,
+                          } : undefined}
                           whileTap={{ scale: 0.98 }}
                         >
                           <AnimatePresence>

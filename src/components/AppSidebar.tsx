@@ -253,6 +253,25 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                         </motion.button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Join Class">
+                        <motion.button
+                          whileHover={{ x: isCollapsed ? 0 : 4 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => navigate("/join-class")}
+                          className={cn(
+                            "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                            isCollapsed ? "justify-center p-2.5 gap-0" : "gap-3 px-3 py-1.5",
+                            isActive("/join-class")
+                              ? "bg-primary text-primary-foreground"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent"
+                          )}
+                        >
+                          <Sparkles className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && <span>Join Class</span>}
+                        </motion.button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   </>
                 )}
               </SidebarMenu>

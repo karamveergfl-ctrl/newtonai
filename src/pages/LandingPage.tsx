@@ -118,7 +118,7 @@ const LandingPage = () => {
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed font-extrabold text-center font-sans">
               Why juggle YouTube, AI tools, notes apps, and random resources?
               <br className="hidden md:block" />
-              NewtonAI unifies everything into one intelligent learning ecosystem — designed to help you{" "}
+              NewtonAI unifies everything into one intelligent learning ecosystem — whether you're a student or teacher, designed to help you{" "}
               <span className="font-semibold text-foreground">focus, retain more, and perform better.</span>
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -145,7 +145,7 @@ const LandingPage = () => {
               <span className="hidden sm:inline text-border">•</span>
               <span className="flex items-center gap-1.5">
                 <Users className="w-4 h-4 text-primary" />
-                12K+ students
+                12K+ students & teachers
               </span>
             </div>
             <FloatingToolsShowcase />
@@ -279,12 +279,72 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* For Teachers Section */}
+      <section className="py-12 md:py-16 bg-muted/30">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="text-center mb-12">
+            <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4 border border-primary/20">
+              For Educators
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground font-serif">
+              Manage Your Classroom with AI
+            </h2>
+            <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
+              Create classes, assign AI-generated work, and track student progress — all in one place.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-10">
+            {[
+              {
+                icon: Users,
+                title: "Create Classes",
+                description: "Organize students into classes with auto-generated invite codes. Students join in seconds.",
+              },
+              {
+                icon: Sparkles,
+                title: "Assign AI-Generated Work",
+                description: "Create quizzes, flashcards, and assignments powered by AI from any study material.",
+              },
+              {
+                icon: Target,
+                title: "Track Progress",
+                description: "Monitor student submissions and performance with real-time analytics and insights.",
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                className="relative rounded-2xl border border-border bg-card p-6 group hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative z-10">
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors duration-300">
+                    <card.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-1.5 group-hover:text-primary transition-colors duration-300 font-serif">
+                    {card.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{card.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center">
+            <Button asChild size="lg" className="text-lg px-10 py-6 rounded-xl group font-semibold">
+              <Link to="/auth">
+                Start Teaching for Free
+                <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Value Proposition */}
       <section className="py-12 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
         <div className="container mx-auto px-4 max-w-3xl text-center">
           <GraduationCap className="w-10 h-10 text-primary mx-auto mb-4" />
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-8">
-            Designed Only For Students
+            Designed For Students & Teachers
           </h2>
           <p className="text-muted-foreground mb-6">Unlike general AI tools:</p>
           <ul className="space-y-3 text-left max-w-md mx-auto mb-8">
