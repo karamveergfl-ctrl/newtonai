@@ -1,101 +1,101 @@
 
 
-# Update All Pages with Classroom Feature Awareness
+# Enhanced Teacher Classroom Analytics & Student Progress Tracking
 
-## Summary
-Add teacher/classroom feature mentions across all Legal, Company, and Resources pages shown in the footer. Each page gets targeted additions that fit naturally into its existing content.
-
----
-
-## Legal Pages
-
-### 1. Terms of Service (`src/pages/Terms.tsx`)
-- **Section 2 (Definitions)**: Add definition for "Class" and "Classroom Features" -- features that allow teachers to create classes, invite students, and assign AI-generated work.
-- **Section 3 (Description of Services)**: Add bullet: "Classroom Management: Tools for teachers to create classes, generate invite codes, assign quizzes/flashcards, and track student progress."
-- **Section 4 (User Accounts)**: Add sub-section "4.5 Teacher Accounts" -- teachers are responsible for managing their classrooms and student data appropriately. Teachers must be 18+ or authorized educators.
-- **Section 6 (Acceptable Use)**: Add clause about classroom misuse -- teachers must not use classroom tools for non-educational purposes; students must not share invite codes publicly.
-
-### 2. Privacy Policy (`src/pages/Privacy.tsx`)
-- **Section 3 (Information We Collect)**: Add bullet under 3.1: "Classroom Activity: Class enrollment data, assignment submissions, grades, and teacher-student relationships within the platform."
-- **Section 5 (How We Use)**: Add bullet under 5.1: "Facilitate classroom features including class management, assignment distribution, and student progress tracking."
-- **Section 6 (Data Sharing)**: Add note: "Teachers in your class can see your assignment submissions and performance data within the classroom context."
-
-### 3. Refund Policy (`src/pages/Refund.tsx`)
-- No major changes needed -- classroom features are part of the existing subscription tiers. Minor update to overview text to mention "classroom management tools" alongside study tools.
+## Overview
+Upgrade the teacher's Class Detail page with comprehensive student-level progress tracking, assignment result breakdowns, and participation/attendance analytics derived from quiz and activity submissions.
 
 ---
 
-## Company Pages
+## 1. New Database RPC: `get_student_progress`
 
-### 4. About (`src/pages/About.tsx`)
-- **Hero subtitle**: Update to mention "students and teachers" instead of just students.
-- **Our Story section**: Add paragraph about expanding from student tools to classroom management, enabling teachers to create AI-powered assignments.
-- **Mission section**: Update to include "democratize education for both students and educators."
-- **CTA section**: Change "Join thousands of students" to "Join thousands of students and teachers."
+Create a new `SECURITY DEFINER` RPC that returns per-student analytics for a class:
+- For each enrolled student: name, total submissions, average score, last submission date, assignments completed vs total
+- Only accessible by the class teacher
 
-### 5. Pricing (`src/pages/Pricing.tsx`)
-- **Feature comparison table**: Add row for "Classroom Management" -- Free: "1 class", Pro: "5 classes", Ultra: "Unlimited classes".
-- **Enterprise CTA**: Mention classroom/institutional deployment -- "Deploy AI-powered classrooms across your entire institution."
+## 2. New Database RPC: `get_assignment_results`
 
-### 6. FAQ (`src/pages/FAQ.tsx`)
-- Add 3 new FAQ entries:
-  - "Can teachers use NewtonAI for classroom management?" -- Yes, teachers can create classes, invite students via codes, assign AI-generated quizzes/flashcards, and track progress.
-  - "How do students join a class?" -- Students enter a 6-character invite code provided by their teacher at /join-class.
-  - "Is student data in classrooms private?" -- Yes, only the class teacher can see submissions and performance. Data is encrypted and follows our privacy policy.
+Create a new `SECURITY DEFINER` RPC that returns per-assignment breakdowns:
+- For each assignment: title, type, total submissions, average score, score distribution (buckets: 0-40, 40-60, 60-80, 80-100), list of who submitted and who hasn't
 
-### 7. Contact (`src/pages/Contact.tsx`)
-- **Common Reasons section**: Add a "Classroom & Teacher Support" card -- "Questions about setting up classes, managing students, or creating assignments? We're here to help teachers get started."
+## 3. Redesigned Analytics Tab (`ClassDetail.tsx`)
+
+Replace the current simple analytics tab with a sub-tabbed interface:
+
+### Sub-tab: Overview (existing, enhanced)
+- Keep current summary stats cards (Students, Assignments, Submissions, Avg Score)
+- Enhanced charts: add a submission trend over time (by assignment creation date), completion rate donut
+
+### Sub-tab: Student Progress (NEW)
+- Table view with columns: Student Name, Submissions, Avg Score (progress bar), Last Active, Attendance Rate
+- Each row is expandable to show individual assignment scores
+- Color-coded performance: green (80%+), amber (50-80%), red (below 50%)
+- Sort by name, score, or activity
+
+### Sub-tab: Assignment Results (NEW)
+- Card per assignment showing: title, type badge, submission count/total, avg score
+- Click to expand: score distribution bar chart + list of students with their scores
+- "Not submitted" list highlighted in red
+- Filter by assignment type (quiz, flashcard, etc.)
+
+### Sub-tab: Attendance (NEW)
+- Grid view: rows = students, columns = assignments
+- Each cell shows a colored dot: green (submitted), amber (submitted late), red (not submitted), gray (not yet due)
+- Summary row at bottom: participation percentage per assignment
+- Summary column on right: each student's overall attendance rate
+
+## 4. New Components
+
+| File | Purpose |
+|------|---------|
+| `src/components/teacher/StudentProgressTable.tsx` | Sortable table of per-student metrics with expandable rows |
+| `src/components/teacher/AssignmentResultsPanel.tsx` | Per-assignment score breakdowns with distribution charts |
+| `src/components/teacher/AttendanceGrid.tsx` | Student x Assignment attendance heatmap grid |
+| `src/components/teacher/StudentScoreBar.tsx` | Inline colored progress bar for scores |
+
+## 5. Enhanced `ClassAnalyticsCharts.tsx`
+
+- Add a stacked bar chart showing score distribution across all assignments
+- Add a completion rate pie/donut chart
+- Add submission timeline (line chart by assignment due date)
+
+## 6. Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/pages/teacher/ClassDetail.tsx` | Redesign Analytics tab with sub-tabs; fetch student progress and assignment results data |
+| `src/components/teacher/ClassAnalyticsCharts.tsx` | Add score distribution and completion charts |
+| `src/hooks/useAssignments.ts` | Add `fetchAllSubmissions` method to get all submissions for a class |
+
+## 7. Database Changes (Migrations)
+
+### New RPC: `get_student_progress(p_class_id uuid)`
+Returns a JSON array of objects, each containing:
+- `student_id`, `full_name`, `total_assignments`, `submitted_count`, `average_score`, `last_submission_at`
+- Uses joins across `class_enrollments`, `assignments`, `assignment_submissions`, and `profiles`
+- Secured: only the class teacher can call it
+
+### New RPC: `get_assignment_results(p_class_id uuid)`
+Returns a JSON array of objects, each containing:
+- `assignment_id`, `title`, `assignment_type`, `is_published`, `due_date`, `total_enrolled`, `submission_count`, `average_score`
+- Plus a `submissions` array with `student_id`, `full_name`, `score`, `status`, `submitted_at`
+- Secured: only the class teacher can call it
+
+### New RPC: `get_attendance_grid(p_class_id uuid)`
+Returns the full student-by-assignment matrix:
+- `students` array: `student_id`, `full_name`
+- `assignments` array: `assignment_id`, `title`, `due_date`
+- `attendance` array: `student_id`, `assignment_id`, `status` (submitted/late/missing/not_due)
+- Secured: only the class teacher can call it
 
 ---
 
-## Resources Pages
-
-### 8. Features (`src/pages/Features.tsx`)
-- Add a new feature entry for "Classroom Hub" with the `School` icon:
-  - Title: "Classroom Hub"
-  - Description: Explains class creation, invite codes, AI-generated assignments, student progress tracking, and analytics.
-  - Link: `/teacher`
-- Update the "Integration Benefits" section to add a 4th benefit: "For Teachers Too" -- manage classrooms and assign AI-generated work from one platform.
-
-### 9. How It Works (`src/pages/HowItWorks.tsx`)
-- Add a new section "For Teachers" after the 4-step process:
-  - Step-by-step for teachers: Create Class -> Share Invite Code -> Assign AI-Generated Work -> Track Student Progress
-- Update "Why Students Choose NewtonAI" to "Why Students & Teachers Choose NewtonAI" and add a card for teachers.
-
-### 10. Guides (`src/pages/Guides.tsx`)
-- Add a new guide card: "Getting Started as a Teacher on NewtonAI" -- slug: `teacher-getting-started`, icon: `GraduationCap`, category: "For Teachers", read time: "6 min read". (Link will be placeholder until the guide page is created.)
-
-### 11. AI for Students (`src/pages/AIForStudents.tsx`)
-- Add a section "AI for Teachers Too" near the bottom (before the CTA):
-  - Brief mention that teachers can create classes, assign AI-generated quizzes and flashcards, and monitor student progress.
-  - CTA link to `/teacher` -- "Explore Teacher Tools"
-- Update the CTA to say "Join Thousands of Students & Teachers."
-
----
-
-## Technical Details
-
-### Files to Modify
-| File | Key Changes |
-|------|-------------|
-| `src/pages/Terms.tsx` | Add classroom definitions, teacher accounts, acceptable use clauses |
-| `src/pages/Privacy.tsx` | Add classroom data collection, teacher data sharing notes |
-| `src/pages/Refund.tsx` | Minor mention of classroom tools in overview |
-| `src/pages/About.tsx` | Update story, mission, and CTAs to include teachers |
-| `src/pages/Pricing.tsx` | Add classroom row to feature table, update enterprise CTA |
-| `src/pages/FAQ.tsx` | Add 3 classroom-related FAQs + update schema |
-| `src/pages/Contact.tsx` | Add classroom support reason card |
-| `src/pages/Features.tsx` | Add Classroom Hub feature entry + teacher benefit |
-| `src/pages/HowItWorks.tsx` | Add "For Teachers" section with teacher workflow |
-| `src/pages/Guides.tsx` | Add teacher guide card |
-| `src/pages/AIForStudents.tsx` | Add "AI for Teachers Too" section |
-
-### No new files needed
-All updates fit within existing page components.
-
-### Design consistency
-- Teacher-related content uses the `School` or `GraduationCap` icons from lucide-react (already available)
-- Follows existing section patterns: `SectionHeader` + content grid/prose
-- Maintains the dark-mode-first aesthetic with `bg-primary/10` accent containers
-- FAQ entries automatically included in the FAQPage structured data schema
+## Design Consistency
+- Uses existing `recharts` for all visualizations
+- Tables use shadcn `Table` components with sortable headers
+- Sub-tabs use pill-style `TabsTrigger` matching existing patterns
+- Color coding: green (`text-green-500`), amber (`text-amber-500`), red (`text-destructive`)
+- All cards use `border-border/50` and `interactive-card` patterns
+- Framer Motion staggered entry animations on rows
+- Mobile: tables scroll horizontally; attendance grid uses a compact dot view
 
