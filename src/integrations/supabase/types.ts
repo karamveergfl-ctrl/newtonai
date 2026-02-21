@@ -1271,11 +1271,14 @@ export type Database = {
       end_study_session: { Args: { p_session_id: string }; Returns: Json }
       generate_invite_code: { Args: never; Returns: string }
       get_ad_stats: { Args: never; Returns: Json }
+      get_assignment_results: { Args: { p_class_id: string }; Returns: Json }
+      get_attendance_grid: { Args: { p_class_id: string }; Returns: Json }
       get_class_analytics: { Args: { p_class_id: string }; Returns: Json }
       get_document_file_path: {
         Args: { p_document_id: string }
         Returns: string
       }
+      get_student_progress: { Args: { p_class_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

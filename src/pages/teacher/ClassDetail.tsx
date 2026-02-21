@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAssignments } from "@/hooks/useAssignments";
 import { InviteCodePill } from "@/components/teacher/InviteCodePill";
 import { ClassAnalyticsCharts } from "@/components/teacher/ClassAnalyticsCharts";
+import { StudentProgressTable } from "@/components/teacher/StudentProgressTable";
+import { AssignmentResultsPanel } from "@/components/teacher/AssignmentResultsPanel";
+import { AttendanceGrid } from "@/components/teacher/AttendanceGrid";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -305,15 +308,26 @@ function DueDateBadge({ dueDate }: { dueDate: string }) {
 
 function AnalyticsTab({ classId }: { classId: string }) {
   const [analytics, setAnalytics] = useState<any>(null);
+  const [studentProgress, setStudentProgress] = useState<any>(null);
+  const [assignmentResults, setAssignmentResults] = useState<any>(null);
+  const [attendanceData, setAttendanceData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase.rpc("get_class_analytics", { p_class_id: classId });
-      setAnalytics(data);
+    const fetchAll = async () => {
+      const [analyticsRes, progressRes, resultsRes, attendanceRes] = await Promise.all([
+        supabase.rpc("get_class_analytics", { p_class_id: classId }),
+        supabase.rpc("get_student_progress", { p_class_id: classId } as any),
+        supabase.rpc("get_assignment_results", { p_class_id: classId } as any),
+        supabase.rpc("get_attendance_grid", { p_class_id: classId } as any),
+      ]);
+      setAnalytics(analyticsRes.data);
+      setStudentProgress(progressRes.data);
+      setAssignmentResults(resultsRes.data);
+      setAttendanceData(attendanceRes.data);
       setLoading(false);
     };
-    fetch();
+    fetchAll();
   }, [classId]);
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
@@ -338,8 +352,40 @@ function AnalyticsTab({ classId }: { classId: string }) {
         ))}
       </div>
 
-      {/* Charts */}
-      <ClassAnalyticsCharts analytics={analytics} />
+      {/* Sub-tabs */}
+      <Tabs defaultValue="overview">
+        <TabsList className="h-9">
+          <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
+          <TabsTrigger value="students" className="text-xs">Students</TabsTrigger>
+          <TabsTrigger value="assignments" className="text-xs">Results</TabsTrigger>
+          <TabsTrigger value="attendance" className="text-xs">Attendance</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <ClassAnalyticsCharts analytics={analytics} assignmentResults={assignmentResults?.assignments} />
+        </TabsContent>
+
+        <TabsContent value="students">
+          <StudentProgressTable
+            students={studentProgress?.students || []}
+            assignmentResults={assignmentResults?.assignments}
+          />
+        </TabsContent>
+
+        <TabsContent value="assignments">
+          <AssignmentResultsPanel
+            assignments={assignmentResults?.assignments || []}
+          />
+        </TabsContent>
+
+        <TabsContent value="attendance">
+          <AttendanceGrid
+            students={attendanceData?.students || []}
+            assignments={attendanceData?.assignments || []}
+            attendance={attendanceData?.attendance || []}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
