@@ -52,6 +52,16 @@ export function OnboardingGate({ children }: OnboardingGateProps) {
       if (!profile.onboarding_completed) {
         navigate("/onboarding", { replace: true });
       } else {
+        // Check if user is a teacher and redirect accordingly
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        
+        if (roleData?.role === "teacher" && window.location.pathname === "/dashboard") {
+          navigate("/teacher", { replace: true });
+        }
         setChecking(false);
       }
     };
