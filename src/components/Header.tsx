@@ -46,6 +46,7 @@ const navLinks: NavLink[] = [
     children: [
       { href: "/guides", label: "Guides", badge: "NEW" },
       { href: "/blog", label: "Blog" },
+      { href: "/teacher", label: "For Teachers" },
       { href: "/faq", label: "FAQ" },
       { href: "/contact", label: "Contact" },
     ],

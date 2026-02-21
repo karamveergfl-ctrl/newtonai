@@ -1,16 +1,25 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssignments } from "@/hooks/useAssignments";
-import { InviteCodeCard } from "@/components/teacher/InviteCodeCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InviteCodePill } from "@/components/teacher/InviteCodePill";
+import { ClassAnalyticsCharts } from "@/components/teacher/ClassAnalyticsCharts";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, FileText, ClipboardList, BarChart3, Trash2 } from "lucide-react";
+import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ClassInfo {
   id: string;
@@ -31,6 +40,8 @@ interface Enrollment {
 
 const ClassDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loadingClass, setLoadingClass] = useState(true);
@@ -52,7 +63,6 @@ const ClassDetail = () => {
         .eq("status", "active");
 
       if (data) {
-        // Fetch profile names
         const enriched = await Promise.all(
           data.map(async (e) => {
             const { data: profile } = await supabase
@@ -84,6 +94,12 @@ const ClassDetail = () => {
     }
   };
 
+  const shareInvite = () => {
+    const link = `${window.location.origin}/join-class?code=${classInfo?.invite_code}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Invite link copied!");
+  };
+
   if (loadingClass) {
     return (
       <AppLayout>
@@ -107,37 +123,49 @@ const ClassDetail = () => {
   return (
     <AppLayout>
       <SEOHead title={classInfo.name} description="Manage your class" noIndex />
-      <div className="container max-w-6xl mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row md:items-start gap-6 mb-8">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold">{classInfo.name}</h1>
-            <div className="flex items-center gap-2 mt-2">
-              {classInfo.subject && <Badge variant="secondary">{classInfo.subject}</Badge>}
-              {classInfo.academic_year && <Badge variant="outline">{classInfo.academic_year}</Badge>}
+      <div className="container max-w-6xl mx-auto px-4 py-6">
+        {/* Sticky Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6"
+        >
+          <Button variant="ghost" size="icon" onClick={() => navigate("/teacher")} className="shrink-0 self-start">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold truncate">{classInfo.name}</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+              {classInfo.subject && <Badge variant="secondary" className="text-xs">{classInfo.subject}</Badge>}
+              {classInfo.academic_year && <Badge variant="outline" className="text-xs">{classInfo.academic_year}</Badge>}
+              <InviteCodePill code={classInfo.invite_code} />
             </div>
-            {classInfo.description && (
-              <p className="text-muted-foreground mt-2">{classInfo.description}</p>
-            )}
           </div>
-          <InviteCodeCard code={classInfo.invite_code} />
-        </div>
+        </motion.div>
+
+        {classInfo.description && (
+          <p className="text-muted-foreground text-sm mb-6">{classInfo.description}</p>
+        )}
 
         <Tabs defaultValue="students">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="students" className="gap-2">
-              <Users className="h-4 w-4" /> Students ({enrollments.length})
+          <TabsList className="grid w-full grid-cols-3 h-10">
+            <TabsTrigger value="students" className="gap-1.5 text-xs sm:text-sm">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Students</span> ({enrollments.length})
             </TabsTrigger>
-            <TabsTrigger value="assignments" className="gap-2">
-              <ClipboardList className="h-4 w-4" /> Assignments ({assignments.length})
+            <TabsTrigger value="assignments" className="gap-1.5 text-xs sm:text-sm">
+              <ClipboardList className="h-4 w-4" />
+              <span className="hidden sm:inline">Assignments</span> ({assignments.length})
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2">
-              <BarChart3 className="h-4 w-4" /> Analytics
+            <TabsTrigger value="analytics" className="gap-1.5 text-xs sm:text-sm">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="students" className="mt-6">
+          <TabsContent value="students" className="mt-5">
             {enrollments.length === 0 ? (
-              <Card className="text-center py-12">
+              <Card className="text-center py-12 border-border/50">
                 <CardContent>
                   <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                   <p className="text-muted-foreground">No students enrolled yet. Share the invite code!</p>
@@ -145,32 +173,57 @@ const ClassDetail = () => {
               </Card>
             ) : (
               <div className="space-y-2">
-                {enrollments.map((e) => (
-                  <Card key={e.id}>
-                    <CardContent className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="font-medium">{e.profile?.full_name || "Unknown Student"}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Joined {new Date(e.enrolled_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={() => removeStudent(e.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </CardContent>
-                  </Card>
+                {enrollments.map((e, i) => (
+                  <motion.div
+                    key={e.id}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                  >
+                    <Card className="border-border/50">
+                      <CardContent className="flex items-center justify-between py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          {/* Avatar initials */}
+                          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                            {(e.profile?.full_name || "?")[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{e.profile?.full_name || "Unknown Student"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Joined {new Date(e.enrolled_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => removeStudent(e.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              Remove Student
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             )}
           </TabsContent>
 
-          <TabsContent value="assignments" className="mt-6">
+          <TabsContent value="assignments" className="mt-5">
             {loadingAssignments ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
             ) : assignments.length === 0 ? (
-              <Card className="text-center py-12">
+              <Card className="text-center py-12 border-border/50">
                 <CardContent>
                   <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                   <p className="text-muted-foreground">No assignments yet</p>
@@ -178,40 +231,77 @@ const ClassDetail = () => {
               </Card>
             ) : (
               <div className="space-y-2">
-                {assignments.map((a) => (
-                  <Card key={a.id}>
-                    <CardContent className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="font-medium">{a.title}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline">{a.assignment_type}</Badge>
-                          {a.is_published ? (
-                            <Badge className="bg-green-500/10 text-green-600 border-green-500/30">Published</Badge>
-                          ) : (
-                            <Badge variant="secondary">Draft</Badge>
-                          )}
+                {assignments.map((a, i) => (
+                  <motion.div
+                    key={a.id}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                  >
+                    <Card className="border-border/50">
+                      <CardContent className="flex items-center justify-between py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${a.is_published ? "bg-green-500" : "bg-amber-400"}`} />
+                          <div>
+                            <p className="font-medium text-sm">{a.title}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Badge variant="outline" className="text-[10px] h-5">{a.assignment_type}</Badge>
+                              {a.is_published ? (
+                                <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">Published</span>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground font-medium">Draft</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      {a.due_date && (
-                        <p className="text-sm text-muted-foreground">
-                          Due: {new Date(a.due_date).toLocaleDateString()}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
+                        {a.due_date && (
+                          <DueDateBadge dueDate={a.due_date} />
+                        )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             )}
           </TabsContent>
 
-          <TabsContent value="analytics" className="mt-6">
+          <TabsContent value="analytics" className="mt-5">
             <AnalyticsTab classId={id!} />
           </TabsContent>
         </Tabs>
+
+        {/* Mobile FAB */}
+        {isMobile && (
+          <motion.button
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
+            onClick={shareInvite}
+          >
+            <Share2 className="h-5 w-5" />
+          </motion.button>
+        )}
       </div>
     </AppLayout>
   );
 };
+
+function DueDateBadge({ dueDate }: { dueDate: string }) {
+  const now = new Date();
+  const due = new Date(dueDate);
+  const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return <span className="text-xs text-destructive font-medium">Overdue</span>;
+  }
+  if (diffDays === 0) {
+    return <span className="text-xs text-amber-500 font-medium">Due today</span>;
+  }
+  if (diffDays <= 3) {
+    return <span className="text-xs text-amber-500 font-medium">Due in {diffDays}d</span>;
+  }
+  return <span className="text-xs text-muted-foreground">{due.toLocaleDateString()}</span>;
+}
 
 function AnalyticsTab({ classId }: { classId: string }) {
   const [analytics, setAnalytics] = useState<any>(null);
@@ -227,24 +317,29 @@ function AnalyticsTab({ classId }: { classId: string }) {
   }, [classId]);
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
-
   if (!analytics?.success) return <p className="text-muted-foreground text-center py-12">Failed to load analytics</p>;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {[
-        { label: "Students", value: analytics.enrollment_count },
-        { label: "Assignments", value: analytics.assignment_count },
-        { label: "Submissions", value: analytics.submission_count },
-        { label: "Avg Score", value: analytics.average_score },
-      ].map((stat) => (
-        <Card key={stat.label}>
-          <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold">{stat.value}</p>
-            <p className="text-sm text-muted-foreground">{stat.label}</p>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="space-y-4">
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Students", value: analytics.enrollment_count },
+          { label: "Assignments", value: analytics.assignment_count },
+          { label: "Submissions", value: analytics.submission_count },
+          { label: "Avg Score", value: analytics.average_score ?? "—" },
+        ].map((stat) => (
+          <Card key={stat.label} className="border-border/50">
+            <CardContent className="pt-5 pb-4 text-center">
+              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Charts */}
+      <ClassAnalyticsCharts analytics={analytics} />
     </div>
   );
 }
