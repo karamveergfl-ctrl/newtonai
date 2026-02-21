@@ -1,8 +1,9 @@
 import { memo, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Camera, LayoutGrid, User } from "lucide-react";
+import { Home, Camera, LayoutGrid, User, School } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserRole } from "@/hooks/useUserRole";
 import newtonChatAvatar from "@/assets/newton-chat-avatar-sm.webp";
 import { getNewtonOpenFn } from "@/lib/newtonOpenRef";
 
@@ -61,6 +62,7 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isTeacher } = useUserRole();
 
   const isPublicRoute = PUBLIC_ROUTES.some(
     (r) => location.pathname === r || (r !== "/" && location.pathname.startsWith(r + "/"))
@@ -113,8 +115,33 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
           const isCamera = item.action === "camera";
           const isNewton = item.action === "newton";
 
-          {/* Center elevated Camera button */}
+          {/* Center elevated Camera/Classes button */}
           if (isCamera) {
+            // Teachers get a "Classes" tab instead of camera
+            if (isTeacher) {
+              const classesActive = location.pathname.startsWith("/teacher");
+              return (
+                <button
+                  key="classes"
+                  onClick={() => navigate("/teacher")}
+                  className={cn(
+                    "flex flex-col items-center justify-center min-w-[56px] -mt-3 focus:outline-none",
+                  )}
+                  aria-label="Teacher Dashboard"
+                >
+                  <div className={cn(
+                    "w-12 h-12 rounded-full flex items-center justify-center shadow-lg mb-0.5",
+                    classesActive
+                      ? "bg-gradient-to-br from-primary to-primary/80 shadow-primary/25"
+                      : "bg-gradient-to-br from-primary to-primary/80 shadow-primary/25"
+                  )}>
+                    <School className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <span className="text-[10px] font-medium text-primary">Classes</span>
+                </button>
+              );
+            }
+
             return (
               <button
                 key="camera"
