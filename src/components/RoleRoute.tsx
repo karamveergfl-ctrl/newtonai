@@ -9,17 +9,17 @@ interface RoleRouteProps {
 }
 
 export function RoleRoute({ children, role }: RoleRouteProps) {
-  const { role: userRole, loading } = useUserRole();
+  const { isTeacher, isStudent, loading } = useUserRole();
   const navigate = useNavigate();
+
+  const hasAccess = role === "teacher" ? isTeacher : isStudent;
 
   useEffect(() => {
     if (loading) return;
-
-    if (role === "teacher" && userRole !== "teacher") {
+    if (!hasAccess) {
       navigate("/dashboard", { replace: true });
     }
-    // Students can be 'student', 'user', or null (default)
-  }, [userRole, loading, role, navigate]);
+  }, [hasAccess, loading, navigate]);
 
   if (loading) {
     return (
@@ -29,9 +29,7 @@ export function RoleRoute({ children, role }: RoleRouteProps) {
     );
   }
 
-  if (role === "teacher" && userRole !== "teacher") {
-    return null;
-  }
+  if (!hasAccess) return null;
 
   return <>{children}</>;
 }
