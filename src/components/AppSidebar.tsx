@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useScrollContext } from "@/contexts/ScrollContext";
 import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 
 import {
   Sidebar,
@@ -46,6 +47,8 @@ import {
   CreditCard,
   HelpCircle,
   BookOpen,
+  School,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
@@ -87,6 +90,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { isAdmin } = useAdminAccess();
+  const { isTeacher, isStudent, loading: roleLoading } = useUserRole();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   
@@ -194,6 +198,67 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* My Classes - Role-aware */}
+        {!roleLoading && (isTeacher || isStudent) && (
+          <SidebarGroup className="-mt-1 pt-0 shrink-0">
+            {!isCollapsed && (
+              <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <School className="h-3 w-3" />
+                {isTeacher ? "Teacher" : "My Classes"}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {isTeacher ? (
+                  <>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Teacher Dashboard">
+                        <motion.button
+                          whileHover={{ x: isCollapsed ? 0 : 4 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => navigate("/teacher")}
+                          className={cn(
+                            "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                            isCollapsed ? "justify-center p-2.5 gap-0" : "gap-3 px-3 py-1.5",
+                            isActive("/teacher")
+                              ? "bg-primary text-primary-foreground"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent"
+                          )}
+                        >
+                          <BarChart3 className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && <span>Dashboard</span>}
+                        </motion.button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="My Classes">
+                        <motion.button
+                          whileHover={{ x: isCollapsed ? 0 : 4 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => navigate("/student/classes")}
+                          className={cn(
+                            "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
+                            isCollapsed ? "justify-center p-2.5 gap-0" : "gap-3 px-3 py-1.5",
+                            isActive("/student/classes")
+                              ? "bg-primary text-primary-foreground"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent"
+                          )}
+                        >
+                          <GraduationCap className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && <span>My Classes</span>}
+                        </motion.button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Study Tools - No scroll, all visible */}
         <SidebarGroup className="-mt-1 pt-0 shrink-0">

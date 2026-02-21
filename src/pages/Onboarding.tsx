@@ -176,9 +176,8 @@ const Onboarding = () => {
 
   const totalSteps = 7;
   
-  // Auto-advance for single-selection steps (Step 2 and Step 5)
+  // Auto-advance for single-selection steps
   useEffect(() => {
-    // Clear any existing timer on cleanup
     return () => {
       if (autoAdvanceTimerRef.current) {
         clearTimeout(autoAdvanceTimerRef.current);
@@ -198,25 +197,25 @@ const Onboarding = () => {
     }
   }, [formData.userRole, step, isAutoAdvancing]);
 
-  // Auto-advance when education level is selected (Step 3)
+  // Auto-advance when education level is selected (Step 2)
   useEffect(() => {
-    if (step === 3 && formData.educationLevel && !isAutoAdvancing) {
+    if (step === 2 && formData.educationLevel && !isAutoAdvancing) {
       setIsAutoAdvancing(true);
       autoAdvanceTimerRef.current = setTimeout(() => {
         setDirection(1);
-        setStep(4);
+        setStep(3);
         setIsAutoAdvancing(false);
       }, 600);
     }
   }, [formData.educationLevel, step, isAutoAdvancing]);
   
-  // Auto-advance when referral source is selected (Step 6)
+  // Auto-advance when referral source is selected (Step 5)
   useEffect(() => {
-    if (step === 6 && formData.referralSource && !isAutoAdvancing) {
+    if (step === 5 && formData.referralSource && !isAutoAdvancing) {
       setIsAutoAdvancing(true);
       autoAdvanceTimerRef.current = setTimeout(() => {
         setDirection(1);
-        setStep(7);
+        setStep(6);
         setIsAutoAdvancing(false);
       }, 600);
     }
@@ -362,6 +361,18 @@ const Onboarding = () => {
       // Apply theme preference immediately
       setTheme(formData.themePreference);
 
+      // Save role to user_roles table
+      const roleToSave = formData.userRole === "teacher" ? "teacher" : "student";
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .upsert(
+          { user_id: session.user.id, role: roleToSave },
+          { onConflict: "user_id,role" }
+        );
+      if (roleError) {
+        console.warn("Failed to save role, continuing:", roleError);
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -383,7 +394,8 @@ const Onboarding = () => {
       localStorage.setItem('newtonai_new_signup', 'true');
       
       toast.success("Welcome to NewtonAI! 🎉");
-      navigate("/dashboard");
+      // Route teachers to teacher dashboard, students to regular dashboard
+      navigate(formData.userRole === "teacher" ? "/teacher" : "/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Failed to save profile");
     } finally {
@@ -480,6 +492,115 @@ const Onboarding = () => {
 
           {/* Step Cards */}
           <AnimatePresence mode="wait" custom={direction}>
+            {/* Step 0: Role Selection */}
+            {step === 0 && (
+              <motion.div
+                key="step0"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Card className="border-0 shadow-xl backdrop-blur-sm bg-card/95">
+                  <CardHeader className="text-center pb-2">
+                    <motion.div 
+                      className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4"
+                      variants={iconVariants}
+                      initial="initial"
+                      animate="animate"
+                    >
+                      <Sparkles className="w-8 h-8 text-primary" />
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <CardTitle className="text-2xl md:text-3xl">How will you use NewtonAI?</CardTitle>
+                      <CardDescription className="text-base mt-2">
+                        Choose your role to get started
+                      </CardDescription>
+                    </motion.div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        {
+                          id: "student" as const,
+                          icon: GraduationCap,
+                          label: "Student",
+                          description: "I want to learn and study",
+                          emoji: "📚",
+                        },
+                        {
+                          id: "teacher" as const,
+                          icon: BookOpen,
+                          label: "Teacher",
+                          description: "I want to manage a classroom",
+                          emoji: "🏫",
+                        },
+                      ].map((role, i) => (
+                        <motion.button
+                          key={role.id}
+                          custom={i}
+                          variants={cardItemVariants}
+                          initial="hidden"
+                          animate="visible"
+                          onClick={() => setFormData(prev => ({ ...prev, userRole: role.id }))}
+                          className={`p-6 rounded-xl border-2 text-left transition-all hover:border-primary/50 hover:scale-[1.02] relative ${
+                            formData.userRole === role.id
+                              ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                              : "border-border"
+                          }`}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <AnimatePresence>
+                            {formData.userRole === role.id && (
+                              <motion.div 
+                                className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg"
+                                variants={checkmarkVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                              >
+                                <Check className="w-4 h-4 text-primary-foreground" />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                          <motion.span 
+                            className="text-3xl mb-3 block"
+                            animate={formData.userRole === role.id ? { scale: [1, 1.3, 1] } : {}}
+                            transition={{ duration: 0.3 }}
+                          >
+                            {role.emoji}
+                          </motion.span>
+                          <p className="font-semibold text-lg">{role.label}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{role.description}</p>
+                        </motion.button>
+                      ))}
+                    </div>
+                    {isAutoAdvancing && formData.userRole && (
+                      <motion.div 
+                        className="flex items-center justify-center gap-2 mt-6 text-primary font-medium"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        >
+                          <Sparkles className="w-5 h-5" />
+                        </motion.div>
+                        Great choice!
+                      </motion.div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
             {/* Step 1: Name */}
             {step === 1 && (
               <motion.div
