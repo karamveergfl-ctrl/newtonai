@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type UserRole = "teacher" | "student" | "admin" | "moderator" | "user" | null;
+type UserRole = "teacher" | "student" | "admin" | "moderator" | "user";
 
 export function useUserRole() {
-  const [role, setRole] = useState<UserRole>(null);
+  const [roles, setRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRole = async () => {
+    const fetchRoles = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        setRoles([]);
         setLoading(false);
         return;
       }
@@ -18,27 +19,35 @@ export function useUserRole() {
       const { data } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .eq("user_id", user.id);
 
-      setRole((data?.role as UserRole) ?? null);
+      const userRoles = (data || []).map((r) => r.role as UserRole);
+      setRoles(userRoles);
       setLoading(false);
     };
 
-    fetchRole();
+    fetchRoles();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      fetchRole();
+      fetchRoles();
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  // Primary role for backward compatibility (prefer teacher > admin > student > user)
+  const role = roles.includes("admin") ? "admin" 
+    : roles.includes("teacher") ? "teacher"
+    : roles.includes("student") ? "student"
+    : roles.includes("user") ? "user"
+    : null;
+
   return {
     role,
+    roles,
     loading,
-    isTeacher: role === "teacher",
-    isStudent: role === "student" || role === "user" || role === null,
-    isAdmin: role === "admin",
+    isTeacher: roles.includes("teacher"),
+    isStudent: roles.includes("student") || roles.includes("user") || roles.length === 0,
+    isAdmin: roles.includes("admin"),
   };
 }

@@ -1283,6 +1283,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_class_teacher: {
+        Args: { p_class_id: string; p_teacher_id: string }
+        Returns: boolean
+      }
+      is_enrolled_in_class: {
+        Args: { p_class_id: string; p_student_id: string }
+        Returns: boolean
+      }
       join_class_by_code: { Args: { p_code: string }; Returns: Json }
       record_generation: {
         Args: {
