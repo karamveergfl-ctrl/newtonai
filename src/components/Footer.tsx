@@ -17,9 +17,9 @@ const Footer = () => {
             <div>
               <Logo size="lg" className="mb-4" eager={false} />
               <p className="text-muted-foreground text-sm leading-relaxed mb-6 max-w-sm">
-                Transform your learning experience with AI-powered study tools.
+                Whether you're a student or teacher, transform your learning experience with AI-powered study tools.
                 Upload any document and let our AI create flashcards, summaries,
-                quizzes, and more.
+                quizzes, and more — or manage your classroom with AI-generated assignments.
               </p>
               <div className="flex flex-col gap-2">
                 <a
@@ -46,6 +46,7 @@ const Footer = () => {
                 { to: "/tools/quiz", label: "AI Quiz Generator" },
                 { to: "/tools/summarizer", label: "AI Summarizer" },
                 { to: "/tools/mind-map", label: "AI Mind Map" },
+                { to: "/teacher", label: "Classroom Hub" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
@@ -74,6 +75,7 @@ const Footer = () => {
                 { to: "/guides/spaced-repetition-guide", label: "Spaced Repetition" },
                 { to: "/guides/responsible-ai-use", label: "Responsible AI Use" },
                 { to: "/blog", label: "Blog Articles" },
+                { to: "/teacher", label: "For Teachers" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
@@ -102,6 +104,7 @@ const Footer = () => {
                 { to: "/ai-study-assistant", label: "AI Study Assistant" },
                 { to: "/exam-preparation-ai", label: "Exam Preparation" },
                 { to: "/about-newtonai-for-ai", label: "About NewtonAI" },
+                { to: "/teacher", label: "Teacher Dashboard" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
