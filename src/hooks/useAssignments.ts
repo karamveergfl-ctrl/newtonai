@@ -142,6 +142,21 @@ export function useAssignments(classId?: string) {
     return data || [];
   };
 
+  const deleteAssignment = async (assignmentId: string) => {
+    const { error } = await supabase
+      .from("assignments")
+      .delete()
+      .eq("id", assignmentId);
+
+    if (error) {
+      toast.error("Failed to delete assignment");
+      return false;
+    }
+    toast.success("Assignment deleted");
+    await fetchAssignments();
+    return true;
+  };
+
   return {
     assignments,
     loading,
@@ -150,5 +165,6 @@ export function useAssignments(classId?: string) {
     publishAssignment,
     submitAssignment,
     fetchSubmissions,
+    deleteAssignment,
   };
 }

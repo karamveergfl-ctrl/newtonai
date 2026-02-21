@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,11 +8,13 @@ import { ClassAnalyticsCharts } from "@/components/teacher/ClassAnalyticsCharts"
 import { StudentProgressTable } from "@/components/teacher/StudentProgressTable";
 import { AssignmentResultsPanel } from "@/components/teacher/AssignmentResultsPanel";
 import { AttendanceGrid } from "@/components/teacher/AttendanceGrid";
+import { LiveSessionDialog } from "@/components/teacher/LiveSessionDialog";
+import { LiveSessionPanel } from "@/components/teacher/LiveSessionPanel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2 } from "lucide-react";
+import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio } from "lucide-react";
 import { toast } from "sonner";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
@@ -48,7 +50,23 @@ const ClassDetail = () => {
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loadingClass, setLoadingClass] = useState(true);
+  const [activeSession, setActiveSession] = useState<any>(null);
   const { assignments, loading: loadingAssignments } = useAssignments(id);
+
+  const fetchActiveSession = useCallback(async () => {
+    if (!id) return;
+    const { data } = await supabase
+      .from("live_sessions" as any)
+      .select("*")
+      .eq("class_id", id)
+      .in("status", ["teaching", "quiz_active", "completed"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setActiveSession(data);
+  }, [id]);
+
+  useEffect(() => { fetchActiveSession(); }, [fetchActiveSession]);
 
   useEffect(() => {
     if (!id) return;
@@ -144,7 +162,18 @@ const ClassDetail = () => {
               <InviteCodePill code={classInfo.invite_code} />
             </div>
           </div>
+          {!activeSession || activeSession.status === "completed" ? (
+            <LiveSessionDialog classId={id!} onSessionStarted={fetchActiveSession}>
+              <Button size="sm" className="gap-1.5 shrink-0">
+                <Radio className="h-3.5 w-3.5" /> Live Session
+              </Button>
+            </LiveSessionDialog>
+          ) : null}
         </motion.div>
+
+        {activeSession && (
+          <LiveSessionPanel classId={id!} session={activeSession} onUpdate={fetchActiveSession} />
+        )}
 
         {classInfo.description && (
           <p className="text-muted-foreground text-sm mb-6">{classInfo.description}</p>

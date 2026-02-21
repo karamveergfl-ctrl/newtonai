@@ -3,10 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssignments } from "@/hooks/useAssignments";
+import { LiveQuizTaker } from "@/components/student/LiveQuizTaker";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video } from "lucide-react";
+import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
@@ -55,6 +56,11 @@ const StudentClassView = () => {
   const [loadingMaterials, setLoadingMaterials] = useState(true);
   const { assignments, loading: loadingAssignments } = useAssignments(id);
 
+  // Live quiz detection
+  const [liveSession, setLiveSession] = useState<any>(null);
+  const [takingQuiz, setTakingQuiz] = useState(false);
+  const [quizResult, setQuizResult] = useState<{ score: number; total: number } | null>(null);
+
   useEffect(() => {
     if (!id) return;
     const fetchData = async () => {
@@ -71,6 +77,25 @@ const StudentClassView = () => {
       setLoadingMaterials(false);
     };
     fetchData();
+  }, [id]);
+
+  // Poll for active live session
+  useEffect(() => {
+    if (!id) return;
+    const pollSession = async () => {
+      const { data } = await supabase
+        .from("live_sessions" as any)
+        .select("*")
+        .eq("class_id", id)
+        .eq("status", "quiz_active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setLiveSession(data);
+    };
+    pollSession();
+    const interval = setInterval(pollSession, 5000);
+    return () => clearInterval(interval);
   }, [id]);
 
   return (
@@ -95,114 +120,167 @@ const StudentClassView = () => {
           </div>
         </motion.div>
 
-        <Tabs defaultValue="materials">
-          <TabsList className="grid w-full grid-cols-2 h-10">
-            <TabsTrigger value="materials" className="gap-1.5 text-sm">
-              <FileText className="h-4 w-4" /> Materials
-            </TabsTrigger>
-            <TabsTrigger value="assignments" className="gap-1.5 text-sm">
-              <ClipboardList className="h-4 w-4" /> Assignments
-            </TabsTrigger>
-          </TabsList>
+        {/* Live Quiz Banner */}
+        {liveSession && !takingQuiz && !quizResult && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-6">
+            <Card className="border-destructive/30 bg-gradient-to-r from-red-500/10 via-orange-500/10 to-amber-500/10">
+              <CardContent className="py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Radio className="h-5 w-5 text-red-500" />
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">Live Quiz!</p>
+                    <p className="text-xs text-muted-foreground">{liveSession.title} — {liveSession.time_limit_minutes} min</p>
+                  </div>
+                </div>
+                <Button size="sm" variant="destructive" onClick={() => setTakingQuiz(true)}>
+                  Start Quiz
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-          <TabsContent value="materials" className="mt-5">
-            {loadingMaterials ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
-            ) : materials.length === 0 ? (
-              <Card className="text-center py-12 border-border/50">
-                <CardContent>
-                  <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">No materials shared yet</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {materials.map((m, i) => {
-                  const typeKey = m.material_type.toLowerCase();
-                  const Icon = materialIcons[typeKey] || materialIcons.default;
-                  const borderColor = materialBorderColors[typeKey] || materialBorderColors.default;
+        {/* Quiz Result */}
+        {quizResult && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-6">
+            <Card className="border-border/50 bg-gradient-to-r from-green-500/5 to-emerald-500/5">
+              <CardContent className="py-6 text-center">
+                <Trophy className="h-8 w-8 text-amber-500 mx-auto mb-2" />
+                <p className="text-2xl font-bold">{quizResult.score}/{quizResult.total}</p>
+                <p className="text-sm text-muted-foreground">
+                  {Math.round((quizResult.score / quizResult.total) * 100)}% — Quiz Submitted!
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-                  return (
-                    <motion.div
-                      key={m.id}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                    >
-                      <Card className={`border-l-4 ${borderColor} border-border/50`}>
-                        <CardContent className="flex items-center justify-between py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-muted/50">
-                              <Icon className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm">{m.title}</p>
-                              {m.description && <p className="text-xs text-muted-foreground mt-0.5">{m.description}</p>}
-                            </div>
-                          </div>
-                          {m.content_ref && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
-                              <a href={m.content_ref} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            </Button>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
+        {/* Taking Quiz */}
+        {takingQuiz && liveSession && (
+          <LiveQuizTaker
+            assignmentId={liveSession.assignment_id}
+            quizStartedAt={liveSession.quiz_started_at}
+            timeLimitMinutes={liveSession.time_limit_minutes}
+            onComplete={(score, total) => {
+              setTakingQuiz(false);
+              setQuizResult({ score, total });
+            }}
+          />
+        )}
 
-          <TabsContent value="assignments" className="mt-5">
-            {loadingAssignments ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
-            ) : assignments.length === 0 ? (
-              <Card className="text-center py-12 border-border/50">
-                <CardContent>
-                  <ClipboardList className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">No assignments yet</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {assignments.map((a, i) => {
-                  const status = getDueDateStatus(a.due_date);
-                  return (
-                    <motion.div
-                      key={a.id}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                    >
-                      <Card className="border-border/50">
-                        <CardContent className="py-3 px-4">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{a.title}</p>
-                              {a.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{a.description}</p>}
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge variant="outline" className="text-[10px] h-5">{a.assignment_type}</Badge>
-                                <AssignmentStatusBadge status={status} />
+        {!takingQuiz && (
+          <Tabs defaultValue="materials">
+            <TabsList className="grid w-full grid-cols-2 h-10">
+              <TabsTrigger value="materials" className="gap-1.5 text-sm">
+                <FileText className="h-4 w-4" /> Materials
+              </TabsTrigger>
+              <TabsTrigger value="assignments" className="gap-1.5 text-sm">
+                <ClipboardList className="h-4 w-4" /> Assignments
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="materials" className="mt-5">
+              {loadingMaterials ? (
+                <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+              ) : materials.length === 0 ? (
+                <Card className="text-center py-12 border-border/50">
+                  <CardContent>
+                    <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">No materials shared yet</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-2">
+                  {materials.map((m, i) => {
+                    const typeKey = m.material_type.toLowerCase();
+                    const Icon = materialIcons[typeKey] || materialIcons.default;
+                    const borderColor = materialBorderColors[typeKey] || materialBorderColors.default;
+
+                    return (
+                      <motion.div
+                        key={m.id}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                      >
+                        <Card className={`border-l-4 ${borderColor} border-border/50`}>
+                          <CardContent className="flex items-center justify-between py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-lg bg-muted/50">
+                                <Icon className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">{m.title}</p>
+                                {m.description && <p className="text-xs text-muted-foreground mt-0.5">{m.description}</p>}
                               </div>
                             </div>
-                            {a.due_date && (
-                              <span className={`text-xs font-medium shrink-0 ${status === "overdue" ? "text-destructive" : "text-muted-foreground"}`}>
-                                {getDaysUntilDue(a.due_date)}
-                              </span>
+                            {m.content_ref && (
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
+                                <a href={m.content_ref} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              </Button>
                             )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="assignments" className="mt-5">
+              {loadingAssignments ? (
+                <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+              ) : assignments.length === 0 ? (
+                <Card className="text-center py-12 border-border/50">
+                  <CardContent>
+                    <ClipboardList className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">No assignments yet</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-2">
+                  {assignments.map((a, i) => {
+                    const status = getDueDateStatus(a.due_date);
+                    return (
+                      <motion.div
+                        key={a.id}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                      >
+                        <Card className="border-border/50">
+                          <CardContent className="py-3 px-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{a.title}</p>
+                                {a.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{a.description}</p>}
+                                <div className="flex items-center gap-2 mt-2">
+                                  <Badge variant="outline" className="text-[10px] h-5">{a.assignment_type}</Badge>
+                                  <AssignmentStatusBadge status={status} />
+                                </div>
+                              </div>
+                              {a.due_date && (
+                                <span className={`text-xs font-medium shrink-0 ${status === "overdue" ? "text-destructive" : "text-muted-foreground"}`}>
+                                  {getDaysUntilDue(a.due_date)}
+                                </span>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </AppLayout>
   );

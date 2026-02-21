@@ -551,6 +551,72 @@ export type Database = {
         }
         Relationships: []
       }
+      live_sessions: {
+        Row: {
+          assignment_id: string | null
+          class_id: string
+          content_source: string
+          content_text: string | null
+          content_title: string | null
+          created_at: string
+          id: string
+          quiz_ended_at: string | null
+          quiz_started_at: string | null
+          started_at: string
+          status: string
+          teacher_id: string
+          time_limit_minutes: number
+          title: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          class_id: string
+          content_source?: string
+          content_text?: string | null
+          content_title?: string | null
+          created_at?: string
+          id?: string
+          quiz_ended_at?: string | null
+          quiz_started_at?: string | null
+          started_at?: string
+          status?: string
+          teacher_id: string
+          time_limit_minutes?: number
+          title: string
+        }
+        Update: {
+          assignment_id?: string | null
+          class_id?: string
+          content_source?: string
+          content_text?: string | null
+          content_title?: string | null
+          created_at?: string
+          id?: string
+          quiz_ended_at?: string | null
+          quiz_started_at?: string | null
+          started_at?: string
+          status?: string
+          teacher_id?: string
+          time_limit_minutes?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_sessions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_sessions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newton_conversations: {
         Row: {
           created_at: string | null
@@ -1233,6 +1299,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      analyze_session_results: { Args: { p_session_id: string }; Returns: Json }
       apply_redeem_code: {
         Args: { p_code_id: string; p_payment_id: string }
         Returns: Json
