@@ -162,7 +162,7 @@ const Onboarding = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [formData, setFormData] = useState({
-    userRole: "student" as "student" | "teacher",
+    userRole: "" as "" | "student" | "teacher",
     fullName: "",
     educationLevel: "",
     subjects: [] as string[],
@@ -302,6 +302,10 @@ const Onboarding = () => {
   };
 
   const handleNext = () => {
+    if (step === 0 && !formData.userRole) {
+      toast.error("Please select your role");
+      return;
+    }
     if (step === 1 && !formData.fullName.trim()) {
       toast.error("Please enter your name");
       return;
@@ -362,7 +366,7 @@ const Onboarding = () => {
       setTheme(formData.themePreference);
 
       // Save role to user_roles table
-      const roleToSave = formData.userRole === "teacher" ? "teacher" : "student";
+      const roleToSave = formData.userRole === "teacher" ? "teacher" : "student" as const;
       const { error: roleError } = await supabase
         .from("user_roles")
         .upsert(
