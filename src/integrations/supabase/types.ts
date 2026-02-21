@@ -77,6 +77,239 @@ export type Database = {
         }
         Relationships: []
       }
+      assignment_submissions: {
+        Row: {
+          answers: Json
+          assignment_id: string
+          graded_at: string | null
+          id: string
+          score: number | null
+          status: string
+          student_id: string
+          submitted_at: string
+        }
+        Insert: {
+          answers?: Json
+          assignment_id: string
+          graded_at?: string | null
+          id?: string
+          score?: number | null
+          status?: string
+          student_id: string
+          submitted_at?: string
+        }
+        Update: {
+          answers?: Json
+          assignment_id?: string
+          graded_at?: string | null
+          id?: string
+          score?: number | null
+          status?: string
+          student_id?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_submissions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assignments: {
+        Row: {
+          assignment_type: string
+          class_id: string
+          content: Json
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          is_published: boolean
+          max_score: number | null
+          teacher_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_type?: string
+          class_id: string
+          content?: Json
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_published?: boolean
+          max_score?: number | null
+          teacher_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_type?: string
+          class_id?: string
+          content?: Json
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_published?: boolean
+          max_score?: number | null
+          teacher_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_enrollments: {
+        Row: {
+          class_id: string
+          enrolled_at: string
+          id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          class_id: string
+          enrolled_at?: string
+          id?: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          class_id?: string
+          enrolled_at?: string
+          id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_join_codes: {
+        Row: {
+          attempted_at: string
+          code: string
+          id: string
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          code: string
+          id?: string
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          code?: string
+          id?: string
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      class_materials: {
+        Row: {
+          class_id: string
+          content_ref: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_visible: boolean
+          material_type: string
+          teacher_id: string
+          title: string
+        }
+        Insert: {
+          class_id: string
+          content_ref?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          material_type?: string
+          teacher_id: string
+          title: string
+        }
+        Update: {
+          class_id?: string
+          content_ref?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          material_type?: string
+          teacher_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_materials_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          academic_year: string | null
+          created_at: string
+          description: string | null
+          id: string
+          invite_code: string
+          is_active: boolean
+          name: string
+          subject: string | null
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          academic_year?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          invite_code?: string
+          is_active?: boolean
+          name: string
+          subject?: string | null
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          invite_code?: string
+          is_active?: boolean
+          name?: string
+          subject?: string | null
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           ad_duration: number | null
@@ -1004,6 +1237,10 @@ export type Database = {
         Args: { p_code_id: string; p_payment_id: string }
         Returns: Json
       }
+      auto_grade_quiz_submission: {
+        Args: { p_submission_id: string }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           p_function_name: string
@@ -1032,7 +1269,9 @@ export type Database = {
         Returns: Json
       }
       end_study_session: { Args: { p_session_id: string }; Returns: Json }
+      generate_invite_code: { Args: never; Returns: string }
       get_ad_stats: { Args: never; Returns: Json }
+      get_class_analytics: { Args: { p_class_id: string }; Returns: Json }
       get_document_file_path: {
         Args: { p_document_id: string }
         Returns: string
@@ -1044,6 +1283,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      join_class_by_code: { Args: { p_code: string }; Returns: Json }
       record_generation: {
         Args: {
           p_metadata?: Json
@@ -1089,7 +1329,7 @@ export type Database = {
       validate_redeem_code: { Args: { p_code: string }; Returns: Json }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "teacher" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1217,7 +1457,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "teacher", "student"],
     },
   },
 } as const

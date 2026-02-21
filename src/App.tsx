@@ -86,10 +86,20 @@ const PaymentFailure = lazy(() => import("./pages/payment/Failure"));
 const AdminRoute = lazy(() => import("./components/AdminRoute").then(m => ({ default: m.AdminRoute })));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
 const OnboardingGate = lazy(() => import("./components/OnboardingGate").then(m => ({ default: m.OnboardingGate })));
+const RoleRoute = lazy(() => import("./components/RoleRoute").then(m => ({ default: m.RoleRoute })));
 const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
 const AdminUsers = lazy(() => import("./pages/admin/Users"));
 const AdminInquiries = lazy(() => import("./pages/admin/Inquiries"));
 const AdminRedeemCodes = lazy(() => import("./pages/admin/RedeemCodes"));
+
+// Teacher pages
+const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard"));
+const ClassDetail = lazy(() => import("./pages/teacher/ClassDetail"));
+
+// Student class pages
+const StudentClasses = lazy(() => import("./pages/student/StudentClasses"));
+const StudentClassView = lazy(() => import("./pages/student/StudentClassView"));
+const JoinClass = lazy(() => import("./pages/JoinClass"));
 
 const queryClient = new QueryClient();
 
@@ -171,6 +181,15 @@ function AnimatedRoutes() {
         <Route path="/compare/chatgpt" element={<PageTransition><ChatGPTComparison /></PageTransition>} />
         <Route path="/compare/studyx" element={<PageTransition><StudyxComparison /></PageTransition>} />
         <Route path="/compare/studyfetch" element={<PageTransition><StudyFetchComparison /></PageTransition>} />
+        
+        {/* Teacher Routes */}
+        <Route path="/teacher" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherDashboard /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/teacher/classes/:id" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><ClassDetail /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        
+        {/* Student Class Routes */}
+        <Route path="/student/classes" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClasses /></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/student/class/:id" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClassView /></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/join-class" element={<PageTransition><ProtectedRoute><JoinClass /></ProtectedRoute></PageTransition>} />
         
         {/* Admin Routes */}
         <Route path="/admin/analytics" element={<PageTransition><AdminRoute><AdminAnalytics /></AdminRoute></PageTransition>} />
