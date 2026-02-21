@@ -16,7 +16,9 @@ import {
   CheckCircle2,
   Sparkles,
   Clock,
-  BarChart3
+  BarChart3,
+  School,
+  Users
 } from "lucide-react";
 
 const breadcrumbs = [
@@ -72,6 +74,12 @@ const features = [
     title: "PDF Chat",
     description: "Have an interactive conversation with your documents. Upload any PDF and ask questions about the content in natural language. Our AI understands context and can answer specific questions, explain complex sections, compare different parts of the document, and help you understand difficult concepts. PDF Chat is like having a personal tutor who has read and understood your entire textbook, available 24/7.",
     link: "/pdf-chat"
+  },
+  {
+    icon: School,
+    title: "Classroom Hub",
+    description: "A complete classroom management suite for educators. Teachers can create virtual classes, generate unique invite codes to onboard students, and assign AI-generated quizzes, flashcards, and study materials. Track student submissions, monitor performance with analytics dashboards, and manage multiple classes from one central hub. Classroom Hub brings the power of AI to the teaching side of education.",
+    link: "/teacher"
   }
 ];
 
@@ -90,6 +98,11 @@ const integrationBenefits = [
     icon: BarChart3,
     title: "Progress Tracking",
     description: "Monitor your study time, quiz scores, and flashcard progress. Identify strengths and areas needing improvement."
+  },
+  {
+    icon: Users,
+    title: "For Teachers Too",
+    description: "Manage classrooms, assign AI-generated work, and track student progress—all from one platform."
   }
 ];
 
@@ -169,7 +182,7 @@ const Features = () => {
             description="Why an integrated platform helps you learn better"
           />
           
-          <div className="mt-10 grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {integrationBenefits.map((benefit, index) => (
               <div key={index} className="p-6 rounded-xl border border-border bg-card text-center">
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">

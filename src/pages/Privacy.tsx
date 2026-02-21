@@ -119,6 +119,7 @@ const Privacy = () => {
                   <li><strong>Contact Us:</strong> Information included in your communications, including support requests and feedback.</li>
                   <li><strong>Participate in Surveys:</strong> Responses to optional surveys or research studies.</li>
                   <li><strong>Redeem Promotional Codes:</strong> Records of redeemed promotional codes, including code identifiers, redemption timestamps, and applied discounts.</li>
+                  <li><strong>Classroom Activity:</strong> Class enrollment data, assignment submissions, grades, teacher-student relationships within the platform, and invite code usage.</li>
                 </ul>
 
                 <h4>3.2 Information Collected Automatically</h4>
@@ -190,7 +191,8 @@ const Privacy = () => {
                   <li>Process and respond to your inputs using AI technology;</li>
                   <li>Personalize your experience based on your preferences;</li>
                   <li>Analyze usage patterns to improve our Services;</li>
-                  <li>Develop new features and products.</li>
+                  <li>Develop new features and products;</li>
+                  <li>Facilitate classroom features including class management, assignment distribution, and student progress tracking.</li>
                 </ul>
 
                 <h4>5.2 Account Management</h4>
@@ -260,12 +262,19 @@ const Privacy = () => {
                   transferred to the acquiring entity. We will notify you of any such change.
                 </p>
 
-                <h4>6.4 With Your Consent</h4>
+                <h4>6.4 Classroom Data Sharing</h4>
+                <p>
+                  If you are enrolled in a Class, your Teacher can see your assignment submissions, scores, 
+                  and performance data within that classroom context. Teachers cannot access your data from 
+                  other classes or your personal study activity outside the classroom.
+                </p>
+
+                <h4>6.5 With Your Consent</h4>
                 <p>
                   We may share your information for other purposes with your explicit consent.
                 </p>
 
-                <h4>6.5 What We Don't Do</h4>
+                <h4>6.6 What We Don't Do</h4>
                 <p>
                   We do not sell your personal data to third parties for their marketing purposes.
                 </p>

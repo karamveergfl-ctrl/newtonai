@@ -14,7 +14,8 @@ import {
   Shield,
   Lightbulb,
   CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  School
 } from "lucide-react";
 
 const breadcrumbs = [
@@ -312,13 +313,47 @@ const AIForStudents = () => {
           </div>
         </section>
 
+        {/* AI for Teachers Too */}
+        <section className="mb-16">
+          <SectionHeader
+            label="For Educators"
+            title="AI for Teachers Too"
+            description="NewtonAI isn't just for students—teachers can harness AI to manage their classrooms"
+          />
+          
+          <div className="mt-10 max-w-4xl mx-auto">
+            <div className="p-8 rounded-xl border border-border bg-card">
+              <div className="flex items-start gap-6">
+                <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                  <School className="w-7 h-7 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold font-display mb-3">Manage Your Classroom with AI</h3>
+                  <p className="text-muted-foreground leading-relaxed mb-4">
+                    Teachers can create virtual classrooms, invite students with a simple code, assign 
+                    AI-generated quizzes and flashcards, and monitor student progress with analytics 
+                    dashboards. It's everything you need to bring AI-powered learning into your classroom.
+                  </p>
+                  <Link 
+                    to="/teacher"
+                    className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+                  >
+                    Explore Teacher Tools
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border border-primary/20">
           <h2 className="text-2xl sm:text-3xl font-bold font-display mb-4">
-            Join Thousands of Students
+            Join Thousands of Students & Teachers
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto mb-8">
-            Students at universities worldwide are already studying smarter with NewtonAI. 
+            Students and teachers at universities worldwide are already using NewtonAI to transform education. 
             Start for free and see the difference AI-powered tools can make.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

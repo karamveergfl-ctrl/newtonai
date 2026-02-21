@@ -33,6 +33,7 @@ const featureLimits = [
   { name: "Live Transcription", free: "20 min/mo", pro: "900 min/mo", ultra: "Unlimited" },
   { name: "Homework Help", free: "5/day", pro: "Unlimited", ultra: "Unlimited" },
   { name: "AI Chat", free: "3/day", pro: "Unlimited", ultra: "Unlimited" },
+  { name: "Classroom Management", free: "1 class", pro: "5 classes", ultra: "Unlimited" },
 ];
 
 // Static feature list (currency-independent)
@@ -409,7 +410,7 @@ const Pricing = () => {
         <div className="mt-16 text-center p-8 rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border border-primary/20">
           <h3 className="text-2xl font-bold mb-2">Need a Custom Solution?</h3>
           <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-            Get custom API access, bulk licensing, and dedicated support for your educational institution or enterprise.
+            Deploy AI-powered classrooms across your entire institution. Get custom API access, bulk licensing, unlimited teacher accounts, and dedicated support.
           </p>
           <Button asChild size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
             <Link to="/enterprise">Contact Enterprise Sales</Link>

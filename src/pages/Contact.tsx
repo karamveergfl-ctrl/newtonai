@@ -176,6 +176,15 @@ const Contact = () => {
               </p>
             </div>
             <div className="space-y-3">
+              <h3 className="font-semibold text-foreground">Classroom & Teacher Support</h3>
+              <p className="text-sm leading-relaxed">
+                Questions about setting up classes, managing students, or creating AI-generated assignments? 
+                We're here to help teachers get started. Visit our{" "}
+                <Link to="/teacher" className="text-primary hover:underline">Teacher Dashboard</Link> or 
+                reach out for guidance on classroom features.
+              </p>
+            </div>
+            <div className="space-y-3">
               <h3 className="font-semibold text-foreground">Enterprise & Institutional Use</h3>
               <p className="text-sm leading-relaxed">
                 Interested in deploying NewtonAI across your institution, school, or university? Visit our{" "}
