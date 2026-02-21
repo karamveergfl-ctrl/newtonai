@@ -106,6 +106,8 @@ const Terms = () => {
                   <li><strong>"Intellectual Property Rights"</strong> means patents, copyrights, trademarks, trade secrets, and all other intellectual property rights.</li>
                   <li><strong>"Personal Data"</strong> means any information relating to an identified or identifiable natural person.</li>
                   <li><strong>"Services"</strong> means the AI-powered study tools, flashcard generation, quiz creation, note-taking, PDF summarization, video summarization, and all other features provided by NewtonAI.</li>
+                  <li><strong>"Class"</strong> means a virtual classroom created by a Teacher within the platform, to which Students may be invited via an invite code.</li>
+                  <li><strong>"Classroom Features"</strong> means the tools that allow Teachers to create Classes, generate invite codes, assign AI-generated quizzes, flashcards, and other study materials, and track Student progress and submissions.</li>
                   <li><strong>"Subscription"</strong> means a paid plan that provides access to premium features of the Services.</li>
                   <li><strong>"User"</strong> or <strong>"you"</strong> means any individual or entity using the Services.</li>
                 </ul>
@@ -134,6 +136,7 @@ const Terms = () => {
                   <li><strong>Video Summarizer:</strong> Analysis and summarization of educational video content.</li>
                   <li><strong>AI Lecture Notes:</strong> Conversion of lecture content into organized study materials.</li>
                   <li><strong>Mind Maps:</strong> Visual organization of concepts and their relationships.</li>
+                  <li><strong>Classroom Management:</strong> Tools for teachers to create classes, generate invite codes, assign AI-generated quizzes and flashcards, and track student progress and submissions.</li>
                 </ul>
                 <p>
                   We reserve the right to modify, suspend, or discontinue any aspect of the Services at any time, 
@@ -179,6 +182,14 @@ const Terms = () => {
                   <li>Not interfere with or disrupt the Services;</li>
                   <li>Not attempt to gain unauthorized access to any systems or networks.</li>
                 </ul>
+
+                <h4>4.5 Teacher Accounts</h4>
+                <p>
+                  Users who register as Teachers assume additional responsibilities. Teachers must be at least 
+                  18 years of age or authorized educators at an accredited institution. Teachers are responsible 
+                  for managing their classrooms appropriately, including safeguarding student data, distributing 
+                  invite codes responsibly, and ensuring that assigned content is suitable for their students.
+                </p>
               </AccordionContent>
             </AccordionItem>
 
@@ -275,6 +286,15 @@ const Terms = () => {
                   <li>Engages in, encourages, promotes, or celebrates violence or physical harm;</li>
                   <li>Targets any group based on race, religion, disability, gender, sexual orientation, national origin, or any other characteristic;</li>
                   <li>Contravenes data protection regulations including GDPR.</li>
+                </ul>
+
+                <h4>6.3 Classroom-Specific Restrictions</h4>
+                <p>In addition to the above, users of Classroom Features agree not to:</p>
+                <ul>
+                  <li>Use classroom tools for any non-educational purpose;</li>
+                  <li>Share invite codes publicly (e.g., on social media or public forums) without the Teacher's explicit consent;</li>
+                  <li>Impersonate a Teacher to gain access to classroom management features;</li>
+                  <li>Access or attempt to access another user's classroom data without authorization.</li>
                 </ul>
 
                 <h4>6.2 Prohibited Uses</h4>

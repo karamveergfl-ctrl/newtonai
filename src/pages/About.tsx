@@ -87,7 +87,7 @@ const About = () => {
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed">
             NewtonAI combines cutting-edge AI technology with proven learning methods 
-            to help students achieve their academic goals faster and more effectively.
+            to help students and teachers achieve their academic goals faster and more effectively.
           </p>
         </section>
 
@@ -112,6 +112,9 @@ const About = () => {
               <p>
                 Today, NewtonAI helps thousands of students transform their study materials into flashcards, quizzes, summaries, podcasts, and more. We're proud to be making a difference in education and are constantly working to improve our tools based on student feedback.
               </p>
+              <p>
+                We've since expanded beyond individual study tools to empower educators too. Teachers can now create virtual classrooms, invite students with a simple code, assign AI-generated quizzes and flashcards, and track student progress—all from one platform. Our classroom features bring the power of AI to the teaching side of education.
+              </p>
             </div>
           </div>
         </section>
@@ -126,11 +129,11 @@ const About = () => {
                 Our Mission
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                We believe that every student deserves access to powerful learning tools. 
-                Our mission is to democratize education by making AI-powered study assistance 
-                available to everyone, regardless of their background or resources. We are committed
-                to helping students study smarter, not harder, and to making learning more efficient,
-                engaging, and accessible for all.
+                We believe that every student and teacher deserves access to powerful learning tools. 
+                Our mission is to democratize education for both students and educators by making 
+                AI-powered study and classroom tools available to everyone, regardless of their 
+                background or resources. We are committed to helping students study smarter and 
+                teachers teach more effectively.
               </p>
             </div>
           </div>
@@ -277,7 +280,7 @@ const About = () => {
               Ready to Transform Your Learning?
             </h2>
             <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Join thousands of students who are already using NewtonAI to ace their studies.
+              Join thousands of students and teachers who are already using NewtonAI to transform education.
             </p>
             <div>
               <Link to="/auth">

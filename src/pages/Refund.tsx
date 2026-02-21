@@ -85,8 +85,8 @@ const Refund = () => {
                 </p>
                 <p>
                   This Refund Policy outlines the terms and conditions under which you may request a refund 
-                  for our Services. By purchasing a subscription or any paid features, you agree to the 
-                  terms of this policy.
+                  for our Services, including AI study tools and classroom management features. By purchasing 
+                  a subscription or any paid features, you agree to the terms of this policy.
                 </p>
                 <p>
                   We are committed to:

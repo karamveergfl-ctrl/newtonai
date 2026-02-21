@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ArrowRight, BookOpen, Brain, Shield, Sparkles } from "lucide-react";
+import { Clock, ArrowRight, BookOpen, Brain, Shield, Sparkles, GraduationCap } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -41,6 +41,14 @@ const guides: GuideItem[] = [
     icon: Shield,
     readTime: "8 min read",
     category: "Best Practices"
+  },
+  {
+    slug: "teacher-getting-started",
+    title: "Getting Started as a Teacher on NewtonAI",
+    description: "A step-by-step guide for educators to set up their first classroom, invite students, create AI-generated assignments, and track student progress using NewtonAI's classroom management tools.",
+    icon: GraduationCap,
+    readTime: "6 min read",
+    category: "For Teachers"
   }
 ];
 

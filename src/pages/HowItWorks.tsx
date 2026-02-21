@@ -14,7 +14,11 @@ import {
   BookOpen,
   Users,
   Lock,
-  CheckCircle2
+  CheckCircle2,
+  School,
+  UserPlus,
+  ClipboardList,
+  TrendingUp
 } from "lucide-react";
 
 const breadcrumbs = [
@@ -150,6 +154,47 @@ const HowItWorks = () => {
           </div>
         </section>
 
+        {/* For Teachers Section */}
+        <section className="mb-20">
+          <SectionHeader
+            label="For Educators"
+            title="How It Works for Teachers"
+            description="A simple workflow to manage your classroom with AI"
+          />
+          
+          <div className="mt-12 space-y-8 max-w-4xl mx-auto">
+            {[
+              { step: 1, icon: School, title: "Create a Class", description: "Set up a virtual classroom in seconds. Give it a name, subject, and academic year. An invite code is automatically generated for you to share with students." },
+              { step: 2, icon: UserPlus, title: "Share Invite Code", description: "Share the 6-character invite code with your students via email, messaging, or in person. Students enter the code at /join-class to enroll instantly—no manual approval needed." },
+              { step: 3, icon: ClipboardList, title: "Assign AI-Generated Work", description: "Create quizzes, flashcards, and study materials powered by AI. Assign them to your class with optional due dates. Students receive assignments automatically in their dashboard." },
+              { step: 4, icon: TrendingUp, title: "Track Student Progress", description: "Monitor submissions, view individual and class-wide performance analytics, and identify students who need extra support—all from your Teacher Dashboard." }
+            ].map((step) => (
+              <div key={step.step} className="flex gap-6 items-start">
+                <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                  <step.icon className="w-8 h-8 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                      {step.step}
+                    </span>
+                    <h3 className="text-xl font-semibold font-display">{step.title}</h3>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-8 text-center">
+            <Button asChild variant="outline" size="lg">
+              <Link to="/teacher">Go to Teacher Dashboard →</Link>
+            </Button>
+          </div>
+        </section>
+
         {/* Technology & Security */}
         <section className="mb-20">
           <SectionHeader
@@ -226,11 +271,11 @@ const HowItWorks = () => {
         <section className="mb-16">
           <SectionHeader
             label="Why Choose Us"
-            title="Why Students Choose NewtonAI"
+            title="Why Students & Teachers Choose NewtonAI"
             description="What makes our platform different from other study tools"
           />
           
-          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {[
               {
                 icon: BookOpen,
@@ -246,6 +291,11 @@ const HowItWorks = () => {
                 icon: CheckCircle2,
                 title: "Proven Techniques",
                 description: "Our tools are built on research-backed learning methods like spaced repetition and active recall."
+              },
+              {
+                icon: School,
+                title: "Classroom Management",
+                description: "Teachers can create classes, assign AI-generated work, and track student progress from one platform."
               }
             ].map((item, index) => (
               <div key={index} className="p-6 rounded-xl border border-border bg-card">
@@ -274,7 +324,7 @@ const HowItWorks = () => {
             Ready to Transform Your Study Experience?
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto mb-8">
-            Join thousands of students who are already learning smarter with NewtonAI. 
+            Join thousands of students and teachers who are already learning smarter with NewtonAI. 
             Start for free—no credit card required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

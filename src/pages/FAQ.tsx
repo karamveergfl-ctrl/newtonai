@@ -80,6 +80,18 @@ const faqs = [
   {
     question: "Can NewtonAI revoke my promotional premium access?",
     answer: "Yes. NewtonAI reserves the right to terminate promotional access if: you violate the Terms of Service, the code was obtained fraudulently, or the promotional campaign ends. We'll notify you before making any changes to your access."
+  },
+  {
+    question: "Can teachers use NewtonAI for classroom management?",
+    answer: "Yes! Teachers can create virtual classrooms, generate invite codes for students, assign AI-generated quizzes and flashcards, and track student progress and submissions—all from one dashboard. Select 'Teacher' during onboarding to access classroom features. Free accounts include 1 class, Pro allows up to 5 classes, and Ultra provides unlimited classrooms."
+  },
+  {
+    question: "How do students join a class?",
+    answer: "Students can join a class by entering a 6-character invite code provided by their teacher. Navigate to /join-class (or click 'Join Class' in the sidebar), enter the code, and you'll be enrolled instantly. Your teacher will then be able to assign you quizzes, flashcards, and other AI-generated study materials."
+  },
+  {
+    question: "Is student data in classrooms private?",
+    answer: "Yes. Only the class teacher can view student submissions and performance data within their classroom. Teachers cannot access your personal study activity outside the classroom context. All classroom data is encrypted and handled in accordance with our Privacy Policy. Students can leave a class at any time."
   }
 ];
 
