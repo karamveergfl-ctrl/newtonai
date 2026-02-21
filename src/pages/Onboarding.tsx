@@ -154,7 +154,7 @@ const checkmarkVariants = {
 const Onboarding = () => {
   const navigate = useNavigate();
   const { setTheme } = useTheme();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -162,18 +162,19 @@ const Onboarding = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [formData, setFormData] = useState({
+    userRole: "student" as "student" | "teacher",
     fullName: "",
     educationLevel: "",
     subjects: [] as string[],
     studyGoals: [] as string[],
     referralSource: "",
-    // Step 6 fields
+    // Step 7 fields
     themePreference: "system",
     languagePreference: "en",
     avatarUrl: null as string | null,
   });
 
-  const totalSteps = 6;
+  const totalSteps = 7;
   
   // Auto-advance for single-selection steps (Step 2 and Step 5)
   useEffect(() => {
@@ -185,25 +186,37 @@ const Onboarding = () => {
     };
   }, []);
   
-  // Auto-advance when education level is selected (Step 2)
+  // Auto-advance when role is selected (Step 0)
   useEffect(() => {
-    if (step === 2 && formData.educationLevel && !isAutoAdvancing) {
+    if (step === 0 && formData.userRole && !isAutoAdvancing) {
       setIsAutoAdvancing(true);
       autoAdvanceTimerRef.current = setTimeout(() => {
         setDirection(1);
-        setStep(3);
+        setStep(1);
+        setIsAutoAdvancing(false);
+      }, 600);
+    }
+  }, [formData.userRole, step, isAutoAdvancing]);
+
+  // Auto-advance when education level is selected (Step 3)
+  useEffect(() => {
+    if (step === 3 && formData.educationLevel && !isAutoAdvancing) {
+      setIsAutoAdvancing(true);
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        setDirection(1);
+        setStep(4);
         setIsAutoAdvancing(false);
       }, 600);
     }
   }, [formData.educationLevel, step, isAutoAdvancing]);
   
-  // Auto-advance when referral source is selected (Step 5)
+  // Auto-advance when referral source is selected (Step 6)
   useEffect(() => {
-    if (step === 5 && formData.referralSource && !isAutoAdvancing) {
+    if (step === 6 && formData.referralSource && !isAutoAdvancing) {
       setIsAutoAdvancing(true);
       autoAdvanceTimerRef.current = setTimeout(() => {
         setDirection(1);
-        setStep(6);
+        setStep(7);
         setIsAutoAdvancing(false);
       }, 600);
     }
