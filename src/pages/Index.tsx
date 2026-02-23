@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UploadZone } from "@/components/UploadZone";
 import { LectureRecorder } from "@/components/LectureRecorder";
@@ -279,6 +279,8 @@ const Index = () => {
     return success;
   };
   const navigate = useNavigate();
+  const location = useLocation();
+  const materialConsumedRef = useRef(false);
   
   // Check onboarding status and redirect if not completed
   useEffect(() => {
@@ -324,6 +326,17 @@ const Index = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Auto-load class material passed via navigation state
+  useEffect(() => {
+    const state = location.state as { materialUrl?: string; materialName?: string } | null;
+    if (state?.materialUrl && !materialConsumedRef.current) {
+      materialConsumedRef.current = true;
+      handleUploadComplete({ pdfUrl: state.materialUrl, pdfName: state.materialName || "Class Material" });
+      // Clear state so refresh doesn't re-trigger
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");

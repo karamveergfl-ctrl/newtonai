@@ -216,7 +216,11 @@ const StudentClassView = () => {
                     const borderColor = materialBorderColors[typeKey] || materialBorderColors.default;
                     return (
                       <motion.div key={m.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                        <Card className={`border-l-4 ${borderColor} border-border/50`}>
+                        <Card className={`border-l-4 ${borderColor} border-border/50 ${(typeKey === "pdf" || typeKey === "document") && m.content_ref ? "cursor-pointer hover:border-primary/30 transition-colors" : ""}`} onClick={() => {
+                          if ((typeKey === "pdf" || typeKey === "document") && m.content_ref) {
+                            navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title } });
+                          }
+                        }}>
                           <CardContent className="flex items-center justify-between py-3 px-4">
                             <div className="flex items-center gap-3">
                               <div className="p-2 rounded-lg bg-muted/50"><Icon className="h-4 w-4 text-muted-foreground" /></div>
@@ -226,8 +230,16 @@ const StudentClassView = () => {
                               </div>
                             </div>
                             {m.content_ref && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
-                                <a href={m.content_ref} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /></a>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => {
+                                e.stopPropagation();
+                                const type = m.material_type.toLowerCase();
+                                if (type === "pdf" || type === "document") {
+                                  navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title } });
+                                } else {
+                                  window.open(m.content_ref!, "_blank", "noopener,noreferrer");
+                                }
+                              }}>
+                                {(m.material_type.toLowerCase() === "pdf" || m.material_type.toLowerCase() === "document") ? <FileText className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
                               </Button>
                             )}
                           </CardContent>
