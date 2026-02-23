@@ -113,6 +113,7 @@ const Index = () => {
   const [showFullScreenMindMap, setShowFullScreenMindMap] = useState(false);
   const [fullScreenMindMapTitle, setFullScreenMindMapTitle] = useState("");
   const [mindMapData, setMindMapData] = useState<any>(null);
+  const [returnTo, setReturnTo] = useState<string | null>(null);
   const [videoMindMapData, setVideoMindMapData] = useState<any>(null);
   const [pdfPageCount, setPdfPageCount] = useState(10);
   const [triggerScreenshot, setTriggerScreenshot] = useState(false);
@@ -299,11 +300,16 @@ const Index = () => {
 
   // Auto-load class material passed via navigation state
   useEffect(() => {
-    const state = location.state as { materialUrl?: string; materialName?: string; materialVideoUrl?: string } | null;
+    const state = location.state as { materialUrl?: string; materialName?: string; materialVideoUrl?: string; returnTo?: string } | null;
     if (materialConsumedRef.current) return;
     if (state?.materialUrl) {
       materialConsumedRef.current = true;
-      handleUploadComplete({ pdfUrl: state.materialUrl, pdfName: state.materialName || "Class Material" });
+      const name = state.materialName || "Class Material";
+      // Detect PDF from URL if name doesn't have .pdf extension
+      const pdfName = name.toLowerCase().endsWith('.pdf') ? name :
+        state.materialUrl.toLowerCase().includes('.pdf') ? name + '.pdf' : name;
+      handleUploadComplete({ pdfUrl: state.materialUrl, pdfName });
+      if (state.returnTo) setReturnTo(state.returnTo);
       window.history.replaceState({}, document.title);
     } else if (state?.materialVideoUrl) {
       materialConsumedRef.current = true;
@@ -2092,9 +2098,9 @@ const Index = () => {
         <div className="p-2 md:p-3 border-b bg-card/50 backdrop-blur-sm">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Button onClick={handleReset} variant="ghost" size="sm" className="gap-1 h-8 shrink-0">
+              <Button onClick={() => returnTo ? navigate(returnTo) : handleReset()} variant="ghost" size="sm" className="gap-1 h-8 shrink-0">
                 <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline text-xs">New File</span>
+                <span className="hidden sm:inline text-xs">{returnTo ? "Back to Class" : "New File"}</span>
               </Button>
               <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent truncate">
                 {fileData.name}
