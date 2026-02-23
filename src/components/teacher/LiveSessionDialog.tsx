@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Radio, FileText, Youtube, Type } from "lucide-react";
+import { processUploadedFile } from "@/utils/contentProcessing";
 
 interface LiveSessionDialogProps {
   classId: string;
@@ -26,11 +27,11 @@ export function LiveSessionDialog({ classId, onSessionStarted, children }: LiveS
   const [extracting, setExtracting] = useState(false);
 
   const extractFromFile = async (f: File): Promise<{ text: string; title: string }> => {
-    const formData = new FormData();
-    formData.append("file", f);
-    const { data, error } = await supabase.functions.invoke("extract-text", { body: formData });
-    if (error || !data?.text) throw new Error("Failed to extract text from file");
-    return { text: data.text, title: f.name };
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error("Not authenticated");
+    const text = await processUploadedFile(f, session.access_token);
+    if (!text?.trim()) throw new Error("Failed to extract text from file");
+    return { text, title: f.name };
   };
 
   const extractFromYoutube = async (url: string): Promise<{ text: string; title: string }> => {
