@@ -15,6 +15,7 @@ import { Brain, BookOpen, FileText, Network, Circle, GitBranch, Boxes, Clock, Za
 import { cn } from "@/lib/utils";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
+import { AssignToClassSelect } from "@/components/AssignToClassSelect";
 
 export interface UniversalGenerationSettings {
   pageStart?: number;
@@ -25,6 +26,7 @@ export interface UniversalGenerationSettings {
   mindMapStyle?: "radial" | "tree" | "cluster" | "timeline";
   summaryFormat?: "concise" | "detailed" | "bullet-points" | "academic";
   includeComparison?: boolean;
+  classId?: string;
 }
 
 interface UniversalStudySettingsDialogProps {
@@ -129,7 +131,7 @@ export const UniversalStudySettingsDialog = ({
   const [mindMapStyle, setMindMapStyle] = useState<MindMapStyle>("radial");
   const [summaryFormat, setSummaryFormat] = useState<SummaryFormat>("concise");
   const [includeComparison, setIncludeComparison] = useState(true);
-
+  const [selectedClassId, setSelectedClassId] = useState("none");
   const handleGenerate = () => {
     const settings: UniversalGenerationSettings = {
       count,
@@ -138,6 +140,7 @@ export const UniversalStudySettingsDialog = ({
       mindMapStyle: type === "mindmap" ? mindMapStyle : undefined,
       summaryFormat: type === "summary" ? summaryFormat : undefined,
       includeComparison: type === "summary" ? includeComparison : undefined,
+      classId: selectedClassId !== "none" ? selectedClassId : undefined,
     };
 
     if (totalPages > 1) {
@@ -384,7 +387,15 @@ export const UniversalStudySettingsDialog = ({
                 <span>Standard</span>
                 <span>Detailed</span>
               </div>
-            </div>
+             </div>
+          )}
+
+          {/* Assign to Class - Only for quiz and only for teachers */}
+          {type === "quiz" && (
+            <AssignToClassSelect
+              selectedClassId={selectedClassId}
+              onClassIdChange={setSelectedClassId}
+            />
           )}
         </div>
 

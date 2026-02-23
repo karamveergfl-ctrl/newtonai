@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Brain, BookOpen, Sparkles } from "lucide-react";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
+import { AssignToClassSelect } from "@/components/AssignToClassSelect";
 
 interface GenerationSettingsDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ export interface GenerationSettings {
   detailLevel?: "brief" | "standard" | "detailed";
   summaryFormat?: "concise" | "detailed" | "bullet-points" | "academic";
   includeComparison?: boolean;
+  classId?: string;
 }
 
 const difficultyLabels = {
@@ -54,13 +56,15 @@ export const GenerationSettingsDialog = ({
   const [pageRange, setPageRange] = useState<[number, number]>([1, Math.min(totalPages, 10)]);
   const [count, setCount] = useState(10);
   const [difficulty, setDifficulty] = useState(2);
+  const [selectedClassId, setSelectedClassId] = useState("none");
 
   const handleGenerate = () => {
     onGenerate({
       pageStart: pageRange[0],
       pageEnd: pageRange[1],
       count,
-      difficulty: difficulty === 1 ? "easy" : difficulty === 2 ? "medium" : "hard"
+      difficulty: difficulty === 1 ? "easy" : difficulty === 2 ? "medium" : "hard",
+      classId: selectedClassId !== "none" ? selectedClassId : undefined,
     });
     onOpenChange(false);
   };
@@ -160,6 +164,14 @@ export const GenerationSettingsDialog = ({
               <span className="text-red-500">Hard</span>
             </div>
           </div>
+
+          {/* Assign to Class - Only for quiz and only for teachers */}
+          {type === "quiz" && (
+            <AssignToClassSelect
+              selectedClassId={selectedClassId}
+              onClassIdChange={setSelectedClassId}
+            />
+          )}
         </div>
 
         <DialogFooter>
