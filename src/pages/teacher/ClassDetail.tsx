@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio, Trash2, Eye, BookOpen, Plus, ExternalLink, File, Link as LinkIcon, Video } from "lucide-react";
+import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio, Trash2, Eye, BookOpen, Plus, ExternalLink, File, Link as LinkIcon, Video, Upload } from "lucide-react";
 import { toast } from "sonner";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
@@ -449,54 +449,69 @@ function AddMaterialDialog({ classId, onAdded }: { classId: string; onAdded: () 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState("link");
   const [contentRef, setContentRef] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const isFileType = type === "document";
+  const hasFile = !!file;
+  const hasLink = contentRef.trim().length > 0;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
       setFile(f);
+      setContentRef("");
       if (!title.trim()) setTitle(f.name.replace(/\.[^.]+$/, ""));
     }
   };
 
+  const handleLinkChange = (value: string) => {
+    setContentRef(value);
+    if (value.trim()) { setFile(null); }
+  };
+
+  const detectType = (): string => {
+    if (hasFile) {
+      const ext = file!.name.split(".").pop()?.toLowerCase() || "";
+      return ext === "pdf" ? "pdf" : "document";
+    }
+    if (hasLink) {
+      const url = contentRef.trim().toLowerCase();
+      if (url.includes("youtube.com") || url.includes("youtu.be") || url.includes("vimeo.com")) return "video";
+      if (url.endsWith(".pdf")) return "pdf";
+      return "link";
+    }
+    return "link";
+  };
+
   const handleSave = async () => {
     if (!title.trim()) return;
-    if (isFileType && !file) { toast.error("Please select a file"); return; }
-    if (!isFileType && !contentRef.trim()) { toast.error("Please enter a URL"); return; }
+    if (!hasFile && !hasLink) { toast.error("Please upload a file or paste a link"); return; }
 
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
 
     let finalRef = contentRef.trim() || null;
-    let finalType = type;
+    let finalType = detectType();
 
-    // Upload file to Supabase storage if document type
-    if (isFileType && file) {
+    if (hasFile && file) {
       setUploading(true);
       const ext = file.name.split(".").pop()?.toLowerCase() || "pdf";
       const filePath = `${classId}/${crypto.randomUUID()}.${ext}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("class-materials")
         .upload(filePath, file, { contentType: file.type, upsert: false });
 
       if (uploadError) {
-        // If bucket doesn't exist, fall back to base64 data URL approach
         console.error("Upload error:", uploadError);
         toast.error("File upload failed. Saving as reference only.");
         finalRef = file.name;
-        finalType = ext === "pdf" ? "pdf" : "document";
       } else {
         const { data: urlData } = supabase.storage.from("class-materials").getPublicUrl(filePath);
         finalRef = urlData.publicUrl;
-        finalType = ext === "pdf" ? "pdf" : "document";
       }
       setUploading(false);
     }
@@ -529,43 +544,54 @@ function AddMaterialDialog({ classId, onAdded }: { classId: string; onAdded: () 
       </DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Add Material</DialogTitle></DialogHeader>
-        <div className="space-y-3 pt-2">
+        <div className="space-y-4 pt-2">
           <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
           <Input placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
-          <Select value={type} onValueChange={(v) => { setType(v); setFile(null); setContentRef(""); }}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="link">Link</SelectItem>
-              <SelectItem value="pdf">PDF Link</SelectItem>
-              <SelectItem value="video">Video Link</SelectItem>
-              <SelectItem value="document">Upload Document</SelectItem>
-            </SelectContent>
-          </Select>
 
-          {isFileType ? (
-            <div className="border-2 border-dashed border-border rounded-lg p-5 text-center">
+          <div className="flex items-stretch gap-3">
+            {/* File upload zone */}
+            <div className={`flex-1 border-2 border-dashed rounded-lg p-4 text-center transition-colors ${hasLink ? "opacity-50 pointer-events-none border-muted" : "border-border hover:border-primary/50 cursor-pointer"}`}>
               <input
                 type="file"
                 accept=".pdf,.docx,.doc,.pptx,.ppt,.txt"
                 onChange={handleFileChange}
                 className="hidden"
                 id="material-file-upload"
+                disabled={hasLink}
               />
-              <label htmlFor="material-file-upload" className="cursor-pointer">
-                <File className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  {file ? file.name : "Click to upload PDF, DOCX, PPTX, or TXT"}
-                </p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Max 20MB</p>
+              <label htmlFor="material-file-upload" className="cursor-pointer flex flex-col items-center justify-center h-full">
+                <Upload className="h-7 w-7 text-muted-foreground mb-1.5" />
+                {hasFile ? (
+                  <p className="text-sm font-medium text-foreground truncate max-w-full">{file!.name}</p>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-foreground">Upload File</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">PDF, DOCX, PPTX, TXT</p>
+                  </>
+                )}
               </label>
             </div>
-          ) : (
-            <Input placeholder="URL" value={contentRef} onChange={(e) => setContentRef(e.target.value)} />
-          )}
+
+            {/* Divider */}
+            <div className="flex items-center">
+              <span className="text-xs text-muted-foreground font-medium">or</span>
+            </div>
+
+            {/* Link input */}
+            <div className={`flex-1 flex flex-col justify-center ${hasFile ? "opacity-50 pointer-events-none" : ""}`}>
+              <Input
+                placeholder="Paste URL here"
+                value={contentRef}
+                onChange={(e) => handleLinkChange(e.target.value)}
+                disabled={hasFile}
+                className="h-full min-h-[80px]"
+              />
+            </div>
+          </div>
 
           <Button
             onClick={handleSave}
-            disabled={saving || !title.trim() || (isFileType ? !file : !contentRef.trim())}
+            disabled={saving || !title.trim() || (!hasFile && !hasLink)}
             className="w-full"
           >
             {saving ? (
