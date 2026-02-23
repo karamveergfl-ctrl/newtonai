@@ -16,22 +16,12 @@ import { pdfjs } from 'react-pdf';
 
 let configured = false;
 
-function getWorkerSrc(): string {
-  return new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-  ).toString();
-}
+const WORKER_CDN_URL = 'https://unpkg.com/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs';
 
 // Safety function to verify/reset worker config — call before any PDF usage
 export function ensurePdfWorkerConfigured(): void {
   if (configured) return;
-  
-  const currentSrc = pdfjs.GlobalWorkerOptions.workerSrc;
-  
-  if (!currentSrc || currentSrc.includes('cdnjs') || currentSrc.includes('unpkg')) {
-    pdfjs.GlobalWorkerOptions.workerSrc = getWorkerSrc();
-  }
+  pdfjs.GlobalWorkerOptions.workerSrc = WORKER_CDN_URL;
   configured = true;
 }
 
@@ -39,4 +29,4 @@ export function ensurePdfWorkerConfigured(): void {
 export { pdfjs };
 
 // Export the worker URL for reference
-export const pdfWorkerUrl = pdfjs.GlobalWorkerOptions.workerSrc || getWorkerSrc();
+export const pdfWorkerUrl = WORKER_CDN_URL;
