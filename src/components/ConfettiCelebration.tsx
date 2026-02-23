@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { useEffect, useState, useRef } from "react";
 
 interface ConfettiPiece {
   id: number;
@@ -18,22 +16,23 @@ interface ConfettiCelebrationProps {
 }
 
 const COLORS = [
-  "bg-yellow-400",
-  "bg-orange-400",
-  "bg-pink-400",
-  "bg-purple-400",
-  "bg-blue-400",
-  "bg-green-400",
-  "bg-red-400",
-  "bg-cyan-400",
+  "hsl(45, 93%, 58%)",   // yellow
+  "hsl(24, 95%, 53%)",   // orange
+  "hsl(330, 80%, 60%)",  // pink
+  "hsl(270, 60%, 60%)",  // purple
+  "hsl(210, 80%, 60%)",  // blue
+  "hsl(140, 60%, 50%)",  // green
+  "hsl(0, 75%, 55%)",    // red
+  "hsl(190, 80%, 55%)",  // cyan
 ];
 
 export function ConfettiCelebration({ isActive, onComplete }: ConfettiCelebrationProps) {
   const [pieces, setPieces] = useState<ConfettiPiece[]>([]);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     if (isActive) {
-      // Generate confetti pieces
       const newPieces: ConfettiPiece[] = Array.from({ length: 50 }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
@@ -45,51 +44,43 @@ export function ConfettiCelebration({ isActive, onComplete }: ConfettiCelebratio
       }));
       setPieces(newPieces);
 
-      // Clear after animation completes
       const timeout = setTimeout(() => {
         setPieces([]);
-        onComplete?.();
+        onCompleteRef.current?.();
       }, 4000);
 
       return () => clearTimeout(timeout);
     }
-  }, [isActive, onComplete]);
+  }, [isActive]);
+
+  if (pieces.length === 0) return null;
 
   return (
-    <AnimatePresence>
-      {pieces.length > 0 && (
-        <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
-          {pieces.map((piece) => (
-            <motion.div
-              key={piece.id}
-              initial={{
-                x: `${piece.x}vw`,
-                y: -20,
-                rotate: 0,
-                opacity: 1,
-              }}
-              animate={{
-                y: "110vh",
-                rotate: piece.rotation + 720,
-                opacity: [1, 1, 0.8, 0],
-              }}
-              transition={{
-                duration: piece.duration,
-                delay: piece.delay,
-                ease: [0.25, 0.46, 0.45, 0.94],
-              }}
-              className={cn(
-                "absolute rounded-sm",
-                piece.color
-              )}
-              style={{
-                width: piece.size,
-                height: piece.size * 0.6,
-              }}
-            />
-          ))}
-        </div>
-      )}
-    </AnimatePresence>
+    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+      {pieces.map((piece) => (
+        <div
+          key={piece.id}
+          className="absolute"
+          style={{
+            left: `${piece.x}vw`,
+            top: -20,
+            width: piece.size,
+            height: piece.size * 0.6,
+            backgroundColor: piece.color,
+            borderRadius: 2,
+            animation: `confetti-fall ${piece.duration}s ${piece.delay}s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards`,
+            // @ts-ignore
+            "--confetti-rotation": `${piece.rotation + 720}deg`,
+          } as React.CSSProperties}
+        />
+      ))}
+      <style>{`
+        @keyframes confetti-fall {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          70% { opacity: 0.8; }
+          100% { transform: translateY(110vh) rotate(var(--confetti-rotation)); opacity: 0; }
+        }
+      `}</style>
+    </div>
   );
 }

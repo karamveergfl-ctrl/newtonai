@@ -161,21 +161,7 @@ const Index = () => {
     }
   }, []);
   
-  // Fetch user name for welcome modal
-  useEffect(() => {
-    if (session?.user?.id) {
-      supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', session.user.id)
-        .single()
-        .then(({ data }) => {
-          if (data?.full_name) {
-            setNewUserName(data.full_name);
-          }
-        });
-    }
-  }, [session?.user?.id]);
+  // Profile data is fetched in a single consolidated query below (after navigate is declared)
 
   // Lecture notes state
   const [lectureNotes, setLectureNotes] = useState("");
@@ -233,23 +219,7 @@ const Index = () => {
   // Get subscription tier for reliable premium check
   const [subscriptionTier, setSubscriptionTier] = useState<"free" | "pro" | "ultra">("free");
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
-  
-  useEffect(() => {
-    const fetchSubscriptionTier = async () => {
-      if (session?.user?.id) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("subscription_tier")
-          .eq("id", session.user.id)
-          .single();
-        if (profile?.subscription_tier) {
-          setSubscriptionTier(profile.subscription_tier as "free" | "pro" | "ultra");
-        }
-      }
-      setSubscriptionLoading(false);
-    };
-    fetchSubscriptionTier();
-  }, [session?.user?.id]);
+  // Subscription tier is fetched in the consolidated profile query below
 
   // Consider user premium if EITHER system says so (Ultra or Pro/Premium)
   const isPremium = isPremiumCredits || subscriptionTier === "ultra" || subscriptionTier === "pro";
@@ -282,50 +252,50 @@ const Index = () => {
   const location = useLocation();
   const materialConsumedRef = useRef(false);
   
-  // Check onboarding status and redirect if not completed
+  // Consolidated profile fetch: full_name, subscription_tier, onboarding_completed
   useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      if (session?.user?.id) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("onboarding_completed")
-          .eq("id", session.user.id)
-          .single();
-        
-        if (!profile?.onboarding_completed) {
-          navigate("/onboarding");
-        }
-      }
-    };
-    checkOnboardingStatus();
+    if (session?.user?.id) {
+      supabase
+        .from('profiles')
+        .select('full_name, subscription_tier, onboarding_completed')
+        .eq('id', session.user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.full_name) {
+            setNewUserName(data.full_name);
+          }
+          if (data?.subscription_tier) {
+            setSubscriptionTier(data.subscription_tier as "free" | "pro" | "ultra");
+          }
+          if (data && !data.onboarding_completed) {
+            navigate("/onboarding");
+          }
+          setSubscriptionLoading(false);
+        });
+    }
   }, [session?.user?.id, navigate]);
-  
-  useEffect(() => {
-    // Set up auth state listener
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (!session) {
-        navigate("/");
-      }
-    });
 
-    // Check for existing session
+  useEffect(() => {
+    // Check for existing session only - ProtectedRoute handles auth guarding
     supabase.auth.getSession().then(({
       data: {
         session
       }
     }) => {
       setSession(session);
-      if (!session) {
-        navigate("/");
-      }
     });
+
+    // Listen for auth changes (sign out, token refresh)
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   // Auto-load class material passed via navigation state
   useEffect(() => {
