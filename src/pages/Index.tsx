@@ -300,14 +300,15 @@ const Index = () => {
 
   // Auto-load class material passed via navigation state
   useEffect(() => {
-    const state = location.state as { materialUrl?: string; materialName?: string; materialVideoUrl?: string; returnTo?: string } | null;
+    const state = location.state as { materialUrl?: string; materialName?: string; materialVideoUrl?: string; returnTo?: string; isPdf?: boolean } | null;
     if (materialConsumedRef.current) return;
     if (state?.materialUrl) {
       materialConsumedRef.current = true;
       const name = state.materialName || "Class Material";
-      // Detect PDF from URL if name doesn't have .pdf extension
-      const pdfName = name.toLowerCase().endsWith('.pdf') ? name :
-        state.materialUrl.toLowerCase().includes('.pdf') ? name + '.pdf' : name;
+      // Use explicit isPdf flag from class views, or detect from name/URL
+      const isPdf = state.isPdf || name.toLowerCase().endsWith('.pdf') ||
+        state.materialUrl.toLowerCase().includes('.pdf');
+      const pdfName = isPdf && !name.toLowerCase().endsWith('.pdf') ? name + '.pdf' : name;
       handleUploadComplete({ pdfUrl: state.materialUrl, pdfName });
       if (state.returnTo) setReturnTo(state.returnTo);
       window.history.replaceState({}, document.title);
@@ -318,6 +319,7 @@ const Index = () => {
         setSelectedVideoId(ytMatch[1]);
         setShowVideosPanel(true);
       }
+      if (state.returnTo) setReturnTo(state.returnTo);
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);

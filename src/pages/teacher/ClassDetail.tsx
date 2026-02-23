@@ -398,7 +398,7 @@ const ClassDetail = () => {
                     if (!m.content_ref) return;
                     const type = m.material_type.toLowerCase();
                     if (type === "pdf" || type === "document") {
-                      navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title, returnTo: `/teacher/classes/${id}` } });
+                      navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title, returnTo: `/teacher/classes/${id}`, isPdf: true } });
                     } else if (type === "video" || isYouTube) {
                       navigate("/dashboard", { state: { materialVideoUrl: m.content_ref, materialName: m.title, returnTo: `/teacher/classes/${id}` } });
                     } else {
