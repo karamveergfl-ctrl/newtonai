@@ -229,7 +229,7 @@ const StudentClassView = () => {
                           if (!m.content_ref) return;
                           const type = m.material_type.toLowerCase();
                           if (type === "pdf" || type === "document") {
-                            navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title, returnTo: `/student/classes/${id}` } });
+                            navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title, returnTo: `/student/classes/${id}`, isPdf: true } });
                           } else if (type === "video" || isYouTubeUrl(m.content_ref)) {
                             navigate("/dashboard", { state: { materialVideoUrl: m.content_ref, materialName: m.title, returnTo: `/student/classes/${id}` } });
                           } else {
