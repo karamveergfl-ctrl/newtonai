@@ -179,6 +179,36 @@ export const extractTextFromDOCX = async (
 };
 
 /**
+ * Extract text from a PPTX file using the extract-pptx-text edge function
+ */
+export const extractTextFromPPTX = async (
+  file: File,
+  accessToken: string
+): Promise<string> => {
+  const base64 = await fileToBase64(file);
+  
+  const response = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-pptx-text`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ pptxContent: base64 }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Failed to extract PPTX text" }));
+    throw new Error(error.error || "Failed to extract PPTX text");
+  }
+
+  const { text } = await response.json();
+  return text;
+};
+
+/**
  * Process uploaded file and extract text content
  */
 export const processUploadedFile = async (
@@ -205,6 +235,16 @@ export const processUploadedFile = async (
     file.name.endsWith(".doc")
   ) {
     return extractTextFromDOCX(file, accessToken);
+  }
+
+  // Handle PPTX/PPT files
+  if (
+    file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+    file.type === "application/vnd.ms-powerpoint" ||
+    file.name.endsWith(".pptx") ||
+    file.name.endsWith(".ppt")
+  ) {
+    return extractTextFromPPTX(file, accessToken);
   }
   
   throw new Error(`Unsupported file type: ${file.type}`);
