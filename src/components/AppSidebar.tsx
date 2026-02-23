@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useScrollContext } from "@/contexts/ScrollContext";
@@ -139,6 +138,18 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Shared button class builder
+  const btnClass = (path?: string) =>
+    cn(
+      "flex w-full items-center rounded-lg text-sm font-medium transition-all duration-150",
+      isCollapsed
+        ? "justify-center p-2.5 gap-0"
+        : "gap-3 px-3 py-1.5 hover:translate-x-1 active:scale-[0.98]",
+      path && isActive(path)
+        ? "bg-primary text-primary-foreground"
+        : "text-sidebar-foreground hover:bg-sidebar-accent"
+    );
+
   return (
     <Sidebar
       collapsible="icon"
@@ -166,33 +177,16 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent className="flex flex-col">
-        {/* Home - Fixed */}
+        {/* Home */}
         <SidebarGroup className="pt-2 shrink-0">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive("/dashboard")}
-                  tooltip="Home"
-                >
-                  <motion.button
-                    whileHover={{ x: isCollapsed ? 0 : 4 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate("/dashboard")}
-                    className={cn(
-                      "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                      isCollapsed 
-                        ? "justify-center p-2.5 gap-0" 
-                        : "gap-3 px-3 py-1.5",
-                      isActive("/dashboard")
-                        ? "bg-primary text-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent"
-                    )}
-                  >
+                <SidebarMenuButton asChild isActive={isActive("/dashboard")} tooltip="Home">
+                  <button onClick={() => navigate("/dashboard")} className={btnClass("/dashboard")}>
                     <Home className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                     {!isCollapsed && <span>Home</span>}
-                  </motion.button>
+                  </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -211,65 +205,30 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {isTeacher ? (
-                  <>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Teacher Dashboard">
-                        <motion.button
-                          whileHover={{ x: isCollapsed ? 0 : 4 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => navigate("/teacher")}
-                          className={cn(
-                            "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                            isCollapsed ? "justify-center p-2.5 gap-0" : "gap-3 px-3 py-1.5",
-                            isActive("/teacher")
-                              ? "bg-primary text-primary-foreground"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent"
-                          )}
-                        >
-                          <BarChart3 className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                          {!isCollapsed && <span>Dashboard</span>}
-                        </motion.button>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Teacher Dashboard">
+                      <button onClick={() => navigate("/teacher")} className={btnClass("/teacher")}>
+                        <BarChart3 className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                        {!isCollapsed && <span>Dashboard</span>}
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 ) : (
                   <>
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="My Classes">
-                        <motion.button
-                          whileHover={{ x: isCollapsed ? 0 : 4 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => navigate("/student/classes")}
-                          className={cn(
-                            "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                            isCollapsed ? "justify-center p-2.5 gap-0" : "gap-3 px-3 py-1.5",
-                            isActive("/student/classes")
-                              ? "bg-primary text-primary-foreground"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent"
-                          )}
-                        >
+                        <button onClick={() => navigate("/student/classes")} className={btnClass("/student/classes")}>
                           <GraduationCap className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                           {!isCollapsed && <span>My Classes</span>}
-                        </motion.button>
+                        </button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Join Class">
-                        <motion.button
-                          whileHover={{ x: isCollapsed ? 0 : 4 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => navigate("/join-class")}
-                          className={cn(
-                            "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                            isCollapsed ? "justify-center p-2.5 gap-0" : "gap-3 px-3 py-1.5",
-                            isActive("/join-class")
-                              ? "bg-primary text-primary-foreground"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent"
-                          )}
-                        >
+                        <button onClick={() => navigate("/join-class")} className={btnClass("/join-class")}>
                           <Sparkles className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                           {!isCollapsed && <span>Join Class</span>}
-                        </motion.button>
+                        </button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   </>
@@ -279,7 +238,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        {/* Study Tools - No scroll, all visible */}
+        {/* Study Tools */}
         <SidebarGroup className="-mt-1 pt-0 shrink-0">
           {!isCollapsed && (
             <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -291,23 +250,10 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
               {studyTools.map((tool) => (
                 <SidebarMenuItem key={tool.id}>
                   <SidebarMenuButton asChild tooltip={tool.label}>
-                    <motion.button
-                      whileHover={{ x: isCollapsed ? 0 : 4 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => navigate(tool.path)}
-                      className={cn(
-                        "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                        isCollapsed 
-                          ? "justify-center p-2.5 gap-0" 
-                          : "gap-3 px-3 py-1.5",
-                        isActive(tool.path)
-                          ? "bg-primary text-primary-foreground"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent"
-                      )}
-                    >
+                    <button onClick={() => navigate(tool.path)} className={btnClass(tool.path)}>
                       <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                       {!isCollapsed && <span>{tool.label}</span>}
-                    </motion.button>
+                    </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -315,63 +261,46 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Explore Section - Only visible when scrolled */}
-        <AnimatePresence>
-          {hasScrolled && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-            >
-              <SidebarGroup className="mt-2 shrink-0">
-                {!isCollapsed && (
-                  <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Explore
-                  </SidebarGroupLabel>
-                )}
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {exploreLinks.map((link) => (
-                      <SidebarMenuItem key={link.id}>
-                        <SidebarMenuButton asChild tooltip={link.label}>
-                          <motion.button
-                            whileHover={{ x: isCollapsed ? 0 : 4 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => navigate(link.path)}
-                            className={cn(
-                              "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                              isCollapsed 
-                                ? "justify-center p-2.5 gap-0" 
-                                : "gap-3 px-3 py-2",
-                              isActive(link.path)
-                                ? "bg-primary text-primary-foreground"
-                                : "text-sidebar-foreground hover:bg-sidebar-accent"
-                            )}
-                          >
-                            <link.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                            {!isCollapsed && (
-                              <>
-                                <span className="flex-1">{link.label}</span>
-                                {link.isNew && (
-                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
-                                    NEW
-                                  </span>
-                                )}
-                              </>
-                            )}
-                          </motion.button>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </motion.div>
+        {/* Explore Section - CSS transition instead of framer-motion */}
+        <div
+          className={cn(
+            "transition-all duration-300 ease-in-out overflow-hidden",
+            hasScrolled ? "opacity-100 max-h-[500px]" : "opacity-0 max-h-0"
           )}
-        </AnimatePresence>
+        >
+          <SidebarGroup className="mt-2 shrink-0">
+            {!isCollapsed && (
+              <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Explore
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {exploreLinks.map((link) => (
+                  <SidebarMenuItem key={link.id}>
+                    <SidebarMenuButton asChild tooltip={link.label}>
+                      <button onClick={() => navigate(link.path)} className={btnClass(link.path)}>
+                        <link.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                        {!isCollapsed && (
+                          <>
+                            <span className="flex-1">{link.label}</span>
+                            {link.isNew && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+                                NEW
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </div>
 
-        {/* Admin Section - Only visible to admins */}
+        {/* Admin Section */}
         {isAdmin && (
           <SidebarGroup className="mt-2 shrink-0">
             {!isCollapsed && (
@@ -385,23 +314,10 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 {adminTools.map((tool) => (
                   <SidebarMenuItem key={tool.id}>
                     <SidebarMenuButton asChild tooltip={tool.label}>
-                      <motion.button
-                        whileHover={{ x: isCollapsed ? 0 : 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => navigate(tool.path)}
-                        className={cn(
-                          "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                          isCollapsed 
-                            ? "justify-center p-2.5 gap-0" 
-                            : "gap-3 px-3 py-2",
-                          isActive(tool.path)
-                            ? "bg-primary text-primary-foreground"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent"
-                        )}
-                      >
+                      <button onClick={() => navigate(tool.path)} className={btnClass(tool.path)}>
                         <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                         {!isCollapsed && <span>{tool.label}</span>}
-                      </motion.button>
+                      </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -432,15 +348,13 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           
           {/* Theme Toggle */}
           <SidebarMenuButton asChild tooltip="Toggle Theme">
-            <motion.button
-              whileHover={{ x: isCollapsed ? 0 : 4 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               onClick={toggleTheme}
               className={cn(
-                "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                isCollapsed 
-                  ? "justify-center p-2.5 gap-0" 
-                  : "gap-3 px-3 py-1.5",
+                "flex w-full items-center rounded-lg text-sm font-medium transition-all duration-150",
+                isCollapsed
+                  ? "justify-center p-2.5 gap-0"
+                  : "gap-3 px-3 py-1.5 hover:translate-x-1 active:scale-[0.98]",
                 "text-sidebar-foreground hover:bg-sidebar-accent"
               )}
             >
@@ -450,57 +364,37 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 <Sun className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
               )}
               {!isCollapsed && <span>Theme</span>}
-            </motion.button>
+            </button>
           </SidebarMenuButton>
-
 
           {/* Profile */}
           <SidebarMenuButton asChild tooltip="Profile">
-            <motion.button
-              whileHover={{ x: isCollapsed ? 0 : 4 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate("/profile")}
-              className={cn(
-                "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                isCollapsed 
-                  ? "justify-center p-2.5 gap-0" 
-                  : "gap-3 px-3 py-1.5",
-                isActive("/profile")
-                  ? "bg-primary text-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent"
-              )}
-            >
+            <button onClick={() => navigate("/profile")} className={btnClass("/profile")}>
               <User className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
               {!isCollapsed && <span>Profile</span>}
-            </motion.button>
+            </button>
           </SidebarMenuButton>
 
           {/* Sign Out */}
           <SidebarMenuButton asChild tooltip="Sign Out">
-            <motion.button
-              whileHover={{ x: isCollapsed ? 0 : 4 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               onClick={onSignOut}
               className={cn(
-                "flex w-full items-center rounded-lg text-sm font-medium transition-colors",
-                isCollapsed 
-                  ? "justify-center p-2.5 gap-0" 
-                  : "gap-3 px-3 py-1.5",
+                "flex w-full items-center rounded-lg text-sm font-medium transition-all duration-150",
+                isCollapsed
+                  ? "justify-center p-2.5 gap-0"
+                  : "gap-3 px-3 py-1.5 hover:translate-x-1 active:scale-[0.98]",
                 "text-sidebar-foreground hover:bg-destructive hover:text-destructive-foreground"
               )}
             >
               <LogOut className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
               {!isCollapsed && <span>Sign Out</span>}
-            </motion.button>
+            </button>
           </SidebarMenuButton>
 
           {/* Get Started Button */}
           {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="pt-2"
-            >
+            <div className="pt-2">
               <Button
                 onClick={() => navigate("/pricing")}
                 className="w-full bg-gradient-to-r from-primary via-secondary to-accent text-white font-semibold shadow-lg hover:shadow-xl transition-shadow"
@@ -508,7 +402,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 <Sparkles className="h-4 w-4 mr-2" />
                 Get Started
               </Button>
-            </motion.div>
+            </div>
           )}
         </div>
       </SidebarFooter>
