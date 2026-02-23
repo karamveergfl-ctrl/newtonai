@@ -245,7 +245,7 @@ const StudentClassView = () => {
                               </div>
                             </div>
                             {m.content_ref && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => { e.stopPropagation(); window.open(m.content_ref, "_blank", "noopener,noreferrer"); }}>
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
                             )}
