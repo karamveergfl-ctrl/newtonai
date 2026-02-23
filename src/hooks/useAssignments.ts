@@ -157,6 +157,25 @@ export function useAssignments(classId?: string) {
     return true;
   };
 
+  const fetchMySubmissions = async (classId: string): Promise<Submission[]> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from("assignment_submissions")
+      .select("*")
+      .eq("student_id", user.id);
+
+    if (error) {
+      console.error("Failed to fetch my submissions:", error);
+      return [];
+    }
+
+    // Filter to only assignments in this class
+    const classAssignmentIds = assignments.map(a => a.id);
+    return (data || []).filter(s => classAssignmentIds.includes(s.assignment_id));
+  };
+
   return {
     assignments,
     loading,
@@ -165,6 +184,7 @@ export function useAssignments(classId?: string) {
     publishAssignment,
     submitAssignment,
     fetchSubmissions,
+    fetchMySubmissions,
     deleteAssignment,
   };
 }

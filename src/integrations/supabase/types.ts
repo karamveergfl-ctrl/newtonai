@@ -171,6 +171,44 @@ export type Database = {
           },
         ]
       }
+      class_announcements: {
+        Row: {
+          class_id: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          message: string
+          teacher_id: string
+          title: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          message: string
+          teacher_id: string
+          title: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          message?: string
+          teacher_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_announcements_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_enrollments: {
         Row: {
           class_id: string
@@ -1344,6 +1382,10 @@ export type Database = {
       get_document_file_path: {
         Args: { p_document_id: string }
         Returns: string
+      }
+      get_student_class_performance: {
+        Args: { p_class_id: string }
+        Returns: Json
       }
       get_student_progress: { Args: { p_class_id: string }; Returns: Json }
       has_role: {
