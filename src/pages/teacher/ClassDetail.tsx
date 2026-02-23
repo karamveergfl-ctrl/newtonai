@@ -391,7 +391,7 @@ const ClassDetail = () => {
             ) : (
               <div className="space-y-2">
                 {materials.map((m, i) => {
-                  const typeIcons: Record<string, typeof FileText> = { pdf: File, link: LinkIcon, video: Video, default: FileText };
+                  const typeIcons: Record<string, typeof FileText> = { pdf: File, link: LinkIcon, video: Video, document: FileText, default: FileText };
                   const Icon = typeIcons[m.material_type.toLowerCase()] || typeIcons.default;
                   return (
                     <motion.div key={m.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
@@ -451,21 +451,63 @@ function AddMaterialDialog({ classId, onAdded }: { classId: string; onAdded: () 
   const [description, setDescription] = useState("");
   const [type, setType] = useState("link");
   const [contentRef, setContentRef] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const isFileType = type === "document";
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) {
+      setFile(f);
+      if (!title.trim()) setTitle(f.name.replace(/\.[^.]+$/, ""));
+    }
+  };
 
   const handleSave = async () => {
     if (!title.trim()) return;
+    if (isFileType && !file) { toast.error("Please select a file"); return; }
+    if (!isFileType && !contentRef.trim()) { toast.error("Please enter a URL"); return; }
+
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
+
+    let finalRef = contentRef.trim() || null;
+    let finalType = type;
+
+    // Upload file to Supabase storage if document type
+    if (isFileType && file) {
+      setUploading(true);
+      const ext = file.name.split(".").pop()?.toLowerCase() || "pdf";
+      const filePath = `${classId}/${crypto.randomUUID()}.${ext}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("class-materials")
+        .upload(filePath, file, { contentType: file.type, upsert: false });
+
+      if (uploadError) {
+        // If bucket doesn't exist, fall back to base64 data URL approach
+        console.error("Upload error:", uploadError);
+        toast.error("File upload failed. Saving as reference only.");
+        finalRef = file.name;
+        finalType = ext === "pdf" ? "pdf" : "document";
+      } else {
+        const { data: urlData } = supabase.storage.from("class-materials").getPublicUrl(filePath);
+        finalRef = urlData.publicUrl;
+        finalType = ext === "pdf" ? "pdf" : "document";
+      }
+      setUploading(false);
+    }
 
     const { error } = await supabase.from("class_materials").insert({
       class_id: classId,
       teacher_id: user.id,
       title: title.trim(),
       description: description.trim() || null,
-      material_type: type,
-      content_ref: contentRef.trim() || null,
+      material_type: finalType,
+      content_ref: finalRef,
     });
 
     setSaving(false);
@@ -473,7 +515,7 @@ function AddMaterialDialog({ classId, onAdded }: { classId: string; onAdded: () 
       toast.error("Failed to add material");
     } else {
       toast.success("Material added!");
-      setTitle(""); setDescription(""); setContentRef(""); setOpen(false);
+      setTitle(""); setDescription(""); setContentRef(""); setFile(null); setOpen(false);
       onAdded();
     }
   };
@@ -490,17 +532,50 @@ function AddMaterialDialog({ classId, onAdded }: { classId: string; onAdded: () 
         <div className="space-y-3 pt-2">
           <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
           <Input placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
-          <Select value={type} onValueChange={setType}>
+          <Select value={type} onValueChange={(v) => { setType(v); setFile(null); setContentRef(""); }}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="link">Link</SelectItem>
               <SelectItem value="pdf">PDF Link</SelectItem>
               <SelectItem value="video">Video Link</SelectItem>
+              <SelectItem value="document">Upload Document</SelectItem>
             </SelectContent>
           </Select>
-          <Input placeholder="URL" value={contentRef} onChange={(e) => setContentRef(e.target.value)} />
-          <Button onClick={handleSave} disabled={saving || !title.trim()} className="w-full">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Material"}
+
+          {isFileType ? (
+            <div className="border-2 border-dashed border-border rounded-lg p-5 text-center">
+              <input
+                type="file"
+                accept=".pdf,.docx,.doc,.pptx,.ppt,.txt"
+                onChange={handleFileChange}
+                className="hidden"
+                id="material-file-upload"
+              />
+              <label htmlFor="material-file-upload" className="cursor-pointer">
+                <File className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  {file ? file.name : "Click to upload PDF, DOCX, PPTX, or TXT"}
+                </p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Max 20MB</p>
+              </label>
+            </div>
+          ) : (
+            <Input placeholder="URL" value={contentRef} onChange={(e) => setContentRef(e.target.value)} />
+          )}
+
+          <Button
+            onClick={handleSave}
+            disabled={saving || !title.trim() || (isFileType ? !file : !contentRef.trim())}
+            className="w-full"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                {uploading ? "Uploading..." : "Saving..."}
+              </>
+            ) : (
+              "Add Material"
+            )}
           </Button>
         </div>
       </DialogContent>
