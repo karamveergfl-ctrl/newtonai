@@ -1040,6 +1040,48 @@ const Index = () => {
       }
       const data = await response.json();
       
+      // If a classId was provided, create an assignment in that class
+      if (settings?.classId) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            // Add correct_answer field to each question for auto-grading
+            const questionsWithAnswers = (data.questions || []).map((q: any) => ({
+              ...q,
+              correct_answer: q.options?.[q.correctIndex] || "",
+            }));
+            
+            const { error: assignmentError } = await supabase
+              .from("assignments")
+              .insert({
+                class_id: settings.classId,
+                teacher_id: user.id,
+                title: (fileData?.name || "Document") + " Quiz",
+                assignment_type: "quiz",
+                content: { questions: questionsWithAnswers } as any,
+                is_published: true,
+                max_score: questionsWithAnswers.length,
+              });
+            
+            if (!assignmentError) {
+              // Fetch class name for the toast
+              const { data: classData } = await supabase
+                .from("classes")
+                .select("name")
+                .eq("id", settings.classId)
+                .single();
+              
+              toast({
+                title: "Quiz assigned! 🎓",
+                description: `Published to ${classData?.name || "class"}`,
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Error creating assignment:", err);
+        }
+      }
+      
       // Store result and trigger completion animation
       setPendingVideoResult({ type: 'quiz', data, title: fileData?.name || "Document Quiz" });
       completeVideoProcessing();
