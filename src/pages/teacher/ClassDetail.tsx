@@ -393,9 +393,21 @@ const ClassDetail = () => {
                 {materials.map((m, i) => {
                   const typeIcons: Record<string, typeof FileText> = { pdf: File, link: LinkIcon, video: Video, document: FileText, default: FileText };
                   const Icon = typeIcons[m.material_type.toLowerCase()] || typeIcons.default;
+                  const isYouTube = m.content_ref && /youtube\.com|youtu\.be/i.test(m.content_ref);
+                  const openMaterial = () => {
+                    if (!m.content_ref) return;
+                    const type = m.material_type.toLowerCase();
+                    if (type === "pdf" || type === "document") {
+                      navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title } });
+                    } else if (type === "video" || isYouTube) {
+                      navigate("/dashboard", { state: { materialVideoUrl: m.content_ref, materialName: m.title } });
+                    } else {
+                      window.open(m.content_ref, "_blank", "noopener,noreferrer");
+                    }
+                  };
                   return (
                     <motion.div key={m.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                      <Card className="border-border/50">
+                      <Card className={`border-border/50 ${m.content_ref ? "cursor-pointer hover:border-primary/30 transition-colors" : ""}`} onClick={openMaterial}>
                         <CardContent className="flex items-center justify-between py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="p-2 rounded-lg bg-muted/50"><Icon className="h-4 w-4 text-muted-foreground" /></div>
@@ -406,11 +418,11 @@ const ClassDetail = () => {
                           </div>
                           <div className="flex items-center gap-1">
                             {m.content_ref && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                <a href={m.content_ref} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /></a>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); openMaterial(); }}>
+                                <ExternalLink className="h-4 w-4" />
                               </Button>
                             )}
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMaterial(m.id)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); deleteMaterial(m.id); }}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
