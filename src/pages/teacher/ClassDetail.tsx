@@ -10,11 +10,13 @@ import { AssignmentResultsPanel } from "@/components/teacher/AssignmentResultsPa
 import { AttendanceGrid } from "@/components/teacher/AttendanceGrid";
 import { LiveSessionDialog } from "@/components/teacher/LiveSessionDialog";
 import { LiveSessionPanel } from "@/components/teacher/LiveSessionPanel";
+import { ClassAnnouncementInput } from "@/components/teacher/ClassAnnouncementInput";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio, Trash2, Eye, BookOpen, Plus, ExternalLink, File, Link as LinkIcon, Video } from "lucide-react";
 import { toast } from "sonner";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
@@ -24,6 +26,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ClassInfo {
@@ -43,6 +59,16 @@ interface Enrollment {
   profile?: { full_name: string | null };
 }
 
+interface ClassMaterial {
+  id: string;
+  title: string;
+  description: string | null;
+  material_type: string;
+  content_ref: string | null;
+  is_visible: boolean;
+  created_at: string;
+}
+
 const ClassDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -51,7 +77,12 @@ const ClassDetail = () => {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loadingClass, setLoadingClass] = useState(true);
   const [activeSession, setActiveSession] = useState<any>(null);
-  const { assignments, loading: loadingAssignments } = useAssignments(id);
+  const { assignments, loading: loadingAssignments, deleteAssignment, fetchSubmissions } = useAssignments(id);
+  const [submissionCounts, setSubmissionCounts] = useState<Record<string, number>>({});
+
+  // Materials state
+  const [materials, setMaterials] = useState<ClassMaterial[]>([]);
+  const [loadingMaterials, setLoadingMaterials] = useState(true);
 
   const fetchActiveSession = useCallback(async () => {
     if (!id) return;
@@ -67,6 +98,17 @@ const ClassDetail = () => {
   }, [id]);
 
   useEffect(() => { fetchActiveSession(); }, [fetchActiveSession]);
+
+  const fetchMaterials = useCallback(async () => {
+    if (!id) return;
+    const { data } = await supabase
+      .from("class_materials")
+      .select("*")
+      .eq("class_id", id)
+      .order("created_at", { ascending: false });
+    setMaterials(data || []);
+    setLoadingMaterials(false);
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -100,7 +142,24 @@ const ClassDetail = () => {
 
     fetchClass();
     fetchEnrollments();
-  }, [id]);
+    fetchMaterials();
+  }, [id, fetchMaterials]);
+
+  // Fetch submission counts for assignments
+  useEffect(() => {
+    if (assignments.length === 0) return;
+    const fetchCounts = async () => {
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        assignments.map(async (a) => {
+          const subs = await fetchSubmissions(a.id);
+          counts[a.id] = subs.length;
+        })
+      );
+      setSubmissionCounts(counts);
+    };
+    fetchCounts();
+  }, [assignments]);
 
   const removeStudent = async (enrollmentId: string) => {
     const { error } = await supabase
@@ -119,6 +178,16 @@ const ClassDetail = () => {
     const link = `${window.location.origin}/join-class?code=${classInfo?.invite_code}`;
     navigator.clipboard.writeText(link);
     toast.success("Invite link copied!");
+  };
+
+  const deleteMaterial = async (materialId: string) => {
+    const { error } = await supabase.from("class_materials").delete().eq("id", materialId);
+    if (error) {
+      toast.error("Failed to delete material");
+    } else {
+      toast.success("Material deleted");
+      fetchMaterials();
+    }
   };
 
   if (loadingClass) {
@@ -145,11 +214,11 @@ const ClassDetail = () => {
     <AppLayout>
       <SEOHead title={classInfo.name} description="Manage your class" noIndex />
       <div className="container max-w-6xl mx-auto px-4 py-6">
-        {/* Sticky Header */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6"
+          className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4"
         >
           <Button variant="ghost" size="icon" onClick={() => navigate("/teacher")} className="shrink-0 self-start">
             <ArrowLeft className="h-4 w-4" />
@@ -171,6 +240,9 @@ const ClassDetail = () => {
           ) : null}
         </motion.div>
 
+        {/* Announcements Input */}
+        {id && <ClassAnnouncementInput classId={id} />}
+
         {activeSession && (
           <LiveSessionPanel classId={id!} session={activeSession} onUpdate={fetchActiveSession} />
         )}
@@ -180,7 +252,7 @@ const ClassDetail = () => {
         )}
 
         <Tabs defaultValue="students">
-          <TabsList className="grid w-full grid-cols-3 h-10">
+          <TabsList className="grid w-full grid-cols-4 h-10">
             <TabsTrigger value="students" className="gap-1.5 text-xs sm:text-sm">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Students</span> ({enrollments.length})
@@ -189,12 +261,17 @@ const ClassDetail = () => {
               <ClipboardList className="h-4 w-4" />
               <span className="hidden sm:inline">Assignments</span> ({assignments.length})
             </TabsTrigger>
+            <TabsTrigger value="materials" className="gap-1.5 text-xs sm:text-sm">
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Materials</span>
+            </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-1.5 text-xs sm:text-sm">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
           </TabsList>
 
+          {/* Students Tab */}
           <TabsContent value="students" className="mt-5">
             {enrollments.length === 0 ? (
               <Card className="text-center py-12 border-border/50">
@@ -206,37 +283,24 @@ const ClassDetail = () => {
             ) : (
               <div className="space-y-2">
                 {enrollments.map((e, i) => (
-                  <motion.div
-                    key={e.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                  >
+                  <motion.div key={e.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <Card className="border-border/50">
                       <CardContent className="flex items-center justify-between py-3 px-4">
                         <div className="flex items-center gap-3">
-                          {/* Avatar initials */}
                           <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
                             {(e.profile?.full_name || "?")[0].toUpperCase()}
                           </div>
                           <div>
                             <p className="font-medium text-sm">{e.profile?.full_name || "Unknown Student"}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Joined {new Date(e.enrolled_at).toLocaleDateString()}
-                            </p>
+                            <p className="text-xs text-muted-foreground">Joined {new Date(e.enrolled_at).toLocaleDateString()}</p>
                           </div>
                         </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => removeStudent(e.id)}
-                              className="text-destructive focus:text-destructive"
-                            >
+                            <DropdownMenuItem onClick={() => removeStudent(e.id)} className="text-destructive focus:text-destructive">
                               Remove Student
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -249,11 +313,10 @@ const ClassDetail = () => {
             )}
           </TabsContent>
 
+          {/* Assignments Tab - Enhanced with actions */}
           <TabsContent value="assignments" className="mt-5">
             {loadingAssignments ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
+              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
             ) : assignments.length === 0 ? (
               <Card className="text-center py-12 border-border/50">
                 <CardContent>
@@ -264,12 +327,7 @@ const ClassDetail = () => {
             ) : (
               <div className="space-y-2">
                 {assignments.map((a, i) => (
-                  <motion.div
-                    key={a.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                  >
+                  <motion.div key={a.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <Card className="border-border/50">
                       <CardContent className="flex items-center justify-between py-3 px-4">
                         <div className="flex items-center gap-3">
@@ -283,12 +341,33 @@ const ClassDetail = () => {
                               ) : (
                                 <span className="text-[10px] text-muted-foreground font-medium">Draft</span>
                               )}
+                              {submissionCounts[a.id] != null && (
+                                <Badge variant="secondary" className="text-[10px] h-5">
+                                  {submissionCounts[a.id]} submission{submissionCounts[a.id] !== 1 ? "s" : ""}
+                                </Badge>
+                              )}
                             </div>
                           </div>
                         </div>
-                        {a.due_date && (
-                          <DueDateBadge dueDate={a.due_date} />
-                        )}
+                        <div className="flex items-center gap-1">
+                          {a.due_date && <DueDateBadge dueDate={a.due_date} />}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => {
+                                const tabEl = document.querySelector('[data-value="analytics"]') as HTMLElement;
+                                tabEl?.click();
+                              }}>
+                                <Eye className="h-3.5 w-3.5 mr-2" /> View Results
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => deleteAssignment(a.id)} className="text-destructive focus:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -297,6 +376,54 @@ const ClassDetail = () => {
             )}
           </TabsContent>
 
+          {/* Materials Tab */}
+          <TabsContent value="materials" className="mt-5">
+            <AddMaterialDialog classId={id!} onAdded={fetchMaterials} />
+            {loadingMaterials ? (
+              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+            ) : materials.length === 0 ? (
+              <Card className="text-center py-12 border-border/50">
+                <CardContent>
+                  <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">No materials yet. Add one above!</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {materials.map((m, i) => {
+                  const typeIcons: Record<string, typeof FileText> = { pdf: File, link: LinkIcon, video: Video, default: FileText };
+                  const Icon = typeIcons[m.material_type.toLowerCase()] || typeIcons.default;
+                  return (
+                    <motion.div key={m.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                      <Card className="border-border/50">
+                        <CardContent className="flex items-center justify-between py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-muted/50"><Icon className="h-4 w-4 text-muted-foreground" /></div>
+                            <div>
+                              <p className="font-medium text-sm">{m.title}</p>
+                              {m.description && <p className="text-xs text-muted-foreground mt-0.5">{m.description}</p>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {m.content_ref && (
+                              <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                <a href={m.content_ref} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /></a>
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMaterial(m.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Analytics Tab */}
           <TabsContent value="analytics" className="mt-5">
             <AnalyticsTab classId={id!} />
           </TabsContent>
@@ -318,20 +445,77 @@ const ClassDetail = () => {
   );
 };
 
+function AddMaterialDialog({ classId, onAdded }: { classId: string; onAdded: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState("link");
+  const [contentRef, setContentRef] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!title.trim()) return;
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSaving(false); return; }
+
+    const { error } = await supabase.from("class_materials").insert({
+      class_id: classId,
+      teacher_id: user.id,
+      title: title.trim(),
+      description: description.trim() || null,
+      material_type: type,
+      content_ref: contentRef.trim() || null,
+    });
+
+    setSaving(false);
+    if (error) {
+      toast.error("Failed to add material");
+    } else {
+      toast.success("Material added!");
+      setTitle(""); setDescription(""); setContentRef(""); setOpen(false);
+      onAdded();
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="gap-1.5 mb-4">
+          <Plus className="h-3.5 w-3.5" /> Add Material
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Add Material</DialogTitle></DialogHeader>
+        <div className="space-y-3 pt-2">
+          <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="link">Link</SelectItem>
+              <SelectItem value="pdf">PDF Link</SelectItem>
+              <SelectItem value="video">Video Link</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input placeholder="URL" value={contentRef} onChange={(e) => setContentRef(e.target.value)} />
+          <Button onClick={handleSave} disabled={saving || !title.trim()} className="w-full">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Material"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function DueDateBadge({ dueDate }: { dueDate: string }) {
   const now = new Date();
   const due = new Date(dueDate);
   const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays < 0) {
-    return <span className="text-xs text-destructive font-medium">Overdue</span>;
-  }
-  if (diffDays === 0) {
-    return <span className="text-xs text-amber-500 font-medium">Due today</span>;
-  }
-  if (diffDays <= 3) {
-    return <span className="text-xs text-amber-500 font-medium">Due in {diffDays}d</span>;
-  }
+  if (diffDays < 0) return <span className="text-xs text-destructive font-medium">Overdue</span>;
+  if (diffDays === 0) return <span className="text-xs text-amber-500 font-medium">Due today</span>;
+  if (diffDays <= 3) return <span className="text-xs text-amber-500 font-medium">Due in {diffDays}d</span>;
   return <span className="text-xs text-muted-foreground">{due.toLocaleDateString()}</span>;
 }
 
@@ -364,7 +548,6 @@ function AnalyticsTab({ classId }: { classId: string }) {
 
   return (
     <div className="space-y-4">
-      {/* Summary stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Students", value: analytics.enrollment_count },
@@ -381,7 +564,6 @@ function AnalyticsTab({ classId }: { classId: string }) {
         ))}
       </div>
 
-      {/* Sub-tabs */}
       <Tabs defaultValue="overview">
         <TabsList className="h-9">
           <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
@@ -393,26 +575,14 @@ function AnalyticsTab({ classId }: { classId: string }) {
         <TabsContent value="overview">
           <ClassAnalyticsCharts analytics={analytics} assignmentResults={assignmentResults?.assignments} />
         </TabsContent>
-
         <TabsContent value="students">
-          <StudentProgressTable
-            students={studentProgress?.students || []}
-            assignmentResults={assignmentResults?.assignments}
-          />
+          <StudentProgressTable students={studentProgress?.students || []} assignmentResults={assignmentResults?.assignments} />
         </TabsContent>
-
         <TabsContent value="assignments">
-          <AssignmentResultsPanel
-            assignments={assignmentResults?.assignments || []}
-          />
+          <AssignmentResultsPanel assignments={assignmentResults?.assignments || []} />
         </TabsContent>
-
         <TabsContent value="attendance">
-          <AttendanceGrid
-            students={attendanceData?.students || []}
-            assignments={attendanceData?.assignments || []}
-            attendance={attendanceData?.attendance || []}
-          />
+          <AttendanceGrid students={attendanceData?.students || []} assignments={attendanceData?.assignments || []} attendance={attendanceData?.attendance || []} />
         </TabsContent>
       </Tabs>
     </div>

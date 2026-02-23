@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { useAssignments } from "@/hooks/useAssignments";
+import { useAssignments, Submission } from "@/hooks/useAssignments";
 import { LiveQuizTaker } from "@/components/student/LiveQuizTaker";
+import { StudentQuizTaker } from "@/components/student/StudentQuizTaker";
+import { StudentPerformanceTab } from "@/components/student/StudentPerformanceTab";
+import { AnnouncementsBanner } from "@/components/student/AnnouncementsBanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy } from "lucide-react";
+import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
@@ -21,23 +24,14 @@ interface Material {
   content_ref: string | null;
 }
 
-const materialIcons: Record<string, typeof FileText> = {
-  pdf: File,
-  link: LinkIcon,
-  video: Video,
-  default: FileText,
-};
+const materialIcons: Record<string, typeof FileText> = { pdf: File, link: LinkIcon, video: Video, default: FileText };
+const materialBorderColors: Record<string, string> = { pdf: "border-l-red-500", link: "border-l-blue-500", video: "border-l-purple-500", default: "border-l-primary" };
 
-const materialBorderColors: Record<string, string> = {
-  pdf: "border-l-red-500",
-  link: "border-l-blue-500",
-  video: "border-l-purple-500",
-  default: "border-l-primary",
-};
-
-function getDueDateStatus(dueDate: string | null): "not_started" | "overdue" {
-  if (!dueDate) return "not_started";
-  return new Date(dueDate) < new Date() ? "overdue" : "not_started";
+function getSubmissionStatus(assignmentId: string, submissions: Submission[]): "not_started" | "submitted" | "graded" {
+  const sub = submissions.find(s => s.assignment_id === assignmentId);
+  if (!sub) return "not_started";
+  if (sub.status === "graded") return "graded";
+  return "submitted";
 }
 
 function getDaysUntilDue(dueDate: string): string {
@@ -54,7 +48,11 @@ const StudentClassView = () => {
   const [classInfo, setClassInfo] = useState<{ name: string; subject?: string | null; academic_year?: string | null } | null>(null);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loadingMaterials, setLoadingMaterials] = useState(true);
-  const { assignments, loading: loadingAssignments } = useAssignments(id);
+  const { assignments, loading: loadingAssignments, fetchMySubmissions, submitAssignment } = useAssignments(id);
+  const [mySubmissions, setMySubmissions] = useState<Submission[]>([]);
+
+  // Assignment interaction states
+  const [activeAssignmentId, setActiveAssignmentId] = useState<string | null>(null);
 
   // Live quiz detection
   const [liveSession, setLiveSession] = useState<any>(null);
@@ -79,6 +77,12 @@ const StudentClassView = () => {
     fetchData();
   }, [id]);
 
+  // Fetch student's submissions
+  useEffect(() => {
+    if (!id || assignments.length === 0) return;
+    fetchMySubmissions(id).then(setMySubmissions);
+  }, [id, assignments]);
+
   // Poll for active live session
   useEffect(() => {
     if (!id) return;
@@ -98,16 +102,34 @@ const StudentClassView = () => {
     return () => clearInterval(interval);
   }, [id]);
 
+  // If taking a regular assignment quiz
+  if (activeAssignmentId) {
+    const existingSub = mySubmissions.find(s => s.assignment_id === activeAssignmentId);
+    return (
+      <AppLayout>
+        <SEOHead title="Quiz" description="Take assignment quiz" noIndex />
+        <div className="container max-w-4xl mx-auto px-4 py-6">
+          <StudentQuizTaker
+            assignmentId={activeAssignmentId}
+            existingSubmission={existingSub ? { score: existingSub.score, answers: existingSub.answers, status: existingSub.status } : null}
+            onComplete={(score, total) => {
+              setActiveAssignmentId(null);
+              setQuizResult({ score, total });
+              if (id) fetchMySubmissions(id).then(setMySubmissions);
+            }}
+            onCancel={() => setActiveAssignmentId(null)}
+          />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <SEOHead title={classInfo?.name || "Class"} description="View class materials and assignments" noIndex />
       <div className="container max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-start gap-3 mb-6"
-        >
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-start gap-3 mb-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/student/classes")} className="shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -120,9 +142,12 @@ const StudentClassView = () => {
           </div>
         </motion.div>
 
+        {/* Announcements */}
+        {id && <AnnouncementsBanner classId={id} />}
+
         {/* Live Quiz Banner */}
         {liveSession && !takingQuiz && !quizResult && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-6">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-4">
             <Card className="border-destructive/30 bg-gradient-to-r from-red-500/10 via-orange-500/10 to-amber-500/10">
               <CardContent className="py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -135,9 +160,7 @@ const StudentClassView = () => {
                     <p className="text-xs text-muted-foreground">{liveSession.title} — {liveSession.time_limit_minutes} min</p>
                   </div>
                 </div>
-                <Button size="sm" variant="destructive" onClick={() => setTakingQuiz(true)}>
-                  Start Quiz
-                </Button>
+                <Button size="sm" variant="destructive" onClick={() => setTakingQuiz(true)}>Start Quiz</Button>
               </CardContent>
             </Card>
           </motion.div>
@@ -145,41 +168,34 @@ const StudentClassView = () => {
 
         {/* Quiz Result */}
         {quizResult && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-6">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-4">
             <Card className="border-border/50 bg-gradient-to-r from-green-500/5 to-emerald-500/5">
               <CardContent className="py-6 text-center">
                 <Trophy className="h-8 w-8 text-amber-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold">{quizResult.score}/{quizResult.total}</p>
-                <p className="text-sm text-muted-foreground">
-                  {Math.round((quizResult.score / quizResult.total) * 100)}% — Quiz Submitted!
-                </p>
+                <p className="text-sm text-muted-foreground">{Math.round((quizResult.score / quizResult.total) * 100)}% — Quiz Submitted!</p>
+                <Button variant="ghost" size="sm" className="mt-2" onClick={() => setQuizResult(null)}>Dismiss</Button>
               </CardContent>
             </Card>
           </motion.div>
         )}
 
-        {/* Taking Quiz */}
+        {/* Taking Live Quiz */}
         {takingQuiz && liveSession && (
           <LiveQuizTaker
             assignmentId={liveSession.assignment_id}
             quizStartedAt={liveSession.quiz_started_at}
             timeLimitMinutes={liveSession.time_limit_minutes}
-            onComplete={(score, total) => {
-              setTakingQuiz(false);
-              setQuizResult({ score, total });
-            }}
+            onComplete={(score, total) => { setTakingQuiz(false); setQuizResult({ score, total }); }}
           />
         )}
 
         {!takingQuiz && (
           <Tabs defaultValue="materials">
-            <TabsList className="grid w-full grid-cols-2 h-10">
-              <TabsTrigger value="materials" className="gap-1.5 text-sm">
-                <FileText className="h-4 w-4" /> Materials
-              </TabsTrigger>
-              <TabsTrigger value="assignments" className="gap-1.5 text-sm">
-                <ClipboardList className="h-4 w-4" /> Assignments
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-10">
+              <TabsTrigger value="materials" className="gap-1.5 text-sm"><FileText className="h-4 w-4" /> Materials</TabsTrigger>
+              <TabsTrigger value="assignments" className="gap-1.5 text-sm"><ClipboardList className="h-4 w-4" /> Assignments</TabsTrigger>
+              <TabsTrigger value="performance" className="gap-1.5 text-sm"><TrendingUp className="h-4 w-4" /> Performance</TabsTrigger>
             </TabsList>
 
             <TabsContent value="materials" className="mt-5">
@@ -198,20 +214,12 @@ const StudentClassView = () => {
                     const typeKey = m.material_type.toLowerCase();
                     const Icon = materialIcons[typeKey] || materialIcons.default;
                     const borderColor = materialBorderColors[typeKey] || materialBorderColors.default;
-
                     return (
-                      <motion.div
-                        key={m.id}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03 }}
-                      >
+                      <motion.div key={m.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                         <Card className={`border-l-4 ${borderColor} border-border/50`}>
                           <CardContent className="flex items-center justify-between py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-muted/50">
-                                <Icon className="h-4 w-4 text-muted-foreground" />
-                              </div>
+                              <div className="p-2 rounded-lg bg-muted/50"><Icon className="h-4 w-4 text-muted-foreground" /></div>
                               <div>
                                 <p className="font-medium text-sm">{m.title}</p>
                                 {m.description && <p className="text-xs text-muted-foreground mt-0.5">{m.description}</p>}
@@ -219,9 +227,7 @@ const StudentClassView = () => {
                             </div>
                             {m.content_ref && (
                               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
-                                <a href={m.content_ref} target="_blank" rel="noopener noreferrer">
-                                  <ExternalLink className="h-4 w-4" />
-                                </a>
+                                <a href={m.content_ref} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /></a>
                               </Button>
                             )}
                           </CardContent>
@@ -246,15 +252,15 @@ const StudentClassView = () => {
               ) : (
                 <div className="space-y-2">
                   {assignments.map((a, i) => {
-                    const status = getDueDateStatus(a.due_date);
+                    const status = getSubmissionStatus(a.id, mySubmissions);
+                    const sub = mySubmissions.find(s => s.assignment_id === a.id);
+                    const isQuiz = a.assignment_type === "quiz";
                     return (
-                      <motion.div
-                        key={a.id}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03 }}
-                      >
-                        <Card className="border-border/50">
+                      <motion.div key={a.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                        <Card
+                          className={`border-border/50 cursor-pointer hover:border-primary/30 transition-colors ${status === "graded" ? "border-l-4 border-l-green-500" : status === "submitted" ? "border-l-4 border-l-amber-500" : ""}`}
+                          onClick={() => isQuiz && setActiveAssignmentId(a.id)}
+                        >
                           <CardContent className="py-3 px-4">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1">
@@ -263,10 +269,15 @@ const StudentClassView = () => {
                                 <div className="flex items-center gap-2 mt-2">
                                   <Badge variant="outline" className="text-[10px] h-5">{a.assignment_type}</Badge>
                                   <AssignmentStatusBadge status={status} />
+                                  {status === "graded" && sub?.score != null && (
+                                    <Badge variant="secondary" className="text-[10px] h-5">
+                                      Score: {sub.score}
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
                               {a.due_date && (
-                                <span className={`text-xs font-medium shrink-0 ${status === "overdue" ? "text-destructive" : "text-muted-foreground"}`}>
+                                <span className={`text-xs font-medium shrink-0 ${new Date(a.due_date) < new Date() ? "text-destructive" : "text-muted-foreground"}`}>
                                   {getDaysUntilDue(a.due_date)}
                                 </span>
                               )}
@@ -278,6 +289,10 @@ const StudentClassView = () => {
                   })}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="performance" className="mt-5">
+              {id && <StudentPerformanceTab classId={id} />}
             </TabsContent>
           </Tabs>
         )}
