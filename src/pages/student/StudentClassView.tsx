@@ -27,6 +27,15 @@ interface Material {
 const materialIcons: Record<string, typeof FileText> = { pdf: File, link: LinkIcon, video: Video, default: FileText };
 const materialBorderColors: Record<string, string> = { pdf: "border-l-red-500", link: "border-l-blue-500", video: "border-l-purple-500", default: "border-l-primary" };
 
+function isYouTubeUrl(url: string): boolean {
+  return /youtube\.com|youtu\.be/i.test(url);
+}
+
+function extractYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return match?.[1] || null;
+}
+
 function getSubmissionStatus(assignmentId: string, submissions: Submission[]): "not_started" | "submitted" | "graded" {
   const sub = submissions.find(s => s.assignment_id === assignmentId);
   if (!sub) return "not_started";
@@ -216,9 +225,15 @@ const StudentClassView = () => {
                     const borderColor = materialBorderColors[typeKey] || materialBorderColors.default;
                     return (
                       <motion.div key={m.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                        <Card className={`border-l-4 ${borderColor} border-border/50 ${(typeKey === "pdf" || typeKey === "document") && m.content_ref ? "cursor-pointer hover:border-primary/30 transition-colors" : ""}`} onClick={() => {
-                          if ((typeKey === "pdf" || typeKey === "document") && m.content_ref) {
+                        <Card className={`border-l-4 ${borderColor} border-border/50 ${m.content_ref ? "cursor-pointer hover:border-primary/30 transition-colors" : ""}`} onClick={() => {
+                          if (!m.content_ref) return;
+                          const type = m.material_type.toLowerCase();
+                          if (type === "pdf" || type === "document") {
                             navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title } });
+                          } else if (type === "video" || isYouTubeUrl(m.content_ref)) {
+                            navigate("/dashboard", { state: { materialVideoUrl: m.content_ref, materialName: m.title } });
+                          } else {
+                            window.open(m.content_ref, "_blank", "noopener,noreferrer");
                           }
                         }}>
                           <CardContent className="flex items-center justify-between py-3 px-4">
@@ -230,16 +245,8 @@ const StudentClassView = () => {
                               </div>
                             </div>
                             {m.content_ref && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => {
-                                e.stopPropagation();
-                                const type = m.material_type.toLowerCase();
-                                if (type === "pdf" || type === "document") {
-                                  navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title } });
-                                } else {
-                                  window.open(m.content_ref!, "_blank", "noopener,noreferrer");
-                                }
-                              }}>
-                                {(m.material_type.toLowerCase() === "pdf" || m.material_type.toLowerCase() === "document") ? <FileText className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                <ExternalLink className="h-4 w-4" />
                               </Button>
                             )}
                           </CardContent>
