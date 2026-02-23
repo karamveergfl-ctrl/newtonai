@@ -1,101 +1,85 @@
 
-# Performance Optimization Plan
 
-## Identified Issues
+# Fix Document Opening & Add Back-to-Class Button
 
-### 1. Redundant Database Calls on Dashboard Load
-The dashboard (`Index.tsx`) makes **5+ separate database calls** on mount, many duplicated across components:
-- `profiles.full_name` (line 167)
-- `profiles.subscription_tier` (line 240)
-- `profiles.onboarding_completed` (line 289)
-- `supabase.auth.getUser()` called separately by `useUserRole`, `useAdminAccess`, `CreditsContext`, and `Index.tsx` itself
-- `useFeatureUsage` (via `FloatingUpgradeBanner`) fetches usage data
+## Issues Found
 
-Each of these triggers a separate network round-trip, blocking render.
+### 1. Document Not Opening as PDF
+The material name passed via navigation state is the title (e.g., "Unit-II Zener diode") without a `.pdf` extension. In `Index.tsx`, the `handleUploadComplete` function checks `data.pdfName.toLowerCase().endsWith('.pdf')` to determine if it's a PDF. Since the title doesn't end with `.pdf`, the file renders as an **image** instead of a PDF -- showing a broken image icon.
 
-**Fix:** Consolidate into a single `profiles` query fetching all needed fields at once, and cache the auth user so `getUser()` is not called 4+ times.
+**Fix:** When loading a class material, also check the URL itself for `.pdf` extension, not just the display name. Update the material loading logic to detect PDF from either the name OR the URL.
 
-### 2. framer-motion Still in Sidebar and Upgrade Banner
-Despite the architecture policy stating framer-motion was removed from high-frequency UI, `AppSidebar.tsx` wraps **every sidebar menu item** in `motion.button` with `whileHover` and `whileTap`, and uses `AnimatePresence` for the explore section. `FloatingUpgradeBanner` also uses framer-motion. These cause unnecessary JS overhead on every interaction.
+### 2. No Back Button to Class View
+When a student opens a material from their class, the dashboard's back button says "New File" and just resets to the upload screen. There's no way to return to the class view.
 
-**Fix:** Replace `motion.button` with plain `button` elements using CSS transitions. Replace `AnimatePresence` with CSS-based show/hide.
-
-### 3. Multiple Auth State Listeners
-At least 4 components independently call `supabase.auth.onAuthStateChange()`:
-- `ProtectedRoute`
-- `GuestTrialProvider`
-- `useUserRole`
-- `useAdminAccess`
-- `Index.tsx`
-
-Each creates a separate WebSocket subscription and triggers re-renders independently.
-
-**Fix:** Keep only the essential listeners. `ProtectedRoute` already guards auth -- `Index.tsx` does not need its own listener. Combine `useUserRole` and `useAdminAccess` data fetching.
-
-### 4. Index.tsx is a 2240-line Mega Component
-This single file holds 40+ state variables and dozens of handler functions, all re-created on every render. Any state change (e.g., a video search) triggers the entire component tree to re-evaluate.
-
-**Fix:** Extract handler functions with `useCallback` and memoize child components. Move video-related state into a custom hook. (Full refactor is too large for this pass, but targeted memoization will help.)
-
-### 5. backdrop-blur on Always-Visible Elements
-`TopStatsBar` uses `backdrop-blur-sm` on a sticky header that is always visible. Backdrop blur is one of the most expensive CSS operations, forcing GPU compositing on every scroll frame.
-
-**Fix:** Remove `backdrop-blur-sm` from the sticky top bar and use a solid or semi-transparent background instead.
-
-### 6. Confetti Animation Creates 50 framer-motion Nodes
-`ConfettiCelebration` renders 50 individual `motion.div` elements with complex animations. While it's event-triggered, the framer-motion overhead for 50 concurrent animations is significant.
-
-**Fix:** Replace with CSS keyframe animations for confetti pieces, eliminating 50 JS-driven animation loops.
-
-### 7. ProcessingOverlay Always Mounts Video Element
-The `ProcessingOverlay` is rendered in `AppLayout` even when not processing, and it keeps a video element mounted. Combined with `VideoPreloader`, there are potentially 2 invisible video elements consuming memory.
-
-**Fix:** Only render the video element when `isVisible` is true (use conditional rendering for the heavy element).
+**Fix:** Pass the class return route in the navigation state. When the dashboard detects it was opened from a class, show a "Back to Class" button that navigates back to the class view.
 
 ---
 
-## Implementation Steps
+## Implementation
 
-### Step 1: Consolidate Dashboard Database Queries
-Merge the 3 separate `profiles` queries in `Index.tsx` (full_name, subscription_tier, onboarding_completed) into one query. Remove the duplicate auth listener in `Index.tsx` since `ProtectedRoute` already handles it.
+### Step 1: Pass class return info in navigation state
+
+**Files:** `src/pages/student/StudentClassView.tsx`, `src/pages/teacher/ClassDetail.tsx`
+
+Add `returnTo` to the navigation state so the dashboard knows where to go back:
+
+```typescript
+// Student view
+navigate("/dashboard", { 
+  state: { materialUrl: m.content_ref, materialName: m.title, returnTo: `/student/classes/${id}` } 
+});
+
+// Teacher view  
+navigate("/dashboard", { 
+  state: { materialUrl: m.content_ref, materialName: m.title, returnTo: `/teacher/classes/${id}` } 
+});
+```
+
+### Step 2: Fix PDF detection in Index.tsx
+
+**File:** `src/pages/Index.tsx`
+
+Update the material loading `useEffect` to detect PDF from the URL when the name doesn't have a `.pdf` extension:
+
+```typescript
+if (state?.materialUrl) {
+  materialConsumedRef.current = true;
+  const name = state.materialName || "Class Material";
+  // Detect PDF from URL if name doesn't have extension
+  const pdfName = name.toLowerCase().endsWith('.pdf') ? name : 
+    state.materialUrl.toLowerCase().includes('.pdf') ? name + '.pdf' : name;
+  handleUploadComplete({ pdfUrl: state.materialUrl, pdfName });
+  // ...
+}
+```
+
+### Step 3: Add "Back to Class" button in dashboard header
 
 **File:** `src/pages/Index.tsx`
 
-### Step 2: Remove framer-motion from AppSidebar
-Replace all `motion.button` elements with plain `button` elements. Replace `whileHover={{ x: 4 }}` with `hover:translate-x-1` CSS class. Replace `whileTap={{ scale: 0.98 }}` with `active:scale-[0.98]` CSS class. Replace `AnimatePresence` for explore section with CSS transitions.
+- Store `returnTo` from navigation state
+- When `returnTo` exists, change the back button from "New File" (reset) to "Back to Class" (navigate back)
 
-**File:** `src/components/AppSidebar.tsx`
+```typescript
+const [returnTo, setReturnTo] = useState<string | null>(null);
 
-### Step 3: Remove framer-motion from FloatingUpgradeBanner
-Replace `motion.div` with a regular `div` using CSS transitions for enter/exit.
+// In the material useEffect:
+if (state?.returnTo) setReturnTo(state.returnTo);
 
-**File:** `src/components/FloatingUpgradeBanner.tsx`
-
-### Step 4: Replace Confetti framer-motion with CSS
-Convert 50 `motion.div` confetti pieces to CSS keyframe animations.
-
-**File:** `src/components/ConfettiCelebration.tsx`
-
-### Step 5: Remove backdrop-blur from TopStatsBar
-Replace `bg-background/80 backdrop-blur-sm` with `bg-background/95` (nearly opaque, no blur needed).
-
-**File:** `src/components/TopStatsBar.tsx`
-
-### Step 6: Optimize ProcessingOverlay Video Mounting
-Only mount the video element when `isVisible` is true or was recently true (with a short unmount delay for exit animation).
-
-**File:** `src/components/ProcessingOverlay.tsx`
-
-### Step 7: Deduplicate Auth Listeners
-Remove the redundant `supabase.auth.onAuthStateChange` from `Index.tsx` (lines 303-328) since `ProtectedRoute` already redirects unauthenticated users. Use `supabase.auth.getSession()` once on mount instead.
-
-**File:** `src/pages/Index.tsx`
+// In the header:
+<Button onClick={() => returnTo ? navigate(returnTo) : handleReset()}>
+  <ArrowLeft />
+  <span>{returnTo ? "Back to Class" : "New File"}</span>
+</Button>
+```
 
 ---
 
-## Expected Impact
-- **Dashboard load time:** ~40-60% fewer network requests on mount
-- **Scroll performance:** Elimination of backdrop-blur jank on sticky header
-- **Interaction responsiveness:** No framer-motion JS overhead on sidebar hover/tap (8+ items)
-- **Memory usage:** Reduced by removing always-mounted video elements
-- **Bundle efficiency:** Less framer-motion usage means tree-shaking can remove more
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `src/pages/Index.tsx` | Fix PDF detection from URL; add `returnTo` state; update back button |
+| `src/pages/student/StudentClassView.tsx` | Pass `returnTo` in navigation state |
+| `src/pages/teacher/ClassDetail.tsx` | Pass `returnTo` in navigation state |
