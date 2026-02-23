@@ -329,11 +329,19 @@ const Index = () => {
 
   // Auto-load class material passed via navigation state
   useEffect(() => {
-    const state = location.state as { materialUrl?: string; materialName?: string } | null;
-    if (state?.materialUrl && !materialConsumedRef.current) {
+    const state = location.state as { materialUrl?: string; materialName?: string; materialVideoUrl?: string } | null;
+    if (materialConsumedRef.current) return;
+    if (state?.materialUrl) {
       materialConsumedRef.current = true;
       handleUploadComplete({ pdfUrl: state.materialUrl, pdfName: state.materialName || "Class Material" });
-      // Clear state so refresh doesn't re-trigger
+      window.history.replaceState({}, document.title);
+    } else if (state?.materialVideoUrl) {
+      materialConsumedRef.current = true;
+      const ytMatch = state.materialVideoUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      if (ytMatch?.[1]) {
+        setSelectedVideoId(ytMatch[1]);
+        setShowVideosPanel(true);
+      }
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
