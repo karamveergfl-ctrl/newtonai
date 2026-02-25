@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import TeacherOnboarding from "@/components/onboarding/TeacherOnboarding";
+import StudentOnboarding from "@/components/onboarding/StudentOnboarding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -468,6 +469,16 @@ const Onboarding = () => {
         {/* Teacher Onboarding Branch */}
         {step >= 1 && formData.userRole === "teacher" ? (
           <TeacherOnboarding
+            fullName={formData.fullName}
+            avatarUrl={formData.avatarUrl}
+            onBack={() => {
+              setDirection(-1);
+              setStep(0);
+              setFormData(prev => ({ ...prev, userRole: "" as "" | "student" | "teacher" }));
+            }}
+          />
+        ) : step >= 1 && formData.userRole === "student" ? (
+          <StudentOnboarding
             fullName={formData.fullName}
             avatarUrl={formData.avatarUrl}
             onBack={() => {
