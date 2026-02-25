@@ -25,12 +25,19 @@ export function QuestionCard({
   onDismiss,
 }: QuestionCardProps) {
   const [newtonOpen, setNewtonOpen] = useState(false);
+  const [upvoteBounce, setUpvoteBounce] = useState(false);
   const isTeacher = role === "teacher";
+
+  const handleUpvote = () => {
+    setUpvoteBounce(true);
+    setTimeout(() => setUpvoteBounce(false), 400);
+    onUpvote(question.id);
+  };
 
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card p-3 transition-all duration-200",
+        "rounded-lg border bg-card p-3 transition-all duration-200 animate-[question-enter_0.3s_ease-out]",
         question.is_pinned && "border-l-2 border-l-primary",
         question.is_answered && "opacity-60"
       )}
@@ -47,7 +54,7 @@ export function QuestionCard({
         </p>
         <div className="flex items-center gap-1 shrink-0">
           {question.is_pinned && (
-            <span className="text-primary text-xs">📌</span>
+            <span className="text-primary text-xs" aria-label="Pinned question">📌</span>
           )}
           {question.is_answered && (
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
@@ -61,16 +68,19 @@ export function QuestionCard({
       <div className="flex items-center justify-between mt-2">
         {/* Upvote */}
         <button
-          onClick={() => onUpvote(question.id)}
+          onClick={handleUpvote}
           className={cn(
-            "flex items-center gap-1 text-xs rounded-md px-2 py-1 border transition-all duration-150 active:scale-95",
+            "flex items-center gap-1 text-xs rounded-md px-2 py-1 border transition-all duration-150 active:scale-95 focus-visible:ring-2 focus-visible:ring-ring",
             question.has_upvoted
               ? "bg-primary/15 border-primary/40 text-primary"
               : "bg-transparent border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
           )}
+          aria-label={`Upvote question, ${question.upvotes} votes`}
         >
           <ArrowBigUp className={cn("w-3.5 h-3.5", question.has_upvoted && "fill-current")} />
-          <span>{question.upvotes}</span>
+          <span className={cn(upvoteBounce && "animate-[upvote-bounce_0.4s_ease-out]")}>
+            {question.upvotes}
+          </span>
         </button>
 
         {/* Teacher actions */}
@@ -81,7 +91,7 @@ export function QuestionCard({
               size="icon"
               className="h-7 w-7 text-muted-foreground hover:text-primary"
               onClick={() => onPin?.(question.id)}
-              title={question.is_pinned ? "Unpin" : "Pin"}
+              aria-label={question.is_pinned ? "Unpin question" : "Pin question"}
             >
               <Pin className={cn("w-3.5 h-3.5", question.is_pinned && "fill-current text-primary")} />
             </Button>
@@ -91,7 +101,7 @@ export function QuestionCard({
                 size="icon"
                 className="h-7 w-7 text-muted-foreground hover:text-emerald-400"
                 onClick={() => onMarkAnswered?.(question.id)}
-                title="Mark answered"
+                aria-label="Mark question as answered"
               >
                 <Check className="w-3.5 h-3.5" />
               </Button>
@@ -101,7 +111,7 @@ export function QuestionCard({
               size="icon"
               className="h-7 w-7 text-muted-foreground hover:text-destructive"
               onClick={() => onDismiss?.(question.id)}
-              title="Dismiss"
+              aria-label="Dismiss question"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </Button>
@@ -111,8 +121,8 @@ export function QuestionCard({
 
       {/* Newton answer */}
       {question.newton_answer && (
-        <Collapsible open={newtonOpen} onOpenChange={setNewtonOpen} className="mt-2">
-          <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors w-full">
+        <Collapsible open={newtonOpen} onOpenChange={setNewtonOpen} className="mt-2 animate-[newton-reveal_1s_ease-out]">
+          <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors w-full focus-visible:ring-2 focus-visible:ring-ring rounded">
             <img src={newtonAvatar} alt="" className="w-4 h-4 rounded-full" />
             <span>Newton's answer</span>
             {newtonOpen ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}

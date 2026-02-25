@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, BookOpen, AlertTriangle, CheckCircle2, XCircle, MessageSquare, ThumbsUp } from "lucide-react";
+import { Loader2, Users, BookOpen, AlertTriangle, CheckCircle2, XCircle, MessageSquare, ThumbsUp, Download } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useSessionSummary } from "@/hooks/useSessionSummary";
+import { Button } from "@/components/ui/button";
 
 interface SessionResultsPanelProps {
   sessionId: string;
@@ -14,7 +15,7 @@ interface SessionResultsPanelProps {
 export function SessionResultsPanel({ sessionId, sessionTitle }: SessionResultsPanelProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { pulseSummary, topQuestions, totalQuestions, isLoading: summaryLoading } = useSessionSummary({ sessionId });
+  const { pulseSummary, topQuestions, totalQuestions, isLoading: summaryLoading, isExporting, exportSummaryAsPDF } = useSessionSummary({ sessionId });
 
   useEffect(() => {
     const fetch = async () => {
@@ -49,9 +50,21 @@ export function SessionResultsPanel({ sessionId, sessionTitle }: SessionResultsP
       {!summaryLoading && pulseSummary.total > 0 && (
         <Card className="border-border/50 bg-gradient-to-r from-primary/5 via-background to-primary/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" /> Interaction Summary
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" /> Interaction Summary
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportSummaryAsPDF}
+                disabled={isExporting}
+                className="text-xs h-7 gap-1.5"
+              >
+                {isExporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                Export PDF
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Pulse breakdown */}

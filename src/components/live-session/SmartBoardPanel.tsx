@@ -1,83 +1,219 @@
-import { type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { useLiveSession } from "@/contexts/LiveSessionContext";
 import { PulseMeter } from "./PulseMeter";
 import { QuestionWall } from "./QuestionWall";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Maximize, Minimize, X } from "lucide-react";
+import newtonLogoSm from "@/assets/newton-logo-sm.webp";
 
 interface SmartBoardPanelProps {
   sessionId: string;
   children: ReactNode;
   onEndSession?: () => void;
+  className?: string;
+  sessionTitle?: string;
 }
 
-export function SmartBoardPanel({ sessionId, children, onEndSession }: SmartBoardPanelProps) {
+function formatDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+export function SmartBoardPanel({
+  sessionId,
+  children,
+  onEndSession,
+  sessionTitle,
+}: SmartBoardPanelProps) {
   const {
     confusionThreshold,
     pulseEnabled,
     questionsEnabled,
+    currentSlideContent,
     updateSessionSettings,
   } = useLiveSession();
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const startTimeRef = useRef(Date.now());
+
+  // Timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Smart board prompt for large screens
+  useEffect(() => {
+    if (window.innerWidth >= 1280) {
+      const dismissed = localStorage.getItem("newton_smartboard_mode");
+      if (dismissed !== "dismissed") {
+        setShowPrompt(true);
+      }
+    }
+  }, []);
+
+  // Listen for fullscreen exit
+  useEffect(() => {
+    const handler = () => {
+      if (!document.fullscreenElement) setIsFullscreen(false);
+    };
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
+  const enterFullscreen = async () => {
+    try {
+      await document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+      setShowPrompt(false);
+    } catch (err) {
+      console.error("Fullscreen failed:", err);
+    }
+  };
+
+  const exitFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      setIsFullscreen(false);
+    } catch (err) {
+      console.error("Exit fullscreen failed:", err);
+    }
+  };
+
+  const dismissPrompt = () => {
+    setShowPrompt(false);
+    localStorage.setItem("newton_smartboard_mode", "dismissed");
+  };
+
+  const slideTitle =
+    currentSlideContent?.split("\n")[0]?.slice(0, 80) || sessionTitle || "Live Session";
+
   return (
-    <div className="flex h-full w-full">
-      {/* Main content area */}
-      <div className="flex-1 min-w-0 h-full overflow-auto">
-        {children}
-      </div>
-
-      {/* Interaction sidebar — hidden on mobile */}
-      <aside className="hidden lg:flex flex-col w-[320px] xl:w-[360px] border-l border-border bg-card h-full shrink-0">
-        {/* Pulse Meter */}
-        <div className="p-3 shrink-0">
-          <PulseMeter sessionId={sessionId} confusionThreshold={confusionThreshold} />
-        </div>
-
-        <div className="border-t border-border" />
-
-        {/* Question Wall */}
-        <div className="flex-1 min-h-0 flex flex-col">
-          <QuestionWall sessionId={sessionId} role="teacher" />
-        </div>
-
-        <div className="border-t border-border" />
-
-        {/* Session controls */}
-        <div className="flex items-center gap-2 p-3 shrink-0">
-          <button
-            onClick={() => updateSessionSettings({ pulse_enabled: !pulseEnabled })}
-            className={cn(
-              "flex-1 text-xs rounded-lg px-3 py-2 border transition-colors font-medium",
-              pulseEnabled
-                ? "bg-primary/10 border-primary/30 text-primary"
-                : "bg-muted border-border text-muted-foreground"
-            )}
-          >
-            Pulse {pulseEnabled ? "On" : "Off"}
-          </button>
-          <button
-            onClick={() => updateSessionSettings({ questions_enabled: !questionsEnabled })}
-            className={cn(
-              "flex-1 text-xs rounded-lg px-3 py-2 border transition-colors font-medium",
-              questionsEnabled
-                ? "bg-primary/10 border-primary/30 text-primary"
-                : "bg-muted border-border text-muted-foreground"
-            )}
-          >
-            Q&A {questionsEnabled ? "On" : "Off"}
-          </button>
-          {onEndSession && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={onEndSession}
-              className="text-xs"
-            >
-              End
+    <div className={cn("flex flex-col h-full w-full", isFullscreen && "fixed inset-0 z-[100] bg-background")}>
+      {/* Smart Board Mode prompt */}
+      {showPrompt && (
+        <div className="bg-primary/10 border-b border-primary/20 px-4 py-3 flex items-center justify-between gap-3 shrink-0 animate-fade-in">
+          <p className="text-sm text-foreground">
+            You appear to be on a large screen. Enable <strong>Smart Board Mode</strong> for the best classroom experience?
+          </p>
+          <div className="flex gap-2 shrink-0">
+            <Button size="sm" onClick={enterFullscreen} className="text-xs">
+              Enable
             </Button>
+            <Button size="sm" variant="ghost" onClick={dismissPrompt} className="text-xs">
+              Not now
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen header bar */}
+      {isFullscreen && (
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card shrink-0">
+          <div className="flex items-center gap-2">
+            <img src={newtonLogoSm} alt="" className="w-6 h-6 rounded" />
+            <span className="text-sm font-semibold text-foreground truncate max-w-[200px]">
+              {sessionTitle || "Live Session"}
+            </span>
+            <span className="text-xs text-muted-foreground tabular-nums">{formatDuration(elapsed)}</span>
+          </div>
+          <p className="text-sm text-muted-foreground truncate max-w-[40%] hidden xl:block">{slideTitle}</p>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={exitFullscreen}>
+              <Minimize className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-1 min-h-0 w-full">
+        {/* Main content area */}
+        <div className={cn("min-w-0 h-full overflow-auto", isFullscreen ? "w-[78%]" : "flex-1")}>
+          {isFullscreen ? (
+            <div className="h-full text-lg">{children}</div>
+          ) : (
+            children
           )}
         </div>
-      </aside>
+
+        {/* Interaction sidebar — hidden on mobile */}
+        <aside
+          className={cn(
+            "hidden lg:flex flex-col border-l border-border bg-card h-full shrink-0",
+            isFullscreen ? "w-[22%] text-base" : "w-[320px] xl:w-[360px]"
+          )}
+        >
+          {/* Pulse Meter */}
+          <div className="p-3 shrink-0">
+            <PulseMeter sessionId={sessionId} confusionThreshold={confusionThreshold} />
+          </div>
+
+          <div className="border-t border-border" />
+
+          {/* Question Wall */}
+          <div className="flex-1 min-h-0 flex flex-col">
+            <QuestionWall sessionId={sessionId} role="teacher" />
+          </div>
+
+          <div className="border-t border-border" />
+
+          {/* Session controls */}
+          <div className="flex items-center gap-2 p-3 shrink-0">
+            <button
+              onClick={() => updateSessionSettings({ pulse_enabled: !pulseEnabled })}
+              className={cn(
+                "flex-1 text-xs rounded-lg px-3 py-2 border transition-colors font-medium",
+                pulseEnabled
+                  ? "bg-primary/10 border-primary/30 text-primary"
+                  : "bg-muted border-border text-muted-foreground"
+              )}
+            >
+              Pulse {pulseEnabled ? "On" : "Off"}
+            </button>
+            <button
+              onClick={() => updateSessionSettings({ questions_enabled: !questionsEnabled })}
+              className={cn(
+                "flex-1 text-xs rounded-lg px-3 py-2 border transition-colors font-medium",
+                questionsEnabled
+                  ? "bg-primary/10 border-primary/30 text-primary"
+                  : "bg-muted border-border text-muted-foreground"
+              )}
+            >
+              Q&A {questionsEnabled ? "On" : "Off"}
+            </button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={isFullscreen ? enterFullscreen : enterFullscreen}
+              title="Smart Board Mode"
+            >
+              <Maximize className="w-4 h-4" />
+            </Button>
+            {onEndSession && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onEndSession}
+                className="text-xs"
+              >
+                End
+              </Button>
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
