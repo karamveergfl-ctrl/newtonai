@@ -51,7 +51,7 @@ serve(async (req) => {
       );
     }
 
-    const { transcription, template, templateStructure, language, notesStyle = "academic", includeComparison = true, stream = false } = await req.json();
+    const { transcription, template, templateStructure, language, notesStyle = "academic", includeComparison = true, stream = false, source = "upload" } = await req.json();
 
     if (!transcription) {
       throw new Error("No transcription provided");
@@ -110,7 +110,9 @@ WRITING STYLE: SLIDES (Minimal)
 `
     };
 
-    const styleInstruction = styleModifiers[notesStyle] || styleModifiers["academic"];
+    // When source is 'live_session', override to quick-notes style for scannability
+    const effectiveStyle = source === "live_session" ? "quick-notes" : notesStyle;
+    const styleInstruction = styleModifiers[effectiveStyle] || styleModifiers["academic"];
 
     const templatePrompts: Record<string, string> = {
       "lecture": `Create COMPREHENSIVE lecture notes:
