@@ -80,30 +80,36 @@ export type Database = {
       assignment_submissions: {
         Row: {
           answers: Json
-          assignment_id: string
+          assignment_id: string | null
+          content: Json | null
           graded_at: string | null
           id: string
           score: number | null
+          session_id: string | null
           status: string
           student_id: string
           submitted_at: string
         }
         Insert: {
           answers?: Json
-          assignment_id: string
+          assignment_id?: string | null
+          content?: Json | null
           graded_at?: string | null
           id?: string
           score?: number | null
+          session_id?: string | null
           status?: string
           student_id: string
           submitted_at?: string
         }
         Update: {
           answers?: Json
-          assignment_id?: string
+          assignment_id?: string | null
+          content?: Json | null
           graded_at?: string | null
           id?: string
           score?: number | null
+          session_id?: string | null
           status?: string
           student_id?: string
           submitted_at?: string
@@ -114,6 +120,13 @@ export type Database = {
             columns: ["assignment_id"]
             isOneToOne: false
             referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignment_submissions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -347,6 +360,110 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      concept_check_responses: {
+        Row: {
+          check_id: string
+          created_at: string
+          id: string
+          is_correct: boolean
+          response_time_ms: number | null
+          selected_answer: string
+          student_id: string
+        }
+        Insert: {
+          check_id: string
+          created_at?: string
+          id?: string
+          is_correct: boolean
+          response_time_ms?: number | null
+          selected_answer: string
+          student_id: string
+        }
+        Update: {
+          check_id?: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          response_time_ms?: number | null
+          selected_answer?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_check_responses_check_id_fkey"
+            columns: ["check_id"]
+            isOneToOne: false
+            referencedRelation: "concept_checks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_check_responses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concept_checks: {
+        Row: {
+          closed_at: string | null
+          correct_answer: string
+          created_at: string
+          duration_seconds: number
+          explanation: string | null
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+          session_id: string
+          slide_context: string | null
+          status: string
+        }
+        Insert: {
+          closed_at?: string | null
+          correct_answer: string
+          created_at?: string
+          duration_seconds?: number
+          explanation?: string | null
+          id?: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+          session_id: string
+          slide_context?: string | null
+          status?: string
+        }
+        Update: {
+          closed_at?: string | null
+          correct_answer?: string
+          created_at?: string
+          duration_seconds?: number
+          explanation?: string | null
+          id?: string
+          option_a?: string
+          option_b?: string
+          option_c?: string
+          option_d?: string
+          question?: string
+          session_id?: string
+          slide_context?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_checks_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       credit_transactions: {
         Row: {
@@ -1507,6 +1624,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_old_webhook_events: { Args: never; Returns: number }
+      close_concept_check: { Args: { p_check_id: string }; Returns: Json }
       earn_credits: {
         Args: { p_ad_duration: number; p_credits_earned: number }
         Returns: Json
@@ -1516,11 +1634,31 @@ export type Database = {
         Returns: Json
       }
       end_study_session: { Args: { p_session_id: string }; Returns: Json }
+      generate_concept_check: {
+        Args: {
+          p_correct_answer: string
+          p_duration_seconds?: number
+          p_explanation?: string
+          p_option_a: string
+          p_option_b: string
+          p_option_c: string
+          p_option_d: string
+          p_question: string
+          p_session_id: string
+          p_slide_context?: string
+        }
+        Returns: Json
+      }
       generate_invite_code: { Args: never; Returns: string }
+      get_active_concept_check: {
+        Args: { p_session_id: string }
+        Returns: Json
+      }
       get_ad_stats: { Args: never; Returns: Json }
       get_assignment_results: { Args: { p_class_id: string }; Returns: Json }
       get_attendance_grid: { Args: { p_class_id: string }; Returns: Json }
       get_class_analytics: { Args: { p_class_id: string }; Returns: Json }
+      get_concept_check_results: { Args: { p_check_id: string }; Returns: Json }
       get_document_file_path: {
         Args: { p_document_id: string }
         Returns: string
@@ -1588,6 +1726,14 @@ export type Database = {
       start_study_session: { Args: { p_pdf_name: string }; Returns: Json }
       submit_anonymous_question: {
         Args: { p_content: string; p_session_id: string }
+        Returns: Json
+      }
+      submit_concept_check_response: {
+        Args: {
+          p_check_id: string
+          p_response_time_ms: number
+          p_selected_answer: string
+        }
         Returns: Json
       }
       toggle_question_upvote: { Args: { p_question_id: string }; Returns: Json }
