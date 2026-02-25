@@ -115,6 +115,7 @@ const InstitutionAnalyticsPage = lazy(() => import("./pages/institution/Institut
 const ResultProcessingPage = lazy(() => import("./pages/institution/ResultProcessingPage"));
 const FacultyMonitoringPage = lazy(() => import("./pages/institution/FacultyMonitoringPage"));
 const CompliancePage = lazy(() => import("./pages/institution/CompliancePage"));
+const InstitutionBillingPage = lazy(() => import("./pages/institution/InstitutionBillingPage"));
 
 const queryClient = new QueryClient();
 
@@ -219,6 +220,7 @@ function AnimatedRoutes() {
         <Route path="/institution/results" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><ResultProcessingPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/institution/faculty" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><FacultyMonitoringPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/institution/compliance" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><CompliancePage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/institution/billing" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><InstitutionBillingPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         
         {/* Admin Routes */}
         <Route path="/admin/analytics" element={<PageTransition><AdminRoute><AdminAnalytics /></AdminRoute></PageTransition>} />

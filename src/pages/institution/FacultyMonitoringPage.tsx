@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useInstitution } from "@/hooks/useInstitution";
+import { InstitutionFeatureGate } from "@/components/institution/InstitutionFeatureGate";
 import { useQuery } from "@tanstack/react-query";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -108,7 +109,9 @@ export default function FacultyMonitoringPage() {
       <SidebarProvider>
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar onSignOut={() => { supabase.auth.signOut(); navigate("/auth"); }} />
-          <FacultyContent />
+          <InstitutionFeatureGate feature="faculty_monitoring">
+            <FacultyContent />
+          </InstitutionFeatureGate>
         </div>
       </SidebarProvider>
     </ScrollProvider>

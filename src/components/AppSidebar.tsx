@@ -378,6 +378,14 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Billing">
+                    <button onClick={() => navigate("/institution/billing")} className={btnClass("/institution/billing")}>
+                      <CreditCard className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                      {!isCollapsed && <span>Billing</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
