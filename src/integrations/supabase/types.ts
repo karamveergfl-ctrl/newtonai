@@ -1564,6 +1564,79 @@ export type Database = {
           },
         ]
       }
+      slide_term_definitions: {
+        Row: {
+          created_at: string
+          id: string
+          session_id: string
+          slide_index: number
+          status: string
+          terms: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_id: string
+          slide_index: number
+          status?: string
+          terms?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_id?: string
+          slide_index?: number
+          status?: string
+          terms?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slide_term_definitions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spotlight_session_state: {
+        Row: {
+          current_slide_content: string | null
+          current_slide_title: string | null
+          id: string
+          session_id: string
+          spotlight_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          current_slide_content?: string | null
+          current_slide_title?: string | null
+          id?: string
+          session_id: string
+          spotlight_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          current_slide_content?: string | null
+          current_slide_title?: string | null
+          id?: string
+          session_id?: string
+          spotlight_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spotlight_session_state_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_intelligence_reports: {
         Row: {
           generated_at: string
@@ -1656,6 +1729,51 @@ export type Database = {
           },
           {
             foreignKeyName: "student_note_annotations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_spotlight_state: {
+        Row: {
+          id: string
+          is_synced: boolean
+          last_viewed_slide_index: number
+          session_id: string
+          spotlight_view_active: boolean
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          is_synced?: boolean
+          last_viewed_slide_index?: number
+          session_id: string
+          spotlight_view_active?: boolean
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          is_synced?: boolean
+          last_viewed_slide_index?: number
+          session_id?: string
+          spotlight_view_active?: boolean
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_spotlight_state_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_spotlight_state_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -2003,6 +2121,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_slide_term_definitions: {
+        Args: { p_session_id: string; p_slide_index: number }
+        Returns: Json
+      }
+      get_spotlight_sync_stats: {
+        Args: { p_session_id: string }
+        Returns: Json
+      }
       get_student_annotations: {
         Args: { p_session_id: string }
         Returns: {
@@ -2101,6 +2227,15 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: Json
       }
+      update_spotlight_session_state: {
+        Args: {
+          p_current_slide_content: string
+          p_current_slide_title: string
+          p_session_id: string
+          p_spotlight_enabled: boolean
+        }
+        Returns: Json
+      }
       upsert_pulse_response: {
         Args: { p_session_id: string; p_status: string }
         Returns: Json
@@ -2121,6 +2256,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      upsert_student_spotlight_state: {
+        Args: {
+          p_is_synced: boolean
+          p_last_viewed_slide_index: number
+          p_session_id: string
+          p_spotlight_view_active: boolean
+        }
+        Returns: Json
       }
       validate_redeem_code: { Args: { p_code: string }; Returns: Json }
     }
