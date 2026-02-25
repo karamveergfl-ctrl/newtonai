@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, BookOpen, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Users, BookOpen, AlertTriangle, CheckCircle2, XCircle, MessageSquare, ThumbsUp } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useSessionSummary } from "@/hooks/useSessionSummary";
 
 interface SessionResultsPanelProps {
   sessionId: string;
@@ -13,6 +14,7 @@ interface SessionResultsPanelProps {
 export function SessionResultsPanel({ sessionId, sessionTitle }: SessionResultsPanelProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { pulseSummary, topQuestions, totalQuestions, isLoading: summaryLoading } = useSessionSummary({ sessionId });
 
   useEffect(() => {
     const fetch = async () => {
@@ -43,6 +45,69 @@ export function SessionResultsPanel({ sessionId, sessionTitle }: SessionResultsP
 
   return (
     <div className="space-y-5">
+      {/* Interaction Summary — new section */}
+      {!summaryLoading && pulseSummary.total > 0 && (
+        <Card className="border-border/50 bg-gradient-to-r from-primary/5 via-background to-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" /> Interaction Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Pulse breakdown */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-center">
+                <p className="text-xl font-bold text-green-600 dark:text-green-400">{pulseSummary.got_it}</p>
+                <p className="text-[10px] text-muted-foreground">Got It</p>
+              </div>
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 text-center">
+                <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{pulseSummary.slightly_lost}</p>
+                <p className="text-[10px] text-muted-foreground">Slightly Lost</p>
+              </div>
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-center">
+                <p className="text-xl font-bold text-red-600 dark:text-red-400">{pulseSummary.lost}</p>
+                <p className="text-[10px] text-muted-foreground">Lost</p>
+              </div>
+            </div>
+
+            {/* Confusion warning */}
+            {pulseSummary.confusion_percentage > 40 && (
+              <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive">
+                  Confusion spiked to {Math.round(pulseSummary.confusion_percentage)}% — consider revisiting this topic next class
+                </p>
+              </div>
+            )}
+
+            {/* Questions summary */}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total questions asked</span>
+              <span className="font-medium">{totalQuestions}</span>
+            </div>
+
+            {/* Top questions */}
+            {topQuestions.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Top Questions</p>
+                {topQuestions.map((q) => (
+                  <div key={q.id} className="flex items-start gap-2 text-xs p-2 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-1 shrink-0 text-muted-foreground">
+                      <ThumbsUp className="h-3 w-3" />
+                      <span>{q.upvotes}</span>
+                    </div>
+                    <span className="flex-1">{q.content}</span>
+                    {q.is_answered && (
+                      <Badge variant="secondary" className="text-[9px] h-4 shrink-0">Answered</Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <div>
         <h2 className="text-xl font-bold">{sessionTitle} — Results</h2>
         <p className="text-sm text-muted-foreground">Class avg: {class_average}% · Median: {class_median}%</p>

@@ -10,6 +10,11 @@ import { AssignmentResultsPanel } from "@/components/teacher/AssignmentResultsPa
 import { AttendanceGrid } from "@/components/teacher/AttendanceGrid";
 import { LiveSessionDialog } from "@/components/teacher/LiveSessionDialog";
 import { LiveSessionPanel } from "@/components/teacher/LiveSessionPanel";
+import { LiveSessionProvider } from "@/contexts/LiveSessionContext";
+import { SmartBoardPanel } from "@/components/live-session";
+import { LiveSessionBadge } from "@/components/live-session";
+import { useNewtonAutoAnswer } from "@/hooks/useNewtonAutoAnswer";
+import { useQuestionWall } from "@/hooks/useQuestionWall";
 import { ClassAnnouncementInput } from "@/components/teacher/ClassAnnouncementInput";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -229,6 +234,9 @@ const ClassDetail = () => {
               {classInfo.subject && <Badge variant="secondary" className="text-xs">{classInfo.subject}</Badge>}
               {classInfo.academic_year && <Badge variant="outline" className="text-xs">{classInfo.academic_year}</Badge>}
               <InviteCodePill code={classInfo.invite_code} />
+              {activeSession && activeSession.status !== "completed" && (
+                <LiveSessionBadge sessionId={activeSession.id} role="teacher" studentCount={enrollments.length} />
+              )}
             </div>
           </div>
           {!activeSession || activeSession.status === "completed" ? (
@@ -243,7 +251,21 @@ const ClassDetail = () => {
         {/* Announcements Input */}
         {id && <ClassAnnouncementInput classId={id} />}
 
-        {activeSession && (
+        {activeSession && activeSession.status !== "completed" && (
+          <LiveSessionProvider
+            sessionId={activeSession.id}
+            role="teacher"
+            initialSettings={{
+              pulse_enabled: activeSession.pulse_enabled,
+              questions_enabled: activeSession.questions_enabled,
+              confusion_threshold: activeSession.confusion_threshold,
+            }}
+          >
+            <TeacherSessionWrapper session={activeSession} classId={id!} onUpdate={fetchActiveSession} enrollmentCount={enrollments.length} />
+          </LiveSessionProvider>
+        )}
+
+        {activeSession && activeSession.status === "completed" && (
           <LiveSessionPanel classId={id!} session={activeSession} onUpdate={fetchActiveSession} />
         )}
 
@@ -618,6 +640,23 @@ function AddMaterialDialog({ classId, onAdded }: { classId: string; onAdded: () 
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function TeacherSessionWrapper({ session, classId, onUpdate, enrollmentCount }: { session: any; classId: string; onUpdate: () => void; enrollmentCount: number }) {
+  const { questions } = useQuestionWall({ sessionId: session.id, role: "teacher" });
+
+  useNewtonAutoAnswer({
+    sessionId: session.id,
+    questions,
+    sessionContext: session.content_text || "",
+    enabled: session.questions_enabled ?? true,
+  });
+
+  return (
+    <SmartBoardPanel sessionId={session.id}>
+      <LiveSessionPanel classId={classId} session={session} onUpdate={onUpdate} />
+    </SmartBoardPanel>
   );
 }
 
