@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import TeacherOnboarding from "@/components/onboarding/TeacherOnboarding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -464,6 +465,18 @@ const Onboarding = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
+        {/* Teacher Onboarding Branch */}
+        {step >= 1 && formData.userRole === "teacher" ? (
+          <TeacherOnboarding
+            fullName={formData.fullName}
+            avatarUrl={formData.avatarUrl}
+            onBack={() => {
+              setDirection(-1);
+              setStep(0);
+              setFormData(prev => ({ ...prev, userRole: "" as "" | "student" | "teacher" }));
+            }}
+          />
+        ) : (
         <div className="w-full max-w-2xl">
           {/* Progress */}
           <motion.div 
@@ -1261,6 +1274,7 @@ const Onboarding = () => {
             )}
           </AnimatePresence>
         </div>
+        )}
       </main>
     </div>
   );
