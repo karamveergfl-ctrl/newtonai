@@ -458,7 +458,23 @@ All colors MUST be HSL.
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.08); }
 }
+@keyframes overlay-rise {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes correct-flash {
+  0% { background-color: transparent; }
+  30% { background-color: rgba(34, 197, 94, 0.4); }
+  100% { background-color: rgba(34, 197, 94, 0.15); }
+}
+@keyframes bar-fill {
+  from { width: 0%; }
+  to { width: var(--bar-width); }
+}
 
 .animate-concept-slide-up { animation: concept-slide-up 0.3s ease-out; }
 .animate-concept-bounce-in { animation: concept-bounce-in 0.4s ease-out; }
 .animate-concept-pulse { animation: concept-pulse 0.8s ease-in-out infinite; }
+.animate-overlay-rise { animation: overlay-rise 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.animate-correct-flash { animation: correct-flash 0.6s ease-out forwards; }
+.animate-bar-fill { animation: bar-fill 0.6s ease-out forwards; }

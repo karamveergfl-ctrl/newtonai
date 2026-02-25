@@ -55,10 +55,10 @@ export function ConceptCheckResultsPanel({
               <div className="flex-1 h-6 bg-gray-800 rounded overflow-hidden relative">
                 <div
                   className={cn(
-                    "h-full rounded transition-all duration-700 ease-out",
+                    "h-full rounded animate-bar-fill",
                     isCorrect ? "bg-emerald-500/60" : "bg-red-500/40"
                   )}
-                  style={{ width: `${dist.percentage}%` }}
+                  style={{ "--bar-width": `${dist.percentage}%`, width: `${dist.percentage}%` } as React.CSSProperties}
                 />
                 <span className="absolute inset-0 flex items-center px-2 text-xs text-foreground truncate">
                   {options[key]}

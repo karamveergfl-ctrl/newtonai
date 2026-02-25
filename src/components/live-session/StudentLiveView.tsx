@@ -1,7 +1,9 @@
 import { useState, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { MessageSquare, X } from "lucide-react";
 import { PulseWidget } from "./PulseWidget";
 import { QuestionWall } from "./QuestionWall";
+import { ConceptCheckOverlay } from "@/components/concept-check";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +77,12 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
         {/* Question wall content */}
         <QuestionWall sessionId={sessionId} role="student" />
       </div>
+
+      {/* Concept check overlay via portal */}
+      {createPortal(
+        <ConceptCheckOverlay sessionId={sessionId} />,
+        document.body
+      )}
     </div>
   );
 }
