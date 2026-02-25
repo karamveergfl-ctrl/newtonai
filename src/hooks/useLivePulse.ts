@@ -44,7 +44,7 @@ export function useLivePulse({ sessionId, role }: UseLivePulseProps) {
         };
         setPulseSummary(summary);
 
-        if (summary.confusion_percentage >= thresholdRef.current) {
+        if (summary.total >= 3 && summary.confusion_percentage >= thresholdRef.current) {
           setConfusionAlert(true);
           if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
           alertTimerRef.current = setTimeout(() => setConfusionAlert(false), 30000);
@@ -55,25 +55,30 @@ export function useLivePulse({ sessionId, role }: UseLivePulseProps) {
     }
   }, [sessionId]);
 
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const submitPulse = useCallback(
     async (status: PulseStatus) => {
       setMyStatus(status);
-      try {
-        const { data, error } = await supabase.rpc("upsert_pulse_response", {
-          p_session_id: sessionId,
-          p_status: status,
-        });
-        if (error) {
-          console.error("upsert_pulse_response error:", error.message);
-          return;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(async () => {
+        try {
+          const { data, error } = await supabase.rpc("upsert_pulse_response", {
+            p_session_id: sessionId,
+            p_status: status,
+          });
+          if (error) {
+            console.error("upsert_pulse_response error:", error.message);
+            return;
+          }
+          const result = data as Record<string, unknown>;
+          if (!result?.success) {
+            console.error("upsert_pulse_response failed:", result?.error);
+          }
+        } catch (err) {
+          console.error("submitPulse failed:", err);
         }
-        const result = data as Record<string, unknown>;
-        if (!result?.success) {
-          console.error("upsert_pulse_response failed:", result?.error);
-        }
-      } catch (err) {
-        console.error("submitPulse failed:", err);
-      }
+      }, 500);
     },
     [sessionId]
   );
@@ -146,10 +151,11 @@ export function useLivePulse({ sessionId, role }: UseLivePulseProps) {
     };
   }, [sessionId, refreshSummary]);
 
-  // Cleanup alert timer
+  // Cleanup timers
   useEffect(() => {
     return () => {
       if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
 

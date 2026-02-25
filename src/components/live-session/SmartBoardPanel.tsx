@@ -196,10 +196,11 @@ export function SmartBoardPanel({
               variant="ghost"
               size="icon"
               className="h-8 w-8 shrink-0"
-              onClick={isFullscreen ? enterFullscreen : enterFullscreen}
-              title="Smart Board Mode"
+              onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+              title={isFullscreen ? "Exit Smart Board Mode" : "Smart Board Mode"}
+              aria-label={isFullscreen ? "Exit Smart Board Mode" : "Enter Smart Board Mode"}
             >
-              <Maximize className="w-4 h-4" />
+              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
             </Button>
             {onEndSession && (
               <Button
