@@ -1569,6 +1569,7 @@ export type Database = {
           subjects: string[] | null
           subscription_expires_at: string | null
           subscription_tier: string
+          teacher_preferences: Json | null
           theme_preference: string | null
           timezone: string | null
           updated_at: string
@@ -1589,6 +1590,7 @@ export type Database = {
           subjects?: string[] | null
           subscription_expires_at?: string | null
           subscription_tier?: string
+          teacher_preferences?: Json | null
           theme_preference?: string | null
           timezone?: string | null
           updated_at?: string
@@ -1609,6 +1611,7 @@ export type Database = {
           subjects?: string[] | null
           subscription_expires_at?: string | null
           subscription_tier?: string
+          teacher_preferences?: Json | null
           theme_preference?: string | null
           timezone?: string | null
           updated_at?: string
