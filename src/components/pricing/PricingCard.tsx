@@ -89,7 +89,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   };
 
   return (
-    <div className="relative hover:-translate-y-2 transition-transform duration-200">
+    <div className="relative hover:-translate-y-1 transition-all duration-200">
       <Card className={`relative h-full overflow-visible ${getBorderClass()} ${plan.popular ? 'scale-[1.02] z-10' : ''}`}>
         {/* Gradient Background */}
         <div className={`absolute inset-0 bg-gradient-to-b ${getPlanGradient()} rounded-lg pointer-events-none`} />

@@ -77,18 +77,18 @@ const testimonials: Testimonial[] = [
 
 export const TestimonialsSection = () => {
   return (
-    <section className="py-12 px-4 bg-muted/30 relative overflow-hidden">
+    <section className="py-16 md:py-20 px-4 bg-muted/30 relative overflow-hidden">
       {/* Static background decorations */}
       <div className="absolute top-40 -right-32 w-72 h-72 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-20 left-0 w-64 h-64 bg-gradient-to-tr from-secondary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       <div className="container mx-auto relative z-10">
         {/* Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-20">
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className="bg-card/80 backdrop-blur-sm rounded-2xl p-6 border border-border/50 text-center group cursor-default hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
+              className="bg-card/80 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-border/50 text-center group cursor-default hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-200"
             >
               <div className={`w-12 h-12 mx-auto mb-4 rounded-xl bg-background flex items-center justify-center ${stat.color}`}>
                 <stat.icon className="w-6 h-6" />
@@ -107,11 +107,11 @@ export const TestimonialsSection = () => {
           description="See what our community has to say about their learning experience"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-12">
           {testimonials.map((testimonial) => (
             <div
               key={testimonial.id}
-              className="bg-card rounded-2xl p-6 shadow-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group"
+              className="bg-card rounded-xl p-5 md:p-6 shadow-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-200 group"
             >
               <div className="flex items-center justify-between mb-4">
                 <StarRating rating={testimonial.rating} size="md" />

@@ -20,7 +20,7 @@ const ComparisonTable = ({ competitor }: ComparisonTableProps) => {
   };
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto rounded-xl border border-border">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
@@ -43,7 +43,7 @@ const ComparisonTable = ({ competitor }: ComparisonTableProps) => {
           {featureComparison.map((row, index) => (
             <TableRow 
               key={row.feature}
-              className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}
+              className={index % 2 === 0 ? "bg-background" : "bg-muted/20"}
             >
               <TableCell className="font-medium">{row.feature}</TableCell>
               <TableCell className="text-center">{renderValue(row.newton)}</TableCell>
