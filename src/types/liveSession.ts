@@ -25,3 +25,41 @@ export interface LiveSessionSettings {
   questions_enabled: boolean;
   confusion_threshold: number;
 }
+
+export interface ConceptCheck {
+  id: string;
+  session_id: string;
+  question: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_answer: 'a' | 'b' | 'c' | 'd';
+  explanation: string | null;
+  slide_context: string | null;
+  status: 'active' | 'closed' | 'reviewing';
+  duration_seconds: number;
+  created_at: string;
+  closed_at: string | null;
+}
+
+export interface ConceptCheckResults {
+  total_responses: number;
+  total_enrolled: number;
+  response_rate: number;
+  answer_distribution: {
+    a: { count: number; percentage: number };
+    b: { count: number; percentage: number };
+    c: { count: number; percentage: number };
+    d: { count: number; percentage: number };
+  };
+  correct_count: number;
+  correct_percentage: number;
+  avg_response_time_ms: number;
+}
+
+export interface ConceptCheckResponse {
+  selected_answer: 'a' | 'b' | 'c' | 'd';
+  is_correct: boolean;
+  response_time_ms: number;
+}

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { LiveSessionSettings } from "@/types/liveSession";
+import type { LiveSessionSettings, ConceptCheck } from "@/types/liveSession";
 
 interface LiveSessionContextValue {
   sessionId: string | null;
@@ -11,6 +11,8 @@ interface LiveSessionContextValue {
   currentSlideContent: string;
   setCurrentSlideContent: (content: string) => void;
   updateSessionSettings: (settings: Partial<LiveSessionSettings>) => Promise<void>;
+  activeConceptCheck: ConceptCheck | null;
+  setActiveConceptCheck: (check: ConceptCheck | null) => void;
 }
 
 const LiveSessionContext = createContext<LiveSessionContextValue | null>(null);
@@ -32,6 +34,7 @@ export function LiveSessionProvider({
   const [questionsEnabled, setQuestionsEnabled] = useState(initialSettings?.questions_enabled ?? true);
   const [confusionThreshold, setConfusionThreshold] = useState(initialSettings?.confusion_threshold ?? 40);
   const [currentSlideContent, setCurrentSlideContent] = useState("");
+  const [activeConceptCheck, setActiveConceptCheck] = useState<ConceptCheck | null>(null);
 
   const updateSessionSettings = useCallback(
     async (settings: Partial<LiveSessionSettings>) => {
@@ -73,6 +76,8 @@ export function LiveSessionProvider({
         currentSlideContent,
         setCurrentSlideContent,
         updateSessionSettings,
+        activeConceptCheck,
+        setActiveConceptCheck,
       }}
     >
       {children}
