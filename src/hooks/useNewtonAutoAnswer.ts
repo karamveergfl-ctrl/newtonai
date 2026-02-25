@@ -60,7 +60,7 @@ export function useNewtonAutoAnswer({
   );
 
   useEffect(() => {
-    if (!enabled || !sessionId) return;
+    if (!enabled || !sessionId || !sessionContext) return;
 
     const interval = setInterval(async () => {
       if (processingRef.current) return;
