@@ -838,6 +838,47 @@ export type Database = {
         }
         Relationships: []
       }
+      institution_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          institution_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          institution_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          institution_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_audit_logs_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institution_members: {
         Row: {
           id: string
@@ -2336,6 +2377,10 @@ export type Database = {
         Returns: Json
       }
       bulk_upsert_student_marks: { Args: { p_marks: Json }; Returns: Json }
+      calculate_grades_batch: {
+        Args: { p_class_id: string; p_grading_scale: Json }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           p_function_name: string
@@ -2381,6 +2426,10 @@ export type Database = {
         Returns: Json
       }
       generate_invite_code: { Args: never; Returns: string }
+      generate_rank_list: {
+        Args: { p_class_id: string; p_course_id: string }
+        Returns: Json
+      }
       get_active_concept_check: {
         Args: { p_session_id: string }
         Returns: Json
@@ -2397,6 +2446,11 @@ export type Database = {
       get_document_file_path: {
         Args: { p_document_id: string }
         Returns: string
+      }
+      get_faculty_stats: { Args: { p_institution_id: string }; Returns: Json }
+      get_institution_analytics: {
+        Args: { p_institution_id: string }
+        Returns: Json
       }
       get_institution_marks_summary: {
         Args: { p_institution_id: string }
@@ -2497,6 +2551,16 @@ export type Database = {
         Returns: boolean
       }
       join_class_by_code: { Args: { p_code: string }; Returns: Json }
+      log_institution_audit: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_entity_id?: string
+          p_entity_type: string
+          p_institution_id: string
+        }
+        Returns: undefined
+      }
       mark_auto_attendance: {
         Args: { p_class_id: string; p_session_id: string; p_student_id: string }
         Returns: undefined
