@@ -137,3 +137,6 @@ verify_jwt = false
 
 [functions.extract-docx-text]
 verify_jwt = false
+
+[functions.generate-concept-check]
+verify_jwt = false
