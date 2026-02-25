@@ -99,3 +99,139 @@ export interface NotesExportRecord {
   format: 'pdf' | 'docx' | 'md';
   file_path: string | null;
 }
+
+// Phase 4 — Post-Class Intelligence Report
+
+export interface SessionIntelligenceReport {
+  id: string;
+  session_id: string;
+  class_id: string;
+  teacher_id: string;
+  status: 'generating' | 'ready' | 'failed';
+  teacher_report: TeacherReport;
+  generated_at: string;
+  updated_at: string;
+}
+
+export interface TeacherReport {
+  session_summary: {
+    duration_minutes: number;
+    total_students: number;
+    active_students: number;
+    engagement_rate: number;
+  };
+  confusion_slides: ConfusionSlide[];
+  concept_check_analysis: ConceptCheckAnalysis[];
+  top_unanswered_questions: UnansweredQuestion[];
+  topics_to_revisit: TopicToRevisit[];
+  engagement_heatmap: EngagementHeatmapItem[];
+  _ai_failed?: boolean;
+}
+
+export interface ConfusionSlide {
+  slide_index: number;
+  slide_title: string;
+  confusion_percentage: number;
+  pulse_responses: number;
+}
+
+export interface ConceptCheckAnalysis {
+  check_id: string;
+  question: string;
+  correct_percentage: number;
+  most_common_wrong_answer: string;
+  needs_review: boolean;
+}
+
+export interface UnansweredQuestion {
+  question_id: string;
+  content: string;
+  upvotes: number;
+  suggested_answer?: string;
+}
+
+export interface TopicToRevisit {
+  topic: string;
+  reason: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+export interface EngagementHeatmapItem {
+  slide_index: number;
+  slide_title: string;
+  pulse_responses: number;
+  annotations: number;
+  questions_asked: number;
+  engagement_score: number;
+}
+
+export interface StudentIntelligenceReport {
+  id: string;
+  session_id: string;
+  student_id: string;
+  status: 'generating' | 'ready' | 'failed';
+  understanding_score: number;
+  topic_scores: TopicScore[];
+  knowledge_gaps: KnowledgeGap[];
+  revision_flashcards: RevisionFlashcard[];
+  video_suggestions: VideoSuggestion[];
+  generated_at: string;
+  updated_at: string;
+}
+
+export interface TopicScore {
+  slide_index: number;
+  slide_title: string;
+  score: number | null;
+  indicators: {
+    pulse_status: 'got_it' | 'slightly_lost' | 'lost' | null;
+    concept_check_correct: boolean | null;
+    has_annotations: boolean;
+  };
+}
+
+export interface KnowledgeGap {
+  topic: string;
+  slide_index: number;
+  gap_reason: string;
+  severity: 'high' | 'medium' | 'low';
+}
+
+export interface RevisionFlashcard {
+  front: string;
+  back: string;
+  topic: string;
+  slide_index: number;
+}
+
+export interface VideoSuggestion {
+  topic: string;
+  query: string;
+  slide_index: number;
+}
+
+export interface ReportVideoResult {
+  id: string;
+  student_report_id: string;
+  topic: string;
+  video_id: string;
+  video_title: string;
+  channel_name: string;
+  thumbnail_url: string;
+  duration: string;
+  fetched_at: string;
+}
+
+export interface ClassReportOverview {
+  total_students: number;
+  reports_generated: number;
+  class_average_score: number;
+  score_distribution: {
+    excellent: number;
+    good: number;
+    needs_work: number;
+    struggling: number;
+  };
+  weakest_topic: { slide_title: string; avg_score: number };
+  strongest_topic: { slide_title: string; avg_score: number };
+}
