@@ -1,169 +1,147 @@
 
-# Institutional Academic Records System
+
+# Institutional Admin Dashboard -- Implementation Plan
 
 ## Overview
-Add a complete attendance + marks management system with three new database tables, teacher CRUD UI (including CSV bulk upload), a student marks dashboard, and an admin aggregate view. All integrated into existing institutional hierarchy.
+Build a comprehensive admin dashboard for institutional roles (Principal, Dean, Exam Admin, Department Head) with 4 subsystems: analytics, result processing, faculty monitoring, and compliance. All pages are scoped to the user's institution and protected by existing `InstitutionRoute` and `is_institution_admin` RLS.
 
 ---
 
 ## Phase 1: Database Migration
 
-Single migration file: `supabase/migrations/[timestamp]_academic_records.sql`
+Single migration: `supabase/migrations/[timestamp]_institution_admin_dashboard.sql`
 
-### 1.1 `attendance_records` Table
+### 1.1 `institution_audit_logs` Table
+Tracks all sensitive actions within the institution for compliance.
 ```text
-attendance_records
-  id                  uuid PK DEFAULT gen_random_uuid()
-  session_id          uuid NOT NULL FK -> live_sessions(id) ON DELETE CASCADE
-  student_id          uuid NOT NULL
-  class_id            uuid NOT NULL FK -> classes(id) ON DELETE CASCADE
-  status              text NOT NULL DEFAULT 'present'  -- present / absent / late
-  auto_marked         boolean NOT NULL DEFAULT false
-  participation_score integer DEFAULT 0
-  marked_at           timestamptz DEFAULT now()
-  UNIQUE(session_id, student_id)
+institution_audit_logs
+  id               uuid PK DEFAULT gen_random_uuid()
+  institution_id   uuid NOT NULL
+  user_id          uuid NOT NULL
+  action           text NOT NULL         -- e.g. 'marks_updated', 'grade_calculated', 'member_added'
+  entity_type      text NOT NULL         -- e.g. 'student_marks', 'attendance_records'
+  entity_id        uuid
+  details          jsonb DEFAULT '{}'
+  created_at       timestamptz DEFAULT now()
 ```
-RLS:
-- SELECT: student can view own (`student_id = auth.uid()`); teacher can view for their class (`is_class_teacher`)
-- INSERT: teacher of the class OR via RPC (auto-mark)
-- UPDATE: teacher of the class only
-- DELETE: teacher of the class only
+RLS: SELECT only for institution admins via `is_institution_admin`. No direct INSERT/UPDATE/DELETE (populated via triggers/RPCs).
 
-### 1.2 `student_marks` Table
-```text
-student_marks
-  id                  uuid PK DEFAULT gen_random_uuid()
-  student_id          uuid NOT NULL
-  course_id           uuid NOT NULL FK -> courses(id) ON DELETE CASCADE
-  class_id            uuid NOT NULL FK -> classes(id) ON DELETE CASCADE
-  assignment_marks    numeric DEFAULT 0
-  attendance_marks    numeric DEFAULT 0
-  midsem1             numeric
-  midsem2             numeric
-  endsem              numeric
-  practical_marks     numeric
-  project_marks       numeric
-  total_marks         numeric GENERATED ALWAYS AS (
-    COALESCE(assignment_marks,0) + COALESCE(attendance_marks,0) +
-    COALESCE(midsem1,0) + COALESCE(midsem2,0) + COALESCE(endsem,0) +
-    COALESCE(practical_marks,0) + COALESCE(project_marks,0)
-  ) STORED
-  grade               text
-  academic_year       text
-  semester            text
-  updated_at          timestamptz DEFAULT now()
-  created_at          timestamptz DEFAULT now()
-  UNIQUE(student_id, course_id, class_id)
-```
-RLS:
-- SELECT: `student_id = auth.uid()` OR teacher of the class OR institution admin
-- INSERT/UPDATE: teacher of the class OR institution admin
-- DELETE: institution admin only
+### 1.2 New RPCs (SECURITY DEFINER)
 
-### 1.3 Auto-Attendance RPC
-`mark_auto_attendance(p_session_id uuid, p_student_id uuid, p_class_id uuid)` -- SECURITY DEFINER function that inserts/updates attendance when a student submits a quiz or interacts with a live session activity. Called from existing quiz submission and pulse response flows.
+**`get_institution_analytics(p_institution_id uuid)`**
+Returns aggregated data:
+- Student performance trends (avg marks per course, per semester)
+- Attendance rates per class/course
+- Active sessions count, total live sessions run
+- Course pass/fail rates
 
-### 1.4 Aggregate Marks RPC
-`get_institution_marks_summary(p_institution_id uuid)` -- SECURITY DEFINER function returning aggregated marks across all courses/classes for the institution. Used by admin dashboard.
+**`get_faculty_stats(p_institution_id uuid)`**
+Returns per-teacher metrics:
+- Number of classes, sessions run, assignments created
+- Average student score across their classes
+- Last active date
 
-### 1.5 Bulk Upsert RPC
-`bulk_upsert_student_marks(p_marks jsonb)` -- SECURITY DEFINER function that accepts a JSON array of marks records and upserts them. Validates teacher ownership of the class before inserting.
+**`calculate_grades_batch(p_class_id uuid, p_grading_scale jsonb)`**
+Auto-calculates grades for all students in a class based on total_marks and a configurable grading scale (e.g. `[{"min":90,"grade":"A+"},{"min":80,"grade":"A"},...]`). Updates `student_marks.grade` column.
+
+**`generate_rank_list(p_class_id uuid, p_course_id uuid)`**
+Returns students ordered by total_marks descending with rank numbers.
+
+**`log_institution_audit(p_institution_id uuid, p_action text, p_entity_type text, p_entity_id uuid, p_details jsonb)`**
+Inserts an audit log entry. Validates caller is institution admin.
 
 ---
 
-## Phase 2: Teacher Features
+## Phase 2: Institution Analytics Page
 
-### 2.1 Attendance Management Component
-**File:** `src/components/teacher/AttendanceManager.tsx`
-- Shows list of students for a session with present/absent/late toggle buttons
-- Auto-marked entries shown with a badge; teacher can override
-- Attendance summary stats (% present, % late)
-- Integrated into ClassDetail page as a new tab or sub-section
+**File:** `src/pages/institution/InstitutionAnalyticsPage.tsx`
 
-### 2.2 Marks Entry UI
-**File:** `src/components/teacher/MarksEntryPanel.tsx`
-- Table-based form for entering marks per student per course
-- Columns: student name, assignment, attendance, midsem1, midsem2, endsem, practical, project, total (auto-calculated), grade (dropdown)
-- Inline editing with save button
-- Uses `student_marks` table via upsert
+Tabbed interface with 4 sections:
+1. **Overview**: KPI cards (total students, avg score, attendance rate, active courses) + trend line chart (recharts)
+2. **Performance**: Per-course average scores bar chart, pass/fail rates, semester comparison
+3. **Attendance**: Attendance rate per class shown as horizontal bar chart, highlighting low-attendance classes
+4. **Faculty Engagement**: Table of teachers with session count, assignment count, avg student score
 
-### 2.3 CSV Bulk Upload
-**File:** `src/components/teacher/BulkMarksUpload.tsx`
-- File dropzone (using existing `react-dropzone`)
-- CSV parsing on client side (simple split, no new dependency needed)
-- Preview table before submission
-- Calls `bulk_upsert_student_marks` RPC
-- Template download button with expected column headers
-
-### 2.4 AI Grade Analytics
-**File:** `src/components/teacher/GradeAnalyticsPanel.tsx`
-- Performance distribution chart (using existing `recharts`)
-- Pass/fail ratio, average scores per exam component
-- AI-powered insights: calls existing `newton-chat` edge function with marks summary to generate text analysis of class performance trends
-- Weak student identification
-
-### 2.5 Integration into ClassDetail
-Modify `src/pages/teacher/ClassDetail.tsx`:
-- Add "Marks" and "Attendance" tabs to the existing tab system
-- Marks tab renders `MarksEntryPanel` + `BulkMarksUpload` + `GradeAnalyticsPanel`
-- Attendance tab renders `AttendanceManager` alongside the existing `AttendanceGrid`
+Uses `get_institution_analytics` and `get_faculty_stats` RPCs.
 
 ---
 
-## Phase 3: Student Dashboard
+## Phase 3: Result Processing Engine
 
-### 3.1 Student Marks View
-**File:** `src/components/student/StudentMarksTab.tsx`
-- Fetches marks from `student_marks` where `student_id = auth.uid()`
-- Card-based layout showing each exam component with score
-- Overall grade display with color coding
-- Performance trend chart (if multiple semesters exist)
-- Weak topics section (reuses existing weak_questions pattern from `StudentPerformanceTab`)
+**File:** `src/pages/institution/ResultProcessingPage.tsx`
 
-### 3.2 Integration
-Modify `src/pages/student/StudentClassView.tsx`:
-- Add a "Marks" tab that renders `StudentMarksTab`
-- Strict RLS ensures students only see their own data
+Features:
+- **Grade Calculator**: Select class + course, choose grading scale (preset or custom), click "Calculate Grades" to call `calculate_grades_batch` RPC
+- **Rank List Generator**: Select class + course, generate and display ranked student list via `generate_rank_list` RPC
+- **Report Card PDF**: Uses existing `jsPDF` library to generate per-student report cards with all marks components, grade, and rank. Batch export option.
+- **Export**: CSV export of marks/grades using existing `ExportButton` component
+
+**File:** `src/components/institution/GradeCalculator.tsx` -- Grading scale editor + batch calculate UI
+**File:** `src/components/institution/ReportCardGenerator.tsx` -- PDF generation for individual/batch report cards
+**File:** `src/components/institution/RankListView.tsx` -- Sortable rank list display
 
 ---
 
-## Phase 4: Admin/Institution View
+## Phase 4: Faculty Monitoring Page
 
-### 4.1 Academic Records Page
-**File:** `src/pages/institution/AcademicRecordsPage.tsx`
-- Aggregate marks view across all classes/courses in the institution
-- Filter by department, course, semester
-- Summary statistics: average scores, pass rates, grade distribution
-- Sortable table of all students with their marks
-- Export to CSV button
+**File:** `src/pages/institution/FacultyMonitoringPage.tsx`
 
-### 4.2 Route & Navigation
-- Add route: `/institution/academic-records` in `App.tsx` (guarded by `InstitutionRoute`)
-- Add sidebar item in `AppSidebar.tsx` under Institution group: "Academic Records" with `ClipboardList` icon
+Displays:
+- Table of all teachers in the institution with metrics (classes, sessions, assignments, avg score, last active)
+- Expandable row showing per-class breakdown
+- Color-coded engagement indicators (green/amber/red based on session frequency)
+- Data sourced from `get_faculty_stats` RPC
+
+---
+
+## Phase 5: Compliance & Audit Page
+
+**File:** `src/pages/institution/CompliancePage.tsx`
+
+Features:
+- **Audit Log Viewer**: Paginated table of `institution_audit_logs` with filters (date range, action type, user)
+- **Data Export**: Full institution data export (students, marks, attendance, courses) as CSV
+- **Role Overview**: Shows all institution members with their roles, providing visibility into access control
+
+---
+
+## Phase 6: Route & Navigation Updates
+
+**File:** `src/App.tsx` -- Add 4 new routes:
+- `/institution/analytics`
+- `/institution/results`
+- `/institution/faculty`
+- `/institution/compliance`
+
+All wrapped in `InstitutionRoute`.
+
+**File:** `src/components/AppSidebar.tsx` -- Add 4 new sidebar items under Institution group:
+- Analytics (BarChart3 icon)
+- Results (Award icon)
+- Faculty (Users icon)
+- Compliance (Shield icon)
 
 ---
 
 ## Files Summary
 
 ### New Files (7)
-1. `supabase/migrations/[timestamp]_academic_records.sql`
-2. `src/components/teacher/AttendanceManager.tsx`
-3. `src/components/teacher/MarksEntryPanel.tsx`
-4. `src/components/teacher/BulkMarksUpload.tsx`
-5. `src/components/teacher/GradeAnalyticsPanel.tsx`
-6. `src/components/student/StudentMarksTab.tsx`
-7. `src/pages/institution/AcademicRecordsPage.tsx`
+1. `supabase/migrations/[timestamp]_institution_admin_dashboard.sql`
+2. `src/pages/institution/InstitutionAnalyticsPage.tsx`
+3. `src/pages/institution/ResultProcessingPage.tsx`
+4. `src/pages/institution/FacultyMonitoringPage.tsx`
+5. `src/pages/institution/CompliancePage.tsx`
+6. `src/components/institution/GradeCalculator.tsx`
+7. `src/components/institution/ReportCardGenerator.tsx`
+8. `src/components/institution/RankListView.tsx`
 
-### Modified Files (4)
-1. `src/pages/teacher/ClassDetail.tsx` -- Add Marks and Attendance tabs
-2. `src/pages/student/StudentClassView.tsx` -- Add Marks tab
-3. `src/App.tsx` -- Add `/institution/academic-records` route
-4. `src/components/AppSidebar.tsx` -- Add Academic Records sidebar link
-5. `src/integrations/supabase/types.ts` -- Auto-updated by migration
+### Modified Files (2)
+1. `src/App.tsx` -- Add 4 institution routes
+2. `src/components/AppSidebar.tsx` -- Add 4 sidebar links
 
-### Zero Breaking Changes
-- All new tables are independent additions
-- `attendance_records` extends live session data without modifying `live_sessions`
-- `student_marks` links to existing `courses` and `classes` tables via nullable-safe FKs
-- Existing attendance grid and student performance tab remain unchanged
-- Auto-attendance is additive (RPC-based, no trigger on reserved tables)
+### Security
+- All new tables use RLS with `is_institution_admin` checks
+- Audit logs are insert-only via RPC (no direct client writes)
+- All RPCs validate institution membership before returning data
+- No cross-institution data leakage possible
+
