@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Brain, TrendingDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { toast } from "sonner";
+import { TeacherAIInsights } from "./TeacherAIInsights";
 
 interface Props {
   classId: string;
@@ -26,8 +27,6 @@ const CHART_COLORS = [
 export function GradeAnalyticsPanel({ classId, courseId }: Props) {
   const [marks, setMarks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [aiInsight, setAiInsight] = useState<string | null>(null);
-  const [loadingAi, setLoadingAi] = useState(false);
 
   useEffect(() => {
     fetchMarks();
@@ -46,48 +45,6 @@ export function GradeAnalyticsPanel({ classId, courseId }: Props) {
     setLoading(false);
   };
 
-  const generateInsight = async () => {
-    if (marks.length === 0) return;
-    setLoadingAi(true);
-
-    const summary = {
-      total_students: marks.length,
-      avg_total: (marks.reduce((s, m) => s + (m.total_marks || 0), 0) / marks.length).toFixed(1),
-      pass_rate: ((marks.filter((m) => (m.total_marks || 0) >= 40).length / marks.length) * 100).toFixed(0),
-      grade_distribution: marks.reduce((acc: any, m) => {
-        const g = m.grade || "Ungraded";
-        acc[g] = (acc[g] || 0) + 1;
-        return acc;
-      }, {}),
-      component_avgs: {
-        assignment: (marks.reduce((s, m) => s + (m.assignment_marks || 0), 0) / marks.length).toFixed(1),
-        midsem1: (marks.reduce((s, m) => s + (m.midsem1 || 0), 0) / marks.length).toFixed(1),
-        midsem2: (marks.reduce((s, m) => s + (m.midsem2 || 0), 0) / marks.length).toFixed(1),
-        endsem: (marks.reduce((s, m) => s + (m.endsem || 0), 0) / marks.length).toFixed(1),
-      },
-    };
-
-    try {
-      const { data, error } = await supabase.functions.invoke("newton-chat", {
-        body: {
-          messages: [
-            {
-              role: "user",
-              content: `Analyze this class performance data and provide brief insights (3-4 bullet points) on trends, weak areas, and recommendations:\n${JSON.stringify(summary)}`,
-            },
-          ],
-        },
-      });
-
-      if (data?.response) {
-        setAiInsight(data.response);
-      }
-    } catch (err) {
-      toast.error("Failed to generate insights");
-    }
-
-    setLoadingAi(false);
-  };
 
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
@@ -210,25 +167,7 @@ export function GradeAnalyticsPanel({ classId, courseId }: Props) {
       )}
 
       {/* AI Insights */}
-      <Card className="border-border/50">
-        <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm flex items-center gap-1.5">
-            <Brain className="h-4 w-4 text-primary" />
-            AI Performance Insights
-          </CardTitle>
-          <Button size="sm" variant="outline" onClick={generateInsight} disabled={loadingAi} className="gap-1.5">
-            {loadingAi ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Brain className="h-3.5 w-3.5" />}
-            Generate
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {aiInsight ? (
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{aiInsight}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">Click "Generate" to get AI-powered insights on class performance.</p>
-          )}
-        </CardContent>
-      </Card>
+      <TeacherAIInsights classId={classId} courseId={courseId} marks={marks} />
     </div>
   );
 }

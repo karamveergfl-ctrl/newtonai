@@ -8,7 +8,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ScrollProvider } from "@/contexts/ScrollContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, TrendingUp, GraduationCap, BookOpen } from "lucide-react";
+import { Loader2, Users, TrendingUp, GraduationCap, BookOpen, Brain } from "lucide-react";
+import { InstitutionAIInsights } from "@/components/institution/InstitutionAIInsights";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Cell,
 } from "recharts";
@@ -80,6 +81,7 @@ function AnalyticsContent() {
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="faculty">Faculty</TabsTrigger>
+          <TabsTrigger value="ai-insights" className="gap-1.5"><Brain className="h-3.5 w-3.5" /> AI Insights</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -204,6 +206,10 @@ function AnalyticsContent() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="ai-insights" className="space-y-4">
+          <InstitutionAIInsights analytics={analytics} facultyStats={facultyStats || []} />
         </TabsContent>
       </Tabs>
     </div>

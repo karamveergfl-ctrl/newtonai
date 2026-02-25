@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, TrendingUp, Award, Target, CheckCircle2, AlertTriangle, BookOpen, Brain, FileQuestion } from "lucide-react";
+import { StudentLearningInsights } from "./StudentLearningInsights";
 
 interface Props {
   classId: string;
@@ -130,6 +131,9 @@ export function StudentPerformanceTab({ classId }: Props) {
           </Button>
         </div>
       </div>
+
+      {/* AI Learning Insights */}
+      <StudentLearningInsights classId={classId} performanceData={data} />
     </div>
   );
 }
