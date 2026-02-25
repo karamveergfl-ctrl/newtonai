@@ -441,6 +441,26 @@ Return ONLY valid JSON with keys: topics_to_revisit, concept_check_analysis, top
       throw new Error("Failed to save report");
     }
 
+    // ── Send notification to teacher ──
+    try {
+      const { data: sessionData } = await supabaseAdmin
+        .from("live_sessions")
+        .select("teacher_id, title")
+        .eq("id", session_id)
+        .single();
+      if (sessionData) {
+        await supabaseAdmin.from("user_notifications").insert({
+          user_id: sessionData.teacher_id,
+          title: "Class intelligence report ready",
+          message: `${sessionData.title} report: ${teacherReport.session_summary.active_students} students engaged`,
+          type: "report_ready",
+          metadata: { action_url: `/report/teacher/${session_id}` },
+        });
+      }
+    } catch (notifErr) {
+      console.error("Notification insert failed:", notifErr);
+    }
+
     return new Response(JSON.stringify({ success: true, report: teacherReport }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

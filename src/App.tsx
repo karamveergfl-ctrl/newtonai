@@ -101,6 +101,8 @@ const StudentClasses = lazy(() => import("./pages/student/StudentClasses"));
 const StudentClassView = lazy(() => import("./pages/student/StudentClassView"));
 const JoinClass = lazy(() => import("./pages/JoinClass"));
 const PostSessionNotesReview = lazy(() => import("./pages/SessionNotesPage"));
+const TeacherReportRoute = lazy(() => import("./pages/TeacherReportRoute"));
+const StudentReportRoute = lazy(() => import("./pages/StudentReportRoute"));
 
 const queryClient = new QueryClient();
 
@@ -192,6 +194,8 @@ function AnimatedRoutes() {
         <Route path="/student/class/:id" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClassView /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/join-class" element={<PageTransition><ProtectedRoute><JoinClass /></ProtectedRoute></PageTransition>} />
         <Route path="/session-notes/:sessionId" element={<PageTransition><ProtectedRoute><OnboardingGate><PostSessionNotesReview /></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/report/teacher/:sessionId" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherReportRoute /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/report/student/:sessionId" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentReportRoute /></OnboardingGate></ProtectedRoute></PageTransition>} />
         
         {/* Admin Routes */}
         <Route path="/admin/analytics" element={<PageTransition><AdminRoute><AdminAnalytics /></AdminRoute></PageTransition>} />

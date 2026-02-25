@@ -266,7 +266,17 @@ const ClassDetail = () => {
         )}
 
         {activeSession && activeSession.status === "completed" && (
-          <LiveSessionPanel classId={id!} session={activeSession} onUpdate={fetchActiveSession} />
+          <div className="mb-6 space-y-2">
+            <LiveSessionPanel classId={id!} session={activeSession} onUpdate={fetchActiveSession} />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={() => navigate(`/report/teacher/${activeSession.id}`)}
+            >
+              <BarChart3 className="h-3.5 w-3.5" /> View Intelligence Report
+            </Button>
+          </div>
         )}
 
         {classInfo.description && (
@@ -644,6 +654,7 @@ function AddMaterialDialog({ classId, onAdded }: { classId: string; onAdded: () 
 }
 
 function TeacherSessionWrapper({ session, classId, onUpdate, enrollmentCount }: { session: any; classId: string; onUpdate: () => void; enrollmentCount: number }) {
+  const navigate = useNavigate();
   const { questions } = useQuestionWall({ sessionId: session.id, role: "teacher" });
 
   useNewtonAutoAnswer({
@@ -653,8 +664,23 @@ function TeacherSessionWrapper({ session, classId, onUpdate, enrollmentCount }: 
     enabled: session.questions_enabled ?? true,
   });
 
+  const handleEndSession = async () => {
+    await supabase.from("live_sessions" as any).update({
+      status: "ended",
+    } as any).eq("id", session.id);
+
+    // Trigger intelligence report generation
+    supabase.functions.invoke("trigger-all-student-reports", {
+      body: { session_id: session.id },
+    }).catch(console.error);
+
+    toast.success("Session ended");
+    onUpdate();
+    navigate(`/report/teacher/${session.id}`);
+  };
+
   return (
-    <SmartBoardPanel sessionId={session.id}>
+    <SmartBoardPanel sessionId={session.id} onEndSession={handleEndSession}>
       <LiveSessionPanel classId={classId} session={session} onUpdate={onUpdate} />
     </SmartBoardPanel>
   );

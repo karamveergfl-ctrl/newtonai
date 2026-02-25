@@ -459,6 +459,29 @@ serve(async (req) => {
       }
     }
 
+    // ── Send notification to student ──
+    try {
+      const supabaseAdmin2 = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+      const { data: sessionInfo } = await supabaseAdmin2
+        .from("live_sessions")
+        .select("title")
+        .eq("id", session_id)
+        .single();
+      const className = sessionInfo?.title || "Class session";
+      await supabaseAdmin2.from("user_notifications").insert({
+        user_id: student_id,
+        title: "Your class report is ready",
+        message: `Your understanding score for ${className}: ${understandingScore}/100`,
+        type: "report_ready",
+        metadata: { action_url: `/report/student/${session_id}` },
+      });
+    } catch (notifErr) {
+      console.error("Student notification failed:", notifErr);
+    }
+
     return new Response(JSON.stringify({ success: true, understanding_score: understandingScore }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

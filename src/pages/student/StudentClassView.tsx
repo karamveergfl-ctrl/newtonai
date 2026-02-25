@@ -10,7 +10,7 @@ import { AnnouncementsBanner } from "@/components/student/AnnouncementsBanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy, TrendingUp } from "lucide-react";
+import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy, TrendingUp, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
@@ -71,6 +71,9 @@ const StudentClassView = () => {
   const [takingQuiz, setTakingQuiz] = useState(false);
   const [quizResult, setQuizResult] = useState<{ score: number; total: number } | null>(null);
 
+  // Past ended sessions for report links
+  const [endedSessions, setEndedSessions] = useState<{ id: string; title: string; created_at: string }[]>([]);
+
   useEffect(() => {
     if (!id) return;
     const fetchData = async () => {
@@ -85,6 +88,16 @@ const StudentClassView = () => {
         .order("created_at", { ascending: false });
       setMaterials(mats || []);
       setLoadingMaterials(false);
+
+      // Fetch past ended/completed sessions for report links
+      const { data: pastSessions } = await supabase
+        .from("live_sessions" as any)
+        .select("id, title, created_at")
+        .eq("class_id", id)
+        .in("status", ["ended", "completed"])
+        .order("created_at", { ascending: false })
+        .limit(5);
+      setEndedSessions((pastSessions as any[]) || []);
     };
     fetchData();
   }, [id]);
@@ -347,6 +360,31 @@ const StudentClassView = () => {
             </TabsContent>
 
             <TabsContent value="performance" className="mt-5">
+              {/* Past session reports */}
+              {endedSessions.length > 0 && (
+                <Card className="border-border/50 mb-4">
+                  <CardContent className="py-3 px-4">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Past Session Reports</p>
+                    <div className="space-y-1.5">
+                      {endedSessions.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => navigate(`/report/student/${s.id}`)}
+                          className="w-full flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-muted/40 transition-colors text-left"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <BarChart3 className="h-3.5 w-3.5 text-primary shrink-0" />
+                            <span className="text-xs truncate">{s.title}</span>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {new Date(s.created_at).toLocaleDateString()}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {id && <StudentPerformanceTab classId={id} />}
             </TabsContent>
           </Tabs>
