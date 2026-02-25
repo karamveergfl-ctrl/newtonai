@@ -65,10 +65,11 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isTeacher, isStudent } = useUserRole();
 
-  // Check for active live sessions (student only)
+  // Check for active live sessions and concept checks (student only)
   const [hasLiveSession, setHasLiveSession] = useState(false);
+  const [hasActiveConceptCheck, setHasActiveConceptCheck] = useState(false);
   useEffect(() => {
-    if (!isStudent) { setHasLiveSession(false); return; }
+    if (!isStudent) { setHasLiveSession(false); setHasActiveConceptCheck(false); return; }
     const check = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -78,7 +79,7 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
         .select("class_id")
         .eq("student_id", user.id)
         .eq("status", "active");
-      if (!enrollments || enrollments.length === 0) { setHasLiveSession(false); return; }
+      if (!enrollments || enrollments.length === 0) { setHasLiveSession(false); setHasActiveConceptCheck(false); return; }
       const classIds = enrollments.map((e) => e.class_id);
       const { data: sessions } = await supabase
         .from("live_sessions" as any)
@@ -86,7 +87,22 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
         .in("class_id", classIds)
         .in("status", ["teaching", "quiz_active"])
         .limit(1);
-      setHasLiveSession(!!(sessions && (sessions as unknown[]).length > 0));
+      const hasSession = !!(sessions && (sessions as unknown[]).length > 0);
+      setHasLiveSession(hasSession);
+
+      // Check for active concept checks in those sessions
+      if (hasSession && sessions) {
+        const sessionIds = (sessions as unknown as { id: string }[]).map((s) => s.id);
+        const { data: checks } = await supabase
+          .from("concept_checks" as any)
+          .select("id")
+          .in("session_id", sessionIds)
+          .eq("status", "active")
+          .limit(1);
+        setHasActiveConceptCheck(!!(checks && (checks as unknown[]).length > 0));
+      } else {
+        setHasActiveConceptCheck(false);
+      }
     };
     check();
     const interval = setInterval(check, 15000);
@@ -224,6 +240,10 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
                 {/* Live session indicator for student Home tab */}
                 {hasLiveSession && item.label === "Home" && (
                   <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                )}
+                {/* Active concept check indicator */}
+                {hasActiveConceptCheck && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
                 )}
               </div>
               <span className="text-[10px] font-medium">{item.label}</span>
