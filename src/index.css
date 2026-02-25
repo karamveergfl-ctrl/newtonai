@@ -5,6 +5,26 @@
 /* Prevent horizontal overflow globally */
 html, body {
   overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Global scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(215 20% 35%);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(215 20% 45%);
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 

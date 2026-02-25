@@ -146,7 +146,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
         ? "justify-center p-2.5 gap-0"
         : "gap-3 px-3 py-1.5 hover:translate-x-1 active:scale-[0.98]",
       path && isActive(path)
-        ? "bg-primary text-primary-foreground"
+        ? "bg-primary/15 text-primary"
         : "text-sidebar-foreground hover:bg-sidebar-accent"
     );
 
