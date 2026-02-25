@@ -1,196 +1,181 @@
 
-
-# Institutional Hierarchy Upgrade for NewtonAI
+# Smartboard Teaching Mode -- Full Implementation Plan
 
 ## Overview
-Extend NewtonAI from a standalone classroom tool into a multi-tenant institutional platform by adding three new database layers (Institution, Department, Course), expanding the RBAC system with institutional roles, and adding role-based dashboard routing -- all without modifying existing features.
+Extend the existing `SmartBoardPanel` into a comprehensive teaching platform with 6 new subsystems: enhanced UI mode, whiteboard canvas, AI handwriting recognition, document annotation, voice commands, and automatic lecture capture. All features integrate into the existing live session architecture.
 
 ---
 
-## Phase 1: Database Schema Changes (Single Migration)
+## 1. Smartboard UI Mode Enhancement
 
-### 1.1 Extend the `app_role` Enum
-Add four new values to the existing enum:
-- `principal`
-- `dean`
-- `exam_admin`
-- `department_head`
+**What changes:** Upgrade the existing fullscreen `SmartBoardPanel` into a dedicated teaching cockpit with large touch-friendly controls, minimal chrome, and a classroom theme toggle.
 
-### 1.2 Create `institutions` Table
-```text
-institutions
-  id              uuid PK (gen_random_uuid)
-  name            text NOT NULL
-  type            text NOT NULL DEFAULT 'school'
-                  -- values: school, college, university, coaching
-  admin_user_id   uuid NOT NULL
-  logo_url        text
-  timezone        text DEFAULT 'Asia/Kolkata'
-  created_at      timestamptz DEFAULT now()
-```
-- RLS enabled
-- SELECT: members of the institution can view (via helper function)
-- ALL for admin_user_id owner
-- Admins (platform-level) can view all
+**Files to modify:**
+- `src/components/live-session/SmartBoardPanel.tsx` -- Add a `teachingMode` state that restructures the layout into a toolbar-based design with large icon buttons (min 48px touch targets), bottom toolbar dock, and a classroom light/dark theme toggle (separate from app theme, stored as `newton_classroom_theme` in localStorage)
 
-### 1.3 Create `departments` Table
-```text
-departments
-  id              uuid PK
-  institution_id  uuid NOT NULL FK -> institutions(id) ON DELETE CASCADE
-  name            text NOT NULL
-  head_user_id    uuid
-  created_at      timestamptz DEFAULT now()
-```
-- RLS: institution admin or department head can manage; institution members can SELECT
+**Files to create:**
+- `src/components/smartboard/SmartBoardToolbar.tsx` -- Bottom-docked toolbar with large icon buttons for: Whiteboard, Document View, Voice Command, Record toggle, Theme toggle, End Session
+- `src/components/smartboard/ClassroomThemeProvider.tsx` -- Context that applies a `classroom-light` or `classroom-dark` CSS class to the smartboard container (high-contrast colors optimized for projectors: pure white/deep navy backgrounds, larger base font 20px+)
 
-### 1.4 Create `courses` Table
-```text
-courses
-  id              uuid PK
-  department_id   uuid NOT NULL FK -> departments(id) ON DELETE CASCADE
-  teacher_id      uuid NOT NULL
-  course_name     text NOT NULL
-  course_code     text
-  semester        text
-  academic_year   text
-  created_at      timestamptz DEFAULT now()
-```
-- RLS: department head / institution admin can manage; assigned teacher can view/update; enrolled students can SELECT
+**CSS approach:** Add smartboard-specific utility classes in `src/index.css` under a `.classroom-light` / `.classroom-dark` scope. No new CSS files.
 
-### 1.5 Extend `classes` Table
-Add a nullable `course_id` column:
+---
+
+## 2. Whiteboard Writing Engine
+
+**What changes:** Add a full drawing canvas that supports stylus (pressure-sensitive), mouse, and touch input with undo/redo, color picker, eraser, and pen-size controls.
+
+**Files to create:**
+- `src/components/smartboard/WhiteboardCanvas.tsx` -- HTML5 Canvas component using PointerEvents API for unified stylus/mouse/touch handling. Features:
+  - Pressure-sensitive line width (via `event.pressure`)
+  - Tools: pen, highlighter, eraser, text insertion
+  - Color palette (8 preset colors + custom)
+  - Undo/redo stack (stores canvas image snapshots, max 50)
+  - Clear all button
+  - Canvas resizes to fill the main content area
+- `src/hooks/useWhiteboardState.ts` -- Manages drawing state, tool selection, undo/redo stack, and auto-save logic
+- `src/hooks/useWhiteboardAutoSave.ts` -- Auto-saves canvas as PNG blob to `whiteboard-notes` storage bucket every 30 seconds (debounced) and on session end. Saves with path: `{sessionId}/{slideIndex}_{timestamp}.png`
+
+**Storage:** New `whiteboard-notes` storage bucket (private, RLS: teacher who owns the session can read/write)
+
+**Export PDF:** Uses existing `html2canvas` + `jsPDF` pattern (already in project). Button in toolbar captures all saved whiteboard images for the session and compiles into a multi-page PDF.
+
+**Database:** Add column to `live_sessions`:
 ```sql
-ALTER TABLE public.classes
-  ADD COLUMN IF NOT EXISTS course_id uuid REFERENCES public.courses(id) ON DELETE SET NULL;
+ALTER TABLE public.live_sessions
+  ADD COLUMN IF NOT EXISTS whiteboard_data jsonb DEFAULT '[]'::jsonb;
 ```
-This is nullable so all existing classes continue working without any course linkage.
-
-### 1.6 Create `institution_members` Table
-Maps users to institutions with their institutional role:
-```text
-institution_members
-  id              uuid PK
-  institution_id  uuid FK -> institutions(id) ON DELETE CASCADE
-  user_id         uuid NOT NULL
-  role            text NOT NULL DEFAULT 'member'
-                  -- institutional context role label
-  joined_at       timestamptz DEFAULT now()
-  UNIQUE(institution_id, user_id)
-```
-- RLS: institution admin can manage; members can view own institution's members
-
-### 1.7 Security Definer Helper Functions
-Create helper functions to avoid RLS recursion:
-
-- `is_institution_admin(inst_id uuid, uid uuid)` -- checks if user is admin of institution
-- `is_institution_member(inst_id uuid, uid uuid)` -- checks if user belongs to institution
-- `get_user_institution_id(uid uuid)` -- returns institution_id for a user (first match)
+Stores array of `{ slide_index, storage_path, created_at }` references.
 
 ---
 
-## Phase 2: RLS Policies
+## 3. AI Handwriting Recognition
 
-All new tables get RLS enabled with restrictive policies:
+**What changes:** When the teacher finishes writing on the whiteboard (detected via 3-second inactivity), capture the canvas, send to the existing `ocr-handwriting` edge function, and generate structured notes in the background.
 
-**institutions:**
-- SELECT: `is_institution_member(id, auth.uid())` OR platform admin
-- INSERT/UPDATE/DELETE: `admin_user_id = auth.uid()` OR platform admin
+**Files to create:**
+- `src/hooks/useHandwritingRecognition.ts` -- Watches for drawing inactivity (3s debounce after last stroke), captures canvas as base64 PNG, calls `ocr-handwriting` edge function, and stores recognized text. Triggers `generate-slide-notes` edge function with the recognized text as context to produce structured notes automatically.
 
-**departments:**
-- SELECT: `is_institution_member(institution_id, auth.uid())`
-- INSERT/UPDATE/DELETE: `is_institution_admin(institution_id, auth.uid())` OR `head_user_id = auth.uid()`
+**Integration:** The recognized text feeds into the existing `LiveSessionContext.setCurrentSlideContent()` so all downstream systems (notes, concept checks, spotlight) automatically receive the whiteboard content.
 
-**courses:**
-- SELECT: `is_institution_member(...)` (via department -> institution join)
-- INSERT/UPDATE/DELETE: institution admin or department head
-- UPDATE also allowed for assigned `teacher_id`
-
-**institution_members:**
-- SELECT: members of same institution
-- INSERT/DELETE: institution admin only
-- No direct UPDATE (delete + re-insert)
+**No new edge functions needed** -- reuses `ocr-handwriting` and `generate-slide-notes`.
 
 ---
 
-## Phase 3: Frontend -- Role Hook Extension
+## 4. Document Teaching Mode
 
-### 3.1 Update `useUserRole.ts`
-- Extend the `UserRole` type to include the 4 new roles: `"principal" | "dean" | "exam_admin" | "department_head"`
-- Add computed booleans: `isPrincipal`, `isDean`, `isExamAdmin`, `isDepartmentHead`
-- Add `isInstitutionalAdmin` computed property (true if any of: principal, dean, exam_admin, department_head)
-- Update the primary role priority: `admin > principal > dean > department_head > exam_admin > teacher > student > user`
+**What changes:** Allow the teacher to open a PDF/PPT/DOCX inside the smartboard, annotate it live with drawing tools, and sync highlighted content to students.
 
-### 3.2 Create `useInstitution.ts` Hook
-New hook to fetch the current user's institution context:
-- Queries `institution_members` joined with `institutions` for `auth.uid()`
-- Returns `{ institution, department, loading }`
-- Caches via React Query
+**Files to create:**
+- `src/components/smartboard/DocumentTeachingView.tsx` -- Renders documents using the existing `react-pdf` library (already installed). Features:
+  - Page navigation with large prev/next buttons
+  - Annotation overlay canvas (same drawing engine as whiteboard, layered on top of PDF pages)
+  - Highlight tool (semi-transparent yellow/green/blue rectangles)
+  - Text selection + highlight
+- `src/components/smartboard/AnnotationLayer.tsx` -- Transparent canvas overlay positioned absolutely over the document page. Captures annotations as serializable objects `{ type, points, color, pageIndex }`
+- `src/hooks/useDocumentAnnotations.ts` -- Manages annotation state per page, serialization, and syncs highlight data to the `spotlight_session_state` table's `current_slide_content` field so students receive it via existing Spotlight sync
 
----
+**Student sync mechanism:** Annotations are serialized and pushed to `spotlight_session_state.current_slide_content` as structured JSON. The existing `SpotlightSync` hook on the student side picks this up via Realtime. The student view renders a read-only version of the annotated page.
 
-## Phase 4: Frontend -- Routing & Navigation
-
-### 4.1 Create `InstitutionRoute.tsx`
-A new route guard component (similar to `RoleRoute`) that checks for institutional admin roles (principal/dean/department_head/exam_admin). Redirects unauthorized users to `/dashboard`.
-
-### 4.2 Create Institutional Dashboard Page
-- New lazy-loaded page: `src/pages/institution/InstitutionDashboard.tsx`
-- Shows institution overview: departments, courses, member count
-- Placeholder cards for future management features
-- Links to department and course management
-
-### 4.3 Create Department & Course Management Pages
-- `src/pages/institution/DepartmentsPage.tsx` -- list/create/edit departments
-- `src/pages/institution/CoursesPage.tsx` -- list/create/edit courses, link classes
-
-### 4.4 Add Routes to `App.tsx`
-```text
-/institution              -> InstitutionDashboard (InstitutionRoute)
-/institution/departments  -> DepartmentsPage (InstitutionRoute)
-/institution/courses      -> CoursesPage (InstitutionRoute)
-```
-
-### 4.5 Update `AppSidebar.tsx`
-- Add a new "Institution" sidebar group (visible when `isInstitutionalAdmin` is true)
-- Menu items: Dashboard, Departments, Courses
-- Uses `Building2`, `Layers`, `BookOpen` icons from lucide
-
-### 4.6 Smart Dashboard Redirect
-Update the `/dashboard` route logic so that after login:
-- If user has institutional role (principal/dean/etc.) -> show institution section on dashboard or auto-navigate to `/institution`
-- Teacher -> existing teacher dashboard
-- Student -> existing student dashboard
-- This is a soft redirect suggestion (banner/card), not a forced redirect, to preserve existing behavior
+**File upload:** Reuses existing file upload + extraction pipeline (`extract-pdf-text`, `extract-pptx-text`, `extract-docx-text`). Teacher selects a file from class materials or uploads directly.
 
 ---
 
-## Phase 5: RoleRoute Extension
+## 5. Voice Command Assistant
 
-Update `RoleRoute.tsx` to accept the new roles:
-```typescript
-type RoleRouteRole = "teacher" | "student" | "principal" | "dean" | "exam_admin" | "department_head";
+**What changes:** Add always-listening voice command detection during smartboard mode. Teacher says trigger phrases that map to AI edge function calls.
+
+**Files to create:**
+- `src/hooks/useVoiceCommands.ts` -- Uses the existing `useSpeechRecognition` hook in continuous mode. Listens for wake word "Newton" followed by a command. Command mapping:
+  - "Newton generate quiz" --> calls `generate-concept-check` edge function with current slide content
+  - "Newton summarize slide" --> calls `generate-summary` with current slide content, displays result in a toast/overlay
+  - "Newton explain topic simply" --> calls `newton-chat` with prompt "Explain this simply: {slideContent}"
+  - "Newton next slide" --> triggers `SlideAdvanceControls` next
+  - "Newton previous slide" --> triggers slide back
+  - "Newton start recording" --> toggles lecture capture on
+  - "Newton stop recording" --> toggles lecture capture off
+- `src/components/smartboard/VoiceCommandIndicator.tsx` -- Small floating indicator showing: mic status (listening/processing), last recognized command, and result preview. Positioned top-right of smartboard.
+
+**Command parsing:** Simple keyword matching after "Newton" trigger word. No additional AI needed for command detection -- just string matching against known commands.
+
+**Edge functions reused:** `generate-concept-check`, `generate-summary`, `newton-chat` (all existing).
+
+---
+
+## 6. Automatic Lecture Capture
+
+**What changes:** Record slides shown, whiteboard notes, and audio transcription during the session. Store all data for post-class intelligence reports.
+
+**Files to create:**
+- `src/hooks/useLectureCapture.ts` -- Orchestrates capture of three data streams:
+  1. **Slide timeline:** Records `{ slideIndex, timestamp, content }` at each slide change (already tracked via `SlideAdvanceControls`)
+  2. **Whiteboard snapshots:** Captures canvas PNG at each slide change (from whiteboard auto-save)
+  3. **Audio transcription:** Uses `AudioRecorder` (existing) to record audio in 2-minute chunks, sends each chunk to `transcribe-audio` edge function, accumulates transcript segments with timestamps
+
+**Database changes:**
+```sql
+CREATE TABLE public.lecture_captures (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id uuid NOT NULL REFERENCES live_sessions(id) ON DELETE CASCADE,
+  teacher_id uuid NOT NULL,
+  slide_timeline jsonb DEFAULT '[]',
+  whiteboard_paths text[] DEFAULT '{}',
+  transcript_segments jsonb DEFAULT '[]',
+  audio_duration_seconds integer DEFAULT 0,
+  status text DEFAULT 'recording',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.lecture_captures ENABLE ROW LEVEL SECURITY;
+
+-- Only the session teacher can access
+CREATE POLICY "Teachers own lecture captures"
+  ON public.lecture_captures FOR ALL
+  USING (auth.uid() = teacher_id)
+  WITH CHECK (auth.uid() = teacher_id);
 ```
 
+**Integration with post-class reports:** When the session ends, the accumulated `lecture_captures` data (transcript + slide timeline) is passed to the existing `generate-teacher-report` edge function as additional context, enriching the intelligence report with full lecture content.
+
+**Storage:** Audio chunks are processed in-memory and discarded after transcription (only text is stored). Whiteboard PNGs go to the `whiteboard-notes` bucket.
+
 ---
 
-## Files to Create
-1. `supabase/migrations/[timestamp]_institutional_hierarchy.sql` -- all schema changes
-2. `src/hooks/useInstitution.ts` -- institution context hook
-3. `src/components/InstitutionRoute.tsx` -- route guard
-4. `src/pages/institution/InstitutionDashboard.tsx` -- main institutional dashboard
-5. `src/pages/institution/DepartmentsPage.tsx` -- department management
-6. `src/pages/institution/CoursesPage.tsx` -- course management
+## Migration Summary
 
-## Files to Modify
-1. `src/hooks/useUserRole.ts` -- extend role types and booleans
-2. `src/components/RoleRoute.tsx` -- accept new roles
-3. `src/components/AppSidebar.tsx` -- add institution nav group
-4. `src/App.tsx` -- add institution routes
+Single migration file: `supabase/migrations/[timestamp]_smartboard_teaching_mode.sql`
+- Add `whiteboard_data` column to `live_sessions`
+- Create `lecture_captures` table with RLS
+- Create `whiteboard-notes` storage bucket (private)
+- Storage RLS policy for whiteboard-notes bucket
 
-## Zero Breaking Changes
-- `classes.course_id` is nullable -- all existing classes unaffected
-- New enum values are additive -- existing role checks unchanged
-- All new tables are independent -- no existing table structures modified
-- Existing RLS policies untouched
+---
 
+## Files Summary
+
+### New Files (12)
+1. `supabase/migrations/[timestamp]_smartboard_teaching_mode.sql`
+2. `src/components/smartboard/SmartBoardToolbar.tsx`
+3. `src/components/smartboard/ClassroomThemeProvider.tsx`
+4. `src/components/smartboard/WhiteboardCanvas.tsx`
+5. `src/components/smartboard/DocumentTeachingView.tsx`
+6. `src/components/smartboard/AnnotationLayer.tsx`
+7. `src/components/smartboard/VoiceCommandIndicator.tsx`
+8. `src/hooks/useWhiteboardState.ts`
+9. `src/hooks/useWhiteboardAutoSave.ts`
+10. `src/hooks/useHandwritingRecognition.ts`
+11. `src/hooks/useDocumentAnnotations.ts`
+12. `src/hooks/useVoiceCommands.ts`
+13. `src/hooks/useLectureCapture.ts`
+
+### Modified Files (3)
+1. `src/components/live-session/SmartBoardPanel.tsx` -- Integrate toolbar, whiteboard, document view, voice commands, and capture toggle
+2. `src/index.css` -- Add classroom theme CSS variables
+3. `src/integrations/supabase/types.ts` -- Auto-updated by migration
+
+### Zero Breaking Changes
+- All new features are additive toolbar buttons within the existing SmartBoardPanel
+- Existing session flow unchanged -- whiteboard/document/voice are opt-in tools
+- All existing edge functions reused, no new AI backend needed
+- Students see synced content via existing Spotlight mechanism
