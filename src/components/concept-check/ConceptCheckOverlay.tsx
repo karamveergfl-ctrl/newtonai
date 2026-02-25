@@ -26,14 +26,16 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
 
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const startTimeRef = useRef(Date.now());
 
-  // Reset start time and play sound cue when a new check arrives
+  // Reset state when a new check arrives
   useEffect(() => {
     if (activeCheck) {
       startTimeRef.current = Date.now();
       setSelectedKey(null);
       setShowResult(false);
+      setDismissed(false);
       // Play subtle notification sound
       try {
         const ctx = new AudioContext();
@@ -52,9 +54,15 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
 
   // Show result after close
   useEffect(() => {
-    if (isClosed && hasResponded) setShowResult(true);
-    if (isClosed && !hasResponded) setShowResult(true);
-  }, [isClosed, hasResponded]);
+    if (isClosed) setShowResult(true);
+  }, [isClosed]);
+
+  // Auto-dismiss overlay 8 seconds after results shown
+  useEffect(() => {
+    if (!showResult) return;
+    const timeout = setTimeout(() => setDismissed(true), 8000);
+    return () => clearTimeout(timeout);
+  }, [showResult]);
 
   const handleSelect = useCallback(
     async (key: "a" | "b" | "c" | "d") => {
@@ -63,8 +71,8 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
       const elapsed = Date.now() - startTimeRef.current;
       // brief suspense
       await new Promise((r) => setTimeout(r, 300));
-      const result = await submitAnswer(key, elapsed);
-      if (result) setShowResult(true);
+      await submitAnswer(key, elapsed);
+      // Don't setShowResult here — wait for isClosed via Realtime
     },
     [hasResponded, isSubmitting, isClosed, submitAnswer]
   );
@@ -84,7 +92,7 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
     window.dispatchEvent(new CustomEvent("newton-prefill", { detail: { message: msg, messageType: "concept_check_explanation" } }));
   }, [activeCheck, myResponse]);
 
-  if (!activeCheck) return null;
+  if (!activeCheck || dismissed) return null;
 
   const options = [
     activeCheck.option_a,

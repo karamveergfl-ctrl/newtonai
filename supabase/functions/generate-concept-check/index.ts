@@ -207,12 +207,14 @@ serve(async (req) => {
       const cooldownMs = 60_000;
       if (elapsed < cooldownMs) {
         const retryAfter = Math.ceil((cooldownMs - elapsed) / 1000);
+        // Return 200 so supabase.functions.invoke passes data to caller
         return new Response(
           JSON.stringify({
+            success: false,
             error: "Please wait before starting another check",
             retry_after_seconds: retryAfter,
           }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }

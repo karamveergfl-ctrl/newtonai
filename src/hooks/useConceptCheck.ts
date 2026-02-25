@@ -296,7 +296,25 @@ export function useConceptCheck({ sessionId, role, slideContext }: UseConceptChe
         },
         (payload) => {
           if (payload.eventType === "INSERT" && role === "student") {
-            const check = payload.new as ConceptCheck;
+            const raw = payload.new as Record<string, unknown>;
+            // Strip correct_answer and explanation from Realtime payload
+            // to prevent students from seeing the answer while check is active
+            const check: ConceptCheck = {
+              id: raw.id as string,
+              session_id: raw.session_id as string,
+              question: raw.question as string,
+              option_a: raw.option_a as string,
+              option_b: raw.option_b as string,
+              option_c: raw.option_c as string,
+              option_d: raw.option_d as string,
+              correct_answer: "" as ConceptCheck["correct_answer"], // hidden
+              explanation: null,
+              slide_context: null,
+              status: "active",
+              duration_seconds: (raw.duration_seconds as number) || 30,
+              created_at: raw.created_at as string,
+              closed_at: null,
+            };
             setActiveCheck(check);
             setIsClosed(false);
             setMyResponse(null);
@@ -306,13 +324,21 @@ export function useConceptCheck({ sessionId, role, slideContext }: UseConceptChe
           }
 
           if (payload.eventType === "UPDATE") {
-            const updated = payload.new as ConceptCheck;
+            const updated = payload.new as Record<string, unknown>;
             if (updated.status === "closed") {
               setIsClosed(true);
               clearTimer();
-              setActiveCheck((prev) =>
-                prev?.id === updated.id ? { ...prev, ...updated } : prev
-              );
+              // Now that check is closed, populate correct_answer and explanation
+              setActiveCheck((prev) => {
+                if (!prev || prev.id !== updated.id) return prev;
+                return {
+                  ...prev,
+                  status: "closed" as const,
+                  correct_answer: (updated.correct_answer as string) as ConceptCheck["correct_answer"],
+                  explanation: (updated.explanation as string) || null,
+                  closed_at: (updated.closed_at as string) || null,
+                };
+              });
             }
           }
         }
