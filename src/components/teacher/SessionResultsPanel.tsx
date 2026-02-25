@@ -13,6 +13,7 @@ interface SessionResultsPanelProps {
 }
 
 export function SessionResultsPanel({ sessionId, sessionTitle }: SessionResultsPanelProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { pulseSummary, topQuestions, totalQuestions, isLoading: summaryLoading, isExporting, exportSummaryAsPDF, totalConceptChecks, avgCorrectPercentage, hardestCheck, conceptChecks, conceptResultsMap } = useSessionSummary({ sessionId });
