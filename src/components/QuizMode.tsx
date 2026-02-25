@@ -480,7 +480,7 @@ export const QuizMode = ({
           </div>
         </div>
         <div className="max-w-2xl mx-auto mt-2">
-          <Progress value={progress} className="h-1.5 md:h-2" />
+          <Progress value={progress} className="h-1.5 md:h-2 [&>div]:transition-all [&>div]:duration-500" />
         </div>
       </div>
 
@@ -488,9 +488,9 @@ export const QuizMode = ({
       <div className="flex-1 overflow-auto p-2 md:p-4 pb-28 md:pb-24 bg-muted/30">
         <div className="max-w-3xl mx-auto space-y-3 md:space-y-6">
           {/* Question Card - Compact on mobile */}
-          <div className="bg-card rounded-lg p-3 md:p-6 border shadow-sm">
-            <p className="text-sm md:text-xl font-semibold leading-relaxed">
-              <span className="text-muted-foreground mr-1 md:mr-2 text-xs md:text-base">Q{currentIndex + 1}.</span>
+          <div className="bg-card rounded-xl p-3 md:p-6 border border-border shadow-sm">
+            <p className="text-sm md:text-xl font-semibold leading-snug">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mr-1 md:mr-2">Question {currentIndex + 1}</span>
               <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                 {currentQuestion.question}
               </ReactMarkdown>
@@ -509,13 +509,13 @@ export const QuizMode = ({
               let borderStyle = "border-transparent";
               
               if (showResult && isCorrectOption) {
-                optionBg = "bg-green-100 dark:bg-green-900/30";
-                badgeBg = "bg-green-600 text-white";
+                optionBg = "bg-green-950/30";
+                badgeBg = "bg-green-700 text-white";
                 borderStyle = "border-green-500";
               } else if (showResult && isSelected && !isCorrectOption) {
-                optionBg = "bg-red-50 dark:bg-red-900/20";
-                badgeBg = "bg-muted text-muted-foreground";
-                borderStyle = "border-red-300";
+                optionBg = "bg-red-950/20";
+                badgeBg = "bg-red-700 text-white";
+                borderStyle = "border-red-500";
               } else if (isSelected && !showResult) {
                 optionBg = "bg-primary/10";
                 badgeBg = "bg-primary text-primary-foreground";
@@ -528,7 +528,7 @@ export const QuizMode = ({
                   onClick={() => handleSelectAnswer(index)}
                   disabled={showResult}
                   className={cn(
-                    "w-full p-2.5 md:p-4 rounded-lg border-2 text-left transition-all",
+                    "w-full p-2.5 md:p-4 rounded-xl border-2 text-left transition-all duration-150",
                     "flex items-start gap-2.5 md:gap-4",
                     optionBg,
                     borderStyle,
@@ -536,7 +536,7 @@ export const QuizMode = ({
                   )}
                 >
                   <span className={cn(
-                    "w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm shrink-0",
+                    "w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center font-bold text-xs md:text-sm shrink-0 transition-colors duration-150",
                     badgeBg
                   )}>
                     {letter}

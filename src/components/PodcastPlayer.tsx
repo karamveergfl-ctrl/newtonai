@@ -297,7 +297,7 @@ export function PodcastPlayer({
       )}
     >
       <Card className={cn(
-        "p-3 sm:p-6 bg-gradient-to-br from-primary/5 via-background to-secondary/5 border-primary/20",
+        "p-4 sm:p-6 bg-gradient-to-br from-primary/5 via-background to-secondary/5 border-border rounded-2xl",
         isFullscreen && "max-w-4xl w-full"
       )}>
         {/* Header */}
@@ -447,7 +447,7 @@ export function PodcastPlayer({
           
           <Button
             size="lg"
-            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary hover:bg-primary/90"
+            className="w-14 h-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30"
             onClick={toggle}
             disabled={isLoading}
           >

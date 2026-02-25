@@ -22,8 +22,8 @@ export const NewtonTriggerButton = memo(function NewtonTriggerButton({
         "relative flex items-center justify-center",
         "w-14 h-14 rounded-full",
         "bg-gradient-to-br from-primary to-primary/80",
-        "shadow-lg shadow-primary/25",
-        "hover:shadow-xl hover:shadow-primary/30",
+        "shadow-lg shadow-primary/30",
+        "hover:shadow-xl hover:shadow-primary/40",
         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
         "transition-all duration-200"
       )}

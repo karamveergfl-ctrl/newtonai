@@ -143,7 +143,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   return (
     <div className="flex flex-col h-full bg-background rounded-none border-0 shadow-none sm:rounded-2xl sm:border sm:shadow-2xl overflow-hidden min-w-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
+      <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 border-b bg-card/80 backdrop-blur-sm">
         <div className="flex items-center gap-2.5">
           {showSidebarToggle && onToggleSidebar && (
             <Button
@@ -178,7 +178,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 px-4 py-3 min-w-0" ref={scrollRef}>
+      <ScrollArea className="flex-1 px-4 py-3 min-w-0 bg-background/50" ref={scrollRef}>
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full py-8 text-center">
             <LottieNewton state="sleeping" size="sm" />

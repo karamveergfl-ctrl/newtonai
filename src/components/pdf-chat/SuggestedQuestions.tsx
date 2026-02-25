@@ -44,7 +44,7 @@ export function SuggestedQuestions({ onSelect, disabled }: SuggestedQuestionsPro
           size="sm"
           onClick={() => onSelect(suggestion.question)}
           disabled={disabled}
-          className="gap-1.5 text-xs hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-colors"
+          className="gap-1.5 text-xs rounded-xl px-4 py-2.5 hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-all duration-150"
         >
           <suggestion.icon className="w-3.5 h-3.5" />
           {suggestion.label}
