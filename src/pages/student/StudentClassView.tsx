@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveMaterialUrl } from "@/utils/materialUrl";
 import { useAssignments, Submission } from "@/hooks/useAssignments";
 import { LiveQuizTaker } from "@/components/student/LiveQuizTaker";
 import { StudentQuizTaker } from "@/components/student/StudentQuizTaker";
@@ -274,15 +275,16 @@ const StudentClassView = () => {
                     const borderColor = materialBorderColors[typeKey] || materialBorderColors.default;
                     return (
                       <motion.div key={m.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                        <Card className={`border-l-4 ${borderColor} border-border/50 ${m.content_ref ? "cursor-pointer hover:border-primary/30 transition-colors" : ""}`} onClick={() => {
+                        <Card className={`border-l-4 ${borderColor} border-border/50 ${m.content_ref ? "cursor-pointer hover:border-primary/30 transition-colors" : ""}`} onClick={async () => {
                           if (!m.content_ref) return;
+                          const url = await resolveMaterialUrl(m.content_ref);
                           const type = m.material_type.toLowerCase();
                           if (type === "pdf" || type === "document") {
-                            navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title, returnTo: `/student/classes/${id}`, isPdf: true } });
+                            navigate("/dashboard", { state: { materialUrl: url, materialName: m.title, returnTo: `/student/classes/${id}`, isPdf: true } });
                           } else if (type === "video" || isYouTubeUrl(m.content_ref)) {
-                            navigate("/dashboard", { state: { materialVideoUrl: m.content_ref, materialName: m.title, returnTo: `/student/classes/${id}` } });
+                            navigate("/dashboard", { state: { materialVideoUrl: url, materialName: m.title, returnTo: `/student/classes/${id}` } });
                           } else {
-                            window.open(m.content_ref, "_blank", "noopener,noreferrer");
+                            window.open(url, "_blank", "noopener,noreferrer");
                           }
                         }}>
                           <CardContent className="flex items-center justify-between py-3 px-4">
@@ -294,7 +296,7 @@ const StudentClassView = () => {
                               </div>
                             </div>
                             {m.content_ref && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => { e.stopPropagation(); window.open(m.content_ref, "_blank", "noopener,noreferrer"); }}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={async (e) => { e.stopPropagation(); const url = await resolveMaterialUrl(m.content_ref!); window.open(url, "_blank", "noopener,noreferrer"); }}>
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
                             )}

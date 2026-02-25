@@ -46,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { resolveMaterialUrl } from "@/utils/materialUrl";
 
 interface ClassInfo {
   id: string;
@@ -426,15 +427,16 @@ const ClassDetail = () => {
                   const typeIcons: Record<string, typeof FileText> = { pdf: File, link: LinkIcon, video: Video, document: FileText, default: FileText };
                   const Icon = typeIcons[m.material_type.toLowerCase()] || typeIcons.default;
                   const isYouTube = m.content_ref && /youtube\.com|youtu\.be/i.test(m.content_ref);
-                  const openMaterial = () => {
+                  const openMaterial = async () => {
                     if (!m.content_ref) return;
+                    const url = await resolveMaterialUrl(m.content_ref);
                     const type = m.material_type.toLowerCase();
                     if (type === "pdf" || type === "document") {
-                      navigate("/dashboard", { state: { materialUrl: m.content_ref, materialName: m.title, returnTo: `/teacher/classes/${id}`, isPdf: true } });
+                      navigate("/dashboard", { state: { materialUrl: url, materialName: m.title, returnTo: `/teacher/classes/${id}`, isPdf: true } });
                     } else if (type === "video" || isYouTube) {
-                      navigate("/dashboard", { state: { materialVideoUrl: m.content_ref, materialName: m.title, returnTo: `/teacher/classes/${id}` } });
+                      navigate("/dashboard", { state: { materialVideoUrl: url, materialName: m.title, returnTo: `/teacher/classes/${id}` } });
                     } else {
-                      window.open(m.content_ref, "_blank", "noopener,noreferrer");
+                      window.open(url, "_blank", "noopener,noreferrer");
                     }
                   };
                   return (
@@ -554,8 +556,8 @@ function AddMaterialDialog({ classId, onAdded }: { classId: string; onAdded: () 
         toast.error("File upload failed. Saving as reference only.");
         finalRef = file.name;
       } else {
-        const { data: urlData } = supabase.storage.from("class-materials").getPublicUrl(filePath);
-        finalRef = urlData.publicUrl;
+        // Store the storage path (not public URL) so we can generate signed URLs
+        finalRef = `storage://class-materials/${filePath}`;
       }
       setUploading(false);
     }
