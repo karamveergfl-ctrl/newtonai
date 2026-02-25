@@ -9,12 +9,12 @@ interface ComparisonTableProps {
 const ComparisonTable = ({ competitor }: ComparisonTableProps) => {
   const competitorData = competitors[competitor];
 
-  const renderValue = (value: boolean | string) => {
+  const renderValue = (value: boolean | string, isNewton = false) => {
     if (value === true) {
-      return <Check className="h-5 w-5 text-green-500 mx-auto" />;
+      return <Check className="h-5 w-5 text-primary mx-auto" />;
     }
     if (value === false) {
-      return <X className="h-5 w-5 text-red-500 mx-auto" />;
+      return <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />;
     }
     return <span className="text-sm text-muted-foreground">{value}</span>;
   };
@@ -43,10 +43,10 @@ const ComparisonTable = ({ competitor }: ComparisonTableProps) => {
           {featureComparison.map((row, index) => (
             <TableRow 
               key={row.feature}
-              className={index % 2 === 0 ? "bg-background" : "bg-muted/20"}
+              className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}
             >
               <TableCell className="font-medium">{row.feature}</TableCell>
-              <TableCell className="text-center">{renderValue(row.newton)}</TableCell>
+              <TableCell className="text-center bg-primary/[0.03]">{renderValue(row.newton, true)}</TableCell>
               <TableCell className="text-center">{renderValue(row[competitor])}</TableCell>
             </TableRow>
           ))}

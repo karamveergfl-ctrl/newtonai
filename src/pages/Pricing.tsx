@@ -212,7 +212,7 @@ const Pricing = () => {
       
       <Header />
 
-      <main className="container mx-auto px-4 py-12 sm:py-16 relative z-10">
+      <main className="container mx-auto px-4 py-20 md:py-28 lg:py-32 relative z-10">
         {/* Header Section */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
@@ -220,10 +220,10 @@ const Pricing = () => {
             Choose Your Plan
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3 tracking-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 tracking-tight leading-tight font-display">
             Simple, Transparent Pricing
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Choose the plan that fits your learning needs. Upgrade or downgrade anytime.
           </p>
         </div>

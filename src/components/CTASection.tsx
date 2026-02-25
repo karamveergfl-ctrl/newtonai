@@ -20,7 +20,7 @@ export const CTASection = ({
   secondaryButtonLink = "/pricing",
 }: CTASectionProps) => {
   return (
-    <section id="footer-cta-section" className="py-16 md:py-20 px-4 relative overflow-hidden">
+    <section id="footer-cta-section" className="py-16 md:py-20 lg:py-24 px-4 relative overflow-hidden border-t border-border/30">
       {/* Static background decorations */}
       <div className="absolute top-0 -right-40 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl pointer-events-none opacity-20" />
       <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl pointer-events-none opacity-20" />
@@ -42,13 +42,13 @@ export const CTASection = ({
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="group">
+              <Button asChild size="lg" className="h-12 px-8 text-base font-medium rounded-lg group">
                 <Link to={primaryButtonLink}>
                   {primaryButtonText}
                   <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
+              <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base font-medium rounded-lg">
                 <Link to={secondaryButtonLink}>{secondaryButtonText}</Link>
               </Button>
             </div>
