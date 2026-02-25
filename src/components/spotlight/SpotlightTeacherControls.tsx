@@ -1,24 +1,20 @@
-import { useState } from "react";
-import { useSpotlightSync } from "@/hooks/useSpotlightSync";
 import { SpotlightSyncIndicator } from "./SpotlightSyncIndicator";
+import type { SpotlightSyncStats } from "@/types/liveSession";
 
 interface SpotlightTeacherControlsProps {
   sessionId: string;
+  spotlightEnabled: boolean;
+  teacherSlideTitle: string;
+  syncStats: SpotlightSyncStats | null;
+  onToggleSpotlight: (enabled: boolean) => void;
 }
 
-export function SpotlightTeacherControls({ sessionId }: SpotlightTeacherControlsProps) {
-  const { spotlightEnabled, teacherSlideTitle, updateSlideContent } = useSpotlightSync({
-    sessionId,
-    role: "teacher",
-  });
-  const [enabled, setEnabled] = useState(spotlightEnabled);
-
-  const handleToggle = async () => {
-    const next = !enabled;
-    setEnabled(next);
-    await updateSlideContent(0, "", "");
-  };
-
+export function SpotlightTeacherControls({
+  spotlightEnabled,
+  teacherSlideTitle,
+  syncStats,
+  onToggleSpotlight,
+}: SpotlightTeacherControlsProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -27,25 +23,25 @@ export function SpotlightTeacherControls({ sessionId }: SpotlightTeacherControls
           <span>Spotlight</span>
         </div>
         <button
-          onClick={handleToggle}
+          onClick={() => onToggleSpotlight(!spotlightEnabled)}
           className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${
-            enabled ? "bg-teal-500" : "bg-gray-600"
+            spotlightEnabled ? "bg-teal-500" : "bg-gray-600"
           }`}
-          aria-label={enabled ? "Disable spotlight" : "Enable spotlight"}
+          aria-label={spotlightEnabled ? "Disable spotlight" : "Enable spotlight"}
           role="switch"
-          aria-checked={enabled}
+          aria-checked={spotlightEnabled}
         >
           <span
             className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${
-              enabled ? "translate-x-5" : "translate-x-0"
+              spotlightEnabled ? "translate-x-5" : "translate-x-0"
             }`}
           />
         </button>
       </div>
 
-      {enabled ? (
+      {spotlightEnabled ? (
         <div className="space-y-2">
-          <SpotlightSyncIndicator sessionId={sessionId} />
+          <SpotlightSyncIndicator syncStats={syncStats} />
           {teacherSlideTitle && (
             <p className="text-xs text-gray-400 truncate">
               Showing: <span className="text-gray-200">{teacherSlideTitle}</span>
