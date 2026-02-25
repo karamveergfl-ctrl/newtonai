@@ -1,10 +1,12 @@
-import { useState, useRef, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { MessageSquare, X } from "lucide-react";
 import { PulseWidget } from "./PulseWidget";
 import { QuestionWall } from "./QuestionWall";
 import { ConceptCheckOverlay } from "@/components/concept-check";
 import { StudentNotesDrawer } from "@/components/live-notes/StudentNotesDrawer";
+import { SpotlightToggle, SpotlightSlideView } from "@/components/spotlight";
+import { useLiveSession } from "@/contexts/LiveSessionContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +17,20 @@ interface StudentLiveViewProps {
 
 export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeView, setActiveView] = useState<"spotlight" | "session">("spotlight");
+  const [notification, setNotification] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const { spotlightEnabled } = useLiveSession();
+
+  // Auto-switch when teacher disables spotlight
+  useEffect(() => {
+    if (!spotlightEnabled) {
+      setActiveView("session");
+      setNotification("Spotlight view disabled by teacher");
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [spotlightEnabled]);
 
   const closeDrawer = () => {
     setDrawerOpen(false);
@@ -24,8 +39,32 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
 
   return (
     <div className="relative h-full w-full">
+      {/* Notification banner */}
+      {notification && (
+        <div className="absolute top-0 left-0 right-0 z-30 bg-amber-500/20 text-amber-300 text-xs text-center py-2 animate-fade-in">
+          {notification}
+        </div>
+      )}
+
+      {/* Spotlight toggle */}
+      {spotlightEnabled && (
+        <SpotlightToggle
+          sessionId={sessionId}
+          currentView={activeView}
+          onToggle={(spotlightActive) =>
+            setActiveView(spotlightActive ? "spotlight" : "session")
+          }
+        />
+      )}
+
       {/* Main content */}
-      <div className="h-full w-full overflow-auto">{children}</div>
+      <div className="h-full w-full overflow-auto">
+        {activeView === "spotlight" && spotlightEnabled ? (
+          <SpotlightSlideView sessionId={sessionId} role="student" />
+        ) : (
+          <div className="h-full w-full">{children}</div>
+        )}
+      </div>
 
       {/* Pulse widget */}
       <PulseWidget sessionId={sessionId} />

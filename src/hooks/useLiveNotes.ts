@@ -5,6 +5,7 @@ import type { SessionSlideNotes } from "@/types/liveSession";
 interface UseLiveNotesProps {
   sessionId: string;
   role: "teacher" | "student";
+  onSlideAdvance?: (index: number, content: string, title: string) => void;
 }
 
 interface UseLiveNotesReturn {
@@ -34,7 +35,7 @@ function parseSlideNote(row: Record<string, unknown>): SessionSlideNotes {
   };
 }
 
-export function useLiveNotes({ sessionId, role }: UseLiveNotesProps): UseLiveNotesReturn {
+export function useLiveNotes({ sessionId, role, onSlideAdvance }: UseLiveNotesProps): UseLiveNotesReturn {
   const [slideNotesMap, setSlideNotesMap] = useState<Record<number, SessionSlideNotes>>({});
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [totalSlides, setTotalSlides] = useState(0);
@@ -254,6 +255,9 @@ export function useLiveNotes({ sessionId, role }: UseLiveNotesProps): UseLiveNot
         console.error("advanceToSlide error:", err);
       }
 
+      // Notify spotlight of new slide content
+      onSlideAdvance?.(slideIndex, slideContext, slideTitle ?? "");
+
       // Generate notes AND term definitions in parallel
       const [notesResult, termsResult] = await Promise.allSettled([
         generateForSlide(slideIndex, slideContext, slideTitle),
@@ -279,7 +283,7 @@ export function useLiveNotes({ sessionId, role }: UseLiveNotesProps): UseLiveNot
         }
       }
     },
-    [role, sessionId, generateForSlide]
+    [role, sessionId, generateForSlide, onSlideAdvance]
   );
 
   const retrySlideGeneration = useCallback(

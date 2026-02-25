@@ -101,13 +101,18 @@ export function TermDefinitionsSidebar({ sessionId, slideIndex }: TermDefinition
 
         {!showSkeleton && !error && definitions?.status === "ready" && definitions.terms.length > 0 && (
           definitions.terms.map((term, idx) => (
-            <TermDefinitionItem
+            <div
               key={`${definitions.slide_index}-${idx}`}
-              term={term}
-              index={idx}
-              isExpanded={expandedTermIndex === idx}
-              onToggle={expandTerm}
-            />
+              className="term-stagger-item"
+              style={{ animationDelay: `${idx * 50}ms` }}
+            >
+              <TermDefinitionItem
+                term={term}
+                index={idx}
+                isExpanded={expandedTermIndex === idx}
+                onToggle={expandTerm}
+              />
+            </div>
           ))
         )}
       </div>
@@ -121,6 +126,13 @@ export function TermDefinitionsSidebar({ sessionId, slideIndex }: TermDefinition
         @keyframes sidebar-shimmer {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
+        }
+        @keyframes term-fade-in {
+          from { opacity: 0; transform: translateX(8px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .term-stagger-item {
+          animation: term-fade-in 0.25s ease-out both;
         }
       `}</style>
     </div>
