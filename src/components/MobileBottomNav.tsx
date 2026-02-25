@@ -1,4 +1,4 @@
-import { memo, useRef, useCallback } from "react";
+import { memo, useRef, useCallback, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Home, Camera, LayoutGrid, User, School } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -6,6 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserRole } from "@/hooks/useUserRole";
 import newtonChatAvatar from "@/assets/newton-chat-avatar-sm.webp";
 import { getNewtonOpenFn } from "@/lib/newtonOpenRef";
+import { supabase } from "@/integrations/supabase/client";
 
 const PUBLIC_ROUTES = ["/", "/auth", "/onboarding", "/pricing", "/about", "/contact", "/privacy", "/terms", "/refund", "/faq", "/features", "/how-it-works", "/blog", "/guides", "/enterprise", "/compare", "/ai-for-students", "/ai-study-assistant", "/ai-notes-generator", "/pdf-study-tool", "/ai-quiz-generator", "/exam-preparation-ai", "/about-newtonai-for-ai"];
 
@@ -62,7 +63,35 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { isTeacher } = useUserRole();
+  const { isTeacher, isStudent } = useUserRole();
+
+  // Check for active live sessions (student only)
+  const [hasLiveSession, setHasLiveSession] = useState(false);
+  useEffect(() => {
+    if (!isStudent) { setHasLiveSession(false); return; }
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      // Find any active session in enrolled classes
+      const { data: enrollments } = await supabase
+        .from("class_enrollments")
+        .select("class_id")
+        .eq("student_id", user.id)
+        .eq("status", "active");
+      if (!enrollments || enrollments.length === 0) { setHasLiveSession(false); return; }
+      const classIds = enrollments.map((e) => e.class_id);
+      const { data: sessions } = await supabase
+        .from("live_sessions" as any)
+        .select("id")
+        .in("class_id", classIds)
+        .in("status", ["teaching", "quiz_active"])
+        .limit(1);
+      setHasLiveSession(!!(sessions && (sessions as unknown[]).length > 0));
+    };
+    check();
+    const interval = setInterval(check, 15000);
+    return () => clearInterval(interval);
+  }, [isStudent]);
 
   const isPublicRoute = PUBLIC_ROUTES.some(
     (r) => location.pathname === r || (r !== "/" && location.pathname.startsWith(r + "/"))
@@ -119,7 +148,7 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
           if (isCamera) {
             // Teachers get a "Classes" tab instead of camera
             if (isTeacher) {
-              const classesActive = location.pathname.startsWith("/teacher");
+              const classesActive = location.pathname.startsWith("/teacher") || location.pathname.startsWith("/student/class");
               return (
                 <button
                   key="classes"
@@ -190,8 +219,12 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
               )}
               aria-label={item.label}
             >
-              <div className={cn("transition-transform duration-200", isActive && "scale-110")}>
+              <div className={cn("relative transition-transform duration-200", isActive && "scale-110")}>
                 {item.icon}
+                {/* Live session indicator for student Home tab */}
+                {hasLiveSession && item.label === "Home" && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                )}
               </div>
               <span className="text-[10px] font-medium">{item.label}</span>
               <div className={cn(

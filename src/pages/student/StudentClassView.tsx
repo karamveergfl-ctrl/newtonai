@@ -15,6 +15,9 @@ import { Button } from "@/components/ui/button";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
 import { AssignmentStatusBadge } from "@/components/student/AssignmentStatusBadge";
+import { LiveSessionProvider } from "@/contexts/LiveSessionContext";
+import { StudentLiveView } from "@/components/live-session";
+import { LiveSessionBadge } from "@/components/live-session";
 
 interface Material {
   id: string;
@@ -92,11 +95,13 @@ const StudentClassView = () => {
     fetchMySubmissions(id).then(setMySubmissions);
   }, [id, assignments]);
 
-  // Poll for active live session
+  // Poll for active live session (teaching or quiz_active)
+  const [teachingSession, setTeachingSession] = useState<any>(null);
   useEffect(() => {
     if (!id) return;
     const pollSession = async () => {
-      const { data } = await supabase
+      // Get quiz_active session for quiz taking
+      const { data: quizData } = await supabase
         .from("live_sessions" as any)
         .select("*")
         .eq("class_id", id)
@@ -104,7 +109,18 @@ const StudentClassView = () => {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      setLiveSession(data);
+      setLiveSession(quizData);
+
+      // Get teaching session for pulse/questions
+      const { data: teachData } = await supabase
+        .from("live_sessions" as any)
+        .select("*")
+        .eq("class_id", id)
+        .in("status", ["teaching", "quiz_active"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setTeachingSession(teachData);
     };
     pollSession();
     const interval = setInterval(pollSession, 5000);
@@ -147,6 +163,9 @@ const StudentClassView = () => {
             <div className="flex flex-wrap items-center gap-2 mt-1">
               {classInfo?.subject && <Badge variant="secondary" className="text-xs">{classInfo.subject}</Badge>}
               {classInfo?.academic_year && <Badge variant="outline" className="text-xs">{classInfo.academic_year}</Badge>}
+              {teachingSession && (
+                <LiveSessionBadge sessionId={teachingSession.id} role="student" label={classInfo?.name} />
+              )}
             </div>
           </div>
         </motion.div>
@@ -197,6 +216,23 @@ const StudentClassView = () => {
             timeLimitMinutes={liveSession.time_limit_minutes}
             onComplete={(score, total) => { setTakingQuiz(false); setQuizResult({ score, total }); }}
           />
+        )}
+
+        {/* Wrap content with StudentLiveView when a teaching session is active */}
+        {teachingSession && !takingQuiz && (
+          <LiveSessionProvider
+            sessionId={teachingSession.id}
+            role="student"
+            initialSettings={{
+              pulse_enabled: teachingSession.pulse_enabled,
+              questions_enabled: teachingSession.questions_enabled,
+              confusion_threshold: teachingSession.confusion_threshold,
+            }}
+          >
+            <StudentLiveView sessionId={teachingSession.id}>
+              <div />
+            </StudentLiveView>
+          </LiveSessionProvider>
         )}
 
         {!takingQuiz && (

@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Radio, FileText, Youtube, Type } from "lucide-react";
@@ -25,6 +27,11 @@ export function LiveSessionDialog({ classId, onSessionStarted, children }: LiveS
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [extracting, setExtracting] = useState(false);
+
+  // Session interaction settings
+  const [pulseEnabled, setPulseEnabled] = useState(true);
+  const [questionsEnabled, setQuestionsEnabled] = useState(true);
+  const [confusionThreshold, setConfusionThreshold] = useState(40);
 
   const extractFromFile = async (f: File): Promise<{ text: string; title: string }> => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -81,6 +88,9 @@ export function LiveSessionDialog({ classId, onSessionStarted, children }: LiveS
         content_text: contentText,
         content_title: contentTitle,
         status: "teaching",
+        pulse_enabled: pulseEnabled,
+        questions_enabled: questionsEnabled,
+        confusion_threshold: confusionThreshold,
       } as any);
 
       if (error) { toast.error("Failed to start session"); console.error(error); setLoading(false); return; }
@@ -163,6 +173,34 @@ export function LiveSessionDialog({ classId, onSessionStarted, children }: LiveS
                 />
               </TabsContent>
             </Tabs>
+          </div>
+
+          {/* Interaction Settings */}
+          <div className="space-y-3 border border-border rounded-lg p-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Interaction Settings</p>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="pulse-toggle" className="text-sm">Enable Live Pulse</Label>
+              <Switch id="pulse-toggle" checked={pulseEnabled} onCheckedChange={setPulseEnabled} />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="questions-toggle" className="text-sm">Enable Question Wall</Label>
+              <Switch id="questions-toggle" checked={questionsEnabled} onCheckedChange={setQuestionsEnabled} />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <Label className="text-sm">Confusion Alert Threshold</Label>
+                <span className="text-xs font-medium text-muted-foreground">{confusionThreshold}%</span>
+              </div>
+              <Slider
+                value={[confusionThreshold]}
+                onValueChange={([v]) => setConfusionThreshold(v)}
+                min={20}
+                max={80}
+                step={5}
+                className="w-full"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">Alert when {confusionThreshold}% of students signal confusion</p>
+            </div>
           </div>
 
           <Button onClick={handleStart} disabled={loading} className="w-full">
