@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, BookOpen, AlertTriangle, CheckCircle2, XCircle, MessageSquare, ThumbsUp, Download } from "lucide-react";
+import { Loader2, Users, BookOpen, AlertTriangle, CheckCircle2, XCircle, MessageSquare, ThumbsUp, Download, Zap } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useSessionSummary } from "@/hooks/useSessionSummary";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ interface SessionResultsPanelProps {
 export function SessionResultsPanel({ sessionId, sessionTitle }: SessionResultsPanelProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { pulseSummary, topQuestions, totalQuestions, isLoading: summaryLoading, isExporting, exportSummaryAsPDF } = useSessionSummary({ sessionId });
+  const { pulseSummary, topQuestions, totalQuestions, isLoading: summaryLoading, isExporting, exportSummaryAsPDF, totalConceptChecks, avgCorrectPercentage, hardestCheck, conceptChecks, conceptResultsMap } = useSessionSummary({ sessionId });
 
   useEffect(() => {
     const fetch = async () => {
@@ -116,6 +116,57 @@ export function SessionResultsPanel({ sessionId, sessionTitle }: SessionResultsP
                   </div>
                 ))}
               </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Concept Checks Summary */}
+      {!summaryLoading && (
+        <Card className="border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Zap className="h-4 w-4" /> Concept Checks
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {totalConceptChecks === 0 ? (
+              <div className="text-center py-3">
+                <p className="text-sm text-muted-foreground">No concept checks were run this session</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tip: Use ⚡ Check Understanding during your next lecture to gauge student understanding in real-time
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{totalConceptChecks} check{totalConceptChecks > 1 ? "s" : ""} run</span>
+                  <span className={`font-bold ${avgCorrectPercentage >= 70 ? "text-green-500" : avgCorrectPercentage >= 40 ? "text-amber-500" : "text-red-500"}`}>
+                    {avgCorrectPercentage}% avg correct
+                  </span>
+                </div>
+                {hardestCheck && conceptResultsMap[hardestCheck.id]?.correct_percentage < 60 && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 flex items-start gap-2 text-xs text-amber-300">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>Hardest: "{hardestCheck.question.split(" ").slice(0, 8).join(" ")}…" — consider reviewing next class</span>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {conceptChecks.map((check) => {
+                    const r = conceptResultsMap[check.id];
+                    if (!r) return null;
+                    const pct = r.correct_percentage;
+                    return (
+                      <div key={check.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-muted/30 text-xs">
+                        <span className="truncate flex-1 mr-2">{check.question}</span>
+                        <Badge className={`text-[10px] ${pct >= 70 ? "bg-green-500/15 text-green-400" : pct >= 40 ? "bg-amber-500/15 text-amber-400" : "bg-red-500/15 text-red-400"}`}>
+                          {Math.round(pct)}%
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

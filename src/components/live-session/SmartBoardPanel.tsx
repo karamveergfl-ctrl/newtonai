@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, type ReactNode } from "react";
 import { useLiveSession } from "@/contexts/LiveSessionContext";
 import { PulseMeter } from "./PulseMeter";
 import { QuestionWall } from "./QuestionWall";
+import { SmartBoardConceptCheckPanel } from "@/components/concept-check";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Maximize, Minimize, X } from "lucide-react";
@@ -35,12 +36,14 @@ export function SmartBoardPanel({
     questionsEnabled,
     currentSlideContent,
     updateSessionSettings,
+    activeConceptCheck,
   } = useLiveSession();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const startTimeRef = useRef(Date.now());
+  const hasActiveCheck = !!activeConceptCheck;
 
   // Timer
   useEffect(() => {
@@ -139,7 +142,7 @@ export function SmartBoardPanel({
 
       <div className="flex flex-1 min-h-0 w-full">
         {/* Main content area */}
-        <div className={cn("min-w-0 h-full overflow-auto", isFullscreen ? "w-[78%]" : "flex-1")}>
+        <div className={cn("min-w-0 h-full overflow-auto transition-all duration-300", isFullscreen ? (hasActiveCheck ? "w-[70%]" : "w-[78%]") : "flex-1")}>
           {isFullscreen ? (
             <div className="h-full text-lg">{children}</div>
           ) : (
@@ -150,12 +153,22 @@ export function SmartBoardPanel({
         {/* Interaction sidebar — hidden on mobile */}
         <aside
           className={cn(
-            "hidden lg:flex flex-col border-l border-border bg-card h-full shrink-0",
-            isFullscreen ? "w-[22%] text-base" : "w-[320px] xl:w-[360px]"
+            "hidden lg:flex flex-col border-l border-border bg-card h-full shrink-0 transition-all duration-300",
+            isFullscreen ? (hasActiveCheck ? "w-[30%]" : "w-[22%]") + " text-base" : "w-[320px] xl:w-[360px]"
           )}
         >
-          {/* Pulse Meter */}
+          {/* Concept Check */}
           <div className="p-3 shrink-0">
+            <SmartBoardConceptCheckPanel
+              sessionId={sessionId}
+              slideContext={currentSlideContent || ""}
+            />
+          </div>
+
+          <div className="border-t border-border" />
+
+          {/* Pulse Meter */}
+          <div className={cn("p-3 shrink-0 transition-opacity duration-300", hasActiveCheck && "opacity-50")}>
             <PulseMeter sessionId={sessionId} confusionThreshold={confusionThreshold} />
           </div>
 

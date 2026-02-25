@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { PulseSummary, LiveQuestion } from "@/types/liveSession";
+import type { PulseSummary, LiveQuestion, ConceptCheck, ConceptCheckResults } from "@/types/liveSession";
 import jsPDF from "jspdf";
 
 interface UseSessionSummaryProps {
@@ -21,6 +21,11 @@ export function useSessionSummary({ sessionId }: UseSessionSummaryProps) {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [conceptChecks, setConceptChecks] = useState<ConceptCheck[]>([]);
+  const [conceptResultsMap, setConceptResultsMap] = useState<Record<string, ConceptCheckResults>>({});
+  const [totalConceptChecks, setTotalConceptChecks] = useState(0);
+  const [avgCorrectPercentage, setAvgCorrectPercentage] = useState(0);
+  const [hardestCheck, setHardestCheck] = useState<ConceptCheck | null>(null);
 
   useEffect(() => {
     if (!sessionId) {
@@ -66,6 +71,46 @@ export function useSessionSummary({ sessionId }: UseSessionSummaryProps) {
         }
 
         setTotalQuestions(countRes.count ?? 0);
+
+        // Fetch concept checks
+        const { data: checks } = await supabase
+          .from("concept_checks" as any)
+          .select("*")
+          .eq("session_id", sessionId)
+          .order("created_at", { ascending: true });
+
+        if (checks && (checks as unknown[]).length > 0) {
+          const typedChecks = checks as unknown as ConceptCheck[];
+          setConceptChecks(typedChecks);
+          setTotalConceptChecks(typedChecks.length);
+
+          // Fetch results for each check
+          const resultsMap: Record<string, ConceptCheckResults> = {};
+          let totalPct = 0;
+          let lowestPct = 101;
+          let hardest: ConceptCheck | null = null;
+
+          for (const check of typedChecks) {
+            try {
+              const { data: resultData } = await supabase.rpc("get_concept_check_results", {
+                p_check_id: check.id,
+              });
+              if (resultData) {
+                const r = resultData as unknown as ConceptCheckResults;
+                resultsMap[check.id] = r;
+                totalPct += r.correct_percentage;
+                if (r.correct_percentage < lowestPct) {
+                  lowestPct = r.correct_percentage;
+                  hardest = check;
+                }
+              }
+            } catch {}
+          }
+
+          setConceptResultsMap(resultsMap);
+          setAvgCorrectPercentage(typedChecks.length > 0 ? Math.round(totalPct / typedChecks.length) : 0);
+          setHardestCheck(hardest);
+        }
       } catch (err) {
         console.error("useSessionSummary fetch error:", err);
       } finally {
@@ -169,7 +214,56 @@ export function useSessionSummary({ sessionId }: UseSessionSummaryProps) {
       }
       y += 6;
 
-      // Section 3: Session Stats
+      // Section 3: Concept Checks
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text("Concept Checks", 20, y);
+      y += 8;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+
+      if (totalConceptChecks === 0) {
+        doc.text("No concept checks were run this session.", 24, y);
+        y += 6;
+      } else {
+        doc.text(`Total checks run: ${totalConceptChecks}`, 24, y); y += 6;
+        doc.text(`Class average correct: ${avgCorrectPercentage}%`, 24, y); y += 8;
+
+        for (const check of conceptChecks) {
+          if (y > 260) { doc.addPage(); y = 20; }
+          const r = conceptResultsMap[check.id];
+          const qLines = doc.splitTextToSize(`Q: ${check.question}`, 160);
+          doc.setFont("helvetica", "bold");
+          doc.text(qLines, 24, y);
+          doc.setFont("helvetica", "normal");
+          y += qLines.length * 5 + 2;
+
+          const correctText = { a: check.option_a, b: check.option_b, c: check.option_c, d: check.option_d }[check.correct_answer];
+          doc.text(`Correct: ${check.correct_answer.toUpperCase()}) ${correctText}`, 28, y); y += 5;
+
+          if (r) {
+            doc.text(`${Math.round(r.correct_percentage)}% answered correctly (${r.total_responses} responses)`, 28, y); y += 5;
+          }
+
+          if (check.explanation) {
+            const expLines = doc.splitTextToSize(`Explanation: ${check.explanation}`, 150);
+            doc.setFont("helvetica", "italic");
+            doc.text(expLines, 28, y);
+            doc.setFont("helvetica", "normal");
+            y += expLines.length * 5 + 2;
+          }
+          y += 4;
+        }
+
+        if (avgCorrectPercentage < 60) {
+          doc.text("⚠️ Recommendation: Review these topics before next class", 24, y);
+          y += 6;
+        }
+      }
+      y += 6;
+
+      // Section 4: Session Stats
       doc.setFontSize(13);
       doc.setFont("helvetica", "bold");
       doc.text("Session Stats", 20, y);
@@ -193,7 +287,10 @@ export function useSessionSummary({ sessionId }: UseSessionSummaryProps) {
     } finally {
       setIsExporting(false);
     }
-  }, [sessionId, pulseSummary, topQuestions, totalQuestions]);
+  }, [sessionId, pulseSummary, topQuestions, totalQuestions, conceptChecks, conceptResultsMap, totalConceptChecks, avgCorrectPercentage]);
 
-  return { pulseSummary, topQuestions, totalQuestions, isLoading, isExporting, exportSummaryAsPDF };
+  return {
+    pulseSummary, topQuestions, totalQuestions, isLoading, isExporting, exportSummaryAsPDF,
+    conceptChecks, conceptResultsMap, totalConceptChecks, avgCorrectPercentage, hardestCheck,
+  };
 }

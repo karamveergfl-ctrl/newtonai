@@ -28,12 +28,25 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
   const [showResult, setShowResult] = useState(false);
   const startTimeRef = useRef(Date.now());
 
-  // Reset start time when a new check arrives
+  // Reset start time and play sound cue when a new check arrives
   useEffect(() => {
     if (activeCheck) {
       startTimeRef.current = Date.now();
       setSelectedKey(null);
       setShowResult(false);
+      // Play subtle notification sound
+      try {
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.2);
+      } catch {}
     }
   }, [activeCheck?.id]);
 
@@ -84,7 +97,7 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
   const revealCorrect = showResult || isClosed || timedOut;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-concept-slide-up">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-overlay-rise">
       <div className="w-[90%] max-w-[500px] bg-gray-900 border border-gray-700 rounded-2xl p-5 shadow-2xl animate-concept-bounce-in">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
