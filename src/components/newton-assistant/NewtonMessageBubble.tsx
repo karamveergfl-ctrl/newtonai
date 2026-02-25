@@ -86,8 +86,8 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
         className={cn(
           "flex-1 rounded-2xl overflow-hidden",
           isUser
-            ? "max-w-[85%] bg-primary text-primary-foreground rounded-br-md px-3 py-2 sm:px-3.5 sm:py-2.5"
-            : "bg-muted/40 text-foreground rounded-bl-md px-3 py-2 min-w-0 max-w-full overflow-hidden"
+            ? "max-w-[85%] bg-primary text-primary-foreground rounded-br-sm px-4 py-3 sm:px-4 sm:py-3"
+            : "bg-muted/50 text-foreground rounded-bl-sm px-4 py-3 min-w-0 max-w-full overflow-hidden border border-border/30"
         )}
       >
         {isUser ? (
@@ -124,24 +124,24 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
               )
             ) : isStreaming ? (
               <motion.span
-                className="inline-flex gap-1"
+                className="inline-flex gap-1.5 px-2 py-1"
                 initial={{ opacity: 0.5 }}
                 animate={{ opacity: 1 }}
               >
                 <motion.span
-                  className="w-1.5 h-1.5 bg-current rounded-full"
-                  animate={{ scale: [1, 1.2, 1] }}
+                  className="w-2 h-2 bg-muted-foreground/60 rounded-full"
+                  animate={{ y: [0, -4, 0] }}
                   transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
                 />
                 <motion.span
-                  className="w-1.5 h-1.5 bg-current rounded-full"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
+                  className="w-2 h-2 bg-muted-foreground/60 rounded-full"
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
                 />
                 <motion.span
-                  className="w-1.5 h-1.5 bg-current rounded-full"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
+                  className="w-2 h-2 bg-muted-foreground/60 rounded-full"
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
                 />
               </motion.span>
             ) : null}

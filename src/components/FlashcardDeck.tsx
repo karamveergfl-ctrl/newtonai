@@ -337,7 +337,7 @@ export const FlashcardDeck = ({
           </div>
         </div>
         <div className="max-w-2xl mx-auto mt-2">
-          <Progress value={progress} className="h-1.5 md:h-2" />
+          <Progress value={progress} className="h-1.5 md:h-2 [&>div]:transition-all [&>div]:duration-500" />
         </div>
       </div>
 

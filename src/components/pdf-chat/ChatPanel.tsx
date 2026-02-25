@@ -320,10 +320,10 @@ export function ChatPanel({
                     )}
 
                     <div
-                      className={`p-3 rounded-lg ${
+                      className={`px-4 py-3 text-sm ${
                         msg.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                          ? 'bg-primary text-primary-foreground rounded-2xl rounded-tr-sm'
+                          : 'bg-muted rounded-2xl rounded-tl-sm border border-border/50'
                       }`}
                     >
                       {msg.role === 'assistant' ? (
@@ -479,7 +479,7 @@ export function ChatPanel({
       )}
 
       {/* Input */}
-      <div className="p-3 border-t flex gap-2">
+      <div className="p-3 border-t flex gap-2 bg-muted/30">
         {/* Voice toggle button */}
         <Button
           onClick={toggleVoiceMode}

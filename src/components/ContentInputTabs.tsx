@@ -382,9 +382,9 @@ export const ContentInputTabs = ({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1.5 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs font-medium transition-all duration-200 min-w-[70px] sm:min-w-[90px]",
+                  "flex flex-col items-center justify-center gap-1.5 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-xs font-medium transition-all duration-150 min-w-[70px] sm:min-w-[90px]",
                   activeTab === tab.id
-                    ? "bg-primary text-primary-foreground shadow-md"
+                    ? "bg-muted text-foreground font-semibold shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
@@ -437,8 +437,8 @@ export const ContentInputTabs = ({
                 className={cn(
                   "border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-all duration-200",
                   isDragActive
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50 hover:bg-accent/50"
+                    ? "border-primary bg-primary/5 scale-[1.01]"
+                    : "border-border hover:border-primary/50 hover:bg-accent/30"
                 )}
               >
                 <input {...getInputProps()} />

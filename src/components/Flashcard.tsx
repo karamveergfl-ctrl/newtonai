@@ -56,7 +56,7 @@ export const Flashcard = ({
           className={cn(
             "absolute inset-0 rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col items-center justify-center",
             "bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20",
-            "border-2 border-primary/30 shadow-xl",
+            "border-2 border-primary/30 shadow-xl shadow-primary/10",
             "min-h-[200px] sm:min-h-[280px]"
           )}
           style={{ backfaceVisibility: "hidden" }}
@@ -87,7 +87,7 @@ export const Flashcard = ({
           className={cn(
             "absolute inset-0 rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col items-center justify-center",
             "bg-gradient-to-br from-secondary/20 via-secondary/10 to-accent/20",
-            "border-2 border-secondary/30 shadow-xl",
+            "border-2 border-secondary/30 shadow-xl shadow-secondary/10",
             "min-h-[200px] sm:min-h-[280px]"
           )}
           style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}

@@ -20,7 +20,7 @@ export function CitationChip({ citation, onClick }: CitationChipProps) {
         <TooltipTrigger asChild>
           <Badge
             variant="secondary"
-            className="cursor-pointer hover:bg-primary/20 transition-colors gap-1 px-2 py-1"
+            className="cursor-pointer hover:bg-primary/20 transition-colors gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs"
             onClick={() => onClick(citation.pageNumber, citation.quote)}
           >
             <FileText className="w-3 h-3" />
