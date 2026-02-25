@@ -20,13 +20,13 @@ export const CTASection = ({
   secondaryButtonLink = "/pricing",
 }: CTASectionProps) => {
   return (
-    <section className="py-12 px-4 relative overflow-hidden">
+    <section id="footer-cta-section" className="py-16 md:py-20 px-4 relative overflow-hidden">
       {/* Static background decorations */}
       <div className="absolute top-0 -right-40 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl pointer-events-none opacity-20" />
       <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl pointer-events-none opacity-20" />
 
       <div className="container mx-auto relative z-10">
-        <div className="bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-3xl p-8 md:p-12 lg:p-16 border border-border/50">
+        <div className="bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-2xl p-8 md:p-12 lg:p-16 border border-border/50">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />

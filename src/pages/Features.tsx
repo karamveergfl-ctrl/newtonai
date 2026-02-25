@@ -119,7 +119,7 @@ const Features = () => {
       
       <Header />
       
-      <main className="container mx-auto px-4 py-10 sm:py-12">
+      <main className="container mx-auto px-4 py-12 sm:py-16">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
@@ -127,7 +127,7 @@ const Features = () => {
             Complete Study Suite
           </div>
           
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-6">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-6 tracking-tight">
             Powerful Features for Effective Learning
           </h1>
           
@@ -150,10 +150,10 @@ const Features = () => {
             {features.map((feature, index) => (
               <div 
                 key={index}
-                className="flex flex-col md:flex-row gap-6 p-6 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors"
+                className="flex flex-col md:flex-row gap-6 p-5 md:p-6 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200"
               >
                 <div className="flex-shrink-0">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
                     <feature.icon className="w-8 h-8 text-primary" />
                   </div>
                 </div>
@@ -184,7 +184,7 @@ const Features = () => {
           
           <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {integrationBenefits.map((benefit, index) => (
-              <div key={index} className="p-6 rounded-xl border border-border bg-card text-center">
+              <div key={index} className="p-5 md:p-6 rounded-xl border border-border bg-card text-center hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200">
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                   <benefit.icon className="w-7 h-7 text-primary" />
                 </div>
@@ -220,7 +220,7 @@ const Features = () => {
           <div className="mt-10 max-w-4xl mx-auto overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-border bg-muted/50">
                   <th className="text-left py-4 px-4 font-semibold">Task</th>
                   <th className="text-left py-4 px-4 font-semibold">Traditional Method</th>
                   <th className="text-left py-4 px-4 font-semibold text-primary">With NewtonAI</th>
@@ -256,7 +256,7 @@ const Features = () => {
             </table>
           </div>
           
-          <div className="mt-8 bg-muted/50 rounded-lg p-6 max-w-3xl mx-auto">
+          <div className="mt-8 bg-muted/50 rounded-xl p-6 max-w-3xl mx-auto">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-muted-foreground">

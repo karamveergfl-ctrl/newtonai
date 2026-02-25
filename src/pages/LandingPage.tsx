@@ -91,7 +91,7 @@ const LandingPage = () => {
       <Header transparent />
       
       {/* Hero Section */}
-      <section id="hero-section" className="relative pt-12 pb-12 md:pt-14 md:pb-16 overflow-hidden">
+      <section id="hero-section" className="relative pt-16 pb-12 md:pt-24 md:pb-20 lg:pt-28 lg:pb-24 overflow-hidden">
         <div className="absolute top-20 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-bl from-secondary/20 to-accent/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
@@ -108,14 +108,14 @@ const LandingPage = () => {
               <Sparkles className="w-4 h-4" />
               AI-Powered Learning Assistant
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl text-foreground mb-8 leading-[1.1] tracking-tight font-serif font-semibold text-center md:text-7xl">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-foreground mb-8 leading-[1.08] tracking-tight font-display font-bold text-center">
               Stop Switching Apps.
               <br />
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 Start Mastering Subjects.
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed font-extrabold text-center font-sans">
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed font-normal text-center">
               Why juggle YouTube, AI tools, notes apps, and random resources?
               <br className="hidden md:block" />
               NewtonAI unifies everything into one intelligent learning ecosystem — whether you're a student or teacher, designed to help you{" "}
@@ -154,7 +154,7 @@ const LandingPage = () => {
       </section>
 
       {/* Problem + Solution Combined Section */}
-      <section className="py-12 md:py-16">
+      <section className="py-16 md:py-20">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
             {/* Problem Card */}
@@ -164,7 +164,7 @@ const LandingPage = () => {
                 <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
                   <XCircle className="w-5 h-5 text-destructive" />
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground font-serif">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground font-display">
                   The Problem
                 </h2>
               </div>
@@ -188,7 +188,7 @@ const LandingPage = () => {
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <Zap className="w-5 h-5 text-primary" />
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground font-serif">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground font-display">
                   The Solution
                 </h2>
               </div>
@@ -209,7 +209,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-12 md:py-16 relative overflow-hidden">
+      <section className="py-16 md:py-20 relative overflow-hidden">
         <div className="absolute top-40 -right-32 w-72 h-72 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-20 -left-40 w-80 h-80 bg-gradient-to-tr from-secondary/10 to-transparent rounded-full blur-3xl pointer-events-none" />
         <div className="container mx-auto px-4 relative z-10">
@@ -217,22 +217,22 @@ const LandingPage = () => {
             <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4 border border-primary/20">
               All-in-One Platform
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground font-serif">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground font-display">
               Everything Students Need
             </h2>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
             {features.map((feature) =>
             <div
               key={feature.title}
-              className="relative rounded-2xl border border-border bg-card p-6 md:p-7 group hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden">
+              className="relative rounded-xl border border-border bg-card p-5 md:p-6 group hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden">
 
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative z-10">
-                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors duration-300">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors duration-300">
                     <feature.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-1.5 group-hover:text-primary transition-colors duration-300 font-serif">
+                  <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
                     {feature.title}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
@@ -244,13 +244,13 @@ const LandingPage = () => {
       </section>
 
       {/* Competitor Comparison */}
-      <section className="py-12 md:py-16 bg-muted/30">
+      <section className="py-16 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4 border border-primary/20">
               Side-by-Side
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground font-serif">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground font-display">
               Why NewtonAI Wins
             </h2>
           </div>
@@ -280,13 +280,13 @@ const LandingPage = () => {
       </section>
 
       {/* For Teachers Section */}
-      <section className="py-12 md:py-16 bg-muted/30">
+      <section className="py-16 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4 border border-primary/20">
               For Educators
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground font-serif">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground font-display">
               Manage Your Classroom with AI
             </h2>
             <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
@@ -313,14 +313,14 @@ const LandingPage = () => {
             ].map((card) => (
               <div
                 key={card.title}
-                className="relative rounded-2xl border border-border bg-card p-6 group hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                className="relative rounded-xl border border-border bg-card p-5 md:p-6 group hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative z-10">
-                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors duration-300">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors duration-300">
                     <card.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-1.5 group-hover:text-primary transition-colors duration-300 font-serif">
+                  <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
                     {card.title}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{card.description}</p>
@@ -340,10 +340,10 @@ const LandingPage = () => {
       </section>
 
       {/* Value Proposition */}
-      <section className="py-12 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
+      <section className="py-16 md:py-20 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
         <div className="container mx-auto px-4 max-w-3xl text-center">
           <GraduationCap className="w-10 h-10 text-primary mx-auto mb-4" />
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-8">
             Designed For Students & Teachers
           </h2>
           <p className="text-muted-foreground mb-6">Unlike general AI tools:</p>
@@ -363,14 +363,14 @@ const LandingPage = () => {
       </section>
 
       {/* Trust / Authority */}
-      <section className="py-12 bg-background">
+      <section className="py-16 md:py-20 bg-background">
         <div className="container mx-auto px-4 max-w-3xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-10">
             Used By Students For
           </h2>
           <div className="grid sm:grid-cols-2 gap-4 max-w-lg mx-auto">
             {usedFor.map((item) =>
-            <div key={item} className="flex items-center gap-3 bg-card rounded-lg p-4 border border-border">
+            <div key={item} className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border shadow-sm">
                 <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                 <span className="text-foreground">{item}</span>
               </div>
@@ -380,13 +380,13 @@ const LandingPage = () => {
       </section>
 
       {/* How NewtonAI Helps Students — Educational Prose */}
-      <section className="py-12 md:py-16 bg-background">
+      <section className="py-16 md:py-20 bg-background">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="text-center mb-10">
             <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4 border border-primary/20">
               The Science of Learning
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground font-serif">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground font-display">
               How NewtonAI Helps Students Learn
             </h2>
           </div>
@@ -417,10 +417,10 @@ const LandingPage = () => {
       <TestimonialsSection />
 
       {/* Monetization Transparency */}
-      <section className="py-12 bg-muted/30">
+      <section className="py-16 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground font-serif">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground font-display">
               Our Commitment to Students
             </h2>
           </div>
@@ -439,9 +439,9 @@ const LandingPage = () => {
       </section>
 
       {/* Final CTA */}
-      <section className="py-12 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
+      <section id="footer-cta-section" className="py-16 md:py-20 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5">
         <div className="container mx-auto px-4 text-center max-w-2xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
             Start Studying Smarter Today
           </h2>
           <p className="text-lg text-muted-foreground mb-8">

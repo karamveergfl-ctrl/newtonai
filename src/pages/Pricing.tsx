@@ -212,7 +212,7 @@ const Pricing = () => {
       
       <Header />
 
-      <main className="container mx-auto px-4 py-10 sm:py-12 relative z-10">
+      <main className="container mx-auto px-4 py-12 sm:py-16 relative z-10">
         {/* Header Section */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
@@ -220,7 +220,7 @@ const Pricing = () => {
             Choose Your Plan
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3 tracking-tight">
             Simple, Transparent Pricing
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -314,7 +314,7 @@ const Pricing = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-4 lg:gap-6 max-w-5xl mx-auto">
           {plans.map((plan, index) => {
             const planKey = plan.name.toLowerCase();
             const isCurrentPlan = currentPlan === planKey;
