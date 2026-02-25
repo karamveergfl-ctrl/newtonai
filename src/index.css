@@ -443,3 +443,22 @@ All colors MUST be HSL.
     break-inside: avoid;
   }
 }
+
+/* Concept Check animations */
+@keyframes concept-slide-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes concept-bounce-in {
+  0% { opacity: 0; transform: scale(0.92) translateY(16px); }
+  60% { transform: scale(1.02) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes concept-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.animate-concept-slide-up { animation: concept-slide-up 0.3s ease-out; }
+.animate-concept-bounce-in { animation: concept-bounce-in 0.4s ease-out; }
+.animate-concept-pulse { animation: concept-pulse 0.8s ease-in-out infinite; }
