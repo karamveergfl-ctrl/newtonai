@@ -105,6 +105,12 @@ const PostSessionNotesReview = lazy(() => import("./pages/SessionNotesPage"));
 const TeacherReportRoute = lazy(() => import("./pages/TeacherReportRoute"));
 const StudentReportRoute = lazy(() => import("./pages/StudentReportRoute"));
 
+// Institution pages
+const InstitutionDashboard = lazy(() => import("./pages/institution/InstitutionDashboard"));
+const DepartmentsPage = lazy(() => import("./pages/institution/DepartmentsPage"));
+const CoursesPage = lazy(() => import("./pages/institution/CoursesPage"));
+const InstitutionRoute = lazy(() => import("./components/InstitutionRoute").then(m => ({ default: m.InstitutionRoute })));
+
 const queryClient = new QueryClient();
 
 function AnimatedRoutes() {
@@ -198,6 +204,11 @@ function AnimatedRoutes() {
         <Route path="/session-notes/:sessionId" element={<PageTransition><ProtectedRoute><OnboardingGate><PostSessionNotesReview /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/report/teacher/:sessionId" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherReportRoute /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/report/student/:sessionId" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentReportRoute /></OnboardingGate></ProtectedRoute></PageTransition>} />
+        
+        {/* Institution Routes */}
+        <Route path="/institution" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><InstitutionDashboard /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/institution/departments" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><DepartmentsPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/institution/courses" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><CoursesPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         
         {/* Admin Routes */}
         <Route path="/admin/analytics" element={<PageTransition><AdminRoute><AdminAnalytics /></AdminRoute></PageTransition>} />
