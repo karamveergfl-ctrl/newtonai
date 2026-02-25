@@ -575,3 +575,40 @@ All colors MUST be HSL.
   background: hsl(var(--primary));
   animation: report-indeterminate 1.5s ease infinite;
 }
+
+/* ===== Smartboard Classroom Themes ===== */
+.classroom-dark {
+  --background: 222 47% 8%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
+  --border: 217 33% 18%;
+  --muted: 217 33% 14%;
+  --muted-foreground: 215 20% 60%;
+  font-size: 20px;
+}
+
+.classroom-light {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 8%;
+  --card: 240 25% 97%;
+  --card-foreground: 222 47% 8%;
+  --border: 214 32% 88%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 40%;
+  font-size: 20px;
+}
+
+.classroom-dark,
+.classroom-light {
+  line-height: 1.5;
+}
+
+/* Whiteboard dark background */
+.classroom-dark .whiteboard-bg {
+  background: hsl(222 47% 8%);
+}
+
+.classroom-light .whiteboard-bg {
+  background: hsl(0 0% 100%);
+}
