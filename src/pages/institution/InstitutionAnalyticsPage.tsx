@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Users, TrendingUp, GraduationCap, BookOpen, Brain } from "lucide-react";
 import { InstitutionAIInsights } from "@/components/institution/InstitutionAIInsights";
+import { InstitutionFeatureGate } from "@/components/institution/InstitutionFeatureGate";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Cell,
 } from "recharts";
@@ -209,7 +210,9 @@ function AnalyticsContent() {
         </TabsContent>
 
         <TabsContent value="ai-insights" className="space-y-4">
-          <InstitutionAIInsights analytics={analytics} facultyStats={facultyStats || []} />
+          <InstitutionFeatureGate feature="ai_insights" overlay>
+            <InstitutionAIInsights analytics={analytics} facultyStats={facultyStats || []} />
+          </InstitutionFeatureGate>
         </TabsContent>
       </Tabs>
     </div>

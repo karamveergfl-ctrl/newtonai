@@ -911,6 +911,119 @@ export type Database = {
           },
         ]
       }
+      institution_payments: {
+        Row: {
+          amount: number
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          institution_id: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          status: string
+          subscription_id: string
+        }
+        Insert: {
+          amount: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          institution_id: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          subscription_id: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          institution_id?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_payments_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institution_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "institution_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_subscriptions: {
+        Row: {
+          billing_cycle: string
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          institution_id: string
+          plan_tier: string
+          price_per_student: number
+          price_per_teacher: number
+          status: string
+          student_seats: number
+          teacher_seats: number
+          updated_at: string | null
+        }
+        Insert: {
+          billing_cycle?: string
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          institution_id: string
+          plan_tier?: string
+          price_per_student?: number
+          price_per_teacher?: number
+          status?: string
+          student_seats?: number
+          teacher_seats?: number
+          updated_at?: string | null
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          institution_id?: string
+          plan_tier?: string
+          price_per_student?: number
+          price_per_teacher?: number
+          status?: string
+          student_seats?: number
+          teacher_seats?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_subscriptions_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: true
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institutions: {
         Row: {
           admin_user_id: string
@@ -2449,6 +2562,14 @@ export type Database = {
       }
       get_faculty_stats: { Args: { p_institution_id: string }; Returns: Json }
       get_institution_analytics: {
+        Args: { p_institution_id: string }
+        Returns: Json
+      }
+      get_institution_billing_stats: {
+        Args: { p_institution_id: string }
+        Returns: Json
+      }
+      get_institution_feature_access: {
         Args: { p_institution_id: string }
         Returns: Json
       }

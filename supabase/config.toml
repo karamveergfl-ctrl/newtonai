@@ -152,3 +152,9 @@ verify_jwt = false
 
 [functions.generate-term-definitions]
 verify_jwt = false
+
+[functions.institution-create-order]
+verify_jwt = false
+
+[functions.institution-verify-payment]
+verify_jwt = false

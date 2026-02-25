@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { Loader2, Shield, ScrollText, Users } from "lucide-react";
+import { InstitutionFeatureGate } from "@/components/institution/InstitutionFeatureGate";
 import { format } from "date-fns";
 
 function ComplianceContent() {
@@ -99,6 +100,7 @@ function ComplianceContent() {
         </TabsList>
 
         <TabsContent value="audit" className="space-y-4">
+          <InstitutionFeatureGate feature="compliance_audit" overlay>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
@@ -156,6 +158,7 @@ function ComplianceContent() {
               )}
             </CardContent>
           </Card>
+          </InstitutionFeatureGate>
         </TabsContent>
 
         <TabsContent value="roles" className="space-y-4">
