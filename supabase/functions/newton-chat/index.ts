@@ -30,6 +30,13 @@ INTERACTION STYLE:
 
 Remember: You're here to help students learn and succeed!`;
 
+const CONCEPT_CHECK_EXPLANATION_PROMPT = `You are Newton, a friendly and encouraging AI tutor. A student just answered a concept check question incorrectly. Your job is to:
+1. Explain WHY the correct answer is right
+2. Explain WHY the student's chosen answer is wrong
+3. Keep your response to 3-4 sentences maximum
+4. Be encouraging — never condescending. Use phrases like "Great attempt!" or "This is a common mix-up"
+5. Use LaTeX for any math: $formula$`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -74,7 +81,7 @@ serve(async (req) => {
       );
     }
 
-    const { messages, stream = true } = await req.json();
+    const { messages, stream = true, message_type } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -88,6 +95,14 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Select system prompt based on message type
+    const activeSystemPrompt =
+      message_type === "concept_check_explanation"
+        ? CONCEPT_CHECK_EXPLANATION_PROMPT
+        : SYSTEM_PROMPT;
+
+    const maxTokens = message_type === "concept_check_explanation" ? 512 : 2048;
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -97,11 +112,11 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: activeSystemPrompt },
           ...messages.slice(-10),
         ],
         stream: stream,
-        max_tokens: 2048,
+        max_tokens: maxTokens,
         temperature: 0.7,
       }),
     });
