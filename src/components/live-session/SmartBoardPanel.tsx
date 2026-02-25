@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ReactNode } from "react";
+import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
 import { useLiveSession } from "@/contexts/LiveSessionContext";
 import { PulseMeter } from "./PulseMeter";
 import { QuestionWall } from "./QuestionWall";
@@ -8,9 +8,19 @@ import { SlideAdvanceControls } from "@/components/live-notes/SlideAdvanceContro
 import { SpotlightTeacherControls } from "@/components/spotlight";
 import { useSpotlightSync } from "@/hooks/useSpotlightSync";
 import { useLiveNotes } from "@/hooks/useLiveNotes";
+import { useWhiteboardState } from "@/hooks/useWhiteboardState";
+import { useWhiteboardAutoSave } from "@/hooks/useWhiteboardAutoSave";
+import { useHandwritingRecognition } from "@/hooks/useHandwritingRecognition";
+import { useVoiceCommands } from "@/hooks/useVoiceCommands";
+import { useLectureCapture } from "@/hooks/useLectureCapture";
+import { ClassroomThemeProvider, useClassroomTheme } from "@/components/smartboard/ClassroomThemeProvider";
+import { SmartBoardToolbar } from "@/components/smartboard/SmartBoardToolbar";
+import { WhiteboardCanvas, type WhiteboardCanvasHandle } from "@/components/smartboard/WhiteboardCanvas";
+import { VoiceCommandIndicator } from "@/components/smartboard/VoiceCommandIndicator";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Maximize, Minimize, X } from "lucide-react";
+import { Maximize, Minimize } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import newtonLogoSm from "@/assets/newton-logo-sm.webp";
 
 interface SmartBoardPanelProps {
@@ -29,7 +39,7 @@ function formatDuration(seconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function SmartBoardPanel({
+function SmartBoardPanelInner({
   sessionId,
   children,
   onEndSession,
@@ -48,6 +58,7 @@ export function SmartBoardPanel({
     setTeacherSlideContent,
     setTeacherSlideTitle,
     setSpotlightEnabled,
+    setCurrentSlideContent,
   } = useLiveSession();
 
   const { updateSlideContent, toggleSpotlight, spotlightEnabled: hookSpotlightEnabled, teacherSlideTitle: hookSlideTitle, syncStats } = useSpotlightSync({ sessionId, role: "teacher" });
@@ -69,6 +80,115 @@ export function SmartBoardPanel({
   const [elapsed, setElapsed] = useState(0);
   const startTimeRef = useRef(Date.now());
   const hasActiveCheck = !!activeConceptCheck;
+
+  // Teaching mode state
+  const [activeView, setActiveView] = useState<"session" | "whiteboard" | "document">("session");
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [teacherId, setTeacherId] = useState("");
+
+  // Classroom theme
+  const { theme, toggleTheme } = useClassroomTheme();
+
+  // Whiteboard state
+  const wb = useWhiteboardState();
+  const whiteboardRef = useRef<WhiteboardCanvasHandle>(null);
+  const canvasElementRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Get canvas ref from handle
+  const getCanvasRef = useCallback(() => {
+    return { current: whiteboardRef.current?.getCanvas() ?? null };
+  }, []);
+
+  const { saveCanvas } = useWhiteboardAutoSave({
+    sessionId,
+    slideIndex: currentSlideIndex,
+    canvasRef: getCanvasRef() as React.RefObject<HTMLCanvasElement | null>,
+    enabled: activeView === "whiteboard",
+  });
+
+  // Handwriting recognition
+  const { isRecognizing, onStrokeEnd: hwStrokeEnd } = useHandwritingRecognition({
+    canvasRef: getCanvasRef() as React.RefObject<HTMLCanvasElement | null>,
+    onRecognized: (text) => {
+      setCurrentSlideContent(text);
+    },
+  });
+
+  // Lecture capture
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setTeacherId(user.id);
+    };
+    getUser();
+  }, []);
+
+  const { isCapturing, startCapture, stopCapture, recordSlideChange } = useLectureCapture({
+    sessionId,
+    teacherId,
+  });
+
+  // Voice commands
+  const { isListening: voiceListening, isProcessing: voiceProcessing, lastCommand } = useVoiceCommands({
+    enabled: voiceEnabled,
+    slideContent: currentSlideContent,
+    sessionId,
+    onNextSlide: () => {
+      const next = Math.min(currentSlideIndex + 1, totalSlides - 1);
+      setCurrentSlideIndex(next);
+    },
+    onPrevSlide: () => {
+      const prev = Math.max(currentSlideIndex - 1, 0);
+      setCurrentSlideIndex(prev);
+    },
+    onToggleCapture: (recording) => {
+      if (recording) startCapture();
+      else stopCapture();
+    },
+  });
+
+  // Whiteboard stroke handler
+  const handleStrokeEnd = useCallback(() => {
+    const canvas = whiteboardRef.current?.getCanvas();
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        // Push undo state was handled via onBeforeStroke
+      }
+    }
+    hwStrokeEnd();
+  }, [hwStrokeEnd]);
+
+  const handleBeforeStroke = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+      wb.pushUndo(imageData);
+    },
+    [wb.pushUndo]
+  );
+
+  const handleUndo = useCallback(() => {
+    const canvas = whiteboardRef.current?.getCanvas();
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const data = wb.undo(ctx);
+    if (data) ctx.putImageData(data, 0, 0);
+  }, [wb.undo]);
+
+  const handleRedo = useCallback(() => {
+    const canvas = whiteboardRef.current?.getCanvas();
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const data = wb.redo(ctx);
+    if (data) ctx.putImageData(data, 0, 0);
+  }, [wb.redo]);
+
+  const handleClear = useCallback(() => {
+    whiteboardRef.current?.clear();
+    wb.clearStacks();
+  }, [wb.clearStacks]);
 
   // Timer
   useEffect(() => {
@@ -152,6 +272,12 @@ export function SmartBoardPanel({
               {sessionTitle || "Live Session"}
             </span>
             <span className="text-xs text-muted-foreground tabular-nums">{formatDuration(elapsed)}</span>
+            {isCapturing && (
+              <span className="flex items-center gap-1 text-xs text-destructive font-medium">
+                <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+                REC
+              </span>
+            )}
           </div>
           <p className="text-sm text-muted-foreground truncate max-w-[40%] hidden xl:block">{slideTitle}</p>
           <div className="flex items-center gap-3">
@@ -165,10 +291,38 @@ export function SmartBoardPanel({
         </div>
       )}
 
-      <div className="flex flex-1 min-h-0 w-full">
+      <div className="flex flex-1 min-h-0 w-full relative">
+        {/* Voice command indicator */}
+        {voiceEnabled && (
+          <VoiceCommandIndicator
+            isListening={voiceListening}
+            isProcessing={voiceProcessing}
+            lastCommand={lastCommand}
+          />
+        )}
+
         {/* Main content area */}
         <div className={cn("min-w-0 h-full overflow-auto transition-all duration-300", isFullscreen ? (hasActiveCheck ? "w-[70%]" : "w-[78%]") : "flex-1")}>
-          {isFullscreen ? (
+          {activeView === "whiteboard" ? (
+            <div className="relative w-full h-full whiteboard-bg">
+              <WhiteboardCanvas
+                ref={whiteboardRef}
+                tool={wb.tool}
+                color={wb.color}
+                penSize={wb.penSize}
+                highlighterSize={wb.highlighterSize}
+                eraserSize={wb.eraserSize}
+                onStrokeEnd={handleStrokeEnd}
+                onBeforeStroke={handleBeforeStroke}
+                className="w-full h-full"
+              />
+              {isRecognizing && (
+                <div className="absolute bottom-4 left-4 text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
+                  Recognizing handwriting…
+                </div>
+              )}
+            </div>
+          ) : isFullscreen ? (
             <div className="h-full text-lg">{children}</div>
           ) : (
             children
@@ -192,7 +346,7 @@ export function SmartBoardPanel({
 
           <div className="border-t border-border" />
 
-          {/* Spotlight Teacher Controls (Phase 5) */}
+          {/* Spotlight Teacher Controls */}
           <div className="p-3 shrink-0">
             <SpotlightTeacherControls
               sessionId={sessionId}
@@ -208,7 +362,7 @@ export function SmartBoardPanel({
 
           <div className="border-t border-border" />
 
-          {/* Live Notes Overview (Phase 3) */}
+          {/* Live Notes Overview */}
           <div className={cn("shrink-0 transition-all duration-300", notesGenerating && "ring-1 ring-primary/40 animate-pulse rounded-lg")}>
             <TeacherNotesOverview sessionId={sessionId} />
           </div>
@@ -231,7 +385,6 @@ export function SmartBoardPanel({
 
           {/* Session controls */}
           <div className="flex items-center gap-2 p-3 shrink-0">
-            {/* Slide advance controls (Phase 3) */}
             <div className="flex-1 min-w-0">
               <SlideAdvanceControls
                 sessionId={sessionId}
@@ -242,6 +395,7 @@ export function SmartBoardPanel({
                 onAdvance={(idx, ctx, title) => {
                   setCurrentSlideIndex(idx);
                   advanceToSlide(idx, ctx, title);
+                  recordSlideChange(idx, ctx);
                 }}
                 onPrev={(idx) => setCurrentSlideIndex(idx)}
                 getSlideContent={() =>
@@ -298,6 +452,44 @@ export function SmartBoardPanel({
           </div>
         </aside>
       </div>
+
+      {/* Bottom teaching toolbar — visible in fullscreen */}
+      {isFullscreen && (
+        <SmartBoardToolbar
+          activeView={activeView}
+          onViewChange={setActiveView}
+          voiceEnabled={voiceEnabled}
+          onToggleVoice={() => setVoiceEnabled((v) => !v)}
+          isCapturing={isCapturing}
+          onToggleCapture={() => {
+            if (isCapturing) stopCapture();
+            else startCapture();
+          }}
+          isDarkTheme={theme === "classroom-dark"}
+          onToggleTheme={toggleTheme}
+          onEndSession={onEndSession}
+          whiteboardTool={wb.tool}
+          onToolChange={wb.setTool}
+          whiteboardColor={wb.color}
+          onColorChange={wb.setColor}
+          penSize={wb.penSize}
+          onPenSizeChange={wb.setPenSize}
+          presetColors={wb.presetColors}
+          canUndo={wb.canUndo}
+          canRedo={wb.canRedo}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onClear={handleClear}
+        />
+      )}
     </div>
+  );
+}
+
+export function SmartBoardPanel(props: SmartBoardPanelProps) {
+  return (
+    <ClassroomThemeProvider>
+      <SmartBoardPanelInner {...props} />
+    </ClassroomThemeProvider>
   );
 }

@@ -852,6 +852,53 @@ export type Database = {
         }
         Relationships: []
       }
+      lecture_captures: {
+        Row: {
+          audio_duration_seconds: number | null
+          created_at: string | null
+          id: string
+          session_id: string
+          slide_timeline: Json | null
+          status: string | null
+          teacher_id: string
+          transcript_segments: Json | null
+          updated_at: string | null
+          whiteboard_paths: string[] | null
+        }
+        Insert: {
+          audio_duration_seconds?: number | null
+          created_at?: string | null
+          id?: string
+          session_id: string
+          slide_timeline?: Json | null
+          status?: string | null
+          teacher_id: string
+          transcript_segments?: Json | null
+          updated_at?: string | null
+          whiteboard_paths?: string[] | null
+        }
+        Update: {
+          audio_duration_seconds?: number | null
+          created_at?: string | null
+          id?: string
+          session_id?: string
+          slide_timeline?: Json | null
+          status?: string | null
+          teacher_id?: string
+          transcript_segments?: Json | null
+          updated_at?: string | null
+          whiteboard_paths?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lecture_captures_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_pulse_responses: {
         Row: {
           created_at: string
@@ -990,6 +1037,7 @@ export type Database = {
           time_limit_minutes: number
           title: string
           total_slides: number
+          whiteboard_data: Json | null
         }
         Insert: {
           assignment_id?: string | null
@@ -1012,6 +1060,7 @@ export type Database = {
           time_limit_minutes?: number
           title: string
           total_slides?: number
+          whiteboard_data?: Json | null
         }
         Update: {
           assignment_id?: string | null
@@ -1034,6 +1083,7 @@ export type Database = {
           time_limit_minutes?: number
           title?: string
           total_slides?: number
+          whiteboard_data?: Json | null
         }
         Relationships: [
           {
