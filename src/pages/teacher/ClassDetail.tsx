@@ -5,6 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAssignments } from "@/hooks/useAssignments";
 import { InviteCodePill } from "@/components/teacher/InviteCodePill";
 import { ClassAnalyticsCharts } from "@/components/teacher/ClassAnalyticsCharts";
+import { AttendanceManager } from "@/components/teacher/AttendanceManager";
+import { MarksEntryPanel } from "@/components/teacher/MarksEntryPanel";
+import { BulkMarksUpload } from "@/components/teacher/BulkMarksUpload";
+import { GradeAnalyticsPanel } from "@/components/teacher/GradeAnalyticsPanel";
 import { StudentProgressTable } from "@/components/teacher/StudentProgressTable";
 import { AssignmentResultsPanel } from "@/components/teacher/AssignmentResultsPanel";
 import { AttendanceGrid } from "@/components/teacher/AttendanceGrid";
@@ -21,7 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio, Trash2, Eye, BookOpen, Plus, ExternalLink, File, Link as LinkIcon, Video, Upload } from "lucide-react";
+import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio, Trash2, Eye, BookOpen, Plus, ExternalLink, File, Link as LinkIcon, Video, Upload, CheckSquare, Award } from "lucide-react";
 import { toast } from "sonner";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
@@ -285,20 +289,28 @@ const ClassDetail = () => {
         )}
 
         <Tabs defaultValue="students">
-          <TabsList className="grid w-full grid-cols-4 h-10">
-            <TabsTrigger value="students" className="gap-1.5 text-xs sm:text-sm">
+          <TabsList className="grid w-full grid-cols-6 h-10">
+            <TabsTrigger value="students" className="gap-1 text-xs sm:text-sm">
               <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Students</span> ({enrollments.length})
+              <span className="hidden sm:inline">Students</span>
             </TabsTrigger>
-            <TabsTrigger value="assignments" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="assignments" className="gap-1 text-xs sm:text-sm">
               <ClipboardList className="h-4 w-4" />
-              <span className="hidden sm:inline">Assignments</span> ({assignments.length})
+              <span className="hidden sm:inline">Assign.</span>
             </TabsTrigger>
-            <TabsTrigger value="materials" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="materials" className="gap-1 text-xs sm:text-sm">
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Materials</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="marks" className="gap-1 text-xs sm:text-sm">
+              <Award className="h-4 w-4" />
+              <span className="hidden sm:inline">Marks</span>
+            </TabsTrigger>
+            <TabsTrigger value="attendance" className="gap-1 text-xs sm:text-sm">
+              <CheckSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Attend.</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-1 text-xs sm:text-sm">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
@@ -467,6 +479,16 @@ const ClassDetail = () => {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          {/* Marks Tab */}
+          <TabsContent value="marks" className="mt-5">
+            <MarksTab classId={id!} />
+          </TabsContent>
+
+          {/* Attendance Tab */}
+          <TabsContent value="attendance" className="mt-5">
+            <AttendanceManager classId={id!} sessionId={activeSession?.id} />
           </TabsContent>
 
           {/* Analytics Tab */}
@@ -697,6 +719,61 @@ function DueDateBadge({ dueDate }: { dueDate: string }) {
   if (diffDays === 0) return <span className="text-xs text-amber-500 font-medium">Due today</span>;
   if (diffDays <= 3) return <span className="text-xs text-amber-500 font-medium">Due in {diffDays}d</span>;
   return <span className="text-xs text-muted-foreground">{due.toLocaleDateString()}</span>;
+}
+
+function MarksTab({ classId }: { classId: string }) {
+  const [courseId, setCourseId] = useState<string>("");
+  const [courses, setCourses] = useState<{ id: string; course_name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      const { data } = await supabase
+        .from("classes")
+        .select("course_id, courses:course_id(id, course_name)")
+        .eq("id", classId)
+        .maybeSingle();
+      if (data?.courses) {
+        const c = data.courses as any;
+        setCourses([{ id: c.id, course_name: c.course_name }]);
+        setCourseId(c.id);
+      }
+    };
+    fetchCourses();
+  }, [classId]);
+
+  return (
+    <div className="space-y-6">
+      {courses.length > 0 && (
+        <Select value={courseId} onValueChange={setCourseId}>
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="Select course" />
+          </SelectTrigger>
+          <SelectContent>
+            {courses.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.course_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      <Tabs defaultValue="entry">
+        <TabsList className="h-9">
+          <TabsTrigger value="entry" className="text-xs">Manual Entry</TabsTrigger>
+          <TabsTrigger value="bulk" className="text-xs">CSV Upload</TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
+        </TabsList>
+        <TabsContent value="entry">
+          <MarksEntryPanel classId={classId} courseId={courseId || undefined} />
+        </TabsContent>
+        <TabsContent value="bulk">
+          <BulkMarksUpload classId={classId} courseId={courseId || undefined} />
+        </TabsContent>
+        <TabsContent value="analytics">
+          <GradeAnalyticsPanel classId={classId} courseId={courseId || undefined} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }
 
 function AnalyticsTab({ classId }: { classId: string }) {

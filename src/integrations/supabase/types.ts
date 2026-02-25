@@ -184,6 +184,54 @@ export type Database = {
           },
         ]
       }
+      attendance_records: {
+        Row: {
+          auto_marked: boolean
+          class_id: string
+          id: string
+          marked_at: string | null
+          participation_score: number | null
+          session_id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          auto_marked?: boolean
+          class_id: string
+          id?: string
+          marked_at?: string | null
+          participation_score?: number | null
+          session_id: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          auto_marked?: boolean
+          class_id?: string
+          id?: string
+          marked_at?: string | null
+          participation_score?: number | null
+          session_id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_announcements: {
         Row: {
           class_id: string
@@ -1890,6 +1938,81 @@ export type Database = {
           },
         ]
       }
+      student_marks: {
+        Row: {
+          academic_year: string | null
+          assignment_marks: number | null
+          attendance_marks: number | null
+          class_id: string
+          course_id: string
+          created_at: string | null
+          endsem: number | null
+          grade: string | null
+          id: string
+          midsem1: number | null
+          midsem2: number | null
+          practical_marks: number | null
+          project_marks: number | null
+          semester: string | null
+          student_id: string
+          total_marks: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          academic_year?: string | null
+          assignment_marks?: number | null
+          attendance_marks?: number | null
+          class_id: string
+          course_id: string
+          created_at?: string | null
+          endsem?: number | null
+          grade?: string | null
+          id?: string
+          midsem1?: number | null
+          midsem2?: number | null
+          practical_marks?: number | null
+          project_marks?: number | null
+          semester?: string | null
+          student_id: string
+          total_marks?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          academic_year?: string | null
+          assignment_marks?: number | null
+          attendance_marks?: number | null
+          class_id?: string
+          course_id?: string
+          created_at?: string | null
+          endsem?: number | null
+          grade?: string | null
+          id?: string
+          midsem1?: number | null
+          midsem2?: number | null
+          practical_marks?: number | null
+          project_marks?: number | null
+          semester?: string | null
+          student_id?: string
+          total_marks?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_marks_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_marks_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_note_annotations: {
         Row: {
           annotations: Json
@@ -2212,6 +2335,7 @@ export type Database = {
         Args: { p_submission_id: string }
         Returns: Json
       }
+      bulk_upsert_student_marks: { Args: { p_marks: Json }; Returns: Json }
       check_rate_limit: {
         Args: {
           p_function_name: string
@@ -2273,6 +2397,10 @@ export type Database = {
       get_document_file_path: {
         Args: { p_document_id: string }
         Returns: string
+      }
+      get_institution_marks_summary: {
+        Args: { p_institution_id: string }
+        Returns: Json
       }
       get_notes_analytics: { Args: { p_session_id: string }; Returns: Json }
       get_pulse_summary: { Args: { p_session_id: string }; Returns: Json }
@@ -2369,6 +2497,10 @@ export type Database = {
         Returns: boolean
       }
       join_class_by_code: { Args: { p_code: string }; Returns: Json }
+      mark_auto_attendance: {
+        Args: { p_class_id: string; p_session_id: string; p_student_id: string }
+        Returns: undefined
+      }
       record_generation: {
         Args: {
           p_metadata?: Json

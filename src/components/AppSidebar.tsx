@@ -336,6 +336,14 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Academic Records">
+                    <button onClick={() => navigate("/institution/academic-records")} className={btnClass("/institution/academic-records")}>
+                      <GraduationCap className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                      {!isCollapsed && <span>Academic Records</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
