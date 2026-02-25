@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { MessageSquarePlus, ShieldCheck } from "lucide-react";
+import { MessageSquarePlus, ShieldCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuestionWall } from "@/hooks/useQuestionWall";
 import { QuestionCard } from "./QuestionCard";
 import { cn } from "@/lib/utils";
@@ -16,6 +15,7 @@ interface QuestionWallProps {
 type FilterTab = "all" | "unanswered" | "pinned";
 
 const MAX_CHARS = 200;
+const MIN_CHARS = 5;
 
 export function QuestionWall({ sessionId, role }: QuestionWallProps) {
   const {
@@ -36,6 +36,7 @@ export function QuestionWall({ sessionId, role }: QuestionWallProps) {
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset unread when teacher opens this component
   useEffect(() => {
@@ -59,7 +60,7 @@ export function QuestionWall({ sessionId, role }: QuestionWallProps) {
 
   const handleSubmit = async () => {
     const trimmed = draft.trim();
-    if (!trimmed || trimmed.length > MAX_CHARS) return;
+    if (!trimmed || trimmed.length < MIN_CHARS || trimmed.length > MAX_CHARS) return;
     await submitQuestion(trimmed);
     setDraft("");
   };
@@ -116,25 +117,28 @@ export function QuestionWall({ sessionId, role }: QuestionWallProps) {
       {role === "student" && questionsEnabled && (
         <div className="px-4 py-3 border-b border-border space-y-2 shrink-0">
           <Textarea
+            ref={textareaRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value.slice(0, MAX_CHARS))}
             placeholder="Type your question…"
             className="min-h-[60px] resize-none text-sm bg-muted/50"
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
                 handleSubmit();
               }
             }}
+            aria-label="Type your question"
           />
           <div className="flex items-center justify-between">
-            <span className={cn("text-xs", draft.length >= MAX_CHARS ? "text-destructive" : "text-muted-foreground")}>
+            <span className={cn("text-xs", draft.length >= MAX_CHARS ? "text-destructive" : draft.length < MIN_CHARS && draft.length > 0 ? "text-amber-500" : "text-muted-foreground")}>
               {draft.length}/{MAX_CHARS}
+              {draft.length > 0 && draft.length < MIN_CHARS && " (min 5)"}
             </span>
             <Button
               size="sm"
               onClick={handleSubmit}
-              disabled={!draft.trim() || isSubmitting}
+              disabled={!draft.trim() || draft.trim().length < MIN_CHARS || isSubmitting}
               className="text-xs"
             >
               {isSubmitting ? "Sending…" : "Ask Anonymously"}
@@ -168,6 +172,8 @@ export function QuestionWall({ sessionId, role }: QuestionWallProps) {
         ref={scrollRef}
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto px-4 py-2 space-y-2 scrollbar-thin"
+        aria-live="polite"
+        aria-label="Questions list"
       >
         {isLoading ? (
           <div className="space-y-2">

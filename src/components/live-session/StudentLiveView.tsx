@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import { MessageSquare, X } from "lucide-react";
 import { PulseWidget } from "./PulseWidget";
 import { QuestionWall } from "./QuestionWall";
@@ -12,6 +12,12 @@ interface StudentLiveViewProps {
 
 export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    triggerRef.current?.focus();
+  };
 
   return (
     <div className="relative h-full w-full">
@@ -23,8 +29,9 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
 
       {/* Question wall trigger */}
       <button
+        ref={triggerRef}
         onClick={() => setDrawerOpen(true)}
-        className="fixed bottom-20 right-4 z-40 sm:bottom-6 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-elevated flex items-center justify-center transition-transform duration-150 active:scale-95 hover:scale-105"
+        className="fixed bottom-20 right-4 z-40 sm:bottom-6 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-elevated flex items-center justify-center transition-transform duration-150 active:scale-95 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Open question wall"
       >
         <MessageSquare className="w-5 h-5" />
@@ -34,7 +41,7 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
       {drawerOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-50 transition-opacity duration-200"
-          onClick={() => setDrawerOpen(false)}
+          onClick={closeDrawer}
         />
       )}
 
@@ -42,9 +49,7 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
       <div
         className={cn(
           "fixed z-50 bg-card border-border flex flex-col transition-transform duration-300 ease-out",
-          // Mobile: bottom sheet
           "inset-x-0 bottom-0 h-[80vh] rounded-t-2xl border-t sm:inset-x-auto",
-          // Desktop: right drawer
           "sm:top-0 sm:right-0 sm:bottom-0 sm:h-full sm:w-[380px] sm:rounded-t-none sm:rounded-l-2xl sm:border-l sm:border-t-0",
           drawerOpen
             ? "translate-y-0 sm:translate-x-0"
@@ -61,7 +66,8 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
           variant="ghost"
           size="icon"
           className="absolute top-2 right-2 h-8 w-8 z-10"
-          onClick={() => setDrawerOpen(false)}
+          onClick={closeDrawer}
+          aria-label="Close question wall"
         >
           <X className="w-4 h-4" />
         </Button>

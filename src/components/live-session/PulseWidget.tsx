@@ -26,15 +26,25 @@ const STATUS_LABEL: Record<PulseStatus, string> = {
 };
 
 export function PulseWidget({ sessionId }: PulseWidgetProps) {
-  const { myStatus, pulseEnabled, submitPulse } = useLivePulse({ sessionId, role: "student" });
+  const { myStatus, pulseEnabled, isLoading, submitPulse } = useLivePulse({ sessionId, role: "student" });
   const [isExpanded, setIsExpanded] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
-    if (!myStatus) {
+    if (!myStatus && !isLoading) {
       setIsExpanded(true);
     }
-  }, []);
+  }, [isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 sm:bottom-6">
+        <div className="bg-card border border-border rounded-2xl shadow-elevated px-4 py-2.5 animate-pulse">
+          <div className="h-4 w-24 bg-muted rounded" />
+        </div>
+      </div>
+    );
+  }
 
   if (!pulseEnabled) return null;
 
@@ -48,7 +58,7 @@ export function PulseWidget({ sessionId }: PulseWidgetProps) {
   };
 
   return (
-    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 sm:bottom-6">
+    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 sm:bottom-6" role="region" aria-label="Understanding check">
       <div
         className={cn(
           "bg-card border border-border rounded-2xl shadow-elevated transition-all duration-300 ease-out overflow-hidden",
@@ -57,7 +67,7 @@ export function PulseWidget({ sessionId }: PulseWidgetProps) {
         onClick={() => !isExpanded && setIsExpanded(true)}
       >
         {showConfirmation ? (
-          <div className="flex items-center gap-2 text-sm text-primary animate-fade-in">
+          <div className="flex items-center gap-2 text-sm text-primary animate-[fade-up-out_1.2s_ease-out_forwards]">
             <span>✓</span>
             <span>Response sent</span>
           </div>
@@ -66,7 +76,7 @@ export function PulseWidget({ sessionId }: PulseWidgetProps) {
             <p className="text-xs text-muted-foreground text-center font-medium">
               How are you following?
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-2" role="radiogroup" aria-label="Understanding level">
               {PULSE_OPTIONS.map((opt) => (
                 <button
                   key={opt.status}
@@ -75,10 +85,13 @@ export function PulseWidget({ sessionId }: PulseWidgetProps) {
                     handleSubmit(opt.status);
                   }}
                   className={cn(
-                    "flex-1 flex flex-col items-center gap-1 rounded-xl border px-2 py-2 text-xs font-medium transition-all duration-150 active:scale-[0.96]",
+                    "flex-1 flex flex-col items-center gap-1 rounded-xl border px-2 py-2 text-xs font-medium transition-all duration-150 active:scale-[0.93] focus-visible:ring-2 focus-visible:ring-ring",
                     opt.colorClass,
                     myStatus === opt.status && "ring-2 ring-primary"
                   )}
+                  role="radio"
+                  aria-checked={myStatus === opt.status}
+                  aria-label={opt.label}
                 >
                   <span className="text-base">{opt.emoji}</span>
                   <span>{opt.label}</span>
@@ -99,12 +112,12 @@ export function PulseWidget({ sessionId }: PulseWidgetProps) {
           <div className="flex items-center gap-2 text-sm">
             {myStatus ? (
               <>
-                <span className={cn("w-2 h-2 rounded-full animate-pulse", STATUS_DOT_COLOR[myStatus])} />
+                <span className={cn("w-2 h-2 rounded-full animate-[status-pulse_2.5s_ease-in-out_infinite]", STATUS_DOT_COLOR[myStatus])} />
                 <span className="text-foreground font-medium">{STATUS_LABEL[myStatus]}</span>
               </>
             ) : (
               <>
-                <span className="w-2 h-2 rounded-full bg-muted-foreground animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-muted-foreground animate-[status-pulse_2.5s_ease-in-out_infinite]" />
                 <span className="text-muted-foreground">Tap to respond</span>
               </>
             )}
