@@ -41,7 +41,10 @@ export function StudentNotesDrawer({ sessionId }: StudentNotesDrawerProps) {
       <button
         ref={triggerRef}
         onClick={handleOpen}
-        className="fixed bottom-20 left-4 z-40 sm:bottom-6 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center transition-transform duration-150 active:scale-95 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring"
+        className={cn(
+          "fixed bottom-20 left-4 z-40 sm:bottom-6 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center transition-transform duration-150 active:scale-95 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring",
+          hasNew && "animate-ring-pulse"
+        )}
         aria-label="Open live notes"
       >
         <BookOpen className="w-5 h-5" />

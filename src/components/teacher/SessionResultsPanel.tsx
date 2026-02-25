@@ -2,30 +2,60 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, BookOpen, AlertTriangle, CheckCircle2, XCircle, MessageSquare, ThumbsUp, Download, Zap } from "lucide-react";
+import { Loader2, Users, BookOpen, AlertTriangle, CheckCircle2, XCircle, MessageSquare, ThumbsUp, Download, Zap, FileText, FileDown, Hash, ArrowRight } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useSessionSummary } from "@/hooks/useSessionSummary";
+import { useLiveNotes } from "@/hooks/useLiveNotes";
+import { useNotesExport } from "@/hooks/useNotesExport";
+import { useStudentAnnotations } from "@/hooks/useStudentAnnotations";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface SessionResultsPanelProps {
   sessionId: string;
   sessionTitle: string;
+  role?: "teacher" | "student";
 }
 
-export function SessionResultsPanel({ sessionId, sessionTitle }: SessionResultsPanelProps) {
+export function SessionResultsPanel({ sessionId, sessionTitle, role = "teacher" }: SessionResultsPanelProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [exportCount, setExportCount] = useState(0);
+  const navigate = useNavigate();
   const { pulseSummary, topQuestions, totalQuestions, isLoading: summaryLoading, isExporting, exportSummaryAsPDF, totalConceptChecks, avgCorrectPercentage, hardestCheck, conceptChecks, conceptResultsMap } = useSessionSummary({ sessionId });
 
+  const { slideNotesMap } = useLiveNotes({ sessionId, role });
+  const { annotationsMap } = useStudentAnnotations({ sessionId });
+
   useEffect(() => {
-    const fetch = async () => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
+  const { isExporting: notesExporting, exportNotes } = useNotesExport({ sessionId, studentId: userId ?? "" });
+
+  const totalAnnotations = Object.values(annotationsMap).reduce((sum, arr) => sum + arr.length, 0);
+  const readyNotes = Object.values(slideNotesMap).filter((n) => n.status === "ready").length;
+  const totalNotes = Object.keys(slideNotesMap).length;
+
+  useEffect(() => {
+    const fetchData = async () => {
       const { data: result } = await supabase.rpc("analyze_session_results" as any, { p_session_id: sessionId });
       setData(result);
       setLoading(false);
     };
-    fetch();
-  }, [sessionId]);
+    fetchData();
+
+    // Fetch export count for teacher view
+    if (role === "teacher") {
+      supabase
+        .from("session_notes_export")
+        .select("id", { count: "exact", head: true })
+        .eq("session_id", sessionId)
+        .then(({ count }) => setExportCount(count ?? 0));
+    }
+  }, [sessionId, role]);
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   if (!data?.success) return <p className="text-muted-foreground text-center py-8">{data?.error || "Failed to load results"}</p>;
@@ -289,6 +319,55 @@ export function SessionResultsPanel({ sessionId, sessionTitle }: SessionResultsP
             <div className="mt-3 pt-3 border-t border-border/50">
               <p className="text-xs text-destructive font-medium">{weakStudents.length} student{weakStudents.length > 1 ? "s" : ""} need additional support</p>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Phase 3 — Live Notes Summary */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <BookOpen className="h-4 w-4" /> {role === "teacher" ? "Notes Summary" : "Your Class Notes"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {role === "teacher" ? (
+            <>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Slides with notes</span>
+                <span className="font-medium">{readyNotes}/{totalNotes}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Students exported notes</span>
+                <span className="font-medium">{exportCount}</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground">Detailed notes analytics coming soon</p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Your annotations</span>
+                <span className="font-medium">{totalAnnotations}</span>
+              </div>
+              <button
+                onClick={() => navigate(`/session-notes/${sessionId}`)}
+                className="w-full flex items-center justify-between text-xs text-primary hover:text-primary/80 transition-colors py-2"
+              >
+                <span>{totalAnnotations > 0 ? "View your annotated notes" : "No annotations — tap to review notes"}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <div className="flex items-center gap-1.5">
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1 flex-1" disabled={notesExporting} onClick={() => exportNotes("pdf")}>
+                  <FileText className="w-3 h-3" /> PDF
+                </Button>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1 flex-1" disabled={notesExporting} onClick={() => exportNotes("docx")}>
+                  <FileDown className="w-3 h-3" /> Word
+                </Button>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1 flex-1" disabled={notesExporting} onClick={() => exportNotes("md")}>
+                  <Hash className="w-3 h-3" /> MD
+                </Button>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
