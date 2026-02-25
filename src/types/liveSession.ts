@@ -63,3 +63,39 @@ export interface ConceptCheckResponse {
   is_correct: boolean;
   response_time_ms: number;
 }
+
+// Phase 3 — Live Notes Co-Pilot
+
+export interface NoteItem {
+  type: 'heading' | 'key_point' | 'detail' | 'remember' | 'example';
+  content: string;
+}
+
+export interface SessionSlideNotes {
+  id: string;
+  session_id: string;
+  slide_index: number;
+  slide_title: string | null;
+  slide_context: string;
+  ai_notes: NoteItem[];
+  status: 'generating' | 'ready' | 'failed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StudentAnnotation {
+  id: string;
+  note_item_index: number;
+  annotation_type: 'text_note' | 'star';
+  content: string;
+  created_at: string;
+}
+
+export interface NotesExportRecord {
+  id: string;
+  session_id: string;
+  student_id: string;
+  exported_at: string;
+  format: 'pdf' | 'docx' | 'md';
+  file_path: string | null;
+}

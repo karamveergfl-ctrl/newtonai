@@ -13,6 +13,11 @@ interface LiveSessionContextValue {
   updateSessionSettings: (settings: Partial<LiveSessionSettings>) => Promise<void>;
   activeConceptCheck: ConceptCheck | null;
   setActiveConceptCheck: (check: ConceptCheck | null) => void;
+  currentSlideIndex: number;
+  totalSlides: number;
+  setCurrentSlideIndex: (index: number) => void;
+  setTotalSlides: (total: number) => void;
+  notesEnabled: boolean;
 }
 
 const LiveSessionContext = createContext<LiveSessionContextValue | null>(null);
@@ -35,6 +40,9 @@ export function LiveSessionProvider({
   const [confusionThreshold, setConfusionThreshold] = useState(initialSettings?.confusion_threshold ?? 40);
   const [currentSlideContent, setCurrentSlideContent] = useState("");
   const [activeConceptCheck, setActiveConceptCheck] = useState<ConceptCheck | null>(null);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [totalSlides, setTotalSlides] = useState(0);
+  const [notesEnabled, setNotesEnabled] = useState(true);
 
   const updateSessionSettings = useCallback(
     async (settings: Partial<LiveSessionSettings>) => {
@@ -78,6 +86,11 @@ export function LiveSessionProvider({
         updateSessionSettings,
         activeConceptCheck,
         setActiveConceptCheck,
+        currentSlideIndex,
+        totalSlides,
+        setCurrentSlideIndex,
+        setTotalSlides,
+        notesEnabled,
       }}
     >
       {children}
