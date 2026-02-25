@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, BookOpen, AlertTriangle, CheckCircle2, XCircle, MessageSquare, ThumbsUp, Download, Zap, FileText, FileDown, Hash, ArrowRight } from "lucide-react";
+import { Loader2, Users, BookOpen, AlertTriangle, CheckCircle2, XCircle, MessageSquare, ThumbsUp, Download, Zap, FileText, FileDown, Hash, ArrowRight, BarChart3 } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useSessionSummary } from "@/hooks/useSessionSummary";
 import { useLiveNotes } from "@/hooks/useLiveNotes";
@@ -10,6 +10,8 @@ import { useNotesExport } from "@/hooks/useNotesExport";
 import { useStudentAnnotations } from "@/hooks/useStudentAnnotations";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useTeacherReport } from "@/hooks/useTeacherReport";
+import { useStudentReport } from "@/hooks/useStudentReport";
 
 interface SessionResultsPanelProps {
   sessionId: string;
@@ -75,8 +77,35 @@ export function SessionResultsPanel({ sessionId, sessionTitle, role = "teacher" 
 
   const weakStudents = (student_analysis || []).filter((s: any) => s.status === "needs_attention");
 
+  const teacherReport = useTeacherReport({ sessionId });
+  const studentReport = useStudentReport({ sessionId });
+  const reportStatus = role === "teacher" ? teacherReport.status : studentReport.status;
+  const reportPath = role === "teacher" ? `/report/teacher/${sessionId}` : `/report/student/${sessionId}`;
+
   return (
     <div className="space-y-5">
+      {/* Intelligence Report Banner */}
+      <Card
+        className={`border-primary/30 ${reportStatus === "ready" ? "bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors" : "bg-primary/5"}`}
+        onClick={() => reportStatus === "ready" && navigate(reportPath)}
+      >
+        <CardContent className="py-3 px-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            {reportStatus === "ready" ? (
+              <span className="text-sm font-medium">📊 Your Intelligence Report is ready →</span>
+            ) : reportStatus === "generating" ? (
+              <span className="text-sm text-muted-foreground flex items-center gap-2">
+                📊 Your Intelligence Report is being generated...
+                <Loader2 className="h-3 w-3 animate-spin" />
+              </span>
+            ) : (
+              <span className="text-sm text-muted-foreground">📊 Intelligence Report</span>
+            )}
+          </div>
+          {reportStatus === "ready" && <ArrowRight className="h-4 w-4 text-primary" />}
+        </CardContent>
+      </Card>
       {/* Interaction Summary — new section */}
       {!summaryLoading && pulseSummary.total > 0 && (
         <Card className="border-border/50 bg-gradient-to-r from-primary/5 via-background to-primary/5">

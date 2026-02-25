@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssignments } from "@/hooks/useAssignments";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +36,7 @@ interface LiveSessionPanelProps {
 
 export function LiveSessionPanel({ classId, session, onUpdate }: LiveSessionPanelProps) {
   const { createAssignment } = useAssignments(classId);
+  const navigate = useNavigate();
   const [generating, setGenerating] = useState(false);
   const [ending, setEnding] = useState(false);
   const [submissionCount, setSubmissionCount] = useState(0);
@@ -127,9 +129,18 @@ export function LiveSessionPanel({ classId, session, onUpdate }: LiveSessionPane
       quiz_ended_at: new Date().toISOString(),
     } as any).eq("id", session.id);
     toast.success("Quiz ended!");
+
+    // Trigger intelligence report generation
+    supabase.functions.invoke("trigger-all-student-reports", {
+      body: { session_id: session.id },
+    }).catch(console.error);
+
     onUpdate();
     setEnding(false);
-  }, [session.id, onUpdate]);
+
+    // Navigate to teacher report
+    navigate(`/report/teacher/${session.id}`);
+  }, [session.id, onUpdate, navigate]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
