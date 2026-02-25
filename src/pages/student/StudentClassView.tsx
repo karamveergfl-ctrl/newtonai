@@ -11,7 +11,8 @@ import { AnnouncementsBanner } from "@/components/student/AnnouncementsBanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy, TrendingUp, BarChart3 } from "lucide-react";
+import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy, TrendingUp, BarChart3, Award } from "lucide-react";
+import { StudentMarksTab } from "@/components/student/StudentMarksTab";
 import { Button } from "@/components/ui/button";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
@@ -251,10 +252,11 @@ const StudentClassView = () => {
 
         {!takingQuiz && (
           <Tabs defaultValue="materials">
-            <TabsList className="grid w-full grid-cols-3 h-10">
+            <TabsList className="grid w-full grid-cols-4 h-10">
               <TabsTrigger value="materials" className="gap-1.5 text-sm"><FileText className="h-4 w-4" /> Materials</TabsTrigger>
-              <TabsTrigger value="assignments" className="gap-1.5 text-sm"><ClipboardList className="h-4 w-4" /> Assignments</TabsTrigger>
-              <TabsTrigger value="performance" className="gap-1.5 text-sm"><TrendingUp className="h-4 w-4" /> Performance</TabsTrigger>
+              <TabsTrigger value="assignments" className="gap-1.5 text-sm"><ClipboardList className="h-4 w-4" /> Assign.</TabsTrigger>
+              <TabsTrigger value="marks" className="gap-1.5 text-sm"><Award className="h-4 w-4" /> Marks</TabsTrigger>
+              <TabsTrigger value="performance" className="gap-1.5 text-sm"><TrendingUp className="h-4 w-4" /> Perf.</TabsTrigger>
             </TabsList>
 
             <TabsContent value="materials" className="mt-5">
@@ -359,6 +361,10 @@ const StudentClassView = () => {
                   })}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="marks" className="mt-5">
+              {id && <StudentMarksTab classId={id} />}
             </TabsContent>
 
             <TabsContent value="performance" className="mt-5">
