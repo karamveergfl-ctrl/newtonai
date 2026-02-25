@@ -235,3 +235,58 @@ export interface ClassReportOverview {
   weakest_topic: { slide_title: string; avg_score: number };
   strongest_topic: { slide_title: string; avg_score: number };
 }
+
+// Phase 5 — Smart Board Spotlight
+
+export interface SlideTermDefinitions {
+  id: string;
+  session_id: string;
+  slide_index: number;
+  terms: TermDefinition[];
+  status: 'generating' | 'ready' | 'failed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TermDefinition {
+  term: string;
+  definition: string;
+  context: string;
+}
+
+export interface SpotlightSessionState {
+  id: string;
+  session_id: string;
+  spotlight_enabled: boolean;
+  current_slide_content: string;
+  current_slide_title: string;
+  updated_at: string;
+}
+
+export interface StudentSpotlightState {
+  id: string;
+  session_id: string;
+  student_id: string;
+  is_synced: boolean;
+  last_viewed_slide_index: number;
+  spotlight_view_active: boolean;
+  updated_at: string;
+}
+
+export interface SpotlightSyncStats {
+  total_enrolled: number;
+  synced_count: number;
+  unsynced_count: number;
+  spotlight_view_count: number;
+  sync_percentage: number;
+}
+
+export interface FormattedSlide {
+  title: string;
+  sections: SlideSection[];
+}
+
+export interface SlideSection {
+  type: 'heading' | 'body' | 'bullet' | 'code' | 'empty';
+  content: string;
+}

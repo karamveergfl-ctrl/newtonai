@@ -18,6 +18,12 @@ interface LiveSessionContextValue {
   setCurrentSlideIndex: (index: number) => void;
   setTotalSlides: (total: number) => void;
   notesEnabled: boolean;
+  spotlightEnabled: boolean;
+  teacherSlideContent: string;
+  teacherSlideTitle: string;
+  setSpotlightEnabled: (enabled: boolean) => void;
+  setTeacherSlideContent: (content: string) => void;
+  setTeacherSlideTitle: (title: string) => void;
 }
 
 const LiveSessionContext = createContext<LiveSessionContextValue | null>(null);
@@ -43,6 +49,9 @@ export function LiveSessionProvider({
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [totalSlides, setTotalSlides] = useState(0);
   const [notesEnabled, setNotesEnabled] = useState(true);
+  const [spotlightEnabled, setSpotlightEnabled] = useState(true);
+  const [teacherSlideContent, setTeacherSlideContent] = useState("");
+  const [teacherSlideTitle, setTeacherSlideTitle] = useState("");
 
   const updateSessionSettings = useCallback(
     async (settings: Partial<LiveSessionSettings>) => {
@@ -91,6 +100,12 @@ export function LiveSessionProvider({
         setCurrentSlideIndex,
         setTotalSlides,
         notesEnabled,
+        spotlightEnabled,
+        teacherSlideContent,
+        teacherSlideTitle,
+        setSpotlightEnabled,
+        setTeacherSlideContent,
+        setTeacherSlideTitle,
       }}
     >
       {children}
