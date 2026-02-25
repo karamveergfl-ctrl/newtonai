@@ -108,7 +108,7 @@ const integrationBenefits = [
 
 const Features = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
       <SEOHead
         title="Features"
         description="Explore NewtonAI's powerful AI study tools: flashcards, quizzes, summaries, mind maps, lecture notes, podcasts, homework help, and PDF chat."
@@ -119,15 +119,15 @@ const Features = () => {
       
       <Header />
       
-      <main className="container mx-auto px-4 py-12 sm:py-16">
+      <main className="container mx-auto px-4 py-20 md:py-28 lg:py-32">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8 border border-primary/20 tracking-wide">
             <Sparkles className="w-4 h-4" />
             Complete Study Suite
           </div>
           
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-6 tracking-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-display mb-6 tracking-tight leading-tight">
             Powerful Features for Effective Learning
           </h1>
           
@@ -153,7 +153,7 @@ const Features = () => {
                 className="flex flex-col md:flex-row gap-6 p-5 md:p-6 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200"
               >
                 <div className="flex-shrink-0">
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 p-3">
                     <feature.icon className="w-8 h-8 text-primary" />
                   </div>
                 </div>
@@ -269,7 +269,7 @@ const Features = () => {
         </section>
 
         {/* CTA */}
-        <section className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border border-primary/20">
+        <section className="text-center py-16 px-8 rounded-2xl bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 border border-border/50">
           <h2 className="text-2xl sm:text-3xl font-bold font-display mb-4">
             Ready to Try These Features?
           </h2>
@@ -278,10 +278,10 @@ const Features = () => {
             AI-powered tools can transform your study experience.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg">
+            <Button asChild size="lg" className="h-12 px-8 text-base font-medium rounded-lg">
               <Link to="/auth">Try Features Free</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base font-medium rounded-lg">
               <Link to="/how-it-works">Learn How It Works</Link>
             </Button>
           </div>
