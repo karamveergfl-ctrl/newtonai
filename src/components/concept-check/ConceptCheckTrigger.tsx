@@ -37,12 +37,12 @@ export function ConceptCheckTrigger({
               : "Check understanding"
         }
         className={cn(
-          "w-full min-h-[56px] text-base font-semibold transition-colors",
+          "w-full h-14 rounded-xl text-base font-semibold transition-all",
           hasError
-            ? "bg-red-600 hover:bg-red-700 text-white"
+            ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             : isRateLimited
-              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-              : "bg-teal-600 hover:bg-teal-700 text-white"
+              ? "bg-muted text-muted-foreground cursor-not-allowed"
+              : "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground"
         )}
       >
         {isGenerating ? (
@@ -76,8 +76,8 @@ export function ConceptCheckTrigger({
             className={cn(
               "px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors border",
               d === difficulty
-                ? "bg-teal-600/20 border-teal-500/40 text-teal-300"
-                : "bg-transparent border-gray-700 text-gray-500 hover:text-gray-300"
+                ? "bg-primary/15 border-primary/40 text-primary"
+                : "bg-transparent border-border text-muted-foreground hover:text-foreground"
             )}
           >
             {d}

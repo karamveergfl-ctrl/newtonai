@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { TopicToRevisit } from "@/types/liveSession";
 
 interface TopicsToRevisitCardProps {
@@ -43,7 +44,11 @@ export function TopicsToRevisitCard({ topics, aiFailed }: TopicsToRevisitCardPro
             return (
               <div key={i}>
                 {i > 0 && <Separator className="mb-2" />}
-                <div className="flex items-start gap-2.5">
+                <div className={cn("flex items-start gap-2.5", 
+                  topic.priority === "high" && "border-l-4 border-l-red-500 pl-3",
+                  topic.priority === "medium" && "border-l-4 border-l-amber-500 pl-3",
+                  topic.priority === "low" && "border-l-4 border-l-muted-foreground pl-3"
+                )}>
                   <Badge variant="outline" className={`text-[9px] shrink-0 mt-0.5 ${config.className}`}>
                     {config.label}
                   </Badge>

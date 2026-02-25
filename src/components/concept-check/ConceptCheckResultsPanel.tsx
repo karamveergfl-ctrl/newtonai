@@ -51,8 +51,8 @@ export function ConceptCheckResultsPanel({
           const isCorrect = key === check.correct_answer;
           return (
             <div key={key} className="flex items-center gap-2 text-xs">
-              <span className="w-5 font-bold text-gray-400">{optLabels[i]}</span>
-              <div className="flex-1 h-6 bg-gray-800 rounded overflow-hidden relative">
+              <span className="w-5 font-bold text-muted-foreground">{optLabels[i]}</span>
+              <div className="flex-1 h-6 bg-muted rounded-lg overflow-hidden relative">
                 <div
                   className={cn(
                     "h-full rounded animate-bar-fill",
@@ -64,7 +64,7 @@ export function ConceptCheckResultsPanel({
                   {options[key]}
                 </span>
               </div>
-              <span className="w-14 text-right text-gray-400 tabular-nums">
+              <span className="w-14 text-right text-muted-foreground tabular-nums">
                 {dist.count} ({Math.round(dist.percentage)}%)
               </span>
             </div>
@@ -73,7 +73,7 @@ export function ConceptCheckResultsPanel({
       </div>
 
       {/* Stats */}
-      <div className="flex items-center justify-between text-xs text-gray-400">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
           {results.total_responses}/{results.total_enrolled} answered ({Math.round(results.response_rate)}%)
         </span>
@@ -85,7 +85,7 @@ export function ConceptCheckResultsPanel({
         <span className={cn("text-2xl font-bold tabular-nums", pctColor)}>
           {Math.round(correctPct)}%
         </span>
-        <span className="text-xs text-gray-500 ml-1">correct</span>
+        <span className="text-xs text-muted-foreground ml-1">correct</span>
       </div>
 
       {/* Warning */}
@@ -102,7 +102,7 @@ export function ConceptCheckResultsPanel({
           variant="ghost"
           size="sm"
           onClick={onDismiss}
-          className="flex-1 text-xs text-gray-400"
+          className="flex-1 text-xs text-muted-foreground"
           aria-label="Dismiss results"
         >
           Dismiss
@@ -110,7 +110,7 @@ export function ConceptCheckResultsPanel({
         <Button
           size="sm"
           onClick={onNewCheck}
-          className="flex-1 text-xs bg-teal-600 hover:bg-teal-700 text-white"
+          className="flex-1 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
           aria-label="Start new concept check"
         >
           New Check

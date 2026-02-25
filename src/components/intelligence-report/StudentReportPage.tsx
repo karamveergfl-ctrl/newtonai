@@ -64,8 +64,8 @@ export function StudentReportPage({ sessionId }: StudentReportPageProps) {
       </div>
 
       {/* Score Hero */}
-      <Card className="border-border/50">
-        <CardContent className="py-6 flex flex-col items-center gap-3">
+      <Card className="border-border/50 bg-gradient-to-b from-primary/[0.07] to-transparent">
+        <CardContent className="py-10 flex flex-col items-center gap-3 rounded-2xl">
           <UnderstandingScoreRing score={report.understanding_score} size="large" />
           <p className="text-sm text-center text-muted-foreground max-w-xs">
             {scoreMessage(report.understanding_score)}

@@ -48,7 +48,7 @@ export function EngagementHeatmap({ heatmapData, totalSlides }: EngagementHeatma
               onClick={() =>
                 setExpandedIndex(expandedIndex === item.slide_index ? null : item.slide_index)
               }
-              className={`relative rounded-lg border p-2.5 h-20 text-left transition-all hover:scale-[1.02] active:scale-[0.98] ${scoreColor(item.engagement_score)}`}
+              className={`relative rounded-lg border p-2.5 h-20 text-left transition-all duration-200 hover:scale-105 hover:shadow-lg cursor-pointer ${scoreColor(item.engagement_score)}`}
             >
               <span className="text-[10px] font-mono text-foreground/60">
                 Slide {item.slide_index + 1}

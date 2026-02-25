@@ -92,7 +92,7 @@ export function GenerationCard({ generation, onDelete, index }: GenerationCardPr
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Card className="p-4 hover:bg-accent/50 transition-colors group">
+      <Card className="p-4 hover:border-border transition-all group border-border/50">
         <div className="flex items-start gap-3">
           <div className={`p-2 rounded-lg ${colorClass}`}>
             <ToolIcon className="h-5 w-5" />

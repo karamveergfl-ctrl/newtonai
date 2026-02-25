@@ -106,10 +106,10 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-overlay-rise">
-      <div className="w-[90%] max-w-[500px] bg-gray-900 border border-gray-700 rounded-2xl p-5 shadow-2xl animate-concept-bounce-in">
+      <div className="w-[90%] max-w-[500px] bg-card border border-border rounded-2xl p-6 shadow-2xl animate-concept-bounce-in">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <span className="text-base font-bold text-teal-300 flex items-center gap-1.5">
+          <span className="text-sm font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5">
             ⚡ Quick Check
           </span>
           <ConceptCheckTimer
@@ -120,7 +120,7 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
         </div>
 
         {/* Question */}
-        <p className="text-lg font-semibold text-foreground mb-5 leading-snug">
+        <p className="text-lg font-semibold text-foreground mb-6 leading-snug">
           {activeCheck.question}
         </p>
 
@@ -131,15 +131,15 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
             const isSelected = selectedKey === key || myResponse?.selected_answer === key;
             const answered = hasResponded || selectedKey !== null;
 
-            let btnClass = "border-gray-700 text-foreground hover:border-teal-500";
+            let btnClass = "border-border text-foreground hover:border-primary/50";
             if (revealCorrect && isCorrect) {
-              btnClass = "border-emerald-500 bg-emerald-500/15 text-emerald-300";
+              btnClass = "border-green-500 bg-green-950/30 text-green-200";
             } else if (revealCorrect && isSelected && !isCorrect) {
-              btnClass = "border-red-500 bg-red-500/10 text-red-400";
+              btnClass = "border-red-500 bg-red-950/30 text-red-200";
             } else if (answered && isSelected) {
-              btnClass = "border-teal-500 bg-teal-500/15 text-teal-300";
+              btnClass = "border-primary bg-primary/10 text-primary";
             } else if (answered) {
-              btnClass = "border-gray-800 text-gray-600";
+              btnClass = "border-border/50 text-muted-foreground";
             }
 
             return (
@@ -155,10 +155,14 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
               >
                 <span
                   className={cn(
-                    "shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border",
+                    "shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold",
                     revealCorrect && isCorrect
-                      ? "border-emerald-400 text-emerald-300"
-                      : "border-gray-600 text-gray-400"
+                      ? "bg-green-700 text-white"
+                      : revealCorrect && isSelected && !isCorrect
+                        ? "bg-red-700 text-white"
+                        : answered && isSelected
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
                   )}
                 >
                   {labels[i]}
@@ -180,11 +184,11 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
           {revealCorrect && hasResponded && myResponse && (
             <div className="space-y-2">
               {myResponse.is_correct ? (
-                <div className="flex items-center justify-center gap-1.5 text-emerald-400">
+                <div className="flex items-center justify-center gap-1.5 bg-green-900/40 border border-green-800 text-green-300 rounded-xl p-3">
                   <CheckCircle2 className="w-5 h-5" /> Correct! Well done
                 </div>
               ) : (
-                <div className="flex items-center justify-center gap-1.5 text-red-400">
+                <div className="flex items-center justify-center gap-1.5 bg-red-900/40 border border-red-800 text-red-300 rounded-xl p-3">
                   <XCircle className="w-5 h-5" /> Incorrect — correct answer was {activeCheck.correct_answer.toUpperCase()}
                 </div>
               )}

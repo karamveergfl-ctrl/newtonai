@@ -36,7 +36,7 @@ export function ProfileHeader({
     const tier = subscriptionTier?.toLowerCase();
     if (tier === 'ultra') {
       return (
-        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+        <Badge className="bg-purple-900/50 text-purple-300 border border-purple-700">
           <Crown className="h-3 w-3 mr-1" />
           Ultra
         </Badge>
@@ -44,14 +44,14 @@ export function ProfileHeader({
     }
     if (tier === 'pro' || tier === 'premium') {
       return (
-        <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+        <Badge className="bg-primary/15 text-primary border border-primary/30">
           <Sparkles className="h-3 w-3 mr-1" />
           Pro
         </Badge>
       );
     }
     return (
-      <Badge variant="secondary">
+      <Badge variant="secondary" className="bg-muted text-muted-foreground">
         Free
       </Badge>
     );
@@ -89,7 +89,7 @@ export function ProfileHeader({
   };
 
   return (
-    <div className="flex items-center gap-4 p-6 bg-card rounded-xl border border-border">
+    <div className="flex items-center gap-4 p-6 bg-card rounded-xl border border-border shadow-sm">
       <AvatarUpload
         userId={userId}
         currentAvatarUrl={avatarUrl}

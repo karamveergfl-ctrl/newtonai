@@ -86,7 +86,7 @@ export function SmartBoardConceptCheckPanel({
           size="sm"
           variant="outline"
           onClick={closeCheck}
-          className="text-xs border-gray-600 text-gray-300 hover:bg-gray-800"
+          className="text-xs border-border text-muted-foreground hover:bg-muted"
           aria-label="Close concept check early"
         >
           Close Early
