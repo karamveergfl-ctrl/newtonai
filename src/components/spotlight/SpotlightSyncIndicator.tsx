@@ -1,23 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { useSpotlightSync } from "@/hooks/useSpotlightSync";
+import { useState } from "react";
 import { RefreshCw } from "lucide-react";
+import type { SpotlightSyncStats } from "@/types/liveSession";
 
 interface SpotlightSyncIndicatorProps {
-  sessionId: string;
+  syncStats: SpotlightSyncStats | null;
 }
 
-export function SpotlightSyncIndicator({ sessionId }: SpotlightSyncIndicatorProps) {
-  const { syncStats, fetchSyncStats } = useSpotlightSync({ sessionId, role: "teacher" });
+export function SpotlightSyncIndicator({ syncStats }: SpotlightSyncIndicatorProps) {
   const [expanded, setExpanded] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Fallback auto-refresh every 10s
-  useEffect(() => {
-    intervalRef.current = setInterval(fetchSyncStats, 10_000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [fetchSyncStats]);
 
   if (!syncStats) return null;
 

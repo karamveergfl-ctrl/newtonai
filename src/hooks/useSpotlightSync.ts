@@ -20,6 +20,7 @@ interface UseSpotlightSyncReturn {
   resyncToTeacher: () => Promise<void>;
   toggleSpotlightView: (active: boolean) => Promise<void>;
   updateSlideContent: (slideIndex: number, content: string, title: string) => Promise<void>;
+  toggleSpotlight: (enabled: boolean) => Promise<void>;
   fetchSyncStats: () => Promise<void>;
 }
 
@@ -144,6 +145,24 @@ export function useSpotlightSync({ sessionId, role }: UseSpotlightSyncProps): Us
       }
     },
     [role, sessionId, spotlightEnabled]
+  );
+
+  const toggleSpotlight = useCallback(
+    async (enabled: boolean) => {
+      if (role !== "teacher") return;
+      setSpotlightEnabled(enabled);
+      try {
+        await supabase.rpc("update_spotlight_session_state", {
+          p_session_id: sessionId,
+          p_spotlight_enabled: enabled,
+          p_current_slide_content: teacherSlideContent,
+          p_current_slide_title: teacherSlideTitle,
+        });
+      } catch (err) {
+        console.error("toggleSpotlight error:", err);
+      }
+    },
+    [role, sessionId, teacherSlideContent, teacherSlideTitle]
   );
 
   const fetchSyncStats = useCallback(async () => {
@@ -274,6 +293,7 @@ export function useSpotlightSync({ sessionId, role }: UseSpotlightSyncProps): Us
     resyncToTeacher,
     toggleSpotlightView,
     updateSlideContent,
+    toggleSpotlight,
     fetchSyncStats,
   };
 }

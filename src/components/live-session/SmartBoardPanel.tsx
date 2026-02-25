@@ -47,9 +47,10 @@ export function SmartBoardPanel({
     setCurrentSlideIndex,
     setTeacherSlideContent,
     setTeacherSlideTitle,
+    setSpotlightEnabled,
   } = useLiveSession();
 
-  const { updateSlideContent } = useSpotlightSync({ sessionId, role: "teacher" });
+  const { updateSlideContent, toggleSpotlight, spotlightEnabled: hookSpotlightEnabled, teacherSlideTitle: hookSlideTitle, syncStats } = useSpotlightSync({ sessionId, role: "teacher" });
 
   const onSlideAdvance = (index: number, content: string, title: string) => {
     updateSlideContent(index, content, title);
@@ -193,7 +194,16 @@ export function SmartBoardPanel({
 
           {/* Spotlight Teacher Controls (Phase 5) */}
           <div className="p-3 shrink-0">
-            <SpotlightTeacherControls sessionId={sessionId} />
+            <SpotlightTeacherControls
+              sessionId={sessionId}
+              spotlightEnabled={hookSpotlightEnabled}
+              teacherSlideTitle={hookSlideTitle}
+              syncStats={syncStats}
+              onToggleSpotlight={(enabled) => {
+                toggleSpotlight(enabled);
+                setSpotlightEnabled(enabled);
+              }}
+            />
           </div>
 
           <div className="border-t border-border" />
