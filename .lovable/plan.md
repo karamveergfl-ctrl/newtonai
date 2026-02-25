@@ -1,147 +1,117 @@
 
 
-# Institutional Admin Dashboard -- Implementation Plan
+# AI-Driven Academic Insights
 
 ## Overview
-Build a comprehensive admin dashboard for institutional roles (Principal, Dean, Exam Admin, Department Head) with 4 subsystems: analytics, result processing, faculty monitoring, and compliance. All pages are scoped to the user's institution and protected by existing `InstitutionRoute` and `is_institution_admin` RLS.
+Add a dedicated edge function `generate-academic-insights` that produces contextual AI analysis at three levels (student, teacher, institution). Integrate insight panels into existing pages -- no new database tables needed since insights are generated on-demand from existing data.
 
 ---
 
-## Phase 1: Database Migration
+## Phase 1: Edge Function
 
-Single migration: `supabase/migrations/[timestamp]_institution_admin_dashboard.sql`
+**File:** `supabase/functions/generate-academic-insights/index.ts`
 
-### 1.1 `institution_audit_logs` Table
-Tracks all sensitive actions within the institution for compliance.
-```text
-institution_audit_logs
-  id               uuid PK DEFAULT gen_random_uuid()
-  institution_id   uuid NOT NULL
-  user_id          uuid NOT NULL
-  action           text NOT NULL         -- e.g. 'marks_updated', 'grade_calculated', 'member_added'
-  entity_type      text NOT NULL         -- e.g. 'student_marks', 'attendance_records'
-  entity_id        uuid
-  details          jsonb DEFAULT '{}'
-  created_at       timestamptz DEFAULT now()
-```
-RLS: SELECT only for institution admins via `is_institution_admin`. No direct INSERT/UPDATE/DELETE (populated via triggers/RPCs).
+A single edge function with a `type` parameter (`student`, `teacher`, `institution`) that:
+- Accepts a data payload (pre-aggregated on the client or via existing RPCs)
+- Sends it to Lovable AI (gemini-3-flash-preview) with role-specific system prompts
+- Returns structured JSON insights via tool calling (not free-text)
 
-### 1.2 New RPCs (SECURITY DEFINER)
+**Student prompt** produces:
+- `weak_topics`: array of {topic, reason, suggested_action}
+- `engagement_analysis`: {level, trend, recommendation}
+- `risk_assessment`: {risk_level, factors, mitigation}
+- `study_plan`: array of {day, focus_area, activity, duration_mins}
 
-**`get_institution_analytics(p_institution_id uuid)`**
-Returns aggregated data:
-- Student performance trends (avg marks per course, per semester)
-- Attendance rates per class/course
-- Active sessions count, total live sessions run
-- Course pass/fail rates
+**Teacher prompt** produces:
+- `reteach_topics`: array of {topic, reason, affected_student_pct}
+- `students_needing_help`: array of {student_id_short, signals, priority}
+- `assignment_improvements`: array of {suggestion, rationale}
 
-**`get_faculty_stats(p_institution_id uuid)`**
-Returns per-teacher metrics:
-- Number of classes, sessions run, assignments created
-- Average student score across their classes
-- Last active date
+**Institution prompt** produces:
+- `department_performance`: array of {department, rating, insight}
+- `exam_difficulty_trends`: array of {course, finding}
+- `attendance_correlations`: array of {finding, recommendation}
+- `overall_recommendations`: array of strings
 
-**`calculate_grades_batch(p_class_id uuid, p_grading_scale jsonb)`**
-Auto-calculates grades for all students in a class based on total_marks and a configurable grading scale (e.g. `[{"min":90,"grade":"A+"},{"min":80,"grade":"A"},...]`). Updates `student_marks.grade` column.
-
-**`generate_rank_list(p_class_id uuid, p_course_id uuid)`**
-Returns students ordered by total_marks descending with rank numbers.
-
-**`log_institution_audit(p_institution_id uuid, p_action text, p_entity_type text, p_entity_id uuid, p_details jsonb)`**
-Inserts an audit log entry. Validates caller is institution admin.
+All prompts explicitly instruct the model to never include PII -- only anonymized IDs and aggregate metrics.
 
 ---
 
-## Phase 2: Institution Analytics Page
+## Phase 2: Student Learning Insights Component
 
-**File:** `src/pages/institution/InstitutionAnalyticsPage.tsx`
+**File:** `src/components/student/StudentLearningInsights.tsx`
 
-Tabbed interface with 4 sections:
-1. **Overview**: KPI cards (total students, avg score, attendance rate, active courses) + trend line chart (recharts)
-2. **Performance**: Per-course average scores bar chart, pass/fail rates, semester comparison
-3. **Attendance**: Attendance rate per class shown as horizontal bar chart, highlighting low-attendance classes
-4. **Faculty Engagement**: Table of teachers with session count, assignment count, avg student score
+- Gathers data from `get_student_class_performance` RPC + `student_marks` table
+- Sends aggregated summary to `generate-academic-insights` with `type: "student"`
+- Renders:
+  - **Weak Topics** cards with suggested actions and links to study tools
+  - **Engagement Trend** indicator (rising/falling/stable) with recommendation
+  - **Risk Assessment** badge (low/medium/high) with contributing factors
+  - **Personalized Study Plan** -- 5-day plan in a timeline/list format
+- "Generate Insights" button (on-demand, not automatic)
 
-Uses `get_institution_analytics` and `get_faculty_stats` RPCs.
-
----
-
-## Phase 3: Result Processing Engine
-
-**File:** `src/pages/institution/ResultProcessingPage.tsx`
-
-Features:
-- **Grade Calculator**: Select class + course, choose grading scale (preset or custom), click "Calculate Grades" to call `calculate_grades_batch` RPC
-- **Rank List Generator**: Select class + course, generate and display ranked student list via `generate_rank_list` RPC
-- **Report Card PDF**: Uses existing `jsPDF` library to generate per-student report cards with all marks components, grade, and rank. Batch export option.
-- **Export**: CSV export of marks/grades using existing `ExportButton` component
-
-**File:** `src/components/institution/GradeCalculator.tsx` -- Grading scale editor + batch calculate UI
-**File:** `src/components/institution/ReportCardGenerator.tsx` -- PDF generation for individual/batch report cards
-**File:** `src/components/institution/RankListView.tsx` -- Sortable rank list display
+**Integration:** Add as a section within `StudentPerformanceTab.tsx` or as a new sub-tab in `StudentClassView.tsx` under "Performance"
 
 ---
 
-## Phase 4: Faculty Monitoring Page
+## Phase 3: Teacher Insights Component
 
-**File:** `src/pages/institution/FacultyMonitoringPage.tsx`
+**File:** `src/components/teacher/TeacherAIInsights.tsx`
 
-Displays:
-- Table of all teachers in the institution with metrics (classes, sessions, assignments, avg score, last active)
-- Expandable row showing per-class breakdown
-- Color-coded engagement indicators (green/amber/red based on session frequency)
-- Data sourced from `get_faculty_stats` RPC
+- Gathers data from `student_marks` + `attendance_records` + `assignment_submissions` for the selected class
+- Sends to `generate-academic-insights` with `type: "teacher"`
+- Renders:
+  - **Topics to Reteach** -- cards with topic name, reason, and % of students affected
+  - **Students Needing Help** -- priority-sorted list with signal indicators (low scores, low attendance, declining trend)
+  - **Assignment Improvements** -- actionable suggestions for better assessments
+- Replaces/enhances the simple "Generate" button in existing `GradeAnalyticsPanel`
 
----
-
-## Phase 5: Compliance & Audit Page
-
-**File:** `src/pages/institution/CompliancePage.tsx`
-
-Features:
-- **Audit Log Viewer**: Paginated table of `institution_audit_logs` with filters (date range, action type, user)
-- **Data Export**: Full institution data export (students, marks, attendance, courses) as CSV
-- **Role Overview**: Shows all institution members with their roles, providing visibility into access control
+**Integration:** Add as a new card section at the bottom of the existing `GradeAnalyticsPanel.tsx`, or as a standalone panel in the Marks tab of `ClassDetail.tsx`
 
 ---
 
-## Phase 6: Route & Navigation Updates
+## Phase 4: Institutional Insights Component
 
-**File:** `src/App.tsx` -- Add 4 new routes:
-- `/institution/analytics`
-- `/institution/results`
-- `/institution/faculty`
-- `/institution/compliance`
+**File:** `src/components/institution/InstitutionAIInsights.tsx`
 
-All wrapped in `InstitutionRoute`.
+- Uses data from `get_institution_analytics` + `get_faculty_stats` RPCs (already fetched on the analytics page)
+- Sends aggregate data to `generate-academic-insights` with `type: "institution"`
+- Renders:
+  - **Department Performance** -- color-coded cards per department with ratings
+  - **Exam Difficulty Trends** -- findings about which courses have unusually hard/easy exams
+  - **Attendance Correlations** -- insights linking attendance patterns to performance
+  - **Recommendations** -- actionable items for institutional improvement
+- "Generate Insights" button (on-demand)
 
-**File:** `src/components/AppSidebar.tsx` -- Add 4 new sidebar items under Institution group:
-- Analytics (BarChart3 icon)
-- Results (Award icon)
-- Faculty (Users icon)
-- Compliance (Shield icon)
+**Integration:** Add as a new "AI Insights" tab in `InstitutionAnalyticsPage.tsx`
+
+---
+
+## Privacy & Security
+
+- The edge function uses JWT auth validation (same pattern as `newton-chat`)
+- Rate limited: reuse existing `check_rate_limit` RPC (e.g., 10 req/hr per user)
+- Data sent to AI is pre-aggregated -- no raw student names or emails; only anonymized IDs (first 8 chars of UUID) and numeric scores
+- Student insights only use their own data (RLS-enforced at the query level)
+- Teacher insights only use data from their own classes
+- Institution insights only use data from their own institution
 
 ---
 
 ## Files Summary
 
-### New Files (7)
-1. `supabase/migrations/[timestamp]_institution_admin_dashboard.sql`
-2. `src/pages/institution/InstitutionAnalyticsPage.tsx`
-3. `src/pages/institution/ResultProcessingPage.tsx`
-4. `src/pages/institution/FacultyMonitoringPage.tsx`
-5. `src/pages/institution/CompliancePage.tsx`
-6. `src/components/institution/GradeCalculator.tsx`
-7. `src/components/institution/ReportCardGenerator.tsx`
-8. `src/components/institution/RankListView.tsx`
+### New Files (4)
+1. `supabase/functions/generate-academic-insights/index.ts` -- Multi-mode AI insight generator
+2. `src/components/student/StudentLearningInsights.tsx` -- Student-facing insight panel
+3. `src/components/teacher/TeacherAIInsights.tsx` -- Teacher-facing insight panel
+4. `src/components/institution/InstitutionAIInsights.tsx` -- Admin-facing insight panel
 
-### Modified Files (2)
-1. `src/App.tsx` -- Add 4 institution routes
-2. `src/components/AppSidebar.tsx` -- Add 4 sidebar links
+### Modified Files (4)
+1. `src/components/student/StudentPerformanceTab.tsx` -- Add StudentLearningInsights section
+2. `src/components/teacher/GradeAnalyticsPanel.tsx` -- Replace simple AI button with TeacherAIInsights
+3. `src/pages/institution/InstitutionAnalyticsPage.tsx` -- Add "AI Insights" tab
+4. `supabase/config.toml` -- Register new edge function with `verify_jwt = false`
 
-### Security
-- All new tables use RLS with `is_institution_admin` checks
-- Audit logs are insert-only via RPC (no direct client writes)
-- All RPCs validate institution membership before returning data
-- No cross-institution data leakage possible
+### No Database Changes
+All insights are computed on-demand from existing tables (`student_marks`, `attendance_records`, `assignment_submissions`, `live_sessions`, `concept_check_responses`). No new tables or RPCs required.
 
