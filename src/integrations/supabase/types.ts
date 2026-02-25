@@ -831,7 +831,9 @@ export type Database = {
           content_text: string | null
           content_title: string | null
           created_at: string
+          current_slide_index: number
           id: string
+          notes_enabled: boolean
           pulse_enabled: boolean
           questions_enabled: boolean
           quiz_ended_at: string | null
@@ -841,6 +843,7 @@ export type Database = {
           teacher_id: string
           time_limit_minutes: number
           title: string
+          total_slides: number
         }
         Insert: {
           assignment_id?: string | null
@@ -850,7 +853,9 @@ export type Database = {
           content_text?: string | null
           content_title?: string | null
           created_at?: string
+          current_slide_index?: number
           id?: string
+          notes_enabled?: boolean
           pulse_enabled?: boolean
           questions_enabled?: boolean
           quiz_ended_at?: string | null
@@ -860,6 +865,7 @@ export type Database = {
           teacher_id: string
           time_limit_minutes?: number
           title: string
+          total_slides?: number
         }
         Update: {
           assignment_id?: string | null
@@ -869,7 +875,9 @@ export type Database = {
           content_text?: string | null
           content_title?: string | null
           created_at?: string
+          current_slide_index?: number
           id?: string
+          notes_enabled?: boolean
           pulse_enabled?: boolean
           questions_enabled?: boolean
           quiz_ended_at?: string | null
@@ -879,6 +887,7 @@ export type Database = {
           teacher_id?: string
           time_limit_minutes?: number
           title?: string
+          total_slides?: number
         }
         Relationships: [
           {
@@ -1370,6 +1379,134 @@ export type Database = {
         }
         Relationships: []
       }
+      session_notes_export: {
+        Row: {
+          exported_at: string
+          file_path: string
+          format: string
+          id: string
+          session_id: string
+          student_id: string
+        }
+        Insert: {
+          exported_at?: string
+          file_path: string
+          format: string
+          id?: string
+          session_id: string
+          student_id: string
+        }
+        Update: {
+          exported_at?: string
+          file_path?: string
+          format?: string
+          id?: string
+          session_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_notes_export_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_notes_export_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_slide_notes: {
+        Row: {
+          ai_notes: Json
+          created_at: string
+          id: string
+          session_id: string
+          slide_context: string
+          slide_index: number
+          slide_title: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ai_notes?: Json
+          created_at?: string
+          id?: string
+          session_id: string
+          slide_context: string
+          slide_index: number
+          slide_title?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_notes?: Json
+          created_at?: string
+          id?: string
+          session_id?: string
+          slide_context?: string
+          slide_index?: number
+          slide_title?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_slide_notes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_note_annotations: {
+        Row: {
+          annotations: Json
+          created_at: string
+          id: string
+          slide_note_id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          annotations?: Json
+          created_at?: string
+          id?: string
+          slide_note_id: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          annotations?: Json
+          created_at?: string
+          id?: string
+          slide_note_id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_note_annotations_slide_note_id_fkey"
+            columns: ["slide_note_id"]
+            isOneToOne: false
+            referencedRelation: "session_slide_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_note_annotations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_sessions: {
         Row: {
           created_at: string
@@ -1663,8 +1800,61 @@ export type Database = {
         Args: { p_document_id: string }
         Returns: string
       }
+      get_notes_analytics: { Args: { p_session_id: string }; Returns: Json }
       get_pulse_summary: { Args: { p_session_id: string }; Returns: Json }
+      get_session_notes: {
+        Args: { p_session_id: string }
+        Returns: {
+          ai_notes: Json
+          created_at: string
+          id: string
+          session_id: string
+          slide_context: string
+          slide_index: number
+          slide_title: string | null
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "session_slide_notes"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_session_questions: { Args: { p_session_id: string }; Returns: Json }
+      get_slide_notes: {
+        Args: { p_session_id: string; p_slide_index: number }
+        Returns: {
+          ai_notes: Json
+          created_at: string
+          id: string
+          session_id: string
+          slide_context: string
+          slide_index: number
+          slide_title: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "session_slide_notes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      get_student_annotations: {
+        Args: { p_session_id: string }
+        Returns: {
+          annotations: Json
+          created_at: string
+          id: string
+          slide_index: number
+          slide_note_id: string
+          student_id: string
+          updated_at: string
+        }[]
+      }
       get_student_class_performance: {
         Args: { p_class_id: string }
         Returns: Json
@@ -1744,6 +1934,23 @@ export type Database = {
       upsert_pulse_response: {
         Args: { p_session_id: string; p_status: string }
         Returns: Json
+      }
+      upsert_student_annotations: {
+        Args: { p_annotations: Json; p_slide_note_id: string }
+        Returns: {
+          annotations: Json
+          created_at: string
+          id: string
+          slide_note_id: string
+          student_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "student_note_annotations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       validate_redeem_code: { Args: { p_code: string }; Returns: Json }
     }
