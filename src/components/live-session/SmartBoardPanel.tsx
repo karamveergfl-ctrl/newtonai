@@ -5,6 +5,8 @@ import { QuestionWall } from "./QuestionWall";
 import { SmartBoardConceptCheckPanel } from "@/components/concept-check";
 import { TeacherNotesOverview } from "@/components/live-notes/TeacherNotesOverview";
 import { SlideAdvanceControls } from "@/components/live-notes/SlideAdvanceControls";
+import { SpotlightTeacherControls } from "@/components/spotlight";
+import { useSpotlightSync } from "@/hooks/useSpotlightSync";
 import { useLiveNotes } from "@/hooks/useLiveNotes";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -43,13 +45,23 @@ export function SmartBoardPanel({
     currentSlideIndex,
     totalSlides,
     setCurrentSlideIndex,
+    setTeacherSlideContent,
+    setTeacherSlideTitle,
   } = useLiveSession();
+
+  const { updateSlideContent } = useSpotlightSync({ sessionId, role: "teacher" });
+
+  const onSlideAdvance = (index: number, content: string, title: string) => {
+    updateSlideContent(index, content, title);
+    setTeacherSlideContent(content);
+    setTeacherSlideTitle(title);
+  };
 
   const {
     isGenerating: notesGenerating,
     generationError: notesError,
     advanceToSlide,
-  } = useLiveNotes({ sessionId, role: "teacher" });
+  } = useLiveNotes({ sessionId, role: "teacher", onSlideAdvance });
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -175,6 +187,13 @@ export function SmartBoardPanel({
               sessionId={sessionId}
               slideContext={currentSlideContent || ""}
             />
+          </div>
+
+          <div className="border-t border-border" />
+
+          {/* Spotlight Teacher Controls (Phase 5) */}
+          <div className="p-3 shrink-0">
+            <SpotlightTeacherControls sessionId={sessionId} />
           </div>
 
           <div className="border-t border-border" />

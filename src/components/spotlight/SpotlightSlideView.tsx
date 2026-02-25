@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useSpotlightSync } from "@/hooks/useSpotlightSync";
 import { useSlideContent } from "@/hooks/useSlideContent";
 import { SlideContentRenderer } from "./SlideContentRenderer";
@@ -30,8 +30,34 @@ export function SpotlightSlideView({ sessionId, role }: SpotlightSlideViewProps)
   const [mobileTab, setMobileTab] = useState<"slide" | "terms">("slide");
   const [isResyncing, setIsResyncing] = useState(false);
   const [localSlideIndex, setLocalSlideIndex] = useState(lastViewedSlideIndex);
+  const [syncFlash, setSyncFlash] = useState(false);
+  const [updatedLabel, setUpdatedLabel] = useState(false);
+  const prevSyncedRef = useRef(isSynced);
+  const prevTeacherSlideRef = useRef(teacherSlideIndex);
 
   const activeSlideIndex = isSynced ? teacherSlideIndex : localSlideIndex;
+
+  // Sync pulse when resync happens
+  useEffect(() => {
+    if (isSynced && !prevSyncedRef.current) {
+      setSyncFlash(true);
+      const timer = setTimeout(() => setSyncFlash(false), 800);
+      prevSyncedRef.current = isSynced;
+      return () => clearTimeout(timer);
+    }
+    prevSyncedRef.current = isSynced;
+  }, [isSynced]);
+
+  // "Updated ✓" flash when teacher advances while synced
+  useEffect(() => {
+    if (isSynced && teacherSlideIndex !== prevTeacherSlideRef.current && prevTeacherSlideRef.current !== 0) {
+      setUpdatedLabel(true);
+      const timer = setTimeout(() => setUpdatedLabel(false), 1500);
+      prevTeacherSlideRef.current = teacherSlideIndex;
+      return () => clearTimeout(timer);
+    }
+    prevTeacherSlideRef.current = teacherSlideIndex;
+  }, [isSynced, teacherSlideIndex]);
 
   const handleResync = useCallback(async () => {
     setIsResyncing(true);
@@ -58,18 +84,29 @@ export function SpotlightSlideView({ sessionId, role }: SpotlightSlideViewProps)
           style={{ flex: "0 0 65%" }}
         >
           <div className="flex-1 overflow-y-auto">
-            <SlideContentRenderer formattedSlide={formattedContent} isLoading={!teacherSlideContent} />
+            <SlideContentRenderer
+              formattedSlide={formattedContent}
+              isLoading={!teacherSlideContent}
+              slideIndex={activeSlideIndex}
+            />
           </div>
 
           {/* Student sync bar */}
           {role === "student" && (
-            <div className="border-t border-gray-700/50 px-4 py-3">
+            <div
+              className="border-t border-gray-700/50 px-4 py-3 transition-colors duration-300"
+              style={syncFlash ? { animation: "sync-pulse 0.8s ease-out" } : undefined}
+            >
               {isSynced ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
                     <span className="w-2 h-2 rounded-full bg-green-400" />
                     <span className="text-gray-300">
-                      Synced with teacher — Slide {teacherSlideIndex + 1}
+                      {updatedLabel ? (
+                        <span className="text-green-400 transition-opacity duration-300">Updated ✓</span>
+                      ) : (
+                        <>Synced with teacher — Slide {teacherSlideIndex + 1}</>
+                      )}
                     </span>
                   </div>
                   <button
@@ -150,6 +187,13 @@ export function SpotlightSlideView({ sessionId, role }: SpotlightSlideViewProps)
           📚 Terms
         </button>
       </div>
+
+      <style>{`
+        @keyframes sync-pulse {
+          0% { background-color: rgba(34,197,94,0.3); }
+          100% { background-color: transparent; }
+        }
+      `}</style>
     </div>
   );
 }
