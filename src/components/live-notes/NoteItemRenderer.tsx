@@ -55,6 +55,9 @@ export function NoteItemRenderer({
     }
   };
 
+  // For stagger animation: parent can set CSS variable --note-delay
+  const staggerStyle = { animationDelay: `${itemIndex * 60}ms` } as React.CSSProperties;
+
   const handleOpenNote = () => {
     setEditingNote(true);
     setNoteContent(textAnnotation?.content ?? "");
@@ -83,7 +86,8 @@ export function NoteItemRenderer({
 
   return (
     <div
-      className="group relative"
+      className="group relative animate-note-reveal"
+      style={staggerStyle}
       onMouseEnter={() => isStudent && !isHeading && setShowActions(true)}
       onMouseLeave={() => isStudent && setShowActions(false)}
       onTouchStart={() => isStudent && !isHeading && setShowActions(true)}
@@ -139,7 +143,7 @@ export function NoteItemRenderer({
               className={cn(
                 "p-1 rounded transition-colors",
                 isStarred
-                  ? "text-amber-400 hover:bg-amber-950/40"
+                  ? "text-amber-400 hover:bg-amber-950/40 animate-star-pop"
                   : "text-muted-foreground hover:text-amber-400 hover:bg-muted"
               )}
               aria-label={isStarred ? "Unstar this point" : "Star this point"}

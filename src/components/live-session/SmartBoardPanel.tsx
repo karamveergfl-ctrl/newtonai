@@ -3,6 +3,9 @@ import { useLiveSession } from "@/contexts/LiveSessionContext";
 import { PulseMeter } from "./PulseMeter";
 import { QuestionWall } from "./QuestionWall";
 import { SmartBoardConceptCheckPanel } from "@/components/concept-check";
+import { TeacherNotesOverview } from "@/components/live-notes/TeacherNotesOverview";
+import { SlideAdvanceControls } from "@/components/live-notes/SlideAdvanceControls";
+import { useLiveNotes } from "@/hooks/useLiveNotes";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Maximize, Minimize, X } from "lucide-react";
@@ -37,7 +40,16 @@ export function SmartBoardPanel({
     currentSlideContent,
     updateSessionSettings,
     activeConceptCheck,
+    currentSlideIndex,
+    totalSlides,
+    setCurrentSlideIndex,
   } = useLiveSession();
+
+  const {
+    isGenerating: notesGenerating,
+    generationError: notesError,
+    advanceToSlide,
+  } = useLiveNotes({ sessionId, role: "teacher" });
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -167,6 +179,13 @@ export function SmartBoardPanel({
 
           <div className="border-t border-border" />
 
+          {/* Live Notes Overview (Phase 3) */}
+          <div className={cn("shrink-0 transition-all duration-300", notesGenerating && "ring-1 ring-primary/40 animate-pulse rounded-lg")}>
+            <TeacherNotesOverview sessionId={sessionId} />
+          </div>
+
+          <div className="border-t border-border" />
+
           {/* Pulse Meter */}
           <div className={cn("p-3 shrink-0 transition-opacity duration-300", hasActiveCheck && "opacity-50")}>
             <PulseMeter sessionId={sessionId} confusionThreshold={confusionThreshold} />
@@ -183,48 +202,70 @@ export function SmartBoardPanel({
 
           {/* Session controls */}
           <div className="flex items-center gap-2 p-3 shrink-0">
-            <button
-              onClick={() => updateSessionSettings({ pulse_enabled: !pulseEnabled })}
-              className={cn(
-                "flex-1 text-xs rounded-lg px-3 py-2 border transition-colors font-medium",
-                pulseEnabled
-                  ? "bg-primary/10 border-primary/30 text-primary"
-                  : "bg-muted border-border text-muted-foreground"
-              )}
-            >
-              Pulse {pulseEnabled ? "On" : "Off"}
-            </button>
-            <button
-              onClick={() => updateSessionSettings({ questions_enabled: !questionsEnabled })}
-              className={cn(
-                "flex-1 text-xs rounded-lg px-3 py-2 border transition-colors font-medium",
-                questionsEnabled
-                  ? "bg-primary/10 border-primary/30 text-primary"
-                  : "bg-muted border-border text-muted-foreground"
-              )}
-            >
-              Q&A {questionsEnabled ? "On" : "Off"}
-            </button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-              title={isFullscreen ? "Exit Smart Board Mode" : "Smart Board Mode"}
-              aria-label={isFullscreen ? "Exit Smart Board Mode" : "Enter Smart Board Mode"}
-            >
-              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-            </Button>
-            {onEndSession && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={onEndSession}
-                className="text-xs"
+            {/* Slide advance controls (Phase 3) */}
+            <div className="flex-1 min-w-0">
+              <SlideAdvanceControls
+                sessionId={sessionId}
+                totalSlides={totalSlides}
+                currentSlideIndex={currentSlideIndex}
+                isGenerating={notesGenerating}
+                generationError={notesError}
+                onAdvance={(idx, ctx, title) => {
+                  setCurrentSlideIndex(idx);
+                  advanceToSlide(idx, ctx, title);
+                }}
+                onPrev={(idx) => setCurrentSlideIndex(idx)}
+                getSlideContent={() =>
+                  currentSlideContent
+                    ? { context: currentSlideContent, title: currentSlideContent.split("\n")[0]?.slice(0, 80) }
+                    : null
+                }
+              />
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => updateSessionSettings({ pulse_enabled: !pulseEnabled })}
+                className={cn(
+                  "text-[10px] rounded-lg px-2 py-1.5 border transition-colors font-medium",
+                  pulseEnabled
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-muted border-border text-muted-foreground"
+                )}
               >
-                End
+                Pulse
+              </button>
+              <button
+                onClick={() => updateSessionSettings({ questions_enabled: !questionsEnabled })}
+                className={cn(
+                  "text-[10px] rounded-lg px-2 py-1.5 border transition-colors font-medium",
+                  questionsEnabled
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-muted border-border text-muted-foreground"
+                )}
+              >
+                Q&A
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0"
+                onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+                title={isFullscreen ? "Exit Smart Board Mode" : "Smart Board Mode"}
+                aria-label={isFullscreen ? "Exit Smart Board Mode" : "Enter Smart Board Mode"}
+              >
+                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
               </Button>
-            )}
+              {onEndSession && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={onEndSession}
+                  className="text-xs"
+                >
+                  End
+                </Button>
+              )}
+            </div>
           </div>
         </aside>
       </div>

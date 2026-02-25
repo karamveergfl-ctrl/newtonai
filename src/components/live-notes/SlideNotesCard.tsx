@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, RefreshCw, Star, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NoteItemRenderer } from "./NoteItemRenderer";
@@ -72,9 +71,9 @@ export function SlideNotesCard({
       {/* Body */}
       {slideNotes.status === "generating" && (
         <div className="space-y-2 py-2">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-3 w-full" />
-          <Skeleton className="h-3 w-5/6" />
+          <div className="h-4 w-3/4 rounded notes-shimmer-bg" />
+          <div className="h-3 w-full rounded notes-shimmer-bg" />
+          <div className="h-3 w-5/6 rounded notes-shimmer-bg" />
           <p className="text-xs text-muted-foreground mt-2 animate-pulse">Generating notes…</p>
         </div>
       )}

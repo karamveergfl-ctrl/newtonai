@@ -4,6 +4,7 @@ import { MessageSquare, X } from "lucide-react";
 import { PulseWidget } from "./PulseWidget";
 import { QuestionWall } from "./QuestionWall";
 import { ConceptCheckOverlay } from "@/components/concept-check";
+import { StudentNotesDrawer } from "@/components/live-notes/StudentNotesDrawer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,9 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
 
       {/* Pulse widget */}
       <PulseWidget sessionId={sessionId} />
+
+      {/* Live Notes drawer (Phase 3) */}
+      <StudentNotesDrawer sessionId={sessionId} />
 
       {/* Question wall trigger */}
       <button
