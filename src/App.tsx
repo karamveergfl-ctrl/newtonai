@@ -15,6 +15,7 @@ import { StudyProvider } from "@/contexts/StudyContext";
 import { GuestTrialProvider } from "@/contexts/GuestTrialContext";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { PageTransition } from "./components/PageTransition";
+import { ChunkErrorBoundary } from "./components/ChunkErrorBoundary";
 
 // Non-critical global components lazy-loaded to reduce main thread blocking
 const PodcastMiniPlayer = lazy(() => import("@/components/PodcastMiniPlayer").then(m => ({ default: m.PodcastMiniPlayer })));
@@ -123,6 +124,7 @@ function AnimatedRoutes() {
   }, []);
   
   return (
+    <ChunkErrorBoundary>
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>}>
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
@@ -207,6 +209,7 @@ function AnimatedRoutes() {
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </Suspense>
+    </ChunkErrorBoundary>
   );
 }
 
