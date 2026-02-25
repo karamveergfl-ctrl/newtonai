@@ -111,6 +111,10 @@ const DepartmentsPage = lazy(() => import("./pages/institution/DepartmentsPage")
 const CoursesPage = lazy(() => import("./pages/institution/CoursesPage"));
 const AcademicRecordsPage = lazy(() => import("./pages/institution/AcademicRecordsPage"));
 const InstitutionRoute = lazy(() => import("./components/InstitutionRoute").then(m => ({ default: m.InstitutionRoute })));
+const InstitutionAnalyticsPage = lazy(() => import("./pages/institution/InstitutionAnalyticsPage"));
+const ResultProcessingPage = lazy(() => import("./pages/institution/ResultProcessingPage"));
+const FacultyMonitoringPage = lazy(() => import("./pages/institution/FacultyMonitoringPage"));
+const CompliancePage = lazy(() => import("./pages/institution/CompliancePage"));
 
 const queryClient = new QueryClient();
 
@@ -211,6 +215,10 @@ function AnimatedRoutes() {
         <Route path="/institution/departments" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><DepartmentsPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/institution/courses" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><CoursesPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/institution/academic-records" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><AcademicRecordsPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/institution/analytics" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><InstitutionAnalyticsPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/institution/results" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><ResultProcessingPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/institution/faculty" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><FacultyMonitoringPage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/institution/compliance" element={<PageTransition><ProtectedRoute><OnboardingGate><InstitutionRoute><CompliancePage /></InstitutionRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         
         {/* Admin Routes */}
         <Route path="/admin/analytics" element={<PageTransition><AdminRoute><AdminAnalytics /></AdminRoute></PageTransition>} />

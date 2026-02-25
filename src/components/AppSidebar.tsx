@@ -49,6 +49,8 @@ import {
   School,
   GraduationCap,
   Building2,
+  Award,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
@@ -341,6 +343,38 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                     <button onClick={() => navigate("/institution/academic-records")} className={btnClass("/institution/academic-records")}>
                       <GraduationCap className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                       {!isCollapsed && <span>Academic Records</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Analytics">
+                    <button onClick={() => navigate("/institution/analytics")} className={btnClass("/institution/analytics")}>
+                      <BarChart3 className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                      {!isCollapsed && <span>Analytics</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Results">
+                    <button onClick={() => navigate("/institution/results")} className={btnClass("/institution/results")}>
+                      <Award className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                      {!isCollapsed && <span>Results</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Faculty">
+                    <button onClick={() => navigate("/institution/faculty")} className={btnClass("/institution/faculty")}>
+                      <Users className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                      {!isCollapsed && <span>Faculty</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Compliance">
+                    <button onClick={() => navigate("/institution/compliance")} className={btnClass("/institution/compliance")}>
+                      <Shield className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                      {!isCollapsed && <span>Compliance</span>}
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
