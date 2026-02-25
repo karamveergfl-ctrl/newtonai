@@ -143,7 +143,7 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-background/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-background/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
       {/* Hidden file input for camera */}
       <input
         ref={fileInputRef}
@@ -238,12 +238,12 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
               <div className={cn("relative transition-transform duration-200", isActive && "scale-110")}>
                 {item.icon}
                 {/* Live session indicator for student Home tab */}
-                {hasLiveSession && item.label === "Home" && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                {hasLiveSession && item.label === "Home" && !hasActiveConceptCheck && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-destructive animate-pulse ring-2 ring-background" />
                 )}
                 {/* Active concept check indicator */}
                 {hasActiveConceptCheck && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-primary animate-pulse ring-2 ring-background" />
                 )}
               </div>
               <span className="text-[10px] font-medium">{item.label}</span>

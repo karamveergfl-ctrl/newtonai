@@ -19,9 +19,9 @@ export function TopStatsBar() {
   const showLogo = isMobile || !sidebarOpen;
 
   return (
-    <div className="sticky top-0 z-40 bg-background/95 border-b border-border/50">
-      <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center justify-between">
+    <div className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-sm border-b border-border">
+      <div className="container mx-auto px-4 h-full">
+        <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="hidden md:flex h-8 w-8" />
             {showLogo && <Logo size="xs" showText compact />}
@@ -34,7 +34,7 @@ export function TopStatsBar() {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate("/profile")}
-                className="h-8 w-8 rounded-full hover:bg-accent"
+                className="h-9 w-9 rounded-full ring-2 ring-border hover:ring-primary transition-all duration-150"
               >
                 <User className="h-4 w-4" />
               </Button>
