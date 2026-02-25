@@ -1355,6 +1355,50 @@ export type Database = {
           },
         ]
       }
+      report_video_results: {
+        Row: {
+          channel_name: string
+          duration: string
+          fetched_at: string
+          id: string
+          student_report_id: string
+          thumbnail_url: string
+          topic: string
+          video_id: string
+          video_title: string
+        }
+        Insert: {
+          channel_name: string
+          duration: string
+          fetched_at?: string
+          id?: string
+          student_report_id: string
+          thumbnail_url: string
+          topic: string
+          video_id: string
+          video_title: string
+        }
+        Update: {
+          channel_name?: string
+          duration?: string
+          fetched_at?: string
+          id?: string
+          student_report_id?: string
+          thumbnail_url?: string
+          topic?: string
+          video_id?: string
+          video_title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_video_results_student_report_id_fkey"
+            columns: ["student_report_id"]
+            isOneToOne: false
+            referencedRelation: "student_intelligence_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       search_history: {
         Row: {
           created_at: string
@@ -1378,6 +1422,61 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      session_intelligence_reports: {
+        Row: {
+          class_id: string
+          generated_at: string
+          id: string
+          session_id: string
+          status: string
+          teacher_id: string
+          teacher_report: Json
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          generated_at?: string
+          id?: string
+          session_id: string
+          status?: string
+          teacher_id: string
+          teacher_report?: Json
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          generated_at?: string
+          id?: string
+          session_id?: string
+          status?: string
+          teacher_id?: string
+          teacher_report?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_intelligence_reports_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_intelligence_reports_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_intelligence_reports_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       session_notes_export: {
         Row: {
@@ -1461,6 +1560,63 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_intelligence_reports: {
+        Row: {
+          generated_at: string
+          id: string
+          knowledge_gaps: Json
+          revision_flashcards: Json
+          session_id: string
+          status: string
+          student_id: string
+          topic_scores: Json
+          understanding_score: number
+          updated_at: string
+          video_suggestions: Json
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          knowledge_gaps?: Json
+          revision_flashcards?: Json
+          session_id: string
+          status?: string
+          student_id: string
+          topic_scores?: Json
+          understanding_score?: number
+          updated_at?: string
+          video_suggestions?: Json
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          knowledge_gaps?: Json
+          revision_flashcards?: Json
+          session_id?: string
+          status?: string
+          student_id?: string
+          topic_scores?: Json
+          understanding_score?: number
+          updated_at?: string
+          video_suggestions?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_intelligence_reports_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_intelligence_reports_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1795,6 +1951,10 @@ export type Database = {
       get_assignment_results: { Args: { p_class_id: string }; Returns: Json }
       get_attendance_grid: { Args: { p_class_id: string }; Returns: Json }
       get_class_analytics: { Args: { p_class_id: string }; Returns: Json }
+      get_class_report_overview: {
+        Args: { p_session_id: string }
+        Returns: Json
+      }
       get_concept_check_results: { Args: { p_check_id: string }; Returns: Json }
       get_document_file_path: {
         Args: { p_document_id: string }
@@ -1860,6 +2020,8 @@ export type Database = {
         Returns: Json
       }
       get_student_progress: { Args: { p_class_id: string }; Returns: Json }
+      get_student_report: { Args: { p_session_id: string }; Returns: Json }
+      get_teacher_report: { Args: { p_session_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1890,6 +2052,10 @@ export type Database = {
       record_video_watch_time: {
         Args: { p_duration_seconds: number; p_video_id: string }
         Returns: Json
+      }
+      save_report_video_results: {
+        Args: { p_student_report_id: string; p_videos: Json }
+        Returns: undefined
       }
       search_document_chunks: {
         Args: {
@@ -1929,6 +2095,10 @@ export type Database = {
       toggle_question_upvote: { Args: { p_question_id: string }; Returns: Json }
       track_feature_usage: {
         Args: { p_feature_name: string; p_usage_minutes?: number }
+        Returns: Json
+      }
+      trigger_report_generation: {
+        Args: { p_session_id: string }
         Returns: Json
       }
       upsert_pulse_response: {
