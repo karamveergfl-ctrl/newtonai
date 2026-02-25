@@ -535,3 +535,23 @@ All colors MUST be HSL.
 .animate-saved-fade {
   animation: saved-fade 2s ease-out forwards;
 }
+
+/* Phase 4 — Report indeterminate progress bar */
+@keyframes report-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+.report-indeterminate-bar {
+  position: relative;
+}
+
+.report-indeterminate-bar::after {
+  content: '';
+  position: absolute;
+  width: 25%;
+  height: 100%;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  animation: report-indeterminate 1.5s ease infinite;
+}
