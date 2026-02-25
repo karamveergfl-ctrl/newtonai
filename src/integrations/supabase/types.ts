@@ -589,15 +589,134 @@ export type Database = {
         }
         Relationships: []
       }
+      live_pulse_responses: {
+        Row: {
+          created_at: string
+          id: string
+          session_id: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_id: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_pulse_responses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_pulse_responses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_question_upvotes: {
+        Row: {
+          id: string
+          question_id: string
+          student_id: string
+        }
+        Insert: {
+          id?: string
+          question_id: string
+          student_id: string
+        }
+        Update: {
+          id?: string
+          question_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_question_upvotes_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "live_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_question_upvotes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_questions: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_answered: boolean
+          is_pinned: boolean
+          newton_answer: string | null
+          session_id: string
+          upvotes: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_answered?: boolean
+          is_pinned?: boolean
+          newton_answer?: string | null
+          session_id: string
+          upvotes?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_answered?: boolean
+          is_pinned?: boolean
+          newton_answer?: string | null
+          session_id?: string
+          upvotes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_questions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_sessions: {
         Row: {
           assignment_id: string | null
           class_id: string
+          confusion_threshold: number
           content_source: string
           content_text: string | null
           content_title: string | null
           created_at: string
           id: string
+          pulse_enabled: boolean
+          questions_enabled: boolean
           quiz_ended_at: string | null
           quiz_started_at: string | null
           started_at: string
@@ -609,11 +728,14 @@ export type Database = {
         Insert: {
           assignment_id?: string | null
           class_id: string
+          confusion_threshold?: number
           content_source?: string
           content_text?: string | null
           content_title?: string | null
           created_at?: string
           id?: string
+          pulse_enabled?: boolean
+          questions_enabled?: boolean
           quiz_ended_at?: string | null
           quiz_started_at?: string | null
           started_at?: string
@@ -625,11 +747,14 @@ export type Database = {
         Update: {
           assignment_id?: string | null
           class_id?: string
+          confusion_threshold?: number
           content_source?: string
           content_text?: string | null
           content_title?: string | null
           created_at?: string
           id?: string
+          pulse_enabled?: boolean
+          questions_enabled?: boolean
           quiz_ended_at?: string | null
           quiz_started_at?: string | null
           started_at?: string
@@ -1334,7 +1459,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      live_pulse_summary: {
+        Row: {
+          got_it: number | null
+          lost: number | null
+          session_id: string | null
+          slightly_lost: number | null
+          total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_pulse_responses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       analyze_session_results: { Args: { p_session_id: string }; Returns: Json }
@@ -1383,6 +1525,8 @@ export type Database = {
         Args: { p_document_id: string }
         Returns: string
       }
+      get_pulse_summary: { Args: { p_session_id: string }; Returns: Json }
+      get_session_questions: { Args: { p_session_id: string }; Returns: Json }
       get_student_class_performance: {
         Args: { p_class_id: string }
         Returns: Json
@@ -1442,8 +1586,17 @@ export type Database = {
         | { Args: { p_feature_name: string }; Returns: Json }
         | { Args: { p_amount: number; p_feature_name: string }; Returns: Json }
       start_study_session: { Args: { p_pdf_name: string }; Returns: Json }
+      submit_anonymous_question: {
+        Args: { p_content: string; p_session_id: string }
+        Returns: Json
+      }
+      toggle_question_upvote: { Args: { p_question_id: string }; Returns: Json }
       track_feature_usage: {
         Args: { p_feature_name: string; p_usage_minutes?: number }
+        Returns: Json
+      }
+      upsert_pulse_response: {
+        Args: { p_session_id: string; p_status: string }
         Returns: Json
       }
       validate_redeem_code: { Args: { p_code: string }; Returns: Json }
