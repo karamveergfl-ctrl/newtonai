@@ -325,6 +325,7 @@ export type Database = {
       classes: {
         Row: {
           academic_year: string | null
+          course_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -337,6 +338,7 @@ export type Database = {
         }
         Insert: {
           academic_year?: string | null
+          course_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -349,6 +351,7 @@ export type Database = {
         }
         Update: {
           academic_year?: string | null
+          course_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -359,7 +362,15 @@ export type Database = {
           teacher_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "classes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       concept_check_responses: {
         Row: {
@@ -465,6 +476,47 @@ export type Database = {
           },
         ]
       }
+      courses: {
+        Row: {
+          academic_year: string | null
+          course_code: string | null
+          course_name: string
+          created_at: string | null
+          department_id: string
+          id: string
+          semester: string | null
+          teacher_id: string
+        }
+        Insert: {
+          academic_year?: string | null
+          course_code?: string | null
+          course_name: string
+          created_at?: string | null
+          department_id: string
+          id?: string
+          semester?: string | null
+          teacher_id: string
+        }
+        Update: {
+          academic_year?: string | null
+          course_code?: string | null
+          course_name?: string
+          created_at?: string | null
+          department_id?: string
+          id?: string
+          semester?: string | null
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_transactions: {
         Row: {
           ad_duration: number | null
@@ -494,6 +546,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      departments: {
+        Row: {
+          created_at: string | null
+          head_user_id: string | null
+          id: string
+          institution_id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          head_user_id?: string | null
+          id?: string
+          institution_id: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          head_user_id?: string | null
+          id?: string
+          institution_id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       document_chunks: {
         Row: {
@@ -703,6 +787,68 @@ export type Database = {
           title?: string | null
           tool_name?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      institution_members: {
+        Row: {
+          id: string
+          institution_id: string
+          joined_at: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          institution_id: string
+          joined_at?: string | null
+          role?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          institution_id?: string
+          joined_at?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_members_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institutions: {
+        Row: {
+          admin_user_id: string
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          timezone: string | null
+          type: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          timezone?: string | null
+          type?: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          timezone?: string | null
+          type?: string
         }
         Relationships: []
       }
@@ -2148,6 +2294,7 @@ export type Database = {
       get_student_progress: { Args: { p_class_id: string }; Returns: Json }
       get_student_report: { Args: { p_session_id: string }; Returns: Json }
       get_teacher_report: { Args: { p_session_id: string }; Returns: Json }
+      get_user_institution_id: { Args: { uid: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2161,6 +2308,14 @@ export type Database = {
       }
       is_enrolled_in_class: {
         Args: { p_class_id: string; p_student_id: string }
+        Returns: boolean
+      }
+      is_institution_admin: {
+        Args: { inst_id: string; uid: string }
+        Returns: boolean
+      }
+      is_institution_member: {
+        Args: { inst_id: string; uid: string }
         Returns: boolean
       }
       join_class_by_code: { Args: { p_code: string }; Returns: Json }
@@ -2269,7 +2424,16 @@ export type Database = {
       validate_redeem_code: { Args: { p_code: string }; Returns: Json }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user" | "teacher" | "student"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "teacher"
+        | "student"
+        | "principal"
+        | "dean"
+        | "exam_admin"
+        | "department_head"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2397,7 +2561,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user", "teacher", "student"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "teacher",
+        "student",
+        "principal",
+        "dean",
+        "exam_admin",
+        "department_head",
+      ],
     },
   },
 } as const

@@ -48,6 +48,7 @@ import {
   BookOpen,
   School,
   GraduationCap,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
@@ -89,7 +90,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { isAdmin } = useAdminAccess();
-  const { isTeacher, isStudent, loading: roleLoading } = useUserRole();
+  const { isTeacher, isStudent, isInstitutionalAdmin, loading: roleLoading } = useUserRole();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   
@@ -299,6 +300,46 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             </SidebarGroupContent>
           </SidebarGroup>
         </div>
+
+        {/* Institution Section */}
+        {!roleLoading && isInstitutionalAdmin && (
+          <SidebarGroup className="mt-2 shrink-0">
+            {!isCollapsed && (
+              <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Building2 className="h-3 w-3" />
+                Institution
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Institution Dashboard">
+                    <button onClick={() => navigate("/institution")} className={btnClass("/institution")}>
+                      <Building2 className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                      {!isCollapsed && <span>Dashboard</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Departments">
+                    <button onClick={() => navigate("/institution/departments")} className={btnClass("/institution/departments")}>
+                      <Layers className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                      {!isCollapsed && <span>Departments</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Courses">
+                    <button onClick={() => navigate("/institution/courses")} className={btnClass("/institution/courses")}>
+                      <BookOpen className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                      {!isCollapsed && <span>Courses</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Admin Section */}
         {isAdmin && (

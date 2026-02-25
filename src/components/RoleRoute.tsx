@@ -5,14 +5,22 @@ import { Loader2 } from "lucide-react";
 
 interface RoleRouteProps {
   children: React.ReactNode;
-  role: "teacher" | "student";
+  role: "teacher" | "student" | "principal" | "dean" | "exam_admin" | "department_head";
 }
 
 export function RoleRoute({ children, role }: RoleRouteProps) {
-  const { isTeacher, isStudent, loading } = useUserRole();
+  const { isTeacher, isStudent, isPrincipal, isDean, isExamAdmin, isDepartmentHead, loading } = useUserRole();
   const navigate = useNavigate();
 
-  const hasAccess = role === "teacher" ? isTeacher : isStudent;
+  const roleMap: Record<string, boolean> = {
+    teacher: isTeacher,
+    student: isStudent,
+    principal: isPrincipal,
+    dean: isDean,
+    exam_admin: isExamAdmin,
+    department_head: isDepartmentHead,
+  };
+  const hasAccess = roleMap[role] ?? false;
 
   useEffect(() => {
     if (loading) return;
