@@ -37,8 +37,8 @@ export function QuestionCard({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card p-3 transition-all duration-200 animate-[question-enter_0.3s_ease-out]",
-        question.is_pinned && "border-l-2 border-l-primary",
+        "rounded-xl border border-border bg-card p-4 transition-all duration-200 animate-[question-enter_0.3s_ease-out] mb-3",
+        question.is_pinned && "border-l-2 border-l-primary pl-3",
         question.is_answered && "opacity-60"
       )}
     >
@@ -127,7 +127,7 @@ export function QuestionCard({
             <span>Newton's answer</span>
             {newtonOpen ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2 text-xs text-muted-foreground bg-muted/50 rounded-md p-2.5 leading-relaxed transition-all duration-200">
+          <CollapsibleContent className="mt-2 text-xs text-muted-foreground bg-primary/5 border border-primary/10 rounded-lg p-3 leading-relaxed transition-all duration-200">
             {question.newton_answer}
           </CollapsibleContent>
         </Collapsible>

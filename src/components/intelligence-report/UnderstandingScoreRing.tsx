@@ -42,9 +42,9 @@ export function UnderstandingScoreRing({ score, size = "large" }: UnderstandingS
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className="relative" style={{ width: svgSize, height: svgSize }}>
+      <div className="relative" style={{ width: svgSize, height: svgSize, filter: score >= 70 ? "drop-shadow(0 0 12px rgba(20,184,166,0.4))" : undefined }}>
         <svg className="w-full h-full -rotate-90" viewBox={`0 0 ${svgSize} ${svgSize}`}>
-          <circle cx={center} cy={center} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-muted/20" />
+          <circle cx={center} cy={center} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-muted" />
           <circle
             cx={center} cy={center} r={radius} fill="none"
             stroke="currentColor"

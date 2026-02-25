@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,7 @@ function FlashcardPractice({ flashcards }: { flashcards: RevisionFlashcard[] }) 
             next();
           }
         }}
-        className="w-full rounded-lg border border-border/50 bg-muted/30 p-3 text-center min-h-[80px] flex items-center justify-center transition-all hover:bg-muted/50"
+        className="w-full rounded-xl border border-border/50 bg-muted/20 p-5 text-center min-h-[120px] flex items-center justify-center transition-all hover:border-primary/50 cursor-pointer"
       >
         <div>
           <p className="text-xs">{isFlipped ? currentCard.back : currentCard.front}</p>
@@ -67,8 +68,11 @@ export function KnowledgeGapCard({ gap, flashcards, videoResult, isExpanded, onT
   if (videoResult) resourceHints.push("Video available");
 
   return (
-    <Card className="border-border/50">
-      <button onClick={onToggle} className="w-full p-3 flex items-center gap-2.5 text-left">
+    <Card className={cn("border-border/50", 
+      gap.severity === "high" && "border-red-800 bg-red-950/10",
+      gap.severity === "medium" && "border-amber-800 bg-amber-950/10"
+    )}>
+      <button onClick={onToggle} className="w-full p-4 flex items-center gap-2.5 text-left">
         <Badge variant="outline" className={`text-[9px] shrink-0 ${config.className}`}>
           {config.label}
         </Badge>

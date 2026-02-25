@@ -8,9 +8,9 @@ interface PulseWidgetProps {
 }
 
 const PULSE_OPTIONS: { status: PulseStatus; emoji: string; label: string; colorClass: string }[] = [
-  { status: "got_it", emoji: "✅", label: "Got it", colorClass: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30" },
-  { status: "slightly_lost", emoji: "🤔", label: "Slightly lost", colorClass: "bg-amber-500/20 text-amber-400 border-amber-500/40 hover:bg-amber-500/30" },
-  { status: "lost", emoji: "❌", label: "Lost", colorClass: "bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30" },
+  { status: "got_it", emoji: "✅", label: "Got it", colorClass: "bg-green-900/40 text-green-300 border-green-600 hover:bg-green-900/50" },
+  { status: "slightly_lost", emoji: "🤔", label: "Slightly lost", colorClass: "bg-amber-900/40 text-amber-300 border-amber-600 hover:bg-amber-900/50" },
+  { status: "lost", emoji: "❌", label: "Lost", colorClass: "bg-red-900/40 text-red-300 border-red-600 hover:bg-red-900/50" },
 ];
 
 const STATUS_DOT_COLOR: Record<PulseStatus, string> = {

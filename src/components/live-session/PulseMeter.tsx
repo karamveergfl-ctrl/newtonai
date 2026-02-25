@@ -99,7 +99,7 @@ export function PulseMeter({ sessionId, confusionThreshold }: PulseMeterProps) {
       )}
 
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-foreground">Live Pulse</h3>
+        <h3 className="text-sm font-semibold text-foreground tracking-wide">Live Pulse</h3>
         <span className="text-xs text-muted-foreground" aria-live="polite">
           {total} {total === 1 ? "response" : "responses"}
         </span>
@@ -113,7 +113,7 @@ export function PulseMeter({ sessionId, confusionThreshold }: PulseMeterProps) {
                 <span className="text-muted-foreground">{b.emoji} {b.label}</span>
                 <span className="text-muted-foreground">—</span>
               </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div className="h-3 rounded-full bg-muted overflow-hidden">
                 <div className="h-full rounded-full bg-muted-foreground/20 animate-pulse w-1/4" />
               </div>
             </div>
@@ -140,7 +140,7 @@ export function PulseMeter({ sessionId, confusionThreshold }: PulseMeterProps) {
                     {" "}({Math.round(pct)}%)
                   </span>
                 </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-3 rounded-full bg-muted overflow-hidden">
                   <div
                     className={cn("h-full rounded-full transition-all duration-700 ease-out", b.barColor)}
                     style={{ width: `${pct}%` }}
