@@ -254,8 +254,30 @@ export function useLiveNotes({ sessionId, role }: UseLiveNotesProps): UseLiveNot
         console.error("advanceToSlide error:", err);
       }
 
-      // Generate notes for this slide
-      await generateForSlide(slideIndex, slideContext, slideTitle);
+      // Generate notes AND term definitions in parallel
+      const [notesResult, termsResult] = await Promise.allSettled([
+        generateForSlide(slideIndex, slideContext, slideTitle),
+        supabase.functions.invoke("generate-term-definitions", {
+          body: {
+            session_id: sessionId,
+            slide_index: slideIndex,
+            slide_content: slideContext,
+            slide_title: slideTitle,
+          },
+        }),
+      ]);
+
+      if (notesResult.status === "rejected") {
+        console.error("Notes generation failed:", notesResult.reason);
+      }
+      if (termsResult.status === "rejected") {
+        console.error("Term definitions generation failed:", termsResult.reason);
+      } else if (termsResult.status === "fulfilled") {
+        const { error: termsError } = termsResult.value;
+        if (termsError) {
+          console.error("Term definitions error:", termsError.message);
+        }
+      }
     },
     [role, sessionId, generateForSlide]
   );
