@@ -1,196 +1,164 @@
 
 
-# Institutional Subscription Model
+# Teacher Onboarding Flow -- Implementation Plan
 
 ## Overview
-Add institution-level licensing with per-student and teacher-bundle pricing, an admin billing dashboard, and feature gating tied to the institution's subscription tier. This extends the existing individual subscription system (free/pro/ultra) with a parallel institution-level tier system.
+Replace the current generic onboarding (which forces teachers through student-centric steps like "study goals" and "education level") with a dedicated, teacher-specific onboarding path. When a teacher selects their role at Step 0, they branch into a tailored 7-step flow designed for fast classroom adoption (5-7 min).
 
 ---
 
-## Phase 1: Database Migration
+## Architecture
 
-Single migration to create the institutional subscription tables and RPCs.
+The current `Onboarding.tsx` (1269 lines) handles both roles in a single flow. We will:
+1. Extract the teacher branch into a new `TeacherOnboarding.tsx` component
+2. Keep `Onboarding.tsx` as the router -- after Step 0 (role selection), teachers are redirected to the teacher-specific flow
+3. Add a `teacher_preferences` column to the `profiles` table for storing teaching style, smartboard settings, and institution link
 
-### 1.1 `institution_subscriptions` Table
-Stores the institution's active plan and seat counts.
+---
+
+## Database Migration
+
+Add a `teacher_preferences` JSONB column to the `profiles` table:
 
 ```text
-institution_subscriptions
-  id                    uuid PK DEFAULT gen_random_uuid()
-  institution_id        uuid NOT NULL UNIQUE (FK -> institutions.id)
-  plan_tier             text NOT NULL DEFAULT 'starter'   -- starter, growth, enterprise
-  student_seats         integer NOT NULL DEFAULT 50
-  teacher_seats         integer NOT NULL DEFAULT 5
-  price_per_student     numeric NOT NULL DEFAULT 0
-  price_per_teacher     numeric NOT NULL DEFAULT 0
-  billing_cycle         text NOT NULL DEFAULT 'monthly'
-  status                text NOT NULL DEFAULT 'active'
-  current_period_start  timestamptz DEFAULT now()
-  current_period_end    timestamptz
-  created_at            timestamptz DEFAULT now()
-  updated_at            timestamptz DEFAULT now()
+profiles.teacher_preferences  jsonb  DEFAULT NULL
 ```
 
-RLS: SELECT/UPDATE for institution admins only via `is_institution_admin`. No direct INSERT/DELETE (managed via edge function).
-
-### 1.2 `institution_payments` Table
-Tracks payment history for the institution.
-
-```text
-institution_payments
-  id                  uuid PK DEFAULT gen_random_uuid()
-  institution_id      uuid NOT NULL
-  subscription_id     uuid NOT NULL (FK -> institution_subscriptions.id)
-  amount              integer NOT NULL
-  currency            text DEFAULT 'INR'
-  razorpay_order_id   text
-  razorpay_payment_id text
-  status              text NOT NULL DEFAULT 'created'
-  billing_period_start timestamptz
-  billing_period_end   timestamptz
-  created_at          timestamptz DEFAULT now()
+Stores:
+```json
+{
+  "institution_name": "MIT",
+  "department": "Physics",
+  "class_level": "college",
+  "teaching_style": "smartboard",
+  "smartboard_enabled": true,
+  "voice_commands": false,
+  "auto_lecture_notes": true,
+  "auto_attendance": true,
+  "marks_tracking": "excel",
+  "institution_code": null
+}
 ```
 
-RLS: SELECT only for institution admins. No direct INSERT/UPDATE/DELETE.
-
-### 1.3 New RPCs
-
-**`get_institution_billing_stats(p_institution_id uuid)`** (SECURITY DEFINER)
-Returns:
-- Current plan details (tier, seats, pricing)
-- Active student count vs allocated seats
-- Active teacher count vs allocated seats
-- Payment history summary (total paid, last payment date)
-- Seat utilization percentages
-
-**`get_institution_feature_access(p_institution_id uuid)`** (SECURITY DEFINER)
-Returns feature access map based on institution tier:
-- Starter: Basic classroom, limited live sessions, no AI insights
-- Growth: Full classroom, AI insights, result processing, 100 live sessions/month
-- Enterprise: Unlimited everything, priority support, custom branding
+No new tables needed -- all preferences live in a single JSONB field on the existing `profiles` table. No RLS changes needed since profiles already have per-user access policies.
 
 ---
 
-## Phase 2: Institution Tier Configuration
+## Teacher Onboarding Steps (7 steps total)
 
-### Feature access per tier (defined in code, not DB):
+### Step 0: Role Selection (existing, shared)
+Already in Onboarding.tsx. Teacher selects "Teacher" and auto-advances.
 
-| Feature | Starter | Growth | Enterprise |
-|---|---|---|---|
-| Live Sessions/month | 20 | 100 | Unlimited |
-| AI Insights | No | Yes | Yes |
-| Result Processing | Basic | Full | Full |
-| Faculty Monitoring | No | Yes | Yes |
-| Compliance/Audit | No | Basic | Full |
-| Report Card PDFs | 50/month | 500/month | Unlimited |
-| Student Seats | Up to 50 | Up to 500 | Unlimited |
-| Teacher Seats | Up to 5 | Up to 50 | Unlimited |
+### Step 1: Teaching Profile (30 sec)
+"Let's Set Up Your Teaching Profile"
+- Full Name (pre-filled from Google auth if available)
+- Institution Name (free text)
+- Department / Subject (free text)
+- Class Level: School / College / Coaching Institute / University (single select, auto-advance)
 
-**File:** `src/lib/institutionTierConfig.ts` -- Defines tier limits and pricing constants.
+### Step 2: Teaching Style Detection
+"How do you usually teach?"
+- Smartboard / Digital board
+- Traditional board + PDF
+- Mostly presentations
+- Hybrid teaching
+(Single select, auto-advance. Determines default tool configuration.)
 
----
+### Step 3: First Class Creation (CRITICAL)
+"Create Your First Class"
+- Class Name field
+- Subject field (with quick-pick chips)
+- Semester/Grade field
+- Approximate student count (visual slider: 10-200)
+- On submit: creates class via existing `useClasses.createClass`, shows generated invite code with copy button and share options
 
-## Phase 3: Hooks
+### Step 4: Smartboard Setup Wizard
+"Optimize NewtonAI for Classroom Teaching"
+- Toggle: Enable Smartboard Mode (default ON if teaching_style is "smartboard")
+- Toggle: Auto Lecture Notes
+- Toggle: Auto Attendance
+- Device info displayed (auto-detected screen size, touch support)
+- Preview card showing what Smartboard mode looks like
 
-**File:** `src/hooks/useInstitutionSubscription.ts`
-- Fetches the institution's subscription from `institution_subscriptions`
-- Returns: tier, seats, utilization, feature access map
-- Uses `useInstitution` to get institution_id
+### Step 5: AI Teaching Assistant Activation
+"Your AI Teaching Assistant Is Ready"
+- Visual showcase of 4 capabilities with icons:
+  - Generate quizzes instantly
+  - Make notes automatically
+  - Answer student doubts
+  - Track performance
+- "AI assists you, never replaces you" confidence message
+- Single "Activate Assistant" CTA button
 
-**File:** `src/hooks/useInstitutionFeatureGate.ts`
-- Checks if a specific feature is available for the institution's tier
-- Returns `canUse`, `tierRequired`, and upgrade prompt info
-- Used by institution pages to gate features
+### Step 6: Academic Records Setup
+"How do you track marks?"
+- Options: Excel sheets / LMS software / Manual register / New to digital
+- Optional: Institution code input ("Are you part of an institution using NewtonAI?")
+- Skip option available
 
----
-
-## Phase 4: Admin Billing Dashboard
-
-**File:** `src/pages/institution/InstitutionBillingPage.tsx`
-
-Tabbed layout with 3 sections:
-
-### 4.1 Subscription Overview Tab
-- Current plan card (tier, pricing, renewal date)
-- Seat utilization bars (students: X/Y used, teachers: X/Y used)
-- Upgrade/downgrade buttons
-- Plan comparison table
-
-### 4.2 Usage Analytics Tab
-- Monthly active students chart (recharts line chart)
-- Live sessions consumed vs limit
-- Feature usage breakdown per tier feature
-- Seat growth trend
-
-### 4.3 Payment History Tab
-- Paginated table of `institution_payments`
-- Columns: date, amount, status, billing period, invoice download
-- Filter by date range
-- Total spent summary card
-
----
-
-## Phase 5: Feature Gating Integration
-
-**File:** `src/components/institution/InstitutionFeatureGate.tsx`
-- Wraps institution page sections that require a certain tier
-- Shows locked overlay with "Upgrade to Growth/Enterprise" CTA for gated features
-- Uses `useInstitutionFeatureGate` hook
-
-Integration points (modify existing pages):
-- `InstitutionAnalyticsPage.tsx`: AI Insights tab gated behind Growth tier
-- `ResultProcessingPage.tsx`: Batch PDF generation gated by tier limits
-- `FacultyMonitoringPage.tsx`: Entire page gated behind Growth tier
-- `CompliancePage.tsx`: Full audit log gated behind Enterprise tier
-
----
-
-## Phase 6: Pricing Edge Functions
-
-**File:** `supabase/functions/institution-create-order/index.ts`
-- Calculates total price: (student_seats * price_per_student) + (teacher_seats * price_per_teacher)
-- Applies billing cycle discount (yearly = 20% off)
-- Creates Razorpay order
-- Inserts pending `institution_payments` record
-
-**File:** `supabase/functions/institution-verify-payment/index.ts`
-- Verifies Razorpay signature (same pattern as individual verify)
-- Updates `institution_payments` status
-- Creates/updates `institution_subscriptions` record
-- Logs audit entry via `log_institution_audit`
-
----
-
-## Phase 7: Route & Navigation
-
-- Add route `/institution/billing` in `App.tsx` under `InstitutionRoute`
-- Add "Billing" sidebar link in `AppSidebar.tsx` under Institution section (CreditCard icon)
+### Step 7: Success Screen
+"You're Ready to Teach Smarter"
+- Animated success with confetti-style sparkles
+- 4 action cards:
+  - Start Live Class
+  - Add Material
+  - Invite Students (shows join code)
+  - Try Smartboard Mode
+- "Get Started" button navigates to `/teacher`
 
 ---
 
 ## Files Summary
 
-### New Files (7)
-1. `supabase/migrations/[timestamp]_institution_subscriptions.sql` -- Tables, RLS, RPCs
-2. `src/lib/institutionTierConfig.ts` -- Tier definitions and pricing
-3. `src/hooks/useInstitutionSubscription.ts` -- Subscription data hook
-4. `src/hooks/useInstitutionFeatureGate.ts` -- Feature gating hook
-5. `src/pages/institution/InstitutionBillingPage.tsx` -- Billing dashboard
-6. `src/components/institution/InstitutionFeatureGate.tsx` -- Gate component
-7. `supabase/functions/institution-create-order/index.ts` -- Order creation
-8. `supabase/functions/institution-verify-payment/index.ts` -- Payment verification
+### New Files (1)
+1. `src/components/onboarding/TeacherOnboarding.tsx` -- Complete teacher onboarding flow (Steps 1-7). Reuses existing animation variants and UI patterns from `Onboarding.tsx`.
 
-### Modified Files (5)
-1. `src/App.tsx` -- Add billing route
-2. `src/components/AppSidebar.tsx` -- Add Billing sidebar link
-3. `src/pages/institution/InstitutionAnalyticsPage.tsx` -- Gate AI Insights tab
-4. `src/pages/institution/FacultyMonitoringPage.tsx` -- Gate behind Growth tier
-5. `src/pages/institution/CompliancePage.tsx` -- Gate audit features behind Enterprise
+### Modified Files (2)
+1. `src/pages/Onboarding.tsx` -- After Step 0 role selection, if teacher is selected, render `TeacherOnboarding` component instead of student steps. Minimal change: conditional render after step 0.
+2. Database migration -- Add `teacher_preferences` JSONB column to `profiles`.
 
-### Security
-- All tables use strict RLS with `is_institution_admin` checks
-- No direct client INSERT/DELETE on subscription or payment tables
-- Payment verification is server-side only (edge function with HMAC)
-- Feature gating is enforced both client-side (UI) and server-side (RPCs check tier before returning data)
-- Audit logging for all billing actions
+### No Changes Needed
+- `App.tsx` -- No new routes needed (teacher onboarding lives within `/onboarding`)
+- `useClasses.ts` -- Reused as-is for class creation in Step 3
+- `CreateClassDialog.tsx` -- Not reused directly; Step 3 has inline class creation form
 
+---
+
+## Technical Details
+
+### Completion Handler
+On final step, the `handleComplete` function will:
+1. Save `teacher` role to `user_roles` table (existing pattern)
+2. Update `profiles` with `full_name`, `teacher_preferences` JSONB, and `onboarding_completed: true`
+3. Create the first class if the teacher filled in class details (via `supabase.from("classes").insert(...)`)
+4. Set localStorage flags for smartboard preferences
+5. Navigate to `/teacher`
+
+### Teaching Style to Config Mapping
+| Teaching Style | Smartboard Default | Auto Notes | Auto Attendance |
+|---|---|---|---|
+| Smartboard/Digital | ON | ON | ON |
+| Traditional + PDF | OFF | ON | OFF |
+| Presentations | ON | OFF | OFF |
+| Hybrid | ON | ON | OFF |
+
+### Device Detection (Step 4)
+Uses `window.innerWidth`, `window.screen`, and `navigator.maxTouchPoints` to auto-detect:
+- Screen size category (Laptop / Desktop / Tablet)
+- Touch support (Yes/No)
+- Recommended Smartboard mode setting
+
+### Invite Code Display (Step 3)
+After class creation, the generated `invite_code` from the classes table is displayed with:
+- Large, copyable code display
+- "Share via WhatsApp" and "Copy Link" buttons
+- QR code generation (using existing canvas approach)
+
+---
+
+## UX Psychology Alignment
+- Each step has a single clear purpose -- no scrolling needed
+- Single-select steps auto-advance after 600ms (existing pattern)
+- "AI assists, not replaces" messaging in Step 5 addresses teacher fear
+- First class creation during onboarding provides immediate value
+- Success screen shows actionable next steps, not a dead end
