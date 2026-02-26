@@ -320,33 +320,24 @@ const slideContent = [
   { title: "Impact & Next Steps", subtitle: "Transform every smart board into a Classroom OS.", bullets: ["Faculty: AI-assisted teaching, auto notes, one-click recording", "Students: Transparent progress, interactive learning, personal AI tutor", "Administration: Clean data for NAAC/NBA, early risk detection", "Pilot: Start with 2–3 departments this semester"] },
 ];
 
-async function captureAllSlides(
-  setSlide: (idx: number) => void,
-  originalSlide: number
-): Promise<string[]> {
+async function captureAllSlides(): Promise<string[]> {
   const html2canvas = (await import("html2canvas")).default;
   const images: string[] = [];
 
-  for (let idx = 0; idx < TOTAL_SLIDES; idx++) {
-    setSlide(idx);
-    await new Promise((r) => setTimeout(r, 700));
-
-    const slideEl = document.querySelector(`[data-slide-index="${idx}"]`) as HTMLElement | null;
-    if (!slideEl) continue;
-
-    const canvas = await html2canvas(slideEl, {
+  const exportSlides = document.querySelectorAll("[data-export-slide]");
+  for (let idx = 0; idx < exportSlides.length; idx++) {
+    const el = exportSlides[idx] as HTMLElement;
+    const canvas = await html2canvas(el, {
       scale: 2,
-      backgroundColor: "#020617",
+      backgroundColor: null,
       useCORS: true,
       logging: false,
-      width: slideEl.offsetWidth,
-      height: slideEl.offsetHeight,
+      width: 1280,
+      height: 720,
     });
-
     images.push(canvas.toDataURL("image/jpeg", 0.95));
   }
 
-  setSlide(originalSlide);
   return images;
 }
 
@@ -487,7 +478,7 @@ export default function PitchDeck() {
           onClick={async () => {
             setGeneratingPDF(true);
             try {
-              const imgs = await captureAllSlides(setCurrent, current);
+              const imgs = await captureAllSlides();
               await generatePDFFromImages(imgs);
             } finally { setGeneratingPDF(false); }
           }}
@@ -501,7 +492,7 @@ export default function PitchDeck() {
           onClick={async () => {
             setGeneratingPPTX(true);
             try {
-              const imgs = await captureAllSlides(setCurrent, current);
+              const imgs = await captureAllSlides();
               await generatePPTXFromImages(imgs);
             } finally { setGeneratingPPTX(false); }
           }}
@@ -511,6 +502,47 @@ export default function PitchDeck() {
         >
           {generatingPPTX ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
         </button>
+      </div>
+
+      {/* Hidden off-screen container for export — renders all slides at fixed 1280x720 with animations disabled */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          left: "-9999px",
+          top: 0,
+          width: 1280,
+          height: 720,
+          overflow: "hidden",
+          pointerEvents: "none",
+        }}
+      >
+        <style>{`
+          .export-slide-container,
+          .export-slide-container * {
+            animation: none !important;
+            animation-delay: 0s !important;
+            transition: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+        `}</style>
+        {SLIDES.map((Slide, i) => (
+          <div
+            key={i}
+            data-export-slide={i}
+            className="export-slide-container"
+            style={{
+              width: 1280,
+              height: 720,
+              position: "relative",
+              background: "linear-gradient(to bottom right, #020617, #0f172a, #020617)",
+              overflow: "hidden",
+            }}
+          >
+            <Slide />
+          </div>
+        ))}
       </div>
     </div>
   );
