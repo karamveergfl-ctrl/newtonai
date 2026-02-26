@@ -8,7 +8,7 @@ import newtonChatAvatar from "@/assets/newton-chat-avatar-sm.webp";
 import { getNewtonOpenFn } from "@/lib/newtonOpenRef";
 import { supabase } from "@/integrations/supabase/client";
 
-const PUBLIC_ROUTES = ["/", "/auth", "/onboarding", "/pricing", "/about", "/contact", "/privacy", "/terms", "/refund", "/faq", "/features", "/how-it-works", "/blog", "/guides", "/enterprise", "/compare", "/ai-for-students", "/ai-study-assistant", "/ai-notes-generator", "/pdf-study-tool", "/ai-quiz-generator", "/exam-preparation-ai", "/about-newtonai-for-ai"];
+const PUBLIC_ROUTES = ["/", "/auth", "/onboarding", "/pricing", "/about", "/contact", "/privacy", "/terms", "/refund", "/faq", "/features", "/how-it-works", "/blog", "/guides", "/enterprise", "/compare", "/ai-for-students", "/ai-study-assistant", "/ai-notes-generator", "/pdf-study-tool", "/ai-quiz-generator", "/exam-preparation-ai", "/about-newtonai-for-ai", "/pitch-deck"];
 
 interface NavItem {
   label: string;

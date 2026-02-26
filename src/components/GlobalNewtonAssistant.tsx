@@ -25,6 +25,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onReg
   const isMobile = useIsMobile();
   const location = useLocation();
   const isLandingPage = location.pathname === "/";
+  const isPitchDeck = location.pathname === "/pitch-deck";
 
   const {
     groupedConversations,
@@ -111,6 +112,8 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onReg
       fetchConversations();
     }
   }, [isOpen, isAuthenticated, fetchConversations]);
+
+  if (isPitchDeck) return null;
 
   // Mobile: drawer (trigger button hidden — bottom nav handles it)
   if (isMobile) {
