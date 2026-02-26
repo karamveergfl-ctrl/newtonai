@@ -1,31 +1,41 @@
 
 
-# Add Pitch Deck Link to Landing Page and Header Navigation
+# Make PDF and PPTX Exports Pixel-Perfect Screenshots
 
-## What Changes
+## Problem
+- The **PDF** export clones slides off-screen, which can lose some CSS styles (gradients, backdrop-blur, animations)
+- The **PPTX** export uses plain text bullets -- looks nothing like the on-screen presentation
 
-### 1. Add "Pitch Deck" link to the Header navigation
-Add a new entry in the **Resources** dropdown menu in `src/components/Header.tsx` so visitors can find the pitch deck from any page.
-- Label: "Pitch Deck" with a "NEW" badge
-- Links to `/pitch-deck`
+## Solution
+Both exports will capture the **actual visible slides** as high-resolution screenshots using `html2canvas`, then embed the images into the PDF/PPTX files.
 
-### 2. Add a Pitch Deck CTA section on the Landing Page
-Add a new section in `src/pages/LandingPage.tsx` just before the Final CTA section. This will be a visually distinct banner inviting Deans, Principals, and HODs to view the pitch deck.
-- Heading: "Are You a Dean or Administrator?"
-- Subtext: "See how NewtonAI transforms your smart boards into a complete Classroom OS"
-- Button: "View Pitch Deck" linking to `/pitch-deck`
-- Styled with a gradient border or accent background to stand out
+## How It Works
 
----
+1. When user clicks Download (PDF or PPTX):
+   - Temporarily navigate through each of the 8 slides (showing each one on screen)
+   - Capture each slide using `html2canvas` at 2x resolution
+   - Store all 8 captured images
+   - Restore the user's original slide position
+   - Build the PDF or PPTX from the captured images
 
-## Technical Details
+2. **PDF**: Each captured image becomes a full-bleed landscape page via `jsPDF`
+3. **PPTX**: Each captured image is added as a full-slide background image via `pptxgenjs` (it supports base64 image data)
 
-### File: `src/components/Header.tsx`
-- Add `{ href: "/pitch-deck", label: "Pitch Deck", badge: "NEW" }` to the `Resources` dropdown children array (around line 47-51)
+## Technical Changes
 
-### File: `src/pages/LandingPage.tsx`
-- Import `Presentation` icon from `lucide-react`
-- Add a new section before the Final CTA (before line 442) with:
-  - Dark gradient background to differentiate from other sections
-  - Presentation icon + heading + description + CTA button linking to `/pitch-deck`
+### File: `src/pages/PitchDeck.tsx`
+
+- **New shared function** `captureAllSlides()`:
+  - Saves current slide index
+  - For each slide (0-7): sets `current` to that index, waits for render, captures with `html2canvas`
+  - Returns array of 8 base64 image strings
+  - Restores original slide
+
+- **Replace `generatePDF()`**: Use captured images instead of cloning DOM nodes off-screen
+
+- **Replace `generatePPTX()`**: Instead of text bullets, add each captured image as a full-slide image using `pptx.addImage()` with base64 data
+
+- **Add generating states** for both buttons (loading spinners during capture)
+
+- The capture function will target the actual slide container element on screen (the `[data-slide-index]` div), ensuring exact visual fidelity including all gradients, fonts, colors, and icons
 
