@@ -320,70 +320,54 @@ const slideContent = [
   { title: "Impact & Next Steps", subtitle: "Transform every smart board into a Classroom OS.", bullets: ["Faculty: AI-assisted teaching, auto notes, one-click recording", "Students: Transparent progress, interactive learning, personal AI tutor", "Administration: Clean data for NAAC/NBA, early risk detection", "Pilot: Start with 2–3 departments this semester"] },
 ];
 
-async function generatePDF() {
+async function captureAllSlides(
+  setSlide: (idx: number) => void,
+  originalSlide: number
+): Promise<string[]> {
   const html2canvas = (await import("html2canvas")).default;
-  const doc = new jsPDF({ orientation: "landscape", unit: "px", format: [1280, 720] });
+  const images: string[] = [];
 
-  // Create off-screen container
-  const container = document.createElement("div");
-  container.style.cssText = "position:fixed;left:-9999px;top:0;width:1280px;height:720px;overflow:hidden;";
-  document.body.appendChild(container);
+  for (let idx = 0; idx < TOTAL_SLIDES; idx++) {
+    setSlide(idx);
+    await new Promise((r) => setTimeout(r, 700));
 
-  for (let idx = 0; idx < SLIDES.length; idx++) {
-    if (idx > 0) doc.addPage([1280, 720], "landscape");
-
-    // Clone the visible slide
-    const slideEl = document.querySelector(`[data-slide-index="${idx}"]`);
+    const slideEl = document.querySelector(`[data-slide-index="${idx}"]`) as HTMLElement | null;
     if (!slideEl) continue;
-    const clone = slideEl.cloneNode(true) as HTMLElement;
-    clone.style.cssText = "width:1280px;height:720px;position:relative;opacity:1;transform:none;pointer-events:none;background:linear-gradient(135deg,#020617,#0f172a,#020617);";
-    container.innerHTML = "";
-    container.appendChild(clone);
 
-    const canvas = await html2canvas(clone, {
+    const canvas = await html2canvas(slideEl, {
       scale: 2,
       backgroundColor: "#020617",
-      width: 1280,
-      height: 720,
       useCORS: true,
       logging: false,
+      width: slideEl.offsetWidth,
+      height: slideEl.offsetHeight,
     });
 
-    const imgData = canvas.toDataURL("image/jpeg", 0.92);
-    doc.addImage(imgData, "JPEG", 0, 0, 1280, 720);
+    images.push(canvas.toDataURL("image/jpeg", 0.95));
   }
 
-  document.body.removeChild(container);
+  setSlide(originalSlide);
+  return images;
+}
+
+async function generatePDFFromImages(images: string[]) {
+  const doc = new jsPDF({ orientation: "landscape", unit: "px", format: [1280, 720] });
+  for (let i = 0; i < images.length; i++) {
+    if (i > 0) doc.addPage([1280, 720], "landscape");
+    doc.addImage(images[i], "JPEG", 0, 0, 1280, 720);
+  }
   doc.save("NewtonAI-PitchDeck.pdf");
 }
 
-async function generatePPTX() {
+async function generatePPTXFromImages(images: string[]) {
   const PptxGenJS = (await import("pptxgenjs")).default;
   const pptx = new PptxGenJS();
   pptx.author = "NewtonAI";
   pptx.title = "NewtonAI — AI Classroom OS";
-
-  slideContent.forEach((s, idx) => {
+  images.forEach((imgData) => {
     const slide = pptx.addSlide();
-    slide.background = { fill: "0F172A" };
-
-    // slide number
-    slide.addText(`Slide ${idx + 1} of ${TOTAL_SLIDES}`, { x: 8.5, y: 0.2, w: 1.5, fontSize: 8, color: "64748B", align: "right" });
-
-    // title
-    slide.addText(s.title, { x: 0.5, y: 0.4, w: 9, fontSize: 28, color: "60A5FA", bold: true, fontFace: "Arial" });
-
-    // subtitle
-    slide.addText(s.subtitle, { x: 0.5, y: 1.1, w: 9, fontSize: 14, color: "94A3B8", fontFace: "Arial" });
-
-    // bullets
-    const bulletObjs = s.bullets.map(b => ({ text: b, options: { fontSize: 11, color: "E2E8F0", bullet: { code: "2022" }, paraSpaceAfter: 6 } }));
-    slide.addText(bulletObjs as any, { x: 0.6, y: 1.7, w: 8.8, h: 3.5, fontFace: "Arial", valign: "top" });
-
-    // footer
-    slide.addText("NewtonAI — AI Classroom OS", { x: 0.5, y: 5.1, w: 5, fontSize: 8, color: "475569" });
+    slide.addImage({ data: imgData, x: 0, y: 0, w: "100%", h: "100%" });
   });
-
   pptx.writeFile({ fileName: "NewtonAI-PitchDeck.pptx" });
 }
 
@@ -395,6 +379,8 @@ export default function PitchDeck() {
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
+  const [generatingPPTX, setGeneratingPPTX] = useState(false);
+  const isExporting = generatingPDF || generatingPPTX;
   const wheelLock = useRef(false);
   const touchStartY = useRef(0);
 
@@ -497,11 +483,33 @@ export default function PitchDeck() {
           <Expand className="w-4 h-4" />
         </button>
         <div className="w-px h-6 bg-white/10 mx-1" />
-        <button onClick={() => { setGeneratingPDF(true); generatePDF().finally(() => setGeneratingPDF(false)); }} disabled={generatingPDF} className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors disabled:opacity-50" title="Download PDF">
+        <button
+          onClick={async () => {
+            setGeneratingPDF(true);
+            try {
+              const imgs = await captureAllSlides(setCurrent, current);
+              await generatePDFFromImages(imgs);
+            } finally { setGeneratingPDF(false); }
+          }}
+          disabled={isExporting}
+          className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+          title="Download PDF"
+        >
           {generatingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
         </button>
-        <button onClick={generatePPTX} className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors" title="Download PPTX">
-          <FileDown className="w-4 h-4" />
+        <button
+          onClick={async () => {
+            setGeneratingPPTX(true);
+            try {
+              const imgs = await captureAllSlides(setCurrent, current);
+              await generatePPTXFromImages(imgs);
+            } finally { setGeneratingPPTX(false); }
+          }}
+          disabled={isExporting}
+          className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+          title="Download PPTX"
+        >
+          {generatingPPTX ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
         </button>
       </div>
     </div>
