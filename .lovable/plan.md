@@ -1,65 +1,31 @@
 
 
-# Fix PDF Download & Remove Newton Chat from Pitch Deck
+# Add Pitch Deck Link to Landing Page and Header Navigation
 
-## Changes
+## What Changes
 
-### 1. PDF Download: Screenshot-Quality Export (Match On-Screen Presentation)
+### 1. Add "Pitch Deck" link to the Header navigation
+Add a new entry in the **Resources** dropdown menu in `src/components/Header.tsx` so visitors can find the pitch deck from any page.
+- Label: "Pitch Deck" with a "NEW" badge
+- Links to `/pitch-deck`
 
-The current PDF uses `jsPDF` text-only output (plain bullets on a dark background). To make the PDF look identical to the on-screen slides, we will use `html2canvas` (already installed) to capture each slide as a high-resolution image and place it into a landscape PDF page.
-
-**How it works:**
-- When "Download PDF" is clicked, temporarily render all 8 slides in a hidden off-screen container (visible but off-viewport, since `html2canvas` needs rendered DOM)
-- Capture each slide as a canvas using `html2canvas` at 2x scale for sharpness
-- Insert each canvas image into a landscape A4 `jsPDF` page
-- Download the resulting PDF -- every slide looks pixel-identical to the presentation
-
-**File modified:** `src/pages/PitchDeck.tsx`
-- Replace the `generatePDF()` function with a new version that:
-  - Creates an off-screen container with all 8 slides at fixed 1280x720 dimensions
-  - Uses `html2canvas` to capture each slide div
-  - Adds each as an image to jsPDF landscape pages
-  - Cleans up the temporary container
-  - Shows a loading state on the download button while generating
-
-### 2. Remove Newton Chat from Pitch Deck Route
-
-**File modified:** `src/components/GlobalNewtonAssistant.tsx`
-- Add a check: if `location.pathname === "/pitch-deck"`, return `null` (render nothing)
-- This hides both the floating trigger button and the chat panel on the pitch deck
-
-**File modified:** `src/components/MobileBottomNav.tsx`
-- Also hide the mobile bottom nav (which includes Newton chat) on `/pitch-deck` if it doesn't already
+### 2. Add a Pitch Deck CTA section on the Landing Page
+Add a new section in `src/pages/LandingPage.tsx` just before the Final CTA section. This will be a visually distinct banner inviting Deans, Principals, and HODs to view the pitch deck.
+- Heading: "Are You a Dean or Administrator?"
+- Subtext: "See how NewtonAI transforms your smart boards into a complete Classroom OS"
+- Button: "View Pitch Deck" linking to `/pitch-deck`
+- Styled with a gradient border or accent background to stand out
 
 ---
 
 ## Technical Details
 
-### PDF Generation Approach
-```text
-1. Create hidden container (position: fixed, left: -9999px)
-2. For each of the 8 slides:
-   a. Render slide component into a 1280x720 div
-   b. Call html2canvas(div, { scale: 2, backgroundColor: null })
-   c. Convert canvas to JPEG data URL
-   d. Add to jsPDF page (landscape A4, full bleed)
-3. Remove hidden container
-4. Save PDF
-```
+### File: `src/components/Header.tsx`
+- Add `{ href: "/pitch-deck", label: "Pitch Deck", badge: "NEW" }` to the `Resources` dropdown children array (around line 47-51)
 
-- Uses `html2canvas` which is already in the project dependencies
-- 2x scale ensures crisp text on retina displays
-- JPEG format keeps file size reasonable (vs PNG)
-- Each slide rendered at 1280x720 to match 16:9 aspect ratio
+### File: `src/pages/LandingPage.tsx`
+- Import `Presentation` icon from `lucide-react`
+- Add a new section before the Final CTA (before line 442) with:
+  - Dark gradient background to differentiate from other sections
+  - Presentation icon + heading + description + CTA button linking to `/pitch-deck`
 
-### Newton Chat Hiding
-- Single line addition in `GlobalNewtonAssistant.tsx`: early return when on `/pitch-deck`
-- Also check `MobileBottomNav.tsx` for the same route exclusion
-
-## Files Summary
-
-| Action | File | Change |
-|--------|------|--------|
-| Modify | `src/pages/PitchDeck.tsx` | Replace `generatePDF()` with html2canvas-based screenshot capture |
-| Modify | `src/components/GlobalNewtonAssistant.tsx` | Hide on `/pitch-deck` route |
-| Modify | `src/components/MobileBottomNav.tsx` | Hide on `/pitch-deck` route |
