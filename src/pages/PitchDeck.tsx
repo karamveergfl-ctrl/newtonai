@@ -320,24 +320,32 @@ const slideContent = [
   { title: "Impact & Next Steps", subtitle: "Transform every smart board into a Classroom OS.", bullets: ["Faculty: AI-assisted teaching, auto notes, one-click recording", "Students: Transparent progress, interactive learning, personal AI tutor", "Administration: Clean data for NAAC/NBA, early risk detection", "Pilot: Start with 2–3 departments this semester"] },
 ];
 
-async function captureAllSlides(): Promise<string[]> {
+async function captureAllSlides(
+  setSlide: (idx: number) => void,
+  originalSlide: number
+): Promise<string[]> {
   const html2canvas = (await import("html2canvas")).default;
   const images: string[] = [];
 
-  const exportSlides = document.querySelectorAll("[data-export-slide]");
-  for (let idx = 0; idx < exportSlides.length; idx++) {
-    const el = exportSlides[idx] as HTMLElement;
-    const canvas = await html2canvas(el, {
+  for (let idx = 0; idx < TOTAL_SLIDES; idx++) {
+    setSlide(idx);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const slideEl = document.querySelector(`[data-slide-index="${idx}"]`) as HTMLElement | null;
+    if (!slideEl) continue;
+
+    const canvas = await html2canvas(slideEl, {
       scale: 2,
-      backgroundColor: null,
+      backgroundColor: "#020617",
       useCORS: true,
       logging: false,
-      width: 1280,
-      height: 720,
+      width: slideEl.offsetWidth,
+      height: slideEl.offsetHeight,
     });
     images.push(canvas.toDataURL("image/jpeg", 0.95));
   }
 
+  setSlide(originalSlide);
   return images;
 }
 
@@ -430,6 +438,15 @@ export default function PitchDeck() {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden select-none">
+      {/* Export overlay to hide slide cycling */}
+      {isExporting && (
+        <div className="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+            <p className="text-slate-400 text-sm">Generating export…</p>
+          </div>
+        </div>
+      )}
       {/* progress bar */}
       <div className="absolute top-0 left-0 h-1 bg-blue-500/80 z-50 transition-all duration-500 ease-out" style={{ width: `${((current + 1) / TOTAL_SLIDES) * 100}%` }} />
 
@@ -478,7 +495,7 @@ export default function PitchDeck() {
           onClick={async () => {
             setGeneratingPDF(true);
             try {
-              const imgs = await captureAllSlides();
+              const imgs = await captureAllSlides(setCurrent, current);
               await generatePDFFromImages(imgs);
             } finally { setGeneratingPDF(false); }
           }}
@@ -492,7 +509,7 @@ export default function PitchDeck() {
           onClick={async () => {
             setGeneratingPPTX(true);
             try {
-              const imgs = await captureAllSlides();
+              const imgs = await captureAllSlides(setCurrent, current);
               await generatePPTXFromImages(imgs);
             } finally { setGeneratingPPTX(false); }
           }}
@@ -502,47 +519,6 @@ export default function PitchDeck() {
         >
           {generatingPPTX ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
         </button>
-      </div>
-
-      {/* Hidden off-screen container for export — renders all slides at fixed 1280x720 with animations disabled */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          left: "-9999px",
-          top: 0,
-          width: 1280,
-          height: 720,
-          overflow: "hidden",
-          pointerEvents: "none",
-        }}
-      >
-        <style>{`
-          .export-slide-container,
-          .export-slide-container * {
-            animation: none !important;
-            animation-delay: 0s !important;
-            transition: none !important;
-            opacity: 1 !important;
-            transform: none !important;
-          }
-        `}</style>
-        {SLIDES.map((Slide, i) => (
-          <div
-            key={i}
-            data-export-slide={i}
-            className="export-slide-container"
-            style={{
-              width: 1280,
-              height: 720,
-              position: "relative",
-              background: "linear-gradient(to bottom right, #020617, #0f172a, #020617)",
-              overflow: "hidden",
-            }}
-          >
-            <Slide />
-          </div>
-        ))}
       </div>
     </div>
   );
