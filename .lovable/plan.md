@@ -1,41 +1,52 @@
 
+# Fix PDF/PPTX Export to Match On-Screen Presentation Exactly
 
-# Make PDF and PPTX Exports Pixel-Perfect Screenshots
+## Problems Identified
 
-## Problem
-- The **PDF** export clones slides off-screen, which can lose some CSS styles (gradients, backdrop-blur, animations)
-- The **PPTX** export uses plain text bullets -- looks nothing like the on-screen presentation
+1. **Animations not complete during capture**: Slide elements use `animate-fade-in` with delays up to 750ms, but capture only waits 700ms -- so cards/text may be invisible or partially faded in
+2. **Visible flickering**: The export cycles through slides on the actual screen using `setCurrent`, causing the user to see rapid slide changes
+3. **Viewport-dependent sizing**: Slides are `absolute inset-0` (full viewport), so the capture size varies with browser window size instead of being a consistent 1280x720
+4. **Progress bar and controls captured**: The capture targets `[data-slide-index]` which is the slide itself, but the overall quality depends on viewport state
 
 ## Solution
-Both exports will capture the **actual visible slides** as high-resolution screenshots using `html2canvas`, then embed the images into the PDF/PPTX files.
 
-## How It Works
+Replace the `captureAllSlides` function with an **off-screen rendering approach** that:
 
-1. When user clicks Download (PDF or PPTX):
-   - Temporarily navigate through each of the 8 slides (showing each one on screen)
-   - Capture each slide using `html2canvas` at 2x resolution
-   - Store all 8 captured images
-   - Restore the user's original slide position
-   - Build the PDF or PPTX from the captured images
+1. Creates a hidden container (`position: fixed; left: -9999px`) at exactly **1280x720**
+2. For each slide, clones the slide's rendered DOM into the container with **all animations removed** (forces `opacity: 1`, `transform: none`, removes `animate-fade-in` class)
+3. Captures each clone with `html2canvas` at 2x scale
+4. Cleans up -- the user never sees any flickering
 
-2. **PDF**: Each captured image becomes a full-bleed landscape page via `jsPDF`
-3. **PPTX**: Each captured image is added as a full-slide background image via `pptxgenjs` (it supports base64 image data)
+This ensures every card, icon, and gradient is fully visible and the output is always 1280x720 regardless of viewport.
 
 ## Technical Changes
 
 ### File: `src/pages/PitchDeck.tsx`
 
-- **New shared function** `captureAllSlides()`:
-  - Saves current slide index
-  - For each slide (0-7): sets `current` to that index, waits for render, captures with `html2canvas`
-  - Returns array of 8 base64 image strings
-  - Restores original slide
+**Replace `captureAllSlides` function** with a new approach:
+- Instead of changing `setCurrent` and waiting, render ALL slides simultaneously in a hidden off-screen container
+- Each slide is rendered in a 1280x720 div with the same background gradient
+- Force all child elements to be fully visible (override `animate-fade-in` opacity/transform, override any `opacity: 0` or `translateY` inline styles)
+- Capture each slide container sequentially with `html2canvas`
+- No state changes needed -- no flickering, no animation timing issues
 
-- **Replace `generatePDF()`**: Use captured images instead of cloning DOM nodes off-screen
+**Key details:**
+- The off-screen container gets inline styles to strip all animations: inject a `<style>` tag that sets `* { animation: none !important; opacity: 1 !important; transition: none !important; }` scoped to the container
+- Each slide component is rendered via `ReactDOM.createRoot` into the off-screen divs, OR simpler: just render all 8 slides always in the DOM (hidden) and capture them
+- **Simplest approach**: Render all slides in a hidden container within the component (always mounted but off-screen), and capture those divs directly. This avoids needing ReactDOM.createRoot or cloning.
 
-- **Replace `generatePPTX()`**: Instead of text bullets, add each captured image as a full-slide image using `pptx.addImage()` with base64 data
+**Implementation:**
+1. Add a hidden container that always renders all 8 slides at 1280x720 (off-screen, `position: fixed; left: -9999px; top: 0`)
+2. Each slide wrapper in this container has a `data-export-slide` attribute and forces no animations via a CSS class
+3. `captureAllSlides` simply queries these pre-rendered slides and captures them -- no slide switching needed
+4. Add a CSS class `.export-slide-container *` that overrides `animation-delay`, `animation`, `opacity`, and `transform` to ensure everything is visible
 
-- **Add generating states** for both buttons (loading spinners during capture)
+**No changes needed to `generatePDFFromImages` or `generatePPTXFromImages`** -- they already work correctly with the image array.
 
-- The capture function will target the actual slide container element on screen (the `[data-slide-index]` div), ensuring exact visual fidelity including all gradients, fonts, colors, and icons
-
+### Summary of changes:
+| What | How |
+|------|-----|
+| Fix invisible/faded elements | Force `animation: none; opacity: 1` on export slides |
+| Fix flickering during export | Render slides off-screen instead of cycling on-screen |
+| Fix inconsistent sizing | Fixed 1280x720 container regardless of viewport |
+| No behavior change | PDF and PPTX buttons work the same way, just produce correct output |
