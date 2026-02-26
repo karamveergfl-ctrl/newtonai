@@ -7,7 +7,7 @@ import {
   ClipboardList, Users, TrendingUp, Building2,
   ChevronLeft, Expand, ArrowRight, Sparkles, Monitor, Zap,
   FileDown, Download, XCircle, Smartphone, BarChart, ShieldCheck,
-  BookCheck, Flag, Play, ImageIcon, Calculator
+  BookCheck, Flag, Play, ImageIcon, Calculator, Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import jsPDF from "jspdf";
@@ -320,43 +320,40 @@ const slideContent = [
   { title: "Impact & Next Steps", subtitle: "Transform every smart board into a Classroom OS.", bullets: ["Faculty: AI-assisted teaching, auto notes, one-click recording", "Students: Transparent progress, interactive learning, personal AI tutor", "Administration: Clean data for NAAC/NBA, early risk detection", "Pilot: Start with 2–3 departments this semester"] },
 ];
 
-function generatePDF() {
-  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-  const w = doc.internal.pageSize.getWidth();
-  const h = doc.internal.pageSize.getHeight();
+async function generatePDF() {
+  const html2canvas = (await import("html2canvas")).default;
+  const doc = new jsPDF({ orientation: "landscape", unit: "px", format: [1280, 720] });
 
-  slideContent.forEach((slide, idx) => {
-    if (idx > 0) doc.addPage();
-    // bg
-    doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, w, h, "F");
-    // slide number
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Slide ${idx + 1} of ${TOTAL_SLIDES}`, w - 40, 30, { align: "right" });
-    // title
-    doc.setFontSize(28);
-    doc.setTextColor(96, 165, 250);
-    doc.text(slide.title, 50, 70);
-    // subtitle
-    doc.setFontSize(14);
-    doc.setTextColor(148, 163, 184);
-    doc.text(slide.subtitle, 50, 100);
-    // bullets
-    doc.setFontSize(11);
-    doc.setTextColor(226, 232, 240);
-    slide.bullets.forEach((b, i) => {
-      const y = 140 + i * 28;
-      if (y < h - 40) {
-        doc.text(`•  ${b}`, 60, y);
-      }
+  // Create off-screen container
+  const container = document.createElement("div");
+  container.style.cssText = "position:fixed;left:-9999px;top:0;width:1280px;height:720px;overflow:hidden;";
+  document.body.appendChild(container);
+
+  for (let idx = 0; idx < SLIDES.length; idx++) {
+    if (idx > 0) doc.addPage([1280, 720], "landscape");
+
+    // Clone the visible slide
+    const slideEl = document.querySelector(`[data-slide-index="${idx}"]`);
+    if (!slideEl) continue;
+    const clone = slideEl.cloneNode(true) as HTMLElement;
+    clone.style.cssText = "width:1280px;height:720px;position:relative;opacity:1;transform:none;pointer-events:none;background:linear-gradient(135deg,#020617,#0f172a,#020617);";
+    container.innerHTML = "";
+    container.appendChild(clone);
+
+    const canvas = await html2canvas(clone, {
+      scale: 2,
+      backgroundColor: "#020617",
+      width: 1280,
+      height: 720,
+      useCORS: true,
+      logging: false,
     });
-    // footer
-    doc.setFontSize(8);
-    doc.setTextColor(71, 85, 105);
-    doc.text("NewtonAI — AI Classroom OS", 50, h - 20);
-  });
 
+    const imgData = canvas.toDataURL("image/jpeg", 0.92);
+    doc.addImage(imgData, "JPEG", 0, 0, 1280, 720);
+  }
+
+  document.body.removeChild(container);
   doc.save("NewtonAI-PitchDeck.pdf");
 }
 
@@ -397,6 +394,7 @@ const SLIDES = [SlideHero, SlideProblem, SlideSmartBoard, SlideVisualLearning, S
 export default function PitchDeck() {
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
   const wheelLock = useRef(false);
   const touchStartY = useRef(0);
 
@@ -462,6 +460,7 @@ export default function PitchDeck() {
       {SLIDES.map((Slide, i) => (
         <div
           key={i}
+          data-slide-index={i}
           className="absolute inset-0 transition-all duration-[600ms] ease-out"
           style={{
             opacity: i === current ? 1 : 0,
@@ -498,8 +497,8 @@ export default function PitchDeck() {
           <Expand className="w-4 h-4" />
         </button>
         <div className="w-px h-6 bg-white/10 mx-1" />
-        <button onClick={generatePDF} className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors" title="Download PDF">
-          <Download className="w-4 h-4" />
+        <button onClick={() => { setGeneratingPDF(true); generatePDF().finally(() => setGeneratingPDF(false)); }} disabled={generatingPDF} className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors disabled:opacity-50" title="Download PDF">
+          {generatingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
         </button>
         <button onClick={generatePPTX} className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors" title="Download PPTX">
           <FileDown className="w-4 h-4" />
