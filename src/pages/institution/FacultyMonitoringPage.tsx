@@ -109,9 +109,11 @@ export default function FacultyMonitoringPage() {
       <SidebarProvider>
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar onSignOut={() => { supabase.auth.signOut(); navigate("/auth"); }} />
-          <InstitutionFeatureGate feature="faculty_monitoring">
-            <FacultyContent />
-          </InstitutionFeatureGate>
+          <div className="flex-1">
+            <InstitutionFeatureGate feature="faculty_monitoring">
+              <FacultyContent />
+            </InstitutionFeatureGate>
+          </div>
         </div>
       </SidebarProvider>
     </ScrollProvider>
