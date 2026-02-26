@@ -206,8 +206,12 @@ export function TeacherReportPage({ sessionId }: TeacherReportPageProps) {
               ))}
             </div>
             <div className="flex flex-col gap-1 text-xs">
-              <span className="text-green-400">✓ {classOverview.strongest_topic.slide_title} — avg {Math.round(classOverview.strongest_topic.avg_score)}%</span>
-              <span className="text-amber-400">⚠️ {classOverview.weakest_topic.slide_title} — avg {Math.round(classOverview.weakest_topic.avg_score)}%</span>
+              {classOverview.strongest_topic && (
+                <span className="text-green-400">✓ {classOverview.strongest_topic.slide_title} — avg {Math.round(classOverview.strongest_topic.avg_score)}%</span>
+              )}
+              {classOverview.weakest_topic && (
+                <span className="text-amber-400">⚠️ {classOverview.weakest_topic.slide_title} — avg {Math.round(classOverview.weakest_topic.avg_score)}%</span>
+              )}
             </div>
           </CardContent>
         </Card>
