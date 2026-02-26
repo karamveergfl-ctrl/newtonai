@@ -23,7 +23,8 @@ import {
   Map,
   MessageSquare,
   GraduationCap,
-  Target } from
+  Target,
+  Presentation } from
 "lucide-react";
 
 const problems = [
@@ -435,6 +436,30 @@ const LandingPage = () => {
             <p>
               We are transparent about how we sustain this platform: free users may see occasional banner advertisements between study sections, and premium subscriptions fund ongoing AI development and infrastructure. We never sell student data, and all AI processing is designed to enhance your learning — not to harvest your information.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Pitch Deck CTA for Administrators */}
+      <section className="py-16 md:py-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10 pointer-events-none" />
+        <div className="container mx-auto relative z-10">
+          <div className="max-w-3xl mx-auto text-center rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-8 md:p-12">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary/10 mb-6">
+              <Presentation className="w-7 h-7 text-primary" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">
+              Are You a Dean or Administrator?
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+              See how NewtonAI transforms your smart boards into a complete Classroom OS
+            </p>
+            <Button asChild size="lg" className="h-12 px-8 text-base font-medium rounded-lg group">
+              <Link to="/pitch-deck">
+                View Pitch Deck
+                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

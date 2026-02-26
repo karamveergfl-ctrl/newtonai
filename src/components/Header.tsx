@@ -49,6 +49,7 @@ const navLinks: NavLink[] = [
       { href: "/teacher", label: "For Teachers" },
       { href: "/faq", label: "FAQ" },
       { href: "/contact", label: "Contact" },
+      { href: "/pitch-deck", label: "Pitch Deck", badge: "NEW" },
     ],
   },
   { href: "/pricing", label: "Pricing", type: "link" },
