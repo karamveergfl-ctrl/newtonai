@@ -72,6 +72,47 @@ export function StudentPerformanceTab({ classId }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Understanding Score Trend */}
+      {reportScores.length > 0 && (
+        <Card className="border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-primary" /> Understanding Score Trend
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end gap-1.5 h-24">
+              {reportScores.map((r, i) => {
+                const height = Math.max(r.score, 5);
+                return (
+                  <div key={r.session_id} className="flex-1 flex flex-col items-center gap-1 group cursor-pointer"
+                    onClick={() => navigate(`/report/student/${r.session_id}`)}>
+                    <span className="text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">{r.score}%</span>
+                    <motion.div
+                      initial={{ height: 0 }} animate={{ height: `${height}%` }}
+                      transition={{ delay: i * 0.1, duration: 0.4 }}
+                      className={`w-full rounded-t-md transition-colors ${
+                        r.score >= 80 ? "bg-emerald-500/70 hover:bg-emerald-500"
+                        : r.score >= 50 ? "bg-amber-500/70 hover:bg-amber-500"
+                        : "bg-destructive/70 hover:bg-destructive"
+                      }`}
+                    />
+                    <span className="text-[8px] text-muted-foreground">{format(new Date(r.date), "M/d")}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {reportScores.length >= 2 && (
+              <p className="text-[10px] text-muted-foreground mt-2 text-center">
+                {reportScores[reportScores.length - 1].score >= reportScores[0].score
+                  ? "📈 Your understanding is improving!"
+                  : "💪 Keep practicing to improve your scores"}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         {stats.map((s, i) => (
