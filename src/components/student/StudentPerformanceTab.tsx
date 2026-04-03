@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, TrendingUp, Award, Target, CheckCircle2, AlertTriangle, BookOpen, Brain, FileQuestion } from "lucide-react";
+import { Loader2, TrendingUp, Award, Target, CheckCircle2, AlertTriangle, BookOpen, Brain, FileQuestion, BarChart3 } from "lucide-react";
 import { StudentLearningInsights } from "./StudentLearningInsights";
+import { format } from "date-fns";
 
 interface Props {
   classId: string;
