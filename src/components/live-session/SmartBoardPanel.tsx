@@ -93,6 +93,7 @@ function SmartBoardPanelInner({
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [teacherId, setTeacherId] = useState("");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [endModalOpen, setEndModalOpen] = useState(false);
 
   // Live pulse for confusion alert banner
   const { pulseSummary, confusionAlert } = useLivePulse({ sessionId, role: "teacher" });
