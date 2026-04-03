@@ -22,6 +22,7 @@ interface UseLectureCaptureProps {
 export function useLectureCapture({ sessionId, teacherId }: UseLectureCaptureProps) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureId, setCaptureId] = useState<string | null>(null);
+  const [latestTranscript, setLatestTranscript] = useState<string>("");
 
   const slideTimelineRef = useRef<SlideTimelineEntry[]>([]);
   const transcriptSegmentsRef = useRef<TranscriptSegment[]>([]);
