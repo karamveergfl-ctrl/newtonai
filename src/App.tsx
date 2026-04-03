@@ -101,6 +101,7 @@ const PitchDeck = lazy(() => import("./pages/PitchDeck"));
 // Teacher pages
 const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard"));
 const ClassDetail = lazy(() => import("./pages/teacher/ClassDetail"));
+const TeacherProfile = lazy(() => import("./pages/teacher/TeacherProfile"));
 
 // Student class pages
 const StudentClasses = lazy(() => import("./pages/student/StudentClasses"));
