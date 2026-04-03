@@ -369,6 +369,8 @@ function SmartBoardPanelInner({
                 </div>
               )}
             </div>
+          ) : activeView === "video" ? (
+            <ClassroomVideoPlayer sessionId={sessionId} />
           ) : isFullscreen ? (
             <div className="h-full text-lg">{children}</div>
           ) : (
