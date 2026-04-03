@@ -93,7 +93,6 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   const { isLoading, isScriptLoaded, initiatePayment } = useRazorpay(handleSuccess, handleFailure, handleModalClose);
 
   const handleClick = async () => {
-    console.log('PaymentButton clicked', { planName, billingCycle, isScriptLoaded, isLoading });
     
     setShowProgress(true);
     setCurrentStep(0);
@@ -101,7 +100,6 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     
     // Check if user is logged in
     const { data: { session } } = await supabase.auth.getSession();
-    console.log('Auth session check:', session ? 'logged in' : 'not logged in');
     
     if (!session) {
       setShowProgress(false);
@@ -114,7 +112,6 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
 
     // Handle 100% discount - bypass Razorpay and activate subscription directly
     if (discountPercent === 100 && redeemCodeId) {
-      console.log('100% discount detected, activating free subscription...');
       setCurrentStep(1);
       
       try {
@@ -132,7 +129,6 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
           return;
         }
 
-        console.log('Free subscription activated successfully:', data);
         setShowProgress(false);
         onPaymentEnd?.();
         onSuccess?.();
@@ -147,7 +143,6 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     // Use passed currency prop, fallback to auto-detection only if not provided
     const finalCurrency = currencyProp || detectCurrency(session.user.email);
 
-    console.log('Calling initiatePayment...', { discountPercent, redeemCodeId, currency: finalCurrency });
     initiatePayment(planName, billingCycle, handleProgress, discountPercent, redeemCodeId ?? undefined, finalCurrency);
   };
 

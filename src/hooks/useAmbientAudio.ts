@@ -88,11 +88,9 @@ export function useAmbientAudio(): UseAmbientAudioReturn {
     // Check cache first
     const cached = cacheRef.current.get(preset.id);
     if (cached) {
-      console.log(`Using cached ambient audio for ${preset.name}`);
       return cached;
     }
 
-    console.log(`Generating ambient audio for ${preset.name}...`);
     
     const { data, error } = await supabase.functions.invoke("elevenlabs-ambient", {
       body: { prompt: preset.prompt, duration: 22 },

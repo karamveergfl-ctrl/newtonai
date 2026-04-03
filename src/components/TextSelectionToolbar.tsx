@@ -122,7 +122,6 @@ export const TextSelectionToolbar = ({
       return;
     }
     capturedTextRef.current = textToCapture;
-    console.log("[TextSelectionToolbar] Captured text for", toolType, ":", textToCapture.slice(0, 50));
     
     setPendingToolType(toolType);
     setSettingsDialogOpen(true);
@@ -136,7 +135,6 @@ export const TextSelectionToolbar = ({
   }, [onSearchVideos, onDismiss]);
 
   const handleGenerateWithSettings = useCallback((settings: UniversalGenerationSettings) => {
-    console.log("[TextSelectionToolbar] Generate with settings called:", pendingToolType, settings);
     
     if (!pendingToolType) {
       console.error("[TextSelectionToolbar] No pending tool type");
@@ -145,7 +143,6 @@ export const TextSelectionToolbar = ({
     
     // Use the captured text from when the tool was clicked - this prevents stale closure issues
     const textToUse = capturedTextRef.current;
-    console.log("[TextSelectionToolbar] Using captured text:", textToUse?.slice(0, 50));
     
     if (!textToUse) {
       console.error("[TextSelectionToolbar] No captured text available for generation");
@@ -156,19 +153,15 @@ export const TextSelectionToolbar = ({
     // Pass text explicitly to callbacks to ensure correct text is used
     switch (pendingToolType) {
       case "quiz":
-        console.log("[TextSelectionToolbar] Calling onGenerateQuiz");
         onGenerateQuiz(textToUse, settings);
         break;
       case "flashcards":
-        console.log("[TextSelectionToolbar] Calling onGenerateFlashcards");
         onGenerateFlashcards(textToUse, settings);
         break;
       case "summary":
-        console.log("[TextSelectionToolbar] Calling onGenerateSummary");
         onGenerateSummary(textToUse, settings);
         break;
       case "mindmap":
-        console.log("[TextSelectionToolbar] Calling onGenerateMindMap");
         onGenerateMindMap(textToUse, settings);
         break;
     }

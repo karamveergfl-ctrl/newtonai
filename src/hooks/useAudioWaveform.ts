@@ -97,7 +97,6 @@ export function useAudioWaveform(options: UseAudioWaveformOptions = {}): UseAudi
       analyzer.connect(audioContextRef.current.destination);
     } catch (e) {
       // Already connected, just update the analyzer
-      console.log("Audio element already connected");
     }
     
     setIsActive(true);

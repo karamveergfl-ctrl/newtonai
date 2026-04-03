@@ -110,7 +110,6 @@ export function PodcastPlayer({
       }
     },
     onComplete: () => {
-      console.log("Podcast playback complete");
     },
   });
 
