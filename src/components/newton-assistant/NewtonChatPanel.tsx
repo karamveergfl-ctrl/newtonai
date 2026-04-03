@@ -23,6 +23,7 @@ interface NewtonChatPanelProps {
   onClose?: () => void;
   onToggleSidebar?: () => void;
   showSidebarToggle?: boolean;
+  onRetry?: () => void;
 }
 
 const SUGGESTIONS = [
@@ -42,6 +43,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   onClose,
   onToggleSidebar,
   showSidebarToggle,
+  onRetry,
 }: NewtonChatPanelProps) {
   const [input, setInput] = useState("");
   const [attachment, setAttachment] = useState<Attachment | null>(null);
@@ -160,7 +162,9 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
           </div>
           <div>
             <h3 className="text-sm font-semibold">Newton AI</h3>
-            <p className="text-xs text-muted-foreground">Ask me anything</p>
+            <p className="text-xs text-muted-foreground">
+              {isLoading ? "Thinking..." : isListening ? "Listening..." : "Ask me anything"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -210,6 +214,11 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
                 key={message.id}
                 message={message}
                 isStreaming={isLoading && index === messages.length - 1 && message.role === "assistant"}
+                onRetry={
+                  message.role === "assistant" && index === messages.length - 1 && !isLoading
+                    ? onRetry
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -218,7 +227,14 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
 
       {/* Error */}
       {error && (
-        <div className="px-4 py-2 bg-destructive/10 text-destructive text-xs">{error}</div>
+        <div className="px-4 py-2 bg-destructive/10 text-destructive text-xs flex items-center justify-between">
+          <span>{error}</span>
+          {onRetry && (
+            <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={onRetry}>
+              Retry
+            </Button>
+          )}
+        </div>
       )}
 
       {/* Attachment chip */}
@@ -232,10 +248,30 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
         </div>
       )}
 
+      {/* Voice indicator */}
+      {isListening && (
+        <div className="px-4 py-2 bg-red-500/10 border-t border-red-500/20">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {[...Array(4)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="w-1 bg-red-500 rounded-full"
+                  animate={{ height: [8, 16 + Math.random() * 8, 8] }}
+                  transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-red-600 dark:text-red-400 font-medium">
+              Listening... speak now
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Input */}
       <div className="p-2 sm:p-3 border-t bg-muted/30 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:pb-3">
         <div className="flex items-end gap-2">
-          {/* Attachment button */}
           {!attachment && (
             <NewtonAttachmentButton
               onAttach={setAttachment}
@@ -245,7 +281,6 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             />
           )}
 
-          {/* Voice button */}
           <Button
             onClick={handleVoiceToggle}
             variant={isListening ? "default" : "outline"}

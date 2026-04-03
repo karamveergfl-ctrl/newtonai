@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Attachment } from "@/components/newton-assistant/NewtonAttachmentButton";
+import { toast } from "sonner";
 
 export interface NewtonMessage {
   id: string;
@@ -8,6 +9,7 @@ export interface NewtonMessage {
   content: string;
   timestamp: Date;
   attachments?: Attachment[];
+  isError?: boolean;
 }
 
 export function useNewtonChat(conversationId: string | null) {
@@ -67,7 +69,6 @@ export function useNewtonChat(conversationId: string | null) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Create a conversation for the old messages
         const { data: conv, error: convErr } = await supabase
           .from("newton_conversations")
           .insert({ user_id: user.id, title: "Previous Chat" })
@@ -104,7 +105,6 @@ export function useNewtonChat(conversationId: string | null) {
         content,
         attachments: attachments ? JSON.parse(JSON.stringify(attachments.map(a => ({ name: a.name, type: a.type })))) : [],
       });
-      // Touch conversation updated_at
       await supabase
         .from("newton_conversations")
         .update({ updated_at: new Date().toISOString() })
@@ -154,6 +154,110 @@ export function useNewtonChat(conversationId: string | null) {
     }
   }, []);
 
+  const streamResponse = useCallback(async (
+    apiMessages: { role: string; content: string }[],
+    assistantMessageId: string,
+    signal: AbortSignal
+  ): Promise<string> => {
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const authToken = currentSession?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/newton-chat`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ messages: apiMessages, stream: true }),
+        signal,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      if (response.status === 429) {
+        toast.error("Rate limit exceeded. Please wait a moment and try again.");
+        throw new Error("Rate limit exceeded");
+      }
+      if (response.status === 402) {
+        toast.error("AI credits exhausted. Please top up your usage.");
+        throw new Error("Credits exhausted");
+      }
+      throw new Error(errorData.error || `Request failed with status ${response.status}`);
+    }
+
+    if (!response.body) throw new Error("No response body");
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = "";
+    let assistantContent = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (line.startsWith(":") || line.trim() === "") continue;
+        if (!line.startsWith("data: ")) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") break;
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const delta = parsed.choices?.[0]?.delta?.content;
+          if (delta) {
+            assistantContent += delta;
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMessageId ? { ...m, content: assistantContent } : m
+              )
+            );
+          }
+        } catch {
+          textBuffer = line + "\n" + textBuffer;
+          break;
+        }
+      }
+    }
+
+    // Final flush
+    if (textBuffer.trim()) {
+      for (let raw of textBuffer.split("\n")) {
+        if (!raw) continue;
+        if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+        if (raw.startsWith(":") || raw.trim() === "") continue;
+        if (!raw.startsWith("data: ")) continue;
+        const jsonStr = raw.slice(6).trim();
+        if (jsonStr === "[DONE]") continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) {
+            assistantContent += content;
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMessageId ? { ...m, content: assistantContent } : m
+              )
+            );
+          }
+        } catch { /* ignore partial leftovers */ }
+      }
+    }
+
+    return assistantContent;
+  }, []);
+
   const sendMessage = useCallback(async (
     content: string,
     createConversation: () => Promise<string | null>,
@@ -164,7 +268,6 @@ export function useNewtonChat(conversationId: string | null) {
     setError(null);
     let convId = conversationId;
 
-    // Create conversation if needed
     if (!convId) {
       convId = await createConversation();
       if (!convId) {
@@ -184,10 +287,8 @@ export function useNewtonChat(conversationId: string | null) {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Save user message to DB
     await saveMessageToDB(convId, "user", content.trim(), attachment ? [attachment] : undefined);
 
-    // Generate title after first user message
     const isFirstMsg = messages.length === 0;
     if (isFirstMsg) {
       generateTitle(convId, content.trim());
@@ -205,7 +306,6 @@ export function useNewtonChat(conversationId: string | null) {
     try {
       abortControllerRef.current = new AbortController();
 
-      // Build API messages with attachment context
       const apiMessages: { role: string; content: string }[] = messages.concat(userMessage).map((m) => ({
         role: m.role,
         content: m.content,
@@ -218,71 +318,8 @@ export function useNewtonChat(conversationId: string | null) {
         });
       }
 
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const authToken = currentSession?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const assistantContent = await streamResponse(apiMessages, assistantMessage.id, abortControllerRef.current.signal);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/newton-chat`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({ messages: apiMessages, stream: true }),
-          signal: abortControllerRef.current.signal,
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Request failed with status ${response.status}`);
-      }
-
-      if (!response.body) throw new Error("No response body");
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = "";
-      let assistantContent = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              assistantContent += delta;
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantMessage.id ? { ...m, content: assistantContent } : m
-                )
-              );
-            }
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
-        }
-      }
-
-      // Save assistant message to DB
       if (assistantContent) {
         setMessages((prev) =>
           prev.map((m) =>
@@ -302,7 +339,7 @@ export function useNewtonChat(conversationId: string | null) {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantMessage.id
-              ? { ...m, content: "Sorry, I encountered an error. Please try again." }
+              ? { ...m, content: "Sorry, I encountered an error. Please try again.", isError: true }
               : m
           )
         );
@@ -311,7 +348,84 @@ export function useNewtonChat(conversationId: string | null) {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [messages, isLoading, conversationId, saveMessageToDB, generateTitle]);
+  }, [messages, isLoading, conversationId, saveMessageToDB, generateTitle, streamResponse]);
+
+  const retryLastMessage = useCallback(async (
+    createConversation: () => Promise<string | null>
+  ) => {
+    if (isLoading) return;
+
+    // Find last user message
+    const lastUserMsgIdx = [...messages].reverse().findIndex(m => m.role === "user");
+    if (lastUserMsgIdx === -1) return;
+
+    const actualIdx = messages.length - 1 - lastUserMsgIdx;
+    const lastUserMsg = messages[actualIdx];
+
+    // Remove the failed assistant message and re-send
+    setMessages((prev) => prev.slice(0, actualIdx + 1));
+
+    setError(null);
+    setIsLoading(true);
+
+    let convId = conversationId;
+    if (!convId) {
+      convId = await createConversation();
+      if (!convId) {
+        setError("Failed to create conversation");
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    const assistantMessage: NewtonMessage = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: "",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, assistantMessage]);
+
+    try {
+      abortControllerRef.current = new AbortController();
+
+      const apiMessages = messages.slice(0, actualIdx + 1).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const assistantContent = await streamResponse(apiMessages, assistantMessage.id, abortControllerRef.current.signal);
+
+      if (assistantContent) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMessage.id
+              ? { ...m, content: assistantContent, timestamp: new Date() }
+              : m
+          )
+        );
+        await saveMessageToDB(convId, "assistant", assistantContent);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        setMessages((prev) => prev.filter((m) => m.id !== assistantMessage.id));
+      } else {
+        console.error("Newton chat retry error:", err);
+        setError(err instanceof Error ? err.message : "Failed to get response");
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMessage.id
+              ? { ...m, content: "Sorry, I encountered an error. Please try again.", isError: true }
+              : m
+          )
+        );
+      }
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+  }, [messages, isLoading, conversationId, saveMessageToDB, streamResponse]);
 
   const cancelRequest = useCallback(() => {
     if (abortControllerRef.current) {
@@ -328,6 +442,7 @@ export function useNewtonChat(conversationId: string | null) {
     isLoading,
     error,
     sendMessage,
+    retryLastMessage,
     cancelRequest,
     clearHistory,
   };
