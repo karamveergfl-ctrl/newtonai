@@ -250,6 +250,7 @@ export default function AIPodcast() {
             content: processedContent, 
             title: metadata?.videoTitle,
             settings: settings,
+            userName: userName || undefined,
           },
         }
       );
