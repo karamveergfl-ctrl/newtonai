@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import { motion } from "framer-motion";
 import { ToolAuthGate } from "@/components/ToolAuthGate";
 import { ContentDisclaimer } from "@/components/ContentDisclaimer";
