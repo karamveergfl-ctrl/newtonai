@@ -144,6 +144,10 @@ export default function TeacherOnboarding({ fullName: initialName, avatarUrl, on
   const [institutionName, setInstitutionName] = useState("");
   const [department, setDepartment] = useState("");
   const [classLevel, setClassLevel] = useState("");
+  const [institutionType, setInstitutionType] = useState("");
+  const [facultyId, setFacultyId] = useState("");
+  const [phone, setPhone] = useState("");
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
 
   // Step 2 - Teaching style
   const [teachingStyle, setTeachingStyle] = useState("");
