@@ -395,11 +395,20 @@ export function PodcastPlayer({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={downloadAsTxt} className="gap-2 cursor-pointer text-sm">
                   <FileText className="w-4 h-4" />
-                  Download as TXT
+                  Download Transcript (TXT)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={downloadAsPdf} className="gap-2 cursor-pointer text-sm">
                   <FileDown className="w-4 h-4" />
-                  Download as PDF
+                  Download Transcript (PDF)
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={downloadAudio} 
+                  className="gap-2 cursor-pointer text-sm"
+                  disabled={!hasElevenLabsAudio}
+                >
+                  <Music className="w-4 h-4" />
+                  Download Audio (MP3)
+                  {!hasElevenLabsAudio && <span className="text-xs text-muted-foreground ml-1">(unavailable)</span>}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
