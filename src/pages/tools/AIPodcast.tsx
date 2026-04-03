@@ -488,6 +488,7 @@ export default function AIPodcast() {
                 podcastContext={sourceContent.substring(0, 2000)}
                 currentTopic={podcast.title}
                 onResponseComplete={handleResponseComplete}
+                userName={userName}
               />
             </motion.div>
           ) : !isProcessing && (
