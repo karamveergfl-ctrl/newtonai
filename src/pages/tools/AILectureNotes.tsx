@@ -971,7 +971,7 @@ const AILectureNotes = () => {
                       )}
                       <Button variant="ghost" size="sm" onClick={handleCopy} className="flex-1 sm:flex-none">
                         {copied ? (
-                          <Check className="h-4 w-4 text-green-500" />
+                          <Check className="h-4 w-4 text-primary" />
                         ) : (
                           <Copy className="h-4 w-4" />
                         )}
