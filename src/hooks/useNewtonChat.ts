@@ -123,7 +123,7 @@ export function useNewtonChat(conversationId: string | null) {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/newton-chat`,
         {
           method: "POST",
@@ -138,6 +138,7 @@ export function useNewtonChat(conversationId: string | null) {
             ],
             stream: false,
           }),
+          timeoutMs: 10000,
         }
       );
 
