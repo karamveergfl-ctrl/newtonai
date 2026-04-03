@@ -79,6 +79,25 @@ const classLevels = [
   { id: "university", label: "University", emoji: "🏛️" },
 ];
 
+const institutionTypes = [
+  { id: "university", label: "University" },
+  { id: "college", label: "College" },
+  { id: "school_cbse", label: "School (CBSE)" },
+  { id: "school_icse", label: "School (ICSE)" },
+  { id: "school_state", label: "School (State Board)" },
+  { id: "coaching", label: "Coaching Centre" },
+  { id: "independent", label: "Independent Tutor" },
+];
+
+const gradeLevels = [
+  { id: "1-5", label: "Grade 1–5" },
+  { id: "6-8", label: "Grade 6–8" },
+  { id: "9-10", label: "Grade 9–10" },
+  { id: "11-12", label: "Grade 11–12" },
+  { id: "ug", label: "Undergraduate" },
+  { id: "pg", label: "Postgraduate" },
+];
+
 const teachingStyles = [
   { id: "smartboard", label: "Smartboard / Digital Board", emoji: "🖥️" },
   { id: "traditional", label: "Traditional Board + PDF", emoji: "📝" },
