@@ -14,7 +14,8 @@ import {
   Sparkles,
   ArrowRight,
   CheckCircle,
-  MessageSquare
+  MessageSquare,
+  FunctionSquare
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
