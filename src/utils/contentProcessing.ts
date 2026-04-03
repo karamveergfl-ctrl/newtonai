@@ -1,6 +1,29 @@
 /**
  * Shared content processing utilities for study tools
  */
+import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
+
+// In-memory cache for extracted document text (dedup within session)
+const documentCache = new Map<string, { text: string; timestamp: number }>();
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+function getFileCacheKey(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
+function getCachedExtraction(file: File): string | null {
+  const key = getFileCacheKey(file);
+  const cached = documentCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.text;
+  }
+  documentCache.delete(key);
+  return null;
+}
+
+function setCachedExtraction(file: File, text: string): void {
+  documentCache.set(getFileCacheKey(file), { text, timestamp: Date.now() });
+}
 
 /**
  * Convert a File to base64 string
