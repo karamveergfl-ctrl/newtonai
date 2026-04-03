@@ -122,13 +122,27 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
         )}
       </div>
 
+      {/* Video sync overlay */}
+      {syncedVideo && (
+        <div className="absolute inset-0 z-40 bg-black/90 flex flex-col items-center justify-center animate-fade-in">
+          <p className="text-white text-sm mb-3 font-medium">📺 Teacher is showing a video</p>
+          <div className="w-full max-w-2xl aspect-video rounded-lg overflow-hidden">
+            <iframe
+              src={`https://www.youtube.com/embed/${syncedVideo.videoId}?autoplay=1&rel=0`}
+              className="w-full h-full"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
+          </div>
+          <p className="text-white/70 text-xs mt-2 max-w-md text-center truncate">{syncedVideo.title}</p>
+        </div>
+      )}
+
       {/* Pulse widget */}
       <PulseWidget sessionId={sessionId} />
 
       {/* Live Notes drawer (Phase 3) */}
       <StudentNotesDrawer sessionId={sessionId} />
-
-      {/* Floating action buttons */}
       <div className="fixed bottom-20 right-4 z-40 sm:bottom-6 flex flex-col gap-2 items-end">
         {/* Reaction buttons */}
         {showReactions && (
