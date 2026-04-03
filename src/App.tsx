@@ -287,7 +287,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            {/* VideoPreloader moved to DeferredComponents */}
+            <OfflineBanner />
             <BrowserRouter>
               <ScrollToTop />
               <GuestTrialProvider>
