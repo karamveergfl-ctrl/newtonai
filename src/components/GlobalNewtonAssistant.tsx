@@ -90,6 +90,13 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onReg
     }, attachment);
   }, [sendMessage, createConversation]);
 
+  const handleRetry = useCallback(() => {
+    retryLastMessage(async () => {
+      const id = await createConversation();
+      return id;
+    });
+  }, [retryLastMessage, createConversation]);
+
   const handleSelectConversation = useCallback((id: string) => {
     setActiveConversationId(id);
     if (isMobile) setShowSidebar(false);
