@@ -271,6 +271,35 @@ const TeacherDashboard = () => {
               </CardContent>
             </Card>
 
+            {/* Recent Reports */}
+            {recentCompletedSessions.length > 0 && (
+              <Card className="border-border/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-primary" />
+                    Recent Reports
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-1.5">
+                  {recentCompletedSessions.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => navigate(`/report/teacher/${s.id}`)}
+                      className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/40 transition-colors text-left"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium truncate">{s.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{s.className}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        {format(new Date(s.started_at), "MMM d")}
+                      </span>
+                    </button>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
             <TeacherActivityFeed />
             <PendingActions />
           </div>
