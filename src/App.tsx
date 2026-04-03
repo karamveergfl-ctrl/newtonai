@@ -258,6 +258,7 @@ function AnimatedRoutes() {
       </Routes>
     </Suspense>
     </ChunkErrorBoundary>
+    </AppErrorBoundary>
   );
 }
 
