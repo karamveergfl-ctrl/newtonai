@@ -2,6 +2,8 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSpeechRecognition } from './useSpeechRecognition';
 import { useToast } from './use-toast';
+import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
+import { useToast } from './use-toast';
 
 interface UseVoiceChatOptions {
   documentId: string | null;
