@@ -20,7 +20,11 @@ import {
   Settings,
   Download,
   FileText,
-  FileDown
+  FileDown,
+  Square,
+  RotateCcw,
+  Music,
+  AlertTriangle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
