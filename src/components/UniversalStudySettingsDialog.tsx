@@ -359,6 +359,41 @@ export const UniversalStudySettingsDialog = ({
             </div>
           )}
 
+          {/* Question Types - For Quiz */}
+          {type === "quiz" && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Question Types</Label>
+              <div className="space-y-2">
+                {quizQuestionTypeOptions.map((qt) => (
+                  <label key={qt.id} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={questionTypes.includes(qt.id)}
+                      onCheckedChange={() => toggleQuestionType(qt.id)}
+                    />
+                    <span className="text-sm">{qt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Include Explanations Toggle - For Quiz */}
+          {type === "quiz" && (
+            <div className="flex items-center justify-between py-2 px-1 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <Label className="text-sm font-medium">Include Explanations</Label>
+                  <p className="text-xs text-muted-foreground">Adds explanation per question</p>
+                </div>
+              </div>
+              <Switch
+                checked={includeExplanations}
+                onCheckedChange={setIncludeExplanations}
+              />
+            </div>
+          )}
+
           {/* Difficulty Slider - For Quiz and Flashcards */}
           {baseConfig.showDifficulty && (
             <div className="space-y-3">
@@ -368,7 +403,8 @@ export const UniversalStudySettingsDialog = ({
                   "text-sm font-semibold px-2 py-0.5 rounded",
                   difficulty === 0 && "bg-green-500/20 text-green-600 dark:text-green-400",
                   difficulty === 1 && "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400",
-                  difficulty === 2 && "bg-red-500/20 text-red-600 dark:text-red-400"
+                  difficulty === 2 && "bg-red-500/20 text-red-600 dark:text-red-400",
+                  difficulty === 3 && "bg-primary/20 text-primary"
                 )}>
                   {difficultyLabels[difficulty]}
                 </span>
@@ -377,7 +413,7 @@ export const UniversalStudySettingsDialog = ({
                 value={[difficulty]}
                 onValueChange={([value]) => setDifficulty(value)}
                 min={0}
-                max={2}
+                max={type === "quiz" ? 3 : 2}
                 step={1}
                 className="w-full"
               />
@@ -385,6 +421,7 @@ export const UniversalStudySettingsDialog = ({
                 <span>Easy</span>
                 <span>Medium</span>
                 <span>Hard</span>
+                {type === "quiz" && <span>Adaptive</span>}
               </div>
             </div>
           )}
