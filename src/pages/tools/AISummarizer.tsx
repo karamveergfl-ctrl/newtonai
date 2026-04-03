@@ -8,7 +8,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star, ChevronDown, X } from "lucide-react";
+import { Sparkles, Download, Copy, Check, ArrowLeft, AlertTriangle, Volume2, VolumeX, FileText, List, GraduationCap, Zap, Star, ChevronDown, X, ArrowDown, ArrowUp, Wand2, BookOpen, Loader2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { useTemplatePreferences } from "@/hooks/useTemplatePreferences";
