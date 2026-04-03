@@ -550,22 +550,22 @@ const AIQuiz = () => {
                   <Card className={cn(
                     "border-2 overflow-hidden",
                     skippedQuestions.has(currentIndex) 
-                      ? "bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
-                      : "bg-gradient-to-r from-yellow-50/80 to-amber-50/80 dark:from-yellow-900/20 dark:to-amber-900/20 border-yellow-200/50 dark:border-yellow-800/50"
+                      ? "bg-muted/50 border-muted-foreground/20"
+                      : "bg-accent/5 border-accent/30"
                   )}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         <div className={cn(
                           "p-2 rounded-full shrink-0",
                           skippedQuestions.has(currentIndex)
-                            ? "bg-amber-500/20"
-                            : "bg-yellow-500/20"
+                            ? "bg-muted"
+                            : "bg-accent/15"
                         )}>
                           <Lightbulb className={cn(
                             "w-5 h-5",
                             skippedQuestions.has(currentIndex)
-                              ? "text-amber-600 dark:text-amber-400"
-                              : "text-yellow-600 dark:text-yellow-400"
+                              ? "text-muted-foreground"
+                              : "text-accent-foreground"
                           )} />
                         </div>
                         <div className="flex-1 min-w-0">
