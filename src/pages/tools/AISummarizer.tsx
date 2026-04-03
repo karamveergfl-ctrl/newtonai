@@ -506,6 +506,41 @@ const AISummarizer = () => {
     setPendingSummaryContent(null);
   };
 
+  // Summary modifier handler (Make Simpler / Longer / Shorter)
+  const handleModifySummary = async (modifier: "simpler" | "longer" | "shorter") => {
+    if (!summary || isModifying) return;
+    setIsModifying(true);
+
+    const modifierPrompts: Record<string, string> = {
+      simpler: "Rewrite this summary at a 5th grade reading level. Use simpler words and shorter sentences. Keep the same key information.",
+      longer: "Expand this summary with more detail, examples, and context. Make it roughly 50% longer while staying factual.",
+      shorter: "Condense this summary to roughly half its length. Keep only the most essential information.",
+    };
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke("generate-summary", {
+        body: {
+          content: summary,
+          language: selectedLanguage,
+          format: selectedFormat,
+          modifier: modifierPrompts[modifier],
+        },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (error) throw error;
+      setSummary(data.summary);
+      toast({ title: "Summary updated", description: `Made it ${modifier}` });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to modify summary", variant: "destructive" });
+    } finally {
+      setIsModifying(false);
+    }
+  };
+
   // Video study tool handlers
   const handleGenerateFlashcardsFromVideo = async (videoId: string, videoTitle: string, settings?: VideoGenerationSettings) => {
     // Check and spend credits first
