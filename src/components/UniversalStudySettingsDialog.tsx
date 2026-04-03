@@ -145,15 +145,31 @@ export const UniversalStudySettingsDialog = ({
   const [summaryFormat, setSummaryFormat] = useState<SummaryFormat>("concise");
   const [includeComparison, setIncludeComparison] = useState(true);
   const [selectedClassId, setSelectedClassId] = useState("none");
+  const [questionTypes, setQuestionTypes] = useState<QuizQuestionType[]>(["mcq"]);
+  const [includeExplanations, setIncludeExplanations] = useState(true);
+
+  const toggleQuestionType = (typeId: QuizQuestionType) => {
+    setQuestionTypes(prev => {
+      if (prev.includes(typeId)) {
+        if (prev.length === 1) return prev;
+        return prev.filter(t => t !== typeId);
+      }
+      return [...prev, typeId];
+    });
+  };
+
   const handleGenerate = () => {
+    const difficultyMap = ["easy", "medium", "hard", "adaptive"] as const;
     const settings: UniversalGenerationSettings = {
       count,
-      difficulty: ["easy", "medium", "hard"][difficulty] as "easy" | "medium" | "hard",
+      difficulty: difficultyMap[difficulty],
       detailLevel: ["brief", "standard", "detailed"][detailLevel] as "brief" | "standard" | "detailed",
       mindMapStyle: type === "mindmap" ? mindMapStyle : undefined,
       summaryFormat: type === "summary" ? summaryFormat : undefined,
       includeComparison: type === "summary" ? includeComparison : undefined,
       classId: selectedClassId !== "none" ? selectedClassId : undefined,
+      questionTypes: type === "quiz" ? questionTypes : undefined,
+      includeExplanations: type === "quiz" ? includeExplanations : undefined,
     };
 
     if (totalPages > 1) {
