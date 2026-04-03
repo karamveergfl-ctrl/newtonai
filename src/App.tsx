@@ -16,6 +16,9 @@ import { GuestTrialProvider } from "@/contexts/GuestTrialContext";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { PageTransition } from "./components/PageTransition";
 import { ChunkErrorBoundary } from "./components/ChunkErrorBoundary";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
+import { OfflineBanner } from "./components/OfflineBanner";
+import { PageSkeleton } from "./components/PageSkeleton";
 
 // Non-critical global components lazy-loaded to reduce main thread blocking
 const PodcastMiniPlayer = lazy(() => import("@/components/PodcastMiniPlayer").then(m => ({ default: m.PodcastMiniPlayer })));
@@ -118,7 +121,24 @@ const FacultyMonitoringPage = lazy(() => import("./pages/institution/FacultyMoni
 const CompliancePage = lazy(() => import("./pages/institution/CompliancePage"));
 const InstitutionBillingPage = lazy(() => import("./pages/institution/InstitutionBillingPage"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000, // 30s cache — identical calls won't re-fetch
+      gcTime: 5 * 60 * 1000, // garbage collect after 5 min
+      retry: (failureCount, error: any) => {
+        // Don't retry 4xx errors (client errors)
+        if (error?.status >= 400 && error?.status < 500) return false;
+        return failureCount < 3;
+      },
+      retryDelay: (attempt) => Math.min(1000 * Math.pow(2, attempt), 8000),
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: false,
+    },
+  },
+});
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -137,8 +157,9 @@ function AnimatedRoutes() {
   }, []);
   
   return (
+    <AppErrorBoundary>
     <ChunkErrorBoundary>
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<PageSkeleton />}>
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
         <Route path="/dashboard" element={<PageTransition><ProtectedRoute><OnboardingGate><Dashboard /></OnboardingGate></ProtectedRoute></PageTransition>} />
@@ -237,6 +258,7 @@ function AnimatedRoutes() {
       </Routes>
     </Suspense>
     </ChunkErrorBoundary>
+    </AppErrorBoundary>
   );
 }
 
@@ -265,7 +287,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            {/* VideoPreloader moved to DeferredComponents */}
+            <OfflineBanner />
             <BrowserRouter>
               <ScrollToTop />
               <GuestTrialProvider>
