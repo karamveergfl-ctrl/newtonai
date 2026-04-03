@@ -312,30 +312,38 @@ const ClassDetail = () => {
         )}
 
         <Tabs defaultValue="students">
-          <TabsList className="grid w-full grid-cols-6 h-10">
-            <TabsTrigger value="students" className="gap-1 text-xs sm:text-sm">
+          <TabsList className="w-full overflow-x-auto flex h-10">
+            <TabsTrigger value="students" className="gap-1 text-xs sm:text-sm flex-1">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Students</span>
             </TabsTrigger>
-            <TabsTrigger value="assignments" className="gap-1 text-xs sm:text-sm">
+            <TabsTrigger value="sessions" className="gap-1 text-xs sm:text-sm flex-1">
+              <PlayCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Sessions</span>
+            </TabsTrigger>
+            <TabsTrigger value="assignments" className="gap-1 text-xs sm:text-sm flex-1">
               <ClipboardList className="h-4 w-4" />
               <span className="hidden sm:inline">Assign.</span>
             </TabsTrigger>
-            <TabsTrigger value="materials" className="gap-1 text-xs sm:text-sm">
+            <TabsTrigger value="materials" className="gap-1 text-xs sm:text-sm flex-1">
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Materials</span>
             </TabsTrigger>
-            <TabsTrigger value="marks" className="gap-1 text-xs sm:text-sm">
+            <TabsTrigger value="marks" className="gap-1 text-xs sm:text-sm flex-1">
               <Award className="h-4 w-4" />
               <span className="hidden sm:inline">Marks</span>
             </TabsTrigger>
-            <TabsTrigger value="attendance" className="gap-1 text-xs sm:text-sm">
+            <TabsTrigger value="attendance" className="gap-1 text-xs sm:text-sm flex-1">
               <CheckSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Attend.</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-1 text-xs sm:text-sm">
+            <TabsTrigger value="analytics" className="gap-1 text-xs sm:text-sm flex-1">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="newton" className="gap-1 text-xs sm:text-sm flex-1">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Newton</span>
             </TabsTrigger>
           </TabsList>
 
