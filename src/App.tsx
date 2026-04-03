@@ -233,6 +233,10 @@ function AnimatedRoutes() {
         <Route path="/teacher" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherDashboard /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/teacher/classes/:id" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><ClassDetail /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/teacher/profile" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherProfile /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/teacher/analytics" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherAnalytics /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/teacher/students" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherStudents /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/teacher/materials" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherMaterials /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/teacher/newton-chat" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherNewtonChat /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         
         {/* Student Class Routes */}
         <Route path="/student/dashboard" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentDashboard /></OnboardingGate></ProtectedRoute></PageTransition>} />
