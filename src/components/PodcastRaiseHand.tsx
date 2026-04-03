@@ -16,6 +16,7 @@ interface PodcastRaiseHandProps {
   podcastContext?: string;
   currentTopic?: string;
   onResponseComplete: () => void;
+  userName?: string;
 }
 
 interface ResponseSegment {
@@ -32,6 +33,7 @@ export function PodcastRaiseHand({
   podcastContext,
   currentTopic,
   onResponseComplete,
+  userName,
 }: PodcastRaiseHandProps) {
   const [question, setQuestion] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -43,7 +45,24 @@ export function PodcastRaiseHand({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isPlayingSegmentRef = useRef(false); // Prevent double-invocation
   const { speak, cancel: cancelSpeech, isSupported: webSpeechSupported } = useWebSpeechTTS();
+
+  const stopAllPlayback = () => {
+    // Stop HTMLAudioElement
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
+      audioRef.current = null;
+    }
+    // Stop Web Speech
+    cancelSpeech();
+    if (typeof speechSynthesis !== "undefined") {
+      speechSynthesis.cancel();
+    }
+    isPlayingSegmentRef.current = false;
+  };
 
   const startRecording = async () => {
     try {
@@ -53,9 +72,7 @@ export function PodcastRaiseHand({
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
 
       mediaRecorder.onstop = async () => {
@@ -82,22 +99,15 @@ export function PodcastRaiseHand({
   const transcribeAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
     try {
-      // Convert blob to base64
       const reader = new FileReader();
       reader.readAsDataURL(audioBlob);
-      
       reader.onloadend = async () => {
         const base64Audio = (reader.result as string).split(",")[1];
-        
         const { data, error } = await supabase.functions.invoke("transcribe-audio", {
           body: { audio: base64Audio, mimeType: "audio/webm" },
         });
-
         if (error) throw error;
-        
-        if (data?.text) {
-          setQuestion(data.text);
-        }
+        if (data?.text) setQuestion(data.text);
         setIsProcessing(false);
       };
     } catch (error) {
@@ -114,29 +124,36 @@ export function PodcastRaiseHand({
     }
 
     setIsProcessing(true);
+    
+    // Cancel ALL audio before sending request
+    stopAllPlayback();
+
     try {
       const { data, error } = await supabase.functions.invoke("podcast-raise-hand", {
         body: {
           question: question.trim(),
           podcastContext,
           currentTopic,
+          userName: userName || undefined,
         },
       });
 
       if (error) throw error;
 
       if (data?.segments) {
-        // Check if we need fallback TTS
         const needsFallback = data.ttsError || data.segments.every((s: ResponseSegment) => !s.audio);
         if (needsFallback && webSpeechSupported) {
           setUsingFallback(true);
           toast.info("Using browser voices as fallback", { duration: 3000 });
         }
-        
+
         setResponseSegments(data.segments);
         setCurrentResponseIndex(0);
         setIsPlayingResponse(true);
-        playResponseSegment(data.segments, 0);
+        setIsProcessing(false);
+        
+        // Small delay to ensure UI renders before playback
+        setTimeout(() => playResponseSegment(data.segments, 0), 100);
       }
     } catch (error) {
       console.error("Error submitting question:", error);
@@ -145,10 +162,12 @@ export function PodcastRaiseHand({
     }
   };
 
-  const playResponseSegment = async (segments: ResponseSegment[], index: number) => {
-    if (index >= segments.length) {
+  const playResponseSegment = async (segs: ResponseSegment[], index: number) => {
+    if (isPlayingSegmentRef.current) return; // Prevent double-invocation
+    
+    if (index >= segs.length) {
+      isPlayingSegmentRef.current = false;
       setIsPlayingResponse(false);
-      setIsProcessing(false);
       setResponseSegments([]);
       setQuestion("");
       setUsingFallback(false);
@@ -156,74 +175,74 @@ export function PodcastRaiseHand({
       return;
     }
 
-    const segment = segments[index];
+    isPlayingSegmentRef.current = true;
+    const segment = segs[index];
     setCurrentResponseIndex(index);
 
-    // If segment has audio, play it
+    // Ensure previous audio is fully stopped
+    stopAllPlayback();
+    await new Promise(r => setTimeout(r, 50));
+    isPlayingSegmentRef.current = true; // Re-set after stopAllPlayback clears it
+
     if (segment.audio) {
-      const audioUrl = `data:audio/mpeg;base64,${segment.audio}`;
-      const audio = new Audio(audioUrl);
+      const audio = new Audio(`data:audio/mpeg;base64,${segment.audio}`);
       audioRef.current = audio;
 
       audio.onended = () => {
-        playResponseSegment(segments, index + 1);
+        isPlayingSegmentRef.current = false;
+        playResponseSegment(segs, index + 1);
       };
 
       audio.onerror = () => {
-        console.error("Audio playback error, trying fallback");
-        // Try Web Speech fallback on audio error
+        isPlayingSegmentRef.current = false;
         if (webSpeechSupported) {
-          playWithWebSpeech(segment, segments, index);
+          playWithWebSpeech(segment, segs, index);
         } else {
-          playResponseSegment(segments, index + 1);
+          playResponseSegment(segs, index + 1);
         }
       };
 
-      await audio.play().catch(console.error);
+      await audio.play().catch(() => {
+        isPlayingSegmentRef.current = false;
+        if (webSpeechSupported) playWithWebSpeech(segment, segs, index);
+      });
     } else if (webSpeechSupported) {
-      // Use Web Speech API fallback
-      await playWithWebSpeech(segment, segments, index);
+      await playWithWebSpeech(segment, segs, index);
     } else {
-      // No audio and no fallback, skip to next
-      playResponseSegment(segments, index + 1);
+      isPlayingSegmentRef.current = false;
+      playResponseSegment(segs, index + 1);
     }
   };
 
   const playWithWebSpeech = async (
     segment: ResponseSegment,
-    segments: ResponseSegment[],
+    segs: ResponseSegment[],
     index: number
   ) => {
     try {
       await speak(segment.text, {
         speaker: segment.speaker as "host1" | "host2",
         onEnd: () => {
-          playResponseSegment(segments, index + 1);
+          isPlayingSegmentRef.current = false;
+          playResponseSegment(segs, index + 1);
         },
         onError: () => {
-          playResponseSegment(segments, index + 1);
+          isPlayingSegmentRef.current = false;
+          playResponseSegment(segs, index + 1);
         },
       });
-    } catch (error) {
-      console.error("Web Speech error:", error);
-      playResponseSegment(segments, index + 1);
+    } catch {
+      isPlayingSegmentRef.current = false;
+      playResponseSegment(segs, index + 1);
     }
   };
 
   useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
+    return () => { stopAllPlayback(); };
   }, []);
 
   const handleClose = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-    cancelSpeech();
+    stopAllPlayback();
     setResponseSegments([]);
     setQuestion("");
     setIsPlayingResponse(false);
@@ -243,7 +262,6 @@ export function PodcastRaiseHand({
 
         <div className="space-y-4">
           {isPlayingResponse ? (
-            // Response Playback
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentResponseIndex}
@@ -294,7 +312,6 @@ export function PodcastRaiseHand({
               </motion.div>
             </AnimatePresence>
           ) : (
-            // Question Input
             <>
               <div className="relative">
                 <Textarea
@@ -307,17 +324,11 @@ export function PodcastRaiseHand({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`absolute bottom-2 right-2 ${
-                    isRecording ? "text-destructive animate-pulse" : ""
-                  }`}
+                  className={`absolute bottom-2 right-2 ${isRecording ? "text-destructive animate-pulse" : ""}`}
                   onClick={isRecording ? stopRecording : startRecording}
                   disabled={isProcessing}
                 >
-                  {isRecording ? (
-                    <MicOff className="w-5 h-5" />
-                  ) : (
-                    <Mic className="w-5 h-5" />
-                  )}
+                  {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                 </Button>
               </div>
 
@@ -333,25 +344,11 @@ export function PodcastRaiseHand({
               )}
 
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleClose}
-                  className="flex-1"
-                  disabled={isProcessing}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
+                <Button variant="outline" onClick={handleClose} className="flex-1" disabled={isProcessing}>
+                  <X className="w-4 h-4 mr-2" /> Cancel
                 </Button>
-                <Button
-                  onClick={handleSubmitQuestion}
-                  className="flex-1"
-                  disabled={!question.trim() || isProcessing}
-                >
-                  {isProcessing ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4 mr-2" />
-                  )}
+                <Button onClick={handleSubmitQuestion} className="flex-1" disabled={!question.trim() || isProcessing}>
+                  {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
                   Ask
                 </Button>
               </div>

@@ -18,7 +18,6 @@ interface PodcastSettings {
   language: string;
 }
 
-// Language-specific prompts for script generation
 const LANGUAGE_PROMPTS: Record<string, string> = {
   en: "Generate the entire podcast script in English.",
   hi: "Generate the entire podcast script in Hindi (हिन्दी). Use natural conversational Hindi. Keep common technical terms in English where appropriate for clarity. Write in Devanagari script.",
@@ -36,20 +35,10 @@ const LANGUAGE_PROMPTS: Record<string, string> = {
 };
 
 const STYLE_PROMPTS: Record<string, string> = {
-  casual: `Create a friendly, relaxed conversation like two study buddies chatting over coffee. 
-Use casual language, relatable examples, and occasional humor. Keep explanations simple and accessible.`,
-  
-  academic: `Create a structured, formal discussion like a university seminar or lecture series.
-Use precise terminology, cite concepts properly, and maintain an educational tone. 
-Explore topics systematically with clear explanations.`,
-  
-  "deep-dive": `Create a comprehensive, investigative exploration of the topic.
-Dig into nuances, examine multiple perspectives, and provide thorough analysis.
-Don't shy away from complexity - explain it clearly.`,
-  
-  interview: `Create a Q&A format where one host interviews the other as a subject matter expert.
-The interviewer asks insightful, probing questions while the expert provides authoritative answers.
-Include follow-up questions and clarifications.`,
+  casual: `Create a friendly, relaxed conversation like two study buddies chatting over coffee. Use casual language, relatable examples, and occasional humor.`,
+  academic: `Create a structured, formal discussion like a university seminar. Use precise terminology, cite concepts properly, and maintain an educational tone.`,
+  "deep-dive": `Create a comprehensive, investigative exploration. Dig into nuances, examine multiple perspectives, and provide thorough analysis.`,
+  interview: `Create a Q&A format where one host interviews the other as a subject matter expert. Include follow-up questions and clarifications.`,
 };
 
 const TONE_MODIFIERS: Record<string, string> = {
@@ -72,13 +61,10 @@ serve(async (req) => {
   }
 
   try {
-    // Authentication check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const supabase = createClient(
@@ -89,40 +75,30 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Rate limiting
     const { data: allowed, error: rateLimitError } = await supabase.rpc("check_rate_limit", {
       p_user_id: user.id,
       p_function_name: "generate-podcast-script",
     });
 
     if (rateLimitError || !allowed) {
-      return new Response(
-        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { content, title, settings } = await req.json();
+    const { content, title, settings, userName } = await req.json();
 
     if (!content) {
-      return new Response(
-        JSON.stringify({ error: "Content is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Content is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Use settings or defaults
     const podcastSettings: PodcastSettings = {
       style: settings?.style || "casual",
       host1Name: settings?.host1Name || "Alex",
@@ -140,6 +116,12 @@ serve(async (req) => {
     const depthConfig = DEPTH_CONFIGS[podcastSettings.depth] || DEPTH_CONFIGS[3];
     const languagePrompt = LANGUAGE_PROMPTS[podcastSettings.language] || LANGUAGE_PROMPTS.en;
 
+    // Personalization block
+    const listenerName = userName?.trim() || "";
+    const personalizationPrompt = listenerName
+      ? `\n**PERSONALIZATION:**\nThe listener's name is "${listenerName}". Address them by name naturally throughout the podcast — greet them warmly at the start (e.g. "Hey ${listenerName}, welcome!"), mention their name when asking rhetorical questions or making a point, and say goodbye using their name at the end. Keep it friendly and natural, like talking to a close friend. Do NOT overuse their name — 3-5 times total is perfect.\n`
+      : `\n**PERSONALIZATION:**\nAddress the listener warmly and conversationally, as if talking to a friend. Use "you" often to keep it personal.\n`;
+
     const systemPrompt = `You are a podcast script writer for an educational podcast called "Study Sessions". 
 You create engaging, conversational dialogues between two hosts.
 
@@ -155,7 +137,7 @@ ${stylePrompt}
 
 **TONE:**
 ${toneModifier}
-
+${personalizationPrompt}
 **DEPTH & LENGTH:**
 Create ${depthConfig.segments} segments total.
 ${depthConfig.detail}
@@ -171,8 +153,6 @@ ${podcastSettings.customInstructions ? `**SPECIAL INSTRUCTIONS:**\n${podcastSett
 6. Include an intro greeting and a brief outro
 7. THE ENTIRE SCRIPT MUST BE IN THE SPECIFIED LANGUAGE (except technical terms if noted)
 8. CRITICAL: The "text" field must contain ONLY spoken dialogue. Do NOT include emotion annotations like (enthusiastic) or (curious) in the text. Emotions go ONLY in the separate "emotion" field.
-   WRONG: "text": "Welcome everyone! (enthusiastic)"
-   CORRECT: "text": "Welcome everyone!", "emotion": "enthusiastic"
 
 **EMOTION HINTS:**
 Add emotion hints in the "emotion" field ONLY (never in "text"):
@@ -207,16 +187,12 @@ Return ONLY valid JSON in this exact format:
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required. Please add credits to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: "Payment required. Please add credits to continue." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
@@ -226,7 +202,6 @@ Return ONLY valid JSON in this exact format:
     const data = await response.json();
     const scriptText = data.choices?.[0]?.message?.content || "";
 
-    // Extract JSON from response
     let script;
     try {
       script = JSON.parse(scriptText);
@@ -244,15 +219,12 @@ Return ONLY valid JSON in this exact format:
       }
     }
 
-    // Validate script structure
     if (!script.segments || !Array.isArray(script.segments)) {
       throw new Error("Invalid script structure: missing segments array");
     }
 
-    return new Response(
-      JSON.stringify(script),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify(script),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
     console.error("Error generating podcast script:", error);
     return new Response(

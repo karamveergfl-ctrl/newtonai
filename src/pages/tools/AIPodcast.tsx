@@ -63,6 +63,7 @@ const stepMessages: Record<GenerationStep, string> = {
 export default function AIPodcast() {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [userName, setUserName] = useState<string>("");
   const [generationStep, setGenerationStep] = useState<GenerationStep>("idle");
   const [progress, setProgress] = useState(0);
   const [sourceContent, setSourceContent] = useState("");
@@ -98,6 +99,25 @@ export default function AIPodcast() {
   } = usePodcastContext();
 
   const creditCost = getFeatureCost("ai_podcast");
+
+  // Fetch user display name for personalization
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", user.id)
+            .single();
+          if (profile?.full_name) {
+            setUserName(profile.full_name.split(" ")[0]); // First name only
+          }
+        }
+      } catch { /* ignore */ }
+    })();
+  }, []);
 
   // When navigating to this page, un-minimize if podcast is playing
   useEffect(() => {
@@ -230,6 +250,7 @@ export default function AIPodcast() {
             content: processedContent, 
             title: metadata?.videoTitle,
             settings: settings,
+            userName: userName || undefined,
           },
         }
       );
@@ -467,6 +488,7 @@ export default function AIPodcast() {
                 podcastContext={sourceContent.substring(0, 2000)}
                 currentTopic={podcast.title}
                 onResponseComplete={handleResponseComplete}
+                userName={userName}
               />
             </motion.div>
           ) : !isProcessing && (
