@@ -363,18 +363,18 @@ const AIQuiz = () => {
                     <div className={cn(
                       "w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center mx-auto",
                       percentage >= 80 
-                        ? "bg-gradient-to-br from-yellow-400/20 to-amber-500/20" 
+                        ? "bg-primary/15" 
                         : percentage >= 60 
-                        ? "bg-gradient-to-br from-gray-300/20 to-gray-400/20"
-                        : "bg-gradient-to-br from-orange-400/20 to-red-500/20"
+                        ? "bg-muted"
+                        : "bg-destructive/15"
                     )}>
                       <Trophy className={cn(
                         "w-12 h-12 sm:w-14 sm:h-14",
                         percentage >= 80 
-                          ? "text-yellow-500" 
+                          ? "text-primary" 
                           : percentage >= 60 
-                          ? "text-gray-400"
-                          : "text-orange-500"
+                          ? "text-muted-foreground"
+                          : "text-destructive"
                       )} />
                     </div>
                   </motion.div>
@@ -482,11 +482,11 @@ const AIQuiz = () => {
                   
                   if (showResult) {
                     if (isCorrectOption) {
-                      optionStyles = "bg-green-50 dark:bg-green-900/20 border-green-500";
-                      badgeStyles = "bg-green-500 text-white";
+                      optionStyles = "bg-accent/10 border-accent dark:bg-accent/20";
+                      badgeStyles = "bg-accent text-accent-foreground";
                     } else if (isSelected && !isCorrectOption) {
-                      optionStyles = "bg-red-50 dark:bg-red-900/20 border-red-400";
-                      badgeStyles = "bg-red-400 text-white";
+                      optionStyles = "bg-destructive/10 border-destructive dark:bg-destructive/20";
+                      badgeStyles = "bg-destructive text-destructive-foreground";
                     }
                   } else if (isSelected) {
                     optionStyles = "bg-primary/5 border-primary";
@@ -550,27 +550,27 @@ const AIQuiz = () => {
                   <Card className={cn(
                     "border-2 overflow-hidden",
                     skippedQuestions.has(currentIndex) 
-                      ? "bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
-                      : "bg-gradient-to-r from-yellow-50/80 to-amber-50/80 dark:from-yellow-900/20 dark:to-amber-900/20 border-yellow-200/50 dark:border-yellow-800/50"
+                      ? "bg-muted/50 border-muted-foreground/20"
+                      : "bg-accent/5 border-accent/30"
                   )}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         <div className={cn(
                           "p-2 rounded-full shrink-0",
                           skippedQuestions.has(currentIndex)
-                            ? "bg-amber-500/20"
-                            : "bg-yellow-500/20"
+                            ? "bg-muted"
+                            : "bg-accent/15"
                         )}>
                           <Lightbulb className={cn(
                             "w-5 h-5",
                             skippedQuestions.has(currentIndex)
-                              ? "text-amber-600 dark:text-amber-400"
-                              : "text-yellow-600 dark:text-yellow-400"
+                              ? "text-muted-foreground"
+                              : "text-accent-foreground"
                           )} />
                         </div>
                         <div className="flex-1 min-w-0">
                           {skippedQuestions.has(currentIndex) && (
-                            <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-1">
+                            <p className="text-sm font-medium text-muted-foreground mb-1">
                               Question skipped
                             </p>
                           )}

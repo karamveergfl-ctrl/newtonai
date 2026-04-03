@@ -719,15 +719,15 @@ const AILectureNotes = () => {
                         isDragActive
                           ? "border-primary bg-primary/5"
                           : uploadedFile
-                          ? "border-green-500 bg-green-500/5"
+                          ? "border-accent bg-accent/5"
                           : "border-border hover:border-primary/50"
                       )}
                     >
                       <input {...getInputProps()} />
                       {uploadedFile ? (
                         <div className="space-y-2">
-                          <div className="w-12 h-12 mx-auto rounded-full bg-green-500/10 flex items-center justify-center">
-                            <Check className="w-6 h-6 text-green-500" />
+                          <div className="w-12 h-12 mx-auto rounded-full bg-accent/10 flex items-center justify-center">
+                            <Check className="w-6 h-6 text-accent-foreground" />
                           </div>
                           <p className="font-medium text-foreground">{uploadedFile.name}</p>
                           <p className="text-sm text-muted-foreground">
@@ -971,7 +971,7 @@ const AILectureNotes = () => {
                       )}
                       <Button variant="ghost" size="sm" onClick={handleCopy} className="flex-1 sm:flex-none">
                         {copied ? (
-                          <Check className="h-4 w-4 text-green-500" />
+                          <Check className="h-4 w-4 text-primary" />
                         ) : (
                           <Copy className="h-4 w-4" />
                         )}

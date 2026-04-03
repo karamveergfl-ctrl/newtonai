@@ -15,9 +15,9 @@ export function ScoreCircle({ score, maxScore, size = 44, className }: ScoreCirc
 
   const color =
     percentage >= 80
-      ? "text-green-500"
+      ? "text-primary"
       : percentage >= 50
-        ? "text-accent"
+        ? "text-accent-foreground"
         : "text-destructive";
 
   return (
