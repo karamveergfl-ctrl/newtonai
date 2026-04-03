@@ -96,6 +96,23 @@ const TeacherDashboard = () => {
         setLastSessionDates(dateMap);
       }
     }
+
+    // Recent completed sessions for reports
+    const { data: completedSessions } = await supabase
+      .from("live_sessions")
+      .select("id, title, class_id, started_at")
+      .eq("teacher_id", user.id)
+      .in("status", ["ended", "completed"])
+      .order("started_at", { ascending: false })
+      .limit(5);
+
+    if (completedSessions) {
+      const classMap = new Map(classes.map(c => [c.id, c.name]));
+      setRecentCompletedSessions(completedSessions.map(s => ({
+        ...s,
+        className: classMap.get(s.class_id) || "Class",
+      })));
+    }
   }, [classes]);
 
   useEffect(() => {
