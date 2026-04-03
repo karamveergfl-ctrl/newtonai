@@ -296,6 +296,7 @@ export default function TeacherOnboarding({ fullName: initialName, avatarUrl, on
 
       const teacherPreferences = {
         institution_name: institutionName,
+        institution_type: institutionType,
         department,
         class_level: classLevel,
         teaching_style: teachingStyle,
@@ -304,6 +305,9 @@ export default function TeacherOnboarding({ fullName: initialName, avatarUrl, on
         auto_attendance: autoAttendance,
         marks_tracking: marksTracking,
         institution_code: institutionCode || null,
+        faculty_id: facultyId || null,
+        phone: phone || null,
+        grade_levels: selectedGrades,
       };
 
       await supabase
