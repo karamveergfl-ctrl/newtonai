@@ -93,7 +93,6 @@ export function useNewtonPoses(options: UseNewtonPosesOptions = {}): UseNewtonPo
     setLoadingStates(prev => ({ ...prev, [pose]: true }));
     
     try {
-      console.log(`Generating Newton ${pose} pose...`);
       
       const { data, error } = await supabase.functions.invoke('generate-newton-pose', {
         body: { pose }
@@ -105,7 +104,6 @@ export function useNewtonPoses(options: UseNewtonPosesOptions = {}): UseNewtonPo
       }
       
       if (data?.image) {
-        console.log(`Successfully generated ${pose} pose`);
         setPoses(prev => {
           const updated = { ...prev, [pose]: data.image };
           setCachedPoses(updated);

@@ -297,7 +297,6 @@ function SmartBoardPanelInner({
           sessionId={sessionId}
           onRestoreWhiteboard={(data) => {
             // Could restore whiteboard data in the future
-            console.log("Restoring whiteboard data from previous session", data);
           }}
         />
       )}

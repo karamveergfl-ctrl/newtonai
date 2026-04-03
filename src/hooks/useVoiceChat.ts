@@ -136,7 +136,6 @@ export function useVoiceChat({
     maxListeningTime: 10000, // Max 10s recording
     onAutoStop: (finalTranscript) => {
       // Auto-send when voice stops due to silence
-      console.log('Voice auto-stopped with transcript:', finalTranscript);
       processVoiceQuery(finalTranscript);
     },
   });

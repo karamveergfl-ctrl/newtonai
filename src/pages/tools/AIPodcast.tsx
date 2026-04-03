@@ -296,13 +296,10 @@ export default function AIPodcast() {
           }));
 
           if (ttsData.stats?.failed > 0) {
-            console.log(`${ttsData.stats.failed} segments will use browser voice fallback`);
           }
         } else {
-          console.log("ElevenLabs TTS unavailable, using browser voice");
         }
       } catch (ttsErr) {
-        console.log("ElevenLabs TTS failed, using browser voice fallback:", ttsErr);
       }
 
       setProgress(90);

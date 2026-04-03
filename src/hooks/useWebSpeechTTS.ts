@@ -314,7 +314,6 @@ export function useWebSpeechTTS(): UseWebSpeechTTSReturn {
       }
     }
 
-    console.log(`Locked voices — host1: ${host1Voice?.name}, host2: ${host2Voice?.name}`);
     return { host1Voice, host2Voice };
   }, [selectVoice, voices]);
 

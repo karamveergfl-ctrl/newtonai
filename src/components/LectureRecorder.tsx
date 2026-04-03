@@ -195,7 +195,6 @@ export const LectureRecorder = ({
           try {
             recognitionRef.current.start();
           } catch (e) {
-            console.log('Recognition restart skipped');
           }
         }
       };
@@ -224,7 +223,6 @@ export const LectureRecorder = ({
         try {
           recognitionRef.current.start();
         } catch (e) {
-          console.log('Recognition start error:', e);
         }
       }
       toast({

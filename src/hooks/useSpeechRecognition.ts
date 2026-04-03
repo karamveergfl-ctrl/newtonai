@@ -78,7 +78,6 @@ export function useSpeechRecognition({
   const autoStopListening = useCallback(async () => {
     if (!isIntentionallyListeningRef.current) return;
     
-    console.log('Auto-stopping due to silence or max time');
     isIntentionallyListeningRef.current = false;
     manualStopRef.current = true;
     clearTimers();
@@ -182,7 +181,6 @@ export function useSpeechRecognition({
       
       // no-speech is normal - will auto-restart via onend
       if (event.error === 'no-speech') {
-        console.log('No speech detected, will auto-restart');
         return;
       }
       
@@ -197,7 +195,6 @@ export function useSpeechRecognition({
       // Auto-restart if user is still intending to listen (not manually stopped)
       if (isIntentionallyListeningRef.current && !manualStopRef.current) {
         try {
-          console.log('Auto-restarting speech recognition...');
           recognition.start();
           return; // Don't set isListening to false, we're still listening
         } catch (e) {
@@ -261,7 +258,6 @@ export function useSpeechRecognition({
     silenceTimerRef.current = setInterval(() => {
       const silenceDuration = Date.now() - lastSpeechTimeRef.current;
       if (silenceDuration > silenceTimeout && isIntentionallyListeningRef.current) {
-        console.log(`Silence detected for ${silenceDuration}ms, auto-stopping`);
         autoStopListening();
       }
     }, 500);
@@ -269,7 +265,6 @@ export function useSpeechRecognition({
     // Start max listening time timer
     maxTimeTimerRef.current = setTimeout(() => {
       if (isIntentionallyListeningRef.current) {
-        console.log('Max listening time reached, auto-stopping');
         autoStopListening();
       }
     }, maxListeningTime);

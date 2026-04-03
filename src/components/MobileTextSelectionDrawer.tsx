@@ -86,14 +86,12 @@ export const MobileTextSelectionDrawer = ({
       return;
     }
     capturedTextRef.current = textToCapture;
-    console.log("[MobileTextSelectionDrawer] Captured text for", toolType, ":", textToCapture.slice(0, 50));
     
     setPendingToolType(toolType);
     setSettingsDialogOpen(true);
   }, [selectedText]);
 
   const handleGenerateWithSettings = useCallback((settings: UniversalGenerationSettings) => {
-    console.log("[MobileTextSelectionDrawer] Generate with settings called:", pendingToolType, settings);
     
     if (!pendingToolType) {
       console.error("[MobileTextSelectionDrawer] No pending tool type");
@@ -102,7 +100,6 @@ export const MobileTextSelectionDrawer = ({
     
     // Use the captured text from when the tool was clicked - this prevents stale closure issues
     const textToUse = capturedTextRef.current;
-    console.log("[MobileTextSelectionDrawer] Using captured text:", textToUse?.slice(0, 50));
     
     if (!textToUse) {
       console.error("[MobileTextSelectionDrawer] No captured text available for generation");
@@ -113,19 +110,15 @@ export const MobileTextSelectionDrawer = ({
     // Pass text explicitly to callbacks to ensure correct text is used
     switch (pendingToolType) {
       case "quiz":
-        console.log("[MobileTextSelectionDrawer] Calling onGenerateQuiz");
         onGenerateQuiz(textToUse, settings);
         break;
       case "flashcards":
-        console.log("[MobileTextSelectionDrawer] Calling onGenerateFlashcards");
         onGenerateFlashcards(textToUse, settings);
         break;
       case "summary":
-        console.log("[MobileTextSelectionDrawer] Calling onGenerateSummary");
         onGenerateSummary(textToUse, settings);
         break;
       case "mindmap":
-        console.log("[MobileTextSelectionDrawer] Calling onGenerateMindMap");
         onGenerateMindMap(textToUse, settings);
         break;
     }
