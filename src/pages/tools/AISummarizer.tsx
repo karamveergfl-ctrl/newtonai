@@ -38,6 +38,7 @@ import {
   transcribeAudio,
 } from "@/utils/contentProcessing";
 import { cn } from "@/lib/utils";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
 import { PrimaryAdBanner } from "@/components/PrimaryAdBanner";
