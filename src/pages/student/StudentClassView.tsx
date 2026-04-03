@@ -253,11 +253,12 @@ const StudentClassView = () => {
 
         {!takingQuiz && (
           <Tabs defaultValue="materials">
-            <TabsList className="grid w-full grid-cols-4 h-10">
-              <TabsTrigger value="materials" className="gap-1.5 text-sm"><FileText className="h-4 w-4" /> Materials</TabsTrigger>
-              <TabsTrigger value="assignments" className="gap-1.5 text-sm"><ClipboardList className="h-4 w-4" /> Assign.</TabsTrigger>
-              <TabsTrigger value="marks" className="gap-1.5 text-sm"><Award className="h-4 w-4" /> Marks</TabsTrigger>
-              <TabsTrigger value="performance" className="gap-1.5 text-sm"><TrendingUp className="h-4 w-4" /> Perf.</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-5 h-10">
+              <TabsTrigger value="materials" className="gap-1 text-xs sm:text-sm"><FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Materials</span><span className="sm:hidden">Mat.</span></TabsTrigger>
+              <TabsTrigger value="assignments" className="gap-1 text-xs sm:text-sm"><ClipboardList className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Assign.</span><span className="sm:hidden">Asgn.</span></TabsTrigger>
+              <TabsTrigger value="newton" className="gap-1 text-xs sm:text-sm"><Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Newton</span><span className="sm:hidden">AI</span></TabsTrigger>
+              <TabsTrigger value="marks" className="gap-1 text-xs sm:text-sm"><Award className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Marks</TabsTrigger>
+              <TabsTrigger value="performance" className="gap-1 text-xs sm:text-sm"><TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Perf.</span><span className="sm:hidden">Perf.</span></TabsTrigger>
             </TabsList>
 
             <TabsContent value="materials" className="mt-5">
