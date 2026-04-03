@@ -45,6 +45,7 @@ function formatDuration(seconds: number): string {
 
 function SmartBoardPanelInner({
   sessionId,
+  classId,
   children,
   onEndSession,
   sessionTitle,
