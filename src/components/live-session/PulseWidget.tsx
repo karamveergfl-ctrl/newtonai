@@ -7,16 +7,22 @@ interface PulseWidgetProps {
   sessionId: string;
 }
 
-const PULSE_OPTIONS: { status: PulseStatus; emoji: string; label: string; colorClass: string }[] = [
-  { status: "got_it", emoji: "✅", label: "Got it", colorClass: "bg-green-900/40 text-green-300 border-green-600 hover:bg-green-900/50" },
-  { status: "slightly_lost", emoji: "🤔", label: "Slightly lost", colorClass: "bg-amber-900/40 text-amber-300 border-amber-600 hover:bg-amber-900/50" },
-  { status: "lost", emoji: "❌", label: "Lost", colorClass: "bg-red-900/40 text-red-300 border-red-600 hover:bg-red-900/50" },
+const PULSE_OPTIONS: { status: PulseStatus; emoji: string; label: string }[] = [
+  { status: "got_it", emoji: "✅", label: "Got it" },
+  { status: "slightly_lost", emoji: "🤔", label: "Slightly lost" },
+  { status: "lost", emoji: "❌", label: "Lost" },
 ];
 
+const STATUS_BG: Record<PulseStatus, string> = {
+  got_it: "bg-green-500/15 border-green-500/30 text-green-700 dark:text-green-300 hover:bg-green-500/25",
+  slightly_lost: "bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25",
+  lost: "bg-destructive/15 border-destructive/30 text-destructive hover:bg-destructive/25",
+};
+
 const STATUS_DOT_COLOR: Record<PulseStatus, string> = {
-  got_it: "bg-emerald-400",
-  slightly_lost: "bg-amber-400",
-  lost: "bg-red-400",
+  got_it: "bg-green-500",
+  slightly_lost: "bg-amber-500",
+  lost: "bg-destructive",
 };
 
 const STATUS_LABEL: Record<PulseStatus, string> = {
@@ -67,7 +73,7 @@ export function PulseWidget({ sessionId }: PulseWidgetProps) {
         onClick={() => !isExpanded && setIsExpanded(true)}
       >
         {showConfirmation ? (
-          <div className="flex items-center gap-2 text-sm text-primary animate-[fade-up-out_1.2s_ease-out_forwards]">
+          <div className="flex items-center gap-2 text-sm text-primary animate-fade-in">
             <span>✓</span>
             <span>Response sent</span>
           </div>
@@ -86,7 +92,7 @@ export function PulseWidget({ sessionId }: PulseWidgetProps) {
                   }}
                   className={cn(
                     "flex-1 flex flex-col items-center gap-1 rounded-xl border px-2 py-2 text-xs font-medium transition-all duration-150 active:scale-[0.93] focus-visible:ring-2 focus-visible:ring-ring",
-                    opt.colorClass,
+                    STATUS_BG[opt.status],
                     myStatus === opt.status && "ring-2 ring-primary"
                   )}
                   role="radio"
@@ -112,12 +118,12 @@ export function PulseWidget({ sessionId }: PulseWidgetProps) {
           <div className="flex items-center gap-2 text-sm">
             {myStatus ? (
               <>
-                <span className={cn("w-2 h-2 rounded-full animate-[status-pulse_2.5s_ease-in-out_infinite]", STATUS_DOT_COLOR[myStatus])} />
+                <span className={cn("w-2 h-2 rounded-full animate-pulse", STATUS_DOT_COLOR[myStatus])} />
                 <span className="text-foreground font-medium">{STATUS_LABEL[myStatus]}</span>
               </>
             ) : (
               <>
-                <span className="w-2 h-2 rounded-full bg-muted-foreground animate-[status-pulse_2.5s_ease-in-out_infinite]" />
+                <span className="w-2 h-2 rounded-full bg-muted-foreground animate-pulse" />
                 <span className="text-muted-foreground">Tap to respond</span>
               </>
             )}

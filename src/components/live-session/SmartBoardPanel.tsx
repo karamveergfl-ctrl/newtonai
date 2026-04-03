@@ -19,7 +19,7 @@ import { WhiteboardCanvas, type WhiteboardCanvasHandle } from "@/components/smar
 import { VoiceCommandIndicator } from "@/components/smartboard/VoiceCommandIndicator";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Maximize, Minimize } from "lucide-react";
+import { Maximize, Minimize, PanelRight, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import newtonLogoSm from "@/assets/newton-logo-sm.webp";
 
@@ -85,6 +85,7 @@ function SmartBoardPanelInner({
   const [activeView, setActiveView] = useState<"session" | "whiteboard" | "document">("session");
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [teacherId, setTeacherId] = useState("");
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Classroom theme
   const { theme, toggleTheme } = useClassroomTheme();
@@ -451,6 +452,72 @@ function SmartBoardPanelInner({
             </div>
           </div>
         </aside>
+
+        {/* Mobile interaction trigger — visible only on small screens */}
+        <Button
+          variant="default"
+          size="icon"
+          className="fixed bottom-20 right-4 z-40 lg:hidden h-12 w-12 rounded-full shadow-elevated"
+          onClick={() => setMobileDrawerOpen(true)}
+        >
+          <PanelRight className="w-5 h-5" />
+        </Button>
+
+        {/* Mobile interaction drawer */}
+        {mobileDrawerOpen && (
+          <>
+            <div className="fixed inset-0 bg-black/40 z-50 lg:hidden" onClick={() => setMobileDrawerOpen(false)} />
+            <div className="fixed inset-y-0 right-0 z-50 lg:hidden w-[85vw] max-w-[380px] bg-card border-l border-border overflow-y-auto flex flex-col animate-in slide-in-from-right duration-300">
+              <div className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-card z-10">
+                <span className="text-sm font-semibold">Session Controls</span>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMobileDrawerOpen(false)}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="p-3">
+                <SmartBoardConceptCheckPanel sessionId={sessionId} slideContext={currentSlideContent || ""} />
+              </div>
+              <div className="border-t border-border" />
+              <div className="p-3">
+                <SpotlightTeacherControls
+                  sessionId={sessionId}
+                  spotlightEnabled={hookSpotlightEnabled}
+                  teacherSlideTitle={hookSlideTitle}
+                  syncStats={syncStats}
+                  onToggleSpotlight={(enabled) => { toggleSpotlight(enabled); setSpotlightEnabled(enabled); }}
+                />
+              </div>
+              <div className="border-t border-border" />
+              <div className={cn("transition-all duration-300", notesGenerating && "ring-1 ring-primary/40 animate-pulse rounded-lg")}>
+                <TeacherNotesOverview sessionId={sessionId} />
+              </div>
+              <div className="border-t border-border" />
+              <div className={cn("p-3", hasActiveCheck && "opacity-50")}>
+                <PulseMeter sessionId={sessionId} confusionThreshold={confusionThreshold} />
+              </div>
+              <div className="border-t border-border" />
+              <div className="flex-1 min-h-[200px] flex flex-col">
+                <QuestionWall sessionId={sessionId} role="teacher" />
+              </div>
+              <div className="border-t border-border" />
+              <div className="p-3">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => updateSessionSettings({ pulse_enabled: !pulseEnabled })}
+                    className={cn("text-[10px] rounded-lg px-2 py-1.5 border transition-colors font-medium", pulseEnabled ? "bg-primary/10 border-primary/30 text-primary" : "bg-muted border-border text-muted-foreground")}
+                  >Pulse</button>
+                  <button
+                    onClick={() => updateSessionSettings({ questions_enabled: !questionsEnabled })}
+                    className={cn("text-[10px] rounded-lg px-2 py-1.5 border transition-colors font-medium", questionsEnabled ? "bg-primary/10 border-primary/30 text-primary" : "bg-muted border-border text-muted-foreground")}
+                  >Q&A</button>
+                  {onEndSession && (
+                    <Button variant="destructive" size="sm" onClick={onEndSession} className="text-xs ml-auto">End</Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Bottom teaching toolbar — visible in fullscreen */}
