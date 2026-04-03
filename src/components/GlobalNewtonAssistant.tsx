@@ -38,7 +38,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onReg
     fetchConversations,
   } = useNewtonConversations();
 
-  const { messages, isLoading, error, sendMessage, cancelRequest, clearHistory } =
+  const { messages, isLoading, error, sendMessage, retryLastMessage, cancelRequest, clearHistory } =
     useNewtonChat(activeConversationId);
 
   // Auth state tracking
@@ -89,6 +89,13 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onReg
       return id;
     }, attachment);
   }, [sendMessage, createConversation]);
+
+  const handleRetry = useCallback(() => {
+    retryLastMessage(async () => {
+      const id = await createConversation();
+      return id;
+    });
+  }, [retryLastMessage, createConversation]);
 
   const handleSelectConversation = useCallback((id: string) => {
     setActiveConversationId(id);
@@ -154,6 +161,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onReg
                     onClose={handleClose}
                     onToggleSidebar={() => setShowSidebar((p) => !p)}
                     showSidebarToggle
+                    onRetry={handleRetry}
                   />
                 </Suspense>
               </div>
@@ -202,6 +210,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onReg
                   onClose={handleClose}
                   onToggleSidebar={() => setShowSidebar((p) => !p)}
                   showSidebarToggle
+                  onRetry={handleRetry}
                 />
               </div>
             </Suspense>
