@@ -6,6 +6,7 @@ import { useScrollContext } from "@/contexts/ScrollContext";
 import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUserNotifications } from "@/hooks/useUserNotifications";
 
 import {
   Sidebar,
