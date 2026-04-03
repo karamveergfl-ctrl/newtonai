@@ -104,6 +104,7 @@ const ClassDetail = lazy(() => import("./pages/teacher/ClassDetail"));
 const TeacherProfile = lazy(() => import("./pages/teacher/TeacherProfile"));
 
 // Student class pages
+const StudentDashboard = lazy(() => import("./pages/student/StudentDashboard"));
 const StudentClasses = lazy(() => import("./pages/student/StudentClasses"));
 const StudentClassView = lazy(() => import("./pages/student/StudentClassView"));
 const JoinClass = lazy(() => import("./pages/JoinClass"));
@@ -230,6 +231,7 @@ function AnimatedRoutes() {
         <Route path="/teacher/profile" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherProfile /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         
         {/* Student Class Routes */}
+        <Route path="/student/dashboard" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentDashboard /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/student/classes" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClasses /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/student/class/:id" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClassView /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/join-class" element={<PageTransition><ProtectedRoute><JoinClass /></ProtectedRoute></PageTransition>} />

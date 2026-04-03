@@ -8,7 +8,8 @@ import { TeacherActivityFeed } from "@/components/teacher/TeacherActivityFeed";
 import { PendingActions } from "@/components/teacher/PendingActions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, GraduationCap, Users, Radio, Brain, ArrowRight, Plus, Calendar } from "lucide-react";
+import { Loader2, GraduationCap, Users, Radio, Brain, ArrowRight, Plus, Calendar, BarChart3 } from "lucide-react";
+import { format } from "date-fns";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,7 @@ const TeacherDashboard = () => {
   const [monthSessions, setMonthSessions] = useState(0);
   const [avgUnderstanding, setAvgUnderstanding] = useState<number | null>(null);
   const [lastSessionDates, setLastSessionDates] = useState<Record<string, string>>({});
+  const [recentCompletedSessions, setRecentCompletedSessions] = useState<{ id: string; title: string; class_id: string; started_at: string; className: string }[]>([]);
   const navigate = useNavigate();
 
   const totalStudents = classes.reduce((acc, cls) => acc + (cls.student_count || 0), 0);
@@ -93,6 +95,23 @@ const TeacherDashboard = () => {
         });
         setLastSessionDates(dateMap);
       }
+    }
+
+    // Recent completed sessions for reports
+    const { data: completedSessions } = await supabase
+      .from("live_sessions")
+      .select("id, title, class_id, started_at")
+      .eq("teacher_id", user.id)
+      .in("status", ["ended", "completed"])
+      .order("started_at", { ascending: false })
+      .limit(5);
+
+    if (completedSessions) {
+      const classMap = new Map(classes.map(c => [c.id, c.name]));
+      setRecentCompletedSessions(completedSessions.map(s => ({
+        ...s,
+        className: classMap.get(s.class_id) || "Class",
+      })));
     }
   }, [classes]);
 
@@ -251,6 +270,35 @@ const TeacherDashboard = () => {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Recent Reports */}
+            {recentCompletedSessions.length > 0 && (
+              <Card className="border-border/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-primary" />
+                    Recent Reports
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-1.5">
+                  {recentCompletedSessions.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => navigate(`/report/teacher/${s.id}`)}
+                      className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/40 transition-colors text-left"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium truncate">{s.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{s.className}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        {format(new Date(s.started_at), "MMM d")}
+                      </span>
+                    </button>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
             <TeacherActivityFeed />
             <PendingActions />
