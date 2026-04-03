@@ -1,78 +1,91 @@
 
 
-# Part 3 — Class Creation and Class Management Enhancement
+# Part 4 — Live Session & Classroom Experience Enhancement
 
-## Current State
+## Current State Audit
 
-| Feature | Status |
-|---------|--------|
-| Basic class creation (name, subject, description, year) | Done — single-step dialog |
-| 6-char invite code generation | Done — DB function `generate_invite_code()` |
-| Invite code copy pill | Done — `InviteCodePill` component |
-| Class detail page with tabs (Students, Assignments, Materials, Marks, Attendance, Analytics) | Done — 849-line `ClassDetail.tsx` |
-| QR code generation | Missing |
-| Multi-step creation wizard | Missing — currently single form |
-| Grade level, section/batch fields | Missing — not in DB schema |
-| Class thumbnail selector | Missing |
-| Schedule grid (weekly time slots) | Missing |
-| Class settings (max students, pulse frequency, Newton Chat toggle, etc.) | Missing |
-| Success screen with QR + share buttons | Missing |
-| Class page tabs: Sessions, Quizzes, Newton Chat | Missing from tab bar |
-| Class header with "Enter Classroom" + "Show QR" buttons | Partial — has Live Session button but no Enter Classroom |
+| Sub-feature | Status |
+|---|---|
+| Session creation dialog (text/file/YouTube + interaction settings) | Done |
+| SmartBoard with whiteboard, canvas, undo/redo, multi-page | Done |
+| Document teaching view (PDF render + annotation) | Done |
+| Pulse meter + confusion alert | Done |
+| Question wall + auto-answer | Done |
+| Voice commands | Done |
+| Walk-in banner | Done |
+| Lecture capture (speech transcription) | Done |
+| Handwriting recognition (OCR) | Done |
+| Concept checks | Done |
+| Spotlight sync | Done |
+| Live notes generation | Done |
+| **Text selection floating menu on PDF** | Missing |
+| **Video search from selected text** | Missing |
+| **In-classroom YouTube player with "Play for Class" sync** | Missing |
+| **Session end progress modal (6-step checklist)** | Missing — currently instant redirect |
+| **PDF thumbnail strip (left sidebar of pages)** | Missing — only prev/next arrows |
+| **Quiz generation from PDF selected text** | Missing in classroom context |
+| **"Ready to Teach" state before GO LIVE** | Missing — session starts immediately |
 
-## Plan — 5 Changes
+Given the size, I'll implement the **4 highest-impact missing features** that the spec explicitly calls out and are most visible to users.
 
-### 1. Database Migration — Add class settings columns
+## Plan — 4 Changes
 
-Add to `classes` table:
-- `grade_level text` — e.g. "Grade 9-10"
-- `section text` — e.g. "Batch A"
-- `thumbnail text` — preset icon name or custom image URL
-- `max_students integer DEFAULT 0` — 0 = unlimited
-- `settings jsonb DEFAULT '{}'` — stores: pulse_frequency, newton_chat_enabled, auto_notes, speech_transcription, allow_student_ocr, anonymous_questions, visibility
+### 1. PDF Thumbnail Strip in Document Teaching View
 
-No schedule table needed yet — store schedule as JSON inside settings.
+Modify `DocumentTeachingView.tsx` to add a left sidebar showing small page thumbnails (60px wide). Clicking a thumbnail jumps to that page. Current page highlighted with indigo ring. Scrollable strip for large documents.
 
-### 2. Multi-Step Create Class Dialog
+### 2. Text Selection Floating Action Menu
 
-Replace current `CreateClassDialog` with a 3-step wizard inside a wider modal (`sm:max-w-xl`):
+Create `src/components/smartboard/TextSelectionMenu.tsx` — a floating popover that appears when the teacher selects text on a PDF page in the Document Teaching View:
+- Detect `mouseup`/`touchend` on the PDF content area
+- Get `window.getSelection().toString()`
+- If non-empty, show a floating menu at the selection position with 4 buttons:
+  - **Search Video** — opens a video search panel (invokes existing `search-youtube` edge function)
+  - **Generate Quiz** — sends selected text to `generate-quiz` edge function, shows results inline
+  - **Explain to Class** — sends text to Newton Chat for a class-friendly explanation
+  - **Add to Notes** — appends text to current slide notes
 
-**Step 1 — Basic Info:** Class name (required), subject (dropdown from teacher's registered subjects + suggestions), grade level (dropdown), academic year, section/batch (optional), description (textarea), thumbnail picker (grid of 12 preset icons — math formula, atom, flask, cell, book, globe, laptop, palette, music, trophy, lightbulb, rocket).
+Wire this into `DocumentTeachingView.tsx` by enabling the text layer (`renderTextLayer={true}`) so text is selectable.
 
-**Step 2 — Schedule:** 7-day row with time slot buttons. Each day: toggle active, pick start time + duration. "No fixed schedule" toggle skips this step. Store as JSON in `settings.schedule`.
+### 3. In-Classroom YouTube Player Panel
 
-**Step 3 — Settings:** Toggles for visibility (Private/Searchable), max students input, Newton Chat enabled, pulse frequency selector (5/10/15min/manual), auto notes, speech transcription, student OCR visibility, anonymous questions. All stored in `settings` JSONB.
+Create `src/components/smartboard/ClassroomVideoPlayer.tsx`:
+- Search bar at top — teacher types a topic, results from `search-youtube` edge function shown as cards (thumbnail, title, channel, duration)
+- Click a result → embedded YouTube iframe player loads
+- "Play for Class" button broadcasts the video URL + timestamp via Supabase Realtime channel `video-sync:{sessionId}`
+- Student side (`StudentLiveView.tsx`): listen on the same channel, show a "Teacher is showing a video" overlay with the embedded player
+- "Stop Video" button on teacher side removes the broadcast
 
-**On Create → Success Screen (Step 4):** Large invite code, QR code (using `qrcode.react` library — install it), "Copy Invite Link" button, "Share via WhatsApp" button (`https://wa.me/?text=...`), "Go to Class" button.
+Add a "Video" view option to `SmartBoardToolbar.tsx` (alongside session/whiteboard/document).
 
-### 3. Enhanced Class Detail Header
+### 4. Session End Progress Modal
 
-Update the header section in `ClassDetail.tsx`:
-- Add class thumbnail icon (left of class name)
-- Add enrolled students count badge
-- Add "Show QR" button → opens modal with large QR code
-- Add "Enter Classroom" button (navigates to `/teacher/class/:id/classroom`)
-- Show last session date + next scheduled session from settings
-- Add "Copy Code" button next to invite code
+Create `src/components/smartboard/EndSessionModal.tsx`:
+- When teacher clicks "End", show a modal with 6 checklist steps instead of instant redirect:
+  1. Saving whiteboard snapshots — save canvas pages as data URLs to `live_sessions.whiteboard_data`
+  2. Saving lecture transcript — already saved incrementally, just confirm
+  3. Processing OCR notes — confirm notes saved
+  4. Generating AI study guide — invoke `generate-session-guide` edge function
+  5. Updating Newton Chat corpus — invoke `trigger-all-student-reports`
+  6. Finalizing attendance — mark session as ended
+- Each step shows: spinner → green checkmark as it completes
+- Steps run sequentially, ~2-3 seconds each
+- On completion: "Session Complete ✓" with "View Report" button → navigates to teacher report
 
-### 4. Expanded Class Tabs
-
-Add 3 missing tabs to the `ClassDetail.tsx` tab bar:
-- **Sessions** tab: query `live_sessions` for this class, show list with date, duration, status, student count, link to report
-- **Quizzes** tab: query `assignments` where `assignment_type = 'quiz'`, show with scores and run counts
-- **Newton Chat** tab: show conversation stats from `newton_conversations` + `newton_messages` for this class, most asked topics
-
-### 5. Install QR Code Library
-
-Add `qrcode.react` package for generating QR codes in the success screen and the "Show QR" modal.
+Modify `ClassDetail.tsx` `handleEndSession` and `SmartBoardPanel.tsx` `onEndSession` to use this modal instead of the current instant update.
 
 ## Files Changed
 
 | File | Action |
-|------|--------|
-| `src/components/teacher/CreateClassDialog.tsx` | Rewrite — multi-step wizard with success screen |
-| `src/pages/teacher/ClassDetail.tsx` | Modify — enhanced header + 3 new tabs |
-| `src/components/teacher/ClassQRModal.tsx` | Create — reusable QR code modal |
-| Migration SQL | Add columns to classes table |
-| `package.json` | Add `qrcode.react` |
+|---|---|
+| `src/components/smartboard/DocumentTeachingView.tsx` | Modify — add thumbnail strip, enable text layer |
+| `src/components/smartboard/TextSelectionMenu.tsx` | Create — floating action menu on text selection |
+| `src/components/smartboard/ClassroomVideoPlayer.tsx` | Create — video search + player + realtime sync |
+| `src/components/smartboard/EndSessionModal.tsx` | Create — 6-step progress modal for session end |
+| `src/components/smartboard/SmartBoardToolbar.tsx` | Modify — add "Video" view option |
+| `src/components/live-session/SmartBoardPanel.tsx` | Modify — wire video view, end session modal |
+| `src/components/live-session/StudentLiveView.tsx` | Modify — add video sync listener overlay |
+| `src/pages/teacher/ClassDetail.tsx` | Modify — use EndSessionModal |
+
+No database migrations needed — uses existing tables and Supabase Realtime channels.
 
