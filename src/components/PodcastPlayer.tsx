@@ -624,6 +624,17 @@ export function PodcastPlayer({
           </Button>
         </div>
 
+        {/* Browser compatibility warning */}
+        {!speechSupported && !hasElevenLabsAudio && (
+          <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+            <p className="text-xs text-destructive">
+              Your browser doesn't support text-to-speech and no premium audio is available. 
+              Try Chrome or Edge for the best experience, or copy the transcript below.
+            </p>
+          </div>
+        )}
+
         {/* Transcript Preview */}
         <div ref={transcriptRef} className="mt-4 sm:mt-6 max-h-32 sm:max-h-48 overflow-y-auto space-y-1.5 sm:space-y-2">
           <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">Transcript</h3>
