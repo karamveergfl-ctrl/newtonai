@@ -17,16 +17,20 @@ import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
 import { AssignToClassSelect } from "@/components/AssignToClassSelect";
 
+export type QuizQuestionType = "mcq" | "true_false" | "fill_blank" | "short_answer" | "match";
+
 export interface UniversalGenerationSettings {
   pageStart?: number;
   pageEnd?: number;
   count: number;
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: "easy" | "medium" | "hard" | "adaptive";
   detailLevel: "brief" | "standard" | "detailed";
   mindMapStyle?: "radial" | "tree" | "cluster" | "timeline";
   summaryFormat?: "concise" | "detailed" | "bullet-points" | "academic";
   includeComparison?: boolean;
   classId?: string;
+  questionTypes?: QuizQuestionType[];
+  includeExplanations?: boolean;
 }
 
 interface UniversalStudySettingsDialogProps {
