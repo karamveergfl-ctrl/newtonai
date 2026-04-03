@@ -582,7 +582,7 @@ function SmartBoardPanelInner({
           }}
           isDarkTheme={theme === "classroom-dark"}
           onToggleTheme={toggleTheme}
-          onEndSession={onEndSession}
+          onEndSession={() => setEndModalOpen(true)}
           whiteboardTool={wb.tool}
           onToolChange={wb.setTool}
           whiteboardColor={wb.color}
@@ -597,6 +597,14 @@ function SmartBoardPanelInner({
           onClear={handleClear}
         />
       )}
+
+      {/* End Session Modal */}
+      <EndSessionModal
+        open={endModalOpen}
+        onOpenChange={setEndModalOpen}
+        sessionId={sessionId}
+        onComplete={onEndSession}
+      />
     </div>
   );
 }
