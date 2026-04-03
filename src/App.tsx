@@ -104,6 +104,7 @@ const ClassDetail = lazy(() => import("./pages/teacher/ClassDetail"));
 const TeacherProfile = lazy(() => import("./pages/teacher/TeacherProfile"));
 
 // Student class pages
+const StudentDashboard = lazy(() => import("./pages/student/StudentDashboard"));
 const StudentClasses = lazy(() => import("./pages/student/StudentClasses"));
 const StudentClassView = lazy(() => import("./pages/student/StudentClassView"));
 const JoinClass = lazy(() => import("./pages/JoinClass"));
