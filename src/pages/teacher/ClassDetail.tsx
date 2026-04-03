@@ -91,6 +91,7 @@ const ClassDetail = () => {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loadingClass, setLoadingClass] = useState(true);
   const [activeSession, setActiveSession] = useState<any>(null);
+  const [qrOpen, setQrOpen] = useState(false);
   const { assignments, loading: loadingAssignments, deleteAssignment, fetchSubmissions } = useAssignments(id);
   const [submissionCounts, setSubmissionCounts] = useState<Record<string, number>>({});
 
