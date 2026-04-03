@@ -17,14 +17,45 @@ export function StudentPerformanceTab({ classId }: Props) {
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [reportScores, setReportScores] = useState<{ session_id: string; score: number; date: string }[]>([]);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data: result } = await supabase.rpc("get_student_class_performance", { p_class_id: classId } as any);
       setData(result);
+
+      // Fetch intelligence report scores for this class's sessions
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: sessions } = await supabase
+          .from("live_sessions")
+          .select("id")
+          .eq("class_id", classId)
+          .in("status", ["ended", "completed"]);
+
+        if (sessions && sessions.length > 0) {
+          const sessionIds = sessions.map(s => s.id);
+          const { data: reports } = await supabase
+            .from("student_intelligence_reports")
+            .select("session_id, understanding_score, generated_at")
+            .eq("student_id", user.id)
+            .eq("status", "ready")
+            .in("session_id", sessionIds)
+            .order("generated_at", { ascending: true });
+
+          if (reports) {
+            setReportScores(reports.map(r => ({
+              session_id: r.session_id,
+              score: r.understanding_score,
+              date: r.generated_at,
+            })));
+          }
+        }
+      }
+
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [classId]);
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
