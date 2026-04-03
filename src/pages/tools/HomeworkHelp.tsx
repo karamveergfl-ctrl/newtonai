@@ -60,6 +60,8 @@ const HomeworkHelp = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [solution, setSolution] = useState("");
+  const [guidedMode, setGuidedMode] = useState(true);
+  const [socraticProblem, setSocraticProblem] = useState("");
   const [copied, setCopied] = useState(false);
   const [contentLanguage, setContentLanguage] = useState("en");
   const [capturedScreenshot, setCapturedScreenshot] = useState<{ imageBase64: string; mimeType: string } | null>(null);
