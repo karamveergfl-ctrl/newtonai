@@ -54,7 +54,7 @@ export function useClasses() {
     fetchClasses();
   }, [fetchClasses]);
 
-  const createClass = async (data: { name: string; subject?: string; description?: string; academic_year?: string }) => {
+  const createClass = async (data: { name: string; subject?: string; description?: string; academic_year?: string; grade_level?: string; section?: string; thumbnail?: string; max_students?: number; settings?: Record<string, any> }) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 

@@ -376,12 +376,17 @@ export type Database = {
           course_id: string | null
           created_at: string
           description: string | null
+          grade_level: string | null
           id: string
           invite_code: string
           is_active: boolean
+          max_students: number
           name: string
+          section: string | null
+          settings: Json
           subject: string | null
           teacher_id: string
+          thumbnail: string | null
           updated_at: string
         }
         Insert: {
@@ -389,12 +394,17 @@ export type Database = {
           course_id?: string | null
           created_at?: string
           description?: string | null
+          grade_level?: string | null
           id?: string
           invite_code?: string
           is_active?: boolean
+          max_students?: number
           name: string
+          section?: string | null
+          settings?: Json
           subject?: string | null
           teacher_id: string
+          thumbnail?: string | null
           updated_at?: string
         }
         Update: {
@@ -402,12 +412,17 @@ export type Database = {
           course_id?: string | null
           created_at?: string
           description?: string | null
+          grade_level?: string | null
           id?: string
           invite_code?: string
           is_active?: boolean
+          max_students?: number
           name?: string
+          section?: string | null
+          settings?: Json
           subject?: string | null
           teacher_id?: string
+          thumbnail?: string | null
           updated_at?: string
         }
         Relationships: [

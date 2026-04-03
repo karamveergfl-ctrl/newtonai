@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssignments } from "@/hooks/useAssignments";
 import { InviteCodePill } from "@/components/teacher/InviteCodePill";
+import { ClassQRModal } from "@/components/teacher/ClassQRModal";
 import { ClassAnalyticsCharts } from "@/components/teacher/ClassAnalyticsCharts";
 import { AttendanceManager } from "@/components/teacher/AttendanceManager";
 import { MarksEntryPanel } from "@/components/teacher/MarksEntryPanel";
@@ -25,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio, Trash2, Eye, BookOpen, Plus, ExternalLink, File, Link as LinkIcon, Video, Upload, CheckSquare, Award } from "lucide-react";
+import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio, Trash2, Eye, BookOpen, Plus, ExternalLink, File, Link as LinkIcon, Video, Upload, CheckSquare, Award, QrCode, DoorOpen, PlayCircle, MessageSquare, Clock } from "lucide-react";
 import { toast } from "sonner";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
@@ -59,6 +60,9 @@ interface ClassInfo {
   description: string | null;
   invite_code: string;
   academic_year: string | null;
+  thumbnail: string | null;
+  grade_level: string | null;
+  section: string | null;
 }
 
 interface Enrollment {
@@ -87,6 +91,7 @@ const ClassDetail = () => {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loadingClass, setLoadingClass] = useState(true);
   const [activeSession, setActiveSession] = useState<any>(null);
+  const [qrOpen, setQrOpen] = useState(false);
   const { assignments, loading: loadingAssignments, deleteAssignment, fetchSubmissions } = useAssignments(id);
   const [submissionCounts, setSubmissionCounts] = useState<Record<string, number>>({});
 
@@ -234,23 +239,41 @@ const ClassDetail = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-display font-bold truncate">{classInfo.name}</h1>
+            <div className="flex items-center gap-2">
+              {classInfo.thumbnail && (
+                <span className="text-2xl">
+                  {{"math":"📐","atom":"⚛️","flask":"🧪","cell":"🧬","book":"📖","globe":"🌍","laptop":"💻","palette":"🎨","music":"🎵","trophy":"🏆","lightbulb":"💡","rocket":"🚀"}[classInfo.thumbnail] || "📖"}
+                </span>
+              )}
+              <h1 className="text-2xl sm:text-3xl font-display font-bold truncate">{classInfo.name}</h1>
+            </div>
             <div className="flex flex-wrap items-center gap-2 mt-1.5">
               {classInfo.subject && <Badge variant="secondary" className="text-xs">{classInfo.subject}</Badge>}
               {classInfo.academic_year && <Badge variant="outline" className="text-xs">{classInfo.academic_year}</Badge>}
+              {classInfo.grade_level && <Badge variant="outline" className="text-xs">{classInfo.grade_level}</Badge>}
+              {classInfo.section && <Badge variant="outline" className="text-xs">{classInfo.section}</Badge>}
+              <Badge variant="outline" className="text-xs">{enrollments.length} student{enrollments.length !== 1 ? "s" : ""}</Badge>
               <InviteCodePill code={classInfo.invite_code} />
               {activeSession && activeSession.status !== "completed" && (
                 <LiveSessionBadge sessionId={activeSession.id} role="teacher" studentCount={enrollments.length} />
               )}
             </div>
           </div>
-          {!activeSession || activeSession.status === "completed" ? (
-            <LiveSessionDialog classId={id!} onSessionStarted={fetchActiveSession}>
-              <Button size="sm" className="gap-1.5 shrink-0">
-                <Radio className="h-3.5 w-3.5" /> Live Session
-              </Button>
-            </LiveSessionDialog>
-          ) : null}
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setQrOpen(true)}>
+              <QrCode className="h-3.5 w-3.5" /> QR
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate(`/teacher/class/${id}/classroom`)}>
+              <DoorOpen className="h-3.5 w-3.5" /> Enter
+            </Button>
+            {!activeSession || activeSession.status === "completed" ? (
+              <LiveSessionDialog classId={id!} onSessionStarted={fetchActiveSession}>
+                <Button size="sm" className="gap-1.5">
+                  <Radio className="h-3.5 w-3.5" /> Live Session
+                </Button>
+              </LiveSessionDialog>
+            ) : null}
+          </div>
         </motion.div>
 
         {/* Announcements Input */}
@@ -289,30 +312,38 @@ const ClassDetail = () => {
         )}
 
         <Tabs defaultValue="students">
-          <TabsList className="grid w-full grid-cols-6 h-10">
-            <TabsTrigger value="students" className="gap-1 text-xs sm:text-sm">
+          <TabsList className="w-full overflow-x-auto flex h-10">
+            <TabsTrigger value="students" className="gap-1 text-xs sm:text-sm flex-1">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Students</span>
             </TabsTrigger>
-            <TabsTrigger value="assignments" className="gap-1 text-xs sm:text-sm">
+            <TabsTrigger value="sessions" className="gap-1 text-xs sm:text-sm flex-1">
+              <PlayCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Sessions</span>
+            </TabsTrigger>
+            <TabsTrigger value="assignments" className="gap-1 text-xs sm:text-sm flex-1">
               <ClipboardList className="h-4 w-4" />
               <span className="hidden sm:inline">Assign.</span>
             </TabsTrigger>
-            <TabsTrigger value="materials" className="gap-1 text-xs sm:text-sm">
+            <TabsTrigger value="materials" className="gap-1 text-xs sm:text-sm flex-1">
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Materials</span>
             </TabsTrigger>
-            <TabsTrigger value="marks" className="gap-1 text-xs sm:text-sm">
+            <TabsTrigger value="marks" className="gap-1 text-xs sm:text-sm flex-1">
               <Award className="h-4 w-4" />
               <span className="hidden sm:inline">Marks</span>
             </TabsTrigger>
-            <TabsTrigger value="attendance" className="gap-1 text-xs sm:text-sm">
+            <TabsTrigger value="attendance" className="gap-1 text-xs sm:text-sm flex-1">
               <CheckSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Attend.</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-1 text-xs sm:text-sm">
+            <TabsTrigger value="analytics" className="gap-1 text-xs sm:text-sm flex-1">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="newton" className="gap-1 text-xs sm:text-sm flex-1">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Newton</span>
             </TabsTrigger>
           </TabsList>
 
@@ -495,7 +526,19 @@ const ClassDetail = () => {
           <TabsContent value="analytics" className="mt-5">
             <AnalyticsTab classId={id!} />
           </TabsContent>
+
+          {/* Sessions Tab */}
+          <TabsContent value="sessions" className="mt-5">
+            <SessionsTab classId={id!} />
+          </TabsContent>
+
+          {/* Newton Chat Tab */}
+          <TabsContent value="newton" className="mt-5">
+            <NewtonChatTab classId={id!} />
+          </TabsContent>
         </Tabs>
+
+        <ClassQRModal open={qrOpen} onOpenChange={setQrOpen} inviteCode={classInfo.invite_code} className={classInfo.name} />
 
         {/* Mobile FAB */}
         {isMobile && (
@@ -842,6 +885,141 @@ function AnalyticsTab({ classId }: { classId: string }) {
           <AttendanceGrid students={attendanceData?.students || []} assignments={attendanceData?.assignments || []} attendance={attendanceData?.attendance || []} />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function SessionsTab({ classId }: { classId: string }) {
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("live_sessions")
+        .select("id, title, status, started_at, total_slides, current_slide_index")
+        .eq("class_id", classId)
+        .order("started_at", { ascending: false });
+      setSessions(data || []);
+      setLoading(false);
+    };
+    fetch();
+  }, [classId]);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
+  if (sessions.length === 0) {
+    return (
+      <Card className="text-center py-12 border-border/50">
+        <CardContent>
+          <PlayCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">No sessions yet. Start a live session!</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const formatDate = (d: string) => {
+    const date = new Date(d);
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+
+  return (
+    <div className="space-y-2">
+      {sessions.map((s, i) => (
+        <motion.div key={s.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+          <Card className="border-border/50 cursor-pointer hover:border-primary/30 transition-colors" onClick={() => navigate(`/report/teacher/${s.id}`)}>
+            <CardContent className="flex items-center justify-between py-3 px-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.status === "teaching" ? "bg-destructive animate-pulse" : s.status === "ended" || s.status === "completed" ? "bg-muted-foreground" : "bg-primary"}`} />
+                <div>
+                  <p className="font-medium text-sm">{s.title}</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(s.started_at)} · {s.total_slides} slides</p>
+                </div>
+              </div>
+              <Badge variant={s.status === "teaching" ? "destructive" : "outline"} className="text-xs capitalize">{s.status}</Badge>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function NewtonChatTab({ classId }: { classId: string }) {
+  const [stats, setStats] = useState<{ total: number; recent: any[] }>({ total: 0, recent: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      // Get sessions for this class to find newton conversations
+      const { data: sessions } = await supabase
+        .from("live_sessions")
+        .select("id")
+        .eq("class_id", classId);
+
+      if (!sessions || sessions.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      // Get live questions from those sessions as proxy for Newton activity
+      const sessionIds = sessions.map(s => s.id);
+      const { data: questions, count } = await supabase
+        .from("live_questions")
+        .select("id, content, newton_answer, created_at, is_answered", { count: "exact" })
+        .in("session_id", sessionIds)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      setStats({ total: count || 0, recent: questions || [] });
+      setLoading(false);
+    };
+    fetch();
+  }, [classId]);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
+  if (stats.total === 0) {
+    return (
+      <Card className="text-center py-12 border-border/50">
+        <CardContent>
+          <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">No Newton Chat activity yet</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-border/50">
+        <CardContent className="pt-5 pb-4 text-center">
+          <p className="text-2xl font-bold">{stats.total}</p>
+          <p className="text-xs text-muted-foreground">Total Questions Asked</p>
+        </CardContent>
+      </Card>
+      <div className="space-y-2">
+        {stats.recent.map((q, i) => (
+          <motion.div key={q.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+            <Card className="border-border/50">
+              <CardContent className="py-3 px-4">
+                <p className="font-medium text-sm">{q.content}</p>
+                {q.newton_answer && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">🤖 {q.newton_answer}</p>
+                )}
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Badge variant={q.is_answered ? "secondary" : "outline"} className="text-[10px] h-5">
+                    {q.is_answered ? "Answered" : "Pending"}
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground">{new Date(q.created_at).toLocaleDateString()}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
