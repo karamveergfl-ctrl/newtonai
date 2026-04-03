@@ -526,7 +526,19 @@ const ClassDetail = () => {
           <TabsContent value="analytics" className="mt-5">
             <AnalyticsTab classId={id!} />
           </TabsContent>
+
+          {/* Sessions Tab */}
+          <TabsContent value="sessions" className="mt-5">
+            <SessionsTab classId={id!} />
+          </TabsContent>
+
+          {/* Newton Chat Tab */}
+          <TabsContent value="newton" className="mt-5">
+            <NewtonChatTab classId={id!} />
+          </TabsContent>
         </Tabs>
+
+        <ClassQRModal open={qrOpen} onOpenChange={setQrOpen} inviteCode={classInfo.invite_code} className={classInfo.name} />
 
         {/* Mobile FAB */}
         {isMobile && (
