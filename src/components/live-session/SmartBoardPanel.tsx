@@ -85,6 +85,7 @@ function SmartBoardPanelInner({
   const [activeView, setActiveView] = useState<"session" | "whiteboard" | "document">("session");
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [teacherId, setTeacherId] = useState("");
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Classroom theme
   const { theme, toggleTheme } = useClassroomTheme();
