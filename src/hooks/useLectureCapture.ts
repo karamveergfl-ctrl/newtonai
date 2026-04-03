@@ -169,6 +169,7 @@ export function useLectureCapture({ sessionId, teacherId }: UseLectureCapturePro
 
   return {
     isCapturing,
+    latestTranscript,
     startCapture,
     stopCapture,
     recordSlideChange,
