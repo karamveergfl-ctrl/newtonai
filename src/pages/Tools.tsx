@@ -14,7 +14,8 @@ import {
   Sparkles,
   ArrowRight,
   CheckCircle,
-  MessageSquare
+  MessageSquare,
+  FunctionSquare
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -119,6 +120,18 @@ const tools = [
     bgColor: "bg-cyan-500/10",
     features: ["Ask questions", "Citations", "Voice chat"],
     limits: { free: "2/month", pro: "20/month", ultra: "Unlimited" }
+  },
+  {
+    id: "latex-editor",
+    name: "LaTeX Editor",
+    shortName: "LaTeX",
+    description: "Write and preview mathematical equations with live KaTeX rendering and a symbol palette.",
+    icon: FunctionSquare,
+    href: "/tools/latex-editor",
+    color: "text-rose-500",
+    bgColor: "bg-rose-500/10",
+    features: ["Live preview", "Symbol palette", "Copy as image"],
+    limits: { free: "Unlimited", pro: "Unlimited", ultra: "Unlimited" }
   },
 ];
 

@@ -4,8 +4,9 @@ import { ToolAuthGate } from "@/components/ToolAuthGate";
 import { ContentDisclaimer } from "@/components/ContentDisclaimer";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { HelpCircle, Copy, Check, ImageIcon, Volume2, VolumeX, ChevronDown, Star, X } from "lucide-react";
+import { HelpCircle, Copy, Check, ImageIcon, Volume2, VolumeX, ChevronDown, Star, X, ToggleLeft, ToggleRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { SocraticStepFlow } from "@/components/homework/SocraticStepFlow";
 import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +60,8 @@ const HomeworkHelp = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [solution, setSolution] = useState("");
+  const [guidedMode, setGuidedMode] = useState(true);
+  const [socraticProblem, setSocraticProblem] = useState("");
   const [copied, setCopied] = useState(false);
   const [contentLanguage, setContentLanguage] = useState("en");
   const [capturedScreenshot, setCapturedScreenshot] = useState<{ imageBase64: string; mimeType: string } | null>(null);
@@ -188,7 +191,26 @@ const HomeworkHelp = () => {
       return;
     }
 
-    // Show global processing overlay IMMEDIATELY
+    // Guided (Socratic) mode — just store the problem text and let SocraticStepFlow handle it
+    if (guidedMode) {
+      let textContent = content;
+      if (type === "youtube" && metadata?.videoId) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) textContent = await getYouTubeTranscript(metadata.videoId, session.access_token);
+      } else if (type === "recording") {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) textContent = await transcribeAudio(content, session.access_token);
+      } else if (type === "upload" && metadata?.file) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) textContent = await processUploadedFile(metadata.file, session.access_token);
+      }
+      setSocraticProblem(textContent);
+      setSolution("");
+      if (!isAuthenticated) incrementGuestUsage();
+      return;
+    }
+
+    // Direct solution mode
     setIsLoading(true);
     showProcessing({
       message: "Solving your problem...",
@@ -197,6 +219,7 @@ const HomeworkHelp = () => {
     });
     
     setSolution("");
+    setSocraticProblem("");
     cancel();
 
     try {
@@ -342,13 +365,42 @@ const HomeworkHelp = () => {
                 <InlineRecents toolId="homework-help" />
               </CardContent>
             </Card>
+            {/* Mode Toggle */}
+            <div className="flex items-center justify-center gap-3">
+              <span className={cn("text-sm font-medium", guidedMode ? "text-primary" : "text-muted-foreground")}>
+                Guided Mode
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="px-2"
+                onClick={() => { setGuidedMode(!guidedMode); setSocraticProblem(""); setSolution(""); }}
+              >
+                {guidedMode ? <ToggleRight className="h-6 w-6 text-primary" /> : <ToggleLeft className="h-6 w-6 text-muted-foreground" />}
+              </Button>
+              <span className={cn("text-sm font-medium", !guidedMode ? "text-primary" : "text-muted-foreground")}>
+                Direct Solution
+              </span>
+            </div>
           </ToolAuthGate>
 
+          {/* Socratic guided flow */}
+          {socraticProblem && guidedMode && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <SocraticStepFlow
+                problemText={socraticProblem}
+                language={contentLanguage}
+                onComplete={(fullSolution) => setSolution(fullSolution)}
+                onPracticeMore={() => setSocraticProblem("")}
+              />
+            </motion.div>
+          )}
+
           {/* Ad Banner - Primary placement, always shows */}
-          {!solution && !isLoading && <PrimaryAdBanner />}
+          {!solution && !isLoading && !socraticProblem && <PrimaryAdBanner />}
 
           {/* Educational content - visible to all visitors including crawlers */}
-          {!solution && !isLoading && (
+          {!solution && !isLoading && !socraticProblem && (
             <>
               <ContentDisclaimer />
               <ToolPagePromoSections toolId="homework-help" />
