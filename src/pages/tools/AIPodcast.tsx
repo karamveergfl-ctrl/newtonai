@@ -63,6 +63,7 @@ const stepMessages: Record<GenerationStep, string> = {
 export default function AIPodcast() {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [userName, setUserName] = useState<string>("");
   const [generationStep, setGenerationStep] = useState<GenerationStep>("idle");
   const [progress, setProgress] = useState(0);
   const [sourceContent, setSourceContent] = useState("");
