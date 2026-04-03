@@ -559,7 +559,7 @@ function SmartBoardPanelInner({
                     className={cn("text-[10px] rounded-lg px-2 py-1.5 border transition-colors font-medium", questionsEnabled ? "bg-primary/10 border-primary/30 text-primary" : "bg-muted border-border text-muted-foreground")}
                   >Q&A</button>
                   {onEndSession && (
-                    <Button variant="destructive" size="sm" onClick={onEndSession} className="text-xs ml-auto">End</Button>
+                    <Button variant="destructive" size="sm" onClick={() => setEndModalOpen(true)} className="text-xs ml-auto">End</Button>
                   )}
                 </div>
               </div>
