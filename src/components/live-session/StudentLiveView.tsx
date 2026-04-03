@@ -65,7 +65,7 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
     <div className="relative h-full w-full">
       {/* Notification banner */}
       {notification && (
-        <div className="absolute top-0 left-0 right-0 z-30 bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs text-center py-2 animate-fade-in">
+        <div className="absolute top-0 left-0 right-0 z-30 bg-warning/20 text-warning-foreground dark:text-amber-300 text-xs text-center py-2 animate-fade-in">
           {notification}
         </div>
       )}
