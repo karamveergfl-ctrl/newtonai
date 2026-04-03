@@ -165,6 +165,10 @@ function SmartBoardPanelInner({
       if (recording) startCapture();
       else stopCapture();
     },
+    onToolChange: (tool) => wb.setTool(tool as any),
+    onColorChange: (color) => wb.setColor(color),
+    onClearBoard: handleClear,
+    onUndo: handleUndo,
   });
 
   // Whiteboard stroke handler
