@@ -319,13 +319,14 @@ const AISummarizer = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`, {
+      const response = await fetchWithTimeout(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ videoId, videoTitle }),
+        timeoutMs: 20000,
       });
 
       if (!response.ok) {
