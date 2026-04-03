@@ -287,6 +287,26 @@ function SmartBoardPanelInner({
         </div>
       )}
 
+      {/* Walk-in Mode Banner */}
+      {classId && (
+        <WalkInBanner
+          classId={classId}
+          sessionId={sessionId}
+          onRestoreWhiteboard={(data) => {
+            // Could restore whiteboard data in the future
+            console.log("Restoring whiteboard data from previous session", data);
+          }}
+        />
+      )}
+
+      {/* Confusion Alert Banner */}
+      <ConfusionAlertBanner
+        confusionPercentage={pulseSummary.confusion_percentage}
+        threshold={confusionThreshold}
+        slideContent={currentSlideContent}
+        sessionId={sessionId}
+      />
+
       {/* Fullscreen header bar */}
       {isFullscreen && (
         <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card shrink-0">
