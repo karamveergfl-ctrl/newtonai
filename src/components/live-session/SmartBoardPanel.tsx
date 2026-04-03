@@ -19,7 +19,7 @@ import { WhiteboardCanvas, type WhiteboardCanvasHandle } from "@/components/smar
 import { VoiceCommandIndicator } from "@/components/smartboard/VoiceCommandIndicator";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Maximize, Minimize } from "lucide-react";
+import { Maximize, Minimize, PanelRight, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import newtonLogoSm from "@/assets/newton-logo-sm.webp";
 
