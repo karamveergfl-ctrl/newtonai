@@ -11,7 +11,7 @@ import { AnnouncementsBanner } from "@/components/student/AnnouncementsBanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy, TrendingUp, BarChart3, Award } from "lucide-react";
+import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy, TrendingUp, BarChart3, Award, Bot } from "lucide-react";
 import { StudentMarksTab } from "@/components/student/StudentMarksTab";
 import { Button } from "@/components/ui/button";
 import SEOHead from "@/components/SEOHead";
