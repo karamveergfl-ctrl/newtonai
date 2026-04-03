@@ -24,8 +24,8 @@ import {
 import { Slider } from "@/components/ui/slider";
 
 interface SmartBoardToolbarProps {
-  activeView: "session" | "whiteboard" | "document";
-  onViewChange: (view: "session" | "whiteboard" | "document") => void;
+  activeView: "session" | "whiteboard" | "document" | "video";
+  onViewChange: (view: "session" | "whiteboard" | "document" | "video") => void;
   voiceEnabled: boolean;
   onToggleVoice: () => void;
   isCapturing: boolean;
