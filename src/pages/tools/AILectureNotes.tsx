@@ -726,8 +726,8 @@ const AILectureNotes = () => {
                       <input {...getInputProps()} />
                       {uploadedFile ? (
                         <div className="space-y-2">
-                          <div className="w-12 h-12 mx-auto rounded-full bg-green-500/10 flex items-center justify-center">
-                            <Check className="w-6 h-6 text-green-500" />
+                          <div className="w-12 h-12 mx-auto rounded-full bg-accent/10 flex items-center justify-center">
+                            <Check className="w-6 h-6 text-accent-foreground" />
                           </div>
                           <p className="font-medium text-foreground">{uploadedFile.name}</p>
                           <p className="text-sm text-muted-foreground">

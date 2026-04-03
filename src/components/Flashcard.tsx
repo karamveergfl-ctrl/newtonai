@@ -34,7 +34,7 @@ export const Flashcard = ({
           className={cn(
             "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium",
             isMastered 
-              ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+              ? "bg-accent/15 text-accent-foreground"
               : "bg-primary/10 text-primary"
           )}
         >

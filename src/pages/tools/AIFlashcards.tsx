@@ -367,13 +367,13 @@ const AIFlashcards = () => {
                     <Shuffle className="h-4 w-4" />
                     <span className="hidden sm:inline">Shuffle</span>
                   </Button>
-                  <Button
+                    <Button
                     variant={masteredCards.has(currentIndex) ? "default" : "outline"}
                     size="sm"
                     onClick={handleMarkMastered}
                     className={cn(
                       "h-10 gap-2",
-                      masteredCards.has(currentIndex) && "bg-green-600 hover:bg-green-700"
+                      masteredCards.has(currentIndex) && "bg-accent text-accent-foreground hover:bg-accent/90"
                     )}
                   >
                     <Check className="h-4 w-4" />

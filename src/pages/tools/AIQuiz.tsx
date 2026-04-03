@@ -570,7 +570,7 @@ const AIQuiz = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           {skippedQuestions.has(currentIndex) && (
-                            <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-1">
+                            <p className="text-sm font-medium text-muted-foreground mb-1">
                               Question skipped
                             </p>
                           )}
