@@ -26,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio, Trash2, Eye, BookOpen, Plus, ExternalLink, File, Link as LinkIcon, Video, Upload, CheckSquare, Award } from "lucide-react";
+import { Loader2, Users, FileText, ClipboardList, BarChart3, MoreHorizontal, ArrowLeft, Share2, Radio, Trash2, Eye, BookOpen, Plus, ExternalLink, File, Link as LinkIcon, Video, Upload, CheckSquare, Award, QrCode, DoorOpen, PlayCircle, MessageSquare, Clock } from "lucide-react";
 import { toast } from "sonner";
 import SEOHead from "@/components/SEOHead";
 import { AppLayout } from "@/components/AppLayout";
