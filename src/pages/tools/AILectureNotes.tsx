@@ -719,7 +719,7 @@ const AILectureNotes = () => {
                         isDragActive
                           ? "border-primary bg-primary/5"
                           : uploadedFile
-                          ? "border-green-500 bg-green-500/5"
+                          ? "border-accent bg-accent/5"
                           : "border-border hover:border-primary/50"
                       )}
                     >
