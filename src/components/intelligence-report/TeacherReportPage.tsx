@@ -5,6 +5,7 @@ import { EngagementHeatmap } from "./EngagementHeatmap";
 import { TopicsToRevisitCard } from "./TopicsToRevisitCard";
 import { ConceptCheckReportCard } from "./ConceptCheckReportCard";
 import { UnansweredQuestionsCard } from "./UnansweredQuestionsCard";
+import { StudentPerformanceBreakdown } from "./StudentPerformanceBreakdown";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, Download } from "lucide-react";
@@ -216,6 +217,9 @@ export function TeacherReportPage({ sessionId }: TeacherReportPageProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Student Performance Breakdown */}
+      <StudentPerformanceBreakdown sessionId={sessionId} />
     </div>
   );
 }
