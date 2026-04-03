@@ -191,7 +191,26 @@ const HomeworkHelp = () => {
       return;
     }
 
-    // Show global processing overlay IMMEDIATELY
+    // Guided (Socratic) mode — just store the problem text and let SocraticStepFlow handle it
+    if (guidedMode) {
+      let textContent = content;
+      if (type === "youtube" && metadata?.videoId) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) textContent = await getYouTubeTranscript(metadata.videoId, session.access_token);
+      } else if (type === "recording") {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) textContent = await transcribeAudio(content, session.access_token);
+      } else if (type === "upload" && metadata?.file) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) textContent = await processUploadedFile(metadata.file, session.access_token);
+      }
+      setSocraticProblem(textContent);
+      setSolution("");
+      if (!isAuthenticated) incrementGuestUsage();
+      return;
+    }
+
+    // Direct solution mode
     setIsLoading(true);
     showProcessing({
       message: "Solving your problem...",
@@ -200,6 +219,7 @@ const HomeworkHelp = () => {
     });
     
     setSolution("");
+    setSocraticProblem("");
     cancel();
 
     try {
