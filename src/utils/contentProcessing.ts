@@ -46,7 +46,7 @@ export const extractTextFromPDF = async (
 ): Promise<string> => {
   const base64 = await fileToBase64(file);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-pdf-text`,
     {
       method: "POST",
@@ -55,6 +55,7 @@ export const extractTextFromPDF = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ pdfContent: base64 }),
+      timeoutMs: 30000,
     }
   );
 
