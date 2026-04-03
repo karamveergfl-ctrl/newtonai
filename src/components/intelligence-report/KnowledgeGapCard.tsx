@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, Play, X } from "lucide-react";
 import { useReportFlashcards } from "@/hooks/useReportFlashcards";
 import type { KnowledgeGap, RevisionFlashcard, ReportVideoResult } from "@/types/liveSession";
 
@@ -27,7 +28,7 @@ function FlashcardPractice({ flashcards }: { flashcards: RevisionFlashcard[] }) 
   if (sessionComplete) {
     return (
       <div className="text-center py-3">
-        <p className="text-sm text-green-400">Practice Complete ✓</p>
+        <p className="text-sm text-emerald-500">Practice Complete ✓</p>
       </div>
     );
   }
@@ -63,6 +64,7 @@ function FlashcardPractice({ flashcards }: { flashcards: RevisionFlashcard[] }) 
 
 export function KnowledgeGapCard({ gap, flashcards, videoResult, isExpanded, onToggle }: KnowledgeGapCardProps) {
   const config = severityConfig[gap.severity];
+  const [inlineVideo, setInlineVideo] = useState(false);
   const resourceHints: string[] = [];
   if (flashcards.length > 0) resourceHints.push(`${flashcards.length} flashcards`);
   if (videoResult) resourceHints.push("Video available");
@@ -103,29 +105,71 @@ export function KnowledgeGapCard({ gap, flashcards, videoResult, isExpanded, onT
             <div>
               <p className="text-[10px] font-medium text-muted-foreground mb-1.5">Video Resource</p>
               {videoResult ? (
-                <a
-                  href={`https://www.youtube.com/watch?v=${videoResult.video_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block rounded-lg border border-border/50 overflow-hidden hover:border-primary/40 transition-colors"
-                >
-                  <img
-                    src={videoResult.thumbnail_url}
-                    alt={videoResult.video_title}
-                    className="w-full aspect-video object-cover"
-                    loading="lazy"
-                  />
+                <div className="rounded-lg border border-border/50 overflow-hidden">
+                  {/* Inline player */}
+                  {inlineVideo ? (
+                    <div className="relative">
+                      <div className="aspect-video bg-black">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${videoResult.video_id}?autoplay=1&rel=0`}
+                          className="w-full h-full"
+                          allow="autoplay; encrypted-media"
+                          allowFullScreen
+                        />
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 bg-black/60 text-white hover:bg-black/80"
+                        onClick={() => setInlineVideo(false)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setInlineVideo(true)}
+                      className="relative w-full group"
+                    >
+                      <img
+                        src={videoResult.thumbnail_url}
+                        alt={videoResult.video_title}
+                        className="w-full aspect-video object-cover"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
+                          <Play className="w-5 h-5 text-black ml-0.5" />
+                        </div>
+                      </div>
+                    </button>
+                  )}
                   <div className="p-2">
                     <p className="text-xs font-medium line-clamp-2">{videoResult.video_title}</p>
                     <div className="flex items-center justify-between mt-1 text-[10px] text-muted-foreground">
                       <span>{videoResult.channel_name}</span>
                       <span>{videoResult.duration}</span>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-5 text-[9px] mt-1 gap-1 text-primary p-0">
-                      Watch on YouTube <ExternalLink className="w-2.5 h-2.5" />
-                    </Button>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 text-[9px] gap-1 text-primary p-0"
+                        onClick={() => setInlineVideo(true)}
+                      >
+                        <Play className="w-2.5 h-2.5" /> Watch Here
+                      </Button>
+                      <a
+                        href={`https://www.youtube.com/watch?v=${videoResult.video_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[9px] text-muted-foreground hover:text-foreground"
+                      >
+                        <ExternalLink className="w-2.5 h-2.5" /> YouTube
+                      </a>
+                    </div>
                   </div>
-                </a>
+                </div>
               ) : (
                 <div className="rounded-lg bg-muted/30 p-4 text-center">
                   <p className="text-[10px] text-muted-foreground">No video found</p>

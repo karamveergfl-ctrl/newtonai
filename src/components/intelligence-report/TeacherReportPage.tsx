@@ -217,6 +217,9 @@ export function TeacherReportPage({ sessionId }: TeacherReportPageProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Student Performance Breakdown */}
+      <StudentPerformanceBreakdown sessionId={sessionId} />
     </div>
   );
 }
