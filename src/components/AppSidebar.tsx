@@ -210,16 +210,8 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 {isTeacher ? (
                   <>
                     <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Teacher Dashboard">
-                        <button onClick={() => navigate("/teacher")} className={btnClass("/teacher")}>
-                          <Home className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                          {!isCollapsed && <span>Dashboard</span>}
-                        </button>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="My Classes">
-                        <button onClick={() => navigate("/teacher")} className={btnClass()}>
+                        <button onClick={() => navigate("/teacher")} className={btnClass("/teacher")}>
                           <GraduationCap className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                           {!isCollapsed && (
                             <span className="flex items-center gap-2">
