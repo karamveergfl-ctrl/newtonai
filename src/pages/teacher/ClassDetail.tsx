@@ -60,6 +60,9 @@ interface ClassInfo {
   description: string | null;
   invite_code: string;
   academic_year: string | null;
+  thumbnail: string | null;
+  grade_level: string | null;
+  section: string | null;
 }
 
 interface Enrollment {
