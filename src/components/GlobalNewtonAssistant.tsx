@@ -38,7 +38,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onReg
     fetchConversations,
   } = useNewtonConversations();
 
-  const { messages, isLoading, error, sendMessage, cancelRequest, clearHistory } =
+  const { messages, isLoading, error, sendMessage, retryLastMessage, cancelRequest, clearHistory } =
     useNewtonChat(activeConversationId);
 
   // Auth state tracking
