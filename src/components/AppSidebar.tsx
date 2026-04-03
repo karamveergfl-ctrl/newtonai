@@ -6,6 +6,7 @@ import { useScrollContext } from "@/contexts/ScrollContext";
 import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUserNotifications } from "@/hooks/useUserNotifications";
 
 import {
   Sidebar,
@@ -95,6 +96,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const { isTeacher, isStudent, isInstitutionalAdmin, loading: roleLoading } = useUserRole();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
+  const { unreadCount } = useUserNotifications();
   
   // Get scroll state from context - safely handle when not in provider
   let hasScrolled = false;
@@ -210,16 +212,8 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 {isTeacher ? (
                   <>
                     <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Teacher Dashboard">
-                        <button onClick={() => navigate("/teacher")} className={btnClass("/teacher")}>
-                          <Home className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                          {!isCollapsed && <span>Dashboard</span>}
-                        </button>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="My Classes">
-                        <button onClick={() => navigate("/teacher")} className={btnClass()}>
+                        <button onClick={() => navigate("/teacher")} className={btnClass("/teacher")}>
                           <GraduationCap className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                           {!isCollapsed && (
                             <span className="flex items-center gap-2">
@@ -264,6 +258,14 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                   </>
                 ) : (
                   <>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Dashboard">
+                        <button onClick={() => navigate("/student/dashboard")} className={btnClass("/student/dashboard")}>
+                          <Home className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && <span>Dashboard</span>}
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="My Classes">
                         <button onClick={() => navigate("/student/classes")} className={btnClass("/student/classes")}>
@@ -507,7 +509,14 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           {/* Profile */}
           <SidebarMenuButton asChild tooltip="Profile">
             <button onClick={() => navigate("/profile")} className={btnClass("/profile")}>
-              <User className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+              <div className="relative shrink-0">
+                <User className={cn(isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-destructive text-destructive-foreground text-[8px] font-bold flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </div>
               {!isCollapsed && <span>Profile</span>}
             </button>
           </SidebarMenuButton>
