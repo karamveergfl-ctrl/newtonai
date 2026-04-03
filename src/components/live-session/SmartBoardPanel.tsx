@@ -491,7 +491,7 @@ function SmartBoardPanelInner({
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={onEndSession}
+                  onClick={() => setEndModalOpen(true)}
                   className="text-xs"
                 >
                   End
