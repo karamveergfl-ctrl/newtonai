@@ -18,6 +18,8 @@ import { ClassroomThemeProvider, useClassroomTheme } from "@/components/smartboa
 import { SmartBoardToolbar } from "@/components/smartboard/SmartBoardToolbar";
 import { WhiteboardCanvas, type WhiteboardCanvasHandle } from "@/components/smartboard/WhiteboardCanvas";
 import { VoiceCommandIndicator } from "@/components/smartboard/VoiceCommandIndicator";
+import { ClassroomVideoPlayer } from "@/components/smartboard/ClassroomVideoPlayer";
+import { EndSessionModal } from "@/components/smartboard/EndSessionModal";
 import { WalkInBanner } from "@/components/smartboard/WalkInBanner";
 import { ConfusionAlertBanner } from "@/components/smartboard/ConfusionAlertBanner";
 import { Button } from "@/components/ui/button";
