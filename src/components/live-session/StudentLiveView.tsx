@@ -28,6 +28,7 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
   const [activeView, setActiveView] = useState<"spotlight" | "session">("spotlight");
   const [notification, setNotification] = useState<string | null>(null);
   const [showReactions, setShowReactions] = useState(false);
+  const [syncedVideo, setSyncedVideo] = useState<{ videoId: string; title: string } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const reactionChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const { spotlightEnabled } = useLiveSession();
@@ -41,6 +42,23 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
     return () => {
       supabase.removeChannel(channel);
       reactionChannelRef.current = null;
+    };
+  }, [sessionId]);
+
+  // Video sync listener
+  useEffect(() => {
+    const channel = supabase.channel(`video-sync:${sessionId}`);
+    channel
+      .on("broadcast", { event: "video_play" }, ({ payload }) => {
+        setSyncedVideo({ videoId: payload.videoId, title: payload.title });
+      })
+      .on("broadcast", { event: "video_stop" }, () => {
+        setSyncedVideo(null);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
     };
   }, [sessionId]);
 
