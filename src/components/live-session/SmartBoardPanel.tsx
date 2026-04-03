@@ -128,10 +128,17 @@ function SmartBoardPanelInner({
     getUser();
   }, []);
 
-  const { isCapturing, startCapture, stopCapture, recordSlideChange } = useLectureCapture({
+  const { isCapturing, latestTranscript, startCapture, stopCapture, recordSlideChange } = useLectureCapture({
     sessionId,
     teacherId,
   });
+
+  // When live transcript arrives, feed it as slide context for AI notes
+  useEffect(() => {
+    if (latestTranscript && latestTranscript.trim().length > 20) {
+      advanceToSlide(currentSlideIndex, latestTranscript, `Speech – Slide ${currentSlideIndex + 1}`);
+    }
+  }, [latestTranscript]);
 
   // Voice commands
   const { isListening: voiceListening, isProcessing: voiceProcessing, lastCommand } = useVoiceCommands({
