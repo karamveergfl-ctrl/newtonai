@@ -184,7 +184,7 @@ export const extractTextFromDOCX = async (
 ): Promise<string> => {
   const base64 = await fileToBase64(file);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-docx-text`,
     {
       method: "POST",
@@ -193,6 +193,7 @@ export const extractTextFromDOCX = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ docxContent: base64 }),
+      timeoutMs: 30000,
     }
   );
 
