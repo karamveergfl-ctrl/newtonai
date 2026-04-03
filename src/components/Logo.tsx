@@ -31,7 +31,7 @@ const Logo = ({ size = "md", showText = false, className = "", compact = false, 
             alt="NewtonAI Logo"
             loading={eager ? "eager" : "lazy"}
             decoding="sync"
-            fetchPriority="high"
+            fetchpriority="high"
             className="w-full h-full object-contain" />
         </div>
       </div>
