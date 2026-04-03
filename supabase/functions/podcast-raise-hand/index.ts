@@ -12,13 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    // Authentication check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const supabase = createClient(
@@ -29,46 +26,42 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Rate limiting
     const { data: allowed, error: rateLimitError } = await supabase.rpc("check_rate_limit", {
       p_user_id: user.id,
       p_function_name: "podcast-raise-hand",
     });
 
     if (rateLimitError || !allowed) {
-      return new Response(
-        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { question, podcastContext, currentTopic } = await req.json();
+    const { question, podcastContext, currentTopic, userName } = await req.json();
 
     if (!question) {
-      return new Response(JSON.stringify({ error: "Question is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ error: "Question is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    const listenerName = userName?.trim() || "";
+    const nameInstruction = listenerName
+      ? `The listener's name is "${listenerName}". Address them by name naturally (e.g. "Great question, ${listenerName}!"). Keep it friendly.`
+      : "Address the listener warmly, like a friend.";
 
-    // Generate response script using AI
     const systemPrompt = `You are writing dialogue for two podcast hosts responding to a listener's question.
 
 Hosts:
 - host1 (name: Alex): male, enthusiastic, uses analogies
 - host2 (name: Sarah): female, knowledgeable, provides clear explanations
+
+${nameInstruction}
 
 The listener has raised their hand to ask a question during the podcast. Generate a brief, helpful response from the hosts.
 
@@ -106,16 +99,12 @@ JSON shape:
 
     if (!aiResponse.ok) {
       if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exceeded. Please try again later." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(JSON.stringify({ error: "AI credits exceeded. Please try again later." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       const t = await aiResponse.text();
       console.error("AI gateway error:", aiResponse.status, t);
@@ -125,7 +114,6 @@ JSON shape:
     const aiData = await aiResponse.json();
     const responseText = aiData.choices?.[0]?.message?.content || "";
 
-    // Parse + validate the response
     let script: any;
     try {
       script = JSON.parse(responseText);
@@ -157,10 +145,7 @@ JSON shape:
       throw new Error("AI returned no usable response segments");
     }
 
-    return new Response(JSON.stringify({ 
-      segments, 
-      ttsError: "Using browser voice synthesis" 
-    }), {
+    return new Response(JSON.stringify({ segments, ttsError: "Using browser voice synthesis" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
