@@ -544,6 +544,31 @@ const Auth = () => {
                   </button>
                 </div>
                 
+                {/* Password Strength Meter - only on signup and reset */}
+                {(mode === "signup" || mode === "reset-password") && password.length > 0 && (() => {
+                  const checks = {
+                    length: password.length >= 8,
+                    upper: /[A-Z]/.test(password),
+                    lower: /[a-z]/.test(password),
+                    number: /[0-9]/.test(password),
+                    special: /[^A-Za-z0-9]/.test(password),
+                  };
+                  const score = Object.values(checks).filter(Boolean).length;
+                  const labels = ["", "Weak", "Fair", "Strong", "Very Strong", "Very Strong"];
+                  const colors = ["", "bg-destructive", "bg-amber-500", "bg-emerald-500", "bg-emerald-600", "bg-emerald-600"];
+                  const textColors = ["", "text-destructive", "text-amber-500", "text-emerald-500", "text-emerald-600", "text-emerald-600"];
+                  return (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-2 space-y-1.5">
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${score >= i ? colors[score] : "bg-muted"}`} />
+                        ))}
+                      </div>
+                      <p className={`text-xs font-medium ${textColors[score]}`}>{labels[score]}</p>
+                    </motion.div>
+                  );
+                })()}
+
                 {/* Password Error Display */}
                 {passwordError && (
                   <motion.div

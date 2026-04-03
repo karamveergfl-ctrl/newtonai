@@ -101,6 +101,7 @@ const PitchDeck = lazy(() => import("./pages/PitchDeck"));
 // Teacher pages
 const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard"));
 const ClassDetail = lazy(() => import("./pages/teacher/ClassDetail"));
+const TeacherProfile = lazy(() => import("./pages/teacher/TeacherProfile"));
 
 // Student class pages
 const StudentClasses = lazy(() => import("./pages/student/StudentClasses"));
@@ -226,6 +227,7 @@ function AnimatedRoutes() {
         {/* Teacher Routes */}
         <Route path="/teacher" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherDashboard /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/teacher/classes/:id" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><ClassDetail /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/teacher/profile" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherProfile /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         
         {/* Student Class Routes */}
         <Route path="/student/classes" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClasses /></OnboardingGate></ProtectedRoute></PageTransition>} />

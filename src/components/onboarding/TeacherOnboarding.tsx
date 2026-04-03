@@ -79,6 +79,25 @@ const classLevels = [
   { id: "university", label: "University", emoji: "🏛️" },
 ];
 
+const institutionTypes = [
+  { id: "university", label: "University" },
+  { id: "college", label: "College" },
+  { id: "school_cbse", label: "School (CBSE)" },
+  { id: "school_icse", label: "School (ICSE)" },
+  { id: "school_state", label: "School (State Board)" },
+  { id: "coaching", label: "Coaching Centre" },
+  { id: "independent", label: "Independent Tutor" },
+];
+
+const gradeLevels = [
+  { id: "1-5", label: "Grade 1–5" },
+  { id: "6-8", label: "Grade 6–8" },
+  { id: "9-10", label: "Grade 9–10" },
+  { id: "11-12", label: "Grade 11–12" },
+  { id: "ug", label: "Undergraduate" },
+  { id: "pg", label: "Postgraduate" },
+];
+
 const teachingStyles = [
   { id: "smartboard", label: "Smartboard / Digital Board", emoji: "🖥️" },
   { id: "traditional", label: "Traditional Board + PDF", emoji: "📝" },
@@ -125,6 +144,10 @@ export default function TeacherOnboarding({ fullName: initialName, avatarUrl, on
   const [institutionName, setInstitutionName] = useState("");
   const [department, setDepartment] = useState("");
   const [classLevel, setClassLevel] = useState("");
+  const [institutionType, setInstitutionType] = useState("");
+  const [facultyId, setFacultyId] = useState("");
+  const [phone, setPhone] = useState("");
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
 
   // Step 2 - Teaching style
   const [teachingStyle, setTeachingStyle] = useState("");
@@ -273,6 +296,7 @@ export default function TeacherOnboarding({ fullName: initialName, avatarUrl, on
 
       const teacherPreferences = {
         institution_name: institutionName,
+        institution_type: institutionType,
         department,
         class_level: classLevel,
         teaching_style: teachingStyle,
@@ -281,6 +305,9 @@ export default function TeacherOnboarding({ fullName: initialName, avatarUrl, on
         auto_attendance: autoAttendance,
         marks_tracking: marksTracking,
         institution_code: institutionCode || null,
+        faculty_id: facultyId || null,
+        phone: phone || null,
+        grade_levels: selectedGrades,
       };
 
       await supabase
@@ -323,13 +350,61 @@ export default function TeacherOnboarding({ fullName: initialName, avatarUrl, on
                   <label className="text-sm font-medium text-foreground mb-1.5 block">Full Name</label>
                   <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Dr. Jane Smith" className="h-12" autoFocus />
                 </motion.div>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.23 }}>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Phone Number</label>
+                  <Input value={phone} onChange={(e) => {
+                    let v = e.target.value.replace(/[^\d+\s]/g, "");
+                    if (v && !v.startsWith("+91")) v = "+91 " + v.replace(/^\+?91?\s?/, "");
+                    setPhone(v);
+                  }} placeholder="+91 98765 43210" className="h-12" />
+                </motion.div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Institution Type</label>
+                  <select
+                    value={institutionType}
+                    onChange={(e) => setInstitutionType(e.target.value)}
+                    className="w-full h-12 rounded-md border border-border bg-background px-3 text-sm focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">Select type...</option>
+                    {institutionTypes.map((t) => (
+                      <option key={t.id} value={t.id}>{t.label}</option>
+                    ))}
+                  </select>
+                </motion.div>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.27 }}>
                   <label className="text-sm font-medium text-foreground mb-1.5 block">Institution Name</label>
                   <Input value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} placeholder="e.g. MIT, Delhi University" className="h-12" />
                 </motion.div>
+                {institutionType && institutionType !== "independent" && (
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+                    <label className="text-sm font-medium text-foreground mb-1.5 block">Faculty / Employee ID</label>
+                    <Input value={facultyId} onChange={(e) => setFacultyId(e.target.value)} placeholder="e.g. FAC-2024-001" className="h-12" />
+                  </motion.div>
+                )}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <label className="text-sm font-medium text-foreground mb-1.5 block">Department / Subject</label>
                   <Input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g. Physics, Computer Science" className="h-12" />
+                </motion.div>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Grade Levels You Teach</label>
+                  <div className="flex flex-wrap gap-2">
+                    {gradeLevels.map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => setSelectedGrades((prev) =>
+                          prev.includes(g.id) ? prev.filter((x) => x !== g.id) : [...prev, g.id]
+                        )}
+                        className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
+                          selectedGrades.includes(g.id)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border hover:border-primary/40 text-foreground"
+                        }`}
+                      >
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
                 </motion.div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
                   <label className="text-sm font-medium text-foreground mb-1.5 block">Class Level</label>
