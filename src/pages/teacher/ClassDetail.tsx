@@ -239,23 +239,41 @@ const ClassDetail = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-display font-bold truncate">{classInfo.name}</h1>
+            <div className="flex items-center gap-2">
+              {classInfo.thumbnail && (
+                <span className="text-2xl">
+                  {{"math":"📐","atom":"⚛️","flask":"🧪","cell":"🧬","book":"📖","globe":"🌍","laptop":"💻","palette":"🎨","music":"🎵","trophy":"🏆","lightbulb":"💡","rocket":"🚀"}[classInfo.thumbnail] || "📖"}
+                </span>
+              )}
+              <h1 className="text-2xl sm:text-3xl font-display font-bold truncate">{classInfo.name}</h1>
+            </div>
             <div className="flex flex-wrap items-center gap-2 mt-1.5">
               {classInfo.subject && <Badge variant="secondary" className="text-xs">{classInfo.subject}</Badge>}
               {classInfo.academic_year && <Badge variant="outline" className="text-xs">{classInfo.academic_year}</Badge>}
+              {classInfo.grade_level && <Badge variant="outline" className="text-xs">{classInfo.grade_level}</Badge>}
+              {classInfo.section && <Badge variant="outline" className="text-xs">{classInfo.section}</Badge>}
+              <Badge variant="outline" className="text-xs">{enrollments.length} student{enrollments.length !== 1 ? "s" : ""}</Badge>
               <InviteCodePill code={classInfo.invite_code} />
               {activeSession && activeSession.status !== "completed" && (
                 <LiveSessionBadge sessionId={activeSession.id} role="teacher" studentCount={enrollments.length} />
               )}
             </div>
           </div>
-          {!activeSession || activeSession.status === "completed" ? (
-            <LiveSessionDialog classId={id!} onSessionStarted={fetchActiveSession}>
-              <Button size="sm" className="gap-1.5 shrink-0">
-                <Radio className="h-3.5 w-3.5" /> Live Session
-              </Button>
-            </LiveSessionDialog>
-          ) : null}
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setQrOpen(true)}>
+              <QrCode className="h-3.5 w-3.5" /> QR
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate(`/teacher/class/${id}/classroom`)}>
+              <DoorOpen className="h-3.5 w-3.5" /> Enter
+            </Button>
+            {!activeSession || activeSession.status === "completed" ? (
+              <LiveSessionDialog classId={id!} onSessionStarted={fetchActiveSession}>
+                <Button size="sm" className="gap-1.5">
+                  <Radio className="h-3.5 w-3.5" /> Live Session
+                </Button>
+              </LiveSessionDialog>
+            ) : null}
+          </div>
         </motion.div>
 
         {/* Announcements Input */}
