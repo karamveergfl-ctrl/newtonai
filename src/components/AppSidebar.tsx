@@ -96,6 +96,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const { isTeacher, isStudent, isInstitutionalAdmin, loading: roleLoading } = useUserRole();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
+  const { unreadCount } = useUserNotifications();
   
   // Get scroll state from context - safely handle when not in provider
   let hasScrolled = false;
