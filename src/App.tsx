@@ -70,6 +70,7 @@ const AISummarizer = lazy(() => import("./pages/tools/AISummarizer"));
 const AILectureNotes = lazy(() => import("./pages/tools/AILectureNotes"));
 const MindMap = lazy(() => import("./pages/tools/MindMap"));
 const AIPodcast = lazy(() => import("./pages/tools/AIPodcast"));
+const LaTeXEditor = lazy(() => import("./pages/tools/LaTeXEditor"));
 const PDFChat = lazy(() => import("./pages/PDFChat"));
 
 // Compare pages
