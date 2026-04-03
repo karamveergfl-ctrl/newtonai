@@ -479,6 +479,7 @@ const AISummarizer = () => {
 
       setSummary(summaryData.summary);
       setContentTitle(pendingSummaryContent.title);
+      setSourceText(pendingSummaryContent.textContent);
       setPendingSummaryContent(null);
       // Increment guest usage after successful generation
       if (!isAuthenticated) {
