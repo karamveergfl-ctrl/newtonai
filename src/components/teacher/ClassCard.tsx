@@ -1,12 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, BookOpen, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, BookOpen, ChevronRight, Radio, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 import type { ClassWithStats } from "@/hooks/useClasses";
 
 interface ClassCardProps {
-  classData: ClassWithStats;
+  classData: ClassWithStats & { last_session_date?: string | null };
 }
 
 const subjectColors: Record<string, string> = {
@@ -54,7 +56,7 @@ export function ClassCard({ classData }: ClassCardProps) {
           <Badge variant="secondary" className="w-fit text-xs">{classData.subject}</Badge>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/50">
             <Users className="h-3.5 w-3.5" />
@@ -67,9 +69,44 @@ export function ClassCard({ classData }: ClassCardProps) {
             </div>
           )}
         </div>
-        {classData.description && (
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{classData.description}</p>
+
+        {/* Last session date */}
+        {classData.last_session_date && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            <span>Last session {formatDistanceToNow(new Date(classData.last_session_date), { addSuffix: true })}</span>
+          </div>
         )}
+
+        {classData.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">{classData.description}</p>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 pt-1">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs flex-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/teacher/classes/${classData.id}`);
+            }}
+          >
+            Enter Classroom
+          </Button>
+          <Button
+            size="sm"
+            className="h-7 text-xs gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/teacher/classes/${classData.id}/live`);
+            }}
+          >
+            <Radio className="h-3 w-3" />
+            Go Live
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

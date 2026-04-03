@@ -208,14 +208,60 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {isTeacher ? (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Teacher Dashboard">
-                      <button onClick={() => navigate("/teacher")} className={btnClass("/teacher")}>
-                        <BarChart3 className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                        {!isCollapsed && <span>Dashboard</span>}
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Teacher Dashboard">
+                        <button onClick={() => navigate("/teacher")} className={btnClass("/teacher")}>
+                          <Home className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && <span>Dashboard</span>}
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="My Classes">
+                        <button onClick={() => navigate("/teacher")} className={btnClass()}>
+                          <GraduationCap className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && (
+                            <span className="flex items-center gap-2">
+                              My Classes
+                            </span>
+                          )}
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Analytics">
+                        <button onClick={() => navigate("/teacher/analytics")} className={btnClass("/teacher/analytics")}>
+                          <BarChart3 className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && <span>Analytics</span>}
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Students">
+                        <button onClick={() => navigate("/teacher/students")} className={btnClass("/teacher/students")}>
+                          <Users className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && <span>Students</span>}
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Materials">
+                        <button onClick={() => navigate("/teacher/materials")} className={btnClass("/teacher/materials")}>
+                          <ScrollText className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && <span>Materials</span>}
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Newton Chat">
+                        <button onClick={() => navigate("/teacher/newton-chat")} className={btnClass("/teacher/newton-chat")}>
+                          <MessageSquare className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && <span>Newton Chat</span>}
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
                 ) : (
                   <>
                     <SidebarMenuItem>
