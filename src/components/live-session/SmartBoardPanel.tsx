@@ -13,10 +13,13 @@ import { useWhiteboardAutoSave } from "@/hooks/useWhiteboardAutoSave";
 import { useHandwritingRecognition } from "@/hooks/useHandwritingRecognition";
 import { useVoiceCommands } from "@/hooks/useVoiceCommands";
 import { useLectureCapture } from "@/hooks/useLectureCapture";
+import { useLivePulse } from "@/hooks/useLivePulse";
 import { ClassroomThemeProvider, useClassroomTheme } from "@/components/smartboard/ClassroomThemeProvider";
 import { SmartBoardToolbar } from "@/components/smartboard/SmartBoardToolbar";
 import { WhiteboardCanvas, type WhiteboardCanvasHandle } from "@/components/smartboard/WhiteboardCanvas";
 import { VoiceCommandIndicator } from "@/components/smartboard/VoiceCommandIndicator";
+import { WalkInBanner } from "@/components/smartboard/WalkInBanner";
+import { ConfusionAlertBanner } from "@/components/smartboard/ConfusionAlertBanner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Maximize, Minimize, PanelRight, X } from "lucide-react";
@@ -25,6 +28,7 @@ import newtonLogoSm from "@/assets/newton-logo-sm.webp";
 
 interface SmartBoardPanelProps {
   sessionId: string;
+  classId?: string;
   children: ReactNode;
   onEndSession?: () => void;
   className?: string;
@@ -41,6 +45,7 @@ function formatDuration(seconds: number): string {
 
 function SmartBoardPanelInner({
   sessionId,
+  classId,
   children,
   onEndSession,
   sessionTitle,
@@ -86,6 +91,9 @@ function SmartBoardPanelInner({
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [teacherId, setTeacherId] = useState("");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  // Live pulse for confusion alert banner
+  const { pulseSummary, confusionAlert } = useLivePulse({ sessionId, role: "teacher" });
 
   // Classroom theme
   const { theme, toggleTheme } = useClassroomTheme();
@@ -140,25 +148,6 @@ function SmartBoardPanelInner({
     }
   }, [latestTranscript]);
 
-  // Voice commands
-  const { isListening: voiceListening, isProcessing: voiceProcessing, lastCommand } = useVoiceCommands({
-    enabled: voiceEnabled,
-    slideContent: currentSlideContent,
-    sessionId,
-    onNextSlide: () => {
-      const next = Math.min(currentSlideIndex + 1, totalSlides - 1);
-      setCurrentSlideIndex(next);
-    },
-    onPrevSlide: () => {
-      const prev = Math.max(currentSlideIndex - 1, 0);
-      setCurrentSlideIndex(prev);
-    },
-    onToggleCapture: (recording) => {
-      if (recording) startCapture();
-      else stopCapture();
-    },
-  });
-
   // Whiteboard stroke handler
   const handleStrokeEnd = useCallback(() => {
     const canvas = whiteboardRef.current?.getCanvas();
@@ -201,6 +190,29 @@ function SmartBoardPanelInner({
     whiteboardRef.current?.clear();
     wb.clearStacks();
   }, [wb.clearStacks]);
+
+  // Voice commands (must be after handleClear/handleUndo)
+  const { isListening: voiceListening, isProcessing: voiceProcessing, lastCommand } = useVoiceCommands({
+    enabled: voiceEnabled,
+    slideContent: currentSlideContent,
+    sessionId,
+    onNextSlide: () => {
+      const next = Math.min(currentSlideIndex + 1, totalSlides - 1);
+      setCurrentSlideIndex(next);
+    },
+    onPrevSlide: () => {
+      const prev = Math.max(currentSlideIndex - 1, 0);
+      setCurrentSlideIndex(prev);
+    },
+    onToggleCapture: (recording) => {
+      if (recording) startCapture();
+      else stopCapture();
+    },
+    onToolChange: (tool) => wb.setTool(tool as any),
+    onColorChange: (color) => wb.setColor(color),
+    onClearBoard: handleClear,
+    onUndo: handleUndo,
+  });
 
   // Timer
   useEffect(() => {
@@ -274,6 +286,26 @@ function SmartBoardPanelInner({
           </div>
         </div>
       )}
+
+      {/* Walk-in Mode Banner */}
+      {classId && (
+        <WalkInBanner
+          classId={classId}
+          sessionId={sessionId}
+          onRestoreWhiteboard={(data) => {
+            // Could restore whiteboard data in the future
+            console.log("Restoring whiteboard data from previous session", data);
+          }}
+        />
+      )}
+
+      {/* Confusion Alert Banner */}
+      <ConfusionAlertBanner
+        confusionPercentage={pulseSummary.confusion_percentage}
+        threshold={confusionThreshold}
+        slideContent={currentSlideContent}
+        sessionId={sessionId}
+      />
 
       {/* Fullscreen header bar */}
       {isFullscreen && (

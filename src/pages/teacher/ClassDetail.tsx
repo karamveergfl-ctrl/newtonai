@@ -704,7 +704,7 @@ function TeacherSessionWrapper({ session, classId, onUpdate, enrollmentCount }: 
   };
 
   return (
-    <SmartBoardPanel sessionId={session.id} onEndSession={handleEndSession}>
+    <SmartBoardPanel sessionId={session.id} classId={classId} onEndSession={handleEndSession}>
       <LiveSessionPanel classId={classId} session={session} onUpdate={onUpdate} />
     </SmartBoardPanel>
   );
