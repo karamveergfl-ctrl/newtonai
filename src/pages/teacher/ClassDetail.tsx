@@ -889,4 +889,139 @@ function AnalyticsTab({ classId }: { classId: string }) {
   );
 }
 
+function SessionsTab({ classId }: { classId: string }) {
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("live_sessions")
+        .select("id, title, status, started_at, total_slides, current_slide_index")
+        .eq("class_id", classId)
+        .order("started_at", { ascending: false });
+      setSessions(data || []);
+      setLoading(false);
+    };
+    fetch();
+  }, [classId]);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
+  if (sessions.length === 0) {
+    return (
+      <Card className="text-center py-12 border-border/50">
+        <CardContent>
+          <PlayCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">No sessions yet. Start a live session!</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const formatDate = (d: string) => {
+    const date = new Date(d);
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+
+  return (
+    <div className="space-y-2">
+      {sessions.map((s, i) => (
+        <motion.div key={s.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+          <Card className="border-border/50 cursor-pointer hover:border-primary/30 transition-colors" onClick={() => navigate(`/report/teacher/${s.id}`)}>
+            <CardContent className="flex items-center justify-between py-3 px-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.status === "teaching" ? "bg-destructive animate-pulse" : s.status === "ended" || s.status === "completed" ? "bg-muted-foreground" : "bg-primary"}`} />
+                <div>
+                  <p className="font-medium text-sm">{s.title}</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(s.started_at)} · {s.total_slides} slides</p>
+                </div>
+              </div>
+              <Badge variant={s.status === "teaching" ? "destructive" : "outline"} className="text-xs capitalize">{s.status}</Badge>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function NewtonChatTab({ classId }: { classId: string }) {
+  const [stats, setStats] = useState<{ total: number; recent: any[] }>({ total: 0, recent: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      // Get sessions for this class to find newton conversations
+      const { data: sessions } = await supabase
+        .from("live_sessions")
+        .select("id")
+        .eq("class_id", classId);
+
+      if (!sessions || sessions.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      // Get live questions from those sessions as proxy for Newton activity
+      const sessionIds = sessions.map(s => s.id);
+      const { data: questions, count } = await supabase
+        .from("live_questions")
+        .select("id, content, newton_answer, created_at, is_answered", { count: "exact" })
+        .in("session_id", sessionIds)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      setStats({ total: count || 0, recent: questions || [] });
+      setLoading(false);
+    };
+    fetch();
+  }, [classId]);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
+  if (stats.total === 0) {
+    return (
+      <Card className="text-center py-12 border-border/50">
+        <CardContent>
+          <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">No Newton Chat activity yet</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-border/50">
+        <CardContent className="pt-5 pb-4 text-center">
+          <p className="text-2xl font-bold">{stats.total}</p>
+          <p className="text-xs text-muted-foreground">Total Questions Asked</p>
+        </CardContent>
+      </Card>
+      <div className="space-y-2">
+        {stats.recent.map((q, i) => (
+          <motion.div key={q.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+            <Card className="border-border/50">
+              <CardContent className="py-3 px-4">
+                <p className="font-medium text-sm">{q.content}</p>
+                {q.newton_answer && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">🤖 {q.newton_answer}</p>
+                )}
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Badge variant={q.is_answered ? "secondary" : "outline"} className="text-[10px] h-5">
+                    {q.is_answered ? "Answered" : "Pending"}
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground">{new Date(q.created_at).toLocaleDateString()}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default ClassDetail;
