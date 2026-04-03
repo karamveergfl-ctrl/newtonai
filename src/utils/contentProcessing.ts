@@ -106,7 +106,7 @@ export const getYouTubeTranscript = async (
   videoId: string,
   accessToken: string
 ): Promise<string> => {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
     {
       method: "POST",
@@ -115,6 +115,7 @@ export const getYouTubeTranscript = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ videoId, videoTitle: "Video" }),
+      timeoutMs: 20000,
     }
   );
 
