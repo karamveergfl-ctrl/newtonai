@@ -1,101 +1,73 @@
 
 
-# NewtonAI — Study Tools & Visual Learning Feature Completion
+# Walk-in Mode, Voice Commands, Confusion Alert & Teacher Report — Implementation Plan
 
-## What This Plan Covers
+## Current State
 
-The user's prompt describes features across 4 slides (Slide 4: Visual Learning, Slide 6: Study Tools, plus Newton Chat integration). After analyzing the codebase, here is what actually needs building versus what already exists.
+| Feature | Status | Gap |
+|---------|--------|-----|
+| **Walk-in Mode** | Missing entirely | No session restore banner on classroom open |
+| **Voice Commands** | Working but requires "Newton" prefix | Missing: direct commands (pen, eraser, colors, clear board, new page), toast feedback for unrecognized commands |
+| **Confusion Alert** | Partial — fires in PulseMeter sidebar only | No full-width top banner in SmartBoardPanel, no "Recap Now" AI button, no warning vs critical distinction, no audio chime |
+| **Teacher Intelligence Report** | Working — has heatmap, topics, concept checks, PDF export | Missing: Recharts-based timeline chart (currently grid tiles), confusion spike annotations on timeline, peak/average student counts in summary |
 
-## Gap Analysis
+## Plan — 4 Changes
 
-| Feature | Status | What's Missing |
-|---------|--------|----------------|
-| **Quiz Generator** | MCQ only | True/False, Fill-in-Blank, Short Answer, Match-the-Following question types; adaptive difficulty; "Retry Wrong Only"; weak area summary; question type config in settings |
-| **Summarizer** | 4 formats + TTS working | Split-panel (source vs summary); "Make Simpler/Longer/Shorter" buttons; key term highlighting; "Send to Notes" |
-| **Homework Help** | Direct solution only | Socratic scaffolding mode (step-by-step guided Q&A); "Practice Similar Problems" |
-| **PDF Chat** | Fully working | No major gaps |
-| **Video Search** | Fully working | No changes needed |
-| **Mind Map** | Fully working (React Flow) | No changes needed |
-| **Podcast** | Fully working (dual-voice TTS) | No changes needed |
-| **OCR Tool** | Fully working (Tesseract.js) | No changes needed |
-| **LaTeX** | KaTeX everywhere | Standalone equation editor page missing |
-| **One-Tap Explainer** | Referenced in PitchDeck only | Entire component missing — bottom drawer with Video + Text tabs |
-| **Newton Chat integration** | Class-scoped chat exists | No changes needed |
+### 1. Walk-in Mode Banner
 
-## Implementation Plan — 4 Batches
+Create `src/components/smartboard/WalkInBanner.tsx`:
+- On `SmartBoardPanel` mount, query `live_sessions` for the most recent `status='ended'` session for the same `class_id`
+- If found, show a banner: class name, last session date, "Continue from last session?" with **Yes** / **Start Fresh** buttons
+- "Yes" loads `whiteboard_data` JSON from that session record onto the canvas via `whiteboardRef.current`
+- "Start Fresh" dismisses the banner
+- Auto-dismiss after 8 seconds via `setTimeout`
+- Wire into `SmartBoardPanelInner` — show above the main content area, only on initial mount
 
-### Batch 1: Multi-Type Quiz Generator
+### 2. Voice Commands Expansion
 
-**Edge function** (`supabase/functions/generate-quiz/index.ts`):
-- Accept `questionTypes` array in settings: `["mcq", "true_false", "fill_blank", "short_answer", "match"]`
-- Update AI prompt to generate mixed question types with a `type` field per question
-- True/False: `{ type: "true_false", question, correctAnswer: true|false, explanation }`
-- Fill in Blank: `{ type: "fill_blank", sentence: "The ___ is the powerhouse...", correctAnswer: "mitochondria", explanation }`
-- Short Answer: `{ type: "short_answer", question, correctAnswer, rubric, explanation }`
-- Match the Following: `{ type: "match", pairs: [{left, right}], explanation }`
+Modify `src/hooks/useVoiceCommands.ts`:
+- Remove the "Newton" prefix requirement — listen for direct commands
+- Add new command types: `"pen"`, `"eraser"`, `"text"`, `"clear_board"`, `"new_page"`, `"undo"`, and color commands (`"red"`, `"blue"`, `"green"`, `"black"`, `"yellow"`)
+- Add callbacks to props: `onToolChange`, `onColorChange`, `onNewPage`, `onUndo`, `onClearBoard`
+- For unrecognized speech: show a toast with suggestions ("Try: 'next slide', 'start recording', 'pen', 'red'")
+- Show animated command toast for every recognized command
 
-**Settings dialog** (`UniversalStudySettingsDialog.tsx`):
-- Add "Question Types" multi-select checkboxes when `type === "quiz"`
-- Add "Adaptive" option to difficulty selector
-- Add "Include Explanations" toggle
+Wire new callbacks in `SmartBoardPanel.tsx` connecting voice commands to whiteboard state (`wb.setTool`, `wb.setColor`, etc.)
 
-**New question type components** in `src/components/quiz/`:
-- `TrueFalseQuestion.tsx` — two large True/False buttons
-- `FillBlankQuestion.tsx` — sentence with inline `<input>` for the blank
-- `ShortAnswerQuestion.tsx` — textarea + AI grading via `newton-chat` edge function (returns score 0-1 + feedback)
-- `MatchQuestion.tsx` — two columns with HTML5 drag-and-drop matching
+### 3. Confusion Alert Full Banner
 
-**Quiz page** (`AIQuiz.tsx`):
-- Route each question to its type-specific component
-- Adaptive difficulty engine: track consecutive correct/wrong count, reorder remaining questions dynamically
-- Results screen: add "Retry Wrong Only" button, weak area summary grouped by topic
-- Export PDF button using jsPDF
+Create `src/components/smartboard/ConfusionAlertBanner.tsx`:
+- Receives `confusionPercentage`, `threshold`, `slideContent`, `sessionId` props
+- **Warning** (>30% confused): amber banner: "⚠ X% of students are struggling — consider slowing down"
+- **Critical** (>50% lost): red banner with soft audio chime (use `AudioContext` oscillator, 440Hz, 200ms)
+- "Dismiss" button and "Recap Now" button
+- "Recap Now" calls `newton-chat` edge function with last OCR text to stream a 3-bullet recap in a small popover
+- Auto-dismiss after 30s with countdown progress bar
 
-### Batch 2: Summarizer Enhancement
+Wire into `SmartBoardPanel.tsx` as a fixed top banner (above canvas area), using `confusionAlert` and `pulseSummary` from `useLivePulse` (need to add the hook to SmartBoardPanel — currently only used inside PulseMeter).
 
-**Summarizer page** (`AISummarizer.tsx`):
-- Add split-panel layout when summary is generated: scrollable source text on left, summary on right (CSS grid, collapses on mobile)
-- Add action buttons below summary: "Make it Simpler" (re-calls AI at lower reading level), "Make it Longer", "Make it Shorter" — each re-invokes the `generate-summary` edge function with a modifier parameter
-- Add "Send to Notes" button — inserts summary into student's personal notes via Supabase
-- Post-process summary output to detect and wrap key terms in highlighted `<span>` elements with click-to-define tooltips
+### 4. Teacher Report — Recharts Timeline
 
-### Batch 3: Homework Help Socratic Mode
+Modify `src/components/intelligence-report/EngagementHeatmap.tsx`:
+- Replace the grid tile layout with a Recharts `AreaChart` + `Tooltip`
+- X-axis: slide index (or timestamp if available)
+- Y-axis: engagement score (0-100)
+- Gradient fill: green at top, red at bottom using `linearGradient` defs
+- Tooltip on hover shows: slide title, engagement score, pulse responses, questions asked
+- Keep the color legend
+- Automatically label peak engagement and confusion spike slides with `ReferenceDot` annotations
 
-**Homework Help page** (`HomeworkHelp.tsx`):
-- Add mode toggle at top: "Guided Mode" (default) vs "Direct Solution"
-- **Guided/Socratic flow** (new state machine):
-  1. On submit, call `analyze-text` with a Socratic system prompt asking it to identify the concept and provide 3-4 options
-  2. Render concept options as clickable buttons
-  3. On selection, AI confirms/corrects and reveals Step 1 as a question with options
-  4. Continue step-by-step until solution complete, tracking state in a `steps[]` array
-  5. Final view shows the complete worked solution
-- "Practice Similar Problems" button after solution — calls AI to generate 3 similar problems at same difficulty
-- New component `SocraticStepFlow.tsx` to manage the multi-step interactive UI
+Add `peak_students` and `average_students` fields to the session summary card in `TeacherReportPage.tsx` (data already available from the edge function, just not displayed).
 
-### Batch 4: One-Tap Explainer + LaTeX Editor
+## Files Changed
 
-**One-Tap Explainer** (`src/components/OneTapExplainer.tsx` — new):
-- Bottom sheet/drawer component triggered by clicking any key term
-- Two tabs: "Video" (default) and "Text"
-- Video tab: calls `search-videos` edge function with `"[term] explained animation"`, shows top 3 results with embedded YouTube player
-- Text tab: calls `newton-chat` with grade-appropriate explanation prompt, streams response
-- "Show with Example" button generates a real-world analogy
-- "Related Terms" chips that recursively open the explainer
-- Dismiss by swiping down, Escape, or clicking outside
-- Wire into: `MarkdownRenderer` (for detected key terms), flashcard backs, homework help steps
+| File | Action |
+|------|--------|
+| `src/components/smartboard/WalkInBanner.tsx` | Create |
+| `src/components/smartboard/ConfusionAlertBanner.tsx` | Create |
+| `src/hooks/useVoiceCommands.ts` | Modify — remove Newton prefix, add tool/color/page commands |
+| `src/components/live-session/SmartBoardPanel.tsx` | Modify — wire walk-in banner, confusion banner, expanded voice callbacks |
+| `src/components/intelligence-report/EngagementHeatmap.tsx` | Modify — replace tile grid with Recharts AreaChart |
 
-**LaTeX Editor** (new tool page `src/pages/tools/LaTeXEditor.tsx`):
-- Two-panel: textarea input (left) with live KaTeX preview (right), debounced 200ms
-- Symbol palette buttons for common math symbols (Σ, ∫, √, π, fractions, matrices)
-- "Copy LaTeX", "Copy as Image" (canvas render → clipboard), "Insert into Notes"
-- Add route in router config
-
----
-
-## Technical Notes
-
-- No database migrations needed — all features use existing tables
-- Edge function changes are backward-compatible (new optional params)
-- ~6 new components, ~4 modified files, 1 new page
-- All new components follow existing patterns: `useProcessingOverlay`, `fetchWithTimeout`, `ToolAuthGate`, `useFeatureLimitGate`
+No database migrations needed — all data uses existing `live_sessions` and `session_intelligence_reports` tables.
 
