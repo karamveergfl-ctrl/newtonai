@@ -11,22 +11,27 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Brain, BookOpen, FileText, Network, Circle, GitBranch, Boxes, Clock, Zap, List, GraduationCap, Table2, Sparkles } from "lucide-react";
+import { Brain, BookOpen, FileText, Network, Circle, GitBranch, Boxes, Clock, Zap, List, GraduationCap, Table2, Sparkles, CheckSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
 import { SubscriptionTierBadge } from "@/components/SubscriptionTierBadge";
 import { AssignToClassSelect } from "@/components/AssignToClassSelect";
 
+export type QuizQuestionType = "mcq" | "true_false" | "fill_blank" | "short_answer" | "match";
+
 export interface UniversalGenerationSettings {
   pageStart?: number;
   pageEnd?: number;
   count: number;
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: "easy" | "medium" | "hard" | "adaptive";
   detailLevel: "brief" | "standard" | "detailed";
   mindMapStyle?: "radial" | "tree" | "cluster" | "timeline";
   summaryFormat?: "concise" | "detailed" | "bullet-points" | "academic";
   includeComparison?: boolean;
   classId?: string;
+  questionTypes?: QuizQuestionType[];
+  includeExplanations?: boolean;
 }
 
 interface UniversalStudySettingsDialogProps {
@@ -104,7 +109,15 @@ const typeConfigBase = {
   },
 };
 
-const difficultyLabels = ["Easy", "Medium", "Hard"];
+const difficultyLabels = ["Easy", "Medium", "Hard", "Adaptive"];
+
+const quizQuestionTypeOptions: { id: QuizQuestionType; label: string }[] = [
+  { id: "mcq", label: "Multiple Choice" },
+  { id: "true_false", label: "True / False" },
+  { id: "fill_blank", label: "Fill in the Blank" },
+  { id: "short_answer", label: "Short Answer" },
+  { id: "match", label: "Match the Following" },
+];
 const detailLevelLabels = ["Brief", "Standard", "Detailed"];
 
 export const UniversalStudySettingsDialog = ({
@@ -132,15 +145,31 @@ export const UniversalStudySettingsDialog = ({
   const [summaryFormat, setSummaryFormat] = useState<SummaryFormat>("concise");
   const [includeComparison, setIncludeComparison] = useState(true);
   const [selectedClassId, setSelectedClassId] = useState("none");
+  const [questionTypes, setQuestionTypes] = useState<QuizQuestionType[]>(["mcq"]);
+  const [includeExplanations, setIncludeExplanations] = useState(true);
+
+  const toggleQuestionType = (typeId: QuizQuestionType) => {
+    setQuestionTypes(prev => {
+      if (prev.includes(typeId)) {
+        if (prev.length === 1) return prev;
+        return prev.filter(t => t !== typeId);
+      }
+      return [...prev, typeId];
+    });
+  };
+
   const handleGenerate = () => {
+    const difficultyMap = ["easy", "medium", "hard", "adaptive"] as const;
     const settings: UniversalGenerationSettings = {
       count,
-      difficulty: ["easy", "medium", "hard"][difficulty] as "easy" | "medium" | "hard",
+      difficulty: difficultyMap[difficulty],
       detailLevel: ["brief", "standard", "detailed"][detailLevel] as "brief" | "standard" | "detailed",
       mindMapStyle: type === "mindmap" ? mindMapStyle : undefined,
       summaryFormat: type === "summary" ? summaryFormat : undefined,
       includeComparison: type === "summary" ? includeComparison : undefined,
       classId: selectedClassId !== "none" ? selectedClassId : undefined,
+      questionTypes: type === "quiz" ? questionTypes : undefined,
+      includeExplanations: type === "quiz" ? includeExplanations : undefined,
     };
 
     if (totalPages > 1) {
@@ -330,6 +359,41 @@ export const UniversalStudySettingsDialog = ({
             </div>
           )}
 
+          {/* Question Types - For Quiz */}
+          {type === "quiz" && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Question Types</Label>
+              <div className="space-y-2">
+                {quizQuestionTypeOptions.map((qt) => (
+                  <label key={qt.id} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={questionTypes.includes(qt.id)}
+                      onCheckedChange={() => toggleQuestionType(qt.id)}
+                    />
+                    <span className="text-sm">{qt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Include Explanations Toggle - For Quiz */}
+          {type === "quiz" && (
+            <div className="flex items-center justify-between py-2 px-1 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <Label className="text-sm font-medium">Include Explanations</Label>
+                  <p className="text-xs text-muted-foreground">Adds explanation per question</p>
+                </div>
+              </div>
+              <Switch
+                checked={includeExplanations}
+                onCheckedChange={setIncludeExplanations}
+              />
+            </div>
+          )}
+
           {/* Difficulty Slider - For Quiz and Flashcards */}
           {baseConfig.showDifficulty && (
             <div className="space-y-3">
@@ -339,7 +403,8 @@ export const UniversalStudySettingsDialog = ({
                   "text-sm font-semibold px-2 py-0.5 rounded",
                   difficulty === 0 && "bg-green-500/20 text-green-600 dark:text-green-400",
                   difficulty === 1 && "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400",
-                  difficulty === 2 && "bg-red-500/20 text-red-600 dark:text-red-400"
+                  difficulty === 2 && "bg-red-500/20 text-red-600 dark:text-red-400",
+                  difficulty === 3 && "bg-primary/20 text-primary"
                 )}>
                   {difficultyLabels[difficulty]}
                 </span>
@@ -348,7 +413,7 @@ export const UniversalStudySettingsDialog = ({
                 value={[difficulty]}
                 onValueChange={([value]) => setDifficulty(value)}
                 min={0}
-                max={2}
+                max={type === "quiz" ? 3 : 2}
                 step={1}
                 className="w-full"
               />
@@ -356,6 +421,7 @@ export const UniversalStudySettingsDialog = ({
                 <span>Easy</span>
                 <span>Medium</span>
                 <span>Hard</span>
+                {type === "quiz" && <span>Adaptive</span>}
               </div>
             </div>
           )}
