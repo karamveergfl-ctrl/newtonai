@@ -161,6 +161,7 @@ export const GlobalNewtonAssistant = memo(function GlobalNewtonAssistant({ onReg
                     onClose={handleClose}
                     onToggleSidebar={() => setShowSidebar((p) => !p)}
                     showSidebarToggle
+                    onRetry={handleRetry}
                   />
                 </Suspense>
               </div>
