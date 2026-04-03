@@ -1110,97 +1110,125 @@ const AISummarizer = () => {
                 ref={summaryRef}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-8"
+                className="mt-8 space-y-4"
                 onAnimationComplete={() => {
                   summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
               >
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle>Summary</CardTitle>
-                        {contentTitle && (
-                          <CardDescription>{contentTitle}</CardDescription>
-                        )}
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
-                        {isSupported && (
-                          <div className="flex items-center gap-1">
-                            <Button 
-                              variant={isSpeaking ? "default" : "outline"} 
-                              size="sm" 
-                              onClick={handleReadAloud}
-                              className={cn(
-                                "rounded-r-none",
-                                isSpeaking && 'bg-primary text-primary-foreground'
-                              )}
-                            >
-                              {isSpeaking ? (
-                                <VolumeX className="h-4 w-4 mr-1" />
-                              ) : (
-                                <Volume2 className="h-4 w-4 mr-1" />
-                              )}
-                              {isSpeaking ? "Stop" : "Listen"}
-                            </Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="rounded-l-none border-l-0 px-2"
-                                >
-                                  <ChevronDown className="h-3 w-3" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="max-h-[300px] overflow-y-auto bg-popover z-50">
-                                {availableVoices.length === 0 ? (
-                                  <DropdownMenuItem disabled>No voices available</DropdownMenuItem>
-                                ) : (
-                                  availableVoices.map((voice) => (
+                {/* Split panel: source + summary (desktop only, stack on mobile) */}
+                <div className={cn(
+                  "grid gap-4",
+                  sourceText ? "md:grid-cols-2" : "grid-cols-1"
+                )}>
+                  {/* Source panel (only if we have source text) */}
+                  {sourceText && (
+                    <Card className="hidden md:block">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Source</CardTitle>
+                        {contentTitle && <CardDescription className="text-xs">{contentTitle}</CardDescription>}
+                      </CardHeader>
+                      <CardContent className="max-h-[500px] overflow-y-auto">
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{sourceText.slice(0, 3000)}{sourceText.length > 3000 ? "..." : ""}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Summary panel */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div>
+                          <CardTitle>Summary</CardTitle>
+                          {contentTitle && !sourceText && <CardDescription>{contentTitle}</CardDescription>}
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          {isSupported && (
+                            <div className="flex items-center gap-1">
+                              <Button 
+                                variant={isSpeaking ? "default" : "outline"} 
+                                size="sm" 
+                                onClick={handleReadAloud}
+                                className={cn("rounded-r-none", isSpeaking && 'bg-primary text-primary-foreground')}
+                              >
+                                {isSpeaking ? <VolumeX className="h-4 w-4 mr-1" /> : <Volume2 className="h-4 w-4 mr-1" />}
+                                {isSpeaking ? "Stop" : "Listen"}
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm" className="rounded-l-none border-l-0 px-2">
+                                    <ChevronDown className="h-3 w-3" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="max-h-[300px] overflow-y-auto bg-popover z-50">
+                                  {availableVoices.length === 0 ? (
+                                    <DropdownMenuItem disabled>No voices available</DropdownMenuItem>
+                                  ) : availableVoices.map((voice) => (
                                     <DropdownMenuItem
                                       key={voice.name}
                                       onClick={() => {
                                         setSelectedVoiceName(voice.name);
                                         setPreferredVoice(voice.name, selectedLanguage);
                                       }}
-                                      className={cn(
-                                        "cursor-pointer",
-                                        selectedVoiceName === voice.name && "bg-accent"
-                                      )}
+                                      className={cn("cursor-pointer", selectedVoiceName === voice.name && "bg-accent")}
                                     >
-                                      <span className="truncate max-w-[200px]">
-                                        {voice.name.replace(/^(Microsoft|Google|Apple)\s+/i, "")}
-                                      </span>
-                                      {/neural|natural|premium|enhanced|wavenet/i.test(voice.name) && (
-                                        <Star className="h-3 w-3 ml-1 text-primary shrink-0" />
-                                      )}
+                                      <span className="truncate max-w-[200px]">{voice.name.replace(/^(Microsoft|Google|Apple)\s+/i, "")}</span>
+                                      {/neural|natural|premium|enhanced|wavenet/i.test(voice.name) && <Star className="h-3 w-3 ml-1 text-primary shrink-0" />}
                                     </DropdownMenuItem>
-                                  ))
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        )}
-                        <Button variant="outline" size="sm" onClick={handleCopy}>
-                          {copied ? (
-                            <Check className="h-4 w-4 mr-1" />
-                          ) : (
-                            <Copy className="h-4 w-4 mr-1" />
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           )}
-                          {copied ? "Copied" : "Copy"}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={handleDownload}>
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
+                          <Button variant="outline" size="sm" onClick={handleCopy}>
+                            {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                            {copied ? "Copied" : "Copy"}
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={handleDownload}>
+                            <Download className="h-4 w-4 mr-1" />
+                            Download
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <StudySectionRenderer content={summary} type="summary" />
-                  </CardContent>
-                </Card>
+                    </CardHeader>
+                    <CardContent>
+                      <StudySectionRenderer content={summary} type="summary" />
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Modifier buttons */}
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleModifySummary("simpler")}
+                    disabled={isModifying}
+                    className="gap-1.5"
+                  >
+                    {isModifying ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+                    Make it Simpler
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleModifySummary("longer")}
+                    disabled={isModifying}
+                    className="gap-1.5"
+                  >
+                    {isModifying ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowUp className="h-3 w-3" />}
+                    Make it Longer
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleModifySummary("shorter")}
+                    disabled={isModifying}
+                    className="gap-1.5"
+                  >
+                    {isModifying ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowDown className="h-3 w-3" />}
+                    Make it Shorter
+                  </Button>
+                </div>
               </motion.div>
             )}
           </div>
