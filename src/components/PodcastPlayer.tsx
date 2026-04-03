@@ -20,7 +20,11 @@ import {
   Settings,
   Download,
   FileText,
-  FileDown
+  FileDown,
+  Square,
+  RotateCcw,
+  Music,
+  AlertTriangle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -286,6 +290,62 @@ export function PodcastPlayer({
     }
   }, [title, segments]);
 
+  // Download audio as MP3 (combines base64 segments)
+  const downloadAudio = useCallback(async () => {
+    const audioSegments = segments.filter(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100);
+    if (audioSegments.length === 0) {
+      toast.error("No audio available to download. This podcast uses browser voice which cannot be exported.");
+      return;
+    }
+    
+    try {
+      toast.info("Preparing audio download...");
+      
+      // Convert base64 segments to blobs and concatenate
+      const audioBlobs: Blob[] = [];
+      for (const seg of audioSegments) {
+        const byteCharacters = atob(seg.audio!);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        audioBlobs.push(new Blob([byteArray], { type: "audio/mpeg" }));
+      }
+      
+      const combinedBlob = new Blob(audioBlobs, { type: "audio/mpeg" });
+      const url = URL.createObjectURL(combinedBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${title.replace(/[^a-z0-9]/gi, "_")}_podcast.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Audio downloaded as MP3");
+    } catch (error) {
+      console.error("Error downloading audio:", error);
+      toast.error("Failed to download audio");
+    }
+  }, [segments, title]);
+
+  // Check if browser supports speech synthesis
+  const speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const hasElevenLabsAudio = segments.some(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100);
+
+  // Stop playback entirely and reset to beginning
+  const handleStop = useCallback(() => {
+    pause();
+    seekToSegment(0);
+  }, [pause, seekToSegment]);
+
+  // Restart from beginning
+  const handleRestart = useCallback(() => {
+    seekToSegment(0);
+    // Small delay then play
+    setTimeout(() => toggle(), 100);
+  }, [seekToSegment, toggle]);
+
   return (
     <motion.div
       ref={containerRef}
@@ -335,11 +395,20 @@ export function PodcastPlayer({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={downloadAsTxt} className="gap-2 cursor-pointer text-sm">
                   <FileText className="w-4 h-4" />
-                  Download as TXT
+                  Download Transcript (TXT)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={downloadAsPdf} className="gap-2 cursor-pointer text-sm">
                   <FileDown className="w-4 h-4" />
-                  Download as PDF
+                  Download Transcript (PDF)
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={downloadAudio} 
+                  className="gap-2 cursor-pointer text-sm"
+                  disabled={!hasElevenLabsAudio}
+                >
+                  <Music className="w-4 h-4" />
+                  Download Audio (MP3)
+                  {!hasElevenLabsAudio && <span className="text-xs text-muted-foreground ml-1">(unavailable)</span>}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -434,7 +503,18 @@ export function PodcastPlayer({
         />
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mb-4">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
+          {/* Restart */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 sm:h-9 sm:w-9"
+            onClick={handleRestart}
+            title="Restart"
+          >
+            <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </Button>
+
           <Button 
             variant="ghost" 
             size="icon"
@@ -469,6 +549,18 @@ export function PodcastPlayer({
           >
             <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
+
+          {/* Stop */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 sm:h-9 sm:w-9"
+            onClick={handleStop}
+            disabled={!isPlaying && currentIndex === 0}
+            title="Stop"
+          >
+            <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </Button>
         </div>
 
         {/* Secondary Controls */}
@@ -497,7 +589,7 @@ export function PodcastPlayer({
 
           {/* Speed */}
           <div className="flex items-center justify-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
-            {[0.75, 1, 1.25, 1.5].map((speed) => (
+            {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
               <Button
                 key={speed}
                 variant={playbackRate === speed ? "secondary" : "ghost"}
@@ -531,6 +623,17 @@ export function PodcastPlayer({
             )}
           </Button>
         </div>
+
+        {/* Browser compatibility warning */}
+        {!speechSupported && !hasElevenLabsAudio && (
+          <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+            <p className="text-xs text-destructive">
+              Your browser doesn't support text-to-speech and no premium audio is available. 
+              Try Chrome or Edge for the best experience, or copy the transcript below.
+            </p>
+          </div>
+        )}
 
         {/* Transcript Preview */}
         <div ref={transcriptRef} className="mt-4 sm:mt-6 max-h-32 sm:max-h-48 overflow-y-auto space-y-1.5 sm:space-y-2">
