@@ -503,7 +503,18 @@ export function PodcastPlayer({
         />
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mb-4">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
+          {/* Restart */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 sm:h-9 sm:w-9"
+            onClick={handleRestart}
+            title="Restart"
+          >
+            <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </Button>
+
           <Button 
             variant="ghost" 
             size="icon"
@@ -537,6 +548,18 @@ export function PodcastPlayer({
             disabled={currentIndex === segments.length - 1}
           >
             <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
+          </Button>
+
+          {/* Stop */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 sm:h-9 sm:w-9"
+            onClick={handleStop}
+            disabled={!isPlaying && currentIndex === 0}
+            title="Stop"
+          >
+            <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </Button>
         </div>
 
