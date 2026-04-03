@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Attachment } from "@/components/newton-assistant/NewtonAttachmentButton";
 import { toast } from "sonner";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 
 export interface NewtonMessage {
   id: string;
