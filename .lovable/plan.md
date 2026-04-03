@@ -1,119 +1,101 @@
 
 
-# NewtonAI — Full Platform Refinement Plan
+# NewtonAI — Study Tools & Visual Learning Feature Completion
 
-## System Analysis Summary
+## What This Plan Covers
 
-The codebase is large (~120+ components, 50+ edge functions, 27+ DB tables) and already has solid architecture: lazy-loaded routes, QueryClient with retry/staleTime, error boundaries, deferred loading, and a promise-based podcast audio queue. However, several critical gaps exist.
+The user's prompt describes features across 4 slides (Slide 4: Visual Learning, Slide 6: Study Tools, plus Newton Chat integration). After analyzing the codebase, here is what actually needs building versus what already exists.
 
-### Key Findings
+## Gap Analysis
 
-**Performance gaps:**
-- `fetchWithTimeout` and `withRetry` exist but are **never imported** anywhere — zero API calls use them
-- No per-tool error boundaries — a crash in Quiz kills the entire page
-- No response caching for AI-generated content (re-generates on every visit)
-- Supabase Realtime channels created in `sendReaction` are never unsubscribed (memory leak)
+| Feature | Status | What's Missing |
+|---------|--------|----------------|
+| **Quiz Generator** | MCQ only | True/False, Fill-in-Blank, Short Answer, Match-the-Following question types; adaptive difficulty; "Retry Wrong Only"; weak area summary; question type config in settings |
+| **Summarizer** | 4 formats + TTS working | Split-panel (source vs summary); "Make Simpler/Longer/Shorter" buttons; key term highlighting; "Send to Notes" |
+| **Homework Help** | Direct solution only | Socratic scaffolding mode (step-by-step guided Q&A); "Practice Similar Problems" |
+| **PDF Chat** | Fully working | No major gaps |
+| **Video Search** | Fully working | No changes needed |
+| **Mind Map** | Fully working (React Flow) | No changes needed |
+| **Podcast** | Fully working (dual-voice TTS) | No changes needed |
+| **OCR Tool** | Fully working (Tesseract.js) | No changes needed |
+| **LaTeX** | KaTeX everywhere | Standalone equation editor page missing |
+| **One-Tap Explainer** | Referenced in PitchDeck only | Entire component missing — bottom drawer with Video + Text tabs |
+| **Newton Chat integration** | Class-scoped chat exists | No changes needed |
 
-**Podcast audio:**
-- Part 2 already added play-lock, voice-locking, and keepalive — these are solid
-- Remaining issue: no fallback when ElevenLabs quota is exhausted (silent failure)
+## Implementation Plan — 4 Batches
 
-**AI pipeline:**
-- Edge functions use raw `fetch` without timeout — can hang indefinitely
-- No streaming for quiz/flashcard/summary generation (blocking responses)
-- Duplicate document extraction if user generates quiz then flashcards from same file
+### Batch 1: Multi-Type Quiz Generator
 
-**Live classroom:**
-- Student reactions create a new channel per call without cleanup
-- No error handling on spotlight sync failures
-- Missing: Live OCR integration into SmartBoard (handwriting hook exists but isn't wired to note generation)
-- Missing: Live speech-to-notes pipeline (lecture capture exists but doesn't auto-generate notes)
+**Edge function** (`supabase/functions/generate-quiz/index.ts`):
+- Accept `questionTypes` array in settings: `["mcq", "true_false", "fill_blank", "short_answer", "match"]`
+- Update AI prompt to generate mixed question types with a `type` field per question
+- True/False: `{ type: "true_false", question, correctAnswer: true|false, explanation }`
+- Fill in Blank: `{ type: "fill_blank", sentence: "The ___ is the powerhouse...", correctAnswer: "mitochondria", explanation }`
+- Short Answer: `{ type: "short_answer", question, correctAnswer, rubric, explanation }`
+- Match the Following: `{ type: "match", pairs: [{left, right}], explanation }`
 
-**Missing integrations:**
-- Class-specific Newton Chat grounding exists in `chat-with-content` but the class-level chat UI doesn't invoke it with class material context
+**Settings dialog** (`UniversalStudySettingsDialog.tsx`):
+- Add "Question Types" multi-select checkboxes when `type === "quiz"`
+- Add "Adaptive" option to difficulty selector
+- Add "Include Explanations" toggle
 
----
+**New question type components** in `src/components/quiz/`:
+- `TrueFalseQuestion.tsx` — two large True/False buttons
+- `FillBlankQuestion.tsx` — sentence with inline `<input>` for the blank
+- `ShortAnswerQuestion.tsx` — textarea + AI grading via `newton-chat` edge function (returns score 0-1 + feedback)
+- `MatchQuestion.tsx` — two columns with HTML5 drag-and-drop matching
 
-## Implementation Plan (6 Batches)
+**Quiz page** (`AIQuiz.tsx`):
+- Route each question to its type-specific component
+- Adaptive difficulty engine: track consecutive correct/wrong count, reorder remaining questions dynamically
+- Results screen: add "Retry Wrong Only" button, weak area summary grouped by topic
+- Export PDF button using jsPDF
 
-### Batch 1: Wire Up API Resilience Everywhere
+### Batch 2: Summarizer Enhancement
 
-**Goal:** Make every API call use `fetchWithTimeout` + `withRetry`.
+**Summarizer page** (`AISummarizer.tsx`):
+- Add split-panel layout when summary is generated: scrollable source text on left, summary on right (CSS grid, collapses on mobile)
+- Add action buttons below summary: "Make it Simpler" (re-calls AI at lower reading level), "Make it Longer", "Make it Shorter" — each re-invokes the `generate-summary` edge function with a modifier parameter
+- Add "Send to Notes" button — inserts summary into student's personal notes via Supabase
+- Post-process summary output to detect and wrap key terms in highlighted `<span>` elements with click-to-define tooltips
 
-| File | Change |
-|------|--------|
-| `src/utils/contentProcessing.ts` | Replace all raw `fetch()` calls with `fetchWithTimeout()` (6 functions) |
-| `src/hooks/useNewtonChat.ts` | Wrap SSE fetch with `fetchWithTimeout` + AbortController cleanup |
-| `src/hooks/usePDFChat.ts` | Use `fetchWithTimeout` for RAG calls |
-| `src/hooks/useVoiceChat.ts` | Use `fetchWithTimeout` for voice-chat-tts calls |
-| `src/pages/tools/AIQuiz.tsx` | Wrap generation call with `fetchWithTimeout` |
-| `src/pages/tools/AIFlashcards.tsx` | Same |
-| `src/pages/tools/AISummarizer.tsx` | Same |
-| `src/pages/tools/MindMap.tsx` | Same |
-| `src/pages/tools/AILectureNotes.tsx` | Same |
-| `src/pages/tools/AIPodcast.tsx` | Same for script generation |
+### Batch 3: Homework Help Socratic Mode
 
-Also add a `useApiCall` helper hook that wraps any edge function invocation with timeout, retry, and error toast.
+**Homework Help page** (`HomeworkHelp.tsx`):
+- Add mode toggle at top: "Guided Mode" (default) vs "Direct Solution"
+- **Guided/Socratic flow** (new state machine):
+  1. On submit, call `analyze-text` with a Socratic system prompt asking it to identify the concept and provide 3-4 options
+  2. Render concept options as clickable buttons
+  3. On selection, AI confirms/corrects and reveals Step 1 as a question with options
+  4. Continue step-by-step until solution complete, tracking state in a `steps[]` array
+  5. Final view shows the complete worked solution
+- "Practice Similar Problems" button after solution — calls AI to generate 3 similar problems at same difficulty
+- New component `SocraticStepFlow.tsx` to manage the multi-step interactive UI
 
-### Batch 2: Per-Tool Error Boundaries + Loading States
+### Batch 4: One-Tap Explainer + LaTeX Editor
 
-**Goal:** Every study tool gets its own error boundary and retry UI.
+**One-Tap Explainer** (`src/components/OneTapExplainer.tsx` — new):
+- Bottom sheet/drawer component triggered by clicking any key term
+- Two tabs: "Video" (default) and "Text"
+- Video tab: calls `search-videos` edge function with `"[term] explained animation"`, shows top 3 results with embedded YouTube player
+- Text tab: calls `newton-chat` with grade-appropriate explanation prompt, streams response
+- "Show with Example" button generates a real-world analogy
+- "Related Terms" chips that recursively open the explainer
+- Dismiss by swiping down, Escape, or clicking outside
+- Wire into: `MarkdownRenderer` (for detected key terms), flashcard backs, homework help steps
 
-| File | Change |
-|------|--------|
-| `src/components/ToolErrorBoundary.tsx` | New component — wraps tool pages, shows retry button with tool name |
-| All 7 tool pages | Wrap root return in `<ToolErrorBoundary toolName="...">` |
-| All tool pages | Add explicit `isGenerating` state with skeleton loader (no blank screens) |
-| All tool pages | Add `onRetry` callback that re-triggers last generation |
-
-### Batch 3: AI Response Caching + Document Dedup
-
-**Goal:** Cache generated content; extract documents once.
-
-| File | Change |
-|------|--------|
-| `src/hooks/useGenerationCache.ts` | New hook — caches AI responses (quiz, flashcards, summary) by content hash in `localStorage` with 24h TTL |
-| `src/utils/contentProcessing.ts` | Add `processedDocumentCache` Map — if same file (by name+size+lastModified) was already extracted, return cached text |
-| All tool pages | Check cache before calling edge function; store result after successful generation |
-
-### Batch 4: Realtime Channel Leak Fix + Podcast Fallback
-
-**Goal:** Fix memory leaks; add TTS fallback.
-
-| File | Change |
-|------|--------|
-| `src/components/live-session/StudentLiveView.tsx` | Create reaction channel once on mount, reuse for all sends, unsubscribe on unmount |
-| `src/hooks/usePodcastAudioQueue.ts` | Add fallback: if ElevenLabs segment returns null audio AND WebSpeech is available, auto-switch to WebSpeech for that segment with a toast notification |
-| `src/components/PodcastRaiseHand.tsx` | Add try/catch around response playback with user-visible error toast |
-
-### Batch 5: Live Classroom Feature Completion
-
-**Goal:** Wire up existing hooks into working features.
-
-| File | Change |
-|------|--------|
-| `src/components/live-session/SmartBoardPanel.tsx` | Wire `useHandwritingRecognition` output to `generate-slide-notes` edge function — when teacher draws and OCR fires, auto-append recognized text as a slide note |
-| `src/components/live-session/SmartBoardPanel.tsx` | Wire `useLectureCapture` transcription output to `generate-slide-notes` — as speech is transcribed, feed it as `slide_context` for the current slide's AI notes |
-| `src/components/live-session/SmartBoardPanel.tsx` | Add "Search Animation Video" button in toolbar that takes selected/current topic and calls `search-videos` edge function, showing results in a side drawer |
-
-### Batch 6: Class-Specific Newton Chat Grounding
-
-**Goal:** Make per-class AI chat answer ONLY from class materials.
-
-| File | Change |
-|------|--------|
-| `src/components/student/ClassNewtonChat.tsx` | New component — class-scoped chat UI that passes `classId` to the backend |
-| `src/pages/student/StudentClassView.tsx` | Add "Ask Newton" tab/button that opens `ClassNewtonChat` |
-| `supabase/functions/chat-with-content/index.ts` | Accept optional `classId` param; when provided, filter `document_chunks` retrieval to only chunks belonging to that class's materials. Add system prompt: "Answer ONLY from the provided class materials. If the question is outside scope, say so." |
-| `src/hooks/useClassChat.ts` | New hook — similar to `useNewtonChat` but scopes context to class materials by passing `classId` in the request body |
+**LaTeX Editor** (new tool page `src/pages/tools/LaTeXEditor.tsx`):
+- Two-panel: textarea input (left) with live KaTeX preview (right), debounced 200ms
+- Symbol palette buttons for common math symbols (Σ, ∫, √, π, fractions, matrices)
+- "Copy LaTeX", "Copy as Image" (canvas render → clipboard), "Insert into Notes"
+- Add route in router config
 
 ---
 
 ## Technical Notes
 
-- **No database migrations needed** — all changes are frontend + edge function logic
-- **No new tables** — class materials and document_chunks already exist with proper RLS
-- All edge function changes are backward-compatible (new optional params)
-- Estimated: ~15 files modified, ~4 new files created
-- Will be implemented batch-by-batch in sequence
+- No database migrations needed — all features use existing tables
+- Edge function changes are backward-compatible (new optional params)
+- ~6 new components, ~4 modified files, 1 new page
+- All new components follow existing patterns: `useProcessingOverlay`, `fetchWithTimeout`, `ToolAuthGate`, `useFeatureLimitGate`
 
