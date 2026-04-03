@@ -18,6 +18,8 @@ import { ClassroomThemeProvider, useClassroomTheme } from "@/components/smartboa
 import { SmartBoardToolbar } from "@/components/smartboard/SmartBoardToolbar";
 import { WhiteboardCanvas, type WhiteboardCanvasHandle } from "@/components/smartboard/WhiteboardCanvas";
 import { VoiceCommandIndicator } from "@/components/smartboard/VoiceCommandIndicator";
+import { ClassroomVideoPlayer } from "@/components/smartboard/ClassroomVideoPlayer";
+import { EndSessionModal } from "@/components/smartboard/EndSessionModal";
 import { WalkInBanner } from "@/components/smartboard/WalkInBanner";
 import { ConfusionAlertBanner } from "@/components/smartboard/ConfusionAlertBanner";
 import { Button } from "@/components/ui/button";
@@ -87,10 +89,11 @@ function SmartBoardPanelInner({
   const hasActiveCheck = !!activeConceptCheck;
 
   // Teaching mode state
-  const [activeView, setActiveView] = useState<"session" | "whiteboard" | "document">("session");
+  const [activeView, setActiveView] = useState<"session" | "whiteboard" | "document" | "video">("session");
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [teacherId, setTeacherId] = useState("");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [endModalOpen, setEndModalOpen] = useState(false);
 
   // Live pulse for confusion alert banner
   const { pulseSummary, confusionAlert } = useLivePulse({ sessionId, role: "teacher" });
@@ -366,6 +369,8 @@ function SmartBoardPanelInner({
                 </div>
               )}
             </div>
+          ) : activeView === "video" ? (
+            <ClassroomVideoPlayer sessionId={sessionId} />
           ) : isFullscreen ? (
             <div className="h-full text-lg">{children}</div>
           ) : (
@@ -486,7 +491,7 @@ function SmartBoardPanelInner({
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={onEndSession}
+                  onClick={() => setEndModalOpen(true)}
                   className="text-xs"
                 >
                   End
@@ -554,7 +559,7 @@ function SmartBoardPanelInner({
                     className={cn("text-[10px] rounded-lg px-2 py-1.5 border transition-colors font-medium", questionsEnabled ? "bg-primary/10 border-primary/30 text-primary" : "bg-muted border-border text-muted-foreground")}
                   >Q&A</button>
                   {onEndSession && (
-                    <Button variant="destructive" size="sm" onClick={onEndSession} className="text-xs ml-auto">End</Button>
+                    <Button variant="destructive" size="sm" onClick={() => setEndModalOpen(true)} className="text-xs ml-auto">End</Button>
                   )}
                 </div>
               </div>
@@ -577,7 +582,7 @@ function SmartBoardPanelInner({
           }}
           isDarkTheme={theme === "classroom-dark"}
           onToggleTheme={toggleTheme}
-          onEndSession={onEndSession}
+          onEndSession={() => setEndModalOpen(true)}
           whiteboardTool={wb.tool}
           onToolChange={wb.setTool}
           whiteboardColor={wb.color}
@@ -592,6 +597,14 @@ function SmartBoardPanelInner({
           onClear={handleClear}
         />
       )}
+
+      {/* End Session Modal */}
+      <EndSessionModal
+        open={endModalOpen}
+        onOpenChange={setEndModalOpen}
+        sessionId={sessionId}
+        onComplete={onEndSession}
+      />
     </div>
   );
 }

@@ -24,8 +24,8 @@ import {
 import { Slider } from "@/components/ui/slider";
 
 interface SmartBoardToolbarProps {
-  activeView: "session" | "whiteboard" | "document";
-  onViewChange: (view: "session" | "whiteboard" | "document") => void;
+  activeView: "session" | "whiteboard" | "document" | "video";
+  onViewChange: (view: "session" | "whiteboard" | "document" | "video") => void;
   voiceEnabled: boolean;
   onToggleVoice: () => void;
   isCapturing: boolean;
@@ -94,8 +94,15 @@ export function SmartBoardToolbar({
       >
         <PenTool className="w-5 h-5" />
       </Button>
-
-      {/* Whiteboard tools (visible when whiteboard active) */}
+      <Button
+        variant={activeView === "video" ? "default" : "ghost"}
+        size="sm"
+        onClick={() => onViewChange("video")}
+        className={btnClass}
+        title="Video Player"
+      >
+        <span className="text-base">🎬</span>
+      </Button>
       {activeView === "whiteboard" && (
         <>
           <div className="w-px h-8 bg-border mx-1" />

@@ -732,18 +732,10 @@ function TeacherSessionWrapper({ session, classId, onUpdate, enrollmentCount }: 
   });
 
   const handleEndSession = async () => {
-    await supabase.from("live_sessions" as any).update({
-      status: "ended",
-    } as any).eq("id", session.id);
-
-    // Trigger intelligence report generation
-    supabase.functions.invoke("trigger-all-student-reports", {
-      body: { session_id: session.id },
-    }).catch(console.error);
-
+    // EndSessionModal handles the actual session ending steps.
+    // This callback fires after the modal completes.
     toast.success("Session ended");
     onUpdate();
-    navigate(`/report/teacher/${session.id}`);
   };
 
   return (

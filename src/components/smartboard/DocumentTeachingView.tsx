@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { ChevronLeft, ChevronRight, Highlighter, Pen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnnotationLayer } from "./AnnotationLayer";
+import { TextSelectionMenu } from "./TextSelectionMenu";
 import { useDocumentAnnotations, type Annotation } from "@/hooks/useDocumentAnnotations";
 import { cn } from "@/lib/utils";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
@@ -15,18 +16,27 @@ interface DocumentTeachingViewProps {
   fileUrl: string;
   sessionId: string;
   onClose?: () => void;
+  onSearchVideo?: (text: string) => void;
+  onGenerateQuiz?: (text: string) => void;
+  onExplain?: (text: string) => void;
+  onAddToNotes?: (text: string) => void;
 }
 
 export function DocumentTeachingView({
   fileUrl,
   sessionId,
   onClose,
+  onSearchVideo,
+  onGenerateQuiz,
+  onExplain,
+  onAddToNotes,
 }: DocumentTeachingViewProps) {
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [annotationTool, setAnnotationTool] = useState<"draw" | "highlight">("highlight");
   const [annotationColor, setAnnotationColor] = useState("#FBBF24");
   const [pageSize, setPageSize] = useState({ width: 800, height: 600 });
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const {
     addAnnotation,
@@ -39,12 +49,9 @@ export function DocumentTeachingView({
     setNumPages(n);
   }, []);
 
-  const onPageLoadSuccess = useCallback(
-    (page: any) => {
-      setPageSize({ width: page.width, height: page.height });
-    },
-    []
-  );
+  const onPageLoadSuccess = useCallback((page: any) => {
+    setPageSize({ width: page.width, height: page.height });
+  }, []);
 
   const handleAnnotationAdd = useCallback(
     (annotation: Annotation) => {
@@ -114,30 +121,72 @@ export function DocumentTeachingView({
         </div>
       </div>
 
-      {/* Document */}
-      <div className="flex-1 overflow-auto flex items-center justify-center relative">
-        <div className="relative">
-          <Document file={fileUrl} onLoadSuccess={onDocumentLoadSuccess}>
-            <Page
-              pageNumber={currentPage + 1}
-              onLoadSuccess={onPageLoadSuccess}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              width={Math.min(900, window.innerWidth * 0.7)}
-            />
-          </Document>
+      {/* Document with thumbnail strip */}
+      <div className="flex-1 flex min-h-0 overflow-hidden">
+        {/* Thumbnail strip */}
+        {numPages > 1 && (
+          <div className="w-[72px] shrink-0 border-r border-border bg-muted/30 overflow-y-auto py-2 px-1.5 space-y-1.5 scrollbar-hide">
+            <Document file={fileUrl}>
+              {Array.from({ length: numPages }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i)}
+                  className={cn(
+                    "w-full rounded-md overflow-hidden border-2 transition-all",
+                    currentPage === i
+                      ? "border-primary ring-1 ring-primary/30 shadow-sm"
+                      : "border-transparent hover:border-border"
+                  )}
+                >
+                  <Page
+                    pageNumber={i + 1}
+                    width={56}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                  />
+                  <span className="block text-[9px] text-muted-foreground text-center py-0.5">
+                    {i + 1}
+                  </span>
+                </button>
+              ))}
+            </Document>
+          </div>
+        )}
 
-          {/* Annotation overlay */}
-          <AnnotationLayer
-            width={pageSize.width}
-            height={pageSize.height}
-            annotations={getPageAnnotations(currentPage)}
-            tool={annotationTool}
-            color={annotationColor}
-            lineWidth={annotationTool === "highlight" ? 20 : 3}
-            onAnnotationAdd={handleAnnotationAdd}
-            pageIndex={currentPage}
-          />
+        {/* Main page */}
+        <div className="flex-1 overflow-auto flex items-center justify-center relative" ref={contentRef}>
+          <div className="relative">
+            <Document file={fileUrl} onLoadSuccess={onDocumentLoadSuccess}>
+              <Page
+                pageNumber={currentPage + 1}
+                onLoadSuccess={onPageLoadSuccess}
+                renderTextLayer={true}
+                renderAnnotationLayer={false}
+                width={Math.min(900, window.innerWidth * 0.65)}
+              />
+            </Document>
+
+            {/* Annotation overlay */}
+            <AnnotationLayer
+              width={pageSize.width}
+              height={pageSize.height}
+              annotations={getPageAnnotations(currentPage)}
+              tool={annotationTool}
+              color={annotationColor}
+              lineWidth={annotationTool === "highlight" ? 20 : 3}
+              onAnnotationAdd={handleAnnotationAdd}
+              pageIndex={currentPage}
+            />
+
+            {/* Text selection floating menu */}
+            <TextSelectionMenu
+              containerRef={contentRef}
+              onSearchVideo={onSearchVideo}
+              onGenerateQuiz={onGenerateQuiz}
+              onExplain={onExplain}
+              onAddToNotes={onAddToNotes}
+            />
+          </div>
         </div>
       </div>
 
