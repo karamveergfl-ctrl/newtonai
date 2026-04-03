@@ -141,7 +141,7 @@ export const transcribeAudio = async (
   mimeType?: string,
   language?: string
 ): Promise<string> => {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
     {
       method: "POST",
@@ -150,6 +150,7 @@ export const transcribeAudio = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ audio: audioBase64, mimeType, language }),
+      timeoutMs: 30000,
     }
   );
 
