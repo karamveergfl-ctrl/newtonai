@@ -20,6 +20,7 @@ import { AssignmentStatusBadge } from "@/components/student/AssignmentStatusBadg
 import { LiveSessionProvider } from "@/contexts/LiveSessionContext";
 import { StudentLiveView } from "@/components/live-session";
 import { LiveSessionBadge } from "@/components/live-session";
+import { ClassNewtonChat } from "@/components/student/ClassNewtonChat";
 
 interface Material {
   id: string;
