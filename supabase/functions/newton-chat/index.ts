@@ -101,7 +101,7 @@ serve(async (req) => {
         ? CONCEPT_CHECK_EXPLANATION_PROMPT
         : SYSTEM_PROMPT;
 
-    const maxTokens = message_type === "concept_check_explanation" ? 512 : 2048;
+    const maxTokens = message_type === "concept_check_explanation" ? 512 : 4096;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
