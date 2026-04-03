@@ -53,6 +53,7 @@ export function useLectureCapture({ sessionId, teacherId }: UseLectureCapturePro
           durationSeconds: 120,
         });
         totalAudioRef.current += 120;
+        setLatestTranscript(data.text);
       }
 
       // Restart recording for next chunk
