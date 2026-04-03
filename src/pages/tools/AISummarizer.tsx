@@ -185,6 +185,10 @@ const AISummarizer = () => {
   // Ref for auto-scrolling to summary
   const summaryRef = useRef<HTMLDivElement>(null);
 
+  // Source text for split-panel
+  const [sourceText, setSourceText] = useState<string>("");
+  const [isModifying, setIsModifying] = useState(false);
+
   // Processing state for Newton animation
   const {
     isProcessing,
