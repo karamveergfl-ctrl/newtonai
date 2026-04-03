@@ -227,6 +227,7 @@ function AnimatedRoutes() {
         {/* Teacher Routes */}
         <Route path="/teacher" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherDashboard /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/teacher/classes/:id" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><ClassDetail /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/teacher/profile" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherProfile /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         
         {/* Student Class Routes */}
         <Route path="/student/classes" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClasses /></OnboardingGate></ProtectedRoute></PageTransition>} />
