@@ -109,7 +109,15 @@ const typeConfigBase = {
   },
 };
 
-const difficultyLabels = ["Easy", "Medium", "Hard"];
+const difficultyLabels = ["Easy", "Medium", "Hard", "Adaptive"];
+
+const quizQuestionTypeOptions: { id: QuizQuestionType; label: string }[] = [
+  { id: "mcq", label: "Multiple Choice" },
+  { id: "true_false", label: "True / False" },
+  { id: "fill_blank", label: "Fill in the Blank" },
+  { id: "short_answer", label: "Short Answer" },
+  { id: "match", label: "Match the Following" },
+];
 const detailLevelLabels = ["Brief", "Standard", "Detailed"];
 
 export const UniversalStudySettingsDialog = ({
