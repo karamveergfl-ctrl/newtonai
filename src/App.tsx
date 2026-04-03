@@ -211,6 +211,7 @@ function AnimatedRoutes() {
         <Route path="/tools/lecture-notes" element={<PageTransition><AILectureNotes /></PageTransition>} />
         <Route path="/tools/ai-podcast" element={<PageTransition><AIPodcast /></PageTransition>} />
         <Route path="/tools/mind-map" element={<PageTransition><MindMap /></PageTransition>} />
+        <Route path="/tools/latex-editor" element={<PageTransition><LaTeXEditor /></PageTransition>} />
         
         {/* Compare Routes */}
         <Route path="/compare" element={<PageTransition><Compare /></PageTransition>} />
