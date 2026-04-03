@@ -23,6 +23,7 @@ const TeacherDashboard = () => {
   const [monthSessions, setMonthSessions] = useState(0);
   const [avgUnderstanding, setAvgUnderstanding] = useState<number | null>(null);
   const [lastSessionDates, setLastSessionDates] = useState<Record<string, string>>({});
+  const [recentCompletedSessions, setRecentCompletedSessions] = useState<{ id: string; title: string; class_id: string; started_at: string; className: string }[]>([]);
   const navigate = useNavigate();
 
   const totalStudents = classes.reduce((acc, cls) => acc + (cls.student_count || 0), 0);
