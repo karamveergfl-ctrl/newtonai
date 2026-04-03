@@ -589,7 +589,7 @@ export function PodcastPlayer({
 
           {/* Speed */}
           <div className="flex items-center justify-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
-            {[0.75, 1, 1.25, 1.5].map((speed) => (
+            {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
               <Button
                 key={speed}
                 variant={playbackRate === speed ? "secondary" : "ghost"}
