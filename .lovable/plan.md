@@ -1,73 +1,66 @@
 
 
-# Walk-in Mode, Voice Commands, Confusion Alert & Teacher Report — Implementation Plan
+# Part 2 — Teacher Dashboard Enhancement
 
 ## Current State
+The existing `TeacherDashboard.tsx` is minimal: 4 stat cards, 2 quick actions, and a class grid. No activity feed, no pending actions, no live session indicator, no session stats. The sidebar already has a "Teacher Dashboard" link at `/teacher`.
 
-| Feature | Status | Gap |
-|---------|--------|-----|
-| **Walk-in Mode** | Missing entirely | No session restore banner on classroom open |
-| **Voice Commands** | Working but requires "Newton" prefix | Missing: direct commands (pen, eraser, colors, clear board, new page), toast feedback for unrecognized commands |
-| **Confusion Alert** | Partial — fires in PulseMeter sidebar only | No full-width top banner in SmartBoardPanel, no "Recap Now" AI button, no warning vs critical distinction, no audio chime |
-| **Teacher Intelligence Report** | Working — has heatmap, topics, concept checks, PDF export | Missing: Recharts-based timeline chart (currently grid tiles), confusion spike annotations on timeline, peak/average student counts in summary |
+## What Needs Building
 
-## Plan — 4 Changes
+### 1. Enhanced Stats Row (modify TeacherDashboard.tsx)
+Replace current 4 stats with meaningful ones from DB:
+- **Active Classes** — count from `classes` table (already have)
+- **Total Students** — sum from `class_enrollments` (already have)
+- **Live Sessions This Month** — query `live_sessions` where `started_at` is in current month and `teacher_id` matches, calculate total hours from duration
+- **Avg Understanding** — query `pulse_responses` aggregated across recent sessions (show "—" if no data)
 
-### 1. Walk-in Mode Banner
+### 2. Two-Column Layout Below Stats
 
-Create `src/components/smartboard/WalkInBanner.tsx`:
-- On `SmartBoardPanel` mount, query `live_sessions` for the most recent `status='ended'` session for the same `class_id`
-- If found, show a banner: class name, last session date, "Continue from last session?" with **Yes** / **Start Fresh** buttons
-- "Yes" loads `whiteboard_data` JSON from that session record onto the canvas via `whiteboardRef.current`
-- "Start Fresh" dismisses the banner
-- Auto-dismiss after 8 seconds via `setTimeout`
-- Wire into `SmartBoardPanelInner` — show above the main content area, only on initial mount
+**Left Column (60%)** — "Your Classes" grid:
+- Show 6 classes initially with "Load More" button
+- Enhance `ClassCard` to show: last session date (from `live_sessions`), "Go Live Now" shortcut button, "Enter Classroom" button
+- Keep existing subject color borders
 
-### 2. Voice Commands Expansion
+**Right Column (40%)** — Three sections:
 
-Modify `src/hooks/useVoiceCommands.ts`:
-- Remove the "Newton" prefix requirement — listen for direct commands
-- Add new command types: `"pen"`, `"eraser"`, `"text"`, `"clear_board"`, `"new_page"`, `"undo"`, and color commands (`"red"`, `"blue"`, `"green"`, `"black"`, `"yellow"`)
-- Add callbacks to props: `onToolChange`, `onColorChange`, `onNewPage`, `onUndo`, `onClearBoard`
-- For unrecognized speech: show a toast with suggestions ("Try: 'next slide', 'start recording', 'pen', 'red'")
-- Show animated command toast for every recognized command
+**a) Recent Activity Feed** — new component `TeacherActivityFeed.tsx`:
+- Query recent events: new enrollments from `class_enrollments`, completed sessions from `live_sessions`, Newton Chat questions from `newton_conversations`
+- Each item: icon, description, class name badge, relative timestamp
+- Show last 10 items, "View All" link
+- Uses existing tables — no migration needed
 
-Wire new callbacks in `SmartBoardPanel.tsx` connecting voice commands to whiteboard state (`wb.setTool`, `wb.setColor`, etc.)
+**b) Upcoming Sessions** — placeholder section showing next 3 scheduled sessions (from `live_sessions` with future `started_at`, or show "No upcoming sessions" with a "Schedule" button)
 
-### 3. Confusion Alert Full Banner
+**c) Pending Actions** — new component `PendingActions.tsx`:
+- Ungraded assignments: query `assignments` with no grades
+- Red flag alerts: sessions where pulse "lost" > 50%
+- Students not active in 7+ days
+- Each item: amber/red card with icon, description, action button
 
-Create `src/components/smartboard/ConfusionAlertBanner.tsx`:
-- Receives `confusionPercentage`, `threshold`, `slideContent`, `sessionId` props
-- **Warning** (>30% confused): amber banner: "⚠ X% of students are struggling — consider slowing down"
-- **Critical** (>50% lost): red banner with soft audio chime (use `AudioContext` oscillator, 440Hz, 200ms)
-- "Dismiss" button and "Recap Now" button
-- "Recap Now" calls `newton-chat` edge function with last OCR text to stream a 3-bullet recap in a small popover
-- Auto-dismiss after 30s with countdown progress bar
+### 3. Sidebar Enhancement for Teachers (modify AppSidebar.tsx)
+Expand the Teacher section from a single "Dashboard" link to:
+- Dashboard (house icon)
+- My Classes (grid icon) — with count badge
+- Live Now (pulsing red dot) — only if teacher has active `live_sessions` with `status = 'teaching'`
+- Analytics (chart icon) → `/teacher/analytics`
+- Students (people icon) → `/teacher/students`
+- Materials (folder icon) → `/teacher/materials`
+- Newton Chat (chat icon) → `/teacher/newton-chat`
+- Profile (at bottom, already exists)
 
-Wire into `SmartBoardPanel.tsx` as a fixed top banner (above canvas area), using `confusionAlert` and `pulseSummary` from `useLivePulse` (need to add the hook to SmartBoardPanel — currently only used inside PulseMeter).
-
-### 4. Teacher Report — Recharts Timeline
-
-Modify `src/components/intelligence-report/EngagementHeatmap.tsx`:
-- Replace the grid tile layout with a Recharts `AreaChart` + `Tooltip`
-- X-axis: slide index (or timestamp if available)
-- Y-axis: engagement score (0-100)
-- Gradient fill: green at top, red at bottom using `linearGradient` defs
-- Tooltip on hover shows: slide title, engagement score, pulse responses, questions asked
-- Keep the color legend
-- Automatically label peak engagement and confusion spike slides with `ReferenceDot` annotations
-
-Add `peak_students` and `average_students` fields to the session summary card in `TeacherReportPage.tsx` (data already available from the edge function, just not displayed).
+### 4. "Live Now" Indicator
+Query `live_sessions` for teacher's active session. If found, show pulsing red "LIVE" badge in sidebar and a banner at top of dashboard: "[Class Name] is LIVE — Return to Classroom →"
 
 ## Files Changed
 
 | File | Action |
 |------|--------|
-| `src/components/smartboard/WalkInBanner.tsx` | Create |
-| `src/components/smartboard/ConfusionAlertBanner.tsx` | Create |
-| `src/hooks/useVoiceCommands.ts` | Modify — remove Newton prefix, add tool/color/page commands |
-| `src/components/live-session/SmartBoardPanel.tsx` | Modify — wire walk-in banner, confusion banner, expanded voice callbacks |
-| `src/components/intelligence-report/EngagementHeatmap.tsx` | Modify — replace tile grid with Recharts AreaChart |
+| `src/pages/teacher/TeacherDashboard.tsx` | Rewrite — two-column layout, enhanced stats, activity feed, pending actions |
+| `src/components/teacher/TeacherActivityFeed.tsx` | Create — recent activity feed component |
+| `src/components/teacher/PendingActions.tsx` | Create — pending actions widget |
+| `src/components/teacher/ClassCard.tsx` | Modify — add last session date, Go Live button |
+| `src/components/AppSidebar.tsx` | Modify — expand Teacher sidebar section with full nav items + Live Now indicator |
 
-No database migrations needed — all data uses existing `live_sessions` and `session_intelligence_reports` tables.
+## No Database Migrations
+All data comes from existing tables: `classes`, `class_enrollments`, `live_sessions`, `assignments`, `newton_conversations`, `pulse_responses`.
 
