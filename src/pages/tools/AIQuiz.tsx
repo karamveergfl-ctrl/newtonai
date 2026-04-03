@@ -363,18 +363,18 @@ const AIQuiz = () => {
                     <div className={cn(
                       "w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center mx-auto",
                       percentage >= 80 
-                        ? "bg-gradient-to-br from-yellow-400/20 to-amber-500/20" 
+                        ? "bg-primary/15" 
                         : percentage >= 60 
-                        ? "bg-gradient-to-br from-gray-300/20 to-gray-400/20"
-                        : "bg-gradient-to-br from-orange-400/20 to-red-500/20"
+                        ? "bg-muted"
+                        : "bg-destructive/15"
                     )}>
                       <Trophy className={cn(
                         "w-12 h-12 sm:w-14 sm:h-14",
                         percentage >= 80 
-                          ? "text-yellow-500" 
+                          ? "text-primary" 
                           : percentage >= 60 
-                          ? "text-gray-400"
-                          : "text-orange-500"
+                          ? "text-muted-foreground"
+                          : "text-destructive"
                       )} />
                     </div>
                   </motion.div>
