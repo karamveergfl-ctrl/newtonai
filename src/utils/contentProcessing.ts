@@ -77,7 +77,7 @@ export const extractTextFromImage = async (
 ): Promise<string> => {
   const base64 = await fileToBase64(file);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-handwriting`,
     {
       method: "POST",
@@ -86,6 +86,7 @@ export const extractTextFromImage = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ imageData: base64 }),
+      timeoutMs: 30000,
     }
   );
 
