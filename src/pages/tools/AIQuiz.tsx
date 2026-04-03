@@ -482,11 +482,11 @@ const AIQuiz = () => {
                   
                   if (showResult) {
                     if (isCorrectOption) {
-                      optionStyles = "bg-green-50 dark:bg-green-900/20 border-green-500";
-                      badgeStyles = "bg-green-500 text-white";
+                      optionStyles = "bg-accent/10 border-accent dark:bg-accent/20";
+                      badgeStyles = "bg-accent text-accent-foreground";
                     } else if (isSelected && !isCorrectOption) {
-                      optionStyles = "bg-red-50 dark:bg-red-900/20 border-red-400";
-                      badgeStyles = "bg-red-400 text-white";
+                      optionStyles = "bg-destructive/10 border-destructive dark:bg-destructive/20";
+                      badgeStyles = "bg-destructive text-destructive-foreground";
                     }
                   } else if (isSelected) {
                     optionStyles = "bg-primary/5 border-primary";
