@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssignments } from "@/hooks/useAssignments";
 import { InviteCodePill } from "@/components/teacher/InviteCodePill";
+import { ClassQRModal } from "@/components/teacher/ClassQRModal";
 import { ClassAnalyticsCharts } from "@/components/teacher/ClassAnalyticsCharts";
 import { AttendanceManager } from "@/components/teacher/AttendanceManager";
 import { MarksEntryPanel } from "@/components/teacher/MarksEntryPanel";
