@@ -11,7 +11,7 @@ import { AnnouncementsBanner } from "@/components/student/AnnouncementsBanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy, TrendingUp, BarChart3, Award } from "lucide-react";
+import { Loader2, FileText, ClipboardList, ExternalLink, ArrowLeft, File, Link as LinkIcon, Video, Radio, Trophy, TrendingUp, BarChart3, Award, Bot } from "lucide-react";
 import { StudentMarksTab } from "@/components/student/StudentMarksTab";
 import { Button } from "@/components/ui/button";
 import SEOHead from "@/components/SEOHead";
@@ -20,6 +20,7 @@ import { AssignmentStatusBadge } from "@/components/student/AssignmentStatusBadg
 import { LiveSessionProvider } from "@/contexts/LiveSessionContext";
 import { StudentLiveView } from "@/components/live-session";
 import { LiveSessionBadge } from "@/components/live-session";
+import { ClassNewtonChat } from "@/components/student/ClassNewtonChat";
 
 interface Material {
   id: string;
@@ -252,11 +253,12 @@ const StudentClassView = () => {
 
         {!takingQuiz && (
           <Tabs defaultValue="materials">
-            <TabsList className="grid w-full grid-cols-4 h-10">
-              <TabsTrigger value="materials" className="gap-1.5 text-sm"><FileText className="h-4 w-4" /> Materials</TabsTrigger>
-              <TabsTrigger value="assignments" className="gap-1.5 text-sm"><ClipboardList className="h-4 w-4" /> Assign.</TabsTrigger>
-              <TabsTrigger value="marks" className="gap-1.5 text-sm"><Award className="h-4 w-4" /> Marks</TabsTrigger>
-              <TabsTrigger value="performance" className="gap-1.5 text-sm"><TrendingUp className="h-4 w-4" /> Perf.</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-5 h-10">
+              <TabsTrigger value="materials" className="gap-1 text-xs sm:text-sm"><FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Materials</span><span className="sm:hidden">Mat.</span></TabsTrigger>
+              <TabsTrigger value="assignments" className="gap-1 text-xs sm:text-sm"><ClipboardList className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Assign.</span><span className="sm:hidden">Asgn.</span></TabsTrigger>
+              <TabsTrigger value="newton" className="gap-1 text-xs sm:text-sm"><Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Newton</span><span className="sm:hidden">AI</span></TabsTrigger>
+              <TabsTrigger value="marks" className="gap-1 text-xs sm:text-sm"><Award className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Marks</TabsTrigger>
+              <TabsTrigger value="performance" className="gap-1 text-xs sm:text-sm"><TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Perf.</span><span className="sm:hidden">Perf.</span></TabsTrigger>
             </TabsList>
 
             <TabsContent value="materials" className="mt-5">
@@ -394,6 +396,10 @@ const StudentClassView = () => {
                 </Card>
               )}
               {id && <StudentPerformanceTab classId={id} />}
+            </TabsContent>
+
+            <TabsContent value="newton" className="mt-5">
+              {id && <ClassNewtonChat classId={id} className="h-[60vh]" />}
             </TabsContent>
           </Tabs>
         )}

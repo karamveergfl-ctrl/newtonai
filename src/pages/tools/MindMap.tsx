@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import { motion } from "framer-motion";
 import { ToolAuthGate } from "@/components/ToolAuthGate";
 import { ContentDisclaimer } from "@/components/ContentDisclaimer";
@@ -134,7 +135,7 @@ const MindMap = () => {
         throw new Error("No content to process");
       }
 
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-mindmap`,
         {
           method: "POST",
@@ -149,6 +150,7 @@ const MindMap = () => {
             detailLevel: "standard",
           }),
           signal: abortControllerRef.current?.signal,
+          timeoutMs: 30000,
         }
       );
 

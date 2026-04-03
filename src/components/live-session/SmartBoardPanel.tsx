@@ -107,11 +107,15 @@ function SmartBoardPanelInner({
     enabled: activeView === "whiteboard",
   });
 
-  // Handwriting recognition
+  // Handwriting recognition — feed OCR text to slide notes
   const { isRecognizing, onStrokeEnd: hwStrokeEnd } = useHandwritingRecognition({
     canvasRef: getCanvasRef() as React.RefObject<HTMLCanvasElement | null>,
     onRecognized: (text) => {
       setCurrentSlideContent(text);
+      // Auto-feed OCR text as slide context for AI note generation
+      if (text.trim()) {
+        advanceToSlide(currentSlideIndex, text, `Whiteboard – Slide ${currentSlideIndex + 1}`);
+      }
     },
   });
 
@@ -124,10 +128,17 @@ function SmartBoardPanelInner({
     getUser();
   }, []);
 
-  const { isCapturing, startCapture, stopCapture, recordSlideChange } = useLectureCapture({
+  const { isCapturing, latestTranscript, startCapture, stopCapture, recordSlideChange } = useLectureCapture({
     sessionId,
     teacherId,
   });
+
+  // When live transcript arrives, feed it as slide context for AI notes
+  useEffect(() => {
+    if (latestTranscript && latestTranscript.trim().length > 20) {
+      advanceToSlide(currentSlideIndex, latestTranscript, `Speech – Slide ${currentSlideIndex + 1}`);
+    }
+  }, [latestTranscript]);
 
   // Voice commands
   const { isListening: voiceListening, isProcessing: voiceProcessing, lastCommand } = useVoiceCommands({

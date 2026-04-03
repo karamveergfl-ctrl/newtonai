@@ -1,6 +1,29 @@
 /**
  * Shared content processing utilities for study tools
  */
+import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
+
+// In-memory cache for extracted document text (dedup within session)
+const documentCache = new Map<string, { text: string; timestamp: number }>();
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+function getFileCacheKey(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
+function getCachedExtraction(file: File): string | null {
+  const key = getFileCacheKey(file);
+  const cached = documentCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.text;
+  }
+  documentCache.delete(key);
+  return null;
+}
+
+function setCachedExtraction(file: File, text: string): void {
+  documentCache.set(getFileCacheKey(file), { text, timestamp: Date.now() });
+}
 
 /**
  * Convert a File to base64 string
@@ -23,7 +46,7 @@ export const extractTextFromPDF = async (
 ): Promise<string> => {
   const base64 = await fileToBase64(file);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-pdf-text`,
     {
       method: "POST",
@@ -32,6 +55,7 @@ export const extractTextFromPDF = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ pdfContent: base64 }),
+      timeoutMs: 30000,
     }
   );
 
@@ -53,7 +77,7 @@ export const extractTextFromImage = async (
 ): Promise<string> => {
   const base64 = await fileToBase64(file);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-handwriting`,
     {
       method: "POST",
@@ -62,6 +86,7 @@ export const extractTextFromImage = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ imageData: base64 }),
+      timeoutMs: 30000,
     }
   );
 
@@ -81,7 +106,7 @@ export const getYouTubeTranscript = async (
   videoId: string,
   accessToken: string
 ): Promise<string> => {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`,
     {
       method: "POST",
@@ -90,6 +115,7 @@ export const getYouTubeTranscript = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ videoId, videoTitle: "Video" }),
+      timeoutMs: 20000,
     }
   );
 
@@ -115,7 +141,7 @@ export const transcribeAudio = async (
   mimeType?: string,
   language?: string
 ): Promise<string> => {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
     {
       method: "POST",
@@ -124,6 +150,7 @@ export const transcribeAudio = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ audio: audioBase64, mimeType, language }),
+      timeoutMs: 30000,
     }
   );
 
@@ -157,7 +184,7 @@ export const extractTextFromDOCX = async (
 ): Promise<string> => {
   const base64 = await fileToBase64(file);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-docx-text`,
     {
       method: "POST",
@@ -166,6 +193,7 @@ export const extractTextFromDOCX = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ docxContent: base64 }),
+      timeoutMs: 30000,
     }
   );
 
@@ -187,7 +215,7 @@ export const extractTextFromPPTX = async (
 ): Promise<string> => {
   const base64 = await fileToBase64(file);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-pptx-text`,
     {
       method: "POST",
@@ -196,6 +224,7 @@ export const extractTextFromPPTX = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ pptxContent: base64 }),
+      timeoutMs: 30000,
     }
   );
 
@@ -209,43 +238,44 @@ export const extractTextFromPPTX = async (
 };
 
 /**
- * Process uploaded file and extract text content
+ * Process uploaded file and extract text content.
+ * Caches results by file identity (name+size+lastModified) to avoid duplicate extractions.
  */
 export const processUploadedFile = async (
   file: File,
   accessToken: string
 ): Promise<string> => {
+  // Check cache first
+  const cached = getCachedExtraction(file);
+  if (cached) return cached;
+
+  let result: string;
+
   if (file.type === "application/pdf") {
-    return extractTextFromPDF(file, accessToken);
-  }
-  
-  if (file.type.startsWith("image/")) {
-    return extractTextFromImage(file, accessToken);
-  }
-  
-  if (file.type.startsWith("text/") || file.name.endsWith(".txt") || file.name.endsWith(".md")) {
-    return readTextFile(file);
-  }
-  
-  // Handle DOCX files
-  if (
+    result = await extractTextFromPDF(file, accessToken);
+  } else if (file.type.startsWith("image/")) {
+    result = await extractTextFromImage(file, accessToken);
+  } else if (file.type.startsWith("text/") || file.name.endsWith(".txt") || file.name.endsWith(".md")) {
+    result = await readTextFile(file);
+  } else if (
     file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
     file.type === "application/msword" ||
     file.name.endsWith(".docx") ||
     file.name.endsWith(".doc")
   ) {
-    return extractTextFromDOCX(file, accessToken);
-  }
-
-  // Handle PPTX/PPT files
-  if (
+    result = await extractTextFromDOCX(file, accessToken);
+  } else if (
     file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
     file.type === "application/vnd.ms-powerpoint" ||
     file.name.endsWith(".pptx") ||
     file.name.endsWith(".ppt")
   ) {
-    return extractTextFromPPTX(file, accessToken);
+    result = await extractTextFromPPTX(file, accessToken);
+  } else {
+    throw new Error(`Unsupported file type: ${file.type}`);
   }
-  
-  throw new Error(`Unsupported file type: ${file.type}`);
+
+  // Cache the result
+  setCachedExtraction(file, result);
+  return result;
 };

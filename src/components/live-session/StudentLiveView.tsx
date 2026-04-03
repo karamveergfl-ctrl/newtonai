@@ -29,7 +29,20 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
   const [notification, setNotification] = useState<string | null>(null);
   const [showReactions, setShowReactions] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const reactionChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const { spotlightEnabled } = useLiveSession();
+
+  // Create reaction channel once on mount, reuse for all sends
+  useEffect(() => {
+    const channel = supabase.channel(`reactions:${sessionId}`);
+    channel.subscribe();
+    reactionChannelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      reactionChannelRef.current = null;
+    };
+  }, [sessionId]);
 
   // Auto-switch when teacher disables spotlight
   useEffect(() => {
@@ -48,7 +61,8 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
 
   const sendReaction = useCallback(async (type: string) => {
     try {
-      const channel = supabase.channel(`reactions:${sessionId}`);
+      const channel = reactionChannelRef.current;
+      if (!channel) return;
       await channel.send({
         type: "broadcast",
         event: "reaction",
@@ -59,7 +73,7 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
     } catch {
       toast.error("Failed to send reaction");
     }
-  }, [sessionId]);
+  }, []);
 
   return (
     <div className="relative h-full w-full">

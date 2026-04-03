@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Attachment } from "@/components/newton-assistant/NewtonAttachmentButton";
 import { toast } from "sonner";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 
 export interface NewtonMessage {
   id: string;
@@ -122,7 +123,7 @@ export function useNewtonChat(conversationId: string | null) {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/newton-chat`,
         {
           method: "POST",
@@ -137,6 +138,7 @@ export function useNewtonChat(conversationId: string | null) {
             ],
             stream: false,
           }),
+          timeoutMs: 10000,
         }
       );
 
@@ -162,7 +164,7 @@ export function useNewtonChat(conversationId: string | null) {
     const { data: { session: currentSession } } = await supabase.auth.getSession();
     const authToken = currentSession?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/newton-chat`,
       {
         method: "POST",
@@ -172,6 +174,7 @@ export function useNewtonChat(conversationId: string | null) {
         },
         body: JSON.stringify({ messages: apiMessages, stream: true }),
         signal,
+        timeoutMs: 60000, // Streaming responses need longer timeout
       }
     );
 

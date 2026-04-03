@@ -38,6 +38,7 @@ import {
   transcribeAudio,
 } from "@/utils/contentProcessing";
 import { cn } from "@/lib/utils";
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { InlineRecents } from "@/components/InlineRecents";
 import { PrimaryAdBanner } from "@/components/PrimaryAdBanner";
@@ -319,13 +320,14 @@ const AISummarizer = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`, {
+      const response = await fetchWithTimeout(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-transcript`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ videoId, videoTitle }),
+        timeoutMs: 20000,
       });
 
       if (!response.ok) {

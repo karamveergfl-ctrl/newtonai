@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSpeechRecognition } from './useSpeechRecognition';
 import { useToast } from './use-toast';
+import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
 
 interface UseVoiceChatOptions {
   documentId: string | null;
@@ -149,7 +150,7 @@ export function useVoiceChat({
       setIsSpeaking(true);
       
       // Call voice-chat-tts edge function
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-chat-tts`,
         {
           method: 'POST',
@@ -162,6 +163,7 @@ export function useVoiceChat({
             text: cleanedText,
             language: currentLanguage,
           }),
+          timeoutMs: 20000,
         }
       );
       
