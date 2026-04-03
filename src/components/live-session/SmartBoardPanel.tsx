@@ -87,7 +87,7 @@ function SmartBoardPanelInner({
   const hasActiveCheck = !!activeConceptCheck;
 
   // Teaching mode state
-  const [activeView, setActiveView] = useState<"session" | "whiteboard" | "document">("session");
+  const [activeView, setActiveView] = useState<"session" | "whiteboard" | "document" | "video">("session");
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [teacherId, setTeacherId] = useState("");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
