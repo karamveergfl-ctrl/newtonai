@@ -397,6 +397,10 @@ const StudentClassView = () => {
               )}
               {id && <StudentPerformanceTab classId={id} />}
             </TabsContent>
+
+            <TabsContent value="newton" className="mt-5">
+              {id && <ClassNewtonChat classId={id} className="h-[60vh]" />}
+            </TabsContent>
           </Tabs>
         )}
       </div>
