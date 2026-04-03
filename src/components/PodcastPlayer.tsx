@@ -290,6 +290,62 @@ export function PodcastPlayer({
     }
   }, [title, segments]);
 
+  // Download audio as MP3 (combines base64 segments)
+  const downloadAudio = useCallback(async () => {
+    const audioSegments = segments.filter(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100);
+    if (audioSegments.length === 0) {
+      toast.error("No audio available to download. This podcast uses browser voice which cannot be exported.");
+      return;
+    }
+    
+    try {
+      toast.info("Preparing audio download...");
+      
+      // Convert base64 segments to blobs and concatenate
+      const audioBlobs: Blob[] = [];
+      for (const seg of audioSegments) {
+        const byteCharacters = atob(seg.audio!);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        audioBlobs.push(new Blob([byteArray], { type: "audio/mpeg" }));
+      }
+      
+      const combinedBlob = new Blob(audioBlobs, { type: "audio/mpeg" });
+      const url = URL.createObjectURL(combinedBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${title.replace(/[^a-z0-9]/gi, "_")}_podcast.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Audio downloaded as MP3");
+    } catch (error) {
+      console.error("Error downloading audio:", error);
+      toast.error("Failed to download audio");
+    }
+  }, [segments, title]);
+
+  // Check if browser supports speech synthesis
+  const speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const hasElevenLabsAudio = segments.some(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100);
+
+  // Stop playback entirely and reset to beginning
+  const handleStop = useCallback(() => {
+    pause();
+    seekToSegment(0);
+  }, [pause, seekToSegment]);
+
+  // Restart from beginning
+  const handleRestart = useCallback(() => {
+    seekToSegment(0);
+    // Small delay then play
+    setTimeout(() => toggle(), 100);
+  }, [seekToSegment, toggle]);
+
   return (
     <motion.div
       ref={containerRef}
