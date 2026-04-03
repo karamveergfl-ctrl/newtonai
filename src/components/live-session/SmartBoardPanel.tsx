@@ -28,6 +28,7 @@ import newtonLogoSm from "@/assets/newton-logo-sm.webp";
 
 interface SmartBoardPanelProps {
   sessionId: string;
+  classId?: string;
   children: ReactNode;
   onEndSession?: () => void;
   className?: string;
