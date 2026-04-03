@@ -253,35 +253,29 @@ export const processUploadedFile = async (
 
   if (file.type === "application/pdf") {
     result = await extractTextFromPDF(file, accessToken);
-  }
-  
-  if (file.type.startsWith("image/")) {
-    return extractTextFromImage(file, accessToken);
-  }
-  
-  if (file.type.startsWith("text/") || file.name.endsWith(".txt") || file.name.endsWith(".md")) {
-    return readTextFile(file);
-  }
-  
-  // Handle DOCX files
-  if (
+  } else if (file.type.startsWith("image/")) {
+    result = await extractTextFromImage(file, accessToken);
+  } else if (file.type.startsWith("text/") || file.name.endsWith(".txt") || file.name.endsWith(".md")) {
+    result = await readTextFile(file);
+  } else if (
     file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
     file.type === "application/msword" ||
     file.name.endsWith(".docx") ||
     file.name.endsWith(".doc")
   ) {
-    return extractTextFromDOCX(file, accessToken);
-  }
-
-  // Handle PPTX/PPT files
-  if (
+    result = await extractTextFromDOCX(file, accessToken);
+  } else if (
     file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
     file.type === "application/vnd.ms-powerpoint" ||
     file.name.endsWith(".pptx") ||
     file.name.endsWith(".ppt")
   ) {
-    return extractTextFromPPTX(file, accessToken);
+    result = await extractTextFromPPTX(file, accessToken);
+  } else {
+    throw new Error(`Unsupported file type: ${file.type}`);
   }
-  
-  throw new Error(`Unsupported file type: ${file.type}`);
+
+  // Cache the result
+  setCachedExtraction(file, result);
+  return result;
 };
