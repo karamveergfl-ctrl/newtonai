@@ -509,7 +509,14 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           {/* Profile */}
           <SidebarMenuButton asChild tooltip="Profile">
             <button onClick={() => navigate("/profile")} className={btnClass("/profile")}>
-              <User className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+              <div className="relative shrink-0">
+                <User className={cn(isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-destructive text-destructive-foreground text-[8px] font-bold flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </div>
               {!isCollapsed && <span>Profile</span>}
             </button>
           </SidebarMenuButton>
