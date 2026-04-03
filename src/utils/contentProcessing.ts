@@ -215,7 +215,7 @@ export const extractTextFromPPTX = async (
 ): Promise<string> => {
   const base64 = await fileToBase64(file);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-pptx-text`,
     {
       method: "POST",
@@ -224,6 +224,7 @@ export const extractTextFromPPTX = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ pptxContent: base64 }),
+      timeoutMs: 30000,
     }
   );
 
