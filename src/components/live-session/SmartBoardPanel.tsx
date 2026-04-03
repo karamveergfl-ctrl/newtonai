@@ -148,29 +148,6 @@ function SmartBoardPanelInner({
     }
   }, [latestTranscript]);
 
-  // Voice commands
-  const { isListening: voiceListening, isProcessing: voiceProcessing, lastCommand } = useVoiceCommands({
-    enabled: voiceEnabled,
-    slideContent: currentSlideContent,
-    sessionId,
-    onNextSlide: () => {
-      const next = Math.min(currentSlideIndex + 1, totalSlides - 1);
-      setCurrentSlideIndex(next);
-    },
-    onPrevSlide: () => {
-      const prev = Math.max(currentSlideIndex - 1, 0);
-      setCurrentSlideIndex(prev);
-    },
-    onToggleCapture: (recording) => {
-      if (recording) startCapture();
-      else stopCapture();
-    },
-    onToolChange: (tool) => wb.setTool(tool as any),
-    onColorChange: (color) => wb.setColor(color),
-    onClearBoard: handleClear,
-    onUndo: handleUndo,
-  });
-
   // Whiteboard stroke handler
   const handleStrokeEnd = useCallback(() => {
     const canvas = whiteboardRef.current?.getCanvas();
@@ -213,6 +190,29 @@ function SmartBoardPanelInner({
     whiteboardRef.current?.clear();
     wb.clearStacks();
   }, [wb.clearStacks]);
+
+  // Voice commands (must be after handleClear/handleUndo)
+  const { isListening: voiceListening, isProcessing: voiceProcessing, lastCommand } = useVoiceCommands({
+    enabled: voiceEnabled,
+    slideContent: currentSlideContent,
+    sessionId,
+    onNextSlide: () => {
+      const next = Math.min(currentSlideIndex + 1, totalSlides - 1);
+      setCurrentSlideIndex(next);
+    },
+    onPrevSlide: () => {
+      const prev = Math.max(currentSlideIndex - 1, 0);
+      setCurrentSlideIndex(prev);
+    },
+    onToggleCapture: (recording) => {
+      if (recording) startCapture();
+      else stopCapture();
+    },
+    onToolChange: (tool) => wb.setTool(tool as any),
+    onColorChange: (color) => wb.setColor(color),
+    onClearBoard: handleClear,
+    onUndo: handleUndo,
+  });
 
   // Timer
   useEffect(() => {
