@@ -2573,12 +2573,20 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: Json
       }
+      get_compliance_report_data: {
+        Args: { p_institution_id: string }
+        Returns: Json
+      }
       get_concept_check_results: { Args: { p_check_id: string }; Returns: Json }
       get_document_file_path: {
         Args: { p_document_id: string }
         Returns: string
       }
       get_faculty_stats: { Args: { p_institution_id: string }; Returns: Json }
+      get_faculty_workload: {
+        Args: { p_institution_id: string }
+        Returns: Json
+      }
       get_institution_analytics: {
         Args: { p_institution_id: string }
         Returns: Json
