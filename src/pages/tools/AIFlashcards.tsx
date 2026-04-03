@@ -133,7 +133,7 @@ const AIFlashcards = () => {
         throw new Error("No content to process");
       }
 
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-flashcards`,
         {
           method: "POST",
@@ -152,6 +152,7 @@ const AIFlashcards = () => {
             },
           }),
           signal: abortControllerRef.current?.signal,
+          timeoutMs: 30000,
         }
       );
 
