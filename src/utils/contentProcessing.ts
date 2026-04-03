@@ -238,14 +238,21 @@ export const extractTextFromPPTX = async (
 };
 
 /**
- * Process uploaded file and extract text content
+ * Process uploaded file and extract text content.
+ * Caches results by file identity (name+size+lastModified) to avoid duplicate extractions.
  */
 export const processUploadedFile = async (
   file: File,
   accessToken: string
 ): Promise<string> => {
+  // Check cache first
+  const cached = getCachedExtraction(file);
+  if (cached) return cached;
+
+  let result: string;
+
   if (file.type === "application/pdf") {
-    return extractTextFromPDF(file, accessToken);
+    result = await extractTextFromPDF(file, accessToken);
   }
   
   if (file.type.startsWith("image/")) {
