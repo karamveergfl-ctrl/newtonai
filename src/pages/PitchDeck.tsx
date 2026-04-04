@@ -344,7 +344,7 @@ function SlideInstitution() {
 /* ─── SLIDE 8: Before/After ─── */
 function SlideBeforeAfter() {
   const comparisons = [
-    { area: "Smart Board Usage", before: "PDF viewer ", after: "Full Classroom OS with whiteboard, recording, AI" },
+    { area: "Smart Board Usage", before: "PDF viewer ", after: "Full Classroom OS with visual interaction, recording, AI" },
     { area: "Student Participation", before: "3-5 students raise hands", after: "100% respond via Pulse, Questions, Concept Checks" },
     { area: "Attendance", before: "Paper register, 10 min/class", after: "Auto-marked via class join, instant" },
     { area: "Notes & Study Material", before: "Students photograph whiteboard", after: "AI-generated notes per slide, auto flashcards" },
