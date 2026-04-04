@@ -406,11 +406,6 @@ function SlideImplementation() {
           ))}
         </div>
 
-        <div className="mt-5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center animate-fade-in" style={{ animationDelay: "850ms" }}>
-          <p className="text-emerald-300 text-xs font-medium">
-            🏫 Pilot: 2-3 departments • 10-15 faculty • 500-1000 students • 4 weeks to full data
-          </p>
-        </div>
       </div>
     </div>
   );
