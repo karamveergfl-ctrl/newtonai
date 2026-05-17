@@ -17,6 +17,7 @@ export default function Slide14MindMaps() {
       ]}
       icon={<Network size={48} color="white" strokeWidth={2} />}
       iconGradient="linear-gradient(135deg, #10B981, #047857)"
+      videoKey="MIND_MAPS"
       videoSrc={VIDEO_PATHS.MIND_MAPS}
       videoCaption="Watch Newton generate a complete Biology mind map for 'The Human Circulatory System' from a chapter PDF in 7 seconds — with all sub-concepts branching interactively, ready to explore."
     />
