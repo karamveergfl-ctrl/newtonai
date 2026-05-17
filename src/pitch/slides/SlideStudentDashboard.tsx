@@ -21,7 +21,7 @@ const classes = [
 export default function SlideStudentDashboard() {
   return (
     <SlideShell theme="dark">
-      <div className="h-full flex flex-col px-12 pt-20 pb-20 bg-inherit">
+      <div className="h-full flex flex-col px-12 pt-28 pb-20 bg-inherit">
         <div className="text-center mb-4">
           <motion.div variants={slideChild} className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-2"
             style={{ background: "#6366F11A" }}>

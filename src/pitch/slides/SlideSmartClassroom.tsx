@@ -7,7 +7,7 @@ import { VIDEO_PATHS } from "../constants/videoPaths";
 export default function SlideSmartClassroom() {
   return (
     <SlideShell theme="dark">
-      <div className="h-full flex flex-col px-14 pt-24 pb-20">
+      <div className="h-full flex flex-col px-14 pt-28 pb-20">
         <motion.div variants={slideChild} style={{ color: "#14B8A6", fontSize: 13, fontWeight: 700, letterSpacing: "0.3em" }}>
           FOR TEACHERS · LIVE SMART CLASSROOM
         </motion.div>
