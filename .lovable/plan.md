@@ -1,40 +1,38 @@
 ## Goal
-Make the admin account use one reliable switch button between Teacher and Student dashboards, and ensure Student Home always lands on the image dashboard at `/student/dashboard` instead of bouncing back to the teacher view.
 
-## What I’ll change
-1. **Add an explicit dashboard mode for admin switching**
-   - Introduce a small frontend-only view-mode state for admin accounts (teacher vs student view).
-   - Update the single admin switch button so it sets that mode before navigating.
-   - Use the current mode, not just raw roles, to determine which dashboard the admin is actively using.
+When an admin uses the "Switch to Student" toggle, the UI should look identical to a real student login — no teacher-only nav items, sections, or shortcuts should leak through.
 
-2. **Make Home navigation honor the active mode everywhere**
-   - Update the main sidebar Home button so:
-     - student accounts go to `/student/dashboard`
-     - teacher accounts go to `/dashboard`
-     - admin accounts in student view also go to `/student/dashboard`
-     - admin accounts in teacher view go to `/teacher`
-   - Update the mobile bottom nav Home item with the same logic, since it still defaults to `/dashboard`.
+## Root cause
 
-3. **Prevent redirect bounce-back to teacher view**
-   - Adjust shared route/onboarding redirect logic so admin users who intentionally switched to student view are not immediately sent back into teacher flow.
-   - Keep existing teacher/institution redirects intact for normal users.
+Admins typically also hold the `teacher` role. The sidebar (and mobile nav) decide what to show purely from roles (`isTeacher` / `isStudent`), so even after switching to student view, the Teacher group (My Classes, Analytics, Students, Materials, Newton Chat) still renders. Same for any teacher-only footer/CTA paths.
 
-4. **Tighten regression coverage**
-   - Replace the current string-based test assumptions with checks that cover the new admin-switch behavior.
-   - Add/extend a small test to confirm:
-     - the admin switch button toggles between teacher and student dashboards
-     - Home resolves to `/student/dashboard` when in student view
-     - teacher users still keep their expected dashboard path
+## Changes (frontend only)
 
-5. **Update QA checklist**
-   - Expand the existing manual QA doc with the exact admin-switch scenario that is failing now.
+1. **`src/components/AppSidebar.tsx`**
+   - Read `dashboardMode` (already imported).
+   - Derive effective view for admins:
+     - `effectiveTeacher = isTeacher && !(isAdmin && dashboardMode === "student")`
+     - `effectiveStudent = isStudent || (isAdmin && dashboardMode === "student")`
+   - Replace `isTeacher` / `isStudent` usage in the "My Classes / Teacher" group rendering with these effective flags so admins in student view see the student nav block (Dashboard, My Classes, Join Class) instead of the teacher block.
+   - Keep the Admin section (with the switch button) visible regardless of mode so they can switch back.
+   - `homePath` logic stays as-is (already correct).
 
-## Technical details
-- Likely files to update:
-  - `src/components/AppSidebar.tsx`
-  - `src/components/MobileBottomNav.tsx`
-  - `src/components/OnboardingGate.tsx`
-  - `src/test/studentHomeButton.test.tsx`
-  - `docs/qa/student-home-button.md`
-- I’ll keep this frontend-only and avoid backend/auth schema changes.
-- I’ll preserve the existing single switch button design rather than adding extra controls.
+2. **`src/components/MobileBottomNav.tsx`**
+   - Apply the same `effectiveTeacher` / `effectiveStudent` derivation so the bottom nav items match what a real student sees.
+
+3. **`src/pages/student/StudentDashboard.tsx`**
+   - No content changes needed — it's already student-only. Verify nothing teacher-specific renders.
+
+4. **Tests**
+   - Extend `src/test/studentHomeButton.test.tsx` with a string assertion that AppSidebar gates the teacher group via the `effectiveTeacher` flag (i.e. an admin with `dashboardMode === "student"` won't render the teacher block).
+
+## Out of scope
+
+- No backend, role, or RLS changes. Admin still has both roles in the DB — this is purely a view-mode UI gate.
+- No changes to onboarding redirect logic (already honors `dashboardMode`).
+
+## Files touched
+
+- `src/components/AppSidebar.tsx`
+- `src/components/MobileBottomNav.tsx`
+- `src/test/studentHomeButton.test.tsx`
