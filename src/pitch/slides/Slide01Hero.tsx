@@ -24,7 +24,7 @@ export default function Slide01Hero() {
           Transforming how India's students learn — one school at a time.
         </motion.p>
         <motion.div variants={slideChild} className="relative flex gap-4 mt-12">
-          {["2.4M+ Students", "1,200+ Institutions", "98 Countries"].map((s) => (
+          {["5 Countries", "1,200+ Institutions", "98 Countries"].map((s) => (
             <div key={s} className="px-6 py-2.5 rounded-full"
               style={{ border: "1px solid rgba(99,102,241,0.4)", background: "rgba(99,102,241,0.08)",
                 color: "#A5B4FC", fontSize: 13, fontWeight: 600 }}>
