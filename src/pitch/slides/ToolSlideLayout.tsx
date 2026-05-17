@@ -28,8 +28,8 @@ function toBullets(input: string | string[]): string[] {
 }
 
 export function ToolSlideLayout(p: ToolSlideLayoutProps) {
-  const problemPoints = toBullets(p.problem);
-  const solutionPoints = [...toBullets(p.solution), ...(p.highlights ?? [])];
+  const problemPoints = toBullets(p.problem).slice(0, 3);
+  const solutionPoints = [...toBullets(p.solution), ...(p.highlights ?? [])].slice(0, 4);
 
   return (
     <SlideShell theme="dark">
@@ -38,7 +38,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
         style={{ top: 0, bottom: 52, fontFamily: FONT }}
       >
         {/* HEADER (sits below the top-left Logo) */}
-        <div className="flex items-center justify-between gap-6 px-12 pt-20 pb-4 flex-shrink-0">
+        <div className="flex items-center justify-between gap-6 px-12 pt-16 pb-3 flex-shrink-0">
           <div className="flex-1 min-w-0">
             <div
               className="inline-flex items-center px-2.5 py-1 rounded-full mb-2"
@@ -58,7 +58,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
               style={{
                 fontFamily: FONT,
                 fontWeight: 800,
-                fontSize: "clamp(20px, 2vw, 28px)",
+                fontSize: "clamp(18px, 1.8vw, 24px)",
                 color: "white",
                 letterSpacing: "-0.02em",
                 lineHeight: 1.15,
@@ -71,18 +71,18 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
           <div
             className="rounded-2xl flex items-center justify-center flex-shrink-0"
             style={{
-              width: 60,
-              height: 60,
+              width: 52,
+              height: 52,
               background: p.iconGradient,
               boxShadow: `0 10px 28px ${p.categoryColor}55`,
             }}
           >
-            <div style={{ transform: "scale(0.78)" }}>{p.icon}</div>
+            <div style={{ transform: "scale(0.68)" }}>{p.icon}</div>
           </div>
         </div>
 
         {/* PROBLEM / SOLUTION ROW */}
-        <div className="grid grid-cols-2 gap-6 px-12 flex-shrink-0">
+        <div className="grid grid-cols-2 gap-5 px-12 flex-shrink-0 items-stretch">
           <BulletCard
             heading="❌ THE PROBLEM"
             headingColor="#F87171"
@@ -106,7 +106,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
         </div>
 
         {/* VIDEO BAND */}
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-12 pt-4 pb-4">
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-12 pt-3 pb-2 overflow-hidden">
           <VideoPlayer
             src={p.videoSrc}
             toolKey={p.videoKey}
@@ -141,33 +141,33 @@ function BulletCard({
 }) {
   return (
     <div
-      className="rounded-xl p-4"
+      className="rounded-xl p-3.5"
       style={{ background: bg, border: `1px solid ${border}` }}
     >
       <div
         style={{
-          fontSize: 10,
+          fontSize: 9.5,
           fontWeight: 800,
           letterSpacing: "0.26em",
           color: headingColor,
           textTransform: "uppercase",
-          marginBottom: 8,
+          marginBottom: 6,
           fontFamily: FONT,
         }}
       >
         {heading}
       </div>
-      <ul className="space-y-1.5 m-0 p-0 list-none">
+      <ul className="space-y-1 m-0 p-0 list-none">
         {points.map((pt, i) => (
           <li key={i} className="flex items-start gap-2">
             <span
               style={{
                 color: bulletColor,
                 fontWeight: 800,
-                fontSize: 13,
-                lineHeight: 1.5,
+                fontSize: 12,
+                lineHeight: 1.45,
                 flexShrink: 0,
-                width: 12,
+                width: 11,
               }}
             >
               {marker}
@@ -175,8 +175,8 @@ function BulletCard({
             <span
               style={{
                 color: textColor,
-                fontSize: 12.5,
-                lineHeight: 1.5,
+                fontSize: 11.5,
+                lineHeight: 1.45,
                 fontFamily: FONT,
                 fontWeight: 400,
               }}
