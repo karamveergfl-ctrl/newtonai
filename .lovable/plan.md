@@ -1,64 +1,64 @@
 
-## Goals
+## Goal
 
-1. All tool demo slides become a clean **3-column layout: Problem (left) · Video (center) · Solution (right)** — nothing else.
-2. Remove all motion/animations on tool slides; pure static layout to eliminate jitter & overlap.
-3. Fix text + video frame overlap (video sized to fit center column, no absolute overflow).
-4. Restyle **Slide 3 (Solution)** to match the same dark theme + typography system as the other slides.
-5. **Remove the "Instant Video Search" slide** (currently slide 4 in the deck) and replace it with a new student-focused slide: **"Ad-Free Educational Videos — Watch Any Topic, No Ads, No Distractions"** (no teacher in-class framing).
+Bring the tool slides back to a cleaner **two-column header (Problem ⟷ Solution) with video centered below**, convert the prose to scannable bullet points, and fix issues on the Podcast, Smart Classroom, and In-Class Quiz slides.
 
 ## Changes
 
-### A. `src/pitch/slides/ToolSlideLayout.tsx` — full rewrite
-Replace current header + 2-col + video-band structure with a single 3-column grid:
+### A. `src/pitch/slides/ToolSlideLayout.tsx` — rewrite layout
+New structure:
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│  Header strip: category chip · tool name · icon (compact)   │
-├──────────────┬──────────────────────────┬───────────────────┤
-│  PROBLEM     │      VIDEO (16:9)        │   SOLUTION        │
-│  (left col)  │      centered, fits      │   (right col)     │
-│              │      column height       │   + 3 highlights  │
-└──────────────┴──────────────────────────┴───────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  Category chip · Tool name                       [icon]  │  ~14%
+├───────────────────────────┬──────────────────────────────┤
+│  ❌ THE PROBLEM           │  ✅ NEWTON'S SOLUTION         │  ~36%
+│  • bullet                 │  • bullet                     │
+│  • bullet                 │  • bullet                     │
+│  • bullet                 │  • bullet                     │
+├──────────────────────────────────────────────────────────┤
+│              ▶  VIDEO (16:9, max 620px)                  │  ~50%
+│              caption under frame                          │
+└──────────────────────────────────────────────────────────┘
 ```
 
-- Grid: `grid-cols-[1fr_1.2fr_1fr] gap-8 px-12`, columns vertically centered.
-- Video container: `width: 100%; max-width: 520px; aspect-ratio: 16/9` — never exceeds column.
-- Remove all `motion.*` wrappers, `variants`, `framer-motion` import. Plain `div`/`h1`.
-- Typography: Plus Jakarta Sans, tool name `clamp(22px, 2vw, 30px)` weight 800; section labels 10px weight 800 uppercase; body 13.5px line-height 1.55.
-- Remove "Watch how it works" banner, decorative gradient band, `Play` icon row.
-- Problem panel: subtle red-tinted card. Solution panel: subtle green-tinted card with check-bullet highlights underneath.
-- Bottom 52px reserved for nav bar (`bottom: 52`).
+- Update the component API: `problem` and `solution` become `string[]` (bullet arrays). Drop the separate `highlights` prop and merge those points into `solution`.
+- Left card: red-tinted (`rgba(248,113,113,0.06)`), heading `❌ THE PROBLEM` in `#F87171`, bullets in `#CBD5E1` 13.5px with a `•` marker.
+- Right card: green-tinted (`rgba(52,211,153,0.07)`), heading `✅ NEWTON'S SOLUTION` in `#34D399`, bullets in `#F1F5F9` 13.5px with a `✓` marker.
+- Video band below both cards, horizontally centered, `max-width: 620px`, `aspect-ratio: 16/9`. Caption in `#94A3B8` italic 11px directly under the frame.
+- No `framer-motion`; static layout. Keep bottom 52px reserved for nav.
 
-### B. `src/pitch/components/VideoPlayer.tsx`
-- Lower `maxWidth` from 560 → 520, remove the pulsing play-button animation (`pitchPulse` keyframes) and the scanning line keyframes (`pitchScan`).
-- Keep upload / play / mute / fullscreen controls. Caption stays under the frame, clamped to column width.
-- Empty-state simplified: icon + tool name + Upload button, no animated scan line.
+### B. Update every tool slide to pass bullet arrays
+Files: `Slide04NewtonChat.tsx`, `Slide08QuizGenerator.tsx`, `Slide10Flashcards.tsx`, `Slide11Summariser.tsx`, `Slide12HomeworkHelp.tsx`, `Slide13PDFChat.tsx`, `Slide14MindMaps.tsx`, `SlideAdFreeVideos.tsx`.
+- Convert each existing paragraph into **3 concise bullets** for problem and **3–4 bullets** for solution (merging the old `highlights`). Same wording, just split.
+- Bump `VideoPlayer` `maxWidth` from 520 → 620 to match the new wider video band.
 
-### C. New slide — replace `Slide07VideoSearch`
-- Delete file `src/pitch/slides/Slide07VideoSearch.tsx`.
-- Add `src/pitch/slides/SlideAdFreeVideos.tsx` using `ToolSlideLayout`:
-  - Category: `STUDENT LEARNING`, color `#A855F7`
-  - Tool name: `Ad-Free Educational Videos — Any Topic, Zero Distractions`
-  - Problem: YouTube buries learning under ads, clickbait recommendations, and 15-second pre-rolls. A student searching "Photosynthesis" wastes 4–5 minutes per video and gets pulled into unrelated content.
-  - Solution: Newton lets the student search any topic and instantly plays curriculum-aligned educational videos in a clean, fullscreen, ad-free player — no recommendations, no comments, no algorithm.
-  - Highlights: ① Zero ads, zero pre-rolls. ② Curriculum-tagged results only. ③ Saves watch history into Newton Chat so the student can ask follow-up questions.
-  - Icon: `PlayCircle` (lucide).
-  - `videoKey: "AD_FREE_VIDEOS"`, `videoSrc: VIDEO_PATHS.AD_FREE_VIDEOS` (will add to constants).
-- Add `AD_FREE_VIDEOS: ""` entry in `src/pitch/constants/videoPaths.ts`.
+### C. `src/pitch/components/VideoPlayer.tsx`
+- Raise `maxWidth` from 520 to 620 so the centered video reads well below the two text cards.
+- No other changes.
 
-### D. `src/pitch/slides/index.ts`
-- Remove the `Slide07VideoSearch` import & its entry.
-- Import & insert `SlideAdFreeVideos` in the same position (slide 4, first of the student tools group).
+### D. `Slide15Podcast.tsx` — fix overlap
+Rebuild on the same "Problem left / Solution right / video centered below" structure as the tool layout so nothing collides:
+- Top header strip (category chip `AI PODCAST`, title, `Headphones` icon on the right).
+- Two-column body with the existing problem/solution copy as bullets.
+- Single bottom video band with `VideoPlayer` centered, max-width 620px.
+- **Remove** the floating chat-bubble mock card (it's the source of the current overlap) and the `Bars`, `Bubble` helpers.
+- Keep `framer-motion` import out; static layout.
 
-### E. `src/pitch/slides/Slide03Solution.tsx` — restyle to match theme
-- Adopt the same dark `#0A1628` background, Plus Jakarta Sans typography, category chip pattern, and spacing scale used by the tool slides.
-- Replace any current bespoke colors/cards with the standard token palette (`#6366F1` accent, `#F1F5F9` body, `#94A3B8` muted, `#34D399`/`#F87171` for green/red highlights).
-- Keep its existing content (the 3-pillar solution narrative) — only typography, colors, and spacing change.
-- Remove heavy motion if present; keep at most a single fade.
+### E. `SlideSmartClassroom.tsx` — remove the planet animation
+- Delete the `PlanetAnim` component and its usage (the orbiting Earth-around-Sun graphic — the "third image animation").
+- In its place, show only the `AUTO-GENERATED · Earth's Revolution around the Sun` label centered, with the source caption underneath, so the smart-board mock stays clean. No animation.
+- Leave the rest of the slide untouched.
+
+### F. `SlideInClassQuiz.tsx` — polish
+- Tighten the 4-step timeline: equalize card heights, align icon + time chip on one row, use consistent `#94A3B8` body text and `#1E293B` divider.
+- Lower-half result panels: align the two cards to the same height, switch the white card to the same dark-glass style (`rgba(255,255,255,0.04)` with `1px solid rgba(255,255,255,0.08)`) so it matches the rest of the deck.
+- Use the standard category-chip pattern (`#14B8A622` bg, `#14B8A6` text, uppercase letter-spacing) instead of the bare colored label.
+- Replace `framer-motion` `motion.*` wrappers with plain `div`s for consistency with the other polished slides; keep content identical.
 
 ## Out of scope
-- Hero, Problem, Smart Classroom, In-Class Quiz, Teacher Dashboard, Student Dashboard, CTA slides — untouched.
-- No backend / data changes. Pure presentational edits inside `src/pitch/`.
+- Hero, Problem, Solution (slide 3), Teacher Dashboard, Student Dashboard, CTA.
+- No backend, routing, or data changes.
 
-Confirm and I'll implement.
+## Note on slide numbering
+Interpreting "slide 13" as **Smart Classroom** and "slide 14" as **In-Class Quiz** based on their position in the deck (`SLIDES` array in `src/pitch/slides/index.ts`). If you meant the files literally named `Slide13PDFChat` / `Slide14MindMaps`, say the word and I'll retarget those instead.
