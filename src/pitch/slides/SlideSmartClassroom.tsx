@@ -35,7 +35,11 @@ export default function SlideSmartClassroom() {
                 <span className="rounded-full px-2 py-0.5" style={{ background: "#10B98122", color: "#34D399", fontSize: 10, fontWeight: 700 }}>● LIVE</span>
               </div>
             </div>
-            <div className="flex-1 relative" style={{ background: "radial-gradient(circle at center, #0B1424, #050912)" }} />
+            <div className="flex-1 relative overflow-hidden" style={{ background: "radial-gradient(circle at center, #0B1424, #050912)" }}>
+              <VideoPlayer toolKey="SMART_CLASSROOM" src={VIDEO_PATHS.SMART_CLASSROOM}
+                toolName="Smart Classroom" toolIcon={<MonitorPlay size={32} color="#14B8A6" />}
+                caption="" />
+            </div>
           </motion.div>
 
           {/* Side info */}
@@ -78,13 +82,6 @@ export default function SlideSmartClassroom() {
           </div>
         </div>
 
-        <div className="mt-4 h-32 flex items-center justify-center">
-          <div style={{ width: 380, maxHeight: "100%" }}>
-            <VideoPlayer toolKey="SMART_CLASSROOM" src={VIDEO_PATHS.SMART_CLASSROOM}
-              toolName="Smart Classroom" toolIcon={<MonitorPlay size={32} color="#14B8A6" />}
-              caption="" />
-          </div>
-        </div>
       </div>
     </SlideShell>
   );
