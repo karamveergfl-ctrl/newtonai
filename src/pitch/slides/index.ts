@@ -2,7 +2,7 @@ import Slide01Hero from "./Slide01Hero";
 import Slide02Problem from "./Slide02Problem";
 import Slide03Solution from "./Slide03Solution";
 // Student tools
-import Slide07VideoSearch from "./Slide07VideoSearch";
+import SlideAdFreeVideos from "./SlideAdFreeVideos";
 import Slide10Flashcards from "./Slide10Flashcards";
 import Slide15Podcast from "./Slide15Podcast";
 import Slide04NewtonChat from "./Slide04NewtonChat";
@@ -24,7 +24,7 @@ export const SLIDES: { title: string; Component: React.ComponentType }[] = [
   { title: "The Challenge", Component: Slide02Problem },
   { title: "The Solution", Component: Slide03Solution },
   // --- Student tools ---
-  { title: "Instant Video Search", Component: Slide07VideoSearch },
+  { title: "Ad-Free Educational Videos", Component: SlideAdFreeVideos },
   { title: "AI Flashcards", Component: Slide10Flashcards },
   { title: "AI Podcast — Two AI Friends", Component: Slide15Podcast },
   { title: "Newton Chat — AI Tutor", Component: Slide04NewtonChat },

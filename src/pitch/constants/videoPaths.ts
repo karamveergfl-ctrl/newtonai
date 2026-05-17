@@ -5,6 +5,7 @@ export const VIDEO_PATHS = {
   SMART_CLASSROOM: "", // Replace with: /videos/smart-classroom-demo.mp4
   PULSE_METER:     "", // Replace with: /videos/pulse-meter-demo.mp4
   VIDEO_SEARCH:    "", // Replace with: /videos/video-search-demo.mp4
+  AD_FREE_VIDEOS:  "", // Replace with: /videos/ad-free-videos-demo.mp4
   QUIZ_GENERATOR:  "", // Replace with: /videos/quiz-generator-demo.mp4
   AUTO_NOTES:      "", // Replace with: /videos/auto-notes-demo.mp4
   FLASHCARDS:      "", // Replace with: /videos/flashcards-demo.mp4
