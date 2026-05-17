@@ -178,7 +178,19 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption, maxWidt
                 <button onClick={(e) => { stop(e); setMuted(m => !m); }}>
                   {muted ? <VolumeX size={16} color="white" /> : <Volume2 size={16} color="white" />}
                 </button>
-                <button onClick={(e) => { stop(e); ref.current?.requestFullscreen?.(); }}>
+                <button
+                  onClick={(e) => {
+                    stop(e);
+                    // Fullscreen the whole slide (document), not just the video,
+                    // so the cards + video + caption all stay visible like the
+                    // in-editor preview.
+                    if (document.fullscreenElement) {
+                      document.exitFullscreen().catch(() => {});
+                    } else {
+                      document.documentElement.requestFullscreen().catch(() => {});
+                    }
+                  }}
+                >
                   <Maximize2 size={16} color="white" />
                 </button>
               </div>
