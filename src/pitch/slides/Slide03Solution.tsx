@@ -44,7 +44,7 @@ export default function Slide03Solution() {
               background: "rgba(99,102,241,0.12)",
               color: "#818CF8",
               border: "1px solid rgba(99,102,241,0.35)",
-              fontSize: 9.5,
+              fontSize: 10,
               fontWeight: 700,
               letterSpacing: "0.3em",
               textTransform: "uppercase",
