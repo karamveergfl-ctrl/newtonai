@@ -64,7 +64,7 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: Video
       <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={onFile} />
       <div
         className="relative w-full rounded-2xl overflow-hidden"
-        style={{ width: "100%", maxWidth: 880, aspectRatio: "16 / 9", maxHeight: "100%", boxShadow: "0 20px 60px rgba(99,102,241,0.18)" }}
+        style={{ width: "100%", maxWidth: 560, aspectRatio: "16 / 9", maxHeight: "100%", boxShadow: "0 20px 60px rgba(99,102,241,0.35)", border: "1px solid rgba(99,102,241,0.25)" }}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onClick={stop}
@@ -89,15 +89,15 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: Video
               opacity: 0.4,
               animation: "pitchScan 2.4s linear infinite",
             }} />
-            <div style={{ color: "#6366F1" }}>{toolIcon}</div>
-            <div style={{ color: "white", fontWeight: 600, fontSize: 18, marginTop: 14, textAlign: "center", padding: "0 16px" }}>{toolName}</div>
+            <div style={{ color: "#818CF8", transform: "scale(0.75)" }}>{toolIcon}</div>
+            <div style={{ color: "white", fontWeight: 600, fontSize: 14, marginTop: 8, textAlign: "center", padding: "0 16px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{toolName}</div>
             <button onClick={onPick}
-              className="mt-4 px-4 py-2 rounded-full text-[12px] font-semibold flex items-center gap-2 transition-transform hover:scale-105"
-              style={{ background: "#6366F1", color: "white", boxShadow: "0 6px 20px rgba(99,102,241,0.4)" }}>
-              <Upload size={14} /> Upload demo video
+              className="mt-3 px-3.5 py-1.5 rounded-full font-semibold flex items-center gap-1.5 transition-transform hover:scale-105"
+              style={{ background: "#6366F1", color: "white", boxShadow: "0 6px 20px rgba(99,102,241,0.4)", fontSize: 11, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              <Upload size={12} /> Upload demo video
             </button>
-            <div style={{ color: "#64748B", fontStyle: "italic", fontSize: 11, marginTop: 10, maxWidth: 360, textAlign: "center" }}>
-              Pick an MP4 from this device — it's stored locally and replays offline.
+            <div style={{ color: "#64748B", fontStyle: "italic", fontSize: 10, marginTop: 8, maxWidth: 320, textAlign: "center", padding: "0 12px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Pick an MP4 from this device — stored locally, plays offline.
             </div>
             <style>{`@keyframes pitchScan { 0% { transform: translateY(0); } 100% { transform: translateY(100vh); } }`}</style>
           </div>
@@ -140,7 +140,7 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: Video
           </>
         )}
       </div>
-      <div style={{ color: "#64748B", fontStyle: "italic", fontSize: 12, marginTop: 10, maxWidth: 760, textAlign: "center" }}>
+      <div style={{ color: "#94A3B8", fontStyle: "italic", fontSize: 11.5, marginTop: 8, maxWidth: 560, textAlign: "center", lineHeight: 1.45, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         {caption}
       </div>
     </div>
