@@ -82,7 +82,7 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: Video
         )}
 
         {!activeSrc ? (
-          <div className="relative w-full h-full items-center justify-center flex flex-col"
+          <div className="relative w-full h-full flex flex-col items-center justify-center"
             style={{ background: "linear-gradient(135deg, #0f172a, #1e293b)" }}>
             <div className="absolute inset-x-0 top-0 h-px" style={{
               background: "linear-gradient(90deg, transparent, #6366F1, transparent)",
