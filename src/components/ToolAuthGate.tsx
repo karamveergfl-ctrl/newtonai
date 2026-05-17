@@ -17,37 +17,40 @@ interface ToolAuthGateProps {
  */
 export function ToolAuthGate({ children, fallback }: ToolAuthGateProps) {
   const [session, setSession] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [resolved, setResolved] = useState(false);
   const location = useLocation();
   const { guestLimitReached, showTrialPrompt, setShowTrialPrompt } = useGuestTrial();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setLoading(false);
+      setResolved(true);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setResolved(true);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  if (loading) return null;
-
   // Authenticated users always pass through
   if (session) return <>{children}</>;
 
-  // Guest with remaining trial uses — allow access
-  if (!guestLimitReached) {
+  // Render input optimistically while auth is still resolving, OR
+  // when guest still has trial uses. Only fall back to CTA once we
+  // know the user is an exhausted guest.
+  if (!resolved || !guestLimitReached) {
     return (
       <>
         {children}
-        {/* Subtle banner for guests */}
-        <p className="text-xs text-center text-muted-foreground mt-3 px-4">
-          Sign up to save your generated content
-        </p>
+        {/* Subtle banner for guests — only after auth resolves to avoid flicker */}
+        {resolved && !session && (
+          <p className="text-xs text-center text-muted-foreground mt-3 px-4">
+            Sign up to save your generated content
+          </p>
+        )}
         {/* Popup modal when guest attempts generation */}
         <GuestTrialLimitModal
           open={showTrialPrompt}
