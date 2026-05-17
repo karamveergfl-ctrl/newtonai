@@ -8,6 +8,7 @@ interface VideoPlayerProps {
   toolName: string;
   toolIcon: ReactNode;
   caption: string;
+  maxWidth?: number | string;
 }
 
 const FONT = `'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
@@ -21,7 +22,7 @@ function fmt(t: number) {
 
 const stop = (e: MouseEvent | ChangeEvent) => e.stopPropagation();
 
-export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: VideoPlayerProps) {
+export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption, maxWidth = 620 }: VideoPlayerProps) {
   const ref = useRef<HTMLVideoElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { url: uploadedUrl, upload, clear } = useToolVideo(toolKey);
@@ -68,7 +69,7 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: Video
         className="relative rounded-2xl overflow-hidden"
         style={{
           width: "100%",
-          maxWidth: 620,
+          maxWidth,
           maxHeight: "100%",
           aspectRatio: "16 / 9",
           boxShadow: "0 16px 48px rgba(99,102,241,0.30)",
@@ -191,7 +192,7 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: Video
           fontStyle: "italic",
           fontSize: 11,
           marginTop: 8,
-          maxWidth: 620,
+          maxWidth,
           textAlign: "center",
           lineHeight: 1.45,
           fontFamily: FONT,
