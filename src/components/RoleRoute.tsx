@@ -9,7 +9,7 @@ interface RoleRouteProps {
 }
 
 export function RoleRoute({ children, role }: RoleRouteProps) {
-  const { isTeacher, isStudent, isPrincipal, isDean, isExamAdmin, isDepartmentHead, loading } = useUserRole();
+  const { isTeacher, isStudent, isPrincipal, isDean, isExamAdmin, isDepartmentHead, isAdmin, loading } = useUserRole();
   const navigate = useNavigate();
 
   const roleMap: Record<string, boolean> = {
@@ -20,7 +20,7 @@ export function RoleRoute({ children, role }: RoleRouteProps) {
     exam_admin: isExamAdmin,
     department_head: isDepartmentHead,
   };
-  const hasAccess = roleMap[role] ?? false;
+  const hasAccess = isAdmin || (roleMap[role] ?? false);
 
   useEffect(() => {
     if (loading) return;
