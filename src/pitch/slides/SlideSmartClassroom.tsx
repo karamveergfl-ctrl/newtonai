@@ -21,8 +21,29 @@ export default function SlideSmartClassroom() {
         </motion.p>
 
         <div className="flex-1 grid grid-cols-12 gap-5 mt-6 min-h-0">
+          {/* Smart board mock */}
+          <motion.div variants={slideChild} className="col-span-8 rounded-2xl flex flex-col overflow-hidden"
+            style={{ background: "#0F172A", border: "2px solid #1E293B", boxShadow: "0 24px 60px rgba(20,184,166,0.18)" }}>
+            <div className="px-4 py-2 flex items-center justify-between" style={{ background: "#1E293B", borderBottom: "1px solid #334155" }}>
+              <div className="flex items-center gap-2">
+                <div className="rounded-full" style={{ width: 8, height: 8, background: "#EF4444" }} />
+                <div className="rounded-full" style={{ width: 8, height: 8, background: "#F59E0B" }} />
+                <div className="rounded-full" style={{ width: 8, height: 8, background: "#10B981" }} />
+                <div style={{ fontSize: 11, color: "#94A3B8", marginLeft: 8 }}>Smart Board · Class 9 Science · Slide 12</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full px-2 py-0.5" style={{ background: "#10B98122", color: "#34D399", fontSize: 10, fontWeight: 700 }}>● LIVE</span>
+              </div>
+            </div>
+            <div className="flex-1 relative overflow-hidden" style={{ background: "radial-gradient(circle at center, #0B1424, #050912)" }}>
+              <VideoPlayer toolKey="SMART_CLASSROOM" src={VIDEO_PATHS.SMART_CLASSROOM}
+                toolName="Smart Classroom" toolIcon={<MonitorPlay size={32} color="#14B8A6" />}
+                caption="" />
+            </div>
+          </motion.div>
+
           {/* Side info */}
-          <div className="col-span-12 flex flex-col gap-3">
+          <div className="col-span-4 flex flex-col gap-3">
             <motion.div variants={slideChild} className="rounded-xl p-4 flex gap-3"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <div className="rounded-lg flex items-center justify-center flex-shrink-0" style={{ width: 36, height: 36, background: "#14B8A622" }}>
