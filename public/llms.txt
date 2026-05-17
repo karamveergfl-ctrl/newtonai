@@ -1,0 +1,53 @@
+# NewtonAI
+
+> AI-powered learning OS for students, teachers, and institutions — study tools, classroom workflows, and an institutional dashboard.
+
+NewtonAI turns any document, lecture, or syllabus into structured study material: notes, flashcards, quizzes, mind maps, podcasts, and a grounded AI tutor. For institutions and coaching centers, it provides a full Classroom OS with live sessions, concept checks, attendance, and post-class analytics.
+
+## Pages
+
+- [Home](/): Product overview and entry point.
+- [About](/about): Company background and mission.
+- [How it works](/how-it-works): Walkthrough of the learning workflow.
+- [Features](/features): Full feature list across study tools and classroom OS.
+- [Pricing](/pricing): Plans for students, teachers, and institutions.
+- [Enterprise](/enterprise): Institutional / university / coaching offering.
+- [Contact](/contact): Get in touch with the team.
+- [FAQ](/faq): Common questions about NewtonAI.
+
+## Study tools
+
+- [AI study assistant](/ai-study-assistant): Grounded AI tutor for any subject.
+- [AI notes generator](/ai-notes-generator): Generate structured notes from sources.
+- [PDF study tool](/pdf-study-tool): Chat, summarize, and quiz over PDFs.
+- [AI quiz generator](/ai-quiz-generator): Auto-generate quizzes from content.
+- [Exam preparation AI](/exam-preparation-ai): Personalized exam prep workflows.
+- [AI for students](/ai-for-students): Overview for student users.
+- [Tools index](/tools): All interactive study tools.
+- [Homework help](/tools/homework-help): Step-by-step homework solver.
+- [Flashcards](/tools/flashcards): Spaced-repetition flashcards.
+- [Quiz](/tools/quiz): Interactive quiz generator.
+- [Summarizer](/tools/summarizer): Summarize documents and lectures.
+- [Lecture notes](/tools/lecture-notes): Convert lectures into structured notes.
+- [AI podcast](/tools/ai-podcast): Turn content into a two-host podcast.
+- [Mind map](/tools/mind-map): Visual concept maps from any text.
+- [LaTeX editor](/tools/latex-editor): Math-friendly editor with AI assist.
+- [PDF chat](/pdf-chat): Conversational Q&A over PDFs.
+
+## Guides
+
+- [Guides index](/guides): Learning and AI usage guides.
+- [How AI learning works](/guides/how-ai-learning-works): Behind the AI tutor.
+- [Spaced repetition guide](/guides/spaced-repetition-guide): Memory science for studying.
+- [Responsible AI use](/guides/responsible-ai-use): Honest, effective AI use for learners.
+
+## Blog
+
+- [Blog](/blog): Articles on learning, AI, and product updates.
+
+## Optional
+
+- [Terms](/terms): Terms of service.
+- [Privacy](/privacy): Privacy policy.
+- [Refund](/refund): Refund policy.
+- [About NewtonAI (for AI assistants)](/about-newtonai-for-ai): Machine-readable product summary.
