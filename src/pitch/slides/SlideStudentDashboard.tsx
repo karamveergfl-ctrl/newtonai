@@ -30,10 +30,10 @@ export default function SlideStudentDashboard() {
           <motion.div variants={slideChild} style={{ color: "#6366F1", fontSize: 10, fontWeight: 700, letterSpacing: "0.3em" }}>
             REAL APP VIEW · STUDENT DASHBOARD
           </motion.div>
-          <motion.h1 variants={slideHeading} style={{ fontWeight: 800, fontSize: 30, color: "#0F172A", letterSpacing: "-0.02em", marginTop: 4 }}>
+          <motion.h1 variants={slideHeading} style={{ fontWeight: 800, fontSize: 30, color: "#F1F5F9", letterSpacing: "-0.02em", marginTop: 4 }}>
             My Dashboard
           </motion.h1>
-          <motion.p variants={slideChild} style={{ fontSize: 13, color: "#475569", marginTop: 2 }}>
+          <motion.p variants={slideChild} style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>
             Attendance, marks and progress across all 8 classes — updated live.
           </motion.p>
         </div>
@@ -43,10 +43,10 @@ export default function SlideStudentDashboard() {
           {summary.map((s, i) => (
             <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               className="rounded-xl p-4 text-center"
-              style={{ background: "white", border: "1px solid #E2E8F0", boxShadow: "0 4px 14px rgba(15,23,42,0.04)" }}>
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 14px rgba(15,23,42,0.04)" }}>
               <s.icon size={18} color={s.color} className="mx-auto mb-1.5" />
-              <div style={{ fontSize: 24, fontWeight: 800, color: "#0F172A", lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 10, color: "#64748B", marginTop: 4 }}>{s.label}</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#F1F5F9", lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: "#94A3B8", marginTop: 4 }}>{s.label}</div>
             </motion.div>
           ))}
         </div>
@@ -69,18 +69,18 @@ export default function SlideStudentDashboard() {
         {/* Class breakdown */}
         <div className="flex items-center gap-2 mb-2">
           <BookOpen size={14} color="#6366F1" />
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>Class breakdown</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9" }}>Class breakdown</div>
         </div>
         <div className="flex-1 grid grid-cols-2 gap-2.5 min-h-0 overflow-hidden">
           {classes.map((c, i) => (
             <motion.div key={c.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.04 }}
               className="rounded-xl p-3 flex flex-col"
-              style={{ background: "white", border: "1px solid #E2E8F0" }}>
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <div className="flex items-center justify-between mb-2">
                 <div className="min-w-0">
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F172A" }}>{c.subject}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "#F1F5F9" }}>{c.subject}</div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="rounded px-1.5 py-0.5" style={{ background: "#F1F5F9", fontSize: 9, color: "#475569", fontWeight: 600 }}>Grade {c.grade}</span>
+                    <span className="rounded px-1.5 py-0.5" style={{ background: "rgba(255,255,255,0.06)", fontSize: 9, color: "#94A3B8", fontWeight: 600 }}>Grade {c.grade}</span>
                     <span style={{ fontSize: 9.5, color: "#94A3B8" }}>Rank {c.rank}/{c.of}</span>
                   </div>
                 </div>
@@ -103,8 +103,8 @@ function Metric({ label, value, pct, color }: { label: string; value: string; pc
   return (
     <div>
       <div style={{ fontSize: 9, color: "#94A3B8", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>{label}</div>
-      <div style={{ fontSize: 13, fontWeight: 800, color: "#0F172A", marginTop: 1 }}>{value}</div>
-      <div className="h-1 rounded-full mt-1" style={{ background: "#F1F5F9" }}>
+      <div style={{ fontSize: 13, fontWeight: 800, color: "#F1F5F9", marginTop: 1 }}>{value}</div>
+      <div className="h-1 rounded-full mt-1" style={{ background: "rgba(255,255,255,0.06)" }}>
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>
     </div>
