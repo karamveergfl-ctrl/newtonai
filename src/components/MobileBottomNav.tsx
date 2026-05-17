@@ -72,6 +72,9 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
   const { isTeacher, isStudent } = useUserRole();
   const { isAdmin } = useAdminAccess();
   const { mode: dashboardMode } = useDashboardMode();
+  const adminInStudentView = isAdmin && dashboardMode === "student";
+  const effectiveTeacher = isTeacher && !adminInStudentView;
+  const effectiveStudent = isStudent || adminInStudentView;
   const homePath = isAdmin
     ? (dashboardMode === "student" ? "/student/dashboard" : "/teacher")
     : (isStudent ? "/student/dashboard" : isTeacher ? "/teacher" : "/dashboard");
@@ -172,10 +175,9 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
           const isCamera = item.action === "camera";
           const isNewton = item.action === "newton";
 
-          {/* Center elevated Camera/Classes button */}
           if (isCamera) {
             // Teachers get a "Classes" tab instead of camera
-            if (isTeacher) {
+            if (effectiveTeacher) {
               const classesActive = location.pathname.startsWith("/teacher") || location.pathname.startsWith("/student/class");
               return (
                 <button
