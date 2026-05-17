@@ -30,3 +30,26 @@ export const PITCH_COLORS = {
 } as const;
 
 export const PITCH_FONT = `"Plus Jakarta Sans", system-ui, -apple-system, sans-serif`;
+
+export type PitchTheme = "dark" | "light";
+
+export interface PitchThemeTokens {
+  background: string;
+  text: string;
+  textMuted: string;
+}
+
+export const PITCH_THEMES: Record<PitchTheme, PitchThemeTokens> = {
+  dark: {
+    background: PITCH_COLORS.darkBg,
+    text: PITCH_COLORS.textOnDark,
+    textMuted: PITCH_COLORS.textOnDarkMuted,
+  },
+  light: {
+    background: PITCH_COLORS.lightBg,
+    text: PITCH_COLORS.textOnLight,
+    textMuted: PITCH_COLORS.textOnLightMuted,
+  },
+};
+
+export const getPitchTheme = (theme: PitchTheme): PitchThemeTokens => PITCH_THEMES[theme];
