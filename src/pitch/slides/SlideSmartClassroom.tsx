@@ -17,7 +17,7 @@ export default function SlideSmartClassroom() {
         </motion.h1>
         <motion.p variants={slideChild} className="mt-2"
           style={{ fontSize: 17, color: "#94A3B8", maxWidth: 880, lineHeight: 1.55 }}>
-          Instead of static diagrams, Newton instantly generates a moving visual explanation from the teacher's PDF + notes for any concept — orbits, photosynthesis, AC circuits, mitosis — so students actually <em>see</em> what's happening.
+            Instead of static diagrams, Newton instantly generates a moving visual explanation from the teacher's PDF + notes for any concept — orbits, photosynthesis, AC circuits, mitosis — so students actually <em>see</em> what's going.
         </motion.p>
 
         <div className="flex-1 grid grid-cols-12 gap-5 mt-6 min-h-0">
