@@ -24,11 +24,11 @@ export const SLIDES: { title: string; Component: React.ComponentType }[] = [
   { title: "The Challenge", Component: Slide02Problem },
   { title: "The Solution", Component: Slide03Solution },
   // --- Student tools ---
-  { title: "Ad-Free Educational Videos", Component: SlideAdFreeVideos },
+  { title: "AI Quiz Generator", Component: Slide08QuizGenerator },
   { title: "AI Flashcards", Component: Slide10Flashcards },
   { title: "AI Podcast — Two AI Friends", Component: Slide15Podcast },
-  { title: "AI Quiz Generator", Component: Slide08QuizGenerator },
   { title: "Newton Chat — AI Tutor", Component: Slide04NewtonChat },
+  { title: "Ad-Free Educational Videos", Component: SlideAdFreeVideos },
   { title: "AI Summariser", Component: Slide11Summariser },
   { title: "Homework Help — School to Engineering", Component: Slide12HomeworkHelp },
   { title: "PDF Chat", Component: Slide13PDFChat },
