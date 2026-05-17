@@ -97,6 +97,11 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const { isAdmin } = useAdminAccess();
   const { isTeacher, isStudent, isInstitutionalAdmin, loading: roleLoading } = useUserRole();
   const { mode: dashboardMode } = useDashboardMode();
+  // Admins can toggle between teacher and student views. When in student
+  // view, hide all teacher-only sections so the UI matches a real student.
+  const adminInStudentView = isAdmin && dashboardMode === "student";
+  const effectiveTeacher = isTeacher && !adminInStudentView;
+  const effectiveStudent = isStudent || adminInStudentView;
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const { unreadCount } = useUserNotifications();
@@ -207,18 +212,18 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* My Classes - Role-aware */}
-        {!roleLoading && (isTeacher || isStudent) && (
+        {/* My Classes - Role-aware (admin view mode honored) */}
+        {!roleLoading && (effectiveTeacher || effectiveStudent) && (
           <SidebarGroup className="-mt-1 pt-0 shrink-0">
             {!isCollapsed && (
               <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <School className="h-3 w-3" />
-                {isTeacher ? "Teacher" : "My Classes"}
+                {effectiveTeacher ? "Teacher" : "My Classes"}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
               <SidebarMenu>
-                {isTeacher ? (
+                {effectiveTeacher ? (
                   <>
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="My Classes">
