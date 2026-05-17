@@ -88,7 +88,7 @@ export default function Slide12HomeworkHelp() {
           </div>
           <div className="flex-1 flex items-center justify-center min-h-0 h-full">
             <VideoPlayer
-              videoKey="HOMEWORK_HELP"
+              toolKey="HOMEWORK_HELP"
               src={VIDEO_PATHS.HOMEWORK_HELP}
               toolName="Homework Help"
               toolIcon={<Calculator size={48} color="#F59E0B" />}

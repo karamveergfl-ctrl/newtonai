@@ -102,7 +102,7 @@ export default function SlideSmartClassroom() {
 
         <div className="mt-4 h-32 flex items-center justify-center">
           <div style={{ width: 380, maxHeight: "100%" }}>
-            <VideoPlayer videoKey="SMART_CLASSROOM" src={VIDEO_PATHS.SMART_CLASSROOM}
+            <VideoPlayer toolKey="SMART_CLASSROOM" src={VIDEO_PATHS.SMART_CLASSROOM}
               toolName="Smart Classroom" toolIcon={<MonitorPlay size={32} color="#14B8A6" />}
               caption="" />
           </div>

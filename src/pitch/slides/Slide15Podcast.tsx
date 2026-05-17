@@ -108,7 +108,7 @@ export default function Slide15Podcast() {
           </div>
           <div className="flex-1 flex items-center justify-center min-h-0 h-full">
             <VideoPlayer
-              videoKey="PODCAST"
+              toolKey="PODCAST"
               src={VIDEO_PATHS.PODCAST}
               toolName="AI Podcast"
               toolIcon={<Headphones size={48} color="#EC4899" />}
