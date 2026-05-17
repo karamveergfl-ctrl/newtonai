@@ -8,15 +8,15 @@ export default function SlideSmartClassroom() {
   return (
     <SlideShell theme="dark">
       <div className="h-full flex flex-col px-14 pt-24 pb-20">
-        <motion.div variants={slideChild} style={{ color: "#14B8A6", fontSize: 11, fontWeight: 700, letterSpacing: "0.3em" }}>
+        <motion.div variants={slideChild} style={{ color: "#14B8A6", fontSize: 13, fontWeight: 700, letterSpacing: "0.3em" }}>
           FOR TEACHERS · LIVE SMART CLASSROOM
         </motion.div>
         <motion.h1 variants={slideHeading} className="mt-2 text-left text-3xl font-extrabold"
-          style={{ fontWeight: 800, fontSize: 36, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1100 }}>
+          style={{ fontWeight: 800, fontSize: 40, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1100 }}>
           Click a topic → an animated explainer appears on the smart board in 8 seconds.
         </motion.h1>
         <motion.p variants={slideChild} className="mt-2"
-          style={{ fontSize: 14, color: "#94A3B8", maxWidth: 880, lineHeight: 1.55 }}>
+          style={{ fontSize: 17, color: "#94A3B8", maxWidth: 880, lineHeight: 1.55 }}>
           Instead of static diagrams, Newton instantly generates a moving visual explanation from the teacher's PDF + notes for any concept — orbits, photosynthesis, AC circuits, mitosis — so students actually <em>see</em> what's happening.
         </motion.p>
 
@@ -36,8 +36,8 @@ export default function SlideSmartClassroom() {
                 <Wand2 size={18} color="#5EEAD4" />
               </div>
               <div>
-                <div style={{ fontWeight: 700, color: "white", fontSize: 13 }}>Type → Animate</div>
-                <div style={{ fontSize: 11.5, color: "#94A3B8", marginTop: 2, lineHeight: 1.5 }}>Teacher types a concept; Newton renders a moving visual using class PDF + notes as the source of truth.</div>
+                <div style={{ fontWeight: 700, color: "white", fontSize: 16 }}>Type → Animate</div>
+                <div style={{ fontSize: 14, color: "#94A3B8", marginTop: 3, lineHeight: 1.5 }}>Teacher types a concept; Newton renders a moving visual using class PDF + notes as the source of truth.</div>
               </div>
             </motion.div>
             <motion.div variants={slideChild} className="rounded-xl p-4 flex gap-3"
@@ -46,8 +46,8 @@ export default function SlideSmartClassroom() {
                 <FileText size={18} color="#A5B4FC" />
               </div>
               <div>
-                <div style={{ fontWeight: 700, color: "white", fontSize: 13 }}>Grounded in your syllabus</div>
-                <div style={{ fontSize: 11.5, color: "#94A3B8", marginTop: 2, lineHeight: 1.5 }}>Animations pulled from the exact pages being taught — no off-syllabus content.</div>
+                <div style={{ fontWeight: 700, color: "white", fontSize: 16 }}>Grounded in your syllabus</div>
+                <div style={{ fontSize: 14, color: "#94A3B8", marginTop: 3, lineHeight: 1.5 }}>Animations pulled from the exact pages being taught — no off-syllabus content.</div>
               </div>
             </motion.div>
             <motion.div variants={slideChild} className="rounded-xl p-4 flex gap-3"
@@ -56,14 +56,14 @@ export default function SlideSmartClassroom() {
                 <MonitorPlay size={18} color="#FCD34D" />
               </div>
               <div>
-                <div style={{ fontWeight: 700, color: "white", fontSize: 13 }}>Mirrors to every student device</div>
-                <div style={{ fontSize: 11.5, color: "#94A3B8", marginTop: 2, lineHeight: 1.5 }}>The animation also plays on student phones/tablets so back-benchers see clearly.</div>
+                <div style={{ fontWeight: 700, color: "white", fontSize: 16 }}>Mirrors to every student device</div>
+                <div style={{ fontSize: 14, color: "#94A3B8", marginTop: 3, lineHeight: 1.5 }}>The animation also plays on student phones/tablets so back-benchers see clearly.</div>
               </div>
             </motion.div>
             <motion.div variants={slideChild} className="rounded-xl p-3 flex items-center gap-2"
               style={{ background: "linear-gradient(135deg, #14B8A622, #6366F122)", border: "1px solid #14B8A655" }}>
               <Sparkles size={14} color="#5EEAD4" />
-              <span style={{ fontSize: 11.5, color: "white", fontWeight: 600 }}>Every session auto-captured → fed into class AI tutor</span>
+              <span style={{ fontSize: 14, color: "white", fontWeight: 600 }}>Every session auto-captured → fed into class AI tutor</span>
             </motion.div>
           </div>
         </div>
