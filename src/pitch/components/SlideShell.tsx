@@ -1,10 +1,10 @@
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Logo } from "./Logo";
-import { PITCH_COLORS, PITCH_FONT } from "../constants/videoPaths";
+import { PITCH_FONT, PITCH_THEMES, PitchTheme } from "../constants/videoPaths";
 
 interface SlideShellProps {
-  theme: "dark" | "light";
+  theme: PitchTheme;
   children: ReactNode;
   noLogo?: boolean;
   bgOverride?: string;
@@ -25,11 +25,12 @@ export const slideHeading = {
 };
 
 export function SlideShell({ theme, children, noLogo, bgOverride }: SlideShellProps) {
-  const bg = bgOverride ?? (theme === "dark" ? PITCH_COLORS.darkBg : PITCH_COLORS.lightBg);
+  const tokens = PITCH_THEMES[theme];
+  const bg = bgOverride ?? tokens.background;
   return (
     <div
       className="relative w-screen h-screen overflow-hidden"
-      style={{ background: bg, fontFamily: PITCH_FONT, color: theme === "dark" ? PITCH_COLORS.textOnDark : PITCH_COLORS.textOnLight }}
+      style={{ background: bg, fontFamily: PITCH_FONT, color: tokens.text }}
     >
       {theme === "dark" && (
         <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.04 }}>
