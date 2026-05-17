@@ -74,6 +74,11 @@ const adminTools = [
   { id: "redeem-codes", label: "Redeem Codes", icon: Gift, path: "/admin/redeem-codes" },
 ];
 
+const adminDashboardSwitches = [
+  { id: "switch-student", label: "Student Dashboard", icon: BookOpen, path: "/student/dashboard" },
+  { id: "switch-teacher", label: "Teacher Dashboard", icon: School, path: "/teacher" },
+];
+
 const exploreLinks = [
   { id: "all-tools", label: "All Tools", icon: Grid3X3, path: "/tools" },
   { id: "compare", label: "Compare", icon: TrendingUp, path: "/compare", isNew: true },
@@ -453,6 +458,16 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                 {adminTools.map((tool) => (
                   <SidebarMenuItem key={tool.id}>
                     <SidebarMenuButton asChild tooltip={tool.label}>
+                      <button onClick={() => navigate(tool.path)} className={btnClass(tool.path)}>
+                        <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                        {!isCollapsed && <span>{tool.label}</span>}
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                {adminDashboardSwitches.map((tool) => (
+                  <SidebarMenuItem key={tool.id}>
+                    <SidebarMenuButton asChild tooltip={`Switch to ${tool.label}`}>
                       <button onClick={() => navigate(tool.path)} className={btnClass(tool.path)}>
                         <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                         {!isCollapsed && <span>{tool.label}</span>}
