@@ -111,6 +111,7 @@ const TeacherNewtonChat = lazy(() => import("./pages/teacher/TeacherNewtonChat")
 const StudentDashboard = lazy(() => import("./pages/student/StudentDashboard"));
 const StudentClasses = lazy(() => import("./pages/student/StudentClasses"));
 const StudentClassView = lazy(() => import("./pages/student/StudentClassView"));
+const StudentPerformance = lazy(() => import("./pages/student/StudentPerformance"));
 const JoinClass = lazy(() => import("./pages/JoinClass"));
 const PostSessionNotesReview = lazy(() => import("./pages/SessionNotesPage"));
 const TeacherReportRoute = lazy(() => import("./pages/TeacherReportRoute"));
@@ -240,6 +241,7 @@ function AnimatedRoutes() {
         
         {/* Student Class Routes */}
         <Route path="/student/dashboard" element={<PageTransition><ProtectedRoute><OnboardingGate><Dashboard /></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/student/performance" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentPerformance /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/student/classes" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClasses /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/student/class/:id" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClassView /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/join-class" element={<PageTransition><ProtectedRoute><JoinClass /></ProtectedRoute></PageTransition>} />

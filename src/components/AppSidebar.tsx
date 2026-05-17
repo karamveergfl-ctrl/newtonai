@@ -274,7 +274,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                   <>
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Dashboard">
-                        <button onClick={() => navigate("/student/dashboard")} className={btnClass("/student/dashboard")}>
+                        <button onClick={() => navigate("/student/performance")} className={btnClass("/student/performance")}>
                           <Home className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                           {!isCollapsed && <span>Dashboard</span>}
                         </button>
