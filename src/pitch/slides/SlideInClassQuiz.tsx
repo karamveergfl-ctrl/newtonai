@@ -45,6 +45,12 @@ export default function SlideInClassQuiz() {
         >
           5-minute quiz at the end of every class. Automatic Attendance + Class performance Analysis .
         </h1>
+        <p
+          className="mt-2"
+          style={{ fontSize: 14, color: "#CBD5E1", lineHeight: 1.5, maxWidth: 1080 }}
+        >
+          From the quiz results, teachers instantly analyse student performance and identify weak topics — so they can revise exactly what the class struggled with in the next session.
+        </p>
 
         {/* Timeline */}
         <div className="grid grid-cols-4 gap-3 mt-6 items-stretch">
