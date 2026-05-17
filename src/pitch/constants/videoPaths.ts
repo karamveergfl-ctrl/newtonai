@@ -1,19 +1,23 @@
 // All demo videos for the NewtonAI pitch deck.
-// Replace each empty string with the actual video URL when recordings are ready.
+// Hosted permanently in the public `pitch-videos` storage bucket so anyone
+// opening the shared pitch link can watch them without a local upload.
+const BASE =
+  "https://tdvsxaxmwmhpvsdpvbvc.supabase.co/storage/v1/object/public/pitch-videos";
+
 export const VIDEO_PATHS = {
-  NEWTON_CHAT:     "", // Replace with: /videos/newton-chat-demo.mp4
-  SMART_CLASSROOM: "", // Replace with: /videos/smart-classroom-demo.mp4
-  PULSE_METER:     "", // Replace with: /videos/pulse-meter-demo.mp4
-  VIDEO_SEARCH:    "", // Replace with: /videos/video-search-demo.mp4
-  AD_FREE_VIDEOS:  "", // Replace with: /videos/ad-free-videos-demo.mp4
-  QUIZ_GENERATOR:  "", // Replace with: /videos/quiz-generator-demo.mp4
-  AUTO_NOTES:      "", // Replace with: /videos/auto-notes-demo.mp4
-  FLASHCARDS:      "", // Replace with: /videos/flashcards-demo.mp4
-  SUMMARISER:      "", // Replace with: /videos/summariser-demo.mp4
-  HOMEWORK_HELP:   "", // Replace with: /videos/homework-help-demo.mp4
-  PDF_CHAT:        "", // Replace with: /videos/pdf-chat-demo.mp4
-  MIND_MAPS:       "", // Replace with: /videos/mind-maps-demo.mp4
-  PODCAST:         "", // Replace with: /videos/podcast-demo.mp4
+  NEWTON_CHAT:     `${BASE}/newtonchat.mp4`,
+  SMART_CLASSROOM: `${BASE}/smart_classroom.mp4`,
+  PULSE_METER:     "",
+  VIDEO_SEARCH:    "",
+  AD_FREE_VIDEOS:  `${BASE}/videowithout_ads.mp4`,
+  QUIZ_GENERATOR:  `${BASE}/quiz.mp4`,
+  AUTO_NOTES:      "",
+  FLASHCARDS:      `${BASE}/flashcards.mp4`,
+  SUMMARISER:      `${BASE}/summary.mp4`,
+  HOMEWORK_HELP:   `${BASE}/homework_help.mp4`,
+  PDF_CHAT:        `${BASE}/chat_pdf.mp4`,
+  MIND_MAPS:       `${BASE}/mindmap.mp4`,
+  PODCAST:         `${BASE}/podcast.mp4`,
 };
 
 export const PITCH_COLORS = {
