@@ -33,7 +33,7 @@ export default function Slide03Solution() {
   return (
     <SlideShell theme="dark">
       <div
-        className="absolute inset-x-0 flex flex-col px-12 pt-14 pb-16"
+        className="absolute inset-x-0 flex flex-col px-12 pt-24 pb-16"
         style={{ top: 0, bottom: 52, fontFamily: FONT }}
       >
         {/* Heading */}
