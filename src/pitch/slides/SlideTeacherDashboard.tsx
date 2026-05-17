@@ -36,7 +36,7 @@ export default function SlideTeacherDashboard() {
               REAL APP VIEW · TEACHER DASHBOARD
             </motion.div>
             <motion.h1 variants={slideHeading} style={{ fontWeight: 800, fontSize: 30, color: "#F1F5F9", letterSpacing: "-0.02em", marginTop: 4 }}>
-              Every class. Every student. One dashboard.
+              A complete view of every class and every student — in one place.
             </motion.h1>
           </div>
           <motion.button variants={slideChild} className="rounded-lg px-4 py-2 flex items-center gap-2"

@@ -37,16 +37,16 @@ export default function SlideInClassQuiz() {
             textTransform: "uppercase",
           }}
         >
-          For Teachers · In-Class Quiz + Auto-Attendance
+          For Teachers · In-Class Assessment & Attendance
         </div>
         <h1 className="mt-1" style={{ fontWeight: 800, fontSize: 30, color: "#F1F5F9", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1080, fontFamily: FONT }}>
-          5-minute quiz at the end of every class. Automatic Attendance + Class performance Analysis .
+          A five-minute assessment at the close of every lesson — automated attendance and class-wide performance analysis.
         </h1>
         <p
           className="mt-2"
           style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.55, maxWidth: 1080 }}
         >
-          From the quiz results, teachers instantly analyse student performance and identify weak topics — so they can revise exactly what the class struggled with in the next session.
+          Each assessment provides teachers with a clear view of individual progress and highlights the concepts students found challenging, enabling focused revision in the following session.
         </p>
 
         {/* Timeline */}
