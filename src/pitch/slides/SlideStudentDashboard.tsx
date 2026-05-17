@@ -27,9 +27,7 @@ export default function SlideStudentDashboard() {
             style={{ background: "#6366F11A" }}>
             <BarChart3 size={22} color="#6366F1" />
           </motion.div>
-          <motion.div variants={slideChild} style={{ color: "#6366F1", fontSize: 10, fontWeight: 700, letterSpacing: "0.3em" }}>
-            REAL APP VIEW · STUDENT DASHBOARD
-          </motion.div>
+          <motion.div variants={slideChild} style={{ color: "#6366F1", fontSize: 10, fontWeight: 700, letterSpacing: "0.3em" }}>STUDENT DASHBOARD</motion.div>
           <motion.h1 variants={slideHeading} style={{ fontWeight: 800, fontSize: 30, color: "#F1F5F9", letterSpacing: "-0.02em", marginTop: 4 }}>
             My Dashboard
           </motion.h1>
