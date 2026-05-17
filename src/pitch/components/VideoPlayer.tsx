@@ -69,6 +69,7 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: Video
         style={{
           width: "100%",
           maxWidth: 620,
+          maxHeight: "100%",
           aspectRatio: "16 / 9",
           boxShadow: "0 16px 48px rgba(99,102,241,0.30)",
           border: "1px solid rgba(99,102,241,0.25)",
