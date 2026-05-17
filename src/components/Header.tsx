@@ -173,7 +173,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
               {location.pathname !== "/" && <CreditBalance />}
               <ThemeToggle />
               <Button asChild variant="ghost" size="sm">
-                <Link to="/auth">Log in</Link>
+                <Link to="/auth?mode=login">Log in</Link>
               </Button>
               <Button asChild size="sm">
                 <Link to="/auth">Sign up</Link>
@@ -226,7 +226,7 @@ export const Header = ({ transparent = false }: HeaderProps) => {
             <div className="h-px bg-border my-2" />
             <div className="flex gap-2">
               <Button asChild variant="outline" className="flex-1">
-                <Link to="/auth">Log in</Link>
+                <Link to="/auth?mode=login">Log in</Link>
               </Button>
               <Button asChild className="flex-1">
                 <Link to="/auth">Sign up</Link>
