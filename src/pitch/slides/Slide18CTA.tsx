@@ -23,7 +23,7 @@ export default function Slide18CTA() {
         </motion.h1>
         <motion.p variants={slideChild} className="relative mt-5"
           style={{ fontSize: 18, color: "#94A3B8", maxWidth: 560 }}>
-          Join 1,200+ institutions already using NewtonAI to transform learning outcomes.
+          Join 20+ institutions already using NewtonAI to transform learning outcomes.
         </motion.p>
         <motion.div variants={slideChild} className="relative flex gap-4 mt-10">
           <button className="px-9 py-4 rounded-xl text-base font-bold transition-transform hover:scale-[1.02]"
