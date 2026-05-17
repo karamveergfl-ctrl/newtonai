@@ -35,15 +35,7 @@ export default function SlideSmartClassroom() {
                 <span className="rounded-full px-2 py-0.5" style={{ background: "#10B98122", color: "#34D399", fontSize: 10, fontWeight: 700 }}>● LIVE</span>
               </div>
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center relative gap-3" style={{ background: "radial-gradient(circle at center, #0B1424, #050912)" }}>
-              <div className="rounded-lg px-4 py-2" style={{ background: "rgba(20,184,166,0.15)", border: "1px solid #14B8A655" }}>
-                <div style={{ fontSize: 10, color: "#5EEAD4", fontWeight: 700, letterSpacing: "0.18em" }}>AUTO-GENERATED</div>
-                <div style={{ fontSize: 14, color: "white", fontWeight: 700, marginTop: 2 }}>Earth's Revolution around the Sun</div>
-              </div>
-              <div className="rounded-lg px-3 py-1.5" style={{ background: "rgba(0,0,0,0.6)" }}>
-                <div style={{ fontSize: 10, color: "#94A3B8" }}>Source: <span style={{ color: "white" }}>NCERT Ch.7 p.94 + teacher notes</span></div>
-              </div>
-            </div>
+            <div className="flex-1 relative" style={{ background: "radial-gradient(circle at center, #0B1424, #050912)" }} />
           </motion.div>
 
           {/* Side info */}
