@@ -149,10 +149,14 @@ const queryClient = new QueryClient({
   },
 });
 
+const isPitchRoute = (pathname: string) => pathname === "/pitch" || pathname === "/pitch-deck";
+
 function AnimatedRoutes() {
   const location = useLocation();
+  const shouldSkipPrefetch = isPitchRoute(location.pathname);
   
   useEffect(() => {
+    if (shouldSkipPrefetch) return;
     const start = () => {
       import("@/lib/prefetchRoutes").then(m => m.prefetchAllRoutes());
     };
@@ -163,7 +167,7 @@ function AnimatedRoutes() {
       const id = setTimeout(start, 3000);
       return () => clearTimeout(id);
     }
-  }, []);
+  }, [shouldSkipPrefetch]);
   
   return (
     <AppErrorBoundary>
@@ -284,8 +288,9 @@ function AnimatedRoutes() {
 
 
 function DeferredComponents() {
+  const location = useLocation();
   const ready = useDeferredLoad(8000);
-  if (!ready) return null;
+  if (!ready || isPitchRoute(location.pathname)) return null;
   return (
     <>
       <Suspense fallback={null}><VideoPreloader /></Suspense>
