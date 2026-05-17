@@ -60,11 +60,20 @@ export function OnboardingGate({ children }: OnboardingGateProps) {
         
         const userRoles = (roleData || []).map(r => r.role as string);
         const isInstitutional = ["principal", "dean", "exam_admin", "department_head"].some(r => userRoles.includes(r));
-        
-        if (isInstitutional && window.location.pathname === "/dashboard") {
-          navigate("/institution", { replace: true });
-        } else if (userRoles.includes("teacher") && window.location.pathname === "/dashboard") {
-          navigate("/teacher", { replace: true });
+        const isAdmin = userRoles.includes("admin");
+        const dashboardMode = (() => {
+          try { return window.localStorage.getItem("newtonai_dashboard_mode"); } catch { return null; }
+        })();
+
+        if (window.location.pathname === "/dashboard") {
+          // Admins who explicitly switched to student view should stay there.
+          if (isAdmin && dashboardMode === "student") {
+            navigate("/student/dashboard", { replace: true });
+          } else if (isInstitutional) {
+            navigate("/institution", { replace: true });
+          } else if (userRoles.includes("teacher")) {
+            navigate("/teacher", { replace: true });
+          }
         }
         setChecking(false);
       }
