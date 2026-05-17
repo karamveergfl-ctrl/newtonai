@@ -20,12 +20,12 @@ export default function SlideSmartClassroom() {
             Instead of static diagrams, Newton instantly generates a moving visual explanation from the teacher's PDF + notes for any concept — orbits, photosynthesis, AC circuits, mitosis — so students actually <em>see</em> what's going.
         </motion.p>
 
-        <div className="flex-1 grid grid-cols-12 gap-5 mt-6 min-h-0">
+        <div className="flex-1 grid grid-cols-12 gap-5 mt-10 min-h-0">
           {/* Demo video */}
           <motion.div variants={slideChild} className="col-span-8 flex items-center justify-center min-h-0">
             <VideoPlayer toolKey="SMART_CLASSROOM" src={VIDEO_PATHS.SMART_CLASSROOM}
               toolName="Smart Classroom" toolIcon={<MonitorPlay size={32} color="#14B8A6" />}
-              caption="" maxWidth="100%" />
+              caption="" maxWidth="85%" />
           </motion.div>
 
           {/* Side info */}
