@@ -74,10 +74,6 @@ const adminTools = [
   { id: "redeem-codes", label: "Redeem Codes", icon: Gift, path: "/admin/redeem-codes" },
 ];
 
-const adminDashboardSwitches = [
-  { id: "switch-student", label: "Student Dashboard", icon: BookOpen, path: "/student/dashboard" },
-  { id: "switch-teacher", label: "Teacher Dashboard", icon: School, path: "/teacher" },
-];
 
 const exploreLinks = [
   { id: "all-tools", label: "All Tools", icon: Grid3X3, path: "/tools" },
@@ -192,8 +188,8 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard")} tooltip="Home">
-                  <button onClick={() => navigate("/dashboard")} className={btnClass("/dashboard")}>
+                <SidebarMenuButton asChild isActive={isActive(isStudent ? "/student/dashboard" : "/dashboard")} tooltip="Home">
+                  <button onClick={() => navigate(isStudent ? "/student/dashboard" : "/dashboard")} className={btnClass(isStudent ? "/student/dashboard" : "/dashboard")}>
                     <Home className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                     {!isCollapsed && <span>Home</span>}
                   </button>
@@ -465,16 +461,22 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
-                {adminDashboardSwitches.map((tool) => (
-                  <SidebarMenuItem key={tool.id}>
-                    <SidebarMenuButton asChild tooltip={`Switch to ${tool.label}`}>
-                      <button onClick={() => navigate(tool.path)} className={btnClass(tool.path)}>
-                        <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
-                        {!isCollapsed && <span>{tool.label}</span>}
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {(() => {
+                  const onTeacher = location.pathname.startsWith("/teacher");
+                  const targetPath = onTeacher ? "/student/dashboard" : "/teacher";
+                  const targetLabel = onTeacher ? "Switch to Student" : "Switch to Teacher";
+                  const TargetIcon = onTeacher ? BookOpen : School;
+                  return (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip={targetLabel}>
+                        <button onClick={() => navigate(targetPath)} className={btnClass(targetPath)}>
+                          <TargetIcon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                          {!isCollapsed && <span>{targetLabel}</span>}
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })()}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
