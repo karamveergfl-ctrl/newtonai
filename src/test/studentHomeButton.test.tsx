@@ -38,4 +38,14 @@ describe("Sidebar Home button + admin dashboard switch", () => {
     expect(gate).toContain('navigate("/student/dashboard"');
     expect(gate).toContain('dashboardMode === "student"');
   });
+
+  it("hides teacher-only sidebar sections when admin is in student view", () => {
+    expect(sidebar).toContain("adminInStudentView");
+    expect(sidebar).toContain("effectiveTeacher");
+    expect(sidebar).toContain("effectiveStudent");
+    // The teacher/student nav group must be gated by the effective flags,
+    // not the raw role flags.
+    expect(sidebar).toContain("(effectiveTeacher || effectiveStudent)");
+    expect(sidebar).toContain("{effectiveTeacher ?");
+  });
 });
