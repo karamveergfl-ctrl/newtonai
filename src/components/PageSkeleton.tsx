@@ -7,8 +7,8 @@ export function PageSkeleton() {
       <div className="border-b border-border/50 px-4 py-3 flex items-center justify-between">
         <Skeleton className="h-8 w-32" />
         <div className="flex gap-3">
-          <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-20" />
+          <div className="animate-pulse bg-muted h-8 w-20 rounded-none" />
+          <div className="animate-pulse bg-muted h-8 w-20 rounded-none" />
           <Skeleton className="h-8 w-8 rounded-full" />
         </div>
       </div>
