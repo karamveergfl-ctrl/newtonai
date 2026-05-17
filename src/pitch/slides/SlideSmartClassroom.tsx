@@ -11,7 +11,7 @@ export default function SlideSmartClassroom() {
         <motion.div variants={slideChild} style={{ color: "#14B8A6", fontSize: 11, fontWeight: 700, letterSpacing: "0.3em" }}>
           FOR TEACHERS · LIVE SMART CLASSROOM
         </motion.div>
-        <motion.h1 variants={slideHeading} className="mt-2"
+        <motion.h1 variants={slideHeading} className="mt-2 text-left text-3xl font-extrabold"
           style={{ fontWeight: 800, fontSize: 36, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1100 }}>
           Click a topic → an animated explainer appears on the smart board in 8 seconds.
         </motion.h1>
