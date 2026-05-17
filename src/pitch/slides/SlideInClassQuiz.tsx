@@ -43,7 +43,7 @@ export default function SlideInClassQuiz() {
           className="mt-3"
           style={{ fontWeight: 800, fontSize: 34, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1080, fontFamily: FONT }}
         >
-          5-minute quiz at the end of every class. Attendance + understanding, automatically.
+          5-minute quiz at the end of every class. Automatic Attendance + Class performance Analysis .
         </h1>
 
         {/* Timeline */}
