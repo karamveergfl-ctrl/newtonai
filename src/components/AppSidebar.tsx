@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { useDashboardMode, setDashboardMode } from "@/hooks/useDashboardMode";
 
 const studyTools = [
   { id: "quiz", label: "AI Quiz", icon: Brain, path: "/tools/quiz" },
@@ -95,6 +96,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
   const isCollapsed = state === "collapsed";
   const { isAdmin } = useAdminAccess();
   const { isTeacher, isStudent, isInstitutionalAdmin, loading: roleLoading } = useUserRole();
+  const { mode: dashboardMode } = useDashboardMode();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const { unreadCount } = useUserNotifications();
@@ -144,6 +146,12 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Resolve which "Home" path applies for this user. Admins may have toggled
+  // to student view via the sidebar switch — honor that preference.
+  const homePath = isAdmin
+    ? (dashboardMode === "student" ? "/student/dashboard" : "/teacher")
+    : (isStudent ? "/student/dashboard" : isTeacher ? "/teacher" : "/dashboard");
+
   // Shared button class builder
   const btnClass = (path?: string) =>
     cn(
@@ -188,8 +196,8 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive(isStudent ? "/student/dashboard" : "/dashboard")} tooltip="Home">
-                  <button onClick={() => navigate(isStudent ? "/student/dashboard" : "/dashboard")} className={btnClass(isStudent ? "/student/dashboard" : "/dashboard")}>
+                <SidebarMenuButton asChild isActive={isActive(homePath)} tooltip="Home">
+                  <button onClick={() => navigate(homePath)} className={btnClass(homePath)}>
                     <Home className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                     {!isCollapsed && <span>Home</span>}
                   </button>
@@ -462,14 +470,29 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                   </SidebarMenuItem>
                 ))}
                 {(() => {
-                  const onTeacher = location.pathname.startsWith("/teacher");
-                  const targetPath = onTeacher ? "/student/dashboard" : "/teacher";
-                  const targetLabel = onTeacher ? "Switch to Student" : "Switch to Teacher";
-                  const TargetIcon = onTeacher ? BookOpen : School;
+                  // Single switch button: derive current view from the active
+                  // path first, then fall back to the persisted dashboard mode.
+                  const onTeacherPath = location.pathname.startsWith("/teacher");
+                  const onStudentPath = location.pathname.startsWith("/student/dashboard");
+                  const currentlyTeacher = onTeacherPath
+                    ? true
+                    : onStudentPath
+                      ? false
+                      : dashboardMode !== "student";
+                  const nextMode: "teacher" | "student" = currentlyTeacher ? "student" : "teacher";
+                  const targetPath = nextMode === "student" ? "/student/dashboard" : "/teacher";
+                  const targetLabel = nextMode === "student" ? "Switch to Student" : "Switch to Teacher";
+                  const TargetIcon = nextMode === "student" ? BookOpen : School;
                   return (
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip={targetLabel}>
-                        <button onClick={() => navigate(targetPath)} className={btnClass(targetPath)}>
+                        <button
+                          onClick={() => {
+                            setDashboardMode(nextMode);
+                            navigate(targetPath);
+                          }}
+                          className={btnClass(targetPath)}
+                        >
                           <TargetIcon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
                           {!isCollapsed && <span>{targetLabel}</span>}
                         </button>
