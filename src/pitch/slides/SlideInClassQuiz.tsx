@@ -24,7 +24,7 @@ const FONT = `'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
 export default function SlideInClassQuiz() {
   return (
     <SlideShell theme="dark">
-      <div className="h-full flex flex-col px-14 pt-20 pb-20" style={{ fontFamily: FONT }}>
+      <div className="h-full flex flex-col px-14 pt-20 pb-20 bg-inherit" style={{ fontFamily: FONT }}>
         <div
           className="inline-flex self-start items-center px-3 py-1 rounded-full"
           style={{
