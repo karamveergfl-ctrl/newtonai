@@ -4,7 +4,7 @@ import { SlideShell, slideChild, slideHeading } from "../components/SlideShell";
 
 const timeline = [
   { time: "00 → 40 min", title: "Teach", body: "Teacher delivers from PDF + smart board.", icon: Clock, color: "#6366F1" },
-  { time: "40 → 45 min", title: "Auto-generate quiz", body: "Newton creates a 5-Q quiz from the exact pages/topics just taught.", icon: RefreshCw, color: "#F59E0B" },
+   { time: "40 → 45 min", title: "Auto-generate quiz", body: "Newton creates a 10-Q quiz from the exact pages/topics just taught.", icon: RefreshCw, color: "#F59E0B" },
   { time: "45 → 50 min", title: "Students answer on phones", body: "Quiz pops up on every student device. Live progress bar.", icon: Smartphone, color: "#14B8A6" },
   { time: "On submit", title: "Attendance auto-marked", body: "Submission = present. No roll-call. No proxy attendance.", icon: CheckCircle2, color: "#10B981" },
 ];
