@@ -239,7 +239,7 @@ function AnimatedRoutes() {
         <Route path="/teacher/newton-chat" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherNewtonChat /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
         
         {/* Student Class Routes */}
-        <Route path="/student/dashboard" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentDashboard /></OnboardingGate></ProtectedRoute></PageTransition>} />
+        <Route path="/student/dashboard" element={<PageTransition><ProtectedRoute><OnboardingGate><Dashboard /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/student/classes" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClasses /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/student/class/:id" element={<PageTransition><ProtectedRoute><OnboardingGate><StudentClassView /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/join-class" element={<PageTransition><ProtectedRoute><JoinClass /></ProtectedRoute></PageTransition>} />
