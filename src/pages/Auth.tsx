@@ -56,6 +56,7 @@ const Auth = () => {
     const m = new URLSearchParams(window.location.search).get("mode");
     if (m === "login") return "login";
     if (m === "signup") return "signup";
+    if (m === "forgot-password") return "forgot-password";
     return "signup";
   });
   const [email, setEmail] = useState("");
@@ -518,10 +519,14 @@ const Auth = () => {
                   <Label htmlFor="password" className="text-sm font-medium text-foreground">
                     {mode === "reset-password" ? "New Password" : "Password"}
                   </Label>
-                  {mode === "login" && (
+                  {(mode === "login" || mode === "signup") && (
                     <button
                       type="button"
-                      onClick={() => { setMode("forgot-password"); setResetEmailSent(false); }}
+                      onClick={() => {
+                        setMode("forgot-password");
+                        setResetEmailSent(false);
+                        window.history.replaceState({}, document.title, '/auth?mode=forgot-password');
+                      }}
                       className="text-xs text-primary hover:underline"
                     >
                       Forgot password?
