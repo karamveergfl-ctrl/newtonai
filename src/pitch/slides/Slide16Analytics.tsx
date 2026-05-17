@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Fragment } from "react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, ReferenceLine, Cell } from "recharts";
 import { SlideShell, slideChild, slideHeading } from "../components/SlideShell";
 
@@ -63,12 +64,12 @@ export default function Slide16Analytics() {
               <div />
               {topics.map(t => <div key={t} style={{ fontSize: 9, color: "#64748B", textAlign: "center", transform: "rotate(-25deg)", transformOrigin: "center" }}>{t}</div>)}
               {students.map((s, r) => (
-                <>
-                  <div key={`l-${s}`} style={{ fontSize: 10, color: "#64748B", display: "flex", alignItems: "center" }}>{s}</div>
+                <Fragment key={s}>
+                  <div style={{ fontSize: 10, color: "#64748B", display: "flex", alignItems: "center" }}>{s}</div>
                   {topics.map((_, c) => (
                     <div key={`${r}-${c}`} className="rounded" style={{ aspectRatio: "1", background: heatColors[heatGrid[r][c]] }} />
                   ))}
-                </>
+                </Fragment>
               ))}
             </div>
             <div className="mt-auto pt-3 flex items-center gap-2 text-[10px]" style={{ color: "#64748B" }}>
