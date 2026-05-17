@@ -3,30 +3,39 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 
 /**
- * Guards the sidebar Home button so students always land on /student/dashboard.
- * If this test fails, AppSidebar's Home button was changed in a way that could
- * regress students back to the generic /dashboard route.
+ * Guards the sidebar Home button and admin dashboard switch so:
+ *  - Students always land on /student/dashboard.
+ *  - Teachers keep /teacher (or /dashboard) as Home.
+ *  - Admins who flipped to student view stay on /student/dashboard.
  */
-describe("Sidebar Home button (students)", () => {
-  const source = readFileSync(
+describe("Sidebar Home button + admin dashboard switch", () => {
+  const sidebar = readFileSync(
     resolve(__dirname, "../components/AppSidebar.tsx"),
     "utf-8"
   );
+  const gate = readFileSync(
+    resolve(__dirname, "../components/OnboardingGate.tsx"),
+    "utf-8"
+  );
 
-  it("navigates students to /student/dashboard", () => {
-    expect(source).toContain(
-      'navigate(isStudent ? "/student/dashboard" : "/dashboard")'
-    );
+  it("computes a role+mode aware Home path", () => {
+    expect(sidebar).toContain("const homePath = isAdmin");
+    expect(sidebar).toContain('"/student/dashboard"');
   });
 
-  it("marks Home active on /student/dashboard for students", () => {
-    expect(source).toContain(
-      'isActive(isStudent ? "/student/dashboard" : "/dashboard")'
-    );
+  it("Home button navigates to the resolved homePath", () => {
+    expect(sidebar).toContain("navigate(homePath)");
+    expect(sidebar).toContain("isActive(homePath)");
   });
 
-  it("keeps non-student users on /dashboard", () => {
-    // The ternary fallback must remain "/dashboard" so teachers/admins are unaffected.
-    expect(source).not.toContain('navigate(isStudent ? "/student/dashboard" : "/student/dashboard")');
+  it("admin switch button persists the chosen dashboard mode before navigating", () => {
+    expect(sidebar).toContain("setDashboardMode(nextMode)");
+    expect(sidebar).toContain("Switch to Student");
+    expect(sidebar).toContain("Switch to Teacher");
+  });
+
+  it("OnboardingGate keeps admins on /student/dashboard when in student view", () => {
+    expect(gate).toContain('navigate("/student/dashboard"');
+    expect(gate).toContain('dashboardMode === "student"');
   });
 });
