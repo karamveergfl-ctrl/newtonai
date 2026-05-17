@@ -190,8 +190,8 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption, maxWidt
         style={{
           color: "#94A3B8",
           fontStyle: "italic",
-          fontSize: 11,
-          marginTop: 8,
+          fontSize: 14,
+          marginTop: 10,
           maxWidth,
           textAlign: "center",
           lineHeight: 1.45,
