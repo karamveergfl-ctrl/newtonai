@@ -74,6 +74,11 @@ const adminTools = [
   { id: "redeem-codes", label: "Redeem Codes", icon: Gift, path: "/admin/redeem-codes" },
 ];
 
+const adminDashboardSwitches = [
+  { id: "switch-student", label: "Student Dashboard", icon: BookOpen, path: "/student/dashboard" },
+  { id: "switch-teacher", label: "Teacher Dashboard", icon: School, path: "/teacher" },
+];
+
 const exploreLinks = [
   { id: "all-tools", label: "All Tools", icon: Grid3X3, path: "/tools" },
   { id: "compare", label: "Compare", icon: TrendingUp, path: "/compare", isNew: true },
