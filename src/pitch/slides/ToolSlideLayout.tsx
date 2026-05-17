@@ -38,7 +38,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
         style={{ top: 0, bottom: 52, fontFamily: FONT }}
       >
         {/* HEADER (sits below the top-left Logo) */}
-        <div className="flex items-center justify-between gap-6 px-12 pt-16 pb-3 flex-shrink-0">
+        <div className="flex items-center justify-between gap-6 px-12 pt-14 pb-3 flex-shrink-0">
           <div className="flex-1 min-w-0">
             <div
               className="inline-flex items-center px-2.5 py-1 rounded-full mb-2"
@@ -46,7 +46,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
                 background: `${p.categoryColor}1F`,
                 color: p.categoryColor,
                 border: `1px solid ${p.categoryColor}55`,
-                fontSize: 9.5,
+                fontSize: 12,
                 fontWeight: 700,
                 letterSpacing: "0.28em",
                 textTransform: "uppercase",
@@ -58,7 +58,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
               style={{
                 fontFamily: FONT,
                 fontWeight: 800,
-                fontSize: "clamp(18px, 1.8vw, 24px)",
+                fontSize: "clamp(26px, 2.6vw, 34px)",
                 color: "white",
                 letterSpacing: "-0.02em",
                 lineHeight: 1.15,
@@ -71,8 +71,8 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
           <div
             className="rounded-2xl flex items-center justify-center flex-shrink-0"
             style={{
-              width: 52,
-              height: 52,
+              width: 64,
+              height: 64,
               background: p.iconGradient,
               boxShadow: `0 10px 28px ${p.categoryColor}55`,
             }}
@@ -130,7 +130,7 @@ function BulletCard({
   marker,
   points,
 }: {
-  heading: string;
+      heading: string;
   headingColor: string;
   bg: string;
   border: string;
@@ -141,33 +141,33 @@ function BulletCard({
 }) {
   return (
     <div
-      className="rounded-xl p-3.5"
+      className="rounded-xl p-4"
       style={{ background: bg, border: `1px solid ${border}` }}
     >
       <div
         style={{
-          fontSize: 9.5,
+          fontSize: 12,
           fontWeight: 800,
           letterSpacing: "0.26em",
           color: headingColor,
           textTransform: "uppercase",
-          marginBottom: 6,
+          marginBottom: 8,
           fontFamily: FONT,
         }}
       >
         {heading}
       </div>
-      <ul className="space-y-1 m-0 p-0 list-none">
+      <ul className="space-y-1.5 m-0 p-0 list-none">
         {points.map((pt, i) => (
           <li key={i} className="flex items-start gap-2">
             <span
               style={{
                 color: bulletColor,
                 fontWeight: 800,
-                fontSize: 12,
+                fontSize: 15,
                 lineHeight: 1.45,
                 flexShrink: 0,
-                width: 11,
+                width: 14,
               }}
             >
               {marker}
@@ -175,7 +175,7 @@ function BulletCard({
             <span
               style={{
                 color: textColor,
-                fontSize: 11.5,
+                fontSize: 14.5,
                 lineHeight: 1.45,
                 fontFamily: FONT,
                 fontWeight: 400,
