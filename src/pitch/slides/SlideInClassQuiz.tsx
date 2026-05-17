@@ -39,7 +39,7 @@ export default function SlideInClassQuiz() {
         >
           For Teachers · In-Class Quiz + Auto-Attendance
         </div>
-        <h1 className="mt-3 text-xl" style={{ fontWeight: 800, fontSize: 34, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1080, fontFamily: FONT }}>
+        <h1 className="mt-3 text-4xl" style={{ fontWeight: 800, fontSize: 34, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1080, fontFamily: FONT }}>
           5-minute quiz at the end of every class. Automatic Attendance + Class performance Analysis .
         </h1>
         <p
