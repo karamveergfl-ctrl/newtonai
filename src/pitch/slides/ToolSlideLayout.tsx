@@ -28,8 +28,8 @@ function toBullets(input: string | string[]): string[] {
 }
 
 export function ToolSlideLayout(p: ToolSlideLayoutProps) {
-  const problemPoints = toBullets(p.problem);
-  const solutionPoints = [...toBullets(p.solution), ...(p.highlights ?? [])];
+  const problemPoints = toBullets(p.problem).slice(0, 3);
+  const solutionPoints = [...toBullets(p.solution), ...(p.highlights ?? [])].slice(0, 4);
 
   return (
     <SlideShell theme="dark">
