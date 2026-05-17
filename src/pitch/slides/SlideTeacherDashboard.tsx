@@ -29,7 +29,7 @@ const activity = [
 export default function SlideTeacherDashboard() {
   return (
     <SlideShell theme="light">
-      <div className="h-full flex flex-col px-12 pt-20 pb-20">
+      <div className="h-full flex flex-col px-12 pt-20 pb-20 bg-inherit">
         <div className="flex items-center justify-between mb-4">
           <div>
             <motion.div variants={slideChild} style={{ color: "#6366F1", fontSize: 10, fontWeight: 700, letterSpacing: "0.3em" }}>
