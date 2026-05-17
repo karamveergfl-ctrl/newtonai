@@ -9,8 +9,12 @@ Goal: confirm the sidebar **Home** button always lands a student on `/student/da
 3. Navigate to `/tools/quiz`, then click **Home** → URL becomes `/student/dashboard` and the Home view renders (no flash of the classes list).
 4. Navigate to `/student/classes`, then click **Home** → URL becomes `/student/dashboard`.
 5. Refresh `/student/dashboard` → page loads directly into the Home view.
-6. Sign in as an **admin** account, switch to the Student dashboard via the sidebar toggle, click **Home** → URL becomes `/student/dashboard`.
-7. Sign in as a **teacher** account, click **Home** → URL becomes `/dashboard` (teachers keep the default Home route).
+6. Sign in as an **admin** account. The sidebar shows a single **Switch to Student / Switch to Teacher** button under Admin.
+7. From `/teacher`, click **Switch to Student** → URL becomes `/student/dashboard` and the image dashboard renders.
+8. Click **Home** → URL stays on `/student/dashboard` (must NOT bounce back to `/teacher`).
+9. Refresh the page → admin stays on `/student/dashboard`.
+10. Click **Switch to Teacher** → URL becomes `/teacher`. Clicking **Home** keeps `/teacher`.
+11. Sign in as a **teacher** account, click **Home** → URL becomes `/teacher`.
 
 ## Automated coverage
 
