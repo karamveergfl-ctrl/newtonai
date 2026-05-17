@@ -158,3 +158,6 @@ verify_jwt = false
 
 [functions.institution-verify-payment]
 verify_jwt = false
+
+[functions.gsc-setup]
+verify_jwt = false
