@@ -4,6 +4,8 @@ import { Home, Camera, LayoutGrid, User, School } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useDashboardMode } from "@/hooks/useDashboardMode";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import newtonChatAvatar from "@/assets/newton-chat-avatar-sm.webp";
 import { getNewtonOpenFn } from "@/lib/newtonOpenRef";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,12 +20,16 @@ interface NavItem {
   match?: (path: string) => boolean;
 }
 
-const NAV_ITEMS: NavItem[] = [
+const buildNavItems = (homePath: string): NavItem[] => [
   {
     label: "Home",
     icon: <Home className="w-5 h-5" />,
-    path: "/dashboard",
-    match: (p) => p === "/dashboard" || p === "/index",
+    path: homePath,
+    match: (p) =>
+      p === "/dashboard" ||
+      p === "/index" ||
+      p === "/student/dashboard" ||
+      p === "/teacher",
   },
   {
     label: "Newton",
@@ -64,6 +70,12 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isTeacher, isStudent } = useUserRole();
+  const { isAdmin } = useAdminAccess();
+  const { mode: dashboardMode } = useDashboardMode();
+  const homePath = isAdmin
+    ? (dashboardMode === "student" ? "/student/dashboard" : "/teacher")
+    : (isStudent ? "/student/dashboard" : isTeacher ? "/teacher" : "/dashboard");
+  const NAV_ITEMS = buildNavItems(homePath);
 
   // Check for active live sessions and concept checks (student only)
   const [hasLiveSession, setHasLiveSession] = useState(false);
