@@ -1,56 +1,64 @@
-## Goal
-Redesign the tool demo slides (9 slides using `ToolSlideLayout`) into a clean, presentation-grade layout with a smaller video frame, properly formatted typography, and a true left/right Problem vs Solution split. Apply consistent fixes across all slides.
 
-## New Tool Slide Layout (applied to all 9 video demo slides)
+## Goals
+
+1. All tool demo slides become a clean **3-column layout: Problem (left) · Video (center) · Solution (right)** — nothing else.
+2. Remove all motion/animations on tool slides; pure static layout to eliminate jitter & overlap.
+3. Fix text + video frame overlap (video sized to fit center column, no absolute overflow).
+4. Restyle **Slide 3 (Solution)** to match the same dark theme + typography system as the other slides.
+5. **Remove the "Instant Video Search" slide** (currently slide 4 in the deck) and replace it with a new student-focused slide: **"Ad-Free Educational Videos — Watch Any Topic, No Ads, No Distractions"** (no teacher in-class framing).
+
+## Changes
+
+### A. `src/pitch/slides/ToolSlideLayout.tsx` — full rewrite
+Replace current header + 2-col + video-band structure with a single 3-column grid:
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  [CATEGORY CHIP]                              [Tool Icon]   │  ← Header band (~14%)
-│  Tool Name — Bold Display Headline                          │
-├──────────────────────────┬──────────────────────────────────┤
-│                          │                                  │
-│  ❌ THE PROBLEM          │   ✅ NEWTON'S SOLUTION           │
-│  (left column, ~38%)     │   (right column, ~38%)           │
-│  Body copy in clean      │   Body copy + 3 checkmark        │
-│  serif/sans hierarchy    │   highlights stacked below       │
-│                          │                                  │
-├──────────────────────────┴──────────────────────────────────┤
-│              ▶  WATCH HOW IT WORKS                          │
-│        ┌────────────────────────────────┐                   │  ← Video band (~48%)
-│        │   Smaller 16:9 video frame     │                   │
-│        │   max-width ~620px, centered   │                   │
-│        └────────────────────────────────┘                   │
-│              Italic caption beneath                         │
-└─────────────────────────────────────────────────────────────┘
+│  Header strip: category chip · tool name · icon (compact)   │
+├──────────────┬──────────────────────────┬───────────────────┤
+│  PROBLEM     │      VIDEO (16:9)        │   SOLUTION        │
+│  (left col)  │      centered, fits      │   (right col)     │
+│              │      column height       │   + 3 highlights  │
+└──────────────┴──────────────────────────┴───────────────────┘
 ```
 
-### Key fixes
-1. **True L/R split for Problem vs Solution** — currently both sit in a cramped top-left 70% block. Move to a real 2-column grid spanning full width, generous gap, vertical divider.
-2. **Smaller video frame** — cap `max-width: 620px` (was 880px), keep `aspect-ratio: 16/9`, center it, leave breathing room. Fits comfortably above the 52px nav even on 1008px viewports.
-3. **Typography polish** (Plus Jakarta Sans is already loaded):
-   - Tool name: 32–40px, weight 800, letter-spacing -0.02em
-   - Section labels (PROBLEM / SOLUTION): 11px, weight 700, uppercase, 0.25em tracking, colored
-   - Body copy: 14–15px, weight 400, line-height 1.6, `#CBD5E1` (problem) / `#F1F5F9` (solution)
-   - Highlights: 12.5px with green check chips
-   - Caption: italic 12px, `#64748B`
-4. **Header band** — category chip + tool name on the left, icon tile on the right, single clean row.
-5. **Highlights** — moved under the solution column (right side), not floating beside the icon.
-6. **Video section header** — centered "▶ WATCH HOW IT WORKS" with a thin underline accent in tool's `categoryColor`.
-7. **Light-band background** kept for the video area but with softer `#F1F5F9` and rounded top corners for visual separation.
-8. **Padding consistency** — `px-16 py-10` outer, `gap-12` between columns, all spacing on an 8-px grid.
+- Grid: `grid-cols-[1fr_1.2fr_1fr] gap-8 px-12`, columns vertically centered.
+- Video container: `width: 100%; max-width: 520px; aspect-ratio: 16/9` — never exceeds column.
+- Remove all `motion.*` wrappers, `variants`, `framer-motion` import. Plain `div`/`h1`.
+- Typography: Plus Jakarta Sans, tool name `clamp(22px, 2vw, 30px)` weight 800; section labels 10px weight 800 uppercase; body 13.5px line-height 1.55.
+- Remove "Watch how it works" banner, decorative gradient band, `Play` icon row.
+- Problem panel: subtle red-tinted card. Solution panel: subtle green-tinted card with check-bullet highlights underneath.
+- Bottom 52px reserved for nav bar (`bottom: 52`).
 
-## Files to change
+### B. `src/pitch/components/VideoPlayer.tsx`
+- Lower `maxWidth` from 560 → 520, remove the pulsing play-button animation (`pitchPulse` keyframes) and the scanning line keyframes (`pitchScan`).
+- Keep upload / play / mute / fullscreen controls. Caption stays under the frame, clamped to column width.
+- Empty-state simplified: icon + tool name + Upload button, no animated scan line.
 
-- **`src/pitch/slides/ToolSlideLayout.tsx`** — full rewrite of the layout per the structure above. This single file controls all 9 demo slides:
-  - Slide04NewtonChat, Slide07VideoSearch, Slide08QuizGenerator, Slide10Flashcards, Slide11Summariser, Slide12HomeworkHelp, Slide13PDFChat, Slide14MindMaps, Slide15Podcast
-- **`src/pitch/components/VideoPlayer.tsx`** — reduce `maxWidth` from 880 → 620, tighten the empty-state card (smaller icon, smaller "Upload demo video" button), refine caption typography. No logic changes (upload/IndexedDB persistence preserved).
+### C. New slide — replace `Slide07VideoSearch`
+- Delete file `src/pitch/slides/Slide07VideoSearch.tsx`.
+- Add `src/pitch/slides/SlideAdFreeVideos.tsx` using `ToolSlideLayout`:
+  - Category: `STUDENT LEARNING`, color `#A855F7`
+  - Tool name: `Ad-Free Educational Videos — Any Topic, Zero Distractions`
+  - Problem: YouTube buries learning under ads, clickbait recommendations, and 15-second pre-rolls. A student searching "Photosynthesis" wastes 4–5 minutes per video and gets pulled into unrelated content.
+  - Solution: Newton lets the student search any topic and instantly plays curriculum-aligned educational videos in a clean, fullscreen, ad-free player — no recommendations, no comments, no algorithm.
+  - Highlights: ① Zero ads, zero pre-rolls. ② Curriculum-tagged results only. ③ Saves watch history into Newton Chat so the student can ask follow-up questions.
+  - Icon: `PlayCircle` (lucide).
+  - `videoKey: "AD_FREE_VIDEOS"`, `videoSrc: VIDEO_PATHS.AD_FREE_VIDEOS` (will add to constants).
+- Add `AD_FREE_VIDEOS: ""` entry in `src/pitch/constants/videoPaths.ts`.
 
-## Out of scope (untouched)
-- Slide01Hero, Slide02Problem, Slide03Solution, SlideSmartClassroom, SlideInClassQuiz, SlideTeacherDashboard, SlideStudentDashboard, Slide18CTA — these have custom layouts and were not flagged.
-- Video upload / IndexedDB / `useToolVideo` hook — already working.
-- Navigation, keyboard shortcuts, slide order.
+### D. `src/pitch/slides/index.ts`
+- Remove the `Slide07VideoSearch` import & its entry.
+- Import & insert `SlideAdFreeVideos` in the same position (slide 4, first of the student tools group).
 
-## Verification
-- Visually inspect 2–3 demo slides (Newton Chat, Quiz Generator, Podcast) at the user's 1008×626 preview viewport and at 1920×1080.
-- Confirm video frame fully visible above the 52px BottomNav with no clipping.
-- Confirm Problem/Solution columns are equal width with readable line-length (~55ch).
+### E. `src/pitch/slides/Slide03Solution.tsx` — restyle to match theme
+- Adopt the same dark `#0A1628` background, Plus Jakarta Sans typography, category chip pattern, and spacing scale used by the tool slides.
+- Replace any current bespoke colors/cards with the standard token palette (`#6366F1` accent, `#F1F5F9` body, `#94A3B8` muted, `#34D399`/`#F87171` for green/red highlights).
+- Keep its existing content (the 3-pillar solution narrative) — only typography, colors, and spacing change.
+- Remove heavy motion if present; keep at most a single fade.
+
+## Out of scope
+- Hero, Problem, Smart Classroom, In-Class Quiz, Teacher Dashboard, Student Dashboard, CTA slides — untouched.
+- No backend / data changes. Pure presentational edits inside `src/pitch/`.
+
+Confirm and I'll implement.
