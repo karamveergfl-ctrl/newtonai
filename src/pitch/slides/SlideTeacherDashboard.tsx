@@ -32,8 +32,10 @@ export default function SlideTeacherDashboard() {
       <div className="h-full flex flex-col px-12 pt-28 pb-20 bg-inherit">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <motion.div variants={slideChild} style={{ color: "#6366F1", fontSize: 10, fontWeight: 700, letterSpacing: "0.3em" }}>TEACHER DASHBOARD</motion.div>
-            <motion.h1 variants={slideHeading} className="text-4xl font-extrabold" style={{ fontWeight: 800, fontSize: 28, color: "#F1F5F9", letterSpacing: "-0.02em", marginTop: 4 }}>
+            <motion.div variants={slideChild} style={{ color: "#6366F1", fontSize: 10, fontWeight: 700, letterSpacing: "0.3em" }}>
+              REAL APP VIEW · TEACHER DASHBOARD
+            </motion.div>
+            <motion.h1 variants={slideHeading} style={{ fontWeight: 800, fontSize: 28, color: "#F1F5F9", letterSpacing: "-0.02em", marginTop: 4 }}>
               Every class. Every student. One dashboard.
             </motion.h1>
           </div>
