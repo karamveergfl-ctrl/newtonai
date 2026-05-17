@@ -17,6 +17,7 @@ export default function Slide07VideoSearch() {
       ]}
       icon={<SearchCheck size={48} color="white" strokeWidth={2} />}
       iconGradient="linear-gradient(135deg, #A855F7, #6D28D9)"
+      videoKey="VIDEO_SEARCH"
       videoSrc={VIDEO_PATHS.VIDEO_SEARCH}
       videoCaption="Watch a teacher select the word 'Mitosis' on a PDF slide, Newton surfaces 6 educational animation videos, and the teacher plays one for the entire class — all without leaving the classroom."
     />

@@ -17,6 +17,7 @@ export default function Slide11Summariser() {
       ]}
       icon={<FileText size={48} color="white" strokeWidth={2} />}
       iconGradient="linear-gradient(135deg, #14B8A6, #0F766E)"
+      videoKey="SUMMARISER"
       videoSrc={VIDEO_PATHS.SUMMARISER}
       videoCaption="Watch Newton summarise a 45-page Chemistry chapter into a 5-section structured study guide in 12 seconds — complete with highlighted key terms, a formula section, and 3 practice questions."
     />

@@ -18,6 +18,7 @@ export default function Slide10Flashcards() {
       ]}
       icon={<Layers size={48} color="white" strokeWidth={2} />}
       iconGradient="linear-gradient(135deg, #6366F1, #4338CA)"
+      videoKey="FLASHCARDS"
       videoSrc={VIDEO_PATHS.FLASHCARDS}
       videoCaption="See Newton generate 15 flashcards from a Trigonometry chapter PDF, then watch a student flip through them with the spaced repetition system — hard cards come back sooner, easy cards fade out."
       extra={<FlashcardDemo />}

@@ -17,6 +17,7 @@ export default function Slide13PDFChat() {
       ]}
       icon={<FileSearch size={48} color="white" strokeWidth={2} />}
       iconGradient="linear-gradient(135deg, #A855F7, #6D28D9)"
+      videoKey="PDF_CHAT"
       videoSrc={VIDEO_PATHS.PDF_CHAT}
       videoCaption="A student uploads their school's prescribed Chemistry reference book and asks: 'Explain the difference between covalent and ionic bonds as described in this book.' Newton answers in 5 seconds, citing pages 34 and 51."
     />

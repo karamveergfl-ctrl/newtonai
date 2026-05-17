@@ -1,8 +1,10 @@
-import { ReactNode, useEffect, useRef, useState, MouseEvent } from "react";
-import { Play, Pause, Volume2, VolumeX, Maximize2 } from "lucide-react";
+import { ReactNode, useEffect, useRef, useState, MouseEvent, ChangeEvent } from "react";
+import { Play, Pause, Volume2, VolumeX, Maximize2, Upload, RotateCcw } from "lucide-react";
+import { useToolVideo } from "../hooks/useToolVideo";
 
 interface VideoPlayerProps {
-  src: string;
+  src?: string;
+  toolKey?: string;
   toolName: string;
   toolIcon: ReactNode;
   caption: string;
@@ -15,10 +17,14 @@ function fmt(t: number) {
   return `${m}:${s}`;
 }
 
-const stop = (e: MouseEvent) => e.stopPropagation();
+const stop = (e: MouseEvent | ChangeEvent) => e.stopPropagation();
 
-export function VideoPlayer({ src, toolName, toolIcon, caption }: VideoPlayerProps) {
+export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: VideoPlayerProps) {
   const ref = useRef<HTMLVideoElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const { url: uploadedUrl, upload, clear } = useToolVideo(toolKey);
+  const activeSrc = src || uploadedUrl || "";
+
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [time, setTime] = useState(0);
@@ -36,7 +42,7 @@ export function VideoPlayer({ src, toolName, toolIcon, caption }: VideoPlayerPro
       v.removeEventListener("timeupdate", onTime);
       v.removeEventListener("loadedmetadata", onLoad);
     };
-  }, [src]);
+  }, [activeSrc]);
 
   const toggle = (e: MouseEvent) => {
     stop(e);
@@ -45,11 +51,20 @@ export function VideoPlayer({ src, toolName, toolIcon, caption }: VideoPlayerPro
     if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
   };
 
+  const onPick = (e: MouseEvent) => { stop(e); fileRef.current?.click(); };
+  const onFile = (e: ChangeEvent<HTMLInputElement>) => {
+    stop(e);
+    const f = e.target.files?.[0];
+    if (f) upload(f);
+    e.target.value = "";
+  };
+
   return (
-    <div className="flex flex-col items-center w-full" onClick={stop}>
+    <div className="flex flex-col items-center w-full" onClick={stop} data-interactive>
+      <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={onFile} />
       <div
         className="relative w-full rounded-2xl overflow-hidden"
-        style={{ maxWidth: 820, aspectRatio: "16 / 9", boxShadow: "0 20px 60px rgba(99,102,241,0.18)" }}
+        style={{ width: "100%", maxWidth: 880, aspectRatio: "16 / 9", maxHeight: "100%", boxShadow: "0 20px 60px rgba(99,102,241,0.18)" }}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onClick={stop}
@@ -58,8 +73,15 @@ export function VideoPlayer({ src, toolName, toolIcon, caption }: VideoPlayerPro
           style={{ background: "rgba(99,102,241,0.95)", color: "white" }}>
           📹 Demo Video
         </div>
+        {uploadedUrl && (
+          <button onClick={(e) => { stop(e); clear(); }}
+            className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1"
+            style={{ background: "rgba(15,23,42,0.85)", color: "white", border: "1px solid rgba(255,255,255,0.15)" }}>
+            <RotateCcw size={11} /> Replace
+          </button>
+        )}
 
-        {!src ? (
+        {!activeSrc ? (
           <div className="relative w-full h-full flex flex-col items-center justify-center"
             style={{ background: "linear-gradient(135deg, #0f172a, #1e293b)" }}>
             <div className="absolute inset-x-0 top-0 h-px" style={{
@@ -68,19 +90,20 @@ export function VideoPlayer({ src, toolName, toolIcon, caption }: VideoPlayerPro
               animation: "pitchScan 2.4s linear infinite",
             }} />
             <div style={{ color: "#6366F1" }}>{toolIcon}</div>
-            <div style={{ color: "white", fontWeight: 600, fontSize: 18, marginTop: 14 }}>{toolName}</div>
-            <div className="mt-3 px-3 py-1 rounded-full text-[11px] font-semibold"
-              style={{ background: "rgba(99,102,241,0.18)", color: "#A5B4FC", border: "1px solid rgba(99,102,241,0.4)" }}>
-              ▶ Demo Video
-            </div>
-            <div style={{ color: "#64748B", fontStyle: "italic", fontSize: 12, marginTop: 12, maxWidth: 420, textAlign: "center" }}>
-              Video recording coming soon — replace the src prop with your demo video URL
+            <div style={{ color: "white", fontWeight: 600, fontSize: 18, marginTop: 14, textAlign: "center", padding: "0 16px" }}>{toolName}</div>
+            <button onClick={onPick}
+              className="mt-4 px-4 py-2 rounded-full text-[12px] font-semibold flex items-center gap-2 transition-transform hover:scale-105"
+              style={{ background: "#6366F1", color: "white", boxShadow: "0 6px 20px rgba(99,102,241,0.4)" }}>
+              <Upload size={14} /> Upload demo video
+            </button>
+            <div style={{ color: "#64748B", fontStyle: "italic", fontSize: 11, marginTop: 10, maxWidth: 360, textAlign: "center" }}>
+              Pick an MP4 from this device — it's stored locally and replays offline.
             </div>
             <style>{`@keyframes pitchScan { 0% { transform: translateY(0); } 100% { transform: translateY(100vh); } }`}</style>
           </div>
         ) : (
           <>
-            <video ref={ref} src={src} className="w-full h-full object-contain bg-black" onClick={toggle} muted={muted} />
+            <video ref={ref} src={activeSrc} className="w-full h-full object-contain bg-black" onClick={toggle} muted={muted} />
             {(!playing || hover) && (
               <button
                 onClick={toggle}
@@ -117,7 +140,7 @@ export function VideoPlayer({ src, toolName, toolIcon, caption }: VideoPlayerPro
           </>
         )}
       </div>
-      <div style={{ color: "#64748B", fontStyle: "italic", fontSize: 13, marginTop: 12, maxWidth: 720, textAlign: "center" }}>
+      <div style={{ color: "#64748B", fontStyle: "italic", fontSize: 12, marginTop: 10, maxWidth: 760, textAlign: "center" }}>
         {caption}
       </div>
     </div>

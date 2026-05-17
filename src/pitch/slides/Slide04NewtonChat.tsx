@@ -17,6 +17,7 @@ export default function Slide04NewtonChat() {
       ]}
       icon={<MessageCircle size={48} color="white" strokeWidth={2} />}
       iconGradient="linear-gradient(135deg, #6366F1, #4338CA)"
+      videoKey="NEWTON_CHAT"
       videoSrc={VIDEO_PATHS.NEWTON_CHAT}
       videoCaption="Watch a Grade 10 student ask Newton Chat to explain 'Integration by Substitution' using the exact notes from their class — in Hindi, by voice."
     />

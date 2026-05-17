@@ -18,6 +18,7 @@ export default function Slide08QuizGenerator() {
       ]}
       icon={<Zap size={48} color="white" strokeWidth={2.5} />}
       iconGradient="linear-gradient(135deg, #EF4444, #F59E0B)"
+      videoKey="QUIZ_GENERATOR"
       videoSrc={VIDEO_PATHS.QUIZ_GENERATOR}
       videoCaption="See a teacher select 3 paragraphs from a Physics PDF, generate a 5-question MCQ quiz in 8 seconds, launch it to 28 students, and watch the live response chart build in real time."
       extra={<QuizDemo />}
