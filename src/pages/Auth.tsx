@@ -51,7 +51,13 @@ const getPwnedPasswordCount = async (password: string) => {
 type AuthMode = "login" | "signup" | "forgot-password" | "reset-password";
 
 const Auth = () => {
-  const [mode, setMode] = useState<AuthMode>("signup");
+  const [mode, setMode] = useState<AuthMode>(() => {
+    if (typeof window === "undefined") return "signup";
+    const m = new URLSearchParams(window.location.search).get("mode");
+    if (m === "login") return "login";
+    if (m === "signup") return "signup";
+    return "signup";
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
