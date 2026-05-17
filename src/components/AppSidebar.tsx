@@ -465,6 +465,16 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+                {adminDashboardSwitches.map((tool) => (
+                  <SidebarMenuItem key={tool.id}>
+                    <SidebarMenuButton asChild tooltip={`Switch to ${tool.label}`}>
+                      <button onClick={() => navigate(tool.path)} className={btnClass(tool.path)}>
+                        <tool.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                        {!isCollapsed && <span>{tool.label}</span>}
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
