@@ -68,7 +68,7 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: Video
         className="relative rounded-2xl overflow-hidden"
         style={{
           width: "100%",
-          maxWidth: 520,
+          maxWidth: 620,
           aspectRatio: "16 / 9",
           boxShadow: "0 16px 48px rgba(99,102,241,0.30)",
           border: "1px solid rgba(99,102,241,0.25)",
@@ -190,7 +190,7 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption }: Video
           fontStyle: "italic",
           fontSize: 11,
           marginTop: 8,
-          maxWidth: 520,
+          maxWidth: 620,
           textAlign: "center",
           lineHeight: 1.45,
           fontFamily: FONT,

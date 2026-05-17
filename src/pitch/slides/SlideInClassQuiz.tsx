@@ -1,6 +1,5 @@
-import { motion } from "framer-motion";
 import { Clock, Smartphone, CheckCircle2, BarChart3, RefreshCw } from "lucide-react";
-import { SlideShell, slideChild, slideHeading } from "../components/SlideShell";
+import { SlideShell } from "../components/SlideShell";
 
 const timeline = [
   { time: "00 → 40 min", title: "Teach", body: "Teacher delivers from PDF + smart board.", icon: Clock, color: "#6366F1" },
@@ -20,22 +19,37 @@ const revisitTopics = [
   { t: "Momentum conservation problems", pct: 55 },
 ];
 
+const FONT = `'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+
 export default function SlideInClassQuiz() {
   return (
     <SlideShell theme="dark">
-      <div className="h-full flex flex-col px-14 pt-24 pb-20">
-        <motion.div variants={slideChild} style={{ color: "#14B8A6", fontSize: 11, fontWeight: 700, letterSpacing: "0.3em" }}>
-          FOR TEACHERS · IN-CLASS QUIZ + AUTO-ATTENDANCE
-        </motion.div>
-        <motion.h1 variants={slideHeading} className="mt-2"
-          style={{ fontWeight: 800, fontSize: 36, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1080 }}>
+      <div className="h-full flex flex-col px-14 pt-20 pb-20" style={{ fontFamily: FONT }}>
+        <div
+          className="inline-flex self-start items-center px-3 py-1 rounded-full"
+          style={{
+            background: "#14B8A622",
+            color: "#14B8A6",
+            border: "1px solid #14B8A655",
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.28em",
+            textTransform: "uppercase",
+          }}
+        >
+          For Teachers · In-Class Quiz + Auto-Attendance
+        </div>
+        <h1
+          className="mt-3"
+          style={{ fontWeight: 800, fontSize: 34, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1080, fontFamily: FONT }}
+        >
           5-minute quiz at the end of every class. Attendance + understanding, automatically.
-        </motion.h1>
+        </h1>
 
         {/* Timeline */}
-        <div className="grid grid-cols-4 gap-3 mt-6">
+        <div className="grid grid-cols-4 gap-3 mt-6 items-stretch">
           {timeline.map((t, i) => (
-            <motion.div key={t.title} variants={slideChild} className="rounded-2xl p-4 relative"
+            <div key={t.title} className="rounded-2xl p-4 relative flex flex-col h-full"
               style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${t.color}44` }}>
               <div className="flex items-center justify-between mb-2">
                 <div className="rounded-lg flex items-center justify-center" style={{ width: 30, height: 30, background: `${t.color}22` }}>
@@ -46,43 +60,43 @@ export default function SlideInClassQuiz() {
               <div style={{ fontWeight: 700, color: "white", fontSize: 14 }}>{t.title}</div>
               <div style={{ fontSize: 11.5, color: "#94A3B8", marginTop: 3, lineHeight: 1.45 }}>{t.body}</div>
               {i < timeline.length - 1 && (
-                <div className="absolute top-1/2 -right-2 text-lg" style={{ color: t.color }}>→</div>
+                <div className="absolute top-1/2 -right-2 text-lg" style={{ color: t.color, transform: "translateY(-50%)" }}>→</div>
               )}
-            </motion.div>
+            </div>
           ))}
         </div>
 
         {/* Result panels */}
-        <div className="flex-1 grid grid-cols-2 gap-5 mt-6 min-h-0">
-          <motion.div variants={slideChild} className="rounded-2xl p-5 flex flex-col"
-            style={{ background: "white", color: "#0F172A" }}>
+        <div className="flex-1 grid grid-cols-2 gap-5 mt-6 min-h-0 items-stretch">
+          <div className="rounded-2xl p-5 flex flex-col h-full"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#F1F5F9" }}>
             <div className="flex items-center gap-2 mb-3">
-              <BarChart3 size={16} color="#6366F1" />
-              <div style={{ fontWeight: 700, fontSize: 14 }}>Per-student performance · Today's quiz</div>
+              <BarChart3 size={16} color="#A5B4FC" />
+              <div style={{ fontWeight: 700, fontSize: 14, color: "white" }}>Per-student performance · Today's quiz</div>
             </div>
             <div className="flex-1 flex flex-col gap-1.5">
               {sampleStudents.map(s => (
                 <div key={s.n} className="flex items-center gap-3">
-                  <div style={{ width: 90, fontSize: 12, color: "#0F172A" }}>{s.n}</div>
-                  <div className="flex-1 h-2 rounded-full" style={{ background: "#F1F5F9" }}>
+                  <div style={{ width: 90, fontSize: 12, color: "#CBD5E1" }}>{s.n}</div>
+                  <div className="flex-1 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
                     <div className="h-full rounded-full" style={{
                       width: `${s.s}%`,
                       background: s.s >= 75 ? "#10B981" : s.s >= 50 ? "#F59E0B" : "#EF4444",
                     }} />
                   </div>
-                  <div style={{ width: 36, textAlign: "right", fontSize: 12, fontWeight: 700, color: "#0F172A" }}>{s.s}%</div>
+                  <div style={{ width: 36, textAlign: "right", fontSize: 12, fontWeight: 700, color: "white" }}>{s.s}%</div>
                 </div>
               ))}
             </div>
-            <div className="mt-3 pt-3 flex items-center justify-between text-xs" style={{ borderTop: "1px solid #E2E8F0" }}>
-              <span style={{ color: "#475569" }}>Class avg: <b style={{ color: "#0F172A" }}>67%</b></span>
-              <span style={{ color: "#475569" }}>Attendance: <b style={{ color: "#10B981" }}>34/36 present</b></span>
-              <span style={{ color: "#475569" }}>At-risk: <b style={{ color: "#EF4444" }}>3 students</b></span>
+            <div className="mt-3 pt-3 flex items-center justify-between text-xs" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+              <span style={{ color: "#94A3B8" }}>Class avg: <b style={{ color: "white" }}>67%</b></span>
+              <span style={{ color: "#94A3B8" }}>Attendance: <b style={{ color: "#34D399" }}>34/36 present</b></span>
+              <span style={{ color: "#94A3B8" }}>At-risk: <b style={{ color: "#F87171" }}>3 students</b></span>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div variants={slideChild} className="rounded-2xl p-5 flex flex-col"
-            style={{ background: "linear-gradient(160deg, #6366F1, #4338CA)", color: "white" }}>
+          <div className="rounded-2xl p-5 flex flex-col h-full"
+            style={{ background: "linear-gradient(160deg, #6366F1, #4338CA)", color: "white", border: "1px solid rgba(99,102,241,0.5)" }}>
             <div className="flex items-center gap-2 mb-3">
               <RefreshCw size={16} color="white" />
               <div style={{ fontWeight: 700, fontSize: 14 }}>Topics to revisit next class</div>
@@ -103,7 +117,7 @@ export default function SlideInClassQuiz() {
             <div className="mt-3 pt-3 text-xs" style={{ borderTop: "1px solid rgba(255,255,255,0.2)" }}>
               Newton emails this summary to the teacher + parents within 2 minutes of class ending.
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </SlideShell>

@@ -4,19 +4,6 @@ import { SlideShell, slideChild, slideHeading } from "../components/SlideShell";
 import { VideoPlayer } from "../components/VideoPlayer";
 import { VIDEO_PATHS } from "../constants/videoPaths";
 
-function PlanetAnim() {
-  return (
-    <div className="relative" style={{ width: 140, height: 140 }}>
-      <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle at 30% 30%, #FDE68A, #F59E0B 60%, #B45309)", boxShadow: "0 0 40px rgba(245,158,11,0.6)" }} />
-      <div className="absolute inset-0" style={{ animation: "orbit 6s linear infinite" }}>
-        <div className="absolute rounded-full" style={{ width: 18, height: 18, top: "50%", left: -10, marginTop: -9, background: "linear-gradient(135deg, #60A5FA, #1E40AF)" }} />
-      </div>
-      <div className="absolute inset-0 rounded-full" style={{ border: "1px dashed rgba(255,255,255,0.25)" }} />
-      <style>{`@keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-}
-
 export default function SlideSmartClassroom() {
   return (
     <SlideShell theme="dark">
@@ -48,13 +35,12 @@ export default function SlideSmartClassroom() {
                 <span className="rounded-full px-2 py-0.5" style={{ background: "#10B98122", color: "#34D399", fontSize: 10, fontWeight: 700 }}>● LIVE</span>
               </div>
             </div>
-            <div className="flex-1 flex items-center justify-center relative" style={{ background: "radial-gradient(circle at center, #0B1424, #050912)" }}>
-              <PlanetAnim />
-              <div className="absolute top-4 left-4 rounded-lg px-3 py-1.5" style={{ background: "rgba(20,184,166,0.15)", border: "1px solid #14B8A655" }}>
-                <div style={{ fontSize: 10, color: "#5EEAD4", fontWeight: 700, letterSpacing: "0.15em" }}>AUTO-GENERATED</div>
-                <div style={{ fontSize: 12, color: "white", fontWeight: 600 }}>Earth's Revolution around the Sun</div>
+            <div className="flex-1 flex flex-col items-center justify-center relative gap-3" style={{ background: "radial-gradient(circle at center, #0B1424, #050912)" }}>
+              <div className="rounded-lg px-4 py-2" style={{ background: "rgba(20,184,166,0.15)", border: "1px solid #14B8A655" }}>
+                <div style={{ fontSize: 10, color: "#5EEAD4", fontWeight: 700, letterSpacing: "0.18em" }}>AUTO-GENERATED</div>
+                <div style={{ fontSize: 14, color: "white", fontWeight: 700, marginTop: 2 }}>Earth's Revolution around the Sun</div>
               </div>
-              <div className="absolute bottom-4 right-4 rounded-lg px-3 py-1.5" style={{ background: "rgba(0,0,0,0.6)" }}>
+              <div className="rounded-lg px-3 py-1.5" style={{ background: "rgba(0,0,0,0.6)" }}>
                 <div style={{ fontSize: 10, color: "#94A3B8" }}>Source: <span style={{ color: "white" }}>NCERT Ch.7 p.94 + teacher notes</span></div>
               </div>
             </div>
