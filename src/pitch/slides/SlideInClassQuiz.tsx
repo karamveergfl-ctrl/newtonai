@@ -33,18 +33,18 @@ export default function SlideInClassQuiz() {
             border: "1px solid #14B8A655",
             fontSize: 10,
             fontWeight: 700,
-            letterSpacing: "0.28em",
+            letterSpacing: "0.3em",
             textTransform: "uppercase",
           }}
         >
           For Teachers · In-Class Quiz + Auto-Attendance
         </div>
-        <h1 className="mt-3 text-4xl font-extrabold" style={{ fontWeight: 800, fontSize: 34, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1080, fontFamily: FONT }}>
+        <h1 className="mt-1" style={{ fontWeight: 800, fontSize: 30, color: "#F1F5F9", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1080, fontFamily: FONT }}>
           5-minute quiz at the end of every class. Automatic Attendance + Class performance Analysis .
         </h1>
         <p
           className="mt-2"
-          style={{ fontSize: 14, color: "#CBD5E1", lineHeight: 1.5, maxWidth: 1080 }}
+          style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.55, maxWidth: 1080 }}
         >
           From the quiz results, teachers instantly analyse student performance and identify weak topics — so they can revise exactly what the class struggled with in the next session.
         </p>

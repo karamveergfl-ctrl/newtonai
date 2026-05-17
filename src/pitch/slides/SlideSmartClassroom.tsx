@@ -8,15 +8,15 @@ export default function SlideSmartClassroom() {
   return (
     <SlideShell theme="dark">
       <div className="h-full flex flex-col px-14 pt-28 pb-20">
-        <motion.div variants={slideChild} style={{ color: "#14B8A6", fontSize: 13, fontWeight: 700, letterSpacing: "0.3em" }}>
+        <motion.div variants={slideChild} style={{ color: "#14B8A6", fontSize: 10, fontWeight: 700, letterSpacing: "0.3em" }}>
           FOR TEACHERS · LIVE SMART CLASSROOM
         </motion.div>
-        <motion.h1 variants={slideHeading} className="mt-2 text-left text-3xl font-extrabold"
-          style={{ fontWeight: 800, fontSize: 40, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1100 }}>
+        <motion.h1 variants={slideHeading} className="mt-1 text-left"
+          style={{ fontWeight: 800, fontSize: 30, color: "#F1F5F9", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1100 }}>
           Click a topic → an animated explainer appears on the smart board in 8 seconds.
         </motion.h1>
         <motion.p variants={slideChild} className="mt-2"
-          style={{ fontSize: 17, color: "#94A3B8", maxWidth: 880, lineHeight: 1.55 }}>
+          style={{ fontSize: 13, color: "#94A3B8", maxWidth: 880, lineHeight: 1.55 }}>
             Instead of static diagrams, Newton instantly generates a moving visual explanation from the teacher's PDF + notes for any concept — orbits, photosynthesis, AC circuits, mitosis — so students actually <em>see</em> what's going.
         </motion.p>
 

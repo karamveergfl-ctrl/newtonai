@@ -35,7 +35,7 @@ export default function SlideTeacherDashboard() {
             <motion.div variants={slideChild} style={{ color: "#6366F1", fontSize: 10, fontWeight: 700, letterSpacing: "0.3em" }}>
               REAL APP VIEW · TEACHER DASHBOARD
             </motion.div>
-            <motion.h1 variants={slideHeading} style={{ fontWeight: 800, fontSize: 28, color: "#F1F5F9", letterSpacing: "-0.02em", marginTop: 4 }}>
+            <motion.h1 variants={slideHeading} style={{ fontWeight: 800, fontSize: 30, color: "#F1F5F9", letterSpacing: "-0.02em", marginTop: 4 }}>
               Every class. Every student. One dashboard.
             </motion.h1>
           </div>

@@ -49,7 +49,7 @@ export default function Slide02Problem() {
   return (
     <SlideShell theme="dark">
       <div className="h-full flex flex-col px-16 pt-28 pb-20">
-        <motion.div variants={slideChild} style={{ color: "#F59E0B", fontSize: 11, fontWeight: 700, letterSpacing: "0.3em" }}>
+        <motion.div variants={slideChild} style={{ color: "#F59E0B", fontSize: 10, fontWeight: 700, letterSpacing: "0.3em" }}>
           THE CHALLENGE
         </motion.div>
         <motion.h1 variants={slideHeading} className="mt-2"

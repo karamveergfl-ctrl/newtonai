@@ -46,9 +46,9 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
                 background: `${p.categoryColor}1F`,
                 color: p.categoryColor,
                 border: `1px solid ${p.categoryColor}55`,
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: 700,
-                letterSpacing: "0.28em",
+                letterSpacing: "0.3em",
                 textTransform: "uppercase",
               }}
             >
@@ -58,11 +58,11 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
               style={{
                 fontFamily: FONT,
                 fontWeight: 800,
-                fontSize: "clamp(26px, 2.6vw, 34px)",
-                color: "white",
+                fontSize: 30,
+                color: "#F1F5F9",
                 letterSpacing: "-0.02em",
                 lineHeight: 1.15,
-                margin: 0,
+                margin: "4px 0 0 0",
               }}
             >
               {p.toolName}
