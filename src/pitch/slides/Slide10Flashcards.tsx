@@ -1,7 +1,6 @@
 import { Layers } from "lucide-react";
 import { ToolSlideLayout } from "./ToolSlideLayout";
 import { VIDEO_PATHS } from "../constants/videoPaths";
-import { FlashcardDemo } from "../components/FlashcardDemo";
 
 export default function Slide10Flashcards() {
   return (
@@ -21,7 +20,6 @@ export default function Slide10Flashcards() {
       videoKey="FLASHCARDS"
       videoSrc={VIDEO_PATHS.FLASHCARDS}
       videoCaption="See Newton generate 15 flashcards from a Trigonometry chapter PDF, then watch a student flip through them with the spaced repetition system — hard cards come back sooner, easy cards fade out."
-      extra={<FlashcardDemo />}
     />
   );
 }

@@ -1,7 +1,6 @@
 import { Zap } from "lucide-react";
 import { ToolSlideLayout } from "./ToolSlideLayout";
 import { VIDEO_PATHS } from "../constants/videoPaths";
-import { QuizDemo } from "../components/QuizDemo";
 
 export default function Slide08QuizGenerator() {
   return (
@@ -21,7 +20,6 @@ export default function Slide08QuizGenerator() {
       videoKey="QUIZ_GENERATOR"
       videoSrc={VIDEO_PATHS.QUIZ_GENERATOR}
       videoCaption="See a teacher select 3 paragraphs from a Physics PDF, generate a 5-question MCQ quiz in 8 seconds, launch it to 28 students, and watch the live response chart build in real time."
-      extra={<QuizDemo />}
     />
   );
 }
