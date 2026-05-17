@@ -1,21 +1,29 @@
 ## Problem
 
-Clicking **Log in** (header, mobile menu, etc.) opens `/auth`, which currently defaults to the **Sign up** form. Users have to click an extra toggle to reach Sign in.
+On every study tool page (Quiz, Flashcards, Podcast, Mind Map, Lecture Notes, Summarizer, Homework Help, PDF Chat), the input card (Upload / Recording / YouTube / Text tabs) only appears after a ~5s delay. The page header and educational sections render immediately, but the interactive area is blank for several seconds.
+
+## Root cause
+
+The input card is wrapped in `<ToolAuthGate>` (`src/components/ToolAuthGate.tsx`). That component calls `supabase.auth.getSession()` in a `useEffect`, holds a `loading` state, and **returns `null` while loading**. The blank period is the time it takes for the auth session promise to resolve (plus any cold-start of supabase-js). Nothing else gates this UI — it's purely the loading null.
 
 ## Fix
 
-1. **`src/pages/Auth.tsx`** — read `?mode=` from the URL on mount and initialize the form mode accordingly:
-   - `?mode=login` → start in **Sign in**
-   - `?mode=signup` → start in **Sign up**
-   - `?mode=reset` / recovery hash → existing reset flow (unchanged)
-   - No param → keep current default (**Sign up**) for organic landing traffic.
+Make `ToolAuthGate` render its children optimistically and only fall back to the signup CTA once we know the user is an exhausted guest. Concretely:
 
-2. **`src/components/Header.tsx`** — point the two "Log in" buttons (desktop + mobile) at `/auth?mode=login`. Leave "Sign up" buttons as `/auth` (or `/auth?mode=signup`, equivalent).
+1. Initialize `session` synchronously from `supabase.auth` cached session if available; otherwise treat as "unknown" and **render children immediately**.
+2. Remove the `if (loading) return null;` early-return. Replace with: render `children` by default; once auth resolves, if `!session && guestLimitReached`, swap to the fallback CTA.
+3. Keep the guest banner ("Sign up to save…") logic, but only show it after the session check resolves and confirms guest (avoid flicker by hiding it during the brief unknown window).
+4. Keep `onAuthStateChange` subscription intact.
 
-3. Audit other call sites that mean "log in" specifically (e.g. `OnboardingGate`, `PaymentButton`, protected-route redirects) and append `?mode=login` so returning users land on Sign in. CTAs like "Start Free", "Get Started Free", "Try Features Free" stay on signup.
+This is a single-file change in `src/components/ToolAuthGate.tsx` and fixes the delay across all 8 tool pages at once — no per-page edits needed.
+
+## Verification
+
+- Open `/tools/quiz`, `/tools/flashcards`, `/tools/podcast`, `/tools/mind-map`, `/tools/lecture-notes`, `/tools/summarizer`, `/tools/homework-help`, `/pdf-chat` — the upload tabs should appear in the same frame as the header.
+- Logged-in user: no flicker, no CTA shown.
+- Guest with remaining trial: input visible immediately, small "Sign up to save…" hint appears after session resolves.
+- Guest with exhausted trial (localStorage `guestLimitReached=true`): input briefly visible, then replaced by "Create a free account" CTA after session resolves. (Acceptable trade-off; exhausted-guest case is rare and the CTA still appears.)
 
 ## Out of scope
 
-- No backend / auth logic changes.
-- No visual redesign of the Auth page.
-- Reset-password and OAuth flows untouched.
+No changes to per-tool components, no changes to generation logic, no changes to `ContentInputTabs`. Only the auth gate rendering behavior.
