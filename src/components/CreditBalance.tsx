@@ -34,7 +34,7 @@ export function CreditBalance({ className, showLabel = false }: CreditBalancePro
   }, [credits]);
 
   if (loading) {
-    return <Skeleton className="h-8 w-20" />;
+    return <div className="animate-pulse bg-muted h-8 w-20 rounded-none" />;
   }
 
   if (isPremium) {
