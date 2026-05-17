@@ -38,7 +38,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
         style={{ top: 0, bottom: 52, fontFamily: FONT }}
       >
         {/* HEADER (sits below the top-left Logo) */}
-        <div className="flex items-center justify-between gap-6 px-12 pt-14 pb-3 flex-shrink-0">
+        <div className="flex items-center justify-between gap-6 px-12 pt-24 pb-3 flex-shrink-0">
           <div className="flex-1 min-w-0">
             <div
               className="inline-flex items-center px-2.5 py-1 rounded-full mb-2"
