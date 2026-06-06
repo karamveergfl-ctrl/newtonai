@@ -19,6 +19,7 @@ import { ChunkErrorBoundary } from "./components/ChunkErrorBoundary";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { PageSkeleton } from "./components/PageSkeleton";
+import { OAuthDiagnostics } from "./components/OAuthDiagnostics";
 
 // Non-critical global components lazy-loaded to reduce main thread blocking
 const PodcastMiniPlayer = lazy(() => import("@/components/PodcastMiniPlayer").then(m => ({ default: m.PodcastMiniPlayer })));
