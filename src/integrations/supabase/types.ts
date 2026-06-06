@@ -729,6 +729,7 @@ export type Database = {
           team_size: string
           updated_at: string | null
           use_case: string
+          user_id: string | null
         }
         Insert: {
           company: string
@@ -743,6 +744,7 @@ export type Database = {
           team_size: string
           updated_at?: string | null
           use_case: string
+          user_id?: string | null
         }
         Update: {
           company?: string
@@ -757,6 +759,7 @@ export type Database = {
           team_size?: string
           updated_at?: string | null
           use_case?: string
+          user_id?: string | null
         }
         Relationships: []
       }
