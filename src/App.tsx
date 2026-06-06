@@ -317,6 +317,7 @@ const App = () => (
                 <PodcastProvider>
                   <AnimatedRoutes />
                   <DeferredComponents />
+                  <OAuthDiagnostics />
                 </PodcastProvider>
               </GuestTrialProvider>
             </BrowserRouter>
