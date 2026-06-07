@@ -153,12 +153,13 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
               size="icon"
               onClick={onToggleSidebar}
               className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              aria-label="Toggle conversations sidebar"
             >
               <PanelLeft className="w-4 h-4" />
             </Button>
           )}
           <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full overflow-hidden shadow-sm">
-            <img src={newtonChatAvatar} alt="Newton" className="w-full h-full object-cover scale-150" />
+            <img src={newtonChatAvatar} alt="Newton AI Avatar" className="w-full h-full object-cover scale-150" />
           </div>
           <div>
             <h3 className="text-sm font-semibold">Newton AI</h3>
@@ -169,12 +170,12 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
         </div>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
-            <Button variant="ghost" size="icon" onClick={onClear} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+            <Button variant="ghost" size="icon" onClick={onClear} aria-label="Clear conversation" className="h-8 w-8 text-muted-foreground hover:text-destructive">
               <Trash2 className="w-4 h-4" />
             </Button>
           )}
           {onClose && (
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close Newton chat" className="h-8 w-8 text-muted-foreground hover:text-foreground">
               <X className="w-4 h-4" />
             </Button>
           )}
@@ -291,6 +292,7 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             )}
             disabled={isLoading}
             title={isListening ? "Stop recording" : "Start voice input"}
+            aria-label={isListening ? "Stop voice input" : "Start voice input"}
           >
             {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </Button>
@@ -317,11 +319,11 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
             disabled={isLoading || isVoiceProcessing}
           />
           {isLoading ? (
-            <Button onClick={onCancel} variant="outline" size="icon" className="h-9 w-9 sm:h-[42px] sm:w-[42px] shrink-0">
+            <Button onClick={onCancel} variant="outline" size="icon" aria-label="Stop generating response" className="h-9 w-9 sm:h-[42px] sm:w-[42px] shrink-0">
               <StopCircle className="w-5 h-5 text-destructive" />
             </Button>
           ) : (
-            <Button onClick={handleSend} disabled={!input.trim()} size="icon" className="h-9 w-9 sm:h-[42px] sm:w-[42px] shrink-0">
+            <Button onClick={handleSend} disabled={!input.trim()} size="icon" aria-label="Send message" className="h-9 w-9 sm:h-[42px] sm:w-[42px] shrink-0">
               <Send className="w-4 h-4" />
             </Button>
           )}

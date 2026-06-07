@@ -293,6 +293,7 @@ const Pricing = () => {
               </span>
               <button
                 onClick={clearCode}
+                aria-label="Remove promo code"
                 className="ml-1 p-1 rounded-full hover:bg-green-500/20 transition-colors"
               >
                 <X className="h-3 w-3 text-green-600 dark:text-green-400" />

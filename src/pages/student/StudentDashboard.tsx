@@ -169,7 +169,7 @@ const StudentDashboard = () => {
             {classes.length === 0 ? (
               <Card className="text-center py-12 border-border/50">
                 <CardContent>
-                  <img src={newtonCharacter} alt="Newton" className="h-20 w-20 mx-auto mb-3 opacity-80" />
+                  <img src={newtonCharacter} alt="Newton AI Character" className="h-20 w-20 mx-auto mb-3 opacity-80" />
                   <p className="text-muted-foreground mb-4">No classes yet</p>
                   <Button onClick={() => navigate("/join-class")} className="gap-2"><Plus className="h-4 w-4" /> Join a Class</Button>
                 </CardContent>
