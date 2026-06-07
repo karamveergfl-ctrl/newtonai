@@ -34,8 +34,8 @@ export interface ConceptCheck {
   option_b: string;
   option_c: string;
   option_d: string;
-  correct_answer: 'a' | 'b' | 'c' | 'd';
-  explanation: string | null;
+  correct_answer?: 'a' | 'b' | 'c' | 'd' | '';
+  explanation?: string | null;
   slide_context: string | null;
   status: 'active' | 'closed' | 'reviewing';
   duration_seconds: number;

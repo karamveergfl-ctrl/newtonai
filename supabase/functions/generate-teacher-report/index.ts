@@ -158,7 +158,7 @@ serve(async (req) => {
     // 3. Concept check data
     const { data: conceptChecks } = await supabaseAdmin
       .from("concept_checks")
-      .select("id, question, correct_answer, option_a, option_b, option_c, option_d, slide_context, status")
+      .select("id, question, option_a, option_b, option_c, option_d, slide_context, status, concept_check_answers(correct_answer)")
       .eq("session_id", session_id);
 
     const conceptCheckAnalysis: Array<{

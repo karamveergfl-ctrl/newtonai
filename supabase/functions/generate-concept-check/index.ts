@@ -264,8 +264,6 @@ serve(async (req) => {
         option_b: question.option_b,
         option_c: question.option_c,
         option_d: question.option_d,
-        correct_answer: question.correct_answer,
-        explanation: question.explanation,
         slide_context: slideContext.slice(0, 4000),
         status: "active",
         duration_seconds: 30,
@@ -276,6 +274,22 @@ serve(async (req) => {
     if (insertError || !conceptCheck) {
       console.error("Insert error:", insertError);
       throw new Error("Failed to save concept check");
+    }
+
+    // Store the correct answer separately so enrolled students cannot read it
+    // before the check is closed (via direct query or realtime payload).
+    const { error: ansError } = await supabaseAdmin
+      .from("concept_check_answers")
+      .insert({
+        check_id: conceptCheck.id,
+        correct_answer: question.correct_answer,
+        explanation: question.explanation,
+      });
+    if (ansError) {
+      console.error("Answer insert error:", ansError);
+      // Roll back the check to keep state consistent
+      await supabaseAdmin.from("concept_checks").delete().eq("id", conceptCheck.id);
+      throw new Error("Failed to save concept check answer");
     }
 
     return new Response(

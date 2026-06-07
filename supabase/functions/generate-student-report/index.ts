@@ -175,7 +175,7 @@ serve(async (req) => {
     const conceptCheckIds = await (async () => {
       const { data: checks } = await supabaseAdmin
         .from("concept_checks")
-        .select("id, question, correct_answer, option_a, option_b, option_c, option_d, explanation, slide_context")
+        .select("id, question, option_a, option_b, option_c, option_d, slide_context, concept_check_answers(correct_answer, explanation)")
         .eq("session_id", session_id);
       return checks || [];
     })();
