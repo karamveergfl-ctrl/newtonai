@@ -42,7 +42,7 @@ export const SLIDES: { title: string; Component: React.ComponentType }[] = [
   // --- Teacher section ---
   { title: "Teacher & Classroom Tools", Component: SlideTeacherToolsIntro },
   { title: "Smart Classroom — Instant Animations", Component: SlideSmartClassroom },
-  { title: "Visual Learning — Ad-Free Educational Videos", Component: SlideVisualLearning },
+  { title: "Animation Videos on Smart Board in Seconds", Component: SlideVisualLearning },
   { title: "In-Class Quiz + Auto-Attendance", Component: SlideInClassQuiz },
   { title: "Teacher Dashboard", Component: SlideTeacherDashboard },
   // --- Close ---
