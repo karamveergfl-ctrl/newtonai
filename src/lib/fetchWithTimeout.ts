@@ -21,8 +21,15 @@ export async function fetchWithTimeout(
     const response = await fetch(input, { ...fetchInit, signal: controller.signal });
     return response;
   } catch (err: any) {
+    // If caller aborted (user cancel), rethrow as AbortError so callers can detect it
+    if (existingSignal?.aborted) {
+      throw err;
+    }
     if (err?.name === "AbortError" || err === "Request timed out") {
-      throw new Error("Request timed out after " + (timeoutMs / 1000) + "s. Please try again.");
+      throw new Error(
+        "The server is taking longer than expected (" + Math.round(timeoutMs / 1000) + "s). " +
+        "Please try again with a smaller file or retry."
+      );
     }
     throw err;
   } finally {

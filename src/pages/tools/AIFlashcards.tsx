@@ -152,7 +152,7 @@ const AIFlashcards = () => {
             },
           }),
           signal: abortControllerRef.current?.signal,
-          timeoutMs: 30000,
+          timeoutMs: 120000,
         }
       );
 
