@@ -20,7 +20,7 @@ export default function Slide08UseOfFunds() {
         <motion.div variants={slideHeading}>
           <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.3em", color: "#6366F1", textTransform: "uppercase" }}>Use of Funds</div>
           <h1 style={{ fontWeight: 900, fontSize: 40, color: "#0F172A", letterSpacing: "-0.035em", lineHeight: 1.1, margin: "6px 0 0 0" }}>
-            ₹70 Lakhs — engineered to compound.
+            $85K — engineered to compound.
           </h1>
         </motion.div>
 
