@@ -1,0 +1,2 @@
+ALTER PUBLICATION supabase_realtime DROP TABLE public.concept_check_responses;
+ALTER PUBLICATION supabase_realtime DROP TABLE public.live_pulse_responses;
