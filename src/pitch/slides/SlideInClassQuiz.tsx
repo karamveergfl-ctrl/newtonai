@@ -23,28 +23,28 @@ const FONT = `'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
 
 export default function SlideInClassQuiz() {
   return (
-    <SlideShell theme="dark">
-      <div className="h-full flex flex-col px-14 pt-28 pb-20 bg-inherit" style={{ fontFamily: FONT }}>
+    <SlideShell theme="light">
+      <div className="h-full flex flex-col px-14 pt-28 pb-24" style={{ fontFamily: FONT }}>
         <div
           className="inline-flex self-start items-center px-3 py-1 rounded-full"
           style={{
-            background: "#14B8A622",
-            color: "#14B8A6",
-            border: "1px solid #14B8A655",
-            fontSize: 10,
-            fontWeight: 700,
+            background: "#D9770615",
+            color: "#D97706",
+            border: "1px solid #D9770655",
+            fontSize: 11,
+            fontWeight: 800,
             letterSpacing: "0.3em",
             textTransform: "uppercase",
           }}
         >
-          For Teachers · In-Class Assessment & Attendance
+          Teacher Tool · In-Class Assessment & Attendance
         </div>
-        <h1 className="mt-1" style={{ fontWeight: 800, fontSize: 30, color: "#F1F5F9", lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 1080, fontFamily: FONT }}>
+        <h1 className="mt-2" style={{ fontWeight: 900, fontSize: 42, color: "#0F172A", lineHeight: 1.1, letterSpacing: "-0.03em", maxWidth: 1200, fontFamily: FONT }}>
           A five-minute assessment at the close of every lesson — automated attendance and class-wide performance analysis.
         </h1>
         <p
           className="mt-2"
-          style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.55, maxWidth: 1080 }}
+          style={{ fontSize: 14, color: "#475569", lineHeight: 1.55, maxWidth: 1100 }}
         >
           Each assessment provides teachers with a clear view of individual progress and highlights the concepts students found challenging, enabling focused revision in the following session.
         </p>
@@ -53,15 +53,15 @@ export default function SlideInClassQuiz() {
         <div className="grid grid-cols-4 gap-3 mt-6 items-stretch">
           {timeline.map((t, i) => (
             <div key={t.title} className="rounded-2xl p-4 relative flex flex-col h-full"
-              style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${t.color}44` }}>
+              style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${t.color}44`, boxShadow: `0 4px 14px ${t.color}10` }}>
               <div className="flex items-center justify-between mb-2">
-                <div className="rounded-lg flex items-center justify-center" style={{ width: 30, height: 30, background: `${t.color}22` }}>
+                <div className="rounded-lg flex items-center justify-center" style={{ width: 30, height: 30, background: `${t.color}1A` }}>
                   <t.icon size={15} color={t.color} strokeWidth={2.4} />
                 </div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: t.color, letterSpacing: "0.08em" }}>{t.time}</div>
               </div>
-              <div style={{ fontWeight: 700, color: "white", fontSize: 14 }}>{t.title}</div>
-              <div style={{ fontSize: 11.5, color: "#94A3B8", marginTop: 3, lineHeight: 1.45 }}>{t.body}</div>
+              <div style={{ fontWeight: 700, color: "#0F172A", fontSize: 14 }}>{t.title}</div>
+              <div style={{ fontSize: 11.5, color: "#475569", marginTop: 3, lineHeight: 1.45 }}>{t.body}</div>
               {i < timeline.length - 1 && (
                 <div className="absolute top-1/2 -right-2 text-lg" style={{ color: t.color, transform: "translateY(-50%)" }}>→</div>
               )}
@@ -72,29 +72,29 @@ export default function SlideInClassQuiz() {
         {/* Result panels */}
         <div className="flex-1 grid grid-cols-2 gap-5 mt-6 min-h-0 items-stretch">
           <div className="rounded-2xl p-5 flex flex-col h-full"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#F1F5F9" }}>
+            style={{ background: "rgba(255,255,255,0.9)", border: "1px solid #E2E8F0", color: "#0F172A", boxShadow: "0 6px 20px rgba(15,23,42,0.05)" }}>
             <div className="flex items-center gap-2 mb-3">
-              <BarChart3 size={16} color="#A5B4FC" />
-              <div style={{ fontWeight: 700, fontSize: 14, color: "white" }}>Per-student performance · Today's quiz</div>
+              <BarChart3 size={16} color="#6366F1" />
+              <div style={{ fontWeight: 700, fontSize: 14, color: "#0F172A" }}>Per-student performance · Today's quiz</div>
             </div>
             <div className="flex-1 flex flex-col gap-1.5">
               {sampleStudents.map(s => (
                 <div key={s.n} className="flex items-center gap-3">
-                  <div style={{ width: 90, fontSize: 12, color: "#CBD5E1" }}>{s.n}</div>
-                  <div className="flex-1 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
+                  <div style={{ width: 90, fontSize: 12, color: "#475569", fontWeight: 600 }}>{s.n}</div>
+                  <div className="flex-1 h-2 rounded-full" style={{ background: "#E2E8F0" }}>
                     <div className="h-full rounded-full" style={{
                       width: `${s.s}%`,
                       background: s.s >= 75 ? "#10B981" : s.s >= 50 ? "#F59E0B" : "#EF4444",
                     }} />
                   </div>
-                  <div style={{ width: 36, textAlign: "right", fontSize: 12, fontWeight: 700, color: "white" }}>{s.s}%</div>
+                  <div style={{ width: 36, textAlign: "right", fontSize: 12, fontWeight: 700, color: "#0F172A" }}>{s.s}%</div>
                 </div>
               ))}
             </div>
-            <div className="mt-3 pt-3 flex items-center justify-between text-xs" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-              <span style={{ color: "#94A3B8" }}>Class avg: <b style={{ color: "white" }}>67%</b></span>
-              <span style={{ color: "#94A3B8" }}>Attendance: <b style={{ color: "#34D399" }}>34/36 present</b></span>
-              <span style={{ color: "#94A3B8" }}>At-risk: <b style={{ color: "#F87171" }}>3 students</b></span>
+            <div className="mt-3 pt-3 flex items-center justify-between text-xs" style={{ borderTop: "1px solid #E2E8F0" }}>
+              <span style={{ color: "#475569" }}>Class avg: <b style={{ color: "#0F172A" }}>67%</b></span>
+              <span style={{ color: "#475569" }}>Attendance: <b style={{ color: "#059669" }}>34/36 present</b></span>
+              <span style={{ color: "#475569" }}>At-risk: <b style={{ color: "#DC2626" }}>3 students</b></span>
             </div>
           </div>
 
