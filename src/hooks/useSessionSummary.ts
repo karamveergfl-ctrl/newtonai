@@ -81,6 +81,18 @@ export function useSessionSummary({ sessionId }: UseSessionSummaryProps) {
 
         if (checks && (checks as unknown[]).length > 0) {
           const typedChecks = checks as unknown as ConceptCheck[];
+          // Correct answers & explanations live in a private table; fetch
+          // each via the dedicated RPC (teachers always have access).
+          for (const c of typedChecks) {
+            const { data: ans } = await supabase.rpc("get_concept_check_answer", {
+              p_check_id: c.id,
+            });
+            const a = ans as { correct_answer?: string; explanation?: string | null } | null;
+            if (a) {
+              c.correct_answer = (a.correct_answer ?? "") as ConceptCheck["correct_answer"];
+              c.explanation = a.explanation ?? null;
+            }
+          }
           setConceptChecks(typedChecks);
           setTotalConceptChecks(typedChecks.length);
 
