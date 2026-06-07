@@ -84,7 +84,7 @@ const LandingPage = () => {
     <div className="min-h-screen flex flex-col bg-background overflow-x-hidden">
       <SEOHead
         title="Home"
-        description="NewtonAI is an AI-powered study assistant for students that converts notes, PDFs and study materials into summaries, quizzes and flashcards for faster exam preparation."
+        description="Study smarter with NewtonAI — AI summaries, quizzes, flashcards and mind maps built from your notes, PDFs and lectures. Free to start."
         canonicalPath="/"
         breadcrumbs={breadcrumbs}
         keywords="AI study assistant, AI notes generator, PDF summarizer, quiz generator, flashcard maker, exam preparation, AI for students, study tools, AI homework helper" />
