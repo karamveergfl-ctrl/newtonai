@@ -274,7 +274,8 @@ function AnimatedRoutes() {
         <Route path="/admin/redeem-codes" element={<PageTransition><AdminRoute><AdminRedeemCodes /></AdminRoute></PageTransition>} />
         
         {/* Pitch Deck */}
-        <Route path="/pitch-deck" element={<PitchDeck />} />
+        <Route path="/pitch-deck" element={<InvestorPitchDeck />} />
+        <Route path="/pitch-deck-old" element={<PitchDeck />} />
         <Route path="/pitch" element={<PitchPresentation />} />
         
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
