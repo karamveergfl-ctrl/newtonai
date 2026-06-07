@@ -128,27 +128,16 @@ export function useLivePulse({ sessionId, role }: UseLivePulseProps) {
     return () => { cancelled = true; };
   }, [sessionId, role, refreshSummary]);
 
-  // Realtime subscription
+  // Polling fallback for pulse summary.
+  // Individual student pulse rows are NOT broadcast via Realtime to prevent
+  // peer-visibility of confusion signals. The summary is fetched server-side
+  // via an aggregated RPC on a short interval instead.
   useEffect(() => {
-    const channel = supabase
-      .channel(`pulse-${sessionId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "live_pulse_responses",
-          filter: `session_id=eq.${sessionId}`,
-        },
-        () => {
-          refreshSummary();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    if (!sessionId) return;
+    const interval = setInterval(() => {
+      refreshSummary();
+    }, 3000);
+    return () => clearInterval(interval);
   }, [sessionId, refreshSummary]);
 
   // Cleanup timers
