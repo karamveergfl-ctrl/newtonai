@@ -22,8 +22,8 @@ export default function Slide07InvestmentAsk() {
 
         <motion.div variants={slideChild} className="grid grid-cols-3 gap-5 mt-7">
           {[
-            { k: "Pre-Money Valuation", v: "₹7 Cr", color: "#6366F1", gradient: "linear-gradient(135deg,#EEF2FF,#F3F0FF)" },
-            { k: "Investment Ask",       v: "₹70 Lakhs", color: "#059669", gradient: "linear-gradient(135deg,#ECFDF5,#F0FDFA)" },
+            { k: "Pre-Money Valuation", v: "$850K", color: "#6366F1", gradient: "linear-gradient(135deg,#EEF2FF,#F3F0FF)" },
+            { k: "Investment Ask",       v: "$85K", color: "#059669", gradient: "linear-gradient(135deg,#ECFDF5,#F0FDFA)" },
             { k: "Equity Offered",       v: "10%", color: "#B45309", gradient: "linear-gradient(135deg,#FEF3C7,#FFFBEB)" },
           ].map(s => (
             <div key={s.k} className="rounded-2xl p-6" style={{ background: s.gradient, border: `1px solid ${s.color}33` }}>
