@@ -32,7 +32,7 @@ export function useConceptCheck({ sessionId, role, slideContext }: UseConceptChe
   const [rateLimitSeconds, setRateLimitSeconds] = useState<number | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const responsesChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const responsesPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Clear timer helper ──
   const clearTimer = useCallback(() => {
@@ -360,39 +360,30 @@ export function useConceptCheck({ sessionId, role, slideContext }: UseConceptChe
     };
   }, [sessionId, role, startTimer, clearTimer]);
 
-  // ── Realtime: concept_check_responses (teacher live distribution) ──
+  // ── Teacher live distribution: poll aggregated results ──
+  // Individual student responses are NOT broadcast via Realtime to prevent
+  // other students from seeing peers' answers. Teachers poll the aggregated
+  // RPC instead while a check is active.
   useEffect(() => {
-    // Clean up previous responses channel
-    if (responsesChannelRef.current) {
-      supabase.removeChannel(responsesChannelRef.current);
-      responsesChannelRef.current = null;
+    if (responsesPollRef.current) {
+      clearInterval(responsesPollRef.current);
+      responsesPollRef.current = null;
     }
 
-    if (!activeCheck || role !== "teacher") return;
+    if (!activeCheck || role !== "teacher" || isClosed) return;
 
-    const channel = supabase
-      .channel(`concept-responses-${activeCheck.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "concept_check_responses",
-          filter: `check_id=eq.${activeCheck.id}`,
-        },
-        () => {
-          refreshResults();
-        }
-      )
-      .subscribe();
-
-    responsesChannelRef.current = channel;
+    refreshResults();
+    responsesPollRef.current = setInterval(() => {
+      refreshResults();
+    }, 2000);
 
     return () => {
-      supabase.removeChannel(channel);
-      responsesChannelRef.current = null;
+      if (responsesPollRef.current) {
+        clearInterval(responsesPollRef.current);
+        responsesPollRef.current = null;
+      }
     };
-  }, [activeCheck, role, refreshResults]);
+  }, [activeCheck, role, isClosed, refreshResults]);
 
   // ── Cleanup timer on unmount ──
   useEffect(() => {
