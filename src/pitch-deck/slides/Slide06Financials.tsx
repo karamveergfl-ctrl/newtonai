@@ -5,11 +5,11 @@ import { Bar, BarChart, CartesianGrid, Line, ComposedChart, ResponsiveContainer,
 const FONT = `'Plus Jakarta Sans', system-ui, sans-serif`;
 
 const DATA = [
-  { year: "Y1", students: 8,   revenue: 5.3,  ebitda: -1.5 },
-  { year: "Y2", students: 15,  revenue: 10,   ebitda: 1.2 },
-  { year: "Y3", students: 30,  revenue: 20,   ebitda: 5.5 },
-  { year: "Y4", students: 60,  revenue: 40,   ebitda: 14 },
-  { year: "Y5", students: 100, revenue: 67,   ebitda: 26 },
+  { year: "Y1", students: 8,  revenue: 5.4,  ebitda: -1.4 },
+  { year: "Y2", students: 15, revenue: 10.2, ebitda: 1.5 },
+  { year: "Y3", students: 30, revenue: 20.4, ebitda: 5.8 },
+  { year: "Y4", students: 50, revenue: 34,   ebitda: 12 },
+  { year: "Y5", students: 80, revenue: 54.4, ebitda: 21 },
 ];
 
 export default function Slide06Financials() {
@@ -19,7 +19,7 @@ export default function Slide06Financials() {
         <motion.div variants={slideHeading}>
           <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.3em", color: "#6366F1", textTransform: "uppercase" }}>5-Year Projection</div>
           <h1 style={{ fontWeight: 900, fontSize: 40, color: "#0F172A", letterSpacing: "-0.035em", lineHeight: 1.1, margin: "6px 0 0 0" }}>
-            From ₹5.3 Cr → <span style={{ color: "#059669" }}>₹67 Cr+</span> in 5 years.
+            From ₹5.4 Cr → <span style={{ color: "#059669" }}>₹54 Cr+</span> in 5 years.
           </h1>
         </motion.div>
 
@@ -58,7 +58,7 @@ export default function Slide06Financials() {
           {[
             { k: "Gross Margin", v: "75–85%" },
             { k: "EBITDA by Y3", v: "Positive" },
-            { k: "5-Yr CAGR", v: "~88%" },
+            { k: "5-Yr CAGR", v: "~78%" },
           ].map(s => (
             <div key={s.k} className="rounded-xl p-3 flex items-center justify-between" style={{ background: "rgba(238,242,255,0.7)", border: "1px solid rgba(99,102,241,0.2)" }}>
               <span style={{ fontSize: 11, fontWeight: 800, color: "#6366F1", letterSpacing: "0.2em", textTransform: "uppercase" }}>{s.k}</span>

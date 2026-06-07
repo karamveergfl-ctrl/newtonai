@@ -5,8 +5,9 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 const FONT = `'Plus Jakarta Sans', system-ui, sans-serif`;
 
 const CAP_TABLE = [
-  { name: "Karamveer Singh", value: 90, color: "#6366F1" },
-  { name: "Saif Malik",      value: 10, color: "#06b6d4" },
+  { name: "Karamveer Singh", value: 81, color: "#6366F1" },
+  { name: "Saif Malik",      value: 9,  color: "#06b6d4" },
+  { name: "Investor",        value: 10, color: "#B45309" },
 ];
 
 export default function Slide07InvestmentAsk() {
@@ -22,8 +23,8 @@ export default function Slide07InvestmentAsk() {
 
         <motion.div variants={slideChild} className="grid grid-cols-3 gap-5 mt-7">
           {[
-            { k: "Pre-Money Valuation", v: "₹6.5 Cr", color: "#6366F1", gradient: "linear-gradient(135deg,#EEF2FF,#F3F0FF)" },
-            { k: "Investment Ask",       v: "₹65 Lakhs", color: "#059669", gradient: "linear-gradient(135deg,#ECFDF5,#F0FDFA)" },
+            { k: "Pre-Money Valuation", v: "₹7 Cr", color: "#6366F1", gradient: "linear-gradient(135deg,#EEF2FF,#F3F0FF)" },
+            { k: "Investment Ask",       v: "₹70 Lakhs", color: "#059669", gradient: "linear-gradient(135deg,#ECFDF5,#F0FDFA)" },
             { k: "Equity Offered",       v: "10%", color: "#B45309", gradient: "linear-gradient(135deg,#FEF3C7,#FFFBEB)" },
           ].map(s => (
             <div key={s.k} className="rounded-2xl p-6" style={{ background: s.gradient, border: `1px solid ${s.color}33` }}>
@@ -35,7 +36,7 @@ export default function Slide07InvestmentAsk() {
 
         <div className="grid grid-cols-2 gap-6 mt-7 flex-1 min-h-0">
           <motion.div variants={slideChild} className="rounded-2xl p-5 flex flex-col" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(99,102,241,0.2)" }}>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.22em", color: "#6366F1", textTransform: "uppercase", marginBottom: 8 }}>Current Cap Table</div>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.22em", color: "#6366F1", textTransform: "uppercase", marginBottom: 8 }}>Post-Investment Cap Table</div>
             <div className="flex items-center gap-4 flex-1 min-h-0">
               <div style={{ width: 180, height: 180 }}>
                 <ResponsiveContainer>

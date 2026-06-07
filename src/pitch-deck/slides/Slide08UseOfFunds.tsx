@@ -5,12 +5,12 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 const FONT = `'Plus Jakarta Sans', system-ui, sans-serif`;
 
 const ALLOCATION = [
-  { name: "Product Development",     pct: 35, amount: "₹22.75 L", color: "#6366F1" },
-  { name: "AI Infrastructure",       pct: 20, amount: "₹13.00 L", color: "#a855f7" },
-  { name: "Sales & Marketing",       pct: 20, amount: "₹13.00 L", color: "#06b6d4" },
-  { name: "Team Hiring",             pct: 15, amount: "₹9.75 L",  color: "#10B981" },
-  { name: "Operations & Compliance", pct: 5,  amount: "₹3.25 L",  color: "#F59E0B" },
-  { name: "Working Capital",         pct: 5,  amount: "₹3.25 L",  color: "#EF4444" },
+  { name: "Product Development",     pct: 35, amount: "₹24.5 L", color: "#6366F1" },
+  { name: "AI Infrastructure",       pct: 20, amount: "₹14.0 L", color: "#a855f7" },
+  { name: "Sales & Marketing",       pct: 20, amount: "₹14.0 L", color: "#06b6d4" },
+  { name: "Team Hiring",             pct: 15, amount: "₹10.5 L", color: "#10B981" },
+  { name: "Operations & Compliance", pct: 5,  amount: "₹3.5 L",  color: "#F59E0B" },
+  { name: "Working Capital",         pct: 5,  amount: "₹3.5 L",  color: "#EF4444" },
 ];
 
 export default function Slide08UseOfFunds() {
@@ -20,7 +20,7 @@ export default function Slide08UseOfFunds() {
         <motion.div variants={slideHeading}>
           <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.3em", color: "#6366F1", textTransform: "uppercase" }}>Use of Funds</div>
           <h1 style={{ fontWeight: 900, fontSize: 40, color: "#0F172A", letterSpacing: "-0.035em", lineHeight: 1.1, margin: "6px 0 0 0" }}>
-            ₹65 Lakhs — engineered to compound.
+            ₹70 Lakhs — engineered to compound.
           </h1>
         </motion.div>
 
