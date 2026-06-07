@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import newtonCharacter from "@/assets/newton-character-sm.webp";
 
 const TeacherDashboard = () => {
-  const { classes, loading, createClass } = useClasses();
+  const { classes, loading, createClass, deleteClass } = useClasses();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [showAllClasses, setShowAllClasses] = useState(false);
   const [liveSession, setLiveSession] = useState<{ id: string; class_id: string; title: string; className: string } | null>(null);
@@ -240,7 +240,7 @@ const TeacherDashboard = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
                   >
-                    <ClassCard classData={{ ...cls, last_session_date: lastSessionDates[cls.id] || null }} />
+                    <ClassCard classData={{ ...cls, last_session_date: lastSessionDates[cls.id] || null }} onDelete={deleteClass} />
                   </motion.div>
                 ))}
               </div>
