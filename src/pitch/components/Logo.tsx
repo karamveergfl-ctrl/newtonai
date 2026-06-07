@@ -1,4 +1,4 @@
-import { PITCH_COLORS } from "../constants/videoPaths";
+import newtonLogo from "@/assets/newtonai-logo-n.png.asset.json";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -16,23 +16,12 @@ export function Logo({ size = "md", showWordmark = true }: LogoProps) {
   const s = SIZES[size];
   return (
     <div className="flex items-center gap-3 select-none">
-      <div
-        style={{
-          width: s.box,
-          height: s.box,
-          borderRadius: s.box * 0.28,
-          background: `linear-gradient(135deg, ${PITCH_COLORS.primary}, #312E81)`,
-          boxShadow: "0 8px 24px rgba(99,102,241,0.35)",
-        }}
-        className="relative flex items-center justify-center"
-      >
-        <svg viewBox="0 0 32 32" width={s.box * 0.62} height={s.box * 0.62}>
-          <line x1="7" y1="6" x2="7" y2="26" stroke="white" strokeWidth="3" strokeLinecap="round" />
-          <line x1="25" y1="6" x2="25" y2="26" stroke="white" strokeWidth="3" strokeLinecap="round" />
-          <line x1="7" y1="6" x2="25" y2="26" stroke="white" strokeWidth="3" strokeLinecap="round" />
-          <circle cx="16" cy="16" r="2.6" fill={PITCH_COLORS.accent} />
-        </svg>
-      </div>
+      <img
+        src={newtonLogo.url}
+        alt="NewtonAI"
+        style={{ width: s.box, height: s.box, objectFit: "contain" }}
+        className="flex-shrink-0"
+      />
       {showWordmark && (
         <div style={{ fontWeight: 800, fontSize: s.font, lineHeight: 1, letterSpacing: "-0.02em" }}>
           <span style={{ color: "#0F172A" }}>Newton</span>
