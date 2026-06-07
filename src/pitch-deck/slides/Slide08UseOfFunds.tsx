@@ -28,7 +28,17 @@ export default function Slide08UseOfFunds() {
           <motion.div variants={slideChild} className="col-span-2 h-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={ALLOCATION} dataKey="pct" innerRadius={70} outerRadius={130} paddingAngle={2} stroke="none">
+                <Pie
+                  data={ALLOCATION}
+                  dataKey="pct"
+                  innerRadius={70}
+                  outerRadius={130}
+                  paddingAngle={2}
+                  stroke="none"
+                  label={({ percent }) => `${Math.round((percent || 0) * 100)}%`}
+                  labelLine={false}
+                  style={{ fontSize: 13, fontWeight: 800, fill: "#fff" }}
+                >
                   {ALLOCATION.map(a => <Cell key={a.name} fill={a.color} />)}
                 </Pie>
               </PieChart>

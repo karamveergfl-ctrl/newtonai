@@ -3,14 +3,17 @@ import { SlideShell, slideChild, slideHeading } from "@/pitch/components/SlideSh
 
 const FONT = `'Plus Jakarta Sans', system-ui, sans-serif`;
 
-function RevenueCard({ flag, region, channel, price, arpu, color, gradient }: { flag: string; region: string; channel: string; price: string; arpu: string; color: string; gradient: string; }) {
+function RevenueCard({ flag, region, tier, channel, price, arpu, color, gradient }: { flag: string; region: string; tier: string; channel: string; price: string; arpu: string; color: string; gradient: string; }) {
   return (
     <div className="rounded-2xl p-7 backdrop-blur-sm flex flex-col" style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${color}33`, boxShadow: `0 14px 36px ${color}22` }}>
       <div className="flex items-center gap-3 mb-3">
         <span style={{ fontSize: 28 }}>{flag}</span>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800, color: "#0F172A" }}>{region}</div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", color, textTransform: "uppercase" }}>{channel}</div>
+          <div className="flex items-baseline gap-2 mt-0.5">
+            <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: "0.04em", color }}>{tier}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", color, textTransform: "uppercase", opacity: 0.85 }}>{channel}</span>
+          </div>
         </div>
       </div>
       <div className="rounded-xl p-4" style={{ background: gradient, color: "white" }}>
@@ -37,8 +40,8 @@ export default function Slide05BusinessModel() {
         </motion.div>
 
         <motion.div variants={slideChild} className="grid grid-cols-2 gap-6 mt-8">
-          <RevenueCard flag="🇮🇳" region="India" channel="B2B · Schools · Colleges · Coaching" price="₹500" arpu="₹6,000" color="#6366F1" gradient="linear-gradient(135deg,#6366F1,#a855f7)" />
-          <RevenueCard flag="🌍" region="Global" channel="B2C · USA · UK · CA · AU · EU" price="$10" arpu="$80–120" color="#06b6d4" gradient="linear-gradient(135deg,#06b6d4,#3b82f6)" />
+          <RevenueCard flag="🇮🇳" region="India" tier="B2B" channel="· Schools · Colleges · Coaching" price="₹500" arpu="₹6,000" color="#6366F1" gradient="linear-gradient(135deg,#6366F1,#a855f7)" />
+          <RevenueCard flag="🌍" region="Global" tier="B2C" channel="· USA · UK · CA · AU · EU" price="$10" arpu="$80–120" color="#06b6d4" gradient="linear-gradient(135deg,#06b6d4,#3b82f6)" />
         </motion.div>
 
         <motion.div variants={slideChild} className="mt-8">
