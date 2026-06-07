@@ -354,6 +354,33 @@ function SmartBoardPanelInner({
 
         {/* Main content area */}
         <div className={cn("min-w-0 h-full overflow-auto transition-all duration-300", isFullscreen ? (hasActiveCheck ? "w-[70%]" : "w-[78%]") : "flex-1")}>
+          {/* Inline view switcher (non-fullscreen) when a document is attached */}
+          {!isFullscreen && documentUrl && (
+            <div className="flex items-center gap-1 px-3 py-2 border-b border-border bg-card sticky top-0 z-10">
+              <button
+                onClick={() => setActiveView("document")}
+                className={cn(
+                  "text-xs px-3 py-1.5 rounded-md font-medium transition-colors",
+                  activeView === "document"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted"
+                )}
+              >
+                Document
+              </button>
+              <button
+                onClick={() => setActiveView("session")}
+                className={cn(
+                  "text-xs px-3 py-1.5 rounded-md font-medium transition-colors",
+                  activeView === "session"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted"
+                )}
+              >
+                Session
+              </button>
+            </div>
+          )}
           {activeView === "whiteboard" ? (
             <div className="relative w-full h-full whiteboard-bg">
               <WhiteboardCanvas
