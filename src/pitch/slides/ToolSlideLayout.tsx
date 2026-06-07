@@ -35,7 +35,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
     <SlideShell theme="light">
       <div
         className="absolute inset-x-0 flex flex-col"
-        style={{ top: 0, bottom: 48, fontFamily: FONT }}
+        style={{ top: 0, bottom: 24, fontFamily: FONT }}
       >
         {/* HEADER (sits below the top-left Logo) */}
         <div className="flex items-center justify-between gap-6 px-14 pt-20 pb-3 flex-shrink-0">
