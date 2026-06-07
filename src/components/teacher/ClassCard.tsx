@@ -150,7 +150,7 @@ export function ClassCard({ classData, onDelete }: ClassCardProps) {
             className="h-7 text-xs gap-1"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/teacher/classes/${classData.id}/live`);
+              navigate(`/teacher/classes/${classData.id}`);
             }}
           >
             <Radio className="h-3 w-3" />
