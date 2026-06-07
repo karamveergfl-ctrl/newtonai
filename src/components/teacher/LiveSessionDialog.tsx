@@ -33,6 +33,19 @@ export function LiveSessionDialog({ classId, onSessionStarted, children }: LiveS
   const [questionsEnabled, setQuestionsEnabled] = useState(true);
   const [confusionThreshold, setConfusionThreshold] = useState(40);
 
+  const uploadFileToStorage = async (f: File, classId: string): Promise<string | null> => {
+    const ext = f.name.split(".").pop()?.toLowerCase() || "pdf";
+    const filePath = `${classId}/live/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("class-materials")
+      .upload(filePath, f, { contentType: f.type, upsert: false });
+    if (error) {
+      console.error("Upload error:", error);
+      return null;
+    }
+    return `storage://class-materials/${filePath}`;
+  };
+
   const extractFromFile = async (f: File): Promise<{ text: string; title: string }> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) throw new Error("Not authenticated");
@@ -55,6 +68,7 @@ export function LiveSessionDialog({ classId, onSessionStarted, children }: LiveS
       let contentText = "";
       let contentTitle = "";
       let contentSource = contentTab;
+      let documentUrl: string | null = null;
 
       if (contentTab === "text") {
         if (!textContent.trim()) { toast.error("Paste your content"); setLoading(false); return; }
@@ -63,10 +77,16 @@ export function LiveSessionDialog({ classId, onSessionStarted, children }: LiveS
       } else if (contentTab === "file") {
         if (!file) { toast.error("Upload a file"); setLoading(false); return; }
         setExtracting(true);
-        const result = await extractFromFile(file);
+        // Upload PDF + extract in parallel
+        const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+        const [result, uploadedRef] = await Promise.all([
+          extractFromFile(file),
+          isPdf ? uploadFileToStorage(file, classId) : Promise.resolve(null),
+        ]);
         contentText = result.text;
         contentTitle = result.title;
         contentSource = "pdf";
+        documentUrl = uploadedRef;
         setExtracting(false);
       } else if (contentTab === "youtube") {
         if (!youtubeUrl.trim()) { toast.error("Enter a YouTube URL"); setLoading(false); return; }
@@ -87,6 +107,7 @@ export function LiveSessionDialog({ classId, onSessionStarted, children }: LiveS
         content_source: contentSource,
         content_text: contentText,
         content_title: contentTitle,
+        document_url: documentUrl,
         status: "teaching",
         pulse_enabled: pulseEnabled,
         questions_enabled: questionsEnabled,

@@ -1268,6 +1268,7 @@ export type Database = {
           content_title: string | null
           created_at: string
           current_slide_index: number
+          document_url: string | null
           id: string
           notes_enabled: boolean
           pulse_enabled: boolean
@@ -1291,6 +1292,7 @@ export type Database = {
           content_title?: string | null
           created_at?: string
           current_slide_index?: number
+          document_url?: string | null
           id?: string
           notes_enabled?: boolean
           pulse_enabled?: boolean
@@ -1314,6 +1316,7 @@ export type Database = {
           content_title?: string | null
           created_at?: string
           current_slide_index?: number
+          document_url?: string | null
           id?: string
           notes_enabled?: boolean
           pulse_enabled?: boolean

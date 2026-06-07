@@ -723,6 +723,16 @@ function AddMaterialDialog({ classId, onAdded }: { classId: string; onAdded: () 
 function TeacherSessionWrapper({ session, classId, onUpdate, enrollmentCount }: { session: any; classId: string; onUpdate: () => void; enrollmentCount: number }) {
   const navigate = useNavigate();
   const { questions } = useQuestionWall({ sessionId: session.id, role: "teacher" });
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!session.document_url) { setDocumentUrl(null); return; }
+    resolveMaterialUrl(session.document_url).then((url) => {
+      if (!cancelled) setDocumentUrl(url);
+    });
+    return () => { cancelled = true; };
+  }, [session.document_url]);
 
   useNewtonAutoAnswer({
     sessionId: session.id,
@@ -739,7 +749,13 @@ function TeacherSessionWrapper({ session, classId, onUpdate, enrollmentCount }: 
   };
 
   return (
-    <SmartBoardPanel sessionId={session.id} classId={classId} onEndSession={handleEndSession}>
+    <SmartBoardPanel
+      sessionId={session.id}
+      classId={classId}
+      onEndSession={handleEndSession}
+      sessionTitle={session.title}
+      documentUrl={documentUrl}
+    >
       <LiveSessionPanel classId={classId} session={session} onUpdate={onUpdate} />
     </SmartBoardPanel>
   );

@@ -169,7 +169,7 @@ const TeacherDashboard = () => {
                   size="sm"
                   variant="destructive"
                   className="gap-1"
-                  onClick={() => navigate(`/teacher/classes/${liveSession.class_id}/live`)}
+                  onClick={() => navigate(`/teacher/classes/${liveSession.class_id}`)}
                 >
                   Return to Classroom
                   <ArrowRight className="h-3.5 w-3.5" />
