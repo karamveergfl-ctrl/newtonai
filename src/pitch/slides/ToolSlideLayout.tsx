@@ -82,7 +82,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
         </div>
 
         {/* PROBLEM / SOLUTION ROW */}
-        <div className="grid grid-cols-2 gap-5 px-14 flex-shrink-0 items-stretch">
+        <div className="grid grid-cols-2 gap-5 px-14 pb-6 flex-shrink-0 items-stretch">
           <BulletCard
             heading="❌ THE PROBLEM"
             headingColor="#DC2626"
@@ -106,7 +106,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
         </div>
 
         {/* VIDEO BAND */}
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-14 pt-4 pb-3 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-14 pt-2 pb-3 overflow-hidden">
           <VideoPlayer
             src={p.videoSrc}
             toolKey={p.videoKey}
