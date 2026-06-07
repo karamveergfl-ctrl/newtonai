@@ -35,9 +35,18 @@ export default function Slide08UseOfFunds() {
                   outerRadius={130}
                   paddingAngle={2}
                   stroke="none"
-                  label={({ percent }) => `${Math.round((percent || 0) * 100)}%`}
+                  label={(props: any) => {
+                    const RAD = Math.PI / 180;
+                    const r = props.innerRadius + (props.outerRadius - props.innerRadius) / 2;
+                    const x = props.cx + r * Math.cos(-props.midAngle * RAD);
+                    const y = props.cy + r * Math.sin(-props.midAngle * RAD);
+                    return (
+                      <text x={x} y={y} fill="#fff" textAnchor="middle" dominantBaseline="central" style={{ fontSize: 13, fontWeight: 800 }}>
+                        {`${Math.round(props.percent * 100)}%`}
+                      </text>
+                    );
+                  }}
                   labelLine={false}
-                  style={{ fontSize: 13, fontWeight: 800, fill: "#fff" }}
                 >
                   {ALLOCATION.map(a => <Cell key={a.name} fill={a.color} />)}
                 </Pie>
