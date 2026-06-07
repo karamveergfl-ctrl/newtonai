@@ -225,7 +225,7 @@ const TeacherDashboard = () => {
             ) : classes.length === 0 ? (
               <Card className="text-center py-16 border-border/50">
                 <CardContent>
-                  <img src={newtonCharacter} alt="Newton" className="h-24 w-24 mx-auto mb-4 opacity-80" />
+                  <img src={newtonCharacter} alt="Newton AI Character" className="h-24 w-24 mx-auto mb-4 opacity-80" />
                   <h2 className="text-xl font-semibold mb-2">No classes yet</h2>
                   <p className="text-muted-foreground mb-6">Create your first class to get started</p>
                   <CreateClassDialog onCreateClass={createClass} />

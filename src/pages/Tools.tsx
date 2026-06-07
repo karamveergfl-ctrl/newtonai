@@ -233,6 +233,9 @@ function PublicToolsPage() {
 
       {/* Tools Grid */}
       <section className="container mx-auto px-4 pb-10">
+        <h2 className="font-display text-2xl md:text-3xl font-bold mb-6 text-foreground">
+          Explore Our Tools
+        </h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tools.map((tool) => (
             <div key={tool.id}>
