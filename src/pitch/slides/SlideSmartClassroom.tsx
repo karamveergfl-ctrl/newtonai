@@ -11,7 +11,7 @@ export default function SlideSmartClassroom() {
         </motion.div>
         <motion.h1 variants={slideHeading} className="mt-1 text-left"
           style={{ fontWeight: 900, fontSize: 44, color: "#0F172A", lineHeight: 1.1, letterSpacing: "-0.03em", maxWidth: 1200 }}>
-          Teacher uploads once → every student's dashboard organises itself.
+          Class Dashboard
         </motion.h1>
         <motion.p variants={slideChild} className="mt-2"
           style={{ fontSize: 14, color: "#475569", maxWidth: 980, lineHeight: 1.55 }}>
