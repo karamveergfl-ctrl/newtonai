@@ -1,11 +1,11 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Mic, Youtube, FileText, Square, Play, Pause, Loader2, File, X, Globe, Check } from "lucide-react";
+import { Upload, Mic, Youtube, FileText, Square, Play, Pause, Loader2, File, X, Globe, Check, FileUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useDropzone } from "react-dropzone";
+import { useDropzone, type FileRejection } from "react-dropzone";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -95,6 +95,7 @@ export const ContentInputTabs = ({
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -142,14 +143,7 @@ export const ContentInputTabs = ({
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const uploadedFile = acceptedFiles[0];
     if (uploadedFile) {
-      if (uploadedFile.size > 20 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Maximum file size is 20MB",
-          variant: "destructive",
-        });
-        return;
-      }
+      setUploadError(null);
       setFile(uploadedFile);
       
       // Generate image preview if it's an image file
@@ -165,10 +159,41 @@ export const ContentInputTabs = ({
     }
   }, [toast]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const friendlyAcceptedList = useMemo(() => {
+    const exts = new Set<string>();
+    Object.values(acceptedFileTypes).forEach((arr) => arr.forEach((e) => exts.add(e.replace(".", "").toUpperCase())));
+    return Array.from(exts).join(", ");
+  }, [acceptedFileTypes]);
+
+  const onDropRejected = useCallback((rejections: FileRejection[]) => {
+    const first = rejections[0];
+    if (!first) return;
+    const code = first.errors[0]?.code;
+    let title = "Upload failed";
+    let description = "Please try a different file.";
+    if (code === "file-too-large") {
+      title = "File is too large";
+      description = `“${first.file.name}” exceeds the 20MB limit. Try compressing it or splitting it into smaller files.`;
+    } else if (code === "file-invalid-type") {
+      title = "Unsupported file type";
+      description = `We can't read “${first.file.name}”. Supported formats: ${friendlyAcceptedList}.`;
+    } else if (code === "too-many-files") {
+      title = "Too many files";
+      description = "Please drop just one file at a time.";
+    }
+    setUploadError(description);
+    toast({ title, description, variant: "destructive" });
+  }, [friendlyAcceptedList, toast]);
+
+  const { getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject, open: openFileDialog } = useDropzone({
     onDrop,
+    onDropRejected,
     accept: acceptedFileTypes,
     maxFiles: 1,
+    maxSize: 20 * 1024 * 1024,
+    multiple: false,
+    noClick: false,
+    noKeyboard: false,
   });
 
   // Recording handling
@@ -327,6 +352,7 @@ export const ContentInputTabs = ({
   const clearFile = () => {
     setFile(null);
     setImagePreview(null);
+    setUploadError(null);
   };
   
   const clearAudio = () => {
@@ -435,13 +461,29 @@ export const ContentInputTabs = ({
               <div
                 {...getRootProps()}
                 className={cn(
-                  "border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-all duration-200",
-                  isDragActive
-                    ? "border-primary bg-primary/5 scale-[1.01]"
-                    : "border-border hover:border-primary/50 hover:bg-accent/30"
+                  "relative border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-all duration-200 outline-none",
+                  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  isDragReject
+                    ? "border-destructive bg-destructive/5 scale-[1.01]"
+                    : isDragAccept
+                      ? "border-primary bg-primary/10 scale-[1.01] shadow-[0_0_0_4px_hsl(var(--primary)/0.12)]"
+                      : isDragActive
+                        ? "border-primary bg-primary/5 scale-[1.01]"
+                        : uploadError
+                          ? "border-destructive/40 hover:border-destructive/60 bg-destructive/[0.02]"
+                          : "border-border hover:border-primary/50 hover:bg-accent/30"
                 )}
+                aria-label="File upload dropzone"
               >
                 <input {...getInputProps()} />
+                {isDragActive && !file && (
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-background/40 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 text-primary font-medium">
+                      <FileUp className="h-5 w-5 animate-bounce" />
+                      {isDragReject ? "This file type isn't supported" : "Release to upload"}
+                    </div>
+                  </div>
+                )}
                 {file ? (
                   <div className="flex flex-col items-center gap-3 sm:gap-4">
                     {/* Image Preview */}
@@ -492,7 +534,7 @@ export const ContentInputTabs = ({
                       </div>
                     </div>
                     <p className="font-medium text-sm sm:text-base">
-                      {isDragActive ? "Drop the file here" : "Drag and drop your file here"}
+                      {isDragActive ? "Drop the file here" : "Drag & drop your file, or click to browse"}
                     </p>
                     <p className="text-xs sm:text-sm text-muted-foreground px-2">
                       Supported: {supportedFormats}
@@ -500,6 +542,25 @@ export const ContentInputTabs = ({
                   </div>
                 )}
               </div>
+
+              {uploadError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs sm:text-sm text-destructive"
+                  role="alert"
+                >
+                  <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span className="flex-1 text-left">{uploadError}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setUploadError(null); openFileDialog(); }}
+                    className="font-medium underline underline-offset-2 hover:no-underline"
+                  >
+                    Try again
+                  </button>
+                </motion.div>
+              )}
               
               <Button
                 onClick={handleSubmit}
