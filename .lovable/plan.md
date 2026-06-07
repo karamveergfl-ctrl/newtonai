@@ -1,48 +1,21 @@
-## What’s actually broken
-The failure is not the PDF itself — the frontend is aborting long-running requests too early.
+1. Refresh the Google sign-in provider in the backend auth settings
+- Reconfigure Google through the managed social-auth setup so the project uses the correct broker/callback configuration for this app.
+- Verify Google is enabled in the backend and that the auth setup matches the current published domain.
 
-I confirmed:
-- `src/utils/contentProcessing.ts` still uses `timeoutMs: 30000` for PDF/image/DOCX/PPTX/audio extraction.
-- `src/pages/tools/AIFlashcards.tsx` still uses `timeoutMs: 30000` for `generate-flashcards`.
-- `src/pages/tools/AIQuiz.tsx` still uses `timeoutMs: 45000` for `generate-quiz`.
-- `src/pages/tools/MindMap.tsx` still uses `timeoutMs: 30000`.
-- Backend logs show `extract-pdf-text` successfully finished after the request had already been cut off on the client side.
+2. Align the frontend OAuth call with the managed flow
+- Update the auth page to use the recommended managed OAuth redirect pattern instead of the current legacy-style `/auth` assumption if needed.
+- Keep sign-in and sign-up buttons on the same working Google flow so both entry points behave identically.
 
-So the exact problem is: upload-based tools are timing out in the browser before the backend finishes extraction/generation.
+3. Replace the current diagnostics with the correct guidance
+- Remove the misleading legacy callback instructions that point to Google Cloud Console callback values intended for a different setup.
+- Show a clear message only when the app is running on an unsupported origin or when the managed auth setup itself is missing/misconfigured.
+- Include exact next steps for published domain vs preview domain cases.
 
-## Plan
-1. **Raise timeouts in the shared upload-processing layer**
-   - Update `src/utils/contentProcessing.ts` so long-running extraction routes have realistic limits:
-     - PDF: much higher timeout
-     - DOCX/PPTX/audio/image OCR: higher timeouts as needed
-   - Keep fast endpoints like YouTube transcript shorter.
+4. Validate the real failure path
+- Test the Google auth launch flow on the published URL and confirm the redirect no longer returns `redirect_uri_mismatch`.
+- Confirm the auth page returns to the app cleanly after Google and that the existing post-login routing still works.
 
-2. **Raise generation timeouts in the affected tools**
-   - Update:
-     - `src/pages/tools/AIFlashcards.tsx`
-     - `src/pages/tools/AIQuiz.tsx`
-     - `src/pages/tools/MindMap.tsx`
-   - Increase request limits so generation can complete after extraction finishes.
-
-3. **Fix the timeout messaging so it’s actionable**
-   - Update `src/lib/fetchWithTimeout.ts` to clearly distinguish slow backend processing from other failures.
-   - Show a better user-facing message that explains the server is still processing and suggests retrying only if the file is unusually large.
-
-4. **Audit related tool flows using the same processing path**
-   - Check `AISummarizer` and any other upload-driven tools that rely on `processUploadedFile` or long AI generation paths.
-   - Standardize timeouts so the same bug does not keep appearing in “other tools”.
-
-5. **Validate the end-to-end path**
-   - Re-test upload → extract → generate flows for flashcards and quiz.
-   - Confirm the old `Request timed out after 30s` path is gone and that successful backend completions are no longer aborted by the client.
-
-## Technical details
-- Root cause: client-side `AbortController` timeout values are shorter than real-world AI extraction/generation latency.
-- Primary files to change:
-  - `src/utils/contentProcessing.ts`
-  - `src/lib/fetchWithTimeout.ts`
-  - `src/pages/tools/AIFlashcards.tsx`
-  - `src/pages/tools/AIQuiz.tsx`
-  - `src/pages/tools/MindMap.tsx`
-  - possibly `src/pages/tools/AISummarizer.tsx` if the same pattern is present there.
-- No database/auth changes are needed for this fix.
+Technical details
+- The app is already using the managed Lovable OAuth SDK, so this is not primarily a button/UI bug.
+- The current diagnostics component is built around a legacy callback model and is likely sending you toward the wrong fix.
+- I also found a local config mismatch in project metadata, so I’ll treat backend auth configuration as the source of truth and avoid relying on stale local assumptions.
