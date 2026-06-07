@@ -5,9 +5,8 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 const FONT = `'Plus Jakarta Sans', system-ui, sans-serif`;
 
 const CAP_TABLE = [
-  { name: "Karamveer Singh", value: 81, color: "#6366F1" },
-  { name: "Saif Malik",      value: 9,  color: "#06b6d4" },
-  { name: "Investor",        value: 10, color: "#B45309" },
+  { name: "Karamveer Singh", value: 90, color: "#6366F1" },
+  { name: "Saif Malik",      value: 10, color: "#06b6d4" },
 ];
 
 export default function Slide07InvestmentAsk() {
