@@ -35,8 +35,8 @@ export function Logo({ size = "md", showWordmark = true }: LogoProps) {
       </div>
       {showWordmark && (
         <div style={{ fontWeight: 800, fontSize: s.font, lineHeight: 1, letterSpacing: "-0.02em" }}>
-          <span style={{ color: "white" }}>Newton</span>
-          <span style={{ color: "#A5B4FC" }}>AI</span>
+          <span style={{ color: "#0F172A" }}>Newton</span>
+          <span style={{ color: "#4338CA" }}>AI</span>
         </div>
       )}
     </div>
