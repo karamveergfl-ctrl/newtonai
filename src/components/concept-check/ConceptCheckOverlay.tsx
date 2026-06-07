@@ -85,7 +85,8 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
       c: activeCheck.option_c,
       d: activeCheck.option_d,
     };
-    const msg = `Explain why "${optionMap[activeCheck.correct_answer]}" is correct for this question: ${activeCheck.question}. I chose "${optionMap[myResponse.selected_answer]}".`;
+    const correctKey = activeCheck.correct_answer || "";
+    const msg = `Explain why "${optionMap[correctKey] ?? ""}" is correct for this question: ${activeCheck.question}. I chose "${optionMap[myResponse.selected_answer]}".`;
     // Open Newton and pass message via custom event
     const openFn = getNewtonOpenFn();
     openFn?.();
@@ -189,7 +190,7 @@ export function ConceptCheckOverlay({ sessionId }: ConceptCheckOverlayProps) {
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-1.5 bg-red-900/40 border border-red-800 text-red-300 rounded-xl p-3">
-                  <XCircle className="w-5 h-5" /> Incorrect — correct answer was {activeCheck.correct_answer.toUpperCase()}
+                  <XCircle className="w-5 h-5" /> Incorrect — correct answer was {(activeCheck.correct_answer || "").toUpperCase()}
                 </div>
               )}
               {activeCheck.explanation && (
