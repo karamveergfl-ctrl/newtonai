@@ -99,6 +99,7 @@ const AdminInquiries = lazy(() => import("./pages/admin/Inquiries"));
 const AdminRedeemCodes = lazy(() => import("./pages/admin/RedeemCodes"));
 const PitchDeck = lazy(() => import("./pages/PitchDeck"));
 const PitchPresentation = lazy(() => import("./pages/PitchPresentation"));
+const InvestorPitchDeck = lazy(() => import("./pages/InvestorPitchDeck"));
 
 // Teacher pages
 const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard"));
@@ -273,7 +274,8 @@ function AnimatedRoutes() {
         <Route path="/admin/redeem-codes" element={<PageTransition><AdminRoute><AdminRedeemCodes /></AdminRoute></PageTransition>} />
         
         {/* Pitch Deck */}
-        <Route path="/pitch-deck" element={<PitchDeck />} />
+        <Route path="/pitch-deck" element={<InvestorPitchDeck />} />
+        <Route path="/pitch-deck-old" element={<PitchDeck />} />
         <Route path="/pitch" element={<PitchPresentation />} />
         
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
