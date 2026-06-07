@@ -22,18 +22,30 @@ const Logo = ({ size = "md", showText = false, className = "", compact = false, 
   const { icon, text } = sizeMap[size];
   const margins = compact ? "ml-0" : "-ml-2 -mr-1";
 
+  const radius = Math.round(icon * 0.22);
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div
-        className={`flex-shrink-0 aspect-square rounded-full ${margins} ring-2 ring-primary/30 transition-transform duration-200 hover:scale-105`}
-        style={{ width: icon, height: icon }}>
-        <div className="overflow-hidden rounded-full w-full h-full">
+        className={`flex-shrink-0 ${margins} transition-transform duration-200 hover:scale-105`}
+        style={{
+          width: icon,
+          height: icon,
+          padding: 2,
+          borderRadius: radius,
+          background: "linear-gradient(135deg, #a855f7, #6366f1, #3b82f6)",
+        }}
+      >
+        <div
+          className="overflow-hidden w-full h-full bg-background"
+          style={{ borderRadius: radius - 2 }}
+        >
           <img
             src={LOGO_SRC}
             alt="NewtonAI Logo"
             loading={eager ? "eager" : "lazy"}
             decoding="sync"
-            className="w-full h-full object-contain" />
+            className="w-full h-full object-contain"
+          />
         </div>
       </div>
       {showText && (
