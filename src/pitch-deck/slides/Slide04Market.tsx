@@ -25,6 +25,7 @@ const ROWS: { feature: string; values: Cell[] }[] = [
   { feature: "Class AI Tutor",         values: [true, false, false, false, true] },
   { feature: "Ad-Free Free Tier",      values: ["Yes", "Limited", "Limited", false, "Limited"] },
   { feature: "Starting Price /mo",     values: ["$8.49", "$20", "$7.99", "$15.95", "$19"] },
+  { feature: "Company Valuation",      values: ["₹7 Cr", "$500B", "$1B", "$200M", "$10M"] },
 ];
 
 function renderCell(v: Cell, highlight: boolean) {
