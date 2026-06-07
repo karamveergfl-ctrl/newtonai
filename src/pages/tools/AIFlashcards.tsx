@@ -322,7 +322,7 @@ const AIFlashcards = () => {
                         onContentReady={handleContentReady}
                         isProcessing={isGenerating}
                         placeholder="Paste your study content here (lecture notes, textbook excerpts, etc.)..."
-                        supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                        supportedFormats="PDF, TXT, Images; Max size: 50MB"
                       />
                       <InlineRecents toolId="flashcards" />
                     </CardContent>

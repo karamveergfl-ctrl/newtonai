@@ -360,7 +360,7 @@ const HomeworkHelp = () => {
                   onContentReady={handleContentReady}
                   isProcessing={isLoading}
                   placeholder="Type your homework question here..."
-                  supportedFormats="Images, PDF, TXT; Max size: 20MB"
+                  supportedFormats="Images, PDF, TXT; Max size: 50MB"
                 />
                 <InlineRecents toolId="homework-help" />
               </CardContent>

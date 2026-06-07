@@ -70,7 +70,7 @@ interface ContentInputTabsProps {
 export const ContentInputTabs = ({
   onContentReady,
   isProcessing = false,
-  supportedFormats = "PDF, DOC, DOCX, TXT, Images; Max size: 20MB",
+  supportedFormats = "PDF, DOC, DOCX, TXT, Images; Max size: 50MB",
   acceptedFileTypes = {
     "application/pdf": [".pdf"],
     "text/plain": [".txt"],
@@ -173,7 +173,7 @@ export const ContentInputTabs = ({
     let description = "Please try a different file.";
     if (code === "file-too-large") {
       title = "File is too large";
-      description = `“${first.file.name}” exceeds the 20MB limit. Try compressing it or splitting it into smaller files.`;
+      description = `“${first.file.name}” exceeds the 50MB limit. Try compressing it or splitting it into smaller files.`;
     } else if (code === "file-invalid-type") {
       title = "Unsupported file type";
       description = `We can't read “${first.file.name}”. Supported formats: ${friendlyAcceptedList}.`;
@@ -190,7 +190,7 @@ export const ContentInputTabs = ({
     onDropRejected,
     accept: acceptedFileTypes,
     maxFiles: 1,
-    maxSize: 20 * 1024 * 1024,
+    maxSize: 50 * 1024 * 1024,
     multiple: false,
     noClick: false,
     noKeyboard: false,
