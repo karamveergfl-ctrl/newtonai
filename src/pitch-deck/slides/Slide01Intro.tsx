@@ -43,8 +43,8 @@ export default function Slide01Intro() {
         </motion.div>
 
         <motion.div variants={slideChild} className="grid grid-cols-2 gap-6 mt-10">
-          <FounderCard name="Karamveer Singh" role="Founder & CEO" initials="KS" gradient="linear-gradient(135deg,#6366F1,#a855f7)" points={["B.E. Mechanical Engineering (3rd Year)", "Product vision & AI architecture", "Smart classroom design", "Education innovation"]} />
-          <FounderCard name="Saif Malik" role="Business Development" initials="SM" gradient="linear-gradient(135deg,#3b82f6,#06b6d4)" points={["B.E. Mechanical Engineering (3rd Year)", "Sales & institutional partnerships", "Institution acquisition", "Market expansion"]} />
+          <FounderCard name="Karamveer Singh" role="Founder & CEO" initials="KS" gradient="linear-gradient(135deg,#6366F1,#a855f7)" points={["Product vision & AI architecture", "Smart classroom design", "Education innovation"]} />
+          <FounderCard name="Saif Malik" role="Business Development" initials="SM" gradient="linear-gradient(135deg,#3b82f6,#06b6d4)" points={["Sales & institutional partnerships", "Institution acquisition", "Market expansion"]} />
         </motion.div>
 
         <motion.div variants={slideChild} className="mt-8 rounded-2xl p-5" style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.06))", border: "1px solid rgba(99,102,241,0.2)" }}>
