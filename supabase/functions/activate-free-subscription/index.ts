@@ -67,6 +67,63 @@ serve(async (req) => {
 
     console.log(`Activating free subscription for user ${user.id}: ${plan_name} ${billing_cycle}`);
 
+    // SECURITY: Validate redeem code BEFORE provisioning any subscription.
+    const { data: codeData, error: codeLookupError } = await supabaseAdmin
+      .from('redeem_codes')
+      .select('id, code, discount_percent, current_uses, max_uses, is_active, expires_at')
+      .eq('id', redeem_code_id)
+      .maybeSingle();
+
+    if (codeLookupError || !codeData) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid redeem code' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!codeData.is_active) {
+      return new Response(
+        JSON.stringify({ error: 'Redeem code is no longer active' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (codeData.expires_at && new Date(codeData.expires_at) < new Date()) {
+      return new Response(
+        JSON.stringify({ error: 'Redeem code has expired' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (codeData.max_uses != null && codeData.current_uses >= codeData.max_uses) {
+      return new Response(
+        JSON.stringify({ error: 'Redeem code usage limit reached' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (codeData.discount_percent !== 100) {
+      return new Response(
+        JSON.stringify({ error: 'This endpoint only accepts 100% discount codes' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Prevent the same user from redeeming the same code twice.
+    const { data: priorRedemption } = await supabaseAdmin
+      .from('redeemed_codes')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('code_id', redeem_code_id)
+      .maybeSingle();
+
+    if (priorRedemption) {
+      return new Response(
+        JSON.stringify({ error: 'You have already redeemed this code' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Calculate subscription period
     const now = new Date();
     const periodEnd = new Date(now);
@@ -118,13 +175,6 @@ serve(async (req) => {
       console.error('Failed to create payment record:', paymentError);
       // Continue anyway, subscription is already created
     }
-
-    // Fetch code details first (needed for recording and notifications)
-    const { data: codeData } = await supabaseAdmin
-      .from('redeem_codes')
-      .select('code, discount_percent, current_uses, max_uses')
-      .eq('id', redeem_code_id)
-      .single();
 
     // Record code usage with direct table operations (bypasses auth.uid() dependency)
     const { error: redeemInsertError } = await supabaseAdmin
