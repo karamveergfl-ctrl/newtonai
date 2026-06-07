@@ -1,14 +1,28 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, ChevronRight, Radio, Calendar } from "lucide-react";
+import { Users, BookOpen, ChevronRight, Radio, Calendar, Trash2, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import type { ClassWithStats } from "@/hooks/useClasses";
 
 interface ClassCardProps {
   classData: ClassWithStats & { last_session_date?: string | null };
+  onDelete?: (classId: string) => Promise<boolean> | boolean;
 }
 
 const subjectColors: Record<string, string> = {
@@ -35,9 +49,28 @@ function getSubjectBorderColor(subject: string | null): string {
   return subjectColors.default;
 }
 
-export function ClassCard({ classData }: ClassCardProps) {
+export function ClassCard({ classData, onDelete }: ClassCardProps) {
   const navigate = useNavigate();
   const borderColor = getSubjectBorderColor(classData.subject);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const canConfirm = confirmText.trim().toLowerCase() === classData.name.trim().toLowerCase();
+
+  const handleDelete = async () => {
+    if (!onDelete || !canConfirm) return;
+    setDeleting(true);
+    try {
+      const ok = await onDelete(classData.id);
+      if (ok) {
+        setDeleteOpen(false);
+        setConfirmText("");
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <Card
@@ -50,7 +83,24 @@ export function ClassCard({ classData }: ClassCardProps) {
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg line-clamp-1">{classData.name}</CardTitle>
-          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+          <div className="flex items-center gap-1 shrink-0">
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Delete ${classData.name}`}
+                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirmText("");
+                  setDeleteOpen(true);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
         </div>
         {classData.subject && (
           <Badge variant="secondary" className="w-fit text-xs">{classData.subject}</Badge>
@@ -108,6 +158,45 @@ export function ClassCard({ classData }: ClassCardProps) {
           </Button>
         </div>
       </CardContent>
+
+      {onDelete && (
+        <AlertDialog open={deleteOpen} onOpenChange={(o) => { if (!deleting) setDeleteOpen(o); }}>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete “{classData.name}”?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This permanently removes the class, its enrollments, materials, and session history.
+                {(classData.student_count ?? 0) > 0 && (
+                  <> {classData.student_count} student{classData.student_count === 1 ? "" : "s"} will lose access.</>
+                )} This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor={`confirm-${classData.id}`} className="text-sm">
+                Type <span className="font-semibold text-foreground">{classData.name}</span> to confirm
+              </Label>
+              <Input
+                id={`confirm-${classData.id}`}
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder={classData.name}
+                autoComplete="off"
+                disabled={deleting}
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={!canConfirm || deleting}
+                onClick={(e) => { e.preventDefault(); handleDelete(); }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" />Deleting…</>) : "Delete class"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Card>
   );
 }
