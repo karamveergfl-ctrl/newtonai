@@ -35,10 +35,10 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
     <SlideShell theme="light">
       <div
         className="absolute inset-x-0 flex flex-col"
-        style={{ top: 0, bottom: 64, fontFamily: FONT }}
+        style={{ top: 0, bottom: 48, fontFamily: FONT }}
       >
         {/* HEADER (sits below the top-left Logo) */}
-        <div className="flex items-center justify-between gap-6 px-14 pt-28 pb-4 flex-shrink-0">
+        <div className="flex items-center justify-between gap-6 px-14 pt-20 pb-3 flex-shrink-0">
           <div className="flex-1 min-w-0">
             <div
               className="inline-flex items-center px-3 py-1.5 rounded-full mb-3"
@@ -106,7 +106,7 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
         </div>
 
         {/* VIDEO BAND */}
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-14 pt-2 pb-3 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-14 pt-1 pb-1 overflow-hidden">
           <VideoPlayer
             src={p.videoSrc}
             toolKey={p.videoKey}
