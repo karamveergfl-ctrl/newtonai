@@ -1,6 +1,6 @@
-import newtonLogoN from "@/assets/newtonai-logo-n.png";
+import newtonLogoN from "@/assets/newtonai-logo-n.png.asset.json";
 
-const LOGO_SRC = newtonLogoN;
+const LOGO_SRC = newtonLogoN.url;
 
 interface LogoProps {
   size?: "xs" | "sm" | "md" | "lg";
