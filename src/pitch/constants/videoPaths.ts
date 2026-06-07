@@ -22,7 +22,7 @@ export const VIDEO_PATHS = {
 
 export const PITCH_COLORS = {
   darkBg: "#0A1628",
-  lightBg: "#FFFFFF",
+  lightBg: "linear-gradient(135deg, #FAFBFF 0%, #EEF2FF 45%, #F3F0FF 100%)",
   primary: "#6366F1",
   primaryLight: "#818CF8",
   primaryDark: "#4338CA",
@@ -31,6 +31,11 @@ export const PITCH_COLORS = {
   textOnDarkMuted: "#94A3B8",
   textOnLight: "#0F172A",
   textOnLightMuted: "#475569",
+  surface: "#FFFFFF",
+  surfaceMuted: "rgba(255,255,255,0.7)",
+  border: "#E2E8F0",
+  borderSoft: "rgba(99,102,241,0.15)",
+  softMuted: "#64748B",
 } as const;
 
 export const PITCH_FONT = `"Plus Jakarta Sans", system-ui, -apple-system, sans-serif`;

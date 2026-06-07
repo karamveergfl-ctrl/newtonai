@@ -20,18 +20,18 @@ const classes = [
 
 export default function SlideStudentDashboard() {
   return (
-    <SlideShell theme="dark">
-      <div className="h-full flex flex-col px-12 pt-28 pb-20 bg-inherit">
+    <SlideShell theme="light">
+      <div className="h-full flex flex-col px-12 pt-28 pb-24">
         <div className="text-center mb-4">
           <motion.div variants={slideChild} className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-2"
-            style={{ background: "#6366F11A" }}>
+            style={{ background: "#6366F115", border: "1px solid #6366F133" }}>
             <BarChart3 size={22} color="#6366F1" />
           </motion.div>
-          <motion.div variants={slideChild} style={{ color: "#6366F1", fontSize: 10, fontWeight: 700, letterSpacing: "0.3em" }}>STUDENT DASHBOARD</motion.div>
-          <motion.h1 variants={slideHeading} style={{ fontWeight: 800, fontSize: 30, color: "#F1F5F9", letterSpacing: "-0.02em", marginTop: 4 }}>
+          <motion.div variants={slideChild} style={{ color: "#6366F1", fontSize: 11, fontWeight: 800, letterSpacing: "0.3em" }}>STUDENT TOOL · DASHBOARD</motion.div>
+          <motion.h1 variants={slideHeading} style={{ fontWeight: 900, fontSize: 42, color: "#0F172A", letterSpacing: "-0.03em", marginTop: 6 }}>
             My Dashboard
           </motion.h1>
-          <motion.p variants={slideChild} style={{ fontSize: 13, color: "#94A3B8", marginTop: 2 }}>
+          <motion.p variants={slideChild} style={{ fontSize: 14, color: "#475569", marginTop: 4 }}>
             Attendance, marks and progress across all 8 classes — updated live.
           </motion.p>
         </div>
@@ -41,10 +41,10 @@ export default function SlideStudentDashboard() {
           {summary.map((s, i) => (
             <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               className="rounded-xl p-4 text-center"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 14px rgba(15,23,42,0.04)" }}>
+              style={{ background: "rgba(255,255,255,0.9)", border: "1px solid #E2E8F0", boxShadow: "0 4px 14px rgba(15,23,42,0.04)" }}>
               <s.icon size={18} color={s.color} className="mx-auto mb-1.5" />
-              <div style={{ fontSize: 24, fontWeight: 800, color: "#F1F5F9", lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 10, color: "#94A3B8", marginTop: 4 }}>{s.label}</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#0F172A", lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: "#64748B", marginTop: 4, fontWeight: 600 }}>{s.label}</div>
             </motion.div>
           ))}
         </div>
@@ -67,22 +67,22 @@ export default function SlideStudentDashboard() {
         {/* Class breakdown */}
         <div className="flex items-center gap-2 mb-2">
           <BookOpen size={14} color="#6366F1" />
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9" }}>Class breakdown</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>Class breakdown</div>
         </div>
         <div className="flex-1 grid grid-cols-2 gap-2.5 min-h-0 overflow-hidden">
           {classes.map((c, i) => (
             <motion.div key={c.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.04 }}
               className="rounded-xl p-3 flex flex-col"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              style={{ background: "rgba(255,255,255,0.9)", border: "1px solid #E2E8F0" }}>
               <div className="flex items-center justify-between mb-2">
                 <div className="min-w-0">
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "#F1F5F9" }}>{c.subject}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F172A" }}>{c.subject}</div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="rounded px-1.5 py-0.5" style={{ background: "rgba(255,255,255,0.06)", fontSize: 9, color: "#94A3B8", fontWeight: 600 }}>Grade {c.grade}</span>
-                    <span style={{ fontSize: 9.5, color: "#94A3B8" }}>Rank {c.rank}/{c.of}</span>
+                    <span className="rounded px-1.5 py-0.5" style={{ background: "#F1F5F9", fontSize: 9, color: "#475569", fontWeight: 600 }}>Grade {c.grade}</span>
+                    <span style={{ fontSize: 9.5, color: "#64748B" }}>Rank {c.rank}/{c.of}</span>
                   </div>
                 </div>
-                <ChevronRight size={14} color="#CBD5E1" />
+                <ChevronRight size={14} color="#94A3B8" />
               </div>
               <div className="grid grid-cols-3 gap-2 mt-auto">
                 <Metric label="Attend." value={`${c.attendance}%`} pct={c.attendance} color="#10B981" />
@@ -100,9 +100,9 @@ export default function SlideStudentDashboard() {
 function Metric({ label, value, pct, color }: { label: string; value: string; pct: number; color: string }) {
   return (
     <div>
-      <div style={{ fontSize: 9, color: "#94A3B8", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>{label}</div>
-      <div style={{ fontSize: 13, fontWeight: 800, color: "#F1F5F9", marginTop: 1 }}>{value}</div>
-      <div className="h-1 rounded-full mt-1" style={{ background: "rgba(255,255,255,0.06)" }}>
+      <div style={{ fontSize: 9, color: "#64748B", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontSize: 13, fontWeight: 800, color: "#0F172A", marginTop: 1 }}>{value}</div>
+      <div className="h-1 rounded-full mt-1" style={{ background: "#E2E8F0" }}>
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>
     </div>

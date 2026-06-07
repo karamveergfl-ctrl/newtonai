@@ -72,8 +72,9 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption, maxWidt
           maxWidth,
           maxHeight: "100%",
           aspectRatio: "16 / 9",
-          boxShadow: "0 16px 48px rgba(99,102,241,0.30)",
-          border: "1px solid rgba(99,102,241,0.25)",
+          boxShadow: "0 18px 50px rgba(99,102,241,0.18)",
+          border: "1px solid rgba(99,102,241,0.22)",
+          background: "white",
         }}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
@@ -99,12 +100,12 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption, maxWidt
         {!activeSrc ? (
           <div
             className="relative w-full h-full flex flex-col items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #0f172a, #1e293b)" }}
+            style={{ background: "linear-gradient(135deg, #EEF2FF, #F5F3FF)" }}
           >
-            <div style={{ color: "#818CF8", transform: "scale(0.7)" }}>{toolIcon}</div>
+            <div style={{ color: "#6366F1", transform: "scale(0.7)" }}>{toolIcon}</div>
             <div
               style={{
-                color: "white",
+                color: "#0F172A",
                 fontWeight: 600,
                 fontSize: 13,
                 marginTop: 6,
@@ -200,9 +201,9 @@ export function VideoPlayer({ src, toolKey, toolName, toolIcon, caption, maxWidt
       </div>
       <div
         style={{
-          color: "#94A3B8",
+          color: "#475569",
           fontStyle: "italic",
-          fontSize: 14,
+          fontSize: 14.5,
           marginTop: 10,
           maxWidth,
           textAlign: "center",

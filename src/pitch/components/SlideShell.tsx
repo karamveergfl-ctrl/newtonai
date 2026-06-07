@@ -24,7 +24,9 @@ export const slideHeading = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
-export function SlideShell({ theme, children, noLogo, bgOverride }: SlideShellProps) {
+export function SlideShell({ theme: _theme, children, noLogo, bgOverride }: SlideShellProps) {
+  // Force light theme across the entire pitch deck for readability.
+  const theme: PitchTheme = "light";
   const tokens = PITCH_THEMES[theme];
   const bg = bgOverride ?? tokens.background;
   return (
@@ -32,16 +34,30 @@ export function SlideShell({ theme, children, noLogo, bgOverride }: SlideShellPr
       className="relative w-screen h-screen overflow-hidden"
       style={{ background: bg, fontFamily: PITCH_FONT, color: tokens.text }}
     >
-      {theme === "dark" && (
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.04 }}>
-          <defs>
-            <pattern id="dotgrid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-              <circle cx="2" cy="2" r="1.2" fill="white" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#dotgrid)" />
-        </svg>
-      )}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.07 }}>
+        <defs>
+          <pattern id="dotgrid" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.2" fill="#6366F1" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#dotgrid)" />
+      </svg>
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: "-20%", right: "-15%", width: 700, height: 700, borderRadius: "50%",
+          background: "radial-gradient(closest-side, rgba(99,102,241,0.18), transparent 70%)",
+          filter: "blur(40px)",
+        }}
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          bottom: "-20%", left: "-15%", width: 700, height: 700, borderRadius: "50%",
+          background: "radial-gradient(closest-side, rgba(244,114,182,0.15), transparent 70%)",
+          filter: "blur(40px)",
+        }}
+      />
       {!noLogo && (
         <div className="absolute top-6 left-8 z-20">
           <Logo size="md" />
