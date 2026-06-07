@@ -32,22 +32,22 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
   const solutionPoints = [...toBullets(p.solution), ...(p.highlights ?? [])].slice(0, 4);
 
   return (
-    <SlideShell theme="dark">
+    <SlideShell theme="light">
       <div
         className="absolute inset-x-0 flex flex-col"
-        style={{ top: 0, bottom: 52, fontFamily: FONT }}
+        style={{ top: 0, bottom: 64, fontFamily: FONT }}
       >
         {/* HEADER (sits below the top-left Logo) */}
-        <div className="flex items-center justify-between gap-6 px-12 pt-24 pb-3 flex-shrink-0">
+        <div className="flex items-center justify-between gap-6 px-14 pt-28 pb-4 flex-shrink-0">
           <div className="flex-1 min-w-0">
             <div
-              className="inline-flex items-center px-2.5 py-1 rounded-full mb-2"
+              className="inline-flex items-center px-3 py-1.5 rounded-full mb-3"
               style={{
-                background: `${p.categoryColor}1F`,
+                background: `${p.categoryColor}15`,
                 color: p.categoryColor,
-                border: `1px solid ${p.categoryColor}55`,
-                fontSize: 10,
-                fontWeight: 700,
+                border: `1px solid ${p.categoryColor}40`,
+                fontSize: 13,
+                fontWeight: 800,
                 letterSpacing: "0.3em",
                 textTransform: "uppercase",
               }}
@@ -57,12 +57,12 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
             <h1
               style={{
                 fontFamily: FONT,
-                fontWeight: 800,
-                fontSize: 30,
-                color: "#F1F5F9",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.15,
-                margin: "4px 0 0 0",
+                fontWeight: 900,
+                fontSize: 48,
+                color: "#0F172A",
+                letterSpacing: "-0.035em",
+                lineHeight: 1.08,
+                margin: "6px 0 0 0",
               }}
             >
               {p.toolName}
@@ -71,42 +71,42 @@ export function ToolSlideLayout(p: ToolSlideLayoutProps) {
           <div
             className="rounded-2xl flex items-center justify-center flex-shrink-0"
             style={{
-              width: 64,
-              height: 64,
+              width: 96,
+              height: 96,
               background: p.iconGradient,
-              boxShadow: `0 10px 28px ${p.categoryColor}55`,
+              boxShadow: `0 14px 36px ${p.categoryColor}55`,
             }}
           >
-            <div style={{ transform: "scale(0.68)" }}>{p.icon}</div>
+            <div style={{ transform: "scale(0.95)" }}>{p.icon}</div>
           </div>
         </div>
 
         {/* PROBLEM / SOLUTION ROW */}
-        <div className="grid grid-cols-2 gap-5 px-12 flex-shrink-0 items-stretch">
+        <div className="grid grid-cols-2 gap-5 px-14 flex-shrink-0 items-stretch">
           <BulletCard
             heading="❌ THE PROBLEM"
-            headingColor="#F87171"
-            bg="rgba(248,113,113,0.06)"
-            border="rgba(248,113,113,0.22)"
-            bulletColor="#F87171"
-            textColor="#CBD5E1"
+            headingColor="#DC2626"
+            bg="rgba(254,226,226,0.7)"
+            border="rgba(220,38,38,0.25)"
+            bulletColor="#DC2626"
+            textColor="#475569"
             marker="•"
             points={problemPoints}
           />
           <BulletCard
             heading="✅ NEWTON'S SOLUTION"
-            headingColor="#34D399"
-            bg="rgba(52,211,153,0.07)"
-            border="rgba(52,211,153,0.22)"
-            bulletColor="#34D399"
-            textColor="#F1F5F9"
+            headingColor="#059669"
+            bg="rgba(220,252,231,0.7)"
+            border="rgba(5,150,105,0.25)"
+            bulletColor="#059669"
+            textColor="#0F172A"
             marker="✓"
             points={solutionPoints}
           />
         </div>
 
         {/* VIDEO BAND */}
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-12 pt-3 pb-2 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-14 pt-4 pb-3 overflow-hidden">
           <VideoPlayer
             src={p.videoSrc}
             toolKey={p.videoKey}
@@ -141,31 +141,31 @@ function BulletCard({
 }) {
   return (
     <div
-      className="rounded-xl p-4"
+      className="rounded-2xl p-5 backdrop-blur-sm"
       style={{ background: bg, border: `1px solid ${border}` }}
     >
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 800,
           letterSpacing: "0.26em",
           color: headingColor,
           textTransform: "uppercase",
-          marginBottom: 8,
+          marginBottom: 10,
           fontFamily: FONT,
         }}
       >
         {heading}
       </div>
-      <ul className="space-y-1.5 m-0 p-0 list-none">
+      <ul className="space-y-2 m-0 p-0 list-none">
         {points.map((pt, i) => (
           <li key={i} className="flex items-start gap-2">
             <span
               style={{
                 color: bulletColor,
                 fontWeight: 800,
-                fontSize: 15,
-                lineHeight: 1.45,
+                fontSize: 16,
+                lineHeight: 1.5,
                 flexShrink: 0,
                 width: 14,
               }}
@@ -175,8 +175,8 @@ function BulletCard({
             <span
               style={{
                 color: textColor,
-                fontSize: 14.5,
-                lineHeight: 1.45,
+                fontSize: 15,
+                lineHeight: 1.5,
                 fontFamily: FONT,
                 fontWeight: 400,
               }}
