@@ -99,6 +99,7 @@ const AdminInquiries = lazy(() => import("./pages/admin/Inquiries"));
 const AdminRedeemCodes = lazy(() => import("./pages/admin/RedeemCodes"));
 const PitchDeck = lazy(() => import("./pages/PitchDeck"));
 const PitchPresentation = lazy(() => import("./pages/PitchPresentation"));
+const InvestorPitchDeck = lazy(() => import("./pages/InvestorPitchDeck"));
 
 // Teacher pages
 const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard"));

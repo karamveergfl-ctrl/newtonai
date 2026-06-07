@@ -4,13 +4,13 @@ import { SlideShell, slideChild, slideHeading } from "@/pitch/components/SlideSh
 
 const FONT = `'Plus Jakarta Sans', system-ui, sans-serif`;
 
-const COMPETITORS = [
+const COMPETITORS: { key: string; name: string; emoji: string; highlight?: boolean }[] = [
   { key: "newton", name: "NewtonAI", emoji: "🧠", highlight: true },
   { key: "chatgpt", name: "ChatGPT", emoji: "🤖" },
   { key: "quizlet", name: "Quizlet", emoji: "🎴" },
   { key: "chegg", name: "Chegg", emoji: "📚" },
   { key: "studyfetch", name: "StudyFetch", emoji: "⚡" },
-] as const;
+];
 
 type Cell = boolean | string;
 const ROWS: { feature: string; values: Cell[] }[] = [
