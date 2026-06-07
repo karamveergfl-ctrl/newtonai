@@ -55,7 +55,11 @@ export default function PitchPresentation() {
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@1,300;1,400&display=swap" rel="stylesheet" />
         <title>NewtonAI — The AI-Powered Classroom</title>
       </Helmet>
-      <div className="fixed inset-0 overflow-hidden bg-[#0A1628]" onClick={handleClick}>
+      <div
+        className="fixed inset-0 overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #FAFBFF 0%, #EEF2FF 45%, #F3F0FF 100%)" }}
+        onClick={handleClick}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
