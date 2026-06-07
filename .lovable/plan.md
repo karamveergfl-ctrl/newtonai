@@ -1,64 +1,48 @@
+## What’s actually broken
+The failure is not the PDF itself — the frontend is aborting long-running requests too early.
 
-## Goal
+I confirmed:
+- `src/utils/contentProcessing.ts` still uses `timeoutMs: 30000` for PDF/image/DOCX/PPTX/audio extraction.
+- `src/pages/tools/AIFlashcards.tsx` still uses `timeoutMs: 30000` for `generate-flashcards`.
+- `src/pages/tools/AIQuiz.tsx` still uses `timeoutMs: 45000` for `generate-quiz`.
+- `src/pages/tools/MindMap.tsx` still uses `timeoutMs: 30000`.
+- Backend logs show `extract-pdf-text` successfully finished after the request had already been cut off on the client side.
 
-Bring the tool slides back to a cleaner **two-column header (Problem ⟷ Solution) with video centered below**, convert the prose to scannable bullet points, and fix issues on the Podcast, Smart Classroom, and In-Class Quiz slides.
+So the exact problem is: upload-based tools are timing out in the browser before the backend finishes extraction/generation.
 
-## Changes
+## Plan
+1. **Raise timeouts in the shared upload-processing layer**
+   - Update `src/utils/contentProcessing.ts` so long-running extraction routes have realistic limits:
+     - PDF: much higher timeout
+     - DOCX/PPTX/audio/image OCR: higher timeouts as needed
+   - Keep fast endpoints like YouTube transcript shorter.
 
-### A. `src/pitch/slides/ToolSlideLayout.tsx` — rewrite layout
-New structure:
+2. **Raise generation timeouts in the affected tools**
+   - Update:
+     - `src/pages/tools/AIFlashcards.tsx`
+     - `src/pages/tools/AIQuiz.tsx`
+     - `src/pages/tools/MindMap.tsx`
+   - Increase request limits so generation can complete after extraction finishes.
 
-```text
-┌──────────────────────────────────────────────────────────┐
-│  Category chip · Tool name                       [icon]  │  ~14%
-├───────────────────────────┬──────────────────────────────┤
-│  ❌ THE PROBLEM           │  ✅ NEWTON'S SOLUTION         │  ~36%
-│  • bullet                 │  • bullet                     │
-│  • bullet                 │  • bullet                     │
-│  • bullet                 │  • bullet                     │
-├──────────────────────────────────────────────────────────┤
-│              ▶  VIDEO (16:9, max 620px)                  │  ~50%
-│              caption under frame                          │
-└──────────────────────────────────────────────────────────┘
-```
+3. **Fix the timeout messaging so it’s actionable**
+   - Update `src/lib/fetchWithTimeout.ts` to clearly distinguish slow backend processing from other failures.
+   - Show a better user-facing message that explains the server is still processing and suggests retrying only if the file is unusually large.
 
-- Update the component API: `problem` and `solution` become `string[]` (bullet arrays). Drop the separate `highlights` prop and merge those points into `solution`.
-- Left card: red-tinted (`rgba(248,113,113,0.06)`), heading `❌ THE PROBLEM` in `#F87171`, bullets in `#CBD5E1` 13.5px with a `•` marker.
-- Right card: green-tinted (`rgba(52,211,153,0.07)`), heading `✅ NEWTON'S SOLUTION` in `#34D399`, bullets in `#F1F5F9` 13.5px with a `✓` marker.
-- Video band below both cards, horizontally centered, `max-width: 620px`, `aspect-ratio: 16/9`. Caption in `#94A3B8` italic 11px directly under the frame.
-- No `framer-motion`; static layout. Keep bottom 52px reserved for nav.
+4. **Audit related tool flows using the same processing path**
+   - Check `AISummarizer` and any other upload-driven tools that rely on `processUploadedFile` or long AI generation paths.
+   - Standardize timeouts so the same bug does not keep appearing in “other tools”.
 
-### B. Update every tool slide to pass bullet arrays
-Files: `Slide04NewtonChat.tsx`, `Slide08QuizGenerator.tsx`, `Slide10Flashcards.tsx`, `Slide11Summariser.tsx`, `Slide12HomeworkHelp.tsx`, `Slide13PDFChat.tsx`, `Slide14MindMaps.tsx`, `SlideAdFreeVideos.tsx`.
-- Convert each existing paragraph into **3 concise bullets** for problem and **3–4 bullets** for solution (merging the old `highlights`). Same wording, just split.
-- Bump `VideoPlayer` `maxWidth` from 520 → 620 to match the new wider video band.
+5. **Validate the end-to-end path**
+   - Re-test upload → extract → generate flows for flashcards and quiz.
+   - Confirm the old `Request timed out after 30s` path is gone and that successful backend completions are no longer aborted by the client.
 
-### C. `src/pitch/components/VideoPlayer.tsx`
-- Raise `maxWidth` from 520 to 620 so the centered video reads well below the two text cards.
-- No other changes.
-
-### D. `Slide15Podcast.tsx` — fix overlap
-Rebuild on the same "Problem left / Solution right / video centered below" structure as the tool layout so nothing collides:
-- Top header strip (category chip `AI PODCAST`, title, `Headphones` icon on the right).
-- Two-column body with the existing problem/solution copy as bullets.
-- Single bottom video band with `VideoPlayer` centered, max-width 620px.
-- **Remove** the floating chat-bubble mock card (it's the source of the current overlap) and the `Bars`, `Bubble` helpers.
-- Keep `framer-motion` import out; static layout.
-
-### E. `SlideSmartClassroom.tsx` — remove the planet animation
-- Delete the `PlanetAnim` component and its usage (the orbiting Earth-around-Sun graphic — the "third image animation").
-- In its place, show only the `AUTO-GENERATED · Earth's Revolution around the Sun` label centered, with the source caption underneath, so the smart-board mock stays clean. No animation.
-- Leave the rest of the slide untouched.
-
-### F. `SlideInClassQuiz.tsx` — polish
-- Tighten the 4-step timeline: equalize card heights, align icon + time chip on one row, use consistent `#94A3B8` body text and `#1E293B` divider.
-- Lower-half result panels: align the two cards to the same height, switch the white card to the same dark-glass style (`rgba(255,255,255,0.04)` with `1px solid rgba(255,255,255,0.08)`) so it matches the rest of the deck.
-- Use the standard category-chip pattern (`#14B8A622` bg, `#14B8A6` text, uppercase letter-spacing) instead of the bare colored label.
-- Replace `framer-motion` `motion.*` wrappers with plain `div`s for consistency with the other polished slides; keep content identical.
-
-## Out of scope
-- Hero, Problem, Solution (slide 3), Teacher Dashboard, Student Dashboard, CTA.
-- No backend, routing, or data changes.
-
-## Note on slide numbering
-Interpreting "slide 13" as **Smart Classroom** and "slide 14" as **In-Class Quiz** based on their position in the deck (`SLIDES` array in `src/pitch/slides/index.ts`). If you meant the files literally named `Slide13PDFChat` / `Slide14MindMaps`, say the word and I'll retarget those instead.
+## Technical details
+- Root cause: client-side `AbortController` timeout values are shorter than real-world AI extraction/generation latency.
+- Primary files to change:
+  - `src/utils/contentProcessing.ts`
+  - `src/lib/fetchWithTimeout.ts`
+  - `src/pages/tools/AIFlashcards.tsx`
+  - `src/pages/tools/AIQuiz.tsx`
+  - `src/pages/tools/MindMap.tsx`
+  - possibly `src/pages/tools/AISummarizer.tsx` if the same pattern is present there.
+- No database/auth changes are needed for this fix.

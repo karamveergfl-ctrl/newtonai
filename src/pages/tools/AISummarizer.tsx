@@ -331,7 +331,7 @@ const AISummarizer = () => {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ videoId, videoTitle }),
-        timeoutMs: 20000,
+        timeoutMs: 120000,
       });
 
       if (!response.ok) {

@@ -194,7 +194,7 @@ const AIQuiz = () => {
             },
           }),
           signal: abortControllerRef.current?.signal,
-          timeoutMs: 45000,
+          timeoutMs: 120000,
         }
       );
 

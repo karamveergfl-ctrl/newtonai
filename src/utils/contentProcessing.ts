@@ -55,7 +55,7 @@ export const extractTextFromPDF = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ pdfContent: base64 }),
-      timeoutMs: 30000,
+      timeoutMs: 180000,
     }
   );
 
@@ -86,7 +86,7 @@ export const extractTextFromImage = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ imageData: base64 }),
-      timeoutMs: 30000,
+      timeoutMs: 120000,
     }
   );
 
@@ -115,7 +115,7 @@ export const getYouTubeTranscript = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ videoId, videoTitle: "Video" }),
-      timeoutMs: 20000,
+      timeoutMs: 30000,
     }
   );
 
@@ -150,7 +150,7 @@ export const transcribeAudio = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ audio: audioBase64, mimeType, language }),
-      timeoutMs: 30000,
+      timeoutMs: 180000,
     }
   );
 
@@ -193,7 +193,7 @@ export const extractTextFromDOCX = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ docxContent: base64 }),
-      timeoutMs: 30000,
+      timeoutMs: 120000,
     }
   );
 
@@ -224,7 +224,7 @@ export const extractTextFromPPTX = async (
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ pptxContent: base64 }),
-      timeoutMs: 30000,
+      timeoutMs: 180000,
     }
   );
 

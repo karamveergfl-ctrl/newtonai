@@ -150,7 +150,7 @@ const MindMap = () => {
             detailLevel: "standard",
           }),
           signal: abortControllerRef.current?.signal,
-          timeoutMs: 30000,
+          timeoutMs: 120000,
         }
       );
 
