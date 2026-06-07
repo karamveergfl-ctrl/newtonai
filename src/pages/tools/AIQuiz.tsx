@@ -595,7 +595,7 @@ Return ONLY JSON: {"score": 0.0-1.0, "feedback": "one sentence feedback"}`
                         onContentReady={handleContentReady}
                         isProcessing={isGenerating}
                         placeholder="Paste your study content here..."
-                        supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                        supportedFormats="PDF, TXT, Images; Max size: 50MB"
                       />
                       <InlineRecents toolId="quiz" />
                     </CardContent>

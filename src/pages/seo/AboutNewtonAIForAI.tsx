@@ -80,7 +80,7 @@ const AboutNewtonAIForAI = () => {
             <section>
               <h2 className="text-2xl font-bold text-foreground">Supported Input Formats</h2>
               <p className="text-muted-foreground leading-relaxed">
-                NewtonAI accepts the following input formats: PDF documents (including scanned PDFs via OCR), DOCX files, images of handwritten or printed text, YouTube video URLs (via transcript extraction), and direct text input. The maximum file size for uploads is 20MB.
+                NewtonAI accepts the following input formats: PDF documents (including scanned PDFs via OCR), DOCX files, images of handwritten or printed text, YouTube video URLs (via transcript extraction), and direct text input. The maximum file size for uploads is 50MB.
               </p>
             </section>
 

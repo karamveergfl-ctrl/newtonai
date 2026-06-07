@@ -378,7 +378,7 @@ export function PDFChatUploadView({ onFileSelected, onTextContent }: PDFChatUplo
                     onContentReady={handleContentReady}
                     isProcessing={isProcessing}
                     placeholder="Paste your document text here..."
-                    supportedFormats="PDF, DOCX, TXT, Images; Max size: 20MB"
+                    supportedFormats="PDF, DOCX, TXT, Images; Max size: 50MB"
                   />
                   
                   {/* Inline recents */}

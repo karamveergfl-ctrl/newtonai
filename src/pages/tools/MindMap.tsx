@@ -315,7 +315,7 @@ const MindMap = () => {
                         onContentReady={handleContentReady}
                         isProcessing={isGenerating}
                         placeholder="Paste your study content here (lecture notes, concepts, topics)..."
-                        supportedFormats="PDF, TXT, Images; Max size: 20MB"
+                        supportedFormats="PDF, TXT, Images; Max size: 50MB"
                       />
                       <InlineRecents toolId="mind-map" />
                     </ToolAuthGate>

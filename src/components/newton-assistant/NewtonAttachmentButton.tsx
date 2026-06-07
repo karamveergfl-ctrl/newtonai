@@ -19,7 +19,7 @@ interface NewtonAttachmentButtonProps {
 }
 
 const ACCEPTED_TYPES = ".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp";
-const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_SIZE = 50 * 1024 * 1024; // 50MB
 
 export const NewtonAttachmentButton = memo(function NewtonAttachmentButton({
   onAttach,
@@ -36,7 +36,7 @@ export const NewtonAttachmentButton = memo(function NewtonAttachmentButton({
     if (!file) return;
 
     if (file.size > MAX_SIZE) {
-      toast({ title: "File too large", description: "Maximum 20MB allowed.", variant: "destructive" });
+      toast({ title: "File too large", description: "Maximum 50MB allowed.", variant: "destructive" });
       return;
     }
 

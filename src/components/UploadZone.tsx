@@ -24,7 +24,7 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
   }, []);
 
 
-  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
   const supportedTypes = [
     "application/pdf",
@@ -60,7 +60,7 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
       if (file.size > MAX_FILE_SIZE) {
         toast({
           title: "File too large",
-          description: "Maximum file size is 20MB",
+          description: "Maximum file size is 50MB",
           variant: "destructive",
         });
         setIsProcessing(false);
@@ -294,7 +294,7 @@ export const UploadZone = ({ onUploadComplete }: UploadZoneProps) => {
                 <span className="font-medium text-foreground/80">Drop files here</span> or <span className="text-primary font-medium underline underline-offset-2 decoration-primary/50">click to browse</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                Images, PDF, Doc, Docx, PPT, PPTX • Max 20MB
+                Images, PDF, Doc, Docx, PPT, PPTX • Max 50MB
               </p>
               
               <div className="mt-5 pt-5 border-t border-border/40 space-y-3">
