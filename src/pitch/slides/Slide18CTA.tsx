@@ -37,11 +37,11 @@ export default function Slide18CTA() {
           </button>
         </motion.div>
         <motion.div variants={slideChild} className="relative flex items-center gap-6 mt-10" style={{ color: "#475569", fontSize: 12 }}>
-          <span>📧 demo@newton.ai</span>
+          <span>📧 contact@newtonai.site</span>
           <span style={{ color: "#94A3B8" }}>·</span>
-          <span>📱 +91-98100-XXXXX</span>
+          <span>📱 +91-81919-75293</span>
           <span style={{ color: "#94A3B8" }}>·</span>
-          <span>🌐 www.newton.ai</span>
+          <a href="https://newtonai.site/" target="_blank" rel="noreferrer" style={{ color: "#475569" }}>🌐 Newtonai.site</a>
         </motion.div>
         <motion.div variants={slideChild} className="absolute bottom-20 left-1/2 -translate-x-1/2"
           style={{ color: "#4338CA", fontSize: 14, fontStyle: "italic", fontWeight: 400, fontFamily: "Cormorant Garamond, serif" }}>
