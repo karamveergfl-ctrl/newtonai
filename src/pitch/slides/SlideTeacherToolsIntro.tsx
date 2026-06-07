@@ -60,7 +60,8 @@ export default function SlideTeacherToolsIntro() {
         </motion.p>
         <motion.div variants={slideChild} className="mt-10 flex gap-3 flex-wrap justify-center" style={{ maxWidth: 700 }}>
           {[
-            { t: "Smart Classroom", c: "#059669", label: "SMARTBOARD" },
+            { t: "Class Materials → Student Dashboard", c: "#059669", label: "TEACHER" },
+            { t: "Animation Videos on Smart Board", c: "#059669", label: "SMARTBOARD" },
             { t: "In-Class Quiz + Attendance", c: "#D97706", label: "TEACHER" },
             { t: "Teacher Dashboard", c: "#D97706", label: "TEACHER" },
           ].map((x) => (
