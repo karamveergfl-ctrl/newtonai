@@ -22,6 +22,7 @@ import { ClassroomVideoPlayer } from "@/components/smartboard/ClassroomVideoPlay
 import { EndSessionModal } from "@/components/smartboard/EndSessionModal";
 import { WalkInBanner } from "@/components/smartboard/WalkInBanner";
 import { ConfusionAlertBanner } from "@/components/smartboard/ConfusionAlertBanner";
+import { DocumentTeachingView } from "@/components/smartboard/DocumentTeachingView";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Maximize, Minimize, PanelRight, X } from "lucide-react";
@@ -35,6 +36,7 @@ interface SmartBoardPanelProps {
   onEndSession?: () => void;
   className?: string;
   sessionTitle?: string;
+  documentUrl?: string | null;
 }
 
 function formatDuration(seconds: number): string {
@@ -51,6 +53,7 @@ function SmartBoardPanelInner({
   children,
   onEndSession,
   sessionTitle,
+  documentUrl,
 }: SmartBoardPanelProps) {
   const {
     confusionThreshold,
@@ -89,7 +92,9 @@ function SmartBoardPanelInner({
   const hasActiveCheck = !!activeConceptCheck;
 
   // Teaching mode state
-  const [activeView, setActiveView] = useState<"session" | "whiteboard" | "document" | "video">("session");
+  const [activeView, setActiveView] = useState<"session" | "whiteboard" | "document" | "video">(
+    documentUrl ? "document" : "session"
+  );
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [teacherId, setTeacherId] = useState("");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -370,6 +375,14 @@ function SmartBoardPanelInner({
             </div>
           ) : activeView === "video" ? (
             <ClassroomVideoPlayer sessionId={sessionId} />
+          ) : activeView === "document" && documentUrl ? (
+            <DocumentTeachingView
+              fileUrl={documentUrl}
+              sessionId={sessionId}
+              onAddToNotes={(text) =>
+                advanceToSlide(currentSlideIndex, text, `Doc – Slide ${currentSlideIndex + 1}`)
+              }
+            />
           ) : isFullscreen ? (
             <div className="h-full text-lg">{children}</div>
           ) : (
