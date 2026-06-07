@@ -18,6 +18,7 @@ import Slide14MindMaps from "./Slide14MindMaps";
 import SlideSmartClassroom from "./SlideSmartClassroom";
 import SlideInClassQuiz from "./SlideInClassQuiz";
 import SlideTeacherDashboard from "./SlideTeacherDashboard";
+import SlideVisualLearning from "./SlideVisualLearning";
 // Dashboards / close
 import SlideStudentDashboard from "./SlideStudentDashboard";
 import Slide18CTA from "./Slide18CTA";
@@ -41,6 +42,7 @@ export const SLIDES: { title: string; Component: React.ComponentType }[] = [
   // --- Teacher section ---
   { title: "Teacher & Classroom Tools", Component: SlideTeacherToolsIntro },
   { title: "Smart Classroom — Instant Animations", Component: SlideSmartClassroom },
+  { title: "Visual Learning — Ad-Free Educational Videos", Component: SlideVisualLearning },
   { title: "In-Class Quiz + Auto-Attendance", Component: SlideInClassQuiz },
   { title: "Teacher Dashboard", Component: SlideTeacherDashboard },
   // --- Close ---

@@ -18,6 +18,7 @@ export const VIDEO_PATHS = {
   PDF_CHAT:        `${BASE}/chat_pdf.mp4`,
   MIND_MAPS:       `${BASE}/mindmap.mp4`,
   PODCAST:         `${BASE}/podcast.mp4`,
+  VISUAL_LEARNING: "",
 };
 
 export const PITCH_COLORS = {
