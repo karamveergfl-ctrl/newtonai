@@ -3,6 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
+const escapeHtml = (s: string): string =>
+  s.replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -139,18 +146,18 @@ const handler = async (req: Request): Promise<Response> => {
           <h1>New Enterprise Inquiry</h1>
           <h2>Contact Information</h2>
           <ul>
-            <li><strong>Name:</strong> ${data.firstName} ${data.lastName}</li>
-            <li><strong>Email:</strong> ${data.email}</li>
-            <li><strong>Company:</strong> ${data.company}</li>
-            <li><strong>Job Title:</strong> ${data.jobTitle}</li>
+            <li><strong>Name:</strong> ${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}</li>
+            <li><strong>Email:</strong> ${escapeHtml(data.email)}</li>
+            <li><strong>Company:</strong> ${escapeHtml(data.company)}</li>
+            <li><strong>Job Title:</strong> ${escapeHtml(data.jobTitle)}</li>
           </ul>
           <h2>Requirements</h2>
           <ul>
-            <li><strong>Team Size:</strong> ${data.teamSize}</li>
-            <li><strong>Use Case:</strong> ${data.useCase}</li>
+            <li><strong>Team Size:</strong> ${escapeHtml(data.teamSize)}</li>
+            <li><strong>Use Case:</strong> ${escapeHtml(data.useCase)}</li>
           </ul>
           <h2>Message</h2>
-          <p>${data.message.replace(/\n/g, '<br>')}</p>
+          <p>${escapeHtml(data.message).replace(/\n/g, '<br>')}</p>
         `,
       }),
     });
@@ -172,8 +179,8 @@ const handler = async (req: Request): Promise<Response> => {
         to: [data.email],
         subject: "Thank you for your enterprise inquiry - NewtonAI",
         html: `
-          <h1>Thank you for contacting NewtonAI Enterprise, ${data.firstName}!</h1>
-          <p>We've received your inquiry about NewtonAI for ${data.company}.</p>
+          <h1>Thank you for contacting NewtonAI Enterprise, ${escapeHtml(data.firstName)}!</h1>
+          <p>We've received your inquiry about NewtonAI for ${escapeHtml(data.company)}.</p>
           <p>Our enterprise team will review your requirements and get back to you within 24 hours.</p>
           <h2>What happens next?</h2>
           <ol>
