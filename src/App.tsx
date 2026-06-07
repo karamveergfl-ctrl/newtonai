@@ -170,6 +170,18 @@ function AnimatedRoutes() {
       return () => clearTimeout(id);
     }
   }, [shouldSkipPrefetch]);
+
+  // High-priority prefetch: warm the pitch decks immediately so /pitch and
+  // /pitch-deck open instantly from any route.
+  useEffect(() => {
+    const warm = () => {
+      import("./pages/PitchPresentation");
+      import("./pages/InvestorPitchDeck");
+    };
+    // Fire ASAP after first paint — don't wait for idle.
+    const id = setTimeout(warm, 0);
+    return () => clearTimeout(id);
+  }, []);
   
   return (
     <AppErrorBoundary>
