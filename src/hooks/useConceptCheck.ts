@@ -328,17 +328,27 @@ export function useConceptCheck({ sessionId, role, slideContext }: UseConceptChe
             if (updated.status === "closed") {
               setIsClosed(true);
               clearTimer();
-              // Now that check is closed, populate correct_answer and explanation
-              setActiveCheck((prev) => {
-                if (!prev || prev.id !== updated.id) return prev;
-                return {
-                  ...prev,
-                  status: "closed" as const,
-                  correct_answer: (updated.correct_answer as string) as ConceptCheck["correct_answer"],
-                  explanation: (updated.explanation as string) || null,
-                  closed_at: (updated.closed_at as string) || null,
-                };
-              });
+              // Correct answer and explanation are stored in a private table
+              // students cannot read directly. Fetch them via a SECURITY DEFINER
+              // RPC that only returns the answer once the check is closed.
+              const checkId = updated.id as string;
+              supabase
+                .rpc("get_concept_check_answer", { p_check_id: checkId })
+                .then(({ data }) => {
+                  const result = data as
+                    | { success?: boolean; correct_answer?: string; explanation?: string | null }
+                    | null;
+                  setActiveCheck((prev) => {
+                    if (!prev || prev.id !== checkId) return prev;
+                    return {
+                      ...prev,
+                      status: "closed" as const,
+                      correct_answer: (result?.correct_answer ?? "") as ConceptCheck["correct_answer"],
+                      explanation: result?.explanation ?? null,
+                      closed_at: (updated.closed_at as string) || null,
+                    };
+                  });
+                });
             }
           }
         }

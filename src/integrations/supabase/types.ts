@@ -435,6 +435,35 @@ export type Database = {
           },
         ]
       }
+      concept_check_answers: {
+        Row: {
+          check_id: string
+          correct_answer: string
+          created_at: string
+          explanation: string | null
+        }
+        Insert: {
+          check_id: string
+          correct_answer: string
+          created_at?: string
+          explanation?: string | null
+        }
+        Update: {
+          check_id?: string
+          correct_answer?: string
+          created_at?: string
+          explanation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_check_answers_check_id_fkey"
+            columns: ["check_id"]
+            isOneToOne: true
+            referencedRelation: "concept_checks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concept_check_responses: {
         Row: {
           check_id: string
@@ -483,10 +512,8 @@ export type Database = {
       concept_checks: {
         Row: {
           closed_at: string | null
-          correct_answer: string
           created_at: string
           duration_seconds: number
-          explanation: string | null
           id: string
           option_a: string
           option_b: string
@@ -499,10 +526,8 @@ export type Database = {
         }
         Insert: {
           closed_at?: string | null
-          correct_answer: string
           created_at?: string
           duration_seconds?: number
-          explanation?: string | null
           id?: string
           option_a: string
           option_b: string
@@ -515,10 +540,8 @@ export type Database = {
         }
         Update: {
           closed_at?: string | null
-          correct_answer?: string
           created_at?: string
           duration_seconds?: number
-          explanation?: string | null
           id?: string
           option_a?: string
           option_b?: string
@@ -2580,6 +2603,7 @@ export type Database = {
         Args: { p_institution_id: string }
         Returns: Json
       }
+      get_concept_check_answer: { Args: { p_check_id: string }; Returns: Json }
       get_concept_check_results: { Args: { p_check_id: string }; Returns: Json }
       get_document_file_path: {
         Args: { p_document_id: string }
