@@ -132,7 +132,7 @@ export function useVoiceChat({
     language: currentLanguage,
     continuous: true,
     interimResults: true,
-    silenceTimeout: 2000, // Auto-stop after 2s silence
+    silenceTimeout: 800, // Snap to processing 800ms after user stops talking
     maxListeningTime: 10000, // Max 10s recording
     onAutoStop: (finalTranscript) => {
       // Auto-send when voice stops due to silence
@@ -170,28 +170,27 @@ export function useVoiceChat({
         throw new Error(`TTS request failed: ${response.status}`);
       }
       
+      // Stream audio: start playback as soon as the first bytes arrive
       const audioBlob = await response.blob();
-      
-      // Clean up previous audio
+
       if (audioUrlRef.current) {
         URL.revokeObjectURL(audioUrlRef.current);
       }
-      
       audioUrlRef.current = URL.createObjectURL(audioBlob);
-      
-      // Create and play audio
+
       if (!audioRef.current) {
         audioRef.current = new Audio();
+        audioRef.current.preload = 'auto';
       }
-      
+
       audioRef.current.src = audioUrlRef.current;
       audioRef.current.onended = () => setIsSpeaking(false);
       audioRef.current.onerror = () => {
         setIsSpeaking(false);
-        // Fallback to Web Speech API
         fallbackSpeak(cleanedText);
       };
-      
+
+      // Kick playback immediately; browser will buffer as bytes flow
       await audioRef.current.play();
       
     } catch (err: any) {
