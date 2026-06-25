@@ -10,11 +10,11 @@ const corsHeaders = {
 const TUTOR_VOICE_ID = "onwK4e9ZLuTAKqWW03F9"; // Daniel - calm and clear
 
 const VOICE_SETTINGS = {
-  stability: 0.65,           // More stable for clear teaching
-  similarity_boost: 0.75,    // Good voice similarity
-  style: 0.15,               // Minimal style exaggeration for clarity
-  use_speaker_boost: true,   // Enhanced clarity
-  speed: 0.9,                // Slightly slower for comprehension
+  stability: 0.5,            // Balanced for turbo model
+  similarity_boost: 0.75,
+  style: 0.0,                // No style processing → lower latency
+  use_speaker_boost: false,  // Faster generation
+  speed: 1.0,
 };
 
 serve(async (req) => {
@@ -37,25 +37,16 @@ serve(async (req) => {
       );
     }
 
-    // Limit text length for voice responses (keep them concise)
-    const truncatedText = text.length > 1500 
-      ? text.slice(0, 1500) + "... For more details, please ask a follow-up question."
+    // Keep voice answers short for low latency
+    const processedText = text.length > 800
+      ? text.slice(0, 800) + "..."
       : text;
 
-    // Add natural pauses for better speech flow
-    const processedText = truncatedText
-      // Add pauses after sentences
-      .replace(/\.\s+/g, '. ... ')
-      // Add pauses after colons (like "Page 7:")
-      .replace(/:\s+/g, ': ... ')
-      // Clean up excessive pauses
-      .replace(/\.\.\.\s*\.\.\./g, '...');
+    console.log(`Streaming TTS for ${processedText.length} chars (${language})`);
 
-    console.log(`Generating TTS for ${processedText.length} chars in language: ${language}`);
-
-    // Call ElevenLabs TTS API
+    // Use the streaming endpoint + turbo model for sub-second time-to-first-byte
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${TUTOR_VOICE_ID}?output_format=mp3_44100_128`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${TUTOR_VOICE_ID}/stream?output_format=mp3_22050_32&optimize_streaming_latency=3`,
       {
         method: "POST",
         headers: {
@@ -64,7 +55,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           text: processedText,
-          model_id: "eleven_multilingual_v2", // Supports multiple languages
+          model_id: "eleven_turbo_v2_5", // Low-latency multilingual model
           voice_settings: VOICE_SETTINGS,
         }),
       }
@@ -76,10 +67,8 @@ serve(async (req) => {
       throw new Error(`ElevenLabs API error: ${response.status}`);
     }
 
-    // Return the audio directly
-    const audioBuffer = await response.arrayBuffer();
-    
-    return new Response(audioBuffer, {
+    // Stream the audio body straight through to the client
+    return new Response(response.body, {
       headers: {
         ...corsHeaders,
         "Content-Type": "audio/mpeg",
