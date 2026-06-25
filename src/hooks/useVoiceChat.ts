@@ -93,6 +93,8 @@ export function useVoiceChat({
   const audioUrlRef = useRef<string | null>(null);
   const lastAnswerRef = useRef<string>('');
   const conversationHistoryRef = useRef<Array<{ role: string; content: string }>>([]);
+  const ttsAbortRef = useRef<AbortController | null>(null);
+  const ttsFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const { toast } = useToast();
 
@@ -144,10 +146,39 @@ export function useVoiceChat({
   const speakAnswer = useCallback(async (text: string) => {
     // Clean text for TTS
     const cleanedText = cleanTextForTTS(text);
-    
+
+    // Cancel any in-flight TTS request / playback before starting a new one
+    if (ttsAbortRef.current) {
+      ttsAbortRef.current.abort();
+    }
+    if (ttsFallbackTimerRef.current) {
+      clearTimeout(ttsFallbackTimerRef.current);
+      ttsFallbackTimerRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    window.speechSynthesis?.cancel();
+
+    const controller = new AbortController();
+    ttsAbortRef.current = controller;
+    let fallbackFired = false;
+
+    // Latency instrumentation
+    const t0 = performance.now();
+    // 3s safety net — if edge TTS hasn't returned by then, switch to Web Speech
+    ttsFallbackTimerRef.current = setTimeout(() => {
+      if (controller.signal.aborted) return;
+      fallbackFired = true;
+      console.warn('[voice-chat] TTS >3s, falling back to Web Speech');
+      controller.abort();
+      fallbackSpeak(cleanedText);
+    }, 3000);
+
     try {
       setIsSpeaking(true);
-      
+
       // Call voice-chat-tts edge function
       const response = await fetchWithTimeout(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-chat-tts`,
@@ -163,15 +194,22 @@ export function useVoiceChat({
             language: currentLanguage,
           }),
           timeoutMs: 20000,
+          signal: controller.signal,
         }
       );
-      
+
+      if (ttsFallbackTimerRef.current) {
+        clearTimeout(ttsFallbackTimerRef.current);
+        ttsFallbackTimerRef.current = null;
+      }
+
       if (!response.ok) {
         throw new Error(`TTS request failed: ${response.status}`);
       }
-      
+
       // Stream audio: start playback as soon as the first bytes arrive
       const audioBlob = await response.blob();
+      console.info(`[voice-chat] TTS round-trip ${Math.round(performance.now() - t0)}ms`);
 
       if (audioUrlRef.current) {
         URL.revokeObjectURL(audioUrlRef.current);
@@ -192,11 +230,21 @@ export function useVoiceChat({
 
       // Kick playback immediately; browser will buffer as bytes flow
       await audioRef.current.play();
-      
+
     } catch (err: any) {
+      if (controller.signal.aborted) {
+        // Interrupted intentionally (stopSpeaking, new turn, or 3s fallback)
+        if (!fallbackFired) setIsSpeaking(false);
+        return;
+      }
       console.error('TTS error:', err);
       // Fallback to Web Speech API
       fallbackSpeak(cleanedText);
+    } finally {
+      if (ttsFallbackTimerRef.current) {
+        clearTimeout(ttsFallbackTimerRef.current);
+        ttsFallbackTimerRef.current = null;
+      }
     }
   }, [currentLanguage]);
 
@@ -246,6 +294,13 @@ export function useVoiceChat({
 
   // Stop speaking
   const stopSpeaking = useCallback(() => {
+    if (ttsAbortRef.current) {
+      ttsAbortRef.current.abort();
+    }
+    if (ttsFallbackTimerRef.current) {
+      clearTimeout(ttsFallbackTimerRef.current);
+      ttsFallbackTimerRef.current = null;
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
