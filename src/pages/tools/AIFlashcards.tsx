@@ -13,6 +13,7 @@ import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ToolDemoVideo } from "@/components/ToolDemoVideo";
 import { Flashcard } from "@/components/Flashcard";
 import { FlashcardCompletionScreen } from "@/components/FlashcardCompletionScreen";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
@@ -318,6 +319,7 @@ const AIFlashcards = () => {
                 <ToolAuthGate>
                   <Card className="border-border/50 shadow-lg">
                     <CardContent className="pt-6">
+                      <ToolDemoVideo toolId="flashcards" />
                       <ContentInputTabs
                         onContentReady={handleContentReady}
                         isProcessing={isGenerating}
