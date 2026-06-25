@@ -19,12 +19,12 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(215 20% 75%);
+  background: hsl(220 15% 82% / 0.7);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(215 20% 60%);
+  background: hsl(220 15% 65% / 0.85);
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
@@ -33,7 +33,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 210 40% 99%;
+    --background: 220 30% 99%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -42,36 +42,36 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 173 80% 35%;
+    --primary: 173 75% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 213 94% 68%;
+    --secondary: 221 83% 62%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 214 32% 96%;
-    --muted-foreground: 215 20% 40%;
+    --muted: 220 25% 96%;
+    --muted-foreground: 220 14% 36%;
 
-    --accent: 38 92% 50%;
+    --accent: 35 85% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 90%;
-    --input: 214 32% 90%;
-    --ring: 213 94% 68%;
+    --border: 220 20% 92%;
+    --input: 220 20% 92%;
+    --ring: 173 75% 40%;
 
     --radius: 0.75rem;
 
-    --gradient-hero: linear-gradient(135deg, hsl(210 40% 99%) 0%, hsl(214 95% 93%) 50%, hsl(213 94% 85%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(214 32% 98%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(213 94% 68%), hsl(199 89% 75%));
-    --gradient-subtle: linear-gradient(180deg, hsl(210 40% 99%), hsl(214 32% 96%));
-    --gradient-primary: linear-gradient(135deg, hsl(173 80% 35%), hsl(173 80% 45%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 40% 99%) 0%, hsl(200 70% 96%) 45%, hsl(250 60% 96%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 30% 98.5%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(221 83% 62%), hsl(199 85% 72%));
+    --gradient-subtle: linear-gradient(180deg, hsl(220 30% 99%), hsl(220 25% 97%));
+    --gradient-primary: linear-gradient(135deg, hsl(173 75% 32%), hsl(178 70% 42%));
 
-    --shadow-card: 0 1px 2px hsl(214 32% 70% / 0.08), 0 4px 12px hsl(214 32% 70% / 0.08);
-    --shadow-elevated: 0 4px 16px hsl(214 32% 60% / 0.12), 0 12px 32px hsl(214 32% 60% / 0.10);
-    --shadow-glow: 0 0 32px hsl(213 94% 68% / 0.25);
+    --shadow-card: 0 1px 2px hsl(220 30% 50% / 0.06), 0 4px 16px hsl(220 30% 50% / 0.06);
+    --shadow-elevated: 0 2px 8px hsl(220 30% 40% / 0.06), 0 16px 40px hsl(220 30% 40% / 0.10);
+    --shadow-glow: 0 0 28px hsl(173 75% 40% / 0.18);
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
