@@ -724,6 +724,7 @@ function TeacherSessionWrapper({ session, classId, onUpdate, enrollmentCount }: 
   const navigate = useNavigate();
   const { questions } = useQuestionWall({ sessionId: session.id, role: "teacher" });
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+  const [sessionContext, setSessionContext] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -734,10 +735,20 @@ function TeacherSessionWrapper({ session, classId, onUpdate, enrollmentCount }: 
     return () => { cancelled = true; };
   }, [session.document_url]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (supabase as any)
+      .rpc("get_live_session_content", { _session_id: session.id })
+      .then(({ data }: { data: string | null }) => {
+        if (!cancelled) setSessionContext(data || "");
+      });
+    return () => { cancelled = true; };
+  }, [session.id]);
+
   useNewtonAutoAnswer({
     sessionId: session.id,
     questions,
-    sessionContext: session.content_text || "",
+    sessionContext,
     enabled: session.questions_enabled ?? true,
   });
 

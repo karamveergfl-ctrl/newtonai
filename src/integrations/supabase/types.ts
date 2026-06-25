@@ -2633,6 +2633,10 @@ export type Database = {
         Args: { p_institution_id: string }
         Returns: Json
       }
+      get_live_session_content: {
+        Args: { _session_id: string }
+        Returns: string
+      }
       get_notes_analytics: { Args: { p_session_id: string }; Returns: Json }
       get_pulse_summary: { Args: { p_session_id: string }; Returns: Json }
       get_session_notes: {
