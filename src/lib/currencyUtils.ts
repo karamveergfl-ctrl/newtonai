@@ -125,24 +125,24 @@ export const CURRENCY_SHORT_NAMES: Record<CurrencyCode, string> = {
 export const PRICING = {
   pro: {
     monthly: {
-      INR: 69900,    // ₹699
-      USD: 849,      // $8.49
-      EUR: 799,      // €7.99
-      GBP: 699,      // £6.99
-      PLN: 3500,     // zł35
-      AUD: 1299,     // A$12.99
-      CAD: 1149,     // C$11.49
-      SGD: 1149,     // S$11.49
+      INR: 99900,    // ₹999
+      USD: 1199,     // $11.99
+      EUR: 1199,     // €11.99
+      GBP: 999,      // £9.99
+      PLN: 5000,     // zł50
+      AUD: 1899,     // A$18.99
+      CAD: 1599,     // C$15.99
+      SGD: 1599,     // S$15.99
     },
     yearly: {
-      INR: 649900,   // ₹6,499
-      USD: 7800,     // $78
-      EUR: 7400,     // €74
-      GBP: 6400,     // £64
-      PLN: 32000,    // zł320
-      AUD: 11900,    // A$119
-      CAD: 10500,    // C$105
-      SGD: 10500,    // S$105
+      INR: 949900,   // ₹9,499
+      USD: 10900,    // $109
+      EUR: 10500,    // €105
+      GBP: 8900,     // £89
+      PLN: 44900,    // zł449
+      AUD: 16900,    // A$169
+      CAD: 14900,    // C$149
+      SGD: 14900,    // S$149
     },
   },
   ultra: {
@@ -174,53 +174,53 @@ export const DISPLAY_PRICING = {
   pro: {
     weeklyMonthly: {
       INR: '₹250',
-      USD: '$2.12',
-      EUR: '€2',
-      GBP: '£1.75',
-      PLN: 'zł8.75',
-      AUD: 'A$3.25',
-      CAD: 'C$2.87',
-      SGD: 'S$2.87',
+      USD: '$2.99',
+      EUR: '€2.99',
+      GBP: '£2.49',
+      PLN: 'zł12.49',
+      AUD: 'A$4.99',
+      CAD: 'C$3.99',
+      SGD: 'S$3.99',
     },
     weeklyYearly: {
-      INR: '₹125',
-      USD: '$1.50',
-      EUR: '€1.42',
-      GBP: '£1.23',
-      PLN: 'zł6.15',
-      AUD: 'A$2.29',
-      CAD: 'C$2.02',
-      SGD: 'S$2.02',
+      INR: '₹179',
+      USD: '$1.99',
+      EUR: '€1.99',
+      GBP: '£1.75',
+      PLN: 'zł8.99',
+      AUD: 'A$3.49',
+      CAD: 'C$2.99',
+      SGD: 'S$2.99',
     },
     monthly: {
-      INR: '₹699',
-      USD: '$8.49',
-      EUR: '€7.99',
-      GBP: '£6.99',
-      PLN: 'zł35',
-      AUD: 'A$12.99',
-      CAD: 'C$11.49',
-      SGD: 'S$11.49',
+      INR: '₹999',
+      USD: '$11.99',
+      EUR: '€11.99',
+      GBP: '£9.99',
+      PLN: 'zł50',
+      AUD: 'A$18.99',
+      CAD: 'C$15.99',
+      SGD: 'S$15.99',
     },
     yearly: {
-      INR: '₹6,499',
-      USD: '$78',
-      EUR: '€74',
-      GBP: '£64',
-      PLN: 'zł320',
-      AUD: 'A$119',
-      CAD: 'C$105',
-      SGD: 'S$105',
+      INR: '₹9,499',
+      USD: '$109',
+      EUR: '€105',
+      GBP: '£89',
+      PLN: 'zł449',
+      AUD: 'A$169',
+      CAD: 'C$149',
+      SGD: 'S$149',
     },
     yearlySavings: {
-      INR: 'Save ₹1,889',
-      USD: 'Save $24',
-      EUR: 'Save €22',
-      GBP: 'Save £20',
-      PLN: 'Save zł100',
-      AUD: 'Save A$37',
-      CAD: 'Save C$33',
-      SGD: 'Save S$33',
+      INR: 'Save ₹2,489',
+      USD: 'Save $35',
+      EUR: 'Save €39',
+      GBP: 'Save £31',
+      PLN: 'Save zł151',
+      AUD: 'Save A$59',
+      CAD: 'Save C$43',
+      SGD: 'Save S$43',
     },
   },
   ultra: {
