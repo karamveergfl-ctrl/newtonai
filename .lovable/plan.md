@@ -1,54 +1,63 @@
-# Light Theme Polish — Pearl & Sky
+## Goal
 
-Scope: **global tokens only** in `src/index.css` (and a minor token addition in `tailwind.config.ts` if needed). No per-page edits, no component rewrites — every page automatically inherits the refined look.
+Produce a single PowerPoint file (`/mnt/documents/newtonai-pitch.pptx`) that mirrors the `/pitch` route — same 19 slides in the same order — with each tool slide's MP4 demo embedded directly inside the file so it plays in PowerPoint without an internet connection.
 
-## Palette (light mode only)
+## Slide list (matches `src/pitch/slides/index.ts`)
 
-Refined Pearl & Sky tokens, keeping the existing teal primary for brand continuity but layering soft sky-blue gradients and pearl surfaces.
+```
+01  The AI-Powered Classroom        (hero, dark)
+02  The Challenge                   (problem statements)
+03  The Solution                    (3 pillars)
+04  Student Tools                   (section divider)
+05  AI Quiz Generator               + quiz.mp4
+06  AI Flashcards                   + flashcards.mp4
+07  AI Podcast — Two AI Friends     + podcast.mp4
+08  Newton Chat — AI Tutor          + newtonchat.mp4
+09  Ad-Free Educational Videos      + videowithout_ads.mp4
+10  AI Summariser                   + summary.mp4
+11  Homework Help                   + homework_help.mp4
+12  PDF Chat                        + chat_pdf.mp4
+13  AI Mind Maps                    + mindmap.mp4
+14  Student Dashboard
+15  Teacher & Classroom Tools       (section divider)
+16  Class Materials → Student Dashboard + smart_classroom.mp4
+17  Animation Videos on Smart Board (no MP4 available)
+18  In-Class Quiz + Auto-Attendance (no MP4 available)
+19  Teacher Dashboard
+20  Get Started                     (CTA, dark)
+```
 
-- `--background`: `210 40% 99%` (pearl white, very subtle cool tint)
-- `--foreground`: `222 47% 11%` (deep slate, stronger contrast)
-- `--card`: `0 0% 100%` with subtle border
-- `--muted`: `214 32% 96%` (cool pearl)
-- `--muted-foreground`: `215 20% 40%` (better readability than current 47%)
-- `--border`: `214 32% 90%` (slightly softer)
-- `--primary`: keep teal `173 80% 35%`
-- `--secondary`: refine to soft sky `213 94% 68%`
-- `--ring`: subtle sky `213 94% 68%`
+## Visual design (carries the /pitch identity into PowerPoint)
 
-## Gradients (light mode)
+- Palette from `PITCH_COLORS`: deep navy `#0A1628` background for hero/CTA/section dividers, light gradient `#FAFBFF → #EEF2FF → #F3F0FF` for content slides, indigo primary `#6366F1` accent, amber `#F59E0B` highlight.
+- Typography: Plus Jakarta Sans for titles (54–60pt bold), Inter/Calibri body (20–24pt).
+- Tool slides use a 2-column layout: left column = title, one-line value prop, 3 short bullet benefits; right column = the embedded video framed in a rounded indigo border with a small "Live Demo" pill above it.
+- Section dividers (Student Tools / Teacher Tools / CTA) are full-bleed dark with a big number and a one-line tagline.
+- Footer on every content slide: "NewtonAI · newtonai.site" + slide number, indigo accent bar on the left edge.
 
-Replace flat/teal-heavy gradients with layered pearl-to-sky washes:
+## Video embedding strategy
 
-- `--gradient-hero`: `linear-gradient(135deg, hsl(210 40% 99%) 0%, hsl(214 95% 93%) 50%, hsl(213 94% 85%) 100%)` — airy hero washes
-- `--gradient-card`: `linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(214 32% 98%) 100%)` — soft pearl on cards
-- `--gradient-accent`: `linear-gradient(135deg, hsl(213 94% 68%), hsl(199 89% 75%))` — sky blue
-- Add `--gradient-subtle`: `linear-gradient(180deg, hsl(210 40% 99%), hsl(214 32% 96%))` — page backgrounds
-- Add `--gradient-primary`: `linear-gradient(135deg, hsl(173 80% 35%), hsl(173 80% 45%))` — keep teal CTAs
+- Download each MP4 from the public `pitch-videos` bucket (`https://tdvsxaxmwmhpvsdpvbvc.supabase.co/storage/v1/object/public/pitch-videos/...`) into `/tmp/pitch-videos/`.
+- For every tool slide that has a URL in `VIDEO_PATHS`, capture a JPEG poster frame at ~1.5 s with `ffmpeg` to use as the slide thumbnail.
+- Use `pptxgenjs` `slide.addMedia({ type: 'video', data: 'data:video/mp4;base64,...', cover: posterBase64, x, y, w, h })` so the MP4 is embedded inside the .pptx (no external link). PowerPoint will play it inline on click.
+- Expected output size: ~150–300 MB depending on the bucket video sizes. We will report the final size in the delivery message.
 
-## Shadows (light mode)
+## Implementation steps
 
-Replace harsh dark drop shadows with soft, layered, slightly cool shadows for a premium SaaS feel:
+1. Write `/tmp/build-pitch-pptx.mjs` (Node + `pptxgenjs`).
+2. Define an array mirroring `SLIDES` with: title, subtitle, bullets, theme (`dark`/`light`), optional `videoKey` from `VIDEO_PATHS`.
+3. Fetch + cache each unique MP4 to `/tmp/pitch-videos/`. Generate poster JPEGs with `ffmpeg`.
+4. Render slides via shared helpers (`renderDarkSlide`, `renderToolSlide`, `renderSectionDivider`, `renderDashboardSlide`).
+5. Save to `/mnt/documents/newtonai-pitch.pptx`.
 
-- `--shadow-card`: `0 1px 2px hsl(214 32% 70% / 0.08), 0 4px 12px hsl(214 32% 70% / 0.08)`
-- `--shadow-elevated`: `0 4px 16px hsl(214 32% 60% / 0.12), 0 12px 32px hsl(214 32% 60% / 0.10)`
-- `--shadow-glow`: `0 0 32px hsl(213 94% 68% / 0.25)` — sky glow instead of teal
+## QA (mandatory)
 
-## Scrollbar
+1. Convert the .pptx to PDF with LibreOffice and to per-slide JPEGs with `pdftoppm`.
+2. Inspect every slide image for: overlapping text, clipped titles, broken posters, missing footers, wrong colors, low-contrast text on the dark slides, and out-of-order content.
+3. Re-open the .pptx file header to confirm each embedded MP4 is present (`unzip -l` should list `ppt/media/media*.mp4` entries equal to the number of unique videos).
+4. Fix any issues, re-render only the affected slides, repeat until a full pass is clean.
+5. Report the final file size and an explicit summary of issues found + fixes.
 
-Lighten the global `::-webkit-scrollbar-thumb` from `hsl(215 20% 35%)` (very dark, looks broken on light bg) to `hsl(215 20% 75%)` with hover `hsl(215 20% 60%)`. Dark mode unchanged via media query or keep as-is (current value works on dark).
+## Deliverable
 
-## What stays unchanged
-
-- Dark mode tokens — untouched
-- Tailwind config — no changes (semantic tokens already exposed)
-- All component files — untouched
-- Brand primary teal — preserved for CTAs/logo continuity
-
-## Files
-
-- `src/index.css` — only file modified
-
-## Verification
-
-After edit: visit Landing, Pricing, Tools, Dashboard in light mode via preview to confirm gradients render and contrast remains AA-compliant. Dark mode should be visually identical to before.
+`/mnt/documents/newtonai-pitch.pptx` surfaced via a `<presentation-artifact>` tag so you can download it directly from chat.
