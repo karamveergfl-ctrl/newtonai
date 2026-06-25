@@ -79,12 +79,18 @@ export function LiveSessionPanel({ classId, session, onUpdate }: LiveSessionPane
   }, [session.status, session.quiz_started_at, session.time_limit_minutes]);
 
   const handleGenerateQuiz = async () => {
-    if (!session.content_text) { toast.error("No content to generate quiz from"); return; }
     setGenerating(true);
     try {
+      const { data: contentText, error: contentError } = await (supabase as any)
+        .rpc("get_live_session_content", { _session_id: session.id });
+      if (contentError || !contentText) {
+        toast.error("No content to generate quiz from");
+        setGenerating(false);
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("generate-quiz", {
         body: {
-          content: session.content_text,
+          content: contentText,
           numQuestions: parseInt(numQuestions),
           difficulty,
         },
