@@ -44,6 +44,18 @@ export const extractTextFromPDF = async (
   file: File,
   accessToken: string
 ): Promise<string> => {
+  // Edge function + Gemini Vision inline limits cap practical inline-base64 PDFs.
+  // Anything above ~15MB exceeds Supabase function body size / Gemini inline cap
+  // and fails mid-upload. Larger PDFs should go through the chunked storage path.
+  const MAX_INLINE_PDF_BYTES = 15 * 1024 * 1024;
+  if (file.size > MAX_INLINE_PDF_BYTES) {
+    throw new Error(
+      `This PDF is ${(file.size / (1024 * 1024)).toFixed(1)} MB. ` +
+      `For instant text extraction please use a PDF under 15 MB, ` +
+      `or upload it to a class for chunked processing.`
+    );
+  }
+
   const base64 = await fileToBase64(file);
   
   const response = await fetchWithTimeout(

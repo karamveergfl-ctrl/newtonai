@@ -59,6 +59,20 @@ serve(async (req) => {
       });
     }
 
+    // Guard against payloads that exceed Gemini Vision's inline-data cap.
+    // base64 length * 0.75 ≈ raw bytes. ~20MB inline ceiling on Gemini.
+    const base64Length = pdfContent.length;
+    const approxBytes = Math.floor(base64Length * 0.75);
+    const MAX_BYTES = 18 * 1024 * 1024;
+    if (approxBytes > MAX_BYTES) {
+      return new Response(
+        JSON.stringify({
+          error: `PDF too large for instant extraction (${(approxBytes / (1024 * 1024)).toFixed(1)} MB). Please use a PDF under 15 MB.`,
+        }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
