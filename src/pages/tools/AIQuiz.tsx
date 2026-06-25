@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ToolDemoVideo } from "@/components/ToolDemoVideo";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { useGuestTrial } from "@/contexts/GuestTrialContext";
@@ -591,6 +592,7 @@ Return ONLY JSON: {"score": 0.0-1.0, "feedback": "one sentence feedback"}`
                 <ToolAuthGate>
                   <Card className="border-border/50 shadow-lg">
                     <CardContent className="pt-6">
+                      <ToolDemoVideo toolId="quiz" />
                       <ContentInputTabs
                         onContentReady={handleContentReady}
                         isProcessing={isGenerating}

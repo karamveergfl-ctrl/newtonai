@@ -5,6 +5,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { ToolAuthGate } from "@/components/ToolAuthGate";
 import { ContentDisclaimer } from "@/components/ContentDisclaimer";
 import { ToolPagePromoSections } from "@/components/tool-sections";
+import { ToolDemoVideo } from "@/components/ToolDemoVideo";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { MessageSquare, FileText, Search, BookOpen, Zap, Brain } from "lucide-react";
@@ -81,6 +82,10 @@ export default function PDFChat() {
         <ToolAuthGate>
           <div />
         </ToolAuthGate>
+
+        <div className="mt-8">
+          <ToolDemoVideo toolId="pdf-chat" />
+        </div>
 
         {/* Educational Content — visible to crawlers */}
         <section className="max-w-4xl mx-auto mt-12 mb-12">

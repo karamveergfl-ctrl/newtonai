@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ToolDemoVideo } from "@/components/ToolDemoVideo";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { useGuestTrial } from "@/contexts/GuestTrialContext";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
@@ -311,6 +312,7 @@ const MindMap = () => {
                 ) : (
                   <div className="space-y-6">
                     <ToolAuthGate>
+                      <ToolDemoVideo toolId="mind-map" />
                       <ContentInputTabs
                         onContentReady={handleContentReady}
                         isProcessing={isGenerating}
