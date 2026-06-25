@@ -158,7 +158,7 @@ const FloatingToolsShowcase = ({ showCTA = true }: FloatingToolsShowcaseProps) =
                   src={newtonCharacter} 
                   alt="Newton AI mascot" 
                   loading="eager"
-                  fetchPriority="high"
+                  {...({ fetchpriority: "high" } as any)}
                   width={72}
                   height={72}
                   className="w-full h-full object-cover"
