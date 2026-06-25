@@ -284,9 +284,9 @@ const StudentClassView = () => {
                           const url = await resolveMaterialUrl(m.content_ref);
                           const type = m.material_type.toLowerCase();
                           if (type === "pdf" || type === "document") {
-                            navigate("/dashboard", { state: { materialUrl: url, materialName: m.title, returnTo: `/student/classes/${id}`, isPdf: true } });
+                            navigate("/dashboard", { state: { materialUrl: url, materialName: m.title, returnTo: `/student/class/${id}`, isPdf: true } });
                           } else if (type === "video" || isYouTubeUrl(m.content_ref)) {
-                            navigate("/dashboard", { state: { materialVideoUrl: url, materialName: m.title, returnTo: `/student/classes/${id}` } });
+                            navigate("/dashboard", { state: { materialVideoUrl: url, materialName: m.title, returnTo: `/student/class/${id}` } });
                           } else {
                             window.open(url, "_blank", "noopener,noreferrer");
                           }
