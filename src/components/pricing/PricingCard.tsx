@@ -161,7 +161,12 @@ export const PricingCard: React.FC<PricingCardProps> = ({
                 {isPaid ? '/week' : '/forever'}
               </span>
             </div>
-            
+            {isPaid && (
+              <p className="text-[11px] text-muted-foreground/80 mt-1 italic">
+                Shown as a weekly rate · {isYearly ? 'billed annually' : 'billed monthly'}
+              </p>
+            )}
+
             {/* Billing Summary Box */}
             {isPaid && (
               <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50">
