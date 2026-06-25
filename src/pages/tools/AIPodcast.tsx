@@ -4,6 +4,7 @@ import { ToolAuthGate } from "@/components/ToolAuthGate";
 import { ContentDisclaimer } from "@/components/ContentDisclaimer";
 import { AppLayout } from "@/components/AppLayout";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ToolDemoVideo } from "@/components/ToolDemoVideo";
 import { PodcastPlayer } from "@/components/PodcastPlayer";
 import { PodcastRaiseHand } from "@/components/PodcastRaiseHand";
 import { PodcastHistory } from "@/components/PodcastHistory";
@@ -533,6 +534,7 @@ export default function AIPodcast() {
                     )}
                   </div>
 
+                  <ToolDemoVideo toolId="podcast" />
                   <ContentInputTabs
                     onContentReady={handleContentReady}
                     isProcessing={isProcessing}
