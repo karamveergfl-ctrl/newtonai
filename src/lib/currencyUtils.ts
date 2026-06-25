@@ -173,7 +173,7 @@ export const PRICING = {
 export const DISPLAY_PRICING = {
   pro: {
     weeklyMonthly: {
-      INR: '₹175',
+      INR: '₹250',
       USD: '$2.12',
       EUR: '€2',
       GBP: '£1.75',
