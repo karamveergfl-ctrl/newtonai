@@ -11,6 +11,7 @@ import SEOHead from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContentInputTabs } from "@/components/ContentInputTabs";
+import { ToolDemoVideo } from "@/components/ToolDemoVideo";
 import { Button } from "@/components/ui/button";
 import { StepBySolutionRenderer } from "@/components/StepBySolutionRenderer";
 import { InlineSolutionPanel } from "@/components/InlineSolutionPanel";
@@ -356,6 +357,7 @@ const HomeworkHelp = () => {
           <ToolAuthGate>
             <Card>
               <CardContent className="pt-6">
+                <ToolDemoVideo toolId="homework-help" />
                 <ContentInputTabs
                   onContentReady={handleContentReady}
                   isProcessing={isLoading}
