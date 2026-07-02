@@ -221,7 +221,7 @@ export function useQuestionWall({ sessionId, role }: UseQuestionWallProps) {
       );
       const { error } = await supabase
         .from("live_questions" as "live_questions")
-        .update({ is_answered: true } as Record<string, unknown>)
+        .update({ is_answered: true })
         .eq("id", questionId);
       if (error) {
         console.error("markAnswered error:", error.message);
@@ -242,7 +242,7 @@ export function useQuestionWall({ sessionId, role }: UseQuestionWallProps) {
       );
       const { error } = await supabase
         .from("live_questions" as "live_questions")
-        .update({ is_pinned: newPinned } as Record<string, unknown>)
+        .update({ is_pinned: newPinned })
         .eq("id", questionId);
       if (error) {
         console.error("togglePin error:", error.message);
