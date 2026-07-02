@@ -8,10 +8,11 @@ const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-
 async function fetchYouTube(urlWithoutKey: string): Promise<Response> {
   const primary = Deno.env.get("YOUTUBE_API_KEY");
   const secondary = Deno.env.get("YOUTUBE_API_KEY_2");
-  if (!primary && !secondary) throw new Error("YOUTUBE_API_KEY not configured");
+  const tertiary = Deno.env.get("YOUTUBE_API_KEY_3");
+  if (!primary && !secondary && !tertiary) throw new Error("YOUTUBE_API_KEY not configured");
   const sep = urlWithoutKey.includes("?") ? "&" : "?";
   const call = (k: string) => fetch(`${urlWithoutKey}${sep}key=${k}`);
-  const keys = [primary, secondary].filter(Boolean) as string[];
+  const keys = [primary, secondary, tertiary].filter(Boolean) as string[];
   let last: Response | null = null;
   for (let i = 0; i < keys.length; i++) {
     const res = await call(keys[i]);
