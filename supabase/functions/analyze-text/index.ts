@@ -315,16 +315,10 @@ $$2 + \\frac{5}{3} = \\frac{6}{3} + \\frac{5}{3} = \\frac{11}{3}$$
     console.log("Extracted topic:", topic);
     console.log("YouTube search query:", searchQuery);
 
-    // Search YouTube for related videos
-    const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
-    if (!YOUTUBE_API_KEY) {
-      throw new Error("YOUTUBE_API_KEY not configured");
-    }
-
     console.log("Searching YouTube for exact video solution:", searchQuery);
-    
-    const youtubeResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&relevanceLanguage=en&safeSearch=strict&order=relevance`
+
+    const youtubeResponse = await fetchYouTube(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(searchQuery)}&type=video&videoDefinition=high&relevanceLanguage=en&safeSearch=strict&order=relevance`
     );
 
     if (!youtubeResponse.ok) {
