@@ -278,6 +278,42 @@ const Privacy = () => {
                 <p>
                   We do not sell your personal data to third parties for their marketing purposes.
                 </p>
+
+                <h4>6.7 YouTube API Services</h4>
+                <p>
+                  NewtonAI uses <strong>YouTube API Services</strong> to search for and embed
+                  educational videos relevant to your study topics. By using features that surface
+                  YouTube content, you agree to be bound by the{" "}
+                  <a
+                    href="https://www.youtube.com/t/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    YouTube Terms of Service
+                  </a>
+                  . Information collected and used through the YouTube API Services (such as video
+                  metadata and playback data) is handled in accordance with the{" "}
+                  <a
+                    href="https://policies.google.com/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Google Privacy Policy
+                  </a>
+                  . You can review and revoke NewtonAI's access to your Google/YouTube data at any
+                  time via the{" "}
+                  <a
+                    href="https://security.google.com/settings/security/permissions"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Google security settings page
+                  </a>
+                  .
+                </p>
               </AccordionContent>
             </AccordionItem>
 
