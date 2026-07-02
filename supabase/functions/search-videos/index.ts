@@ -87,7 +87,7 @@ serve(async (req) => {
     const YOUTUBE_API_KEY_2 = Deno.env.get('YOUTUBE_API_KEY_2');
 
     // If no YouTube API key, return educational mock data
-    if (!YOUTUBE_API_KEY && !YOUTUBE_API_KEY_2) {
+    if (!YOUTUBE_API_KEY && !YOUTUBE_API_KEY_2 && !Deno.env.get("YOUTUBE_API_KEY_3")) {
       console.log('No YouTube API key, returning mock educational videos');
       
       const mockVideos = [
