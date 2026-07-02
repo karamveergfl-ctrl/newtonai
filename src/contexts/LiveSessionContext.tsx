@@ -72,7 +72,7 @@ export function LiveSessionProvider({
       if (Object.keys(updates).length > 0) {
         const { error } = await supabase
           .from("live_sessions" as "live_sessions")
-          .update(updates)
+          .update(updates as never)
           .eq("id", sessionId);
         if (error) {
           console.error("updateSessionSettings error:", error.message);
