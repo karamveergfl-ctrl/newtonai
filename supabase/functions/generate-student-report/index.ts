@@ -439,8 +439,8 @@ serve(async (req) => {
 
     // ── Fetch YouTube videos for each suggestion ──
     if (reportRow && videoSuggestions.length > 0) {
-      const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
-      if (YOUTUBE_API_KEY) {
+      const HAS_YT_KEY = Boolean(Deno.env.get("YOUTUBE_API_KEY") || Deno.env.get("YOUTUBE_API_KEY_2"));
+      if (HAS_YT_KEY) {
         const videoResults: Array<{
           topic: string;
           video_id: string;
@@ -452,8 +452,8 @@ serve(async (req) => {
 
         for (const vs of videoSuggestions) {
           try {
-            const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(vs.query)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&videoDuration=medium`;
-            const searchResp = await fetch(searchUrl);
+            const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(vs.query)}&type=video&videoDefinition=high&videoDuration=medium`;
+            const searchResp = await fetchYouTube(searchUrl);
             if (searchResp.ok) {
               const searchData = await searchResp.json();
               const item = searchData.items?.[0];
