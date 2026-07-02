@@ -23,6 +23,17 @@ interface SolutionData {
 
 export function useVideoSearch() {
   const { toast } = useToast();
+  // In-memory session cache to dedupe rapid re-searches of the same topic
+  const sessionCache = (useVideoSearch as any)._cache || ((useVideoSearch as any)._cache = new Map<string, { data: any; ts: number }>());
+  const SESSION_TTL_MS = 10 * 60 * 1000; // 10 min
+  const cachedFetch = async (key: string, fetcher: () => Promise<any>) => {
+    const hit = sessionCache.get(key);
+    if (hit && Date.now() - hit.ts < SESSION_TTL_MS) return hit.data;
+    const data = await fetcher();
+    sessionCache.set(key, { data, ts: Date.now() });
+    return data;
+  };
+
   const [animationVideos, setAnimationVideos] = useState<Video[]>([]);
   const [explanationVideos, setExplanationVideos] = useState<Video[]>([]);
   const [animationNextPageToken, setAnimationNextPageToken] = useState<string | null>(null);
@@ -87,14 +98,21 @@ export function useVideoSearch() {
         setAnimationNextPageToken(null);
         setExplanationNextPageToken(null);
 
-        const [animRes, explRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, { method: "POST", headers, body: JSON.stringify({ query, type: "animation" }) }),
-          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, { method: "POST", headers, body: JSON.stringify({ query, type: "explanation" }) }),
+        const normalized = query.trim().toLowerCase();
+        const [animData, explData] = await Promise.all([
+          cachedFetch(`${normalized}|animation`, async () => {
+            const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, { method: "POST", headers, body: JSON.stringify({ query, type: "animation" }) });
+            return r.json();
+          }),
+          cachedFetch(`${normalized}|explanation`, async () => {
+            const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, { method: "POST", headers, body: JSON.stringify({ query, type: "explanation" }) });
+            return r.json();
+          }),
         ]);
 
-        if (!animRes.ok || !explRes.ok) throw new Error("Failed to search videos");
-
-        const [animData, explData] = await Promise.all([animRes.json(), explRes.json()]);
+        if (animData?.quotaExceeded || explData?.quotaExceeded) {
+          toast({ title: "YouTube temporarily unavailable", description: "Daily search limit reached. Please try again in a few hours.", variant: "destructive" });
+        }
         setAnimationVideos(animData.videos || []);
         setExplanationVideos(explData.videos || []);
         setAnimationNextPageToken(animData.nextPageToken || null);
@@ -133,14 +151,20 @@ export function useVideoSearch() {
 
     try {
       const { headers } = await getAuthHeaders();
-      const [animRes, explRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, { method: "POST", headers, body: JSON.stringify({ query: topic, type: "animation" }) }),
-        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, { method: "POST", headers, body: JSON.stringify({ query: topic, type: "explanation" }) }),
+      const normalized = topic.trim().toLowerCase();
+      const [animData, explData] = await Promise.all([
+        cachedFetch(`${normalized}|animation`, async () => {
+          const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, { method: "POST", headers, body: JSON.stringify({ query: topic, type: "animation" }) });
+          return r.json();
+        }),
+        cachedFetch(`${normalized}|explanation`, async () => {
+          const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-youtube`, { method: "POST", headers, body: JSON.stringify({ query: topic, type: "explanation" }) });
+          return r.json();
+        }),
       ]);
-
-      if (!animRes.ok || !explRes.ok) throw new Error("Failed to search videos");
-
-      const [animData, explData] = await Promise.all([animRes.json(), explRes.json()]);
+      if (animData?.quotaExceeded || explData?.quotaExceeded) {
+        toast({ title: "YouTube temporarily unavailable", description: "Daily search limit reached. Please try again in a few hours.", variant: "destructive" });
+      }
       setAnimationVideos(animData.videos || []);
       setExplanationVideos(explData.videos || []);
       setAnimationNextPageToken(animData.nextPageToken || null);

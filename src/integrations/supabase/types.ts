@@ -2505,6 +2505,30 @@ export type Database = {
         }
         Relationships: []
       }
+      youtube_search_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          expires_at: string
+          next_page_token: string | null
+          videos: Json
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          expires_at?: string
+          next_page_token?: string | null
+          videos: Json
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          expires_at?: string
+          next_page_token?: string | null
+          videos?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       live_pulse_summary: {
