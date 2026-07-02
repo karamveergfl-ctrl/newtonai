@@ -6,6 +6,29 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function fetchYouTube(urlWithoutKey: string): Promise<Response> {
+  const primary = Deno.env.get("YOUTUBE_API_KEY");
+  const secondary = Deno.env.get("YOUTUBE_API_KEY_2");
+  if (!primary && !secondary) throw new Error("YOUTUBE_API_KEY not configured");
+  const sep = urlWithoutKey.includes("?") ? "&" : "?";
+  const keys = [primary, secondary].filter(Boolean) as string[];
+  let last: Response | null = null;
+  for (let i = 0; i < keys.length; i++) {
+    const res = await fetch(`${urlWithoutKey}${sep}key=${keys[i]}`);
+    if (res.ok) return res;
+    if ((res.status === 403 || res.status === 429) && i < keys.length - 1) {
+      const body = await res.clone().text();
+      if (/quota|rateLimit|dailyLimit/i.test(body)) {
+        console.warn(`[youtube] key #${i + 1} quota hit, falling back`);
+        last = res;
+        continue;
+      }
+    }
+    return res;
+  }
+  return last as Response;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -60,9 +83,10 @@ serve(async (req) => {
     }
 
     const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY');
-    
+    const YOUTUBE_API_KEY_2 = Deno.env.get('YOUTUBE_API_KEY_2');
+
     // If no YouTube API key, return educational mock data
-    if (!YOUTUBE_API_KEY) {
+    if (!YOUTUBE_API_KEY && !YOUTUBE_API_KEY_2) {
       console.log('No YouTube API key, returning mock educational videos');
       
       const mockVideos = [
@@ -109,14 +133,13 @@ serve(async (req) => {
     searchUrl.searchParams.set('relevanceLanguage', 'en');
     searchUrl.searchParams.set('safeSearch', 'strict');
     searchUrl.searchParams.set('videoDuration', 'medium');
-    searchUrl.searchParams.set('key', YOUTUBE_API_KEY);
     
     // Add pageToken for pagination
     if (pageToken) {
       searchUrl.searchParams.set('pageToken', pageToken);
     }
 
-    const searchResponse = await fetch(searchUrl.toString());
+    const searchResponse = await fetchYouTube(searchUrl.toString());
     
     if (!searchResponse.ok) {
       const errorText = await searchResponse.text();
@@ -141,9 +164,8 @@ serve(async (req) => {
     const detailsUrl = new URL('https://www.googleapis.com/youtube/v3/videos');
     detailsUrl.searchParams.set('part', 'contentDetails,statistics');
     detailsUrl.searchParams.set('id', videoIds);
-    detailsUrl.searchParams.set('key', YOUTUBE_API_KEY);
 
-    const detailsResponse = await fetch(detailsUrl.toString());
+    const detailsResponse = await fetchYouTube(detailsUrl.toString());
     const detailsData = await detailsResponse.json();
 
     // Create a map of video details
