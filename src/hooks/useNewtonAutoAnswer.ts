@@ -49,7 +49,7 @@ export function useNewtonAutoAnswer({
         if (typeof answer === "string" && answer.length > 0) {
           await supabase
             .from("live_questions" as "live_questions")
-            .update({ newton_answer: answer } as Record<string, unknown>)
+            .update({ newton_answer: answer })
             .eq("id", question.id);
         }
       } catch (err) {
