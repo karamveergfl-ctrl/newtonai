@@ -6,6 +6,29 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function fetchYouTube(urlWithoutKey: string): Promise<Response> {
+  const primary = Deno.env.get("YOUTUBE_API_KEY");
+  const secondary = Deno.env.get("YOUTUBE_API_KEY_2");
+  if (!primary && !secondary) throw new Error("YOUTUBE_API_KEY not configured");
+  const sep = urlWithoutKey.includes("?") ? "&" : "?";
+  const keys = [primary, secondary].filter(Boolean) as string[];
+  let last: Response | null = null;
+  for (let i = 0; i < keys.length; i++) {
+    const res = await fetch(`${urlWithoutKey}${sep}key=${keys[i]}`);
+    if (res.ok) return res;
+    if ((res.status === 403 || res.status === 429) && i < keys.length - 1) {
+      const body = await res.clone().text();
+      if (/quota|rateLimit|dailyLimit/i.test(body)) {
+        console.warn(`[youtube] key #${i + 1} quota hit, falling back`);
+        last = res;
+        continue;
+      }
+    }
+    return res;
+  }
+  return last as Response;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -292,16 +315,10 @@ $$2 + \\frac{5}{3} = \\frac{6}{3} + \\frac{5}{3} = \\frac{11}{3}$$
     console.log("Extracted topic:", topic);
     console.log("YouTube search query:", searchQuery);
 
-    // Search YouTube for related videos
-    const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
-    if (!YOUTUBE_API_KEY) {
-      throw new Error("YOUTUBE_API_KEY not configured");
-    }
-
     console.log("Searching YouTube for exact video solution:", searchQuery);
-    
-    const youtubeResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&relevanceLanguage=en&safeSearch=strict&order=relevance`
+
+    const youtubeResponse = await fetchYouTube(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(searchQuery)}&type=video&videoDefinition=high&relevanceLanguage=en&safeSearch=strict&order=relevance`
     );
 
     if (!youtubeResponse.ok) {

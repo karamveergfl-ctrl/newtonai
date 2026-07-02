@@ -3,6 +3,32 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 
+// Fetches a YouTube Data API URL, automatically falling back to a secondary
+// API key when the primary hits quota (403 quotaExceeded / dailyLimitExceeded).
+async function fetchYouTube(urlWithoutKey: string): Promise<Response> {
+  const primary = Deno.env.get("YOUTUBE_API_KEY");
+  const secondary = Deno.env.get("YOUTUBE_API_KEY_2");
+  if (!primary && !secondary) throw new Error("YOUTUBE_API_KEY not configured");
+  const sep = urlWithoutKey.includes("?") ? "&" : "?";
+  const call = (k: string) => fetch(`${urlWithoutKey}${sep}key=${k}`);
+  const keys = [primary, secondary].filter(Boolean) as string[];
+  let last: Response | null = null;
+  for (let i = 0; i < keys.length; i++) {
+    const res = await call(keys[i]);
+    if (res.ok) return res;
+    if ((res.status === 403 || res.status === 429) && i < keys.length - 1) {
+      const body = await res.clone().text();
+      if (/quota|rateLimit|dailyLimit/i.test(body)) {
+        console.warn(`[youtube] key #${i + 1} quota hit, falling back`);
+        last = res;
+        continue;
+      }
+    }
+    return res;
+  }
+  return last as Response;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -25,8 +51,9 @@ serve(async (req) => {
     }
 
     const { query, type = "all", pageToken } = await req.json();
-    const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
-    if (!YOUTUBE_API_KEY) throw new Error("YOUTUBE_API_KEY not configured");
+    if (!Deno.env.get("YOUTUBE_API_KEY") && !Deno.env.get("YOUTUBE_API_KEY_2")) {
+      throw new Error("YOUTUBE_API_KEY not configured");
+    }
 
     // Service-role client for cache table access (bypasses RLS)
     const adminClient = createClient(
@@ -52,10 +79,10 @@ serve(async (req) => {
     }
 
     const searchQuery = type === "animation" ? `"${query}" animated explanation -shorts` : type === "explanation" ? `"${query}" lecture explained -shorts` : `"${query}" educational -shorts`;
-    let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=8&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&videoDuration=medium`;
+    let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=8&q=${encodeURIComponent(searchQuery)}&type=video&videoDefinition=high&videoDuration=medium`;
     if (pageToken) url += `&pageToken=${pageToken}`;
 
-    const searchResponse = await fetch(url);
+    const searchResponse = await fetchYouTube(url);
 
     // Quota exceeded — fall back to stale cache if available
     if (searchResponse.status === 403) {
@@ -93,7 +120,7 @@ serve(async (req) => {
       return new Response(JSON.stringify(empty), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const detailsResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=${videoIds}&key=${YOUTUBE_API_KEY}`);
+    const detailsResponse = await fetchYouTube(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=${videoIds}`);
     const detailsMap = new Map();
     if (detailsResponse.ok) { (await detailsResponse.json()).items?.forEach((i: any) => detailsMap.set(i.id, { duration: i.contentDetails?.duration, viewCount: i.statistics?.viewCount })); }
 

@@ -7,6 +7,29 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function fetchYouTube(urlWithoutKey: string): Promise<Response> {
+  const primary = Deno.env.get("YOUTUBE_API_KEY");
+  const secondary = Deno.env.get("YOUTUBE_API_KEY_2");
+  if (!primary && !secondary) throw new Error("YOUTUBE_API_KEY not configured");
+  const sep = urlWithoutKey.includes("?") ? "&" : "?";
+  const keys = [primary, secondary].filter(Boolean) as string[];
+  let last: Response | null = null;
+  for (let i = 0; i < keys.length; i++) {
+    const res = await fetch(`${urlWithoutKey}${sep}key=${keys[i]}`);
+    if (res.ok) return res;
+    if ((res.status === 403 || res.status === 429) && i < keys.length - 1) {
+      const body = await res.clone().text();
+      if (/quota|rateLimit|dailyLimit/i.test(body)) {
+        console.warn(`[youtube] key #${i + 1} quota hit, falling back`);
+        last = res;
+        continue;
+      }
+    }
+    return res;
+  }
+  return last as Response;
+}
+
 interface TopicScore {
   slide_index: number;
   slide_title: string | null;
@@ -416,8 +439,8 @@ serve(async (req) => {
 
     // ── Fetch YouTube videos for each suggestion ──
     if (reportRow && videoSuggestions.length > 0) {
-      const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
-      if (YOUTUBE_API_KEY) {
+      const HAS_YT_KEY = Boolean(Deno.env.get("YOUTUBE_API_KEY") || Deno.env.get("YOUTUBE_API_KEY_2"));
+      if (HAS_YT_KEY) {
         const videoResults: Array<{
           topic: string;
           video_id: string;
@@ -429,8 +452,8 @@ serve(async (req) => {
 
         for (const vs of videoSuggestions) {
           try {
-            const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(vs.query)}&type=video&key=${YOUTUBE_API_KEY}&videoDefinition=high&videoDuration=medium`;
-            const searchResp = await fetch(searchUrl);
+            const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(vs.query)}&type=video&videoDefinition=high&videoDuration=medium`;
+            const searchResp = await fetchYouTube(searchUrl);
             if (searchResp.ok) {
               const searchData = await searchResp.json();
               const item = searchData.items?.[0];
