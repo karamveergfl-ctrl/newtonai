@@ -303,7 +303,7 @@ Return ONLY a JSON array with this exact format:
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: systemPromptWithHygiene },
           { role: "user", content: userPrompt }
         ],
       }),

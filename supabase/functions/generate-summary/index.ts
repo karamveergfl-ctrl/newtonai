@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { LATEX_HYGIENE } from "../_shared/latex-hygiene.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -263,7 +264,7 @@ RULES:
 - Write everything in ${targetLanguage}`
     };
 
-    const systemPrompt = `${formatPrompts[format] || formatPrompts["concise"]}\n\n${comparisonInstruction}`;
+    const systemPrompt = `${formatPrompts[format] || formatPrompts["concise"]}\n\n${comparisonInstruction}\n${LATEX_HYGIENE}`;
 
     // SSE streaming response
     if (stream) {
