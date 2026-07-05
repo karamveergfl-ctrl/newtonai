@@ -169,7 +169,7 @@ Return ONLY the JSON object with all text in ${targetLanguage}.`;
               body: JSON.stringify({
                 model: "google/gemini-2.5-flash",
                 messages: [
-                  { role: "system", content: systemPrompt },
+                  { role: "system", content: `${systemPrompt}\n${LATEX_HYGIENE}` },
                   { role: "user", content: userPrompt }
                 ],
               }),
@@ -312,7 +312,7 @@ Return ONLY the JSON object with all text in ${targetLanguage}.`;
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: `${systemPrompt}\n${LATEX_HYGIENE}` },
           { role: "user", content: userPrompt }
         ],
       }),
