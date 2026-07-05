@@ -13,6 +13,18 @@ import { VideoPlayer } from './VideoPlayer';
 import { FEATURE_COSTS } from '@/lib/creditConfig';
 import { useStudyContext } from '@/contexts/StudyContext';
 
+function getFriendlyError(err: any): string {
+  const msg = String(err?.message || err || '').toLowerCase();
+  if (msg.includes('rate limit') || msg.includes('429')) return "Newton is handling many requests right now. Please wait 30 seconds and try again.";
+  if (msg.includes('413') || msg.includes('too large')) return "This image is too large. Please use an image under 10MB, or crop to just the question.";
+  if (msg.includes('400') || msg.includes('invalid image')) return "Newton could not read this image format. Please try saving it as a JPG or PNG and upload again.";
+  if (msg.includes('timeout')) return "This took too long. Complex diagrams sometimes need more time — please try again.";
+  if (msg.includes('network') || msg.includes('fetch') || msg.includes('failed to fetch')) return "Connection issue. Please check your internet and try again.";
+  if (msg.includes('401') || msg.includes('unauthorized')) return "Please sign in and try again.";
+  if (msg.includes('402')) return "You've used your free credits. Please upgrade or wait for your quota to reset.";
+  return err?.message || "Something went wrong reading this image. Try a clearer photo with good lighting, or type the problem manually.";
+}
+
 interface Video {
   id: string;
   title: string;
