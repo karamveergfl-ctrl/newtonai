@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { LATEX_HYGIENE } from "../_shared/latex-hygiene.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -107,7 +108,7 @@ FORMATTING RULES:
 5. Explain the reasoning behind each step.`
         }, {
           role: 'user',
-          content: `Solve this problem step by step:\n\n${problemContext}`
+          content: `Solve this problem step by step:\n\n${problemContext}\n\n${LATEX_HYGIENE}`
         }],
         max_tokens: 4096,
         response_format: { type: "json_object" }
