@@ -67,11 +67,14 @@ serve(async (req) => {
 
     console.log('Solving problem...');
 
-    const problemContext = structuredProblem 
+    const problemContext = structuredProblem
       ? `Problem: ${structuredProblem.problemStatement}
 Given: ${structuredProblem.given || 'N/A'}
 Find: ${structuredProblem.find || 'N/A'}
-Topic: ${structuredProblem.topic || 'General'}`
+Topic: ${structuredProblem.topic || 'General'}
+
+RAW VISION EXTRACTION (authoritative — includes figure elements, dimensions, forces):
+${extractedText || 'N/A'}`
       : extractedText;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -81,10 +84,16 @@ Topic: ${structuredProblem.topic || 'General'}`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-2.5-pro',
         messages: [{
           role: 'system',
-          content: `You are an expert tutor solving mathematical and scientific problems. Provide clear, step-by-step solutions.
+          content: `You are an expert engineering/physics/math tutor. Solve the given problem using ONLY the numbers, labels, and geometry stated in the provided context — never invent values.
+
+If the problem involves a structural diagram (frame, truss, beam, statics), you MUST:
+- Restate what you understand from the figure (points, forces, dimensions) as Step 1.
+- Draw the free-body diagram in words (list all reactions and applied forces with directions).
+- Write full equilibrium equations ($\\sum F_x = 0$, $\\sum F_y = 0$, $\\sum M = 0$) before substituting numbers.
+- Substitute numbers explicitly and box each reaction component.
 
 FORMATTING RULES:
 1. Use LaTeX notation for ALL mathematical expressions:
