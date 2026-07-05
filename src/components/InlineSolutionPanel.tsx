@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Loader2, Play, Eye, ChevronRight, Sparkles, BookOpen, Video, RefreshCw, ArrowUp } from 'lucide-react';
+import { X, Loader2, Play, Eye, ChevronRight, Sparkles, BookOpen, Video, RefreshCw, ArrowUp, Copy, Check, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +12,18 @@ import { CreditBadge } from './CreditBadge';
 import { VideoPlayer } from './VideoPlayer';
 import { FEATURE_COSTS } from '@/lib/creditConfig';
 import { useStudyContext } from '@/contexts/StudyContext';
+
+function getFriendlyError(err: any): string {
+  const msg = String(err?.message || err || '').toLowerCase();
+  if (msg.includes('rate limit') || msg.includes('429')) return "Newton is handling many requests right now. Please wait 30 seconds and try again.";
+  if (msg.includes('413') || msg.includes('too large')) return "This image is too large. Please use an image under 10MB, or crop to just the question.";
+  if (msg.includes('400') || msg.includes('invalid image')) return "Newton could not read this image format. Please try saving it as a JPG or PNG and upload again.";
+  if (msg.includes('timeout')) return "This took too long. Complex diagrams sometimes need more time — please try again.";
+  if (msg.includes('network') || msg.includes('fetch') || msg.includes('failed to fetch')) return "Connection issue. Please check your internet and try again.";
+  if (msg.includes('401') || msg.includes('unauthorized')) return "Please sign in and try again.";
+  if (msg.includes('402')) return "You've used your free credits. Please upgrade or wait for your quota to reset.";
+  return err?.message || "Something went wrong reading this image. Try a clearer photo with good lighting, or type the problem manually.";
+}
 
 interface Video {
   id: string;
@@ -175,10 +187,23 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
 
     } catch (err: any) {
       console.error('Problem solving error:', err);
-      setError(err.message || 'An error occurred while solving the problem');
+      setError(getFriendlyError(err));
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const [copied, setCopied] = useState(false);
+  const handleCopySolution = async () => {
+    const parts: string[] = [];
+    if (structuredProblem?.problemStatement) parts.push(`Problem: ${structuredProblem.problemStatement}`);
+    if (structuredProblem?.given) parts.push(`Given: ${structuredProblem.given}`);
+    if (structuredProblem?.find) parts.push(`Find: ${structuredProblem.find}`);
+    solution.forEach((s, i) => parts.push(`\nStep ${s.stepNumber || i + 1}: ${s.title}\n${s.content}${s.explanation ? `\n${s.explanation}` : ''}`));
+    if (finalAnswer) parts.push(`\nFinal Answer: ${finalAnswer}`);
+    await navigator.clipboard.writeText(parts.join('\n'));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const loadMoreVideos = async () => {
@@ -317,6 +342,20 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                       {/* Problem Statement */}
                       {structuredProblem && (
                         <div className="p-3 sm:p-4 rounded-lg bg-muted/50 border border-border overflow-hidden">
+                          {(structuredProblem.topic || structuredProblem.difficulty) && (
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {structuredProblem.topic && (
+                                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/20">
+                                  {structuredProblem.topic}
+                                </span>
+                              )}
+                              {structuredProblem.difficulty && (
+                                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-teal-500/15 text-teal-400 border border-teal-500/20 capitalize">
+                                  {structuredProblem.difficulty}
+                                </span>
+                              )}
+                            </div>
+                          )}
                           <h3 className="font-semibold mb-2 flex items-center gap-2">
                             <span className="p-1.5 rounded-full bg-primary text-primary-foreground shrink-0">
                               <span className="text-xs font-bold">1</span>
@@ -403,6 +442,20 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                             <MixedContent content={finalAnswer} />
                           </div>
                         </motion.div>
+                      )}
+
+                      {/* Action buttons */}
+                      {solution.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <Button variant="outline" size="sm" onClick={handleCopySolution} className="gap-2">
+                            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                            {copied ? 'Copied' : 'Copy Solution'}
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={onClose} className="gap-2">
+                            <RotateCcw className="h-4 w-4" />
+                            Try Another Problem
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </ScrollArea>
