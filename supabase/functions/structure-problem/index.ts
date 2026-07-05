@@ -1,6 +1,63 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const STRUCTURE_PROMPT = `You are an expert at reading physics and engineering problem descriptions and extracting structured data.
+Read the following problem description (which was extracted from an image or typed by a student) and return a JSON object.
+
+YOU MUST RETURN VALID JSON ONLY. No markdown. No code fences. No explanation outside the JSON.
+
+Return this exact structure:
+{
+  "subject": "The academic subject. Examples: Engineering Mechanics, Physics, Mathematics, Chemistry, Biology",
+  "topic": "The specific topic. Examples: Statics - Frame Analysis, Kinematics, Integration, Thermodynamics",
+  "difficulty": "Easy, Medium, or Hard",
+  "given": ["List each given value as a string", "T = 150 kN", "Four loads of 20 kN each"],
+  "find": "A single sentence describing what must be found. Example: Find the reaction forces Ex, Ey and moment ME at fixed support E.",
+  "problemStatement": "A complete 2-3 sentence description of the problem in plain English that a student can understand.",
+  "assumptions": ["List any assumptions", "Static equilibrium", "2D planar problem", "Rigid body"]
+}
+
+Input problem description:`;
+
+function parseStructureResponse(rawText: string, fallback: string): any {
+  let cleaned = rawText.trim();
+  cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+  }
+  try {
+    const parsed = JSON.parse(cleaned);
+    // Normalize given to string for the existing UI which uses <MixedContent content={given} />
+    if (Array.isArray(parsed.given)) {
+      parsed.given = parsed.given.map((g: string) => `- ${g}`).join('\n');
+    }
+    return {
+      subject: parsed.subject || 'General',
+      topic: parsed.topic || parsed.subject || 'General',
+      difficulty: (parsed.difficulty || 'Medium').toString(),
+      given: parsed.given || '',
+      find: parsed.find || '',
+      problemStatement: parsed.problemStatement || fallback,
+      assumptions: Array.isArray(parsed.assumptions) ? parsed.assumptions : [],
+      type: parsed.type || 'calculation',
+    };
+  } catch (err) {
+    console.error('Structure JSON parse failed:', err);
+    return {
+      subject: 'General',
+      topic: 'General',
+      difficulty: 'Medium',
+      given: '',
+      find: '',
+      problemStatement: fallback,
+      assumptions: [],
+      type: 'calculation',
+    };
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -76,19 +133,7 @@ serve(async (req) => {
         model: 'google/gemini-2.5-flash',
         messages: [{
           role: 'system',
-          content: `You structure a homework/exam problem from a vision-extracted transcript.
-
-The input may include labelled sections: PROBLEM STATEMENT, FIGURE ELEMENTS, GIVEN VALUES, FIND, UNCLEAR ITEMS, CONFIDENCE. Preserve ALL of that information — never drop figure geometry, dimensions, force vectors, labels, or numeric values.
-
-Return a JSON object with:
-- problemStatement: Main problem/question (LaTeX for math). Include a short "Figure:" paragraph summarizing the diagram if FIGURE ELEMENTS is present.
-- given: Bullet-style multiline string with EVERY numeric value, label, dimension, force, and geometric relation from GIVEN VALUES and FIGURE ELEMENTS. Use LaTeX (e.g. "- $T = 150\\,\\text{kN}$ (cable DF)"). Do NOT summarize away figure data.
-- find: What must be determined, verbatim from FIND.
-- topic: Subject area (e.g. "Engineering Mechanics - Statics", "Physics - Kinematics").
-- difficulty: "easy" | "medium" | "hard"
-- type: "calculation" | "proof" | "word_problem" | "equation_solving"
-
-Rules: never invent numbers. If a value is [unclear], keep it marked. Use LaTeX for all math (e.g. $v = 20\\,\\text{m/s}$).`
+          content: STRUCTURE_PROMPT
         }, {
           role: 'user',
           content: extractedText
@@ -106,20 +151,7 @@ Rules: never invent numbers. If a value is [unclear], keep it marked. Use LaTeX 
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || '{}';
-    
-    let structuredProblem;
-    try {
-      structuredProblem = JSON.parse(content);
-    } catch {
-      structuredProblem = {
-        problemStatement: extractedText,
-        given: '',
-        find: '',
-        topic: 'General',
-        difficulty: 'medium',
-        type: 'calculation'
-      };
-    }
+    const structuredProblem = parseStructureResponse(content, extractedText.slice(0, 500));
 
     console.log('Problem structured successfully:', structuredProblem.topic);
 
