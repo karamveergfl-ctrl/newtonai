@@ -126,6 +126,21 @@ serve(async (req) => {
       );
     }
 
+    // Verify the caller owns this document before touching its chunks.
+    const { data: ownedDoc, error: ownerErr } = await supabase
+      .from('pdf_documents')
+      .select('id')
+      .eq('id', documentId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (ownerErr || !ownedDoc) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: document not found or not owned by caller' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Update document status to processing
     await supabase
       .from('pdf_documents')
