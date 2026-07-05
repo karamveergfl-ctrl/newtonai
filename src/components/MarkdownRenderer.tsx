@@ -27,6 +27,7 @@ import {
   type LucideIcon
 } from "lucide-react";
 import { autoDetectLatex, shouldApplyLatex } from "@/utils/latexAutoDetect";
+import { sanitizeLatex } from "@/lib/latexSanitize";
 
 interface MarkdownRendererProps {
   content: string;
@@ -105,10 +106,11 @@ export const MarkdownRenderer = ({ content, className, enableAutoLatex = true }:
 
   // Apply LaTeX auto-detection if enabled and content looks technical
   const processedContent = useMemo(() => {
-    if (enableAutoLatex && shouldApplyLatex(content)) {
-      return autoDetectLatex(content);
+    const sanitized = sanitizeLatex(content);
+    if (enableAutoLatex && shouldApplyLatex(sanitized)) {
+      return autoDetectLatex(sanitized);
     }
-    return content;
+    return sanitized;
   }, [content, enableAutoLatex]);
 
   const renderHeadingWithIcon = (children: React.ReactNode, Tag: 'h1' | 'h2' | 'h3' | 'h4') => {

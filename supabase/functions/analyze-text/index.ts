@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { LATEX_HYGIENE } from "../_shared/latex-hygiene.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -120,7 +121,23 @@ serve(async (req) => {
       ? `\nIMPORTANT: Respond in ${language} language.` 
       : "";
 
-    const systemPrompt = `Solve this problem step by step.${langInstruction}
+    const visionPreamble = hasImage ? `
+
+VISION FIRST — the problem is provided as an image. BEFORE solving:
+A. Transcribe the exact problem statement verbatim from the image (including all
+   numbers, symbols, subscripts, and units). Re-read each numeric value TWICE
+   to avoid OCR errors. If a character is unclear, write "unclear" and choose
+   the most physically reasonable interpretation, explicitly noting the assumption.
+B. If the image contains a figure/diagram, describe its geometry BEFORE solving:
+   - list all labeled points, lengths, angles, coordinates
+   - list every force with its direction (arrow), magnitude, and point of application
+   - list any given constraints (fixed supports, cables, pulleys, contact surfaces)
+   Present these as bullet points under a "Given (from figure):" section.
+C. Only after A and B, proceed with the step-by-step solution below.
+D. Extreme accuracy is required — mis-reading a single number invalidates the whole answer.
+` : "";
+
+    const systemPrompt = `Solve this problem step by step.${langInstruction}${visionPreamble}
 
 INSTRUCTIONS:
 1. First line MUST be: "TOPIC: [specific topic, e.g., "BODMAS order of operations", "quadratic equations", "projectile motion"]"
@@ -184,7 +201,8 @@ $$10 \\div 6 = \\frac{10}{6} = \\frac{5}{3}$$
 Step 3: Apply addition
 $$2 + \\frac{5}{3} = \\frac{6}{3} + \\frac{5}{3} = \\frac{11}{3}$$
 
-**✅ Final Answer:** $$\\boxed{\\frac{11}{3} \\approx 3.67}$$`;
+**✅ Final Answer:** $$\\boxed{\\frac{11}{3} \\approx 3.67}$$
+${LATEX_HYGIENE}`;
 
     // Build message content based on available inputs
     const messageContent: any[] = [{ type: "text", text: systemPrompt }];
@@ -207,7 +225,7 @@ $$2 + \\frac{5}{3} = \\frac{6}{3} + \\frac{5}{3} = \\frac{11}{3}$$
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: hasImage ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
           stream: true,
           messages: [
             {
@@ -252,7 +270,7 @@ $$2 + \\frac{5}{3} = \\frac{6}{3} + \\frac{5}{3} = \\frac{11}{3}$$
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: hasImage ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
         messages: [
           {
             role: "user",
