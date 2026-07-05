@@ -195,7 +195,7 @@ ${extractedText || 'N/A'}`
           role: 'user',
           content: problemContext
         }],
-        max_tokens: 4096,
+        max_tokens: 8192,
         response_format: { type: "json_object" }
       })
     });
