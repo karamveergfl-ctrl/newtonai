@@ -73,20 +73,22 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-2.5-pro',
         messages: [{
           role: 'system',
-          content: `You are a problem structuring assistant. Analyze the given text and extract the mathematical or scientific problem structure.
+          content: `You structure a homework/exam problem from a vision-extracted transcript.
 
-Return a JSON object with these fields:
-- problemStatement: The main problem or question (use LaTeX for math)
-- given: What information is provided (use LaTeX for values/equations)
-- find: What needs to be found or solved
-- topic: The subject area (e.g., "Physics - Kinematics", "Calculus - Integration")
-- difficulty: "easy", "medium", or "hard"
-- type: "calculation", "proof", "word_problem", "equation_solving"
+The input may include labelled sections: PROBLEM STATEMENT, FIGURE ELEMENTS, GIVEN VALUES, FIND, UNCLEAR ITEMS, CONFIDENCE. Preserve ALL of that information — never drop figure geometry, dimensions, force vectors, labels, or numeric values.
 
-Use LaTeX notation for all mathematical expressions (e.g., $v = 20 \\text{ m/s}$).`
+Return a JSON object with:
+- problemStatement: Main problem/question (LaTeX for math). Include a short "Figure:" paragraph summarizing the diagram if FIGURE ELEMENTS is present.
+- given: Bullet-style multiline string with EVERY numeric value, label, dimension, force, and geometric relation from GIVEN VALUES and FIGURE ELEMENTS. Use LaTeX (e.g. "- $T = 150\\,\\text{kN}$ (cable DF)"). Do NOT summarize away figure data.
+- find: What must be determined, verbatim from FIND.
+- topic: Subject area (e.g. "Engineering Mechanics - Statics", "Physics - Kinematics").
+- difficulty: "easy" | "medium" | "hard"
+- type: "calculation" | "proof" | "word_problem" | "equation_solving"
+
+Rules: never invent numbers. If a value is [unclear], keep it marked. Use LaTeX for all math (e.g. $v = 20\\,\\text{m/s}$).`
         }, {
           role: 'user',
           content: extractedText

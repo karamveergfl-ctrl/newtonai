@@ -64,43 +64,95 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    console.log('Extracting text from image using Gemini Vision...');
+    console.log('Extracting text from image using Gemini 2.5 Pro Vision...');
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Extract ALL text from this image exactly as it appears. Preserve the layout, formatting, and structure. Include all mathematical equations, numbers, and special characters. For mathematical expressions, use LaTeX notation (e.g., $x^2$ for x squared, $\\frac{a}{b}$ for fractions). Do not add any explanations or interpretations.`
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:${mimeType || 'image/png'};base64,${imageBase64}`
-              }
-            }
-          ]
-        }],
-        max_tokens: 4096
-      })
-    });
+    const VISION_PROMPT = `You are an expert vision system reading a homework or exam problem image. It may contain engineering/physics diagrams (frames, trusses, beams), figures, force vectors, dimensions, geometry, labels, or plain text.
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API error:', errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+Return a single response with these sections in order, using EXACT headings:
+
+PROBLEM STATEMENT:
+<Transcribe the printed problem text verbatim. Preserve wording, units, and punctuation. If part is unreadable, mark it [unclear].>
+
+FIGURE ELEMENTS:
+<If a diagram/figure is present, list every visible element as bullet points. Include:
+ - Labeled points (A, B, C, ...)
+ - Force arrows with magnitude, direction, and point of application (e.g. "20 kN downward at B")
+ - Support types (fixed, pin, roller, cable) and locations
+ - All dimensions with units (e.g. "AB = 1.8 m horizontal", "wall height = 2.25 m")
+ - Geometry (angles, cables, members between points)
+If no figure, write: None.>
+
+GIVEN VALUES:
+<Bullet list of every numeric value with symbol and unit, e.g. "T = 150 kN", "L = 7.2 m". Include values from both text and figure.>
+
+FIND:
+<What the problem asks to determine, verbatim.>
+
+UNCLEAR ITEMS:
+<Bullet list of anything you cannot read with high confidence. If none, write: None.>
+
+CONFIDENCE: high | medium | low
+
+Rules:
+- Read digits and units character by character. Do NOT invent values.
+- Preserve LaTeX for equations ($x^2$, $\\frac{a}{b}$).
+- Do NOT solve the problem. Extraction only.`;
+
+    const callVision = async (extraInstruction = '') => {
+      const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-pro',
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: VISION_PROMPT + (extraInstruction ? `\n\nADDITIONAL INSTRUCTION: ${extraInstruction}` : '') },
+              { type: 'image_url', image_url: { url: `data:${mimeType || 'image/png'};base64,${imageBase64}` } }
+            ]
+          }],
+          max_tokens: 4096
+        })
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Gemini API error:', errorText);
+        throw new Error(`Gemini API error: ${res.status}`);
+      }
+      const json = await res.json();
+      return (json.choices?.[0]?.message?.content || '') as string;
+    };
+
+    let extractedText = await callVision();
+
+    // Confidence / completeness check → retry once with stricter instruction
+    const needsRetry = (() => {
+      if (!extractedText || extractedText.trim().length < 20) return true;
+      if (/CONFIDENCE:\s*low/i.test(extractedText)) return true;
+      const unclearMatch = extractedText.match(/UNCLEAR ITEMS:\s*([\s\S]*?)(?:\n[A-Z ]+:|$)/);
+      if (unclearMatch && !/^\s*none\.?\s*$/i.test(unclearMatch[1].trim())) return true;
+      const hasFigureMention = /FIGURE ELEMENTS:\s*(?!\s*None)/i.test(extractedText);
+      const hasGivens = /GIVEN VALUES:\s*[-*•]/i.test(extractedText);
+      if (hasFigureMention && !hasGivens) return true;
+      return false;
+    })();
+
+    if (needsRetry) {
+      console.log('Extraction flagged as low-confidence, retrying with stricter prompt...');
+      try {
+        const retryText = await callVision(
+          'Re-read the image extremely carefully. Zoom in on every label, digit, and unit. For each ambiguous character, list both interpretations. Ensure every dimension, force, and label from the figure is captured.'
+        );
+        if (retryText && retryText.length > extractedText.length * 0.7) {
+          extractedText = retryText;
+        }
+      } catch (retryErr) {
+        console.warn('Retry failed, keeping first pass:', retryErr);
+      }
     }
-
-    const data = await response.json();
-    const extractedText = data.choices?.[0]?.message?.content || '';
 
     console.log('Text extraction successful, length:', extractedText.length);
 
