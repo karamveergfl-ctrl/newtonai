@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { LATEX_HYGIENE } from "../_shared/latex-hygiene.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,7 +29,8 @@ INTERACTION STYLE:
 - If unsure, say so honestly
 - Keep responses concise but thorough
 
-Remember: You're here to help students learn and succeed!`;
+Remember: You're here to help students learn and succeed!
+${LATEX_HYGIENE}`;
 
 const CONCEPT_CHECK_EXPLANATION_PROMPT = `You are Newton, a friendly and encouraging AI tutor. A student just answered a concept check question incorrectly. Your job is to:
 1. Explain WHY the correct answer is right

@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { LATEX_HYGIENE } from "../_shared/latex-hygiene.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -223,12 +224,13 @@ serve(async (req) => {
     console.log(`Generating ${count} ${difficulty} quiz questions (types: ${questionTypes.join(",")}) in ${targetLanguage} for ${type}: ${title || 'content'}`);
 
     const systemPrompt = buildSystemPrompt(targetLanguage, difficulty, questionTypes, includeExplanations);
+    const systemPromptWithHygiene = `${systemPrompt}\n${LATEX_HYGIENE}`;
     const userPrompt = buildUserPrompt(content, type, title, count, difficulty, targetLanguage, questionTypes);
 
     const aiBody = {
       model: "google/gemini-2.5-flash",
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: systemPromptWithHygiene },
         { role: "user", content: userPrompt }
       ]
     };

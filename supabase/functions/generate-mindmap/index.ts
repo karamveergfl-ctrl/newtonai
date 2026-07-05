@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { LATEX_HYGIENE } from "../_shared/latex-hygiene.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -168,7 +169,7 @@ Return ONLY the JSON object with all text in ${targetLanguage}.`;
               body: JSON.stringify({
                 model: "google/gemini-2.5-flash",
                 messages: [
-                  { role: "system", content: systemPrompt },
+                  { role: "system", content: `${systemPrompt}\n${LATEX_HYGIENE}` },
                   { role: "user", content: userPrompt }
                 ],
               }),
@@ -311,7 +312,7 @@ Return ONLY the JSON object with all text in ${targetLanguage}.`;
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: `${systemPrompt}\n${LATEX_HYGIENE}` },
           { role: "user", content: userPrompt }
         ],
       }),
