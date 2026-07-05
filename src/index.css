@@ -614,3 +614,26 @@ All colors MUST be HSL.
 .classroom-light .whiteboard-bg {
   background: hsl(0 0% 100%);
 }
+
+/* Homework Help — KaTeX display math block */
+.math-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 12px 16px;
+  margin: 12px 0;
+  background: hsl(var(--muted) / 0.4);
+  border-radius: 8px;
+  border: 1px solid hsl(var(--primary) / 0.15);
+}
+.math-display .katex-display {
+  margin: 0 !important;
+  text-align: left !important;
+}
+.katex-error {
+  color: #fbbf24;
+  font-family: monospace;
+  font-size: 0.75rem;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+}

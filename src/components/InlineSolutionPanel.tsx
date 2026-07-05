@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { X, Loader2, Play, Eye, ChevronRight, Sparkles, BookOpen, Video, RefreshCw, ArrowUp, Copy, Check, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,6 +12,7 @@ import { CreditBadge } from './CreditBadge';
 import { VideoPlayer } from './VideoPlayer';
 import { FEATURE_COSTS } from '@/lib/creditConfig';
 import { useStudyContext } from '@/contexts/StudyContext';
+import { sanitizeLatex } from '@/lib/latexSanitize';
 
 function getFriendlyError(err: any): string {
   const msg = String(err?.message || err || '').toLowerCase();
@@ -144,22 +145,36 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
       }
       setExtractedText(extractData.extractedText);
 
-      // Step 2: Structure the problem
+      // Step 2: Structure the problem (non-fatal — fall back if it fails)
       setLoadingStage('structuring');
-      const { data: structureData, error: structureError } = await supabase.functions.invoke('structure-problem', {
-        body: { extractedText: extractData.extractedText }
-      });
-
-      if (structureError || !structureData?.success) {
-        throw new Error(structureData?.error || 'Failed to structure problem');
+      let structured: any;
+      try {
+        const { data: structureData, error: structureError } = await supabase.functions.invoke('structure-problem', {
+          body: { extractedText: extractData.extractedText }
+        });
+        if (structureError || !structureData?.success || !structureData?.structuredProblem) {
+          throw new Error(structureData?.error || 'Failed to structure problem');
+        }
+        structured = structureData.structuredProblem;
+      } catch (structErr) {
+        console.warn('structure-problem failed, using fallback:', structErr);
+        structured = {
+          subject: 'Physics / Engineering',
+          topic: 'Problem Solving',
+          difficulty: 'Medium',
+          given: 'See extracted text above',
+          find: 'Solve the problem as stated.',
+          problemStatement: extractData.extractedText.slice(0, 300),
+          assumptions: ['Standard assumptions apply'],
+        };
       }
-      setStructuredProblem(structureData.structuredProblem);
+      setStructuredProblem(structured);
 
       // Step 3: Solve the problem
       setLoadingStage('solving');
       const { data: solveData, error: solveError } = await supabase.functions.invoke('solve-problem', {
         body: { 
-          structuredProblem: structureData.structuredProblem,
+          structuredProblem: structured,
           extractedText: extractData.extractedText
         }
       });
@@ -172,7 +187,7 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
 
       // Step 4: Search for related videos
       setLoadingStage('videos');
-      const searchQuery = structureData.structuredProblem?.topic || extractData.extractedText.slice(0, 100);
+      const searchQuery = structured?.topic || extractData.extractedText.slice(0, 100);
       const { data: videoData } = await supabase.functions.invoke('search-videos', {
         body: { query: searchQuery, maxResults: 6 }
       });
@@ -192,6 +207,22 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
       setIsLoading(false);
     }
   };
+
+  // Defensive normalization for step rendering (Bug 6/8)
+  const safeSteps = useMemo(() => {
+    if (!Array.isArray(solution)) return [] as SolutionStep[];
+    return solution.map((step, index) => ({
+      stepNumber: Number(step?.stepNumber ?? index + 1),
+      title: String(step?.title ?? `Step ${index + 1}`),
+      content: sanitizeLatex(String(step?.content ?? '')),
+      explanation: sanitizeLatex(String(step?.explanation ?? '')),
+    }));
+  }, [solution]);
+
+  const safeFinalAnswer = useMemo(() => {
+    if (!finalAnswer) return '';
+    return sanitizeLatex(String(finalAnswer));
+  }, [finalAnswer]);
 
   const [copied, setCopied] = useState(false);
   const handleCopySolution = async () => {
@@ -391,7 +422,7 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                           Step-by-Step Solution:
                         </h3>
                         
-                        {solution.map((step, index) => (
+                        {safeSteps.map((step, index) => (
                           <motion.div
                             key={index}
                             initial={{ opacity: 0, x: -20 }}
@@ -400,7 +431,7 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                             className="relative pl-7 sm:pl-8"
                           >
                             {/* Step connector line */}
-                            {index < solution.length - 1 && (
+                            {index < safeSteps.length - 1 && (
                               <div className="absolute left-[11px] sm:left-3 top-7 sm:top-8 bottom-0 w-0.5 bg-border" />
                             )}
                             
@@ -414,11 +445,13 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                               <div className="text-sm text-muted-foreground break-words overflow-x-auto">
                                 <MixedContent content={step.content} />
                               </div>
-                              {step.explanation && (
-                                <div className="mt-3 p-2.5 sm:p-3 rounded bg-muted/50 text-sm overflow-hidden">
-                                  <span className="text-xs font-medium text-primary uppercase block mb-1">Explanation: </span>
-                                  <div className="break-words overflow-x-auto">
-                                    <MixedContent content={step.explanation} />
+                              {step.explanation && step.explanation.trim() !== '' && (
+                                <div className="mt-3 pt-3 border-t border-border/50">
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-amber-400 text-xs mt-0.5">💡</span>
+                                    <div className="text-muted-foreground text-xs leading-relaxed italic break-words overflow-x-auto">
+                                      <MixedContent content={step.explanation} />
+                                    </div>
                                   </div>
                                 </div>
                               )}
@@ -428,7 +461,7 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                       </div>
 
                       {/* Final Answer */}
-                      {finalAnswer && (
+                      {safeFinalAnswer && (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -439,13 +472,13 @@ export function InlineSolutionPanel({ screenshot, onClose }: InlineSolutionPanel
                             Final Answer
                           </h3>
                           <div className="text-base sm:text-lg font-medium break-words overflow-x-auto">
-                            <MixedContent content={finalAnswer} />
+                            <MixedContent content={safeFinalAnswer} />
                           </div>
                         </motion.div>
                       )}
 
                       {/* Action buttons */}
-                      {solution.length > 0 && (
+                      {safeSteps.length > 0 && (
                         <div className="flex flex-wrap gap-2 pt-2">
                           <Button variant="outline" size="sm" onClick={handleCopySolution} className="gap-2">
                             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}

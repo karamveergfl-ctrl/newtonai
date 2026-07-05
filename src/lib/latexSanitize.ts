@@ -1,44 +1,36 @@
-// Cleans common LaTeX output mistakes from AI models before Markdown/KaTeX rendering.
-// Safe to run on any string; no-ops when nothing matches.
+// Normalizes AI-produced LaTeX so KaTeX can render it. Non-destructive: preserves
+// valid commands and math line breaks. Intentionally minimal after over-aggressive
+// prior versions corrupted correct expressions.
 
-const UNIT_WORDS = [
-  "kN", "MN", "GN", "mN",
-  "kg", "mg", "g", "t",
-  "km", "cm", "mm", "nm", "µm",
-  "kHz", "MHz", "GHz", "Hz",
-  "kJ", "MJ", "mJ", "J",
-  "kW", "MW", "mW", "W",
-  "kPa", "MPa", "GPa", "Pa",
-  "mol", "rad", "deg",
-  "mL", "L",
-  "kV", "mV", "V",
-  "kA", "mA", "A",
-  "kΩ", "MΩ", "Ω",
-];
+export function sanitizeLatex(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  let result = text;
 
-function fixMathSegment(seg: string): string {
-  let s = seg;
-  // \cdot / \times / \pm / \div / \cdots directly followed by a letter → add spacing
-  s = s.replace(/\\(cdot|cdots|times|div|pm|mp|approx|sim|leq|geq|neq)([a-zA-Z])/g, "\\$1\\,$2");
-  // number then unit word directly juxtaposed → wrap unit in \text{}
-  const unitRe = new RegExp(`([0-9)\\}])\\s*(${UNIT_WORDS.map(u => u.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")).join("|")})\\b`, "g");
-  s = s.replace(unitRe, "$1\\,\\text{$2}");
-  // bare unit right after \cdot / \times followed by space then unit word
-  s = s.replace(/\\(cdot|times)\s+(k?N|m|s|kg|Hz|J|W|Pa|mol|cm|mm|km|rad)\b/g, "\\$1\\,\\text{$2}");
-  return s;
+  // 1. Normalize display math \[ \] -> $$ $$
+  result = result.replace(/\\\[/g, '$$').replace(/\\\]/g, '$$');
+
+  // 2. Normalize inline math \( \) -> $ $
+  result = result.replace(/\\\(/g, '$').replace(/\\\)/g, '$');
+
+  // 3. Repair double-escaped KaTeX commands (\\frac -> \frac). Do NOT touch
+  //    bare \\ which is the LaTeX line-break inside math.
+  result = result.replace(/\\\\(frac|sqrt|sum|int|oint|prod|lim|sin|cos|tan|log|ln|exp|text|mathrm|mathbf|vec|hat|bar|dot|ddot|tilde|left|right|cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|infty|partial|nabla|Delta|Sigma|Pi|Omega|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|nu|pi|rho|sigma|tau|phi|psi|omega|boxed|underbrace|overbrace|overrightarrow|overleftarrow|rightarrow|leftarrow|Rightarrow|Leftarrow|leftrightarrow|uparrow|downarrow|ldots|cdots|vdots|ddots)/g, '\\$1');
+
+  // 4. Fix `\text {kN}` / `\mathrm {N}` (stray space before brace)
+  result = result.replace(/\\text\s+\{/g, '\\text{');
+  result = result.replace(/\\mathrm\s+\{/g, '\\mathrm{');
+
+  // 5. Strip zero-width / null characters that break parsing
+  result = result.replace(/\u0000/g, '').replace(/\u200B/g, '').replace(/\uFEFF/g, '');
+
+  return result;
 }
 
-export function sanitizeLatex(input: string): string {
-  if (!input || typeof input !== "string") return input;
-  let out = input;
-
-  // Fix display math $$...$$
-  out = out.replace(/\$\$([\s\S]+?)\$\$/g, (_m, inner) => `$$${fixMathSegment(inner)}$$`);
-  // Fix inline math $...$
-  out = out.replace(/(^|[^\$])\$([^\$\n]+?)\$/g, (_m, pre, inner) => `${pre}$${fixMathSegment(inner)}$`);
-
-  // Repair \cdotm / \timesm-style outside math (model sometimes forgets delimiters)
-  out = out.replace(/\\(cdot|times|div|pm)([a-zA-Z])/g, "\\$1\\,$2");
-
-  return out;
+export function sanitizeStep(step: { title?: string; content?: string; explanation?: string }) {
+  return {
+    ...step,
+    title: step.title ? sanitizeLatex(step.title) : '',
+    content: step.content ? sanitizeLatex(step.content) : '',
+    explanation: step.explanation ? sanitizeLatex(step.explanation) : '',
+  };
 }

@@ -17,3 +17,16 @@ STRICT OUTPUT HYGIENE — non-negotiable, apply before returning:
    exact same value (not a re-rounded variant) in later steps.
 7. Do not invent facts. If unsure, say so explicitly.
 `;
+
+// Deno-compatible mirror of src/lib/latexSanitize.ts. Keep both files identical.
+export function sanitizeLatex(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  let result = text;
+  result = result.replace(/\\\[/g, '$$').replace(/\\\]/g, '$$');
+  result = result.replace(/\\\(/g, '$').replace(/\\\)/g, '$');
+  result = result.replace(/\\\\(frac|sqrt|sum|int|oint|prod|lim|sin|cos|tan|log|ln|exp|text|mathrm|mathbf|vec|hat|bar|dot|ddot|tilde|left|right|cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|infty|partial|nabla|Delta|Sigma|Pi|Omega|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|nu|pi|rho|sigma|tau|phi|psi|omega|boxed|underbrace|overbrace|overrightarrow|overleftarrow|rightarrow|leftarrow|Rightarrow|Leftarrow|leftrightarrow|uparrow|downarrow|ldots|cdots|vdots|ddots)/g, '\\$1');
+  result = result.replace(/\\text\s+\{/g, '\\text{');
+  result = result.replace(/\\mathrm\s+\{/g, '\\mathrm{');
+  result = result.replace(/\u0000/g, '').replace(/\u200B/g, '').replace(/\uFEFF/g, '');
+  return result;
+}

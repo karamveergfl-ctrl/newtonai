@@ -66,37 +66,36 @@ serve(async (req) => {
 
     console.log('Extracting text from image using Gemini 2.5 Flash Vision...');
 
-    const VISION_PROMPT = `You are an expert vision system reading a homework or exam problem image. It may contain engineering/physics diagrams (frames, trusses, beams), figures, force vectors, dimensions, geometry, labels, or plain text.
+    const VISION_PROMPT = `You are an expert at reading engineering and physics diagrams.
+Carefully examine this image and extract ALL information you can see.
 
-Return a single response with these sections in order, using EXACT headings:
+Return your response in plain text using this EXACT format — do not use JSON, do not use markdown headers:
 
 PROBLEM STATEMENT:
-<Transcribe the printed problem text verbatim. Preserve wording, units, and punctuation. If part is unreadable, mark it [unclear].>
+Write the complete problem statement as given in the image, word for word.
 
 FIGURE ELEMENTS:
-<If a diagram/figure is present, list every visible element as bullet points. Include:
- - Labeled points (A, B, C, ...)
- - Force arrows with magnitude, direction, and point of application (e.g. "20 kN downward at B")
- - Support types (fixed, pin, roller, cable) and locations
- - All dimensions with units (e.g. "AB = 1.8 m horizontal", "wall height = 2.25 m")
- - Geometry (angles, cables, members between points)
-If no figure, write: None.>
+- List every labeled point (A, B, C, D, E, F, etc.) and describe their position and role
+- List every force arrow: direction, magnitude, and where it is applied
+- List every support: type (fixed, pin, roller, cable) and location
+- List every structural member and how they connect
+- List every dimension line with its numerical value and unit
 
 GIVEN VALUES:
-<Bullet list of every numeric value with symbol and unit, e.g. "T = 150 kN", "L = 7.2 m". Include values from both text and figure.>
+- List every numerical value with its unit and what it represents
+- Example: T = 150 kN (tension in cable DF)
+- Example: Spacing between loads = 1.8 m
 
-FIND:
-<What the problem asks to determine, verbatim.>
+GEOMETRY:
+- Describe the coordinate layout (which direction is horizontal, vertical)
+- Describe how members are connected
+- Describe the path of any cables, ropes, or strings
 
-UNCLEAR ITEMS:
-<Bullet list of anything you cannot read with high confidence. If none, write: None.>
+WHAT TO FIND:
+State clearly what the problem is asking to calculate.
 
-CONFIDENCE: high | medium | low
-
-Rules:
-- Read digits and units character by character. Do NOT invent values.
-- Preserve LaTeX for equations ($x^2$, $\\frac{a}{b}$).
-- Do NOT solve the problem. Extraction only.`;
+Be extremely precise with numbers. Do not guess any value — only report what is visible in the image.
+If a value is unclear, write "unclear" rather than guessing.`;
 
     const callVision = async (extraInstruction = '') => {
       const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
