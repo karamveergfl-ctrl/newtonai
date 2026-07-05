@@ -117,19 +117,32 @@ serve(async (req) => {
       });
     }
 
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      serviceRoleKey
     );
 
-    // Accept service role key or validate user token
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    // Determine caller: either service-role (trusted internal invocation)
+    // or an end user with a valid JWT. Any other token is rejected.
+    const rawToken = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const isServiceRole = serviceRoleKey.length > 0 && rawToken === serviceRoleKey;
 
-    const { data: { user } } = await supabase.auth.getUser();
+    let user: { id: string } | null = null;
+    if (!isServiceRole) {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      user = { id: userData.user.id };
+    }
 
     const { session_id, student_id } = await req.json();
     if (!session_id || !student_id) {
@@ -140,7 +153,7 @@ serve(async (req) => {
 
     // If called by a user (not service role), validate they are the student or the teacher
     if (user) {
-      const { data: session } = await supabase
+      const { data: session } = await supabaseAdmin
         .from("live_sessions")
         .select("teacher_id")
         .eq("id", session_id)
