@@ -121,6 +121,98 @@ serve(async (req) => {
       ? `\nIMPORTANT: Respond in ${language} language.` 
       : "";
 
+    // -----------------------------------------------------------------
+    // Pre-flight OCR/vision extraction (images only) with auto-retry.
+    // We ask Gemini Pro to transcribe the image into strict JSON, then
+    // validate. If confidence is low OR any numeric/unclear issue is
+    // found, we retry ONCE with a stricter prompt. The confirmed
+    // extraction is then injected into the solve prompt as authoritative
+    // ground truth, which dramatically reduces mis-reads.
+    // -----------------------------------------------------------------
+    let verifiedExtraction: string | null = null;
+    if (hasImage) {
+      const runExtraction = async (strict: boolean) => {
+        const extractionPrompt = `You are an OCR + diagram-reading engine. Look at the image and return ONLY valid JSON (no markdown fences) with this shape:
+{
+  "problem_text": "the full problem statement transcribed VERBATIM",
+  "given_values": [ { "symbol": "F", "value": "10", "unit": "N" } ],
+  "figure_description": "geometry/forces/labels if a figure exists, else empty string",
+  "unclear_items": [ "list any character/number you could not read confidently" ],
+  "confidence": "high" | "medium" | "low"
+}
+${strict ? `
+STRICTER PASS — the previous extraction was flagged as unreliable.
+- Zoom mentally into every numeric value and re-read digit by digit.
+- For each number, cross-check it against the surrounding units and context.
+- If two interpretations are possible, list BOTH in unclear_items with the format "X or Y".
+- Do NOT skip any labeled quantity from a diagram.
+- confidence must be "high" only if EVERY number and symbol is unambiguous.
+` : ""}`;
+
+        const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-pro",
+            response_format: { type: "json_object" },
+            messages: [{
+              role: "user",
+              content: [
+                { type: "text", text: extractionPrompt },
+                { type: "image_url", image_url: { url: imageData } },
+              ],
+            }],
+          }),
+        });
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        const raw = data.choices?.[0]?.message?.content || "{}";
+        try { return JSON.parse(raw.replace(/```json?\n?/g, "").replace(/```/g, "").trim()); }
+        catch { return null; }
+      };
+
+      const needsRetry = (ex: any): boolean => {
+        if (!ex || typeof ex !== "object") return true;
+        if (ex.confidence === "low") return true;
+        if (Array.isArray(ex.unclear_items) && ex.unclear_items.length > 0) return true;
+        const pt = String(ex.problem_text || "").trim();
+        if (pt.length < 10) return true;
+        // If there's a figure but no givens extracted, likely missed values
+        if (ex.figure_description && Array.isArray(ex.given_values) && ex.given_values.length === 0) return true;
+        // Detect unbalanced brackets in the transcription
+        const opens = (pt.match(/[([{]/g) || []).length;
+        const closes = (pt.match(/[)\]}]/g) || []).length;
+        if (Math.abs(opens - closes) > 1) return true;
+        return false;
+      };
+
+      let extraction = await runExtraction(false);
+      let retried = false;
+      if (needsRetry(extraction)) {
+        console.log("[analyze-text] extraction flagged, retrying with stricter prompt", {
+          confidence: extraction?.confidence,
+          unclear: extraction?.unclear_items?.length,
+        });
+        const retry = await runExtraction(true);
+        if (retry) extraction = retry;
+        retried = true;
+      }
+
+      if (extraction && extraction.problem_text) {
+        const givens = Array.isArray(extraction.given_values) && extraction.given_values.length
+          ? extraction.given_values.map((g: any) => `- ${g.symbol || "?"} = ${g.value ?? "?"} ${g.unit || ""}`.trim()).join("\n")
+          : "(none extracted)";
+        const unclear = Array.isArray(extraction.unclear_items) && extraction.unclear_items.length
+          ? `\nAmbiguous items (state assumption made for each): ${extraction.unclear_items.join("; ")}`
+          : "";
+        verifiedExtraction = `\n\nVERIFIED EXTRACTION FROM IMAGE${retried ? " (post-retry)" : ""} — treat as authoritative ground truth:\nProblem: ${extraction.problem_text}\nGiven values:\n${givens}\nFigure: ${extraction.figure_description || "(no figure)"}${unclear}\n`;
+        console.log("[analyze-text] verified extraction ready, confidence:", extraction.confidence);
+      }
+    }
+
     const visionPreamble = hasImage ? `
 
 VISION FIRST — the problem is provided as an image. BEFORE solving:
@@ -137,7 +229,7 @@ C. Only after A and B, proceed with the step-by-step solution below.
 D. Extreme accuracy is required — mis-reading a single number invalidates the whole answer.
 ` : "";
 
-    const systemPrompt = `Solve this problem step by step.${langInstruction}${visionPreamble}
+    const systemPrompt = `Solve this problem step by step.${langInstruction}${visionPreamble}${verifiedExtraction || ""}
 
 INSTRUCTIONS:
 1. First line MUST be: "TOPIC: [specific topic, e.g., "BODMAS order of operations", "quadratic equations", "projectile motion"]"
