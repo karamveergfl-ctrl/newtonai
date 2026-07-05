@@ -2,6 +2,82 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { LATEX_HYGIENE } from "../_shared/latex-hygiene.ts";
 
+interface Step {
+  stepNumber: number;
+  title: string;
+  content: string;
+  explanation: string;
+}
+
+const SOLVE_PROMPT = `You are an expert tutor solving a student's homework problem step by step.
+You will be given a structured problem description. Solve it completely.
+
+YOU MUST RETURN VALID JSON ONLY. No markdown outside the JSON. No code fences. No preamble. No explanation outside the JSON structure.
+
+Return this exact JSON structure:
+{
+  "steps": [
+    {
+      "stepNumber": 1,
+      "title": "Step title describing what this step does",
+      "content": "Full step content with all math in LaTeX. Use $...$ for inline math and $$...$$ for display math equations. Show ALL working.",
+      "explanation": "Why this step is needed and what concept it uses."
+    }
+  ],
+  "finalAnswer": "The complete final answer with all results in LaTeX. Example: $$E_x = 90\\\\,\\\\text{kN} \\\\leftarrow$$ $$E_y = 200\\\\,\\\\text{kN} \\\\uparrow$$ $$M_E = 180\\\\,\\\\text{kN}\\\\cdot\\\\text{m (clockwise)}$$"
+}
+
+REQUIREMENTS FOR EACH STEP:
+1. Number steps sequentially starting from 1
+2. Each step title must be a clear action: "Calculate Cable Angle", "Apply Moment Equilibrium", etc.
+3. Write ALL mathematical expressions in LaTeX enclosed in $...$ or $$...$$
+4. For display equations (standalone on their own line), use $$...$$
+5. For inline equations within text sentences, use $...$
+6. Show numerical substitution explicitly before giving the result
+7. State the sign convention clearly in the step where you set up equilibrium
+8. For the final answer: box each reaction component separately using $$\\\\boxed{...}$$
+9. Include units in EVERY numerical result using \\\\text{kN} or \\\\text{kN}\\\\cdot\\\\text{m}
+10. DO NOT use \\\\[ \\\\] or \\\\( \\\\) — use ONLY $$ and $ delimiters
+
+CRITICAL FOR STATICS/MECHANICS PROBLEMS:
+- Step 1: Always identify ALL external forces and their directions
+- Step 2: Determine geometry (cable angles, distances) before applying equilibrium
+- Step 3: Set up coordinate system and sign convention explicitly
+- Step 4: Apply ΣFx = 0
+- Step 5: Apply ΣFy = 0
+- Step 6: Apply ΣMpoint = 0 with correct moment arms for EVERY force
+- Step 7: State final answers with directions (leftward/rightward, upward/downward, CW/CCW)
+
+Problem to solve:`;
+
+function parseSolveResponse(rawText: string): { steps: Step[]; finalAnswer: string } {
+  let cleaned = rawText.trim();
+  cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+  }
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (!parsed.steps || !Array.isArray(parsed.steps)) throw new Error('Missing steps array');
+    if (!parsed.finalAnswer || typeof parsed.finalAnswer !== 'string') throw new Error('Missing finalAnswer');
+    const validatedSteps: Step[] = parsed.steps.map((step: Partial<Step>, index: number) => ({
+      stepNumber: Number(step?.stepNumber ?? index + 1),
+      title: String(step?.title ?? `Step ${index + 1}`),
+      content: String(step?.content ?? ''),
+      explanation: String(step?.explanation ?? ''),
+    }));
+    return { steps: validatedSteps, finalAnswer: parsed.finalAnswer };
+  } catch (parseError) {
+    console.error('JSON parse failed, attempting recovery:', parseError);
+    return {
+      steps: [{ stepNumber: 1, title: 'Solution', content: cleaned, explanation: 'Full solution provided above.' }],
+      finalAnswer: 'See solution above.',
+    };
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -87,37 +163,10 @@ ${extractedText || 'N/A'}`
         model: 'google/gemini-2.5-flash',
         messages: [{
           role: 'system',
-          content: `You are an expert engineering/physics/math tutor. Solve the given problem using ONLY the numbers, labels, and geometry stated in the provided context — never invent values.
-
-If the problem involves a structural diagram (frame, truss, beam, statics), you MUST:
-- Restate what you understand from the figure (points, forces, dimensions) as Step 1.
-- Draw the free-body diagram in words (list all reactions and applied forces with directions).
-- Write full equilibrium equations ($\\sum F_x = 0$, $\\sum F_y = 0$, $\\sum M = 0$) before substituting numbers.
-- Substitute numbers explicitly and box each reaction component.
-
-FORMATTING RULES:
-1. Use LaTeX notation for ALL mathematical expressions:
-   - Inline math: $expression$
-   - Display math: $$expression$$
-   - Fractions: $\\frac{numerator}{denominator}$
-   - Powers: $x^{2}$
-   - Square roots: $\\sqrt{x}$
-   - Greek letters: $\\alpha$, $\\beta$, $\\theta$
-
-2. Structure your response as JSON with:
-   - steps: Array of solution steps, each with:
-     - stepNumber: Number
-     - title: Brief step title
-     - content: Detailed explanation with LaTeX math
-     - explanation: Optional deeper explanation
-   - finalAnswer: The boxed final answer using LaTeX
-
-3. Be thorough but concise. Show all work.
-4. Include units where applicable.
-5. Explain the reasoning behind each step.`
+          content: SOLVE_PROMPT + '\n\n' + LATEX_HYGIENE
         }, {
           role: 'user',
-          content: `Solve this problem step by step:\n\n${problemContext}\n\n${LATEX_HYGIENE}`
+          content: problemContext
         }],
         max_tokens: 4096,
         response_format: { type: "json_object" }
@@ -132,32 +181,7 @@ FORMATTING RULES:
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || '{}';
-    
-    let solution;
-    try {
-      solution = JSON.parse(content);
-    } catch {
-      // If JSON parsing fails, create a single-step solution
-      solution = {
-        steps: [{
-          stepNumber: 1,
-          title: 'Solution',
-          content: content,
-          explanation: ''
-        }],
-        finalAnswer: 'See solution above'
-      };
-    }
-
-    // Ensure steps array exists
-    if (!solution.steps || !Array.isArray(solution.steps)) {
-      solution.steps = [{
-        stepNumber: 1,
-        title: 'Solution',
-        content: solution.solution || content,
-        explanation: ''
-      }];
-    }
+    const solution = parseSolveResponse(content);
 
     console.log('Problem solved successfully, steps:', solution.steps.length);
 
