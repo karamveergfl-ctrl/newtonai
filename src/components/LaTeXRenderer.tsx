@@ -23,13 +23,18 @@ export const LaTeXRenderer = memo(function LaTeXRenderer({
           .replace(/\\\]/g, '')
           .replace(/\\\(/g, '')
           .replace(/\\\)/g, '');
-        
-        katex.render(processedLatex, containerRef.current, {
-          throwOnError: false,
-          displayMode,
-          trust: true,
-          strict: false,
-        });
+
+        try {
+          katex.render(processedLatex, containerRef.current, {
+            throwOnError: false,
+            displayMode,
+            trust: false,
+            strict: false,
+          });
+        } catch (err) {
+          console.warn('KaTeX render failed for:', processedLatex, err);
+          containerRef.current.innerHTML = `<span class="katex-error font-mono text-xs">${processedLatex}</span>`;
+        }
       } catch (error) {
         console.error('LaTeX rendering error:', error);
         if (containerRef.current) {
