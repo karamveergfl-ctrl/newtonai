@@ -84,7 +84,7 @@ ${extractedText || 'N/A'}`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
+        model: 'google/gemini-2.5-flash',
         messages: [{
           role: 'system',
           content: `You are an expert engineering/physics/math tutor. Solve the given problem using ONLY the numbers, labels, and geometry stated in the provided context — never invent values.

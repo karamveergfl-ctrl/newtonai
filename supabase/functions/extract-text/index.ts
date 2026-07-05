@@ -64,7 +64,7 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    console.log('Extracting text from image using Gemini 2.5 Pro Vision...');
+    console.log('Extracting text from image using Gemini 2.5 Flash Vision...');
 
     const VISION_PROMPT = `You are an expert vision system reading a homework or exam problem image. It may contain engineering/physics diagrams (frames, trusses, beams), figures, force vectors, dimensions, geometry, labels, or plain text.
 
@@ -106,7 +106,7 @@ Rules:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-pro',
+          model: 'google/gemini-2.5-flash',
           messages: [{
             role: 'user',
             content: [
@@ -126,33 +126,7 @@ Rules:
       return (json.choices?.[0]?.message?.content || '') as string;
     };
 
-    let extractedText = await callVision();
-
-    // Confidence / completeness check → retry once with stricter instruction
-    const needsRetry = (() => {
-      if (!extractedText || extractedText.trim().length < 20) return true;
-      if (/CONFIDENCE:\s*low/i.test(extractedText)) return true;
-      const unclearMatch = extractedText.match(/UNCLEAR ITEMS:\s*([\s\S]*?)(?:\n[A-Z ]+:|$)/);
-      if (unclearMatch && !/^\s*none\.?\s*$/i.test(unclearMatch[1].trim())) return true;
-      const hasFigureMention = /FIGURE ELEMENTS:\s*(?!\s*None)/i.test(extractedText);
-      const hasGivens = /GIVEN VALUES:\s*[-*•]/i.test(extractedText);
-      if (hasFigureMention && !hasGivens) return true;
-      return false;
-    })();
-
-    if (needsRetry) {
-      console.log('Extraction flagged as low-confidence, retrying with stricter prompt...');
-      try {
-        const retryText = await callVision(
-          'Re-read the image extremely carefully. Zoom in on every label, digit, and unit. For each ambiguous character, list both interpretations. Ensure every dimension, force, and label from the figure is captured.'
-        );
-        if (retryText && retryText.length > extractedText.length * 0.7) {
-          extractedText = retryText;
-        }
-      } catch (retryErr) {
-        console.warn('Retry failed, keeping first pass:', retryErr);
-      }
-    }
+    const extractedText = await callVision();
 
     console.log('Text extraction successful, length:', extractedText.length);
 
