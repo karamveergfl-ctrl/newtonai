@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -18,7 +19,63 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Require a valid Supabase JWT so this endpoint cannot be used as an
+    // open email relay for spam / phishing.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const authClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await authClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    const authedUser = userData.user;
+
     const { email, name }: WelcomeEmailRequest = await req.json();
+
+    // The welcome email may only be sent to the authenticated user's own address.
+    if (!email || typeof email !== "string" ||
+        !authedUser.email ||
+        email.trim().toLowerCase() !== authedUser.email.toLowerCase()) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: recipient must match authenticated user" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Per-user rate limit to prevent abuse / quota exhaustion.
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (serviceKey) {
+      try {
+        const adminClient = createClient(supabaseUrl, serviceKey);
+        const { data: allowed } = await adminClient.rpc("check_rate_limit", {
+          p_user_id: authedUser.id,
+          p_action: "send_welcome_email",
+          p_max_requests: 3,
+          p_window_minutes: 60,
+        });
+        if (allowed === false) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded. Try again later." }),
+            { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      } catch (rlErr) {
+        console.warn("Rate limit check failed (allowing):", rlErr);
+      }
+    }
 
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY not configured");
