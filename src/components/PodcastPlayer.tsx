@@ -386,12 +386,54 @@ export function PodcastPlayer({
               </p>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
-              {usingFallback && (
-                <Badge variant="secondary" className="gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                  <Volume1 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                  <span className="hidden sm:inline">Browser Voice</span>
-                </Badge>
-              )}
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant={ttsStats.fallback === 0 ? "default" : ttsStats.elevenlabs === 0 ? "secondary" : "outline"}
+                      className="gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 cursor-help"
+                    >
+                      {ttsStats.fallback === 0 ? (
+                        <>
+                          <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          <span className="hidden sm:inline">ElevenLabs · {ttsStats.elevenlabs}/{ttsStats.total}</span>
+                          <span className="sm:hidden">EL {ttsStats.elevenlabs}/{ttsStats.total}</span>
+                        </>
+                      ) : ttsStats.elevenlabs === 0 ? (
+                        <>
+                          <Volume1 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          <span className="hidden sm:inline">Browser Voice (fallback)</span>
+                          <span className="sm:hidden">Browser</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          <span className="hidden sm:inline">
+                            {ttsStats.elevenlabs}/{ttsStats.total} ElevenLabs · {ttsStats.fallback} fallback
+                          </span>
+                          <span className="sm:hidden">EL {ttsStats.elevenlabs}/{ttsStats.total}</span>
+                        </>
+                      )}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-xs">
+                    <div className="space-y-1">
+                      <p className="font-semibold">Voice generation status</p>
+                      <p>
+                        <span className="text-emerald-500">●</span> ElevenLabs: {ttsStats.elevenlabs} segment(s)
+                      </p>
+                      <p>
+                        <span className="text-amber-500">●</span> Browser voice fallback: {ttsStats.fallback} segment(s)
+                      </p>
+                      {firstFallbackReason && (
+                        <p className="text-muted-foreground pt-1 border-t border-border/50">
+                          Reason: {firstFallbackReason}
+                        </p>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {status === "buffering" && (
                 <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2">
                   <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin" />
