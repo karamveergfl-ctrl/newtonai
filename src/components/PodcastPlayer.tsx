@@ -25,7 +25,15 @@ import {
   RotateCcw,
   Music,
   AlertTriangle,
+  CheckCircle2,
+  Sparkles,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { usePodcastAudioQueue, AudioSegment } from "@/hooks/usePodcastAudioQueue";
@@ -51,6 +59,7 @@ export interface PodcastSegment {
   emotion?: string;
   audio?: string;
   fallbackAudio?: boolean;
+  audioError?: string | null;
 }
 
 interface PodcastPlayerProps {
