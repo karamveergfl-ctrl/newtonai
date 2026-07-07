@@ -7,10 +7,11 @@ export function sanitizeLatex(text: string): string {
   let result = text;
 
   // 1. Normalize display math \[ \] -> $$ $$
-  result = result.replace(/\\\[/g, '$$').replace(/\\\]/g, '$$');
+  //    NOTE: In String.replace, "$$" means a literal "$", so we need "$$$$" to emit "$$".
+  result = result.replace(/\\\[/g, '$$$$').replace(/\\\]/g, '$$$$');
 
   // 2. Normalize inline math \( \) -> $ $
-  result = result.replace(/\\\(/g, '$').replace(/\\\)/g, '$');
+  result = result.replace(/\\\(/g, '$$').replace(/\\\)/g, '$$');
 
   // 3. Repair double-escaped KaTeX commands (\\frac -> \frac). Do NOT touch
   //    bare \\ which is the LaTeX line-break inside math.
