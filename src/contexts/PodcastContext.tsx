@@ -8,6 +8,7 @@ export interface PodcastSegment {
   emotion?: string;
   audio?: string;
   fallbackAudio?: boolean;
+  audioError?: string | null;
 }
 
 interface PodcastData {

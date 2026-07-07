@@ -25,7 +25,15 @@ import {
   RotateCcw,
   Music,
   AlertTriangle,
+  CheckCircle2,
+  Sparkles,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { usePodcastAudioQueue, AudioSegment } from "@/hooks/usePodcastAudioQueue";
@@ -51,6 +59,7 @@ export interface PodcastSegment {
   emotion?: string;
   audio?: string;
   fallbackAudio?: boolean;
+  audioError?: string | null;
 }
 
 interface PodcastPlayerProps {
@@ -332,6 +341,14 @@ export function PodcastPlayer({
   const speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
   const hasElevenLabsAudio = segments.some(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100);
 
+  // TTS status stats — how many segments got ElevenLabs vs fell back to browser voice
+  const ttsStats = {
+    total: segments.length,
+    elevenlabs: segments.filter(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100).length,
+    fallback: segments.filter(s => !(s.audio && typeof s.audio === 'string' && s.audio.length > 100)).length,
+  };
+  const firstFallbackReason = segments.find(s => !s.audio)?.audioError || null;
+
   // Stop playback entirely and reset to beginning
   const handleStop = useCallback(() => {
     pause();
@@ -369,12 +386,54 @@ export function PodcastPlayer({
               </p>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
-              {usingFallback && (
-                <Badge variant="secondary" className="gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                  <Volume1 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                  <span className="hidden sm:inline">Browser Voice</span>
-                </Badge>
-              )}
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant={ttsStats.fallback === 0 ? "default" : ttsStats.elevenlabs === 0 ? "secondary" : "outline"}
+                      className="gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 cursor-help"
+                    >
+                      {ttsStats.fallback === 0 ? (
+                        <>
+                          <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          <span className="hidden sm:inline">ElevenLabs · {ttsStats.elevenlabs}/{ttsStats.total}</span>
+                          <span className="sm:hidden">EL {ttsStats.elevenlabs}/{ttsStats.total}</span>
+                        </>
+                      ) : ttsStats.elevenlabs === 0 ? (
+                        <>
+                          <Volume1 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          <span className="hidden sm:inline">Browser Voice (fallback)</span>
+                          <span className="sm:hidden">Browser</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          <span className="hidden sm:inline">
+                            {ttsStats.elevenlabs}/{ttsStats.total} ElevenLabs · {ttsStats.fallback} fallback
+                          </span>
+                          <span className="sm:hidden">EL {ttsStats.elevenlabs}/{ttsStats.total}</span>
+                        </>
+                      )}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-xs">
+                    <div className="space-y-1">
+                      <p className="font-semibold">Voice generation status</p>
+                      <p>
+                        <span className="text-emerald-500">●</span> ElevenLabs: {ttsStats.elevenlabs} segment(s)
+                      </p>
+                      <p>
+                        <span className="text-amber-500">●</span> Browser voice fallback: {ttsStats.fallback} segment(s)
+                      </p>
+                      {firstFallbackReason && (
+                        <p className="text-muted-foreground pt-1 border-t border-border/50">
+                          Reason: {firstFallbackReason}
+                        </p>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {status === "buffering" && (
                 <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2">
                   <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin" />
@@ -637,32 +696,80 @@ export function PodcastPlayer({
         {/* Transcript Preview */}
         <div ref={transcriptRef} className="mt-4 sm:mt-6 max-h-32 sm:max-h-48 overflow-y-auto space-y-1.5 sm:space-y-2">
           <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">Transcript</h3>
-          {segments.map((seg, idx) => (
-            <motion.div
-              key={idx}
-              data-segment={idx}
-              className={cn(
-                "p-1.5 sm:p-2 rounded text-xs sm:text-sm cursor-pointer transition-colors",
-                idx === currentIndex 
-                  ? "bg-primary/10 border-l-2 border-primary" 
-                  : "hover:bg-muted/50"
-              )}
-              onClick={() => seekToSegment(idx)}
-              initial={{ opacity: 0.5 }}
-              animate={{ 
-                opacity: idx === currentIndex ? 1 : 0.7,
-                scale: idx === currentIndex ? 1.01 : 1,
-              }}
-            >
-              <span className={cn(
-                "font-medium mr-1.5 sm:mr-2",
-                seg.speaker === "host1" ? "text-primary" : "text-secondary"
-              )}>
-                {seg.name}:
-              </span>
-              <span className="text-foreground/80">{seg.text}</span>
-            </motion.div>
-          ))}
+          <TooltipProvider delayDuration={150}>
+            {segments.map((seg, idx) => {
+              const hasEleven = !!(seg.audio && typeof seg.audio === 'string' && seg.audio.length > 100);
+              return (
+                <motion.div
+                  key={idx}
+                  data-segment={idx}
+                  className={cn(
+                    "p-1.5 sm:p-2 rounded text-xs sm:text-sm cursor-pointer transition-colors",
+                    idx === currentIndex
+                      ? "bg-primary/10 border-l-2 border-primary"
+                      : "hover:bg-muted/50"
+                  )}
+                  onClick={() => seekToSegment(idx)}
+                  initial={{ opacity: 0.5 }}
+                  animate={{
+                    opacity: idx === currentIndex ? 1 : 0.7,
+                    scale: idx === currentIndex ? 1.01 : 1,
+                  }}
+                >
+                  <div className="flex items-start gap-1.5">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-0.5 shrink-0 mt-0.5 rounded px-1 py-0.5 text-[9px] sm:text-[10px] font-medium",
+                            hasEleven
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          )}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {hasEleven ? (
+                            <>
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              <span className="hidden sm:inline">EL</span>
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle className="w-2.5 h-2.5" />
+                              <span className="hidden sm:inline">Fallback</span>
+                            </>
+                          )}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-xs text-xs">
+                        {hasEleven ? (
+                          <p>ElevenLabs voice · segment {idx + 1}</p>
+                        ) : (
+                          <div className="space-y-1">
+                            <p className="font-semibold">Browser voice fallback</p>
+                            <p className="text-muted-foreground">
+                              {seg.audioError || "ElevenLabs did not return audio for this segment."}
+                            </p>
+                          </div>
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                    <div className="min-w-0">
+                      <span
+                        className={cn(
+                          "font-medium mr-1.5 sm:mr-2",
+                          seg.speaker === "host1" ? "text-primary" : "text-secondary"
+                        )}
+                      >
+                        {seg.name}:
+                      </span>
+                      <span className="text-foreground/80">{seg.text}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </TooltipProvider>
         </div>
 
         {/* Voice Settings Dialog */}
