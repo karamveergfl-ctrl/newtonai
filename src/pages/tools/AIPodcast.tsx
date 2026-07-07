@@ -273,6 +273,7 @@ export default function AIPodcast() {
         text: segment.text,
         emotion: segment.emotion,
         fallbackAudio: true, // Default to Web Speech fallback
+        audioError: "TTS not attempted yet",
       }));
 
       // Try to generate ElevenLabs audio with language and custom voices support
@@ -295,13 +296,18 @@ export default function AIPodcast() {
             ...segments[idx],
             audio: seg.audio || null,
             fallbackAudio: !seg.audio, // Only use fallback if no audio
+            audioError: seg.audio ? null : (seg.audioError || "ElevenLabs returned no audio"),
           }));
 
           if (ttsData.stats?.failed > 0) {
           }
         } else {
+          const reason = ttsError?.message || "ElevenLabs TTS call failed";
+          segments = segments.map(s => ({ ...s, fallbackAudio: true, audio: undefined, audioError: reason }));
         }
       } catch (ttsErr) {
+        const reason = ttsErr instanceof Error ? ttsErr.message : "ElevenLabs TTS threw an error";
+        segments = segments.map(s => ({ ...s, fallbackAudio: true, audio: undefined, audioError: reason }));
       }
 
       setProgress(90);
