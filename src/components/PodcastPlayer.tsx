@@ -341,6 +341,14 @@ export function PodcastPlayer({
   const speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
   const hasElevenLabsAudio = segments.some(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100);
 
+  // TTS status stats — how many segments got ElevenLabs vs fell back to browser voice
+  const ttsStats = {
+    total: segments.length,
+    elevenlabs: segments.filter(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100).length,
+    fallback: segments.filter(s => !(s.audio && typeof s.audio === 'string' && s.audio.length > 100)).length,
+  };
+  const firstFallbackReason = segments.find(s => !s.audio)?.audioError || null;
+
   // Stop playback entirely and reset to beginning
   const handleStop = useCallback(() => {
     pause();
