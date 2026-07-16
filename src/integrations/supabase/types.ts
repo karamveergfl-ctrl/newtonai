@@ -2556,6 +2556,7 @@ export type Database = {
         Args: { p_code_id: string; p_payment_id: string }
         Returns: Json
       }
+      assign_teacher_role: { Args: never; Returns: undefined }
       auto_grade_quiz_submission: {
         Args: { p_submission_id: string }
         Returns: Json

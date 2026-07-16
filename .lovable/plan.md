@@ -1,45 +1,49 @@
-Two targeted fixes based on the reported problems and the screenshot you shared (where `\cdot m` rendered as red `\cdotm` — a LaTeX unit-spacing bug).
+## Root cause
 
-## 1. Fix writing / formatting mistakes across all tools
+Creating a class fails with `new row violates row-level security policy for table "classes"` because the INSERT policy on `classes` requires **both** `auth.uid() = teacher_id` **and** `has_role(auth.uid(), 'teacher')`.
 
-Root cause: the prompts tell the model to use LaTeX but don't enforce unit spacing, escaping, or a proofreading pass. So the model outputs things like `\cdotm`, `kN\cdotm`, unclosed `$`, or stray markdown mixed with math — which KaTeX renders in red.
+The current user does not actually have the `teacher` role. Why:
 
-Changes:
-- Update the system prompt in every generation edge function (`analyze-text`, `solve-problem`, `generate-quiz`, `generate-flashcards`, `generate-lecture-notes`, `generate-summary`, `generate-mindmap`, `newton-chat`) with a strict "LaTeX hygiene" block:
-  - Units must be wrapped as `\,\text{unit}` (e.g. `2.5\,\text{m}`, `138.46\,\text{kN}`), never bare `m` or `kN` glued to `\cdot`.
-  - Every LaTeX control word (`\cdot`, `\times`, `\sum`, etc.) must be followed by a space or `{}` before any letter.
-  - Every `$` / `$$` must be balanced; no markdown (`**`, `*`, `_`) inside math.
-  - Spell-check + grammar pass required before returning; no half-words, no duplicated punctuation.
-- Add a lightweight post-processing sanitizer in `src/lib/utils.ts` (or a new `src/lib/latexSanitize.ts`) that runs on any AI text before it's rendered:
-  - Regex-fix `\cdot([a-zA-Z])` → `\cdot\,\text{$1}`
-  - Regex-fix `\times([a-zA-Z])` → `\times\,\text{$1}`
-  - Regex-fix `([0-9])\s*(kN|m|s|kg|N|J|W|Hz|mol|cm|mm|km)\b` inside math delimiters → `$1\,\text{$2}`
-  - Trim orphan single `$` at line end.
-- Wire the sanitizer into `MarkdownRenderer` (single choke-point) so every tool benefits without touching each page.
+- The `user_roles` INSERT policies only allow:
+  - self-assign of role **`student`** (`WITH CHECK (auth.uid() = user_id AND role = 'student')`)
+  - or admins inserting any role.
+- `TeacherOnboarding.handleComplete` does `supabase.from("user_roles").upsert({ role: "teacher" })`. That upsert is silently blocked by RLS — no teacher row is ever written.
+- Data confirms it: only 1 user in the whole project has the `teacher` role, and that user is also an admin (so their insert worked). Every other "teacher" that went through onboarding is effectively role-less, and their class creation dies at the RLS check.
 
-## 2. Improve Homework Help image / figure accuracy
+Additionally, in the onboarding flow the class is created in step 3 but the role upsert only runs in step 7 (`handleComplete`) — so even if the policy allowed teacher self-assign, the order would still be wrong.
 
-Root cause: `analyze-text` sends images to `google/gemini-2.5-flash` with a generic "solve step by step" prompt. Flash misreads figures, diagrams, and handwritten symbols on hard problems.
+## Fix
 
-Changes to `supabase/functions/analyze-text/index.ts`:
-- When `imageData` is present, route to `google/gemini-2.5-pro` instead of `gemini-2.5-flash` (Pro has significantly stronger multimodal reasoning on diagrams). Text-only requests stay on Flash for speed/cost.
-- Prepend a dedicated vision instruction block before the existing solve prompt:
-  - "Before solving, list everything visible in the image: printed text, handwriting, numbers, symbols, units, figure elements (arrows, angles, labels, coordinates, forces, geometry). Transcribe the exact problem statement verbatim."
-  - "If the image contains a figure/diagram, describe its geometry (points, lines, angles, given lengths, force directions) as structured `Given:` bullets before starting the solution."
-  - "Never guess unreadable characters — say 'unclear' and pick the most physically reasonable interpretation, noting the assumption."
-  - "Double-check numeric extraction: re-read each number twice from the image before using it."
-- Keep the existing streaming path; only the model + prompt prefix change when an image is provided.
-- Apply the same vision-first prompt upgrade to `structure-problem` and `ocr-handwriting` edge functions if they're on the image path (verify during build).
+### 1. Database migration — add a SECURITY DEFINER RPC to self-promote to teacher
 
-## Technical notes
+New function `public.assign_teacher_role()`:
 
-- No schema or RLS changes.
-- No new secrets; uses existing `LOVABLE_API_KEY` via the Gateway.
-- Cost impact: image requests move from Flash → Pro (~higher per-call cost, but only on image submissions in Homework Help). Text tools unchanged.
-- No client-side breaking changes — the sanitizer is additive inside `MarkdownRenderer`.
+- `SECURITY DEFINER`, `search_path = public`.
+- Uses `auth.uid()`; errors if unauthenticated.
+- Refuses if the caller already has `admin` or `institutional_admin` role (defence in depth — don't let a privileged role be re-shaped through this path).
+- `INSERT ... ON CONFLICT (user_id, role) DO NOTHING` into `user_roles` with `role = 'teacher'`.
+- `GRANT EXECUTE ... TO authenticated`.
 
-## Files touched
-- `supabase/functions/analyze-text/index.ts` (model swap + vision prompt)
-- `supabase/functions/solve-problem/index.ts`, `generate-quiz`, `generate-flashcards`, `generate-lecture-notes`, `generate-summary`, `generate-mindmap`, `newton-chat` (LaTeX hygiene block)
-- `src/lib/latexSanitize.ts` (new)
-- `src/components/MarkdownRenderer.tsx` (invoke sanitizer)
+This is the same pattern already used elsewhere in the project (per the RPC-based access control memory) and keeps the strict RLS on `user_roles` intact — students still can't grant themselves teacher rights through the Data API; they must go through this vetted function.
+
+Also backfill existing broken accounts: for every profile with `teacher_preferences IS NOT NULL` (i.e. they finished the teacher onboarding flow) that does not have a `teacher` row in `user_roles`, insert one. This unblocks users who already onboarded but silently lost their role.
+
+### 2. `src/components/onboarding/TeacherOnboarding.tsx`
+
+- In `handleCreateClass` (step 3), before the `classes` insert, call `supabase.rpc('assign_teacher_role')`. Ignore "already exists" style responses.
+- In `handleComplete` (step 7), replace the current `.from('user_roles').upsert(...)` with the same `rpc('assign_teacher_role')` call so the role is guaranteed regardless of which step actually finishes.
+
+### 3. `src/hooks/useClasses.ts`
+
+- In the `createClass` path (used by the main dashboard's `CreateClassDialog`, which is the surface in the screenshot), call `supabase.rpc('assign_teacher_role')` once before the insert if the current user does not already have the teacher role. This heals older accounts on their next class-creation attempt even before they refresh onboarding.
+
+### 4. No policy changes
+
+We deliberately do NOT loosen the `user_roles` INSERT policy to allow self-assign of `teacher`. That would let any signed-in user grant themselves teacher powers by hitting the Data API directly. The SECURITY DEFINER RPC is the single controlled entry point.
+
+## Verification
+
+- Retry "Create Class" from the teacher dashboard: should succeed and return an `invite_code`.
+- `SELECT role FROM user_roles WHERE user_id = <caller>` shows `teacher`.
+- Student accounts remain unable to create classes (RPC still gates, and their onboarding flow never calls it).
+- Existing pre-broken teacher accounts now have a `teacher` row after the backfill and can create classes without redoing onboarding.
