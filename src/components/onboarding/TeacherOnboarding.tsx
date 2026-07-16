@@ -251,6 +251,9 @@ export default function TeacherOnboarding({ fullName: initialName, avatarUrl, on
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      // Grant teacher role via SECURITY DEFINER RPC before inserting the class,
+      // otherwise the classes RLS INSERT policy (requires has_role teacher) blocks us.
+      await supabase.rpc("assign_teacher_role" as any);
       const { data: newClass, error } = await supabase
         .from("classes")
         .insert({
@@ -288,11 +291,8 @@ export default function TeacherOnboarding({ fullName: initialName, avatarUrl, on
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/auth"); return; }
 
-      // Save teacher role
-      await supabase.from("user_roles").upsert(
-        { user_id: session.user.id, role: "teacher" as const },
-        { onConflict: "user_id,role" }
-      );
+      // Save teacher role via SECURITY DEFINER RPC (direct upsert is blocked by RLS).
+      await supabase.rpc("assign_teacher_role" as any);
 
       const teacherPreferences = {
         institution_name: institutionName,
