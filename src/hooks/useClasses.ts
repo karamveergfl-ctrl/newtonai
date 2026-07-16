@@ -58,6 +58,19 @@ export function useClasses() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
+    // Ensure the caller actually holds the `teacher` role required by the
+    // classes INSERT policy. Older accounts silently lost this role because
+    // the previous direct upsert into user_roles was blocked by RLS.
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "teacher")
+      .maybeSingle();
+    if (!existingRole) {
+      await supabase.rpc("assign_teacher_role" as any);
+    }
+
     const { data: newClass, error } = await supabase
       .from("classes")
       .insert({ ...data, teacher_id: user.id })
