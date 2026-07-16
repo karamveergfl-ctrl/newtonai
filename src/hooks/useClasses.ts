@@ -55,20 +55,30 @@ export function useClasses() {
   }, [fetchClasses]);
 
   const createClass = async (data: { name: string; subject?: string; description?: string; academic_year?: string; grade_level?: string; section?: string; thumbnail?: string; max_students?: number; settings?: Record<string, any> }) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      toast.error("Please sign in before creating a class");
+      return null;
+    }
 
-    // Ensure the caller actually holds the `teacher` role required by the
-    // classes INSERT policy. Older accounts silently lost this role because
-    // the previous direct upsert into user_roles was blocked by RLS.
-    const { data: existingRole } = await supabase
+    const { error: assignRoleError } = await supabase.rpc("assign_teacher_role" as any);
+    if (assignRoleError) {
+      console.error("Failed to prepare teacher role:", assignRoleError);
+      toast.error("Failed to prepare teacher permissions: " + assignRoleError.message);
+      return null;
+    }
+
+    const { data: teacherRole, error: roleCheckError } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .eq("role", "teacher")
       .maybeSingle();
-    if (!existingRole) {
-      await supabase.rpc("assign_teacher_role" as any);
+
+    if (roleCheckError || !teacherRole) {
+      console.error("Failed to verify teacher role:", roleCheckError);
+      toast.error("Teacher permissions could not be verified. Please refresh and try again.");
+      return null;
     }
 
     const { data: newClass, error } = await supabase
