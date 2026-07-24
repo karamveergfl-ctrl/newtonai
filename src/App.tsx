@@ -83,6 +83,7 @@ const CourseHeroComparison = lazy(() => import("./pages/compare/CourseHeroCompar
 const ChatGPTComparison = lazy(() => import("./pages/compare/ChatGPTComparison"));
 const StudyxComparison = lazy(() => import("./pages/compare/StudyxComparison"));
 const StudyFetchComparison = lazy(() => import("./pages/compare/StudyFetchComparison"));
+const StudyFetchVsNewtonAI = lazy(() => import("./pages/compare/StudyFetchVsNewtonAI"));
 
 // Payment pages
 const PaymentSuccess = lazy(() => import("./pages/payment/Success"));
@@ -248,6 +249,7 @@ function AnimatedRoutes() {
         <Route path="/compare/chatgpt" element={<PageTransition><ChatGPTComparison /></PageTransition>} />
         <Route path="/compare/studyx" element={<PageTransition><StudyxComparison /></PageTransition>} />
         <Route path="/compare/studyfetch" element={<PageTransition><StudyFetchComparison /></PageTransition>} />
+        <Route path="/compare/studyfetch-vs-newtonai" element={<PageTransition><StudyFetchVsNewtonAI /></PageTransition>} />
         
         {/* Teacher Routes */}
         <Route path="/teacher" element={<PageTransition><ProtectedRoute><OnboardingGate><RoleRoute role="teacher"><TeacherDashboard /></RoleRoute></OnboardingGate></ProtectedRoute></PageTransition>} />
