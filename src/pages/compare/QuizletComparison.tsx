@@ -14,7 +14,7 @@ const QuizletComparison = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="NewtonAI vs Quizlet 2026 - AI-Powered Flashcard Alternative"
+        title="NewtonAI vs Quizlet 2026: AI Flashcards"
         description="Compare NewtonAI and Quizlet. Generate flashcards from any PDF, video, or notes with AI. Plus get quizzes, podcasts, and homework help."
         canonicalPath="/compare/quizlet"
         keywords="Quizlet alternative, NewtonAI vs Quizlet, AI flashcards, auto-generate flashcards, study app comparison"

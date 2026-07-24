@@ -14,7 +14,7 @@ const CourseHeroComparison = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="NewtonAI vs Course Hero 2026 - Affordable Alternative"
+        title="NewtonAI vs Course Hero 2026: Affordable Pick"
         description="Compare NewtonAI and Course Hero. Get AI homework help, flashcards, and 5 more study tools at 43% lower cost. Free tier available."
         canonicalPath="/compare/course-hero"
         keywords="Course Hero alternative, NewtonAI vs Course Hero, cheaper study platform, AI homework help, tutor alternative"

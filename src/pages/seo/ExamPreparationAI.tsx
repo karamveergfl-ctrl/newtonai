@@ -14,7 +14,7 @@ const ExamPreparationAI = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEOHead
-        title="AI for Exam Preparation – Study Smarter, Score Higher"
+        title="AI for Exam Prep – Study Smarter, Score Higher"
         description="Prepare for any exam using AI-powered study tools. NewtonAI creates flashcards, practice quizzes, summaries, and study plans from your course materials for effective exam preparation."
         canonicalPath="/exam-preparation-ai"
         breadcrumbs={breadcrumbs}

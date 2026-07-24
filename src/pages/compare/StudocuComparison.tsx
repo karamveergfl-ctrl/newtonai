@@ -14,7 +14,7 @@ const StudocuComparison = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="NewtonAI vs Studocu 2026 - AI Study Tools Alternative"
+        title="NewtonAI vs Studocu 2026: AI Study Tools"
         description="Compare NewtonAI and Studocu. Instead of searching for notes, generate your own AI flashcards, summaries, and podcasts from any document."
         canonicalPath="/compare/studocu"
         keywords="Studocu alternative, NewtonAI vs Studocu, AI study notes, document summarizer, study app comparison"

@@ -30,7 +30,7 @@ const Compare = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Compare NewtonAI vs Competitors 2026 - Chegg, Quizlet, Studocu & More"
+        title="Compare NewtonAI vs Chegg, Quizlet & Studocu 2026"
         description="See how NewtonAI compares to Chegg, Quizlet, Studocu, Course Hero, and ChatGPT. Get 7 AI study tools at half the price with our unique features."
         canonicalPath="/compare"
         keywords="NewtonAI vs Chegg, NewtonAI vs Quizlet, AI study app comparison, best study app 2026, Studocu alternative, Course Hero alternative"

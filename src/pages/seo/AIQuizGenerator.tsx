@@ -14,7 +14,7 @@ const AIQuizGenerator = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEOHead
-        title="AI Quiz Generator – Create Practice Tests Instantly"
+        title="AI Quiz Generator – Instant Practice Tests"
         description="Generate practice quizzes and tests from any study material using AI. NewtonAI creates multiple choice, true/false, and short answer questions with instant grading and explanations."
         canonicalPath="/ai-quiz-generator"
         breadcrumbs={breadcrumbs}
