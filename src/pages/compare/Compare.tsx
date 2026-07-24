@@ -180,6 +180,18 @@ const Compare = () => {
                             View full comparison
                             <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                           </div>
+                          {comp.slug === "studyfetch" && (
+                            <div className="mt-3 pt-3 border-t border-dashed">
+                              <Link
+                                to="/compare/studyfetch-vs-newtonai"
+                                className="text-xs text-primary hover:underline flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Read detailed guide
+                                <ArrowRight className="h-3 w-3" />
+                              </Link>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     </Link>
