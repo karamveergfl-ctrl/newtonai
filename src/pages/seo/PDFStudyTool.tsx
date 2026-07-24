@@ -14,7 +14,7 @@ const PDFStudyTool = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEOHead
-        title="AI PDF Study Tool – Summarize, Chat & Learn from PDFs"
+        title="AI PDF Study Tool – Summarize & Chat with PDFs"
         description="Upload any PDF and use AI to summarize, create flashcards, generate quizzes, and chat with your documents. NewtonAI's PDF study tool makes textbook learning effortless."
         canonicalPath="/pdf-study-tool"
         breadcrumbs={breadcrumbs}

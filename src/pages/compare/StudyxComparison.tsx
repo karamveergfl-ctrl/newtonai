@@ -14,7 +14,7 @@ const StudyxComparison = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="NewtonAI vs Studyx 2026 - Better AI Study Platform"
+        title="NewtonAI vs Studyx 2026: Better AI Study"
         description="Compare NewtonAI and Studyx. Get embedded videos in PDFs, AI podcasts, and 7 study tools. Better features at the same price point."
         canonicalPath="/compare/studyx"
         keywords="Studyx alternative, NewtonAI vs Studyx, AI homework help comparison, study app comparison"

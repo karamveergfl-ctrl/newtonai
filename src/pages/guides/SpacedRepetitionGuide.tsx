@@ -17,7 +17,7 @@ const SpacedRepetitionGuide = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="The Science of Spaced Repetition: Master Any Subject"
+        title="Spaced Repetition: Master Any Subject"
         description="Learn how spaced repetition helps you remember more with less effort. Discover the science-backed technique and how to implement it with AI flashcards."
         canonicalPath="/guides/spaced-repetition-guide"
         breadcrumbs={breadcrumbs}

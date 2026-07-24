@@ -17,7 +17,7 @@ const ResponsibleAIUse = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Using AI Responsibly for Education: Best Practices Guide"
+        title="Using AI Responsibly in Education: Best Practices"
         description="Learn the best practices for using AI study tools ethically and effectively. Understand when to use AI, how to verify information, and how to ensure genuine learning."
         canonicalPath="/guides/responsible-ai-use"
         breadcrumbs={breadcrumbs}

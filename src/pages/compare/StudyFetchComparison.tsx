@@ -14,7 +14,7 @@ const StudyFetchComparison = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="NewtonAI vs StudyFetch 2026 - Save 55% with Better Features"
+        title="NewtonAI vs StudyFetch 2026: Save 55%"
         description="Compare NewtonAI and StudyFetch. Get 7 AI study tools, embedded videos, and podcasts at less than half the price. Free tier available."
         canonicalPath="/compare/studyfetch"
         keywords="StudyFetch alternative, NewtonAI vs StudyFetch, cheaper than StudyFetch, AI study app comparison"

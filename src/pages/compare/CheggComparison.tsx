@@ -14,7 +14,7 @@ const CheggComparison = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="NewtonAI vs Chegg 2026 - Better & Cheaper Alternative"
+        title="NewtonAI vs Chegg 2026: Cheaper Alternative"
         description="Compare NewtonAI and Chegg. Get AI flashcards, embedded videos, podcasts, and homework help at nearly half the price. Free tier available."
         canonicalPath="/compare/chegg"
         keywords="Chegg alternative, NewtonAI vs Chegg, cheaper than Chegg, AI homework help, study app comparison"

@@ -14,7 +14,7 @@ const ChatGPTComparison = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="NewtonAI vs ChatGPT for Studying 2026 - Purpose-Built Alternative"
+        title="NewtonAI vs ChatGPT 2026: Study Alternative"
         description="Compare NewtonAI and ChatGPT for students. While ChatGPT is a general AI, NewtonAI is built for learning with flashcards, quizzes, podcasts, and more."
         canonicalPath="/compare/chatgpt"
         keywords="ChatGPT for studying, NewtonAI vs ChatGPT, AI study app, ChatGPT alternative students, study with AI"
