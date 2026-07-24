@@ -28,11 +28,12 @@ export const ThemeToggle = () => {
       onClick={toggleTheme}
       className="h-8 w-8 rounded-full hover:bg-accent flex items-center justify-center"
       title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+      aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
     >
       {theme === "light" ? (
-        <Moon className="h-4 w-4" />
+        <Moon className="h-4 w-4" aria-hidden="true" />
       ) : (
-        <Sun className="h-4 w-4" />
+        <Sun className="h-4 w-4" aria-hidden="true" />
       )}
     </Button>
   );
