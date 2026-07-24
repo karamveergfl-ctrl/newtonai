@@ -14,7 +14,7 @@ const AINotesGenerator = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEOHead
-        title="AI Notes Generator – Create Study Notes Instantly"
+        title="AI Notes Generator – Create Notes Instantly"
         description="Generate structured study notes from PDFs, lectures, and textbooks using AI. NewtonAI's notes generator extracts key concepts, definitions, and summaries automatically."
         canonicalPath="/ai-notes-generator"
         breadcrumbs={breadcrumbs}
