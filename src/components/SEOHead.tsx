@@ -20,6 +20,7 @@ interface SEOHeadProps {
     author?: string;
     section?: string;
   };
+  structuredData?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const SITE_URL = "https://newtonai.site";
@@ -36,6 +37,7 @@ export const SEOHead = ({
   keywords,
   noIndex = false,
   article,
+  structuredData,
 }: SEOHeadProps) => {
   const fullTitle = title === "Home" ? `${SITE_NAME} - AI Study Assistant` : `${title} | ${SITE_NAME}`;
   const canonicalUrl = `${SITE_URL}${canonicalPath}`;
@@ -126,6 +128,13 @@ export const SEOHead = ({
       {articleSchema && (
         <script type="application/ld+json">
           {JSON.stringify(articleSchema)}
+        </script>
+      )}
+
+      {/* Structured Data - Custom */}
+      {structuredData && (
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
         </script>
       )}
     </Helmet>

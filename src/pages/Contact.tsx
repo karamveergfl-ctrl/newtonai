@@ -16,6 +16,25 @@ const Contact = () => {
     { name: "Home", href: "/" },
     { name: "Contact", href: "/contact" },
   ];
+
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "NewtonAI",
+    "url": "https://newtonai.site",
+    "telephone": "+91 7618495307",
+    "email": "support@newtonAI.site",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Aligarh",
+      "addressRegion": "Uttar Pradesh",
+      "postalCode": "202150",
+      "addressCountry": "IN",
+    },
+    "openingHours": ["Mo-Fr 10:00-18:00"],
+    "priceRange": "$$",
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,6 +53,7 @@ const Contact = () => {
         canonicalPath="/contact"
         breadcrumbs={breadcrumbs}
         keywords="contact NewtonAI, support, help, customer service, AI study tools support"
+        structuredData={localBusinessSchema}
       />
       <Header />
 
