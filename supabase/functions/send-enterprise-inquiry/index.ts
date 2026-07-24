@@ -116,6 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { error: insertError } = await supabase
       .from('enterprise_inquiries')
       .insert({
+        user_id: userId,
         first_name: data.firstName.trim(),
         last_name: data.lastName.trim(),
         email: data.email.trim().toLowerCase(),
