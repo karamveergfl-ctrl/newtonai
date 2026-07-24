@@ -111,10 +111,10 @@ const LandingPage = () => {
               AI-Powered Learning Assistant
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-foreground mb-8 leading-tight tracking-tight font-display font-bold text-center">
-              Stop Switching Apps.
+              NewtonAI: Your All-in-One
               <br />
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Start Mastering Subjects.
+                AI Study Assistant
               </span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed text-center">
