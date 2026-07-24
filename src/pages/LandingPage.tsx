@@ -234,9 +234,9 @@ const LandingPage = () => {
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors duration-300">
                     <feature.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+                  <h2 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
                     {feature.title}
-                  </h3>
+                  </h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
                 </div>
               </div>
