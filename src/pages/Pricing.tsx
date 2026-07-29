@@ -204,6 +204,12 @@ const Pricing = () => {
         canonicalPath="/pricing"
         breadcrumbs={breadcrumbs}
         keywords="NewtonAI pricing, student discount, AI study tools pricing, flashcard generator cost"
+        structuredData={buildWebPageSchema({
+          name: "NewtonAI Pricing",
+          description: "Free, Pro and Ultra plans for NewtonAI's AI flashcards, quizzes, summaries, mind maps and podcasts.",
+          path: "/pricing",
+          primaryTopic: "NewtonAI pricing plans",
+        })}
       />
       
       {/* Static gradient blobs */}
