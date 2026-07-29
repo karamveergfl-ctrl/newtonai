@@ -4,44 +4,22 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { ArrowRight, BookOpen, Brain, FileText, Sparkles, CheckCircle, Zap, Users } from "lucide-react";
+import { buildFaqSchema, buildWebPageSchema, buildSoftwareAppSchema } from "@/lib/structuredData";
+
+const FAQS = [
+  { q: "What is an AI study assistant?", a: "An AI study assistant is a software tool that uses artificial intelligence to help students learn more effectively. It can summarize documents, generate quizzes, create flashcards, and provide step-by-step explanations for complex topics." },
+  { q: "Is NewtonAI free to use?", a: "Yes, NewtonAI offers a free tier that includes basic access to all study tools. Premium plans unlock higher usage limits and advanced features like AI podcasts and unlimited homework help." },
+  { q: "How does NewtonAI differ from ChatGPT?", a: "Unlike generic chatbots, NewtonAI is purpose-built for education. It includes specialized tools like flashcard generators, quiz makers, PDF summarizers, and mind map creators that are optimized for the student learning workflow." },
+  { q: "Can NewtonAI help with exam preparation?", a: "Absolutely. NewtonAI helps students prepare for exams by generating practice quizzes, creating flashcards for active recall, summarizing study materials, and providing step-by-step solutions to practice problems." },
+  { q: "What file formats does NewtonAI support?", a: "NewtonAI supports PDF documents, images (for OCR text extraction), DOCX files, and YouTube video URLs. You can upload any of these formats and the AI will process them into study materials." },
+  { q: "Is my data safe with NewtonAI?", a: "Yes. NewtonAI takes data privacy seriously. Your uploaded documents are processed securely and are only accessible to your account. We do not share your study materials with third parties." },
+];
 
 const AIStudyAssistant = () => {
   const breadcrumbs = [
     { name: "Home", href: "/" },
     { name: "AI Study Assistant", href: "/ai-study-assistant" },
   ];
-
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "What is an AI study assistant?",
-        "acceptedAnswer": { "@type": "Answer", "text": "An AI study assistant is a software tool that uses artificial intelligence to help students learn more effectively. It can summarize documents, generate quizzes, create flashcards, and provide step-by-step explanations for complex topics." }
-      },
-      {
-        "@type": "Question",
-        "name": "Is NewtonAI free to use?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes, NewtonAI offers a free tier that includes basic access to all study tools. Premium plans unlock higher limits and advanced features like AI podcasts and unlimited homework help." }
-      },
-      {
-        "@type": "Question",
-        "name": "How does NewtonAI differ from ChatGPT?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Unlike generic chatbots, NewtonAI is purpose-built for education. It includes specialized tools like flashcard generators, quiz makers, PDF summarizers, and mind map creators that are optimized for the student learning workflow." }
-      },
-      {
-        "@type": "Question",
-        "name": "Can NewtonAI help with exam preparation?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Absolutely. NewtonAI helps students prepare for exams by generating practice quizzes, creating flashcards for active recall, summarizing study materials, and providing step-by-step solutions to practice problems." }
-      },
-      {
-        "@type": "Question",
-        "name": "What file formats does NewtonAI support?",
-        "acceptedAnswer": { "@type": "Answer", "text": "NewtonAI supports PDF documents, images (for OCR text extraction), DOCX files, and YouTube video URLs. You can upload any of these formats and the AI will process them into study materials." }
-      }
-    ]
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -51,8 +29,22 @@ const AIStudyAssistant = () => {
         canonicalPath="/ai-study-assistant"
         breadcrumbs={breadcrumbs}
         keywords="AI study assistant, AI tutor, study helper, AI for students, exam preparation tool, AI learning platform"
+        structuredData={[
+          buildWebPageSchema({
+            name: "AI Study Assistant for Students",
+            description: "Convert notes, PDFs and lectures into flashcards, quizzes, summaries and mind maps for faster exam preparation.",
+            path: "/ai-study-assistant",
+            primaryTopic: "AI study assistant",
+          }),
+          buildSoftwareAppSchema({
+            name: "NewtonAI Study Assistant",
+            description: "AI study assistant that turns any study material into summaries, quizzes, flashcards, mind maps and podcasts.",
+            path: "/ai-study-assistant",
+            featureList: ["Summaries", "Quizzes", "Flashcards", "Mind maps", "Homework help", "PDF chat"],
+          }),
+          buildFaqSchema(FAQS),
+        ]}
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <Header />
 
       <main className="flex-1">
@@ -157,14 +149,7 @@ const AIStudyAssistant = () => {
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Frequently Asked Questions</h2>
             <div className="space-y-4">
-              {[
-                { q: "What is an AI study assistant?", a: "An AI study assistant is a software tool that uses artificial intelligence to help students learn more effectively. It can summarize documents, generate quizzes, create flashcards, and provide step-by-step explanations for complex topics." },
-                { q: "Is NewtonAI free to use?", a: "Yes, NewtonAI offers a free tier that includes basic access to all study tools. Premium plans unlock higher usage limits and advanced features like AI podcasts and unlimited homework help." },
-                { q: "How does NewtonAI differ from ChatGPT?", a: "Unlike generic chatbots, NewtonAI is purpose-built for education. It includes specialized tools like flashcard generators, quiz makers, PDF summarizers, and mind map creators that are optimized for the student learning workflow." },
-                { q: "Can NewtonAI help with exam preparation?", a: "Absolutely. NewtonAI helps students prepare for exams by generating practice quizzes, creating flashcards for active recall, summarizing study materials, and providing step-by-step solutions to practice problems." },
-                { q: "What file formats does NewtonAI support?", a: "NewtonAI supports PDF documents, images (for OCR text extraction), DOCX files, and YouTube video URLs. You can upload any of these formats and the AI will process them into study materials." },
-                { q: "Is my data safe with NewtonAI?", a: "Yes. NewtonAI takes data privacy seriously. Your uploaded documents are processed securely and are only accessible to your account. We do not share your study materials with third parties." }
-              ].map((faq) => (
+              {FAQS.map((faq) => (
                 <details key={faq.q} className="bg-card rounded-lg border border-border p-4 group">
                   <summary className="font-semibold text-foreground cursor-pointer list-none flex items-center justify-between">
                     {faq.q}

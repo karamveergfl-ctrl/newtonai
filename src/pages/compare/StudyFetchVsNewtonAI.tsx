@@ -13,6 +13,26 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Headphones, Map, Video, PenTool, Sparkles, ArrowRight } from "lucide-react";
+import { buildFaqSchema, buildWebPageSchema } from "@/lib/structuredData";
+
+const FAQS = [
+  {
+    q: "Is NewtonAI a good StudyFetch alternative?",
+    a: "Yes. NewtonAI matches StudyFetch's AI tutor and audio features while adding mind maps, video-in-PDF, handwriting OCR, and a free tier at a lower price.",
+  },
+  {
+    q: "Which is the better AI study tool for homework help?",
+    a: "NewtonAI is better for students who want step-by-step solutions plus study materials generated from the same source. StudyFetch is more focused on tutoring alone.",
+  },
+  {
+    q: "Does NewtonAI have AI podcasts like StudyFetch Audio Recap?",
+    a: "Yes. NewtonAI's podcast generator creates conversational audio episodes from any document, video, or notes, making it ideal for auditory learners.",
+  },
+  {
+    q: "Can I use NewtonAI for free?",
+    a: "Yes. NewtonAI offers an ad-supported free tier with usage limits, so you can try the core tools before subscribing.",
+  },
+];
 
 const StudyFetchVsNewtonAI = () => {
   return (
@@ -22,6 +42,15 @@ const StudyFetchVsNewtonAI = () => {
         description="Looking for a StudyFetch alternative? Compare NewtonAI vs StudyFetch and see why NewtonAI is the more versatile AI study tool with podcasts, mind maps, and homework help."
         canonicalPath="/compare/studyfetch-vs-newtonai"
         keywords="NewtonAI vs StudyFetch, StudyFetch alternative, AI study tool, homework helper, AI podcast study, mind map generator, best study app 2026"
+        structuredData={[
+          buildWebPageSchema({
+            name: "NewtonAI vs StudyFetch: Versatile Study Ecosystem",
+            description: "Compare NewtonAI vs StudyFetch on features, pricing and study tools to find the better AI study app.",
+            path: "/compare/studyfetch-vs-newtonai",
+            primaryTopic: "NewtonAI vs StudyFetch comparison",
+          }),
+          buildFaqSchema(FAQS),
+        ]}
         breadcrumbs={[
           { name: "Home", href: "/" },
           { name: "Compare", href: "/compare" },
@@ -127,24 +156,7 @@ const StudyFetchVsNewtonAI = () => {
             Frequently Asked Questions
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
-            {[
-              {
-                q: "Is NewtonAI a good StudyFetch alternative?",
-                a: "Yes. NewtonAI matches StudyFetch's AI tutor and audio features while adding mind maps, video-in-PDF, handwriting OCR, and a free tier at a lower price.",
-              },
-              {
-                q: "Which is the better AI study tool for homework help?",
-                a: "NewtonAI is better for students who want step-by-step solutions plus study materials generated from the same source. StudyFetch is more focused on tutoring alone.",
-              },
-              {
-                q: "Does NewtonAI have AI podcasts like StudyFetch Audio Recap?",
-                a: "Yes. NewtonAI's podcast generator creates conversational audio episodes from any document, video, or notes, making it ideal for auditory learners.",
-              },
-              {
-                q: "Can I use NewtonAI for free?",
-                a: "Yes. NewtonAI offers an ad-supported free tier with usage limits, so you can try the core tools before subscribing.",
-              },
-            ].map((faq, i) => (
+            {FAQS.map((faq, i) => (
               <Card key={i} className="h-full">
                 <CardContent className="p-6">
                   <h3 className="font-semibold text-lg mb-2 flex items-start gap-2">

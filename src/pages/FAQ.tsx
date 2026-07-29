@@ -1,11 +1,11 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { AdBanner } from "@/components/AdBanner";
+import { buildFaqSchema, buildWebPageSchema } from "@/lib/structuredData";
 
 
 const faqs = [
@@ -101,20 +101,6 @@ const FAQ = () => {
     { name: "FAQ", href: "/faq" },
   ];
 
-  // Generate FAQPage structured data
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": faqs.map(faq => ({
-      "@type": "Question",
-      "name": faq.question,
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": faq.answer
-      }
-    }))
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
@@ -123,12 +109,16 @@ const FAQ = () => {
         canonicalPath="/faq"
         breadcrumbs={breadcrumbs}
         keywords="NewtonAI FAQ, AI study tools questions, flashcard generator help"
+        structuredData={[
+          buildWebPageSchema({
+            name: "NewtonAI FAQ",
+            description: "Answers to common questions about NewtonAI pricing, features, file support and privacy.",
+            path: "/faq",
+            primaryTopic: "NewtonAI frequently asked questions",
+          }),
+          buildFaqSchema(faqs.map((faq) => ({ q: faq.question, a: faq.answer }))),
+        ]}
       />
-      <Helmet>
-        <script type="application/ld+json">
-          {JSON.stringify(faqSchema)}
-        </script>
-      </Helmet>
       <Header />
 
       <main className="container mx-auto px-4 py-10">

@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import SEOHead from "@/components/SEOHead";
+import { buildWebPageSchema, buildSoftwareAppSchema } from "@/lib/structuredData";
 import FloatingToolsShowcase from "@/components/FloatingToolsShowcase";
 import StickyCTABar from "@/components/StickyCTABar";
 import { AdBanner } from "@/components/AdBanner";
@@ -87,7 +88,32 @@ const LandingPage = () => {
         description="Study smarter with NewtonAI — AI summaries, quizzes, flashcards and mind maps built from your notes, PDFs and lectures. Free to start."
         canonicalPath="/"
         breadcrumbs={breadcrumbs}
-        keywords="AI study assistant, AI notes generator, PDF summarizer, quiz generator, flashcard maker, exam preparation, AI for students, study tools, AI homework helper" />
+        keywords="AI study assistant, AI notes generator, PDF summarizer, quiz generator, flashcard maker, exam preparation, AI for students, study tools, AI homework helper"
+        structuredData={[
+          buildWebPageSchema({
+            name: "NewtonAI — AI Study Assistant for Students",
+            description:
+              "Study smarter with NewtonAI — AI summaries, quizzes, flashcards and mind maps built from your notes, PDFs and lectures.",
+            path: "/",
+            primaryTopic: "AI-assisted studying",
+          }),
+          buildSoftwareAppSchema({
+            name: "NewtonAI",
+            description:
+              "AI-powered study assistant that converts notes, PDFs and lectures into summaries, quizzes, flashcards, mind maps and study podcasts.",
+            path: "/",
+            featureList: [
+              "AI PDF Summarizer",
+              "AI Notes Generator",
+              "AI Quiz Generator",
+              "AI Flashcard Maker",
+              "AI Mind Map Generator",
+              "AI Homework Helper",
+              "AI Study Podcast",
+              "PDF Chat",
+            ],
+          }),
+        ]} />
 
       <Header transparent />
       

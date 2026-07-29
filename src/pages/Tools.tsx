@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Helmet } from "react-helmet-async";
 import { 
   Brain, 
   FileText, 
@@ -20,6 +19,7 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { buildWebPageSchema } from "@/lib/structuredData";
 import { AdBanner } from "@/components/AdBanner";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -186,7 +186,7 @@ function PublicToolsPage() {
         "description": tool.description,
         "applicationCategory": "EducationalApplication",
         "operatingSystem": "Web",
-        "url": `https://newtonai.lovable.app${tool.href}`,
+        "url": `https://newtonai.site${tool.href}`,
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
       }
     }))
@@ -200,10 +200,16 @@ function PublicToolsPage() {
         canonicalPath="/tools"
         breadcrumbs={breadcrumbs}
         keywords="AI study tools, quiz generator, flashcard maker, mind map generator, lecture notes, PDF summarizer, homework help"
+        structuredData={[
+          buildWebPageSchema({
+            name: "AI Study Tools",
+            description: "NewtonAI's suite of AI study tools: quizzes, flashcards, podcasts, mind maps, lecture notes, summaries and homework help.",
+            path: "/tools",
+            primaryTopic: "AI study tools",
+          }),
+          toolsSchema,
+        ]}
       />
-      <Helmet>
-        <script type="application/ld+json">{JSON.stringify(toolsSchema)}</script>
-      </Helmet>
 
       <Header />
 

@@ -3,6 +3,15 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { buildFaqSchema, buildWebPageSchema, buildSoftwareAppSchema } from "@/lib/structuredData";
+
+const FAQS = [
+  { q: "Can AI generate notes from handwritten content?", a: "Yes! NewtonAI supports OCR (optical character recognition) to process images of handwritten notes. Simply take a photo of your notes and upload it." },
+  { q: "How accurate are AI-generated notes?", a: "NewtonAI uses advanced AI models that produce highly accurate notes. However, we always recommend reviewing the generated notes against your original material, especially for specialized or technical subjects." },
+  { q: "Can I edit the generated notes?", a: "Yes, all generated notes are fully editable. You can add your own annotations, highlight important sections, and customize the structure to match your learning style." },
+  { q: "What subjects does the notes generator work best for?", a: "NewtonAI's notes generator works well across all subjects — from STEM fields like physics, chemistry, and mathematics to humanities like history, literature, and political science." },
+  { q: "How many notes can I generate for free?", a: "The free tier includes a generous monthly allowance for note generation. Premium plans offer higher limits for students with heavy course loads." },
+];
 import { ArrowRight, FileText, CheckCircle, Sparkles } from "lucide-react";
 
 const AINotesGenerator = () => {
@@ -19,6 +28,21 @@ const AINotesGenerator = () => {
         canonicalPath="/ai-notes-generator"
         breadcrumbs={breadcrumbs}
         keywords="AI notes generator, automatic note taking, AI lecture notes, study notes maker, notes from PDF, AI note taker"
+        structuredData={[
+          buildWebPageSchema({
+            name: "AI Notes Generator – Create Notes Instantly",
+            description: "Generate structured study notes from PDFs, lectures and textbooks using AI.",
+            path: "/ai-notes-generator",
+            primaryTopic: "AI note generation",
+          }),
+          buildSoftwareAppSchema({
+            name: "NewtonAI Notes Generator",
+            description: "AI tool that turns PDFs, lectures and handwritten notes into structured, editable study notes.",
+            path: "/ai-notes-generator",
+            featureList: ["Structured notes from PDFs", "Lecture note generation", "Handwriting OCR", "Editable output"],
+          }),
+          buildFaqSchema(FAQS),
+        ]}
       />
       <Header />
 
@@ -100,13 +124,7 @@ const AINotesGenerator = () => {
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Frequently Asked Questions</h2>
             <div className="space-y-4">
-              {[
-                { q: "Can AI generate notes from handwritten content?", a: "Yes! NewtonAI supports OCR (optical character recognition) to process images of handwritten notes. Simply take a photo of your notes and upload it." },
-                { q: "How accurate are AI-generated notes?", a: "NewtonAI uses advanced AI models that produce highly accurate notes. However, we always recommend reviewing the generated notes against your original material, especially for specialized or technical subjects." },
-                { q: "Can I edit the generated notes?", a: "Yes, all generated notes are fully editable. You can add your own annotations, highlight important sections, and customize the structure to match your learning style." },
-                { q: "What subjects does the notes generator work best for?", a: "NewtonAI's notes generator works well across all subjects — from STEM fields like physics, chemistry, and mathematics to humanities like history, literature, and political science." },
-                { q: "How many notes can I generate for free?", a: "The free tier includes a generous monthly allowance for note generation. Premium plans offer higher limits for students with heavy course loads." }
-              ].map((faq) => (
+              {FAQS.map((faq) => (
                 <details key={faq.q} className="bg-card rounded-lg border border-border p-4 group">
                   <summary className="font-semibold text-foreground cursor-pointer list-none flex items-center justify-between">
                     {faq.q}

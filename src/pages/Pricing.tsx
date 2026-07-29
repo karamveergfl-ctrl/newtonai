@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { buildWebPageSchema } from "@/lib/structuredData";
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
@@ -204,6 +205,12 @@ const Pricing = () => {
         canonicalPath="/pricing"
         breadcrumbs={breadcrumbs}
         keywords="NewtonAI pricing, student discount, AI study tools pricing, flashcard generator cost"
+        structuredData={buildWebPageSchema({
+          name: "NewtonAI Pricing",
+          description: "Free, Pro and Ultra plans for NewtonAI's AI flashcards, quizzes, summaries, mind maps and podcasts.",
+          path: "/pricing",
+          primaryTopic: "NewtonAI pricing plans",
+        })}
       />
       
       {/* Static gradient blobs */}

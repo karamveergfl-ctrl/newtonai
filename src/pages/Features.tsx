@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { buildWebPageSchema, buildSoftwareAppSchema } from "@/lib/structuredData";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -115,6 +116,29 @@ const Features = () => {
         canonicalPath="/features"
         breadcrumbs={breadcrumbs}
         keywords="AI study features, flashcard generator, quiz maker, summarizer, mind map, lecture notes, study tools"
+        structuredData={[
+          buildWebPageSchema({
+            name: "NewtonAI Features",
+            description: "Explore NewtonAI's AI study tools: flashcards, quizzes, summaries, mind maps, lecture notes, podcasts, homework help and PDF chat.",
+            path: "/features",
+            primaryTopic: "AI study tool features",
+          }),
+          buildSoftwareAppSchema({
+            name: "NewtonAI",
+            description: "AI study platform with flashcards, quizzes, summaries, mind maps, lecture notes, podcasts, homework help and PDF chat.",
+            path: "/features",
+            featureList: [
+              "AI Flashcards",
+              "AI Quizzes",
+              "AI Summaries",
+              "AI Mind Maps",
+              "AI Lecture Notes",
+              "AI Study Podcasts",
+              "AI Homework Help",
+              "PDF Chat",
+            ],
+          }),
+        ]}
       />
       
       <Header />
