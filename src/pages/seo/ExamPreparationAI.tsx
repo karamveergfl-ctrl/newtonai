@@ -140,13 +140,7 @@ const ExamPreparationAI = () => {
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Frequently Asked Questions</h2>
             <div className="space-y-4">
-              {[
-                { q: "How far in advance should I start using NewtonAI for exam prep?", a: "Ideally, start 4-6 weeks before your exam. This gives enough time for spaced repetition to work effectively. However, even last-minute use for summary generation and quick quizzes can be beneficial." },
-                { q: "Can NewtonAI replace a tutor?", a: "NewtonAI is a powerful complement to tutoring. It excels at content processing, practice generation, and self-testing. For personalized guidance on study strategies or complex concepts, a tutor can still be valuable." },
-                { q: "Does it work for practical/lab-based exams?", a: "NewtonAI is most effective for theory-based exams. For practical exams, it can help you study the theoretical concepts, procedures, and safety protocols that are often tested alongside practical skills." },
-                { q: "How does spaced repetition work?", a: "Spaced repetition is a learning technique that schedules reviews at increasing intervals. NewtonAI's flashcard system uses this principle — cards you find easy are shown less frequently, while difficult cards appear more often." },
-                { q: "Can I study with friends on NewtonAI?", a: "Currently, NewtonAI is optimized for individual study. Group study features are planned for future updates. In the meantime, students often generate quizzes and test each other using the generated questions." }
-              ].map((faq) => (
+              {FAQS.map((faq) => (
                 <details key={faq.q} className="bg-card rounded-lg border border-border p-4 group">
                   <summary className="font-semibold text-foreground cursor-pointer list-none flex items-center justify-between">
                     {faq.q}
