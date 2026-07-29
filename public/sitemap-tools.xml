@@ -52,6 +52,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://newtonai.site/tools/latex-editor</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://newtonai.site/pdf-chat</loc>
     <lastmod>2026-02-16</lastmod>
     <changefreq>weekly</changefreq>
