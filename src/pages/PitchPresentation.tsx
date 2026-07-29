@@ -54,6 +54,8 @@ export default function PitchPresentation() {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@1,300;1,400&display=swap" rel="stylesheet" />
         <title>NewtonAI — The AI-Powered Classroom</title>
+        <meta name="robots" content="noindex, nofollow" />
+        <meta name="description" content="NewtonAI presentation deck — the AI-powered classroom for students and teachers." />
       </Helmet>
       <div
         className="fixed inset-0 overflow-hidden"
