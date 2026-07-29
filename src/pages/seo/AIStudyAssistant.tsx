@@ -29,8 +29,22 @@ const AIStudyAssistant = () => {
         canonicalPath="/ai-study-assistant"
         breadcrumbs={breadcrumbs}
         keywords="AI study assistant, AI tutor, study helper, AI for students, exam preparation tool, AI learning platform"
+        structuredData={[
+          buildWebPageSchema({
+            name: "AI Study Assistant for Students",
+            description: "Convert notes, PDFs and lectures into flashcards, quizzes, summaries and mind maps for faster exam preparation.",
+            path: "/ai-study-assistant",
+            primaryTopic: "AI study assistant",
+          }),
+          buildSoftwareAppSchema({
+            name: "NewtonAI Study Assistant",
+            description: "AI study assistant that turns any study material into summaries, quizzes, flashcards, mind maps and podcasts.",
+            path: "/ai-study-assistant",
+            featureList: ["Summaries", "Quizzes", "Flashcards", "Mind maps", "Homework help", "PDF chat"],
+          }),
+          buildFaqSchema(FAQS),
+        ]}
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <Header />
 
       <main className="flex-1">
