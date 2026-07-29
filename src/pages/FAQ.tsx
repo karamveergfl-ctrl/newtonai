@@ -1,11 +1,11 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { AdBanner } from "@/components/AdBanner";
+import { buildFaqSchema, buildWebPageSchema } from "@/lib/structuredData";
 
 
 const faqs = [
