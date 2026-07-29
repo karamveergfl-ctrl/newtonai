@@ -3,6 +3,15 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { buildFaqSchema, buildWebPageSchema, buildSoftwareAppSchema } from "@/lib/structuredData";
+
+const FAQS = [
+  { q: "What's the maximum PDF file size?", a: "NewtonAI supports PDF files up to 50MB. For larger documents, we recommend splitting them into chapters or sections for optimal processing." },
+  { q: "Can NewtonAI read scanned PDFs?", a: "Yes! NewtonAI includes OCR (Optical Character Recognition) technology that can extract text from scanned documents and images within PDFs." },
+  { q: "How accurate is the PDF Chat feature?", a: "The PDF Chat feature uses advanced AI to provide accurate answers based on your document content. It includes page citations so you can verify the information directly." },
+  { q: "Can I use the PDF tool for research papers?", a: "Absolutely. The PDF study tool is excellent for processing research papers. It can summarize findings, extract methodology details, and help you quickly assess a paper's relevance." },
+  { q: "Does it work with textbooks that have images and diagrams?", a: "Yes, NewtonAI processes the text content of PDFs including captions and descriptions. For diagram-heavy content, the AI can explain concepts referenced in the text." },
+];
 import { ArrowRight, FileText, CheckCircle, Sparkles, BookOpen, Brain } from "lucide-react";
 
 const PDFStudyTool = () => {
@@ -19,6 +28,21 @@ const PDFStudyTool = () => {
         canonicalPath="/pdf-study-tool"
         breadcrumbs={breadcrumbs}
         keywords="PDF study tool, AI PDF summarizer, chat with PDF, PDF to flashcards, PDF quiz generator, study from PDF, AI PDF reader"
+        structuredData={[
+          buildWebPageSchema({
+            name: "AI PDF Study Tool – Summarize & Chat with PDFs",
+            description: "Upload any PDF and use AI to summarize, create flashcards, generate quizzes and chat with your documents.",
+            path: "/pdf-study-tool",
+            primaryTopic: "AI PDF study tools",
+          }),
+          buildSoftwareAppSchema({
+            name: "NewtonAI PDF Study Tool",
+            description: "AI PDF reader that summarizes documents, answers questions with page citations and generates flashcards and quizzes.",
+            path: "/pdf-study-tool",
+            featureList: ["PDF summarization", "Chat with PDF", "PDF to flashcards", "PDF to quiz", "Scanned PDF OCR"],
+          }),
+          buildFaqSchema(FAQS),
+        ]}
       />
       <Header />
 
