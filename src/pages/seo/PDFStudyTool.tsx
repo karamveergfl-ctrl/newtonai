@@ -125,13 +125,7 @@ const PDFStudyTool = () => {
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Frequently Asked Questions</h2>
             <div className="space-y-4">
-              {[
-                { q: "What's the maximum PDF file size?", a: "NewtonAI supports PDF files up to 50MB. For larger documents, we recommend splitting them into chapters or sections for optimal processing." },
-                { q: "Can NewtonAI read scanned PDFs?", a: "Yes! NewtonAI includes OCR (Optical Character Recognition) technology that can extract text from scanned documents and images within PDFs." },
-                { q: "How accurate is the PDF Chat feature?", a: "The PDF Chat feature uses advanced AI to provide accurate answers based on your document content. It includes page citations so you can verify the information directly." },
-                { q: "Can I use the PDF tool for research papers?", a: "Absolutely. The PDF study tool is excellent for processing research papers. It can summarize findings, extract methodology details, and help you quickly assess a paper's relevance." },
-                { q: "Does it work with textbooks that have images and diagrams?", a: "Yes, NewtonAI processes the text content of PDFs including captions and descriptions. For diagram-heavy content, the AI can explain concepts referenced in the text." }
-              ].map((faq) => (
+              {FAQS.map((faq) => (
                 <details key={faq.q} className="bg-card rounded-lg border border-border p-4 group">
                   <summary className="font-semibold text-foreground cursor-pointer list-none flex items-center justify-between">
                     {faq.q}
