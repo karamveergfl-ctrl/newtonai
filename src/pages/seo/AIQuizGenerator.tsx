@@ -4,6 +4,15 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import { ArrowRight, CheckCircle, Sparkles, BookOpen } from "lucide-react";
+import { buildFaqSchema, buildWebPageSchema, buildSoftwareAppSchema } from "@/lib/structuredData";
+
+const FAQS = [
+  { q: "How many questions does the AI generate per quiz?", a: "By default, NewtonAI generates 10-15 questions per quiz, but you can customize this. The AI ensures questions cover all major topics in your uploaded material." },
+  { q: "Can I generate quizzes from YouTube videos?", a: "Yes! Paste a YouTube video URL and NewtonAI will transcribe the content and generate quiz questions based on the video material." },
+  { q: "Are the quiz questions unique each time?", a: "Yes, the AI generates different questions each time you create a quiz from the same material, so you can practice multiple times without memorizing answers." },
+  { q: "Can I share quizzes with classmates?", a: "Currently, quizzes are tied to your account. We're working on sharing features for collaborative study groups." },
+  { q: "Does the quiz generator work for competitive exams?", a: "Absolutely. Students use NewtonAI to prepare for competitive exams like JEE, NEET, UPSC, GRE, GMAT, and more. The AI generates exam-style questions from your preparation materials." },
+];
 
 const AIQuizGenerator = () => {
   const breadcrumbs = [
@@ -19,6 +28,21 @@ const AIQuizGenerator = () => {
         canonicalPath="/ai-quiz-generator"
         breadcrumbs={breadcrumbs}
         keywords="AI quiz generator, practice test maker, AI quiz maker, generate quiz from notes, exam practice questions, AI test generator, quiz from PDF"
+        structuredData={[
+          buildWebPageSchema({
+            name: "AI Quiz Generator – Instant Practice Tests",
+            description: "Generate practice quizzes and tests from any study material using AI, with instant grading and explanations.",
+            path: "/ai-quiz-generator",
+            primaryTopic: "AI quiz generation",
+          }),
+          buildSoftwareAppSchema({
+            name: "NewtonAI Quiz Generator",
+            description: "AI tool that turns notes, PDFs and videos into multiple choice, true/false and short answer practice quizzes.",
+            path: "/ai-quiz-generator",
+            featureList: ["Multiple choice questions", "True/false questions", "Short answer questions", "Instant grading", "Answer explanations"],
+          }),
+          buildFaqSchema(FAQS),
+        ]}
       />
       <Header />
 
@@ -100,13 +124,7 @@ const AIQuizGenerator = () => {
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Frequently Asked Questions</h2>
             <div className="space-y-4">
-              {[
-                { q: "How many questions does the AI generate per quiz?", a: "By default, NewtonAI generates 10-15 questions per quiz, but you can customize this. The AI ensures questions cover all major topics in your uploaded material." },
-                { q: "Can I generate quizzes from YouTube videos?", a: "Yes! Paste a YouTube video URL and NewtonAI will transcribe the content and generate quiz questions based on the video material." },
-                { q: "Are the quiz questions unique each time?", a: "Yes, the AI generates different questions each time you create a quiz from the same material, so you can practice multiple times without memorizing answers." },
-                { q: "Can I share quizzes with classmates?", a: "Currently, quizzes are tied to your account. We're working on sharing features for collaborative study groups." },
-                { q: "Does the quiz generator work for competitive exams?", a: "Absolutely. Students use NewtonAI to prepare for competitive exams like JEE, NEET, UPSC, GRE, GMAT, and more. The AI generates exam-style questions from your preparation materials." }
-              ].map((faq) => (
+              {FAQS.map((faq) => (
                 <details key={faq.q} className="bg-card rounded-lg border border-border p-4 group">
                   <summary className="font-semibold text-foreground cursor-pointer list-none flex items-center justify-between">
                     {faq.q}
