@@ -21,6 +21,7 @@ import { FullScreenStudyTool } from "@/components/FullScreenStudyTool";
 import { VisualMindMap } from "@/components/VisualMindMap";
 import { GamificationBadge } from "@/components/GamificationBadge";
 import { AppLayout } from "@/components/AppLayout";
+import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -316,6 +317,12 @@ const Index = () => {
 
     return (
       <>
+        <SEOHead
+          title="Study Dashboard"
+          description="Your NewtonAI study dashboard — upload notes and PDFs to generate summaries, quizzes, flashcards and mind maps."
+          canonicalPath="/dashboard"
+          noIndex
+        />
         {processingOverlay}
         <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
           <WelcomeModal onUploadClick={triggerUploadClick} onRecordClick={triggerRecordClick} />
@@ -362,6 +369,12 @@ const Index = () => {
 
   return (
     <>
+      <SEOHead
+        title="Study Workspace"
+        description="Read, chat and generate study tools from your uploaded material in the NewtonAI workspace."
+        canonicalPath="/dashboard"
+        noIndex
+      />
       {processingOverlay}
       <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
         <div className="flex-1 flex flex-col overflow-hidden min-h-0 bg-gradient-to-br from-background via-background to-primary/5">
