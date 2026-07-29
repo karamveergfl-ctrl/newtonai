@@ -149,14 +149,7 @@ const AIStudyAssistant = () => {
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Frequently Asked Questions</h2>
             <div className="space-y-4">
-              {[
-                { q: "What is an AI study assistant?", a: "An AI study assistant is a software tool that uses artificial intelligence to help students learn more effectively. It can summarize documents, generate quizzes, create flashcards, and provide step-by-step explanations for complex topics." },
-                { q: "Is NewtonAI free to use?", a: "Yes, NewtonAI offers a free tier that includes basic access to all study tools. Premium plans unlock higher usage limits and advanced features like AI podcasts and unlimited homework help." },
-                { q: "How does NewtonAI differ from ChatGPT?", a: "Unlike generic chatbots, NewtonAI is purpose-built for education. It includes specialized tools like flashcard generators, quiz makers, PDF summarizers, and mind map creators that are optimized for the student learning workflow." },
-                { q: "Can NewtonAI help with exam preparation?", a: "Absolutely. NewtonAI helps students prepare for exams by generating practice quizzes, creating flashcards for active recall, summarizing study materials, and providing step-by-step solutions to practice problems." },
-                { q: "What file formats does NewtonAI support?", a: "NewtonAI supports PDF documents, images (for OCR text extraction), DOCX files, and YouTube video URLs. You can upload any of these formats and the AI will process them into study materials." },
-                { q: "Is my data safe with NewtonAI?", a: "Yes. NewtonAI takes data privacy seriously. Your uploaded documents are processed securely and are only accessible to your account. We do not share your study materials with third parties." }
-              ].map((faq) => (
+              {FAQS.map((faq) => (
                 <details key={faq.q} className="bg-card rounded-lg border border-border p-4 group">
                   <summary className="font-semibold text-foreground cursor-pointer list-none flex items-center justify-between">
                     {faq.q}
