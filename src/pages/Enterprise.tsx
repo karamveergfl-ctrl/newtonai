@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 
 
@@ -108,6 +109,13 @@ const Enterprise = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Enterprise AI Learning for Teams"
+        description="Bring NewtonAI to your school, university or company. Enterprise AI study tools with admin controls, analytics, SSO and priority support."
+        canonicalPath="/enterprise"
+        keywords="enterprise AI learning, AI for schools, university AI study platform, corporate training AI"
+        breadcrumbs={[{ name: "Home", href: "/" }, { name: "Enterprise", href: "/enterprise" }]}
+      />
       <Header />
 
       <main className="container mx-auto px-4 py-16">
