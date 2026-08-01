@@ -1,0 +1,272 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Building2, Loader2, Monitor, Plus, Search } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import type { SbBoard, SbInstitution } from "@/hooks/useSmartboardAdmin";
+
+export default function AdminSmartBoards() {
+  const [institutions, setInstitutions] = useState<SbInstitution[]>([]);
+  const [boards, setBoards] = useState<SbBoard[]>([]);
+  const [usageCount, setUsageCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    city: "",
+    state: "",
+    contact_name: "",
+    contact_email: "",
+    contact_phone: "",
+    max_smartboards: 5,
+  });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [instRes, boardRes, usageRes] = await Promise.all([
+      supabase.from("sb_institutions").select("*").order("created_at", { ascending: false }),
+      supabase.from("sb_boards").select("*"),
+      supabase.from("sb_board_usage").select("id", { count: "exact", head: true }),
+    ]);
+    setInstitutions((instRes.data as SbInstitution[]) ?? []);
+    setBoards((boardRes.data as SbBoard[]) ?? []);
+    setUsageCount(usageRes.count ?? 0);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const filtered = useMemo(
+    () =>
+      institutions.filter((i) =>
+        [i.name, i.city, i.contact_email].filter(Boolean).join(" ").toLowerCase().includes(query.toLowerCase()),
+      ),
+    [institutions, query],
+  );
+
+  const createSchool = async () => {
+    if (!form.name.trim() || !form.contact_email.trim()) return;
+    setSaving(true);
+    const { error } = await supabase.from("sb_institutions").insert({
+      name: form.name.trim(),
+      city: form.city.trim() || null,
+      state: form.state.trim() || null,
+      contact_name: form.contact_name.trim() || null,
+      contact_email: form.contact_email.trim(),
+      contact_phone: form.contact_phone.trim() || null,
+      max_smartboards: Number(form.max_smartboards) || 1,
+    });
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("SmartBoard school created.");
+    setOpen(false);
+    setForm({ name: "", city: "", state: "", contact_name: "", contact_email: "", contact_phone: "", max_smartboards: 5 });
+    void load();
+  };
+
+  const toggleActive = async (inst: SbInstitution) => {
+    const { error } = await supabase.from("sb_institutions").update({ is_active: !inst.is_active }).eq("id", inst.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    void load();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 p-5">
+      <SEOHead
+        title="SmartBoard Administration"
+        description="Manage NewtonAI SmartBoard schools, boards and usage."
+        canonicalPath="/admin/smartboards"
+        noIndex
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">SmartBoard Plan</h1>
+          <p className="text-sm text-muted-foreground">Schools subscribed to the classroom video SmartBoard tier</p>
+        </div>
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add school
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {[
+          { label: "Schools", value: institutions.length, icon: Building2 },
+          { label: "Boards", value: boards.length, icon: Monitor },
+          { label: "Logged searches", value: usageCount, icon: Search },
+        ].map((s) => (
+          <Card key={s.label}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{s.label}</CardTitle>
+              <s.icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search schools by name, city or email"
+        aria-label="Search SmartBoard schools"
+        className="max-w-sm"
+      />
+
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>School</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Boards</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                    No SmartBoard schools yet.
+                  </TableCell>
+                </TableRow>
+              )}
+              {filtered.map((inst) => {
+                const count = boards.filter((b) => b.institution_id === inst.id).length;
+                return (
+                  <TableRow key={inst.id}>
+                    <TableCell className="font-medium">
+                      {inst.name}
+                      <span className="block text-xs text-muted-foreground">
+                        {[inst.city, inst.state].filter(Boolean).join(", ")}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {inst.contact_name ?? "—"}
+                      <span className="block text-xs text-muted-foreground">{inst.contact_email}</span>
+                    </TableCell>
+                    <TableCell>
+                      {count}/{inst.max_smartboards}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={inst.is_active ? "default" : "secondary"}>
+                        {inst.is_active ? "Active" : "Suspended"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="outline" onClick={() => toggleActive(inst)}>
+                        {inst.is_active ? "Suspend" : "Reactivate"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Add SmartBoard school</DialogTitle>
+            <DialogDescription>Create a school account for the SmartBoard plan.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2 space-y-2">
+              <Label htmlFor="sb-name">School name</Label>
+              <Input id="sb-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sb-city">City</Label>
+              <Input id="sb-city" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sb-state">State</Label>
+              <Input id="sb-state" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sb-contact">Contact name</Label>
+              <Input
+                id="sb-contact"
+                value={form.contact_name}
+                onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sb-phone">Contact phone</Label>
+              <Input
+                id="sb-phone"
+                value={form.contact_phone}
+                onChange={(e) => setForm({ ...form, contact_phone: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sb-email">Contact email</Label>
+              <Input
+                id="sb-email"
+                type="email"
+                value={form.contact_email}
+                onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sb-max">Max boards</Label>
+              <Input
+                id="sb-max"
+                type="number"
+                min={1}
+                value={form.max_smartboards}
+                onChange={(e) => setForm({ ...form, max_smartboards: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={createSchool} disabled={saving || !form.name.trim() || !form.contact_email.trim()}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />} Create school
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

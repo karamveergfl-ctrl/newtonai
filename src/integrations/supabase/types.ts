@@ -1844,6 +1844,199 @@ export type Database = {
           },
         ]
       }
+      sb_board_usage: {
+        Row: {
+          action: string
+          board_id: string
+          created_at: string
+          id: string
+          institution_id: string
+          search_query: string
+          session_date: string
+          video_channel: string | null
+          video_id: string | null
+          video_title: string | null
+        }
+        Insert: {
+          action?: string
+          board_id: string
+          created_at?: string
+          id?: string
+          institution_id: string
+          search_query: string
+          session_date?: string
+          video_channel?: string | null
+          video_id?: string | null
+          video_title?: string | null
+        }
+        Update: {
+          action?: string
+          board_id?: string
+          created_at?: string
+          id?: string
+          institution_id?: string
+          search_query?: string
+          session_date?: string
+          video_channel?: string | null
+          video_id?: string | null
+          video_title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sb_board_usage_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "sb_boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sb_board_usage_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "sb_institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sb_boards: {
+        Row: {
+          activated_at: string | null
+          activation_code: string
+          board_name: string
+          created_at: string
+          device_token_hash: string | null
+          grade_level: string | null
+          id: string
+          institution_id: string
+          is_active: boolean
+          last_active_at: string | null
+          subject_focus: string | null
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activation_code: string
+          board_name: string
+          created_at?: string
+          device_token_hash?: string | null
+          grade_level?: string | null
+          id?: string
+          institution_id: string
+          is_active?: boolean
+          last_active_at?: string | null
+          subject_focus?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          activation_code?: string
+          board_name?: string
+          created_at?: string
+          device_token_hash?: string | null
+          grade_level?: string | null
+          id?: string
+          institution_id?: string
+          is_active?: boolean
+          last_active_at?: string | null
+          subject_focus?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sb_boards_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "sb_institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sb_institution_admins: {
+        Row: {
+          created_at: string
+          id: string
+          institution_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sb_institution_admins_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "sb_institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sb_institutions: {
+        Row: {
+          city: string | null
+          contact_email: string
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_smartboards: number
+          name: string
+          notes: string | null
+          plan: string
+          state: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          contact_email: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_smartboards?: number
+          name: string
+          notes?: string | null
+          plan?: string
+          state?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          contact_email?: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_smartboards?: number
+          name?: string
+          notes?: string | null
+          plan?: string
+          state?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       search_history: {
         Row: {
           created_at: string
@@ -2756,6 +2949,10 @@ export type Database = {
         Args: { inst_id: string; uid: string }
         Returns: boolean
       }
+      is_sb_admin: {
+        Args: { _institution_id: string; _user_id: string }
+        Returns: boolean
+      }
       join_class_by_code: { Args: { p_code: string }; Returns: Json }
       log_institution_audit: {
         Args: {
@@ -2790,6 +2987,21 @@ export type Database = {
         Args: { p_student_report_id: string; p_videos: Json }
         Returns: undefined
       }
+      sb_admin_institution: { Args: { _user_id: string }; Returns: string }
+      sb_create_board: {
+        Args: {
+          p_board_name: string
+          p_grade_level?: string
+          p_institution_id: string
+          p_subject_focus?: string
+        }
+        Returns: Json
+      }
+      sb_generate_activation_code: {
+        Args: { _board_name: string; _institution_name: string }
+        Returns: string
+      }
+      sb_reissue_board_code: { Args: { p_board_id: string }; Returns: Json }
       search_document_chunks: {
         Args: {
           p_document_id: string

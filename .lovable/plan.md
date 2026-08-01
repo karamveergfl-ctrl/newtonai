@@ -1,46 +1,69 @@
-# AMUIF Pitch Deck — NewtonAI (.pptx)
+# SmartBoard Plan for NewtonAI
 
-Deliverable: a single downloadable PowerPoint file, `NewtonAI_AMUIF_Pitch_Deck.pptx`, saved to the documents area. No changes to the web app.
+A separate product tier for schools: each classroom board is activated once, then opens straight into a teaching screen with document display and instant animation-video lookup. Nothing else from NewtonAI is reachable from those screens.
 
-## Design system
+## Decisions locked in
 
-- 16:9 (13.33in x 7.5in), all slides presentation-ready.
-- Palette: Deep Navy `0B1533` (dominant), Electric Blue `2F6BFF`, Gold accent `E8B64C`, White `FFFFFF`, Slate `94A3B8`.
-- Sandwich structure: dark navy title/section/closing slides, light slides for dense content, gold used only for emphasis (NewtonAI row in competition, key numbers).
-- Glassmorphism-style cards: translucent panels, soft borders, rounded corners — repeated as the single visual motif across all slides.
-- Typography: Georgia headings / Calibri body. Titles 40-48pt, section headers 28-32pt, body 18-22pt, stat callouts 72-100pt.
-- Founder avatars: gold-ringed monogram circles (KS, SM, ZM) — no photos.
-- Every slide carries a visual: icon rows, charts, comparison tables, timeline, canvas grids. No plain title+bullets slides.
+- Fully separate tables (`sb_*`) — the existing institution/department/course system is untouched.
+- Standalone school portal at `/smartboard-admin/*` — existing `/institution/*` portal untouched.
+- Super admin uses the existing `admin` role and `AdminRoute`.
+- **No PIN, no password on the board.** One-time activation, then the board never asks again.
 
-## Slide sequence (mirrors the AMUIF template)
+## How the board login works (revised)
 
-1. Team Profile — 3 monogram cards with role, age, degree, responsibilities + incorporation timeline strip (23 Apr 2026) + mission/vision.
-2. Elevator Pitch — one bold statement plus three columns (Teachers / Students / Institutions).
-3. Company Introduction — company facts, mission, vision, traction stats (500+ trial sign-ups, working MVP, Pvt Ltd, AMUIF incubated), pilot milestone.
-4. Problem Statement — fragmented-tools infographic (7 disconnected tool chips converging), three problem columns, validation note from 7 private-school principal interviews.
-5. Customer — segments grid + validation panel (7 principals, 500+ students, upcoming pilots).
-6. Customer Persona — 5 premium persona cards (Teacher, Student, Principal, Dean, Institution Owner) with goals, challenges, workflow, how NewtonAI helps.
-7. Value Proposition Canvas — two-panel canvas: Customer Jobs / Pains / Gains vs Products / Pain Relievers / Gain Creators.
-8. Value Proposition — "9 tools → 1 platform" before/after comparison graphic.
-9. Business Model — India B2B ₹500/student/month vs Global B2C $10/month, bold headings, plus five revenue streams.
-10. Lean Canvas — full 9-block canvas grid.
-11. Prototype — screenshot placeholders for Website, Student Dashboard, Teacher Dashboard, Live Classroom, AI Chat, Smart Board (clearly marked so you can drop real screenshots in, or I capture them from the live app if you want).
-12. Competition Analysis — feature/price matrix vs Google Classroom, Teachmint, Canvas LMS, Moodle, Classplus; NewtonAI column highlighted in gold.
-13. Technology Readiness — TRL 6 gauge, MVP/cloud/AI/users readiness cards.
-14. Financial Projection — 12-month revenue growth chart to ₹25,00,000/month (₹3 Cr annual, 15 institutions / 5000 students), break-even marker, acquisition funnel.
-15. Funding Plan — ₹5,00,000 required, ₹1,20,000 founder-invested; premium pie chart with the 35/30/20/10/5 allocation and rupee amounts labelled.
-16. Go-To-Market — channel map: direct B2B, founder-led demos, pilots, exhibitions, referrals, SEO/LinkedIn/Instagram/YouTube, email, campus ambassadors.
-17. Team Commitment — responsibility matrix for the three founders + full-time-after-graduation commitment.
-18. Investability — ₹7 Cr valuation, ₹5 Lakh ask, ₹1.2 L founder investment, cap table (Karamveer 90% / Zaid 10%), exit-by-acquisition logos/list.
-19. Future Roadmap — 2026→2030 timeline (Pilot Schools → 100 Schools → 500 Institutions → India → Global).
-20. Thank You — dark navy AI-classroom hero, wordmark, www.newtonai.site, "Teach Better. Learn Smarter. Achieve More."
+1. School admin creates a board and gets a one-time **Activation Code** (e.g. `DPS-6A-X9F2`).
+2. The teacher enters it once on `/smartboard/activate`. A server function validates it, marks it used, and returns a long-lived random **device token** stored in localStorage.
+3. From then on, opening the app on that board goes straight to the classroom home — no login screen, no session expiry.
+4. Every board request sends the device token; the server resolves the board and logs usage. Admin can revoke or re-issue a board at any time, which instantly kills that token.
 
-## Technical notes
+No credential is ever readable by the client, and there is no shared PIN that can leak to students.
 
-- Built with `pptxgenjs`; charts are native PowerPoint charts so they stay editable.
-- All template placeholder/instruction text is dropped entirely.
-- QA loop before delivery: schema validation, text extraction check, then render every slide to an image and inspect each one for overflow, overlap, contrast and spacing issues; fix and re-render until clean.
+## Classroom experience (`/smartboard/classroom`)
 
-## Open item
+Optimised for 1920×1080 projectors and 65–85" touch panels: min 16px text, 64px tap targets, high contrast, no icon-only buttons.
 
-Slide 18 cap table is Karamveer 90% / Zaid 10% as given, with Saif Malik listed on the team but not the cap table. I'll build it exactly that way — tell me if Saif should hold equity and I'll adjust in one edit.
+- **Top bar:** logo, board name, school name, live clock, ACTIVE badge.
+- **Teach area (default view):** drag-and-drop or tap to upload a PDF/PPTX/DOCX/image and display it full-screen with page navigation and zoom. Reuses the project's existing extraction functions; document stays local to the board.
+- **Select text → videos:** highlighting any text in the document pops a floating "Find animation videos" button; tapping it shows the **top 5** animation videos for that topic in a side panel, each playable instantly.
+- **Manual search:** always-visible search bar plus quick topic chips grouped by Science, Maths, Physics, Chemistry, History, Geography. Chips search on tap.
+- **Video player:** full-screen overlay, YouTube iframe, large title, Fullscreen / Close buttons, keyboard shortcuts (Space, Esc, F, ←/→), "Up Next" strip of the other results.
+- **Idle screen:** after 5 minutes, a branded screensaver with a large clock; any tap or key dismisses it.
+- **States:** shimmer skeletons while searching, clear large empty state with alternative topic chips, and a friendly "Video search is temporarily unavailable — Retry" panel if the quota is exhausted. Never crashes.
+
+## School admin portal (`/smartboard-admin`)
+
+Email + password login, then a sidebar app:
+
+- **Overview:** boards used vs allowed with progress bar, boards active today, searches this month, top topic, and a live activity feed.
+- **My SmartBoards:** table of Board Name, Activation Code / status, Last Active, Actions (rename, activate/deactivate, re-issue code, delete with confirmation). "Add SmartBoard" modal enforces the school's board limit and finishes with a copyable credential screen plus **Download PDF** (A5 landscape credential card via jsPDF, already installed).
+- **Usage Reports:** date-range picker, bar chart of daily searches, pie chart of top topics, line chart per board (Recharts, already installed), full sortable/filterable log table, CSV export.
+- **Settings:** editable school details, read-only plan info, password change.
+
+## NewtonAI super admin (`/admin/smartboards`)
+
+Behind the existing `AdminRoute`. Global stats, searchable institution table, "Add Institution" modal (creates the school, its admin auth user, and emails the invite), and a detail view with all boards, full usage history, board limit, plan expiry, deactivate/delete, and re-issue code.
+
+## Technical details
+
+**Migration** (`sb_` prefix, all with GRANTs then RLS then policies):
+- `sb_institutions` — name, type, city, state, contact name/email/phone, plan, max_smartboards, is_active, expires_at, notes.
+- `sb_boards` — institution_id, board_name, grade_level, subject_focus, activation_code (unique), activation_code_used_at, device_token_hash, is_active, last_active_at.
+- `sb_board_usage` — board_id, institution_id, search_query, video_id/title/channel, action (`search` | `play` | `select_text`), session_date.
+- `sb_institution_admins` — institution_id, user_id, role, unique pair.
+- Policies: school admins read/manage only their own rows via a `SECURITY DEFINER` membership helper (avoids recursion); app admins get full access via `has_role(auth.uid(),'admin')`; boards themselves have **no** direct client access — all board reads/writes go through edge functions with the service role. `anon` gets no grants.
+- Helper functions for activation-code generation.
+
+**Edge functions:**
+- `smartboard-activate` — validates a code, issues and stores the hashed device token.
+- `smartboard-session` — resolves a device token to board + school, checks `is_active` and `expires_at`, bumps `last_active_at`.
+- `smartboard-video-search` — token-gated; reuses the project's existing `youtube_search_cache` table and multi-key fallback so this tier doesn't blow the YouTube quota; returns 5 results for select-text lookups, 12 for manual search, with duration and view count; logs usage server-side.
+
+**Frontend:** new pages `SmartBoardActivate`, `SmartBoardClassroom`, `SmartBoardAdminLogin`, `SmartBoardAdminDashboard` (+ Boards/Reports/Settings), `AdminSmartboardPanel`; components under `src/components/smartboard/` and `src/components/institution-sb/`; guards `SmartBoardRoute` (device token) and `SmartBoardAdminRoute` (auth + membership). Routes added lazily in `App.tsx`. The main app chrome is suppressed for any path starting with `/smartboard`.
+
+**Onboarding:** a third teal "SmartBoard Login" card is added to the role-selection screen in `src/pages/Onboarding.tsx` and a matching link on `src/pages/Auth.tsx`, routing to `/smartboard/activate`. The Teacher and Student cards and their flows are not modified.
+
+**YouTube key:** the project already has `YOUTUBE_API_KEY` (plus fallback keys) in edge-function secrets, so no new secret is needed.
+
+## Verification
+
+Activate a board with a code and confirm the second visit skips activation; upload a document, select text, and confirm 5 videos appear and play; confirm no NewtonAI navigation or tools are reachable from `/smartboard/*`; create/deactivate a board from the school portal and confirm the board's token stops working; confirm teacher and student flows are unchanged.
