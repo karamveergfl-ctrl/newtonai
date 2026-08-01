@@ -1,69 +1,41 @@
-# SmartBoard Plan for NewtonAI
+## Goal
 
-A separate product tier for schools: each classroom board is activated once, then opens straight into a teaching screen with document display and instant animation-video lookup. Nothing else from NewtonAI is reachable from those screens.
+Let SmartBoard classrooms open DOCX and PPTX files (not just PDF/images), keeping select-text → find-video working, without requiring a user login on the board.
 
-## Decisions locked in
+## Why it doesn't work today
 
-- Fully separate tables (`sb_*`) — the existing institution/department/course system is untouched.
-- Standalone school portal at `/smartboard-admin/*` — existing `/institution/*` portal untouched.
-- Super admin uses the existing `admin` role and `AdminRoute`.
-- **No PIN, no password on the board.** One-time activation, then the board never asks again.
+The existing `extract-docx-text` and `extract-pptx-text` edge functions require an `Authorization` header and call `auth.getUser()`. A SmartBoard has no Supabase user — it authenticates with a device token issued at activation — so those calls would fail. `DocumentStage` therefore rejects anything that isn't a PDF or image.
 
-## How the board login works (revised)
+## Plan
 
-1. School admin creates a board and gets a one-time **Activation Code** (e.g. `DPS-6A-X9F2`).
-2. The teacher enters it once on `/smartboard/activate`. A server function validates it, marks it used, and returns a long-lived random **device token** stored in localStorage.
-3. From then on, opening the app on that board goes straight to the classroom home — no login screen, no session expiry.
-4. Every board request sends the device token; the server resolves the board and logs usage. Admin can revoke or re-issue a board at any time, which instantly kills that token.
+### 1. Shared Office text extraction module
+Create `supabase/functions/_shared/office-extract.ts` containing the JSZip-based parsers already proven in the two existing functions:
+- `extractDocxSections(bytes)` → array of `{ heading, text }` blocks derived from `word/document.xml` paragraphs.
+- `extractPptxSlides(bytes)` → array of `{ slideNumber, title, lines }` from `ppt/slides/slideN.xml`.
 
-No credential is ever readable by the client, and there is no shared PIN that can leak to students.
+The existing user-facing functions stay untouched (no regression risk).
 
-## Classroom experience (`/smartboard/classroom`)
+### 2. New device-token-gated edge function
+`supabase/functions/smartboard-extract-document/index.ts`:
+- Accepts `POST { deviceToken, fileName, fileBase64 }`.
+- Resolves the board through the existing `resolveBoard()` helper in `_shared/smartboard-auth.ts` (same gate used by search/log-play), returning the same structured error codes for inactive board / inactive school / expired plan.
+- Rejects payloads over ~15 MB of base64 and any extension other than `.docx` / `.pptx`.
+- Returns `{ kind: "docx" | "pptx", pages: [{ title, blocks: string[] }] }`.
+- Nothing is written to storage or the database; extraction is in-memory and stateless. Optionally logs a `document_open` row in `sb_board_usage` for the school's usage report.
 
-Optimised for 1920×1080 projectors and 65–85" touch panels: min 16px text, 64px tap targets, high contrast, no icon-only buttons.
+### 3. Frontend wiring
+- `src/lib/smartboardSession.ts`: add `extractBoardDocument(deviceToken, file)` that base64-encodes the file and calls the new function, returning the same `{ data, message, errorCode }` shape used by the other SmartBoard API wrappers.
+- `src/components/smartboard/DocumentStage.tsx`:
+  - Widen the accepted types to `.pdf`, images, `.docx`, `.pptx`; keep 50 MB for PDF/images and cap Office files at 15 MB with a clear message.
+  - Add an `extracting` state showing "Reading your document…".
+  - New `kind: "text"` render mode: large, high-contrast, selectable typography on the dark slate stage — slide/section title as a heading, body blocks as paragraphs — with the same Prev/Next paging (one slide or section per page) and zoom controls that PDFs use.
+  - Text selection and the existing "Find animation videos" bar work unchanged, since it reads `window.getSelection()`.
+  - On extraction failure, show the server message plus a fallback hint to export the file as PDF.
 
-- **Top bar:** logo, board name, school name, live clock, ACTIVE badge.
-- **Teach area (default view):** drag-and-drop or tap to upload a PDF/PPTX/DOCX/image and display it full-screen with page navigation and zoom. Reuses the project's existing extraction functions; document stays local to the board.
-- **Select text → videos:** highlighting any text in the document pops a floating "Find animation videos" button; tapping it shows the **top 5** animation videos for that topic in a side panel, each playable instantly.
-- **Manual search:** always-visible search bar plus quick topic chips grouped by Science, Maths, Physics, Chemistry, History, Geography. Chips search on tap.
-- **Video player:** full-screen overlay, YouTube iframe, large title, Fullscreen / Close buttons, keyboard shortcuts (Space, Esc, F, ←/→), "Up Next" strip of the other results.
-- **Idle screen:** after 5 minutes, a branded screensaver with a large clock; any tap or key dismisses it.
-- **States:** shimmer skeletons while searching, clear large empty state with alternative topic chips, and a friendly "Video search is temporarily unavailable — Retry" panel if the quota is exhausted. Never crashes.
+### 4. Verify
+- Typecheck.
+- Call the new function through the edge-function tester with an invalid token (expect 401) and with a small real `.pptx` payload (expect parsed slides).
 
-## School admin portal (`/smartboard-admin`)
-
-Email + password login, then a sidebar app:
-
-- **Overview:** boards used vs allowed with progress bar, boards active today, searches this month, top topic, and a live activity feed.
-- **My SmartBoards:** table of Board Name, Activation Code / status, Last Active, Actions (rename, activate/deactivate, re-issue code, delete with confirmation). "Add SmartBoard" modal enforces the school's board limit and finishes with a copyable credential screen plus **Download PDF** (A5 landscape credential card via jsPDF, already installed).
-- **Usage Reports:** date-range picker, bar chart of daily searches, pie chart of top topics, line chart per board (Recharts, already installed), full sortable/filterable log table, CSV export.
-- **Settings:** editable school details, read-only plan info, password change.
-
-## NewtonAI super admin (`/admin/smartboards`)
-
-Behind the existing `AdminRoute`. Global stats, searchable institution table, "Add Institution" modal (creates the school, its admin auth user, and emails the invite), and a detail view with all boards, full usage history, board limit, plan expiry, deactivate/delete, and re-issue code.
-
-## Technical details
-
-**Migration** (`sb_` prefix, all with GRANTs then RLS then policies):
-- `sb_institutions` — name, type, city, state, contact name/email/phone, plan, max_smartboards, is_active, expires_at, notes.
-- `sb_boards` — institution_id, board_name, grade_level, subject_focus, activation_code (unique), activation_code_used_at, device_token_hash, is_active, last_active_at.
-- `sb_board_usage` — board_id, institution_id, search_query, video_id/title/channel, action (`search` | `play` | `select_text`), session_date.
-- `sb_institution_admins` — institution_id, user_id, role, unique pair.
-- Policies: school admins read/manage only their own rows via a `SECURITY DEFINER` membership helper (avoids recursion); app admins get full access via `has_role(auth.uid(),'admin')`; boards themselves have **no** direct client access — all board reads/writes go through edge functions with the service role. `anon` gets no grants.
-- Helper functions for activation-code generation.
-
-**Edge functions:**
-- `smartboard-activate` — validates a code, issues and stores the hashed device token.
-- `smartboard-session` — resolves a device token to board + school, checks `is_active` and `expires_at`, bumps `last_active_at`.
-- `smartboard-video-search` — token-gated; reuses the project's existing `youtube_search_cache` table and multi-key fallback so this tier doesn't blow the YouTube quota; returns 5 results for select-text lookups, 12 for manual search, with duration and view count; logs usage server-side.
-
-**Frontend:** new pages `SmartBoardActivate`, `SmartBoardClassroom`, `SmartBoardAdminLogin`, `SmartBoardAdminDashboard` (+ Boards/Reports/Settings), `AdminSmartboardPanel`; components under `src/components/smartboard/` and `src/components/institution-sb/`; guards `SmartBoardRoute` (device token) and `SmartBoardAdminRoute` (auth + membership). Routes added lazily in `App.tsx`. The main app chrome is suppressed for any path starting with `/smartboard`.
-
-**Onboarding:** a third teal "SmartBoard Login" card is added to the role-selection screen in `src/pages/Onboarding.tsx` and a matching link on `src/pages/Auth.tsx`, routing to `/smartboard/activate`. The Teacher and Student cards and their flows are not modified.
-
-**YouTube key:** the project already has `YOUTUBE_API_KEY` (plus fallback keys) in edge-function secrets, so no new secret is needed.
-
-## Verification
-
-Activate a board with a code and confirm the second visit skips activation; upload a document, select text, and confirm 5 videos appear and play; confirm no NewtonAI navigation or tools are reachable from `/smartboard/*`; create/deactivate a board from the school portal and confirm the board's token stops working; confirm teacher and student flows are unchanged.
+## Technical notes
+- Deliberately text-only for Office files: rendering true DOCX/PPTX layout in the browser needs a converter service; extracted text is what the video-search feature actually consumes, and it renders far better on a large classroom display.
+- No schema change is required; if the usage log entry is included it reuses the existing `sb_board_usage` table via the service role, consistent with the other SmartBoard functions.
