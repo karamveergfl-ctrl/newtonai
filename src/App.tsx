@@ -98,6 +98,15 @@ const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
 const AdminUsers = lazy(() => import("./pages/admin/Users"));
 const AdminInquiries = lazy(() => import("./pages/admin/Inquiries"));
 const AdminRedeemCodes = lazy(() => import("./pages/admin/RedeemCodes"));
+const AdminSmartBoards = lazy(() => import("./pages/admin/SmartBoards"));
+
+// SmartBoard Plan
+const SmartBoardRoute = lazy(() => import("./components/routes/SmartBoardRoute").then(m => ({ default: m.SmartBoardRoute })));
+const SmartBoardAdminRoute = lazy(() => import("./components/routes/SmartBoardAdminRoute").then(m => ({ default: m.SmartBoardAdminRoute })));
+const SmartBoardActivate = lazy(() => import("./pages/smartboard/SmartBoardActivate"));
+const SmartBoardClassroom = lazy(() => import("./pages/smartboard/SmartBoardClassroom"));
+const SmartBoardAdminLogin = lazy(() => import("./pages/smartboard-admin/SmartBoardAdminLogin"));
+const SmartBoardAdminDashboard = lazy(() => import("./pages/smartboard-admin/SmartBoardAdminDashboard"));
 const PitchDeck = lazy(() => import("./pages/PitchDeck"));
 const PitchPresentation = lazy(() => import("./pages/PitchPresentation"));
 const InvestorPitchDeck = lazy(() => import("./pages/InvestorPitchDeck"));
@@ -286,6 +295,15 @@ function AnimatedRoutes() {
         <Route path="/admin/users" element={<PageTransition><AdminRoute><AdminUsers /></AdminRoute></PageTransition>} />
         <Route path="/admin/inquiries" element={<PageTransition><AdminRoute><AdminInquiries /></AdminRoute></PageTransition>} />
         <Route path="/admin/redeem-codes" element={<PageTransition><AdminRoute><AdminRedeemCodes /></AdminRoute></PageTransition>} />
+        <Route path="/admin/smartboards" element={<PageTransition><AdminRoute><AdminSmartBoards /></AdminRoute></PageTransition>} />
+
+        {/* SmartBoard Plan */}
+        <Route path="/smartboard" element={<SmartBoardActivate />} />
+        <Route path="/smartboard/activate" element={<SmartBoardActivate />} />
+        <Route path="/smartboard/classroom" element={<SmartBoardRoute><SmartBoardClassroom /></SmartBoardRoute>} />
+        <Route path="/smartboard-admin" element={<SmartBoardAdminLogin />} />
+        <Route path="/smartboard-admin/login" element={<SmartBoardAdminLogin />} />
+        <Route path="/smartboard-admin/dashboard" element={<SmartBoardAdminRoute><SmartBoardAdminDashboard /></SmartBoardAdminRoute>} />
         
         {/* Pitch Deck */}
         <Route path="/pitch-deck" element={<InvestorPitchDeck />} />

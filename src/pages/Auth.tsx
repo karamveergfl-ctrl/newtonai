@@ -804,6 +804,13 @@ const Auth = () => {
               </a>
             </motion.p>
           )}
+
+          <p className="mt-6 text-xs text-muted-foreground">
+            Setting up a classroom SmartBoard?{" "}
+            <a href="/smartboard/activate" className="text-primary hover:underline">
+              Activate a SmartBoard
+            </a>
+          </p>
         </div>
       </motion.div>
       </div>
