@@ -112,3 +112,36 @@ export function logBoardPlay(
 ) {
   return invoke<{ success: boolean }>("smartboard-log-play", { deviceToken, ...payload });
 }
+
+export interface ExtractedDocPage {
+  title: string;
+  blocks: string[];
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",").pop() ?? "");
+    reader.onerror = () => reject(new Error("Could not read this file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+/** Sends a .docx/.pptx to the board-authenticated extractor and returns page-like text blocks. */
+export async function extractBoardDocument(
+  deviceToken: string,
+  file: File,
+): Promise<InvokeResult<{ kind: "docx" | "pptx"; pages: ExtractedDocPage[] }>> {
+  let fileBase64: string;
+  try {
+    fileBase64 = await fileToBase64(file);
+  } catch (e) {
+    return { data: null, message: e instanceof Error ? e.message : "Could not read this file.", errorCode: "read_failed" };
+  }
+
+  return invoke<{ kind: "docx" | "pptx"; pages: ExtractedDocPage[] }>("smartboard-extract-document", {
+    deviceToken,
+    fileName: file.name,
+    fileBase64,
+  });
+}
