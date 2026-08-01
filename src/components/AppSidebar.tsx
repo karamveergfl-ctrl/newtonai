@@ -73,6 +73,7 @@ const adminTools = [
   { id: "users", label: "Users", icon: Users, path: "/admin/users" },
   { id: "inquiries", label: "Inquiries", icon: MessageSquare, path: "/admin/inquiries" },
   { id: "redeem-codes", label: "Redeem Codes", icon: Gift, path: "/admin/redeem-codes" },
+  { id: "smartboards", label: "SmartBoards", icon: Monitor, path: "/admin/smartboards" },
 ];
 
 
