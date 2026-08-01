@@ -41,6 +41,7 @@ import {
   MessageSquare,
   Shield,
   Gift,
+  Monitor,
   MessageSquareText,
   Grid3X3,
   TrendingUp,
