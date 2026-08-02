@@ -3001,6 +3001,14 @@ export type Database = {
         Args: { _board_name: string; _institution_name: string }
         Returns: string
       }
+      sb_link_institution_admin: {
+        Args: { p_email: string; p_institution_id: string }
+        Returns: Json
+      }
+      sb_list_institution_admins: {
+        Args: { p_institution_id: string }
+        Returns: Json
+      }
       sb_reissue_board_code: { Args: { p_board_id: string }; Returns: Json }
       search_document_chunks: {
         Args: {
