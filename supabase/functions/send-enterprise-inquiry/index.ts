@@ -1,6 +1,14 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Sender address: uses the verified domain from RESEND_FROM_EMAIL when configured,
+// otherwise falls back to Resend's test sender (only delivers to the account owner).
+const FROM_ADDRESS = (label: string): string => {
+  const addr = Deno.env.get("RESEND_FROM_EMAIL")?.trim();
+  return addr ? `${label} <${addr}>` : `${label} <onboarding@resend.dev>`;
+};
+
+
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const escapeHtml = (s: string): string =>
@@ -140,7 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "NewtonAI Enterprise <onboarding@resend.dev>",
+        from: FROM_ADDRESS("NewtonAI Enterprise"),
         to: ["support@newtonAI.site"],
         subject: `Enterprise Inquiry: ${data.company} - ${data.teamSize} users`,
         html: `
@@ -176,7 +184,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "NewtonAI Enterprise <onboarding@resend.dev>",
+        from: FROM_ADDRESS("NewtonAI Enterprise"),
         to: [data.email],
         subject: "Thank you for your enterprise inquiry - NewtonAI",
         html: `
