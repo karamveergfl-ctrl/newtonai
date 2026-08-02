@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
+// Sender address: uses the verified domain from RESEND_FROM_EMAIL when configured,
+// otherwise falls back to Resend's test sender (only delivers to the account owner).
+const FROM_ADDRESS = (label: string): string => {
+  const addr = Deno.env.get("RESEND_FROM_EMAIL")?.trim();
+  return addr ? `${label} <${addr}>` : `${label} <onboarding@resend.dev>`;
+};
+
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -105,7 +113,7 @@ serve(async (req) => {
           const resend = new Resend(resendApiKey);
           
           await resend.emails.send({
-            from: "NewtonAI <onboarding@resend.dev>",
+            from: FROM_ADDRESS("NewtonAI"),
             to: [userEmail],
             subject: "Your NewtonAI Account Has Been Deleted",
             html: `

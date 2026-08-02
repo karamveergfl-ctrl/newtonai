@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Building2, Loader2, Monitor, Plus, Search } from "lucide-react";
+import { Building2, Loader2, Monitor, Plus, Search, UserPlus } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,10 @@ export default function AdminSmartBoards() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [adminTarget, setAdminTarget] = useState<SbInstitution | null>(null);
+  const [adminEmail, setAdminEmail] = useState("");
+  const [linking, setLinking] = useState(false);
+  const [linkedAdmins, setLinkedAdmins] = useState<{ user_id: string; email: string }[]>([]);
   const [form, setForm] = useState({
     name: "",
     city: "",
@@ -92,6 +96,31 @@ export default function AdminSmartBoards() {
       return;
     }
     void load();
+  };
+
+  const openAdminDialog = async (inst: SbInstitution) => {
+    setAdminTarget(inst);
+    setAdminEmail(inst.contact_email ?? "");
+    setLinkedAdmins([]);
+    const { data } = await supabase.rpc("sb_list_institution_admins" as any, { p_institution_id: inst.id });
+    setLinkedAdmins((data as { user_id: string; email: string }[]) ?? []);
+  };
+
+  const linkAdmin = async () => {
+    if (!adminTarget || !adminEmail.trim()) return;
+    setLinking(true);
+    const { data, error } = await supabase.rpc("sb_link_institution_admin" as any, {
+      p_institution_id: adminTarget.id,
+      p_email: adminEmail.trim(),
+    });
+    setLinking(false);
+    const result = data as { success?: boolean; error?: string } | null;
+    if (error || !result?.success) {
+      toast.error(error?.message ?? result?.error ?? "Could not link this administrator.");
+      return;
+    }
+    toast.success("School administrator linked. They can now sign in at /smartboard-admin/login.");
+    void openAdminDialog(adminTarget);
   };
 
   if (loading) {
@@ -190,9 +219,14 @@ export default function AdminSmartBoards() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline" onClick={() => toggleActive(inst)}>
-                        {inst.is_active ? "Suspend" : "Reactivate"}
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="outline" onClick={() => openAdminDialog(inst)}>
+                          <UserPlus className="mr-1.5 h-4 w-4" aria-hidden="true" /> Admins
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => toggleActive(inst)}>
+                          {inst.is_active ? "Suspend" : "Reactivate"}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -263,6 +297,55 @@ export default function AdminSmartBoards() {
             </Button>
             <Button onClick={createSchool} disabled={saving || !form.name.trim() || !form.contact_email.trim()}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />} Create school
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!adminTarget} onOpenChange={(o) => !o && setAdminTarget(null)}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>School administrators</DialogTitle>
+            <DialogDescription>
+              Link a signed-up NewtonAI account to {adminTarget?.name} so they can use the SmartBoard School Portal.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="sb-admin-email">Account email</Label>
+              <Input
+                id="sb-admin-email"
+                type="email"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                placeholder="principal@school.edu"
+              />
+              <p className="text-xs text-muted-foreground">
+                The person must already have a NewtonAI account with this email.
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-3">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Linked administrators</p>
+              {linkedAdmins.length === 0 ? (
+                <p className="text-sm text-muted-foreground">None yet.</p>
+              ) : (
+                <ul className="space-y-1 text-sm">
+                  {linkedAdmins.map((a) => (
+                    <li key={a.user_id}>{a.email}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdminTarget(null)}>
+              Close
+            </Button>
+            <Button onClick={linkAdmin} disabled={linking || !adminEmail.trim()}>
+              {linking && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />} Link administrator
             </Button>
           </DialogFooter>
         </DialogContent>
