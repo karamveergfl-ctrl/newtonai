@@ -15,6 +15,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateCredentialPDF } from "@/lib/smartboardCredentialPdf";
 import { toast } from "sonner";
 
+const ERROR_MESSAGES: Record<string, string> = {
+  not_authorized: "You do not have permission to add boards for this school.",
+  institution_not_found: "That school could not be found.",
+  limit_reached: "This school has used all board slots on its plan. Raise the plan limit first.",
+};
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,13 +54,23 @@ export function AddBoardModal({ open, onOpenChange, institutionId, institutionNa
     });
     setSaving(false);
 
-    const result = data as { success?: boolean; error?: string; activation_code?: string; board_name?: string } | null;
+    const result = data as {
+      success?: boolean;
+      error?: string;
+      activation_code?: string;
+      board_name?: string;
+      board?: { activation_code?: string; board_name?: string };
+    } | null;
     if (error || !result?.success) {
-      toast.error(result?.error ?? error?.message ?? "Could not create this board.");
+      const code = result?.error ?? "";
+      toast.error(ERROR_MESSAGES[code] ?? error?.message ?? "Could not create this board.");
       return;
     }
 
-    setCreated({ boardName: result.board_name ?? boardName.trim(), code: result.activation_code ?? "" });
+    setCreated({
+      boardName: result.board?.board_name ?? result.board_name ?? boardName.trim(),
+      code: result.board?.activation_code ?? result.activation_code ?? "",
+    });
     onCreated();
   };
 

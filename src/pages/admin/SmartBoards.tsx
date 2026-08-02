@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Building2, Loader2, Monitor, Plus, Search, UserPlus } from "lucide-react";
+import { Building2, Download, Loader2, Monitor, Plus, RefreshCw, Search, UserPlus } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { SbBoard, SbInstitution } from "@/hooks/useSmartboardAdmin";
+import AddBoardModal from "@/components/smartboard-admin/AddBoardModal";
+import { generateCredentialPDF } from "@/lib/smartboardCredentialPdf";
 
 export default function AdminSmartBoards() {
   const [institutions, setInstitutions] = useState<SbInstitution[]>([]);
@@ -31,6 +33,8 @@ export default function AdminSmartBoards() {
   const [adminEmail, setAdminEmail] = useState("");
   const [linking, setLinking] = useState(false);
   const [linkedAdmins, setLinkedAdmins] = useState<{ user_id: string; email: string }[]>([]);
+  const [boardTarget, setBoardTarget] = useState<SbInstitution | null>(null);
+  const [addBoardOpen, setAddBoardOpen] = useState(false);
   const [form, setForm] = useState({
     name: "",
     city: "",
@@ -122,6 +126,20 @@ export default function AdminSmartBoards() {
     toast.success("School administrator linked. They can now sign in at /smartboard-admin/login.");
     void openAdminDialog(adminTarget);
   };
+
+  const reissueCode = async (board: SbBoard) => {
+    const { data, error } = await supabase.rpc("sb_reissue_board_code", { p_board_id: board.id });
+    const result = data as { success?: boolean; error?: string; activation_code?: string } | null;
+    if (error || !result?.success) {
+      toast.error(error?.message ?? result?.error ?? "Could not reissue the code.");
+      return;
+    }
+    toast.success(`New activation code for ${board.board_name}: ${result.activation_code}`);
+    void load();
+  };
+
+  const targetBoards = boardTarget ? boards.filter((b) => b.institution_id === boardTarget.id) : [];
+  const boardSlotsLeft = boardTarget ? boardTarget.max_smartboards - targetBoards.length : 0;
 
   if (loading) {
     return (
@@ -220,6 +238,9 @@ export default function AdminSmartBoards() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setBoardTarget(inst)}>
+                          <Monitor className="mr-1.5 h-4 w-4" aria-hidden="true" /> Boards
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => openAdminDialog(inst)}>
                           <UserPlus className="mr-1.5 h-4 w-4" aria-hidden="true" /> Admins
                         </Button>
@@ -301,6 +322,102 @@ export default function AdminSmartBoards() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!boardTarget} onOpenChange={(o) => !o && setBoardTarget(null)}>
+        <DialogContent className="sm:max-w-[720px]">
+          <DialogHeader>
+            <DialogTitle>SmartBoards — {boardTarget?.name}</DialogTitle>
+            <DialogDescription>
+              Create classroom boards, download their credential PDFs and reissue activation codes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              {boardSlotsLeft > 0
+                ? `${boardSlotsLeft} board slot${boardSlotsLeft === 1 ? "" : "s"} remaining on this plan.`
+                : "All board slots on this plan are used. Raise Max boards to add more."}
+            </p>
+            <Button size="sm" onClick={() => setAddBoardOpen(true)} disabled={boardSlotsLeft <= 0}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" /> Add board
+            </Button>
+          </div>
+
+          <div className="max-h-[45vh] overflow-y-auto rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Board</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {targetBoards.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                      No boards yet for this school.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {targetBoards.map((b) => (
+                  <TableRow key={b.id}>
+                    <TableCell className="font-medium">
+                      {b.board_name}
+                      <span className="block text-xs text-muted-foreground">
+                        {[b.grade_level, b.subject_focus].filter(Boolean).join(" · ")}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">{b.activation_code}</TableCell>
+                    <TableCell>
+                      <Badge variant={b.activated_at ? "default" : "secondary"}>
+                        {b.activated_at ? "Activated" : "Awaiting activation"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            generateCredentialPDF({
+                              institutionName: boardTarget?.name ?? "",
+                              boardName: b.board_name,
+                              activationCode: b.activation_code,
+                            })
+                          }
+                        >
+                          <Download className="mr-1 h-4 w-4" aria-hidden="true" /> PDF
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => reissueCode(b)}>
+                          <RefreshCw className="mr-1 h-4 w-4" aria-hidden="true" /> New code
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBoardTarget(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {boardTarget && (
+        <AddBoardModal
+          open={addBoardOpen}
+          onOpenChange={setAddBoardOpen}
+          institutionId={boardTarget.id}
+          institutionName={boardTarget.name}
+          onCreated={load}
+        />
+      )}
 
       <Dialog open={!!adminTarget} onOpenChange={(o) => !o && setAdminTarget(null)}>
         <DialogContent className="sm:max-w-[520px]">
