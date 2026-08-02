@@ -323,6 +323,102 @@ export default function AdminSmartBoards() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!boardTarget} onOpenChange={(o) => !o && setBoardTarget(null)}>
+        <DialogContent className="sm:max-w-[720px]">
+          <DialogHeader>
+            <DialogTitle>SmartBoards — {boardTarget?.name}</DialogTitle>
+            <DialogDescription>
+              Create classroom boards, download their credential PDFs and reissue activation codes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              {boardSlotsLeft > 0
+                ? `${boardSlotsLeft} board slot${boardSlotsLeft === 1 ? "" : "s"} remaining on this plan.`
+                : "All board slots on this plan are used. Raise Max boards to add more."}
+            </p>
+            <Button size="sm" onClick={() => setAddBoardOpen(true)} disabled={boardSlotsLeft <= 0}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" /> Add board
+            </Button>
+          </div>
+
+          <div className="max-h-[45vh] overflow-y-auto rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Board</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {targetBoards.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                      No boards yet for this school.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {targetBoards.map((b) => (
+                  <TableRow key={b.id}>
+                    <TableCell className="font-medium">
+                      {b.board_name}
+                      <span className="block text-xs text-muted-foreground">
+                        {[b.grade_level, b.subject_focus].filter(Boolean).join(" · ")}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">{b.activation_code}</TableCell>
+                    <TableCell>
+                      <Badge variant={b.activated_at ? "default" : "secondary"}>
+                        {b.activated_at ? "Activated" : "Awaiting activation"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            generateCredentialPDF({
+                              institutionName: boardTarget?.name ?? "",
+                              boardName: b.board_name,
+                              activationCode: b.activation_code,
+                            })
+                          }
+                        >
+                          <Download className="mr-1 h-4 w-4" aria-hidden="true" /> PDF
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => reissueCode(b)}>
+                          <RefreshCw className="mr-1 h-4 w-4" aria-hidden="true" /> New code
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBoardTarget(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {boardTarget && (
+        <AddBoardModal
+          open={addBoardOpen}
+          onOpenChange={setAddBoardOpen}
+          institutionId={boardTarget.id}
+          institutionName={boardTarget.name}
+          onCreated={load}
+        />
+      )}
+
       <Dialog open={!!adminTarget} onOpenChange={(o) => !o && setAdminTarget(null)}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
