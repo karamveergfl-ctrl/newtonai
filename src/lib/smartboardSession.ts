@@ -93,6 +93,39 @@ export function verifyBoardSession(deviceToken: string) {
   return invoke<{ board: Omit<SmartBoardSession, "deviceToken" | "activatedAt"> }>("smartboard-session", { deviceToken });
 }
 
+export interface SchoolBoardOption {
+  id: string;
+  board_name: string;
+  grade_level: string | null;
+  subject_focus: string | null;
+  last_active_at: string | null;
+  activated_at: string | null;
+}
+
+/** Lists the boards of the signed-in school account (uses the user's JWT). */
+export function listSchoolBoards() {
+  return invoke<{ institution: { id: string; name: string }; boards: SchoolBoardOption[] }>(
+    "smartboard-signin",
+    {},
+  );
+}
+
+/** Signs this device in as a specific board of the signed-in school account. */
+export async function signInBoardAsSchool(boardId: string) {
+  const res = await invoke<{ deviceToken: string; board: Omit<SmartBoardSession, "deviceToken" | "activatedAt"> }>(
+    "smartboard-signin",
+    { boardId },
+  );
+  if (res.data) {
+    writeSmartBoardSession({
+      deviceToken: res.data.deviceToken,
+      ...res.data.board,
+      activatedAt: new Date().toISOString(),
+    });
+  }
+  return res;
+}
+
 export function searchBoardVideos(
   deviceToken: string,
   query: string,

@@ -1,41 +1,40 @@
 ## Goal
 
-Let SmartBoard classrooms open DOCX and PPTX files (not just PDF/images), keeping select-text → find-video working, without requiring a user login on the board.
+Today a classroom board can only be activated with a per-board activation code (`/smartboard/activate`), and onboarding offers just Student and Teacher. You want: one school account (school email + password), used to sign in on every board of that school, and then pick **SmartBoard** on the onboarding screen to turn that device into a board.
 
-## Why it doesn't work today
+## What exists today (verified)
 
-The existing `extract-docx-text` and `extract-pptx-text` edge functions require an `Authorization` header and call `auth.getUser()`. A SmartBoard has no Supabase user — it authenticates with a device token issued at activation — so those calls would fail. `DocumentStage` therefore rejects anything that isn't a PDF or image.
+- `sb_institutions`, `sb_boards`, `sb_institution_admins` tables with RLS; `sb_admin_institution(user_id)` and `is_sb_admin()` helpers already exist.
+- Board auth is a device token (`sb_boards.device_token_hash`), minted only by the `smartboard-activate` edge function from an activation code.
+- `src/pages/Onboarding.tsx` renders exactly two role tiles and redirects to `/dashboard` when `profiles.onboarding_completed` is true.
 
 ## Plan
 
-### 1. Shared Office text extraction module
-Create `supabase/functions/_shared/office-extract.ts` containing the JSZip-based parsers already proven in the two existing functions:
-- `extractDocxSections(bytes)` → array of `{ heading, text }` blocks derived from `word/document.xml` paragraphs.
-- `extractPptxSlides(bytes)` → array of `{ slideNumber, title, lines }` from `ppt/slides/slideN.xml`.
+### 1. New edge function: `smartboard-signin`
+- Accepts the caller's user JWT plus an optional `boardId`.
+- Verifies the user is an admin of a school via `sb_institution_admins`, and that the school is active and unexpired.
+- Returns the school's board list when no `boardId` is given; when a `boardId` of that school is supplied, mints a fresh device token (same hashing as `smartboard-activate`), stores it on the board, marks `activated_at`/`last_active_at`, and returns the board context.
+- Reuses `_shared/smartboard-auth.ts` (`sha256`, `newDeviceToken`, `json`, `corsHeaders`).
 
-The existing user-facing functions stay untouched (no regression risk).
+No schema change is required — the activation-code path keeps working unchanged as a fallback.
 
-### 2. New device-token-gated edge function
-`supabase/functions/smartboard-extract-document/index.ts`:
-- Accepts `POST { deviceToken, fileName, fileBase64 }`.
-- Resolves the board through the existing `resolveBoard()` helper in `_shared/smartboard-auth.ts` (same gate used by search/log-play), returning the same structured error codes for inactive board / inactive school / expired plan.
-- Rejects payloads over ~15 MB of base64 and any extension other than `.docx` / `.pptx`.
-- Returns `{ kind: "docx" | "pptx", pages: [{ title, blocks: string[] }] }`.
-- Nothing is written to storage or the database; extraction is in-memory and stateless. Optionally logs a `document_open` row in `sb_board_usage` for the school's usage report.
+### 2. Client helper
+Add `listSchoolBoards()` and `signInBoardAsSchool(boardId)` to `src/lib/smartboardSession.ts`, writing the returned token into the existing local board session.
 
-### 3. Frontend wiring
-- `src/lib/smartboardSession.ts`: add `extractBoardDocument(deviceToken, file)` that base64-encodes the file and calls the new function, returning the same `{ data, message, errorCode }` shape used by the other SmartBoard API wrappers.
-- `src/components/smartboard/DocumentStage.tsx`:
-  - Widen the accepted types to `.pdf`, images, `.docx`, `.pptx`; keep 50 MB for PDF/images and cap Office files at 15 MB with a clear message.
-  - Add an `extracting` state showing "Reading your document…".
-  - New `kind: "text"` render mode: large, high-contrast, selectable typography on the dark slate stage — slide/section title as a heading, body blocks as paragraphs — with the same Prev/Next paging (one slide or section per page) and zoom controls that PDFs use.
-  - Text selection and the existing "Find animation videos" bar work unchanged, since it reads `window.getSelection()`.
-  - On extraction failure, show the server message plus a fallback hint to export the file as PDF.
+### 3. Onboarding: third role tile
+In `src/pages/Onboarding.tsx`:
+- Add a **SmartBoard** tile ("Classroom board — sign in this display for your school") next to Student and Teacher, with a monitor icon and matching card styling.
+- Selecting it opens a new `SmartBoardOnboarding` step (`src/components/onboarding/SmartBoardOnboarding.tsx`) that:
+  - calls `listSchoolBoards()`;
+  - if the account is not a school account, shows a clear message plus a link to `/smartboard/activate`;
+  - otherwise lists the school's boards (name, grade, subject) — tap one to sign this device in, then navigate to `/smartboard/classroom`.
+- Adjust `checkAuth` so a signed-in school account is not force-redirected to `/dashboard` before it can pick SmartBoard (keep the redirect for normal students/teachers, and skip it when the user has a SmartBoard school membership).
 
-### 4. Verify
-- Typecheck.
-- Call the new function through the edge-function tester with an invalid token (expect 401) and with a small real `.pptx` payload (expect parsed slides).
+### 4. Entry points
+- On `/auth` and `/smartboard/activate`, keep existing links but point school staff at "Sign in with your school account", which lands on onboarding's SmartBoard step.
+- `SmartBoardRoute` and the classroom screen stay as-is — they still just need a valid device token.
 
-## Technical notes
-- Deliberately text-only for Office files: rendering true DOCX/PPTX layout in the browser needs a converter service; extracted text is what the video-search feature actually consumes, and it renders far better on a large classroom display.
-- No schema change is required; if the usage log entry is included it reuses the existing `sb_board_usage` table via the service role, consistent with the other SmartBoard functions.
+## Notes
+
+- School accounts are created the same way as now: a platform admin creates the school in `/admin/smartboards` and links the school's email via the existing `sb_link_institution_admin` RPC. Signing in on each board simply reuses that one account.
+- Signing a board in from a new device replaces its token, so the previous device for that board is signed out — that keeps one token per board. Tell me if you'd rather allow multiple simultaneous devices per board; that needs a small token table instead.

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import TeacherOnboarding from "@/components/onboarding/TeacherOnboarding";
 import StudentOnboarding from "@/components/onboarding/StudentOnboarding";
+import SmartBoardOnboarding from "@/components/onboarding/SmartBoardOnboarding";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ import {
   BookOpen,
   Check,
   Sparkles,
+  Monitor,
 } from "lucide-react";
 
 const slideVariants = {
@@ -82,7 +84,7 @@ const Onboarding = () => {
   const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [formData, setFormData] = useState({
-    userRole: "" as "" | "student" | "teacher",
+    userRole: "" as "" | "student" | "teacher" | "smartboard",
     fullName: "",
     avatarUrl: null as string | null,
   });
@@ -132,7 +134,14 @@ const Onboarding = () => {
       return;
     }
 
-    if (profile.onboarding_completed) {
+    // School accounts stay on this screen so they can pick the SmartBoard option.
+    const { data: schoolMembership } = await supabase
+      .from("sb_institution_admins")
+      .select("institution_id")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (profile.onboarding_completed && !schoolMembership) {
       navigate("/dashboard");
       return;
     }
@@ -197,7 +206,15 @@ const Onboarding = () => {
             onBack={() => {
               setDirection(-1);
               setStep(0);
-              setFormData(prev => ({ ...prev, userRole: "" as "" | "student" | "teacher" }));
+              setFormData(prev => ({ ...prev, userRole: "" as const }));
+            }}
+          />
+        ) : step >= 1 && formData.userRole === "smartboard" ? (
+          <SmartBoardOnboarding
+            onBack={() => {
+              setDirection(-1);
+              setStep(0);
+              setFormData(prev => ({ ...prev, userRole: "" as const }));
             }}
           />
         ) : (
@@ -251,6 +268,13 @@ const Onboarding = () => {
                             label: "Teacher",
                             description: "Create classes, assign work & track student progress",
                             emoji: "🏫",
+                          },
+                          {
+                            id: "smartboard" as const,
+                            icon: Monitor,
+                            label: "SmartBoard",
+                            description: "Sign in this classroom display with your school account",
+                            emoji: "🖥️",
                           },
                         ].map((role, i) => (
                           <motion.button

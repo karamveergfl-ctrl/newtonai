@@ -92,6 +92,11 @@ export default function SmartBoardActivate() {
 
           <div className="mt-6 space-y-2 text-center text-base">
             <p>
+              <Link to="/auth" className="text-teal-300 underline-offset-4 hover:underline">
+                Sign in with your school account instead →
+              </Link>
+            </p>
+            <p>
               <Link to="/auth" className="text-slate-400 underline-offset-4 hover:text-white hover:underline">
                 Are you a teacher or student?
               </Link>
