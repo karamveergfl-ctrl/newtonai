@@ -301,6 +301,55 @@ export default function AdminSmartBoards() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!adminTarget} onOpenChange={(o) => !o && setAdminTarget(null)}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>School administrators</DialogTitle>
+            <DialogDescription>
+              Link a signed-up NewtonAI account to {adminTarget?.name} so they can use the SmartBoard School Portal.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="sb-admin-email">Account email</Label>
+              <Input
+                id="sb-admin-email"
+                type="email"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                placeholder="principal@school.edu"
+              />
+              <p className="text-xs text-muted-foreground">
+                The person must already have a NewtonAI account with this email.
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-3">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Linked administrators</p>
+              {linkedAdmins.length === 0 ? (
+                <p className="text-sm text-muted-foreground">None yet.</p>
+              ) : (
+                <ul className="space-y-1 text-sm">
+                  {linkedAdmins.map((a) => (
+                    <li key={a.user_id}>{a.email}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdminTarget(null)}>
+              Close
+            </Button>
+            <Button onClick={linkAdmin} disabled={linking || !adminEmail.trim()}>
+              {linking && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />} Link administrator
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
