@@ -808,8 +808,9 @@ const Auth = () => {
           <p className="mt-6 text-xs text-muted-foreground">
             Setting up a classroom SmartBoard?{" "}
             <a href="/smartboard/activate" className="text-primary hover:underline">
-              Activate a SmartBoard
-            </a>
+              Use an activation code
+            </a>{" "}
+            or sign in above with your school account and choose SmartBoard.
           </p>
         </div>
       </motion.div>
