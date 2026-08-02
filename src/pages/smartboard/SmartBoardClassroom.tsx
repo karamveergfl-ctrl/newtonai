@@ -14,6 +14,7 @@ import {
   readSmartBoardSession,
   searchBoardVideos,
   verifyBoardSession,
+  writeSmartBoardSession,
   type SmartBoardSession,
   type SmartBoardVideo,
 } from "@/lib/smartboardSession";
@@ -46,9 +47,18 @@ export default function SmartBoardClassroom() {
       if (data?.board) {
         const next = { ...local, ...data.board };
         setSession(next);
-      } else if (errorCode && errorCode !== "network") {
+        // Persist the refreshed board details so the device reopens on the
+        // right board even while offline.
+        writeSmartBoardSession(next);
+      } else if (errorCode === "invalid_token") {
+        // Only a revoked/replaced device token forces re-activation. Plan or
+        // network problems keep the device signed in.
         clearSmartBoardSession();
         navigate("/smartboard/activate", { replace: true });
+      } else if (errorCode) {
+        setError(
+          "This board could not be verified right now. You can keep teaching — it will retry automatically.",
+        );
       }
     });
     return () => {

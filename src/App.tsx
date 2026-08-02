@@ -102,6 +102,7 @@ const AdminSmartBoards = lazy(() => import("./pages/admin/SmartBoards"));
 
 // SmartBoard Plan
 const SmartBoardRoute = lazy(() => import("./components/routes/SmartBoardRoute").then(m => ({ default: m.SmartBoardRoute })));
+const SmartBoardDeviceRedirect = lazy(() => import("./components/routes/SmartBoardDeviceRedirect").then(m => ({ default: m.SmartBoardDeviceRedirect })));
 const SmartBoardAdminRoute = lazy(() => import("./components/routes/SmartBoardAdminRoute").then(m => ({ default: m.SmartBoardAdminRoute })));
 const SmartBoardActivate = lazy(() => import("./pages/smartboard/SmartBoardActivate"));
 const SmartBoardClassroom = lazy(() => import("./pages/smartboard/SmartBoardClassroom"));
@@ -198,7 +199,7 @@ function AnimatedRoutes() {
     <ChunkErrorBoundary>
     <Suspense fallback={<PageSkeleton />}>
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+        <Route path="/" element={<SmartBoardDeviceRedirect><PageTransition><LandingPage /></PageTransition></SmartBoardDeviceRedirect>} />
         <Route path="/dashboard" element={<PageTransition><ProtectedRoute><OnboardingGate><Dashboard /></OnboardingGate></ProtectedRoute></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
         <Route path="/onboarding" element={<PageTransition><ProtectedRoute><Onboarding /></ProtectedRoute></PageTransition>} />
