@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page } from "react-pdf";
 import {
   Camera,
@@ -27,17 +27,13 @@ interface Props {
   onFindVideos: (topic: string) => void;
   /** Notifies the classroom when a document is opened/closed. */
   onOpenChange?: (open: boolean, docKey: string) => void;
-  /** Rendered as a thin rail above the document (animation video results). */
-  topSlot?: ReactNode;
-  /** Rendered above everything while a document is open (teacher notes panel). */
-  sideSlot?: ReactNode;
 }
 
 const ACCEPTED = ".pdf,.doc,.docx,.ppt,.pptx,image/png,image/jpeg,image/webp";
 const OFFICE_MAX_BYTES = 15 * 1024 * 1024;
 const PDF_MAX_BYTES = 50 * 1024 * 1024;
 
-export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }: Props) {
+export function DocumentStage({ onFindVideos, onOpenChange }: Props) {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [fileKind, setFileKind] = useState<"pdf" | "image" | "text" | null>(null);
   const [textPages, setTextPages] = useState<ExtractedDocPage[]>([]);
@@ -239,8 +235,6 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
 
   return (
     <div className="absolute inset-0 z-30 flex flex-col bg-[#0A1628]">
-      {topSlot}
-
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-2">
         <p className="max-w-[28%] truncate text-base font-semibold text-white">{fileName}</p>
 
@@ -365,8 +359,6 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
           </button>
         </div>
       )}
-
-      {sideSlot}
     </div>
   );
 }

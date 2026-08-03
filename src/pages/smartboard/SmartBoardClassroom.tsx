@@ -3,9 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Eraser, FileText, Highlighter, Loader2, LogOut, Pen, PenLine, Search, Trash2, Undo2, X } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
 import DocumentStage from "@/components/smartboard/DocumentStage";
-import VideoResultsGrid from "@/components/smartboard/VideoResultsGrid";
-import VideoStrip from "@/components/smartboard/VideoStrip";
-import TeacherNotesPanel from "@/components/smartboard/TeacherNotesPanel";
+import AnimationResultsPanel from "@/components/smartboard/AnimationResultsPanel";
 import SmartBoardVideoPlayer from "@/components/smartboard/SmartBoardVideoPlayer";
 import IdleScreen from "@/components/smartboard/IdleScreen";
 import { WhiteboardCanvas, type WhiteboardCanvasHandle } from "@/components/smartboard/WhiteboardCanvas";
@@ -47,7 +45,6 @@ export default function SmartBoardClassroom() {
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState<SmartBoardVideo | null>(null);
   const [docOpen, setDocOpen] = useState(false);
-  const [docKey, setDocKey] = useState("");
   const [mode, setMode] = useState<"document" | "whiteboard">("document");
   const [exitOpen, setExitOpen] = useState(false);
   const [resultsOpen, setResultsOpen] = useState(false);
@@ -56,9 +53,8 @@ export default function SmartBoardClassroom() {
   const board = useWhiteboardState();
   const canvasRef = useRef<WhiteboardCanvasHandle>(null);
 
-  const handleDocOpenChange = useCallback((open: boolean, key: string) => {
+  const handleDocOpenChange = useCallback((open: boolean) => {
     setDocOpen(open);
-    setDocKey(key);
   }, []);
 
   /* ---- session validation ---- */
@@ -112,14 +108,21 @@ export default function SmartBoardClassroom() {
   const runSearch = useCallback(
     async (query: string, action: "search" | "select_text" = "search") => {
       const current = readSmartBoardSession();
-      if (!current || !query.trim()) return;
-      setActiveQuery(query);
-      setTerm(query);
+      const cleaned = query
+        .replace(/\s+/g, " ")
+        .replace(/^[^\w]+|[^\w)]+$/g, "")
+        .trim()
+        .split(" ")
+        .slice(0, 10)
+        .join(" ");
+      if (!current || !cleaned) return;
+      setActiveQuery(cleaned);
+      setTerm(cleaned);
       setLoading(true);
       setError(null);
-      setResultsOpen(action === "search");
+      setResultsOpen(true);
 
-      const { data, message } = await searchBoardVideos(current.deviceToken, query, { limit: 15, action });
+      const { data, message } = await searchBoardVideos(current.deviceToken, cleaned, { limit: 15, action });
 
       setLoading(false);
       if (!data) {
@@ -298,21 +301,6 @@ export default function SmartBoardClassroom() {
               <DocumentStage
                 onFindVideos={(topic) => void runSearch(topic, "select_text")}
                 onOpenChange={handleDocOpenChange}
-                topSlot={
-                  <VideoStrip
-                    videos={videos}
-                    loading={loading}
-                    query={activeQuery}
-                    error={error}
-                    onPlay={handlePlay}
-                    onDismiss={() => {
-                      setVideos([]);
-                      setActiveQuery("");
-                    }}
-                    onRetry={() => void runSearch(activeQuery, "select_text")}
-                  />
-                }
-                sideSlot={<TeacherNotesPanel docKey={docKey} />}
               />
             </div>
           ) : (
@@ -333,41 +321,18 @@ export default function SmartBoardClassroom() {
             </div>
           )}
 
-        {/* results overlay (typed searches) */}
-        {resultsOpen && !docOpen && (
-          <div className="absolute inset-0 z-40 flex flex-col bg-[#0A0F1A]/98 backdrop-blur-sm">
-            <div className="flex shrink-0 items-center justify-between gap-4 px-6 pb-3 pt-5">
-              <h2 className="text-2xl font-extrabold tracking-[-0.5px] text-white">
-                {activeQuery ? `Videos for “${activeQuery}”` : "Find an Educational Video"}
-              </h2>
-              <div className="flex items-center gap-3">
-                {videos.length > 0 && (
-                  <span className="rounded-full bg-slate-700 px-3 py-1 text-[11px] text-slate-300">
-                    {videos.length} videos
-                  </span>
-                )}
-                <button
-                  type="button"
-                  aria-label="Close video results"
-                  onClick={() => setResultsOpen(false)}
-                  className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-xs text-slate-300 hover:bg-white/[0.06] hover:text-white"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" /> Close
-                </button>
-              </div>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
-              <VideoResultsGrid
-                videos={videos}
-                loading={loading}
-                query={activeQuery}
-                error={error}
-                onPlay={handlePlay}
-                onRetry={() => void runSearch(activeQuery)}
-                onSuggestion={(topic) => void runSearch(topic)}
-              />
-            </div>
-          </div>
+        {/* animation-only results panel */}
+        {resultsOpen && (
+          <AnimationResultsPanel
+            videos={videos}
+            loading={loading}
+            query={activeQuery}
+            error={error}
+            onPlay={handlePlay}
+            onRetry={() => void runSearch(activeQuery)}
+            onSuggestion={(topic) => void runSearch(topic)}
+            onClose={() => setResultsOpen(false)}
+          />
         )}
       </main>
 
