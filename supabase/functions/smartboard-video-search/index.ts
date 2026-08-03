@@ -235,11 +235,12 @@ serve(async (req) => {
         });
 
         // Animation-only: strong animation signal + on-topic, never a lecture recording.
+        const notShort = (s: { seconds: number }) => s.seconds === 0 || s.seconds >= 60;
         const strict = scored.filter(
-          (s) => s.strongAnimation && !s.lectureLike && !s.tooLong && s.relevance >= 0.5 && s.seconds >= 60,
+          (s) => s.strongAnimation && !s.lectureLike && !s.tooLong && s.relevance >= 0.5 && notShort(s),
         );
         const nearMiss = scored.filter(
-          (s) => s.strongAnimation && !s.tooLong && s.relevance >= 0.34 && s.seconds >= 60,
+          (s) => s.strongAnimation && !s.tooLong && s.relevance >= 0.34 && notShort(s),
         );
         const pool = strict.length > 0 ? strict : nearMiss;
 
