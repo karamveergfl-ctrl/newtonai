@@ -101,11 +101,11 @@ const AdminRedeemCodes = lazy(() => import("./pages/admin/RedeemCodes"));
 const AdminSmartBoards = lazy(() => import("./pages/admin/SmartBoards"));
 
 // SmartBoard Plan
+import SmartBoardClassroom from "./pages/smartboard/SmartBoardClassroom";
 const SmartBoardRoute = lazy(() => import("./components/routes/SmartBoardRoute").then(m => ({ default: m.SmartBoardRoute })));
 const SmartBoardDeviceRedirect = lazy(() => import("./components/routes/SmartBoardDeviceRedirect").then(m => ({ default: m.SmartBoardDeviceRedirect })));
 const SmartBoardAdminRoute = lazy(() => import("./components/routes/SmartBoardAdminRoute").then(m => ({ default: m.SmartBoardAdminRoute })));
 const SmartBoardActivate = lazy(() => import("./pages/smartboard/SmartBoardActivate"));
-const SmartBoardClassroom = lazy(() => import("./pages/smartboard/SmartBoardClassroom"));
 const SmartBoardAdminLogin = lazy(() => import("./pages/smartboard-admin/SmartBoardAdminLogin"));
 const SmartBoardAdminDashboard = lazy(() => import("./pages/smartboard-admin/SmartBoardAdminDashboard"));
 const PitchDeck = lazy(() => import("./pages/PitchDeck"));

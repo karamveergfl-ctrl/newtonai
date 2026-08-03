@@ -637,3 +637,21 @@ All colors MUST be HSL.
   padding: 2px 4px;
   border-radius: 3px;
 }
+
+/* ---------- SmartBoard kiosk shell ---------- */
+.smartboard-classroom {
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.smartboard-classroom ::-webkit-scrollbar {
+  display: none;
+}
+
+.smartboard-classroom * {
+  scrollbar-width: none;
+}
