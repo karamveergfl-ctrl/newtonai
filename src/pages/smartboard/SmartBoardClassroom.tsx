@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eraser, Highlighter, Loader2, LogOut, Pen, Search, Trash2, Undo2, X } from "lucide-react";
+import { Eraser, FileText, Highlighter, Loader2, LogOut, Pen, PenLine, Search, Trash2, Undo2, X } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
 import DocumentStage from "@/components/smartboard/DocumentStage";
 import QuickTopicChips from "@/components/smartboard/QuickTopicChips";
@@ -246,11 +246,12 @@ export default function SmartBoardClassroom() {
                 key={m}
                 type="button"
                 onClick={() => setMode(m)}
-                className={`flex-1 rounded-lg py-2 text-xs font-medium transition-colors ${
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-colors ${
                   mode === m ? "bg-white text-[#0D1117] shadow-sm" : "text-slate-400 hover:text-white"
                 }`}
               >
-                {m === "document" ? "📄 Document" : "✏️ Whiteboard"}
+                {m === "document" ? <FileText className="h-3.5 w-3.5" aria-hidden="true" /> : <PenLine className="h-3.5 w-3.5" aria-hidden="true" />}
+                {m === "document" ? "Document" : "Whiteboard"}
               </button>
             ))}
           </div>
