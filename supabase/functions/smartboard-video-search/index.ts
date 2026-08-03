@@ -121,7 +121,7 @@ serve(async (req) => {
       return json({ success: false, error: auth.error, message: auth.message }, auth.status);
     }
 
-    const cacheKey = `sb-anim2:${rawQuery.toLowerCase()}:${limit}`;
+    const cacheKey = `sb-anim3:${rawQuery.toLowerCase()}:${limit}`;
     const nowIso = new Date().toISOString();
 
     const { data: cached } = await supabase
@@ -148,12 +148,13 @@ serve(async (req) => {
       };
 
       // Two passes so niche topics still surface real animations.
-      const [resA, resB] = await Promise.all([
+      const [resA, resB, resC] = await Promise.all([
         fetchYouTube(buildUrl(`${rawQuery} animation animated 3d`)),
         fetchYouTube(buildUrl(`${rawQuery} animated explanation video`)),
+        fetchYouTube(buildUrl(`${rawQuery} working principle visualization`)),
       ]);
 
-      if (!resA.ok && !resB.ok) {
+      if (!resA.ok && !resB.ok && !resC.ok) {
         console.error("[smartboard-video-search] youtube error", resA.status, await resA.text());
         return json({
           success: false,
@@ -165,7 +166,7 @@ serve(async (req) => {
 
       // deno-lint-ignore no-explicit-any
       const merged = new Map<string, any>();
-      for (const res of [resA, resB]) {
+      for (const res of [resA, resB, resC]) {
         if (!res.ok) continue;
         const d = await res.json();
         // deno-lint-ignore no-explicit-any
