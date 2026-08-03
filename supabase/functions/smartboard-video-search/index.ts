@@ -15,6 +15,15 @@ const ANIMATION_CHANNELS = [
 const STOP_WORDS = new Set(["the", "of", "and", "for", "with", "a", "an", "to", "in", "on", "is", "are"]);
 
 const STOP_TERMS = ["#shorts", "full lecture", "one shot", "live class", "unacademy live", "webinar"];
+// Strong signals that a result is a talking-head / handwritten lecture, not an animation.
+const NON_ANIMATION_TERMS = [
+  "lecture", "numerical", "solved example", "question paper", "previous year",
+  "handwritten", "notes pdf", "exam", "syllabus", "revision", "crash course", "doubt session",
+];
+const STRONG_ANIMATION_TERMS = [
+  "animation", "animated", "3d", "2d", "simulation", "visualization", "visualisation",
+  "motion graphics", "how it works", "working of",
+];
 
 function parseIsoSeconds(iso?: string): number {
   const m = iso?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -112,7 +121,7 @@ serve(async (req) => {
       return json({ success: false, error: auth.error, message: auth.message }, auth.status);
     }
 
-    const cacheKey = `sb-anim:${rawQuery.toLowerCase()}:${limit}`;
+    const cacheKey = `sb-anim2:${rawQuery.toLowerCase()}:${limit}`;
     const nowIso = new Date().toISOString();
 
     const { data: cached } = await supabase
@@ -125,19 +134,27 @@ serve(async (req) => {
     let videos = cached?.videos as unknown[] | undefined;
 
     if (!videos) {
-      const searchUrl = new URL("https://www.googleapis.com/youtube/v3/search");
-      searchUrl.searchParams.set("part", "snippet");
-      searchUrl.searchParams.set("q", `${rawQuery} animation animated 3d explained educational`);
-      searchUrl.searchParams.set("type", "video");
-      searchUrl.searchParams.set("videoEmbeddable", "true");
-      searchUrl.searchParams.set("safeSearch", "strict");
-      searchUrl.searchParams.set("maxResults", String(Math.min(25, limit + 10)));
-      searchUrl.searchParams.set("relevanceLanguage", "en");
-      searchUrl.searchParams.set("order", "relevance");
+      const buildUrl = (q: string) => {
+        const u = new URL("https://www.googleapis.com/youtube/v3/search");
+        u.searchParams.set("part", "snippet");
+        u.searchParams.set("q", q);
+        u.searchParams.set("type", "video");
+        u.searchParams.set("videoEmbeddable", "true");
+        u.searchParams.set("safeSearch", "strict");
+        u.searchParams.set("maxResults", "25");
+        u.searchParams.set("relevanceLanguage", "en");
+        u.searchParams.set("order", "relevance");
+        return u.toString();
+      };
 
-      const searchRes = await fetchYouTube(searchUrl.toString());
-      if (!searchRes.ok) {
-        console.error("[smartboard-video-search] youtube error", searchRes.status, await searchRes.text());
+      // Two passes so niche topics still surface real animations.
+      const [resA, resB] = await Promise.all([
+        fetchYouTube(buildUrl(`${rawQuery} animation animated 3d`)),
+        fetchYouTube(buildUrl(`${rawQuery} animated explanation video`)),
+      ]);
+
+      if (!resA.ok && !resB.ok) {
+        console.error("[smartboard-video-search] youtube error", resA.status, await resA.text());
         return json({
           success: false,
           error: "youtube_unavailable",
@@ -146,9 +163,19 @@ serve(async (req) => {
         }, 503);
       }
 
-      const searchData = await searchRes.json();
       // deno-lint-ignore no-explicit-any
-      const items: any[] = searchData.items ?? [];
+      const merged = new Map<string, any>();
+      for (const res of [resA, resB]) {
+        if (!res.ok) continue;
+        const d = await res.json();
+        // deno-lint-ignore no-explicit-any
+        for (const it of (d.items ?? []) as any[]) {
+          const id = it.id?.videoId;
+          if (id && !merged.has(id)) merged.set(id, it);
+        }
+      }
+      // deno-lint-ignore no-explicit-any
+      const items: any[] = [...merged.values()];
 
       if (items.length === 0) {
         videos = [];
@@ -198,14 +225,23 @@ serve(async (req) => {
             },
             queryTerms,
           );
-          return { base, ...rank };
+          const hay = `${base.title} ${base.channel}`.toLowerCase();
+          const strongAnimation =
+            STRONG_ANIMATION_TERMS.some((t) => base.title.toLowerCase().includes(t)) ||
+            ANIMATION_CHANNELS.some((c) => base.channel.toLowerCase().includes(c));
+          const lectureLike = NON_ANIMATION_TERMS.some((t) => hay.includes(t));
+          const tooLong = seconds > 20 * 60;
+          return { base, ...rank, strongAnimation, lectureLike, tooLong, seconds };
         });
 
-        // Animation-only + on-topic; fall back to the closest on-topic results
-        // so the strip is never empty.
-        const strict = scored.filter((s) => s.animation >= 3 && s.relevance >= 0.5);
-        const relaxed = scored.filter((s) => s.relevance >= 0.5);
-        const pool = strict.length >= 3 ? strict : relaxed.length > 0 ? relaxed : scored;
+        // Animation-only: strong animation signal + on-topic, never a lecture recording.
+        const strict = scored.filter(
+          (s) => s.strongAnimation && !s.lectureLike && !s.tooLong && s.relevance >= 0.5 && s.seconds >= 60,
+        );
+        const nearMiss = scored.filter(
+          (s) => s.strongAnimation && !s.tooLong && s.relevance >= 0.34 && s.seconds >= 60,
+        );
+        const pool = strict.length > 0 ? strict : nearMiss;
 
         videos = pool
           .sort((a, b) => b.score - a.score)
