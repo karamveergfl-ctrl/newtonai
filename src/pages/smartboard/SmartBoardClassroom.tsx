@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Eraser, FileText, Highlighter, Loader2, LogOut, Pen, PenLine, Search, Trash2, Undo2, X } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
 import DocumentStage from "@/components/smartboard/DocumentStage";
-import QuickTopicChips from "@/components/smartboard/QuickTopicChips";
 import VideoResultsGrid from "@/components/smartboard/VideoResultsGrid";
 import VideoStrip from "@/components/smartboard/VideoStrip";
 import TeacherNotesPanel from "@/components/smartboard/TeacherNotesPanel";
@@ -51,6 +50,7 @@ export default function SmartBoardClassroom() {
   const [docKey, setDocKey] = useState("");
   const [mode, setMode] = useState<"document" | "whiteboard">("document");
   const [exitOpen, setExitOpen] = useState(false);
+  const [resultsOpen, setResultsOpen] = useState(false);
   const idleTimer = useRef<number | null>(null);
 
   const board = useWhiteboardState();
@@ -117,6 +117,7 @@ export default function SmartBoardClassroom() {
       setTerm(query);
       setLoading(true);
       setError(null);
+      setResultsOpen(action === "search");
 
       const { data, message } = await searchBoardVideos(current.deviceToken, query, { limit: 15, action });
 
@@ -207,7 +208,7 @@ export default function SmartBoardClassroom() {
       />
 
       {/* ---- top bar ---- */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.06] bg-[#0D1117] px-4">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-white/[0.06] bg-[#0D1117] px-4 py-2">
         <div className="flex items-center gap-3">
           <img src={newtonLogoN.url} alt="NewtonAI" className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 p-1" />
           <span className="h-5 w-px bg-white/[0.12]" />
@@ -216,6 +217,60 @@ export default function SmartBoardClassroom() {
             <p className="text-[11px] font-normal text-slate-400">{session?.institutionName ?? ""}</p>
           </div>
         </div>
+
+        {/* mode tabs */}
+        <div className="flex gap-1 rounded-xl bg-white/[0.05] p-1">
+          {(["document", "whiteboard"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={`flex items-center justify-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-medium transition-colors ${
+                mode === m ? "bg-white text-[#0D1117] shadow-sm" : "text-slate-400 hover:text-white"
+              }`}
+            >
+              {m === "document" ? <FileText className="h-3.5 w-3.5" aria-hidden="true" /> : <PenLine className="h-3.5 w-3.5" aria-hidden="true" />}
+              {m === "document" ? "Document" : "Whiteboard"}
+            </button>
+          ))}
+        </div>
+
+        {/* search strip */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void runSearch(term);
+          }}
+          className="flex h-11 min-w-[260px] flex-1 items-center overflow-hidden rounded-[12px] border border-white/[0.08] bg-[#151C2B] focus-within:border-indigo-500/50 focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+        >
+          <Search className="ml-3.5 h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" />
+          <input
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            aria-label="Search for an educational video topic"
+            placeholder="Search any topic — Photosynthesis, Newton's Laws, Fractions..."
+            className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] font-medium text-white outline-none placeholder:text-slate-600"
+          />
+          <div className="flex items-center gap-2 pr-1.5">
+            {term && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setTerm("")}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex h-8 items-center justify-center rounded-[9px] bg-gradient-to-br from-indigo-500 to-indigo-600 px-4 text-[13px] font-bold text-white transition-all hover:from-indigo-400 hover:to-indigo-500 active:scale-[0.97] disabled:opacity-70"
+            >
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : "Search"}
+            </button>
+          </div>
+        </form>
 
         <div className="flex items-center gap-3">
           <p className="text-[13px] font-medium tabular-nums text-slate-300">
@@ -237,27 +292,9 @@ export default function SmartBoardClassroom() {
       </header>
 
       {/* ---- main ---- */}
-      <main className="flex min-h-0 flex-1 flex-col-reverse min-[1200px]:flex-row">
-        {/* LEFT PANEL */}
-        <section className="flex w-full shrink-0 flex-col border-white/[0.06] bg-[#0D1117] min-[1200px]:h-full min-[1200px]:w-[380px] min-[1200px]:border-r">
-          <div className="m-4 flex gap-1 rounded-xl bg-white/[0.05] p-1">
-            {(["document", "whiteboard"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-colors ${
-                  mode === m ? "bg-white text-[#0D1117] shadow-sm" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                {m === "document" ? <FileText className="h-3.5 w-3.5" aria-hidden="true" /> : <PenLine className="h-3.5 w-3.5" aria-hidden="true" />}
-                {m === "document" ? "Document" : "Whiteboard"}
-              </button>
-            ))}
-          </div>
-
+      <main className="relative min-h-0 flex-1 overflow-hidden bg-[#0D1117]">
           {mode === "document" ? (
-            <div className="min-h-[260px] flex-1 px-3 pb-3 min-[1200px]:overflow-hidden">
+            <div className="h-full w-full p-4">
               <DocumentStage
                 onFindVideos={(topic) => void runSearch(topic, "select_text")}
                 onOpenChange={handleDocOpenChange}
@@ -279,7 +316,7 @@ export default function SmartBoardClassroom() {
               />
             </div>
           ) : (
-            <div className="flex min-h-[320px] flex-1 flex-col gap-3 px-3 pb-3">
+            <div className="flex h-full flex-col gap-3 p-4">
               <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0A0F1A]">
                 <WhiteboardCanvas
                   ref={canvasRef}
@@ -295,83 +332,43 @@ export default function SmartBoardClassroom() {
               {annotationTools}
             </div>
           )}
-        </section>
 
-        {/* RIGHT PANEL */}
-        <section className="flex min-h-0 flex-1 flex-col p-6">
-          <div className="shrink-0 pb-4">
-            <div className="flex items-center justify-between gap-4">
-              <h1
-                className="font-extrabold tracking-[-0.5px] text-white"
-                style={{ fontSize: "clamp(22px, 2.5vw, 32px)" }}
-              >
-                Find an Educational Video
-              </h1>
-              {videos.length > 0 && (
-                <span className="shrink-0 rounded-full bg-slate-700 px-3 py-1 text-[11px] text-slate-300">
-                  {videos.length} videos
-                </span>
-              )}
-            </div>
-            {!activeQuery && (
-              <p className="mt-1 text-[13px] text-slate-500">
-                Type any topic below to find curriculum-aligned animation videos
-              </p>
-            )}
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void runSearch(term);
-              }}
-              className="mt-4 flex h-14 w-full items-center overflow-hidden rounded-[14px] border border-white/[0.08] bg-[#151C2B] focus-within:border-indigo-500/50 focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
-            >
-              <Search className="ml-[18px] h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" />
-              <input
-                value={term}
-                onChange={(e) => setTerm(e.target.value)}
-                aria-label="Search for an educational video topic"
-                placeholder="Search any topic — Photosynthesis, Newton's Laws, Fractions..."
-                className="h-full flex-1 bg-transparent px-3 text-[17px] font-medium text-white outline-none placeholder:text-slate-600"
-              />
-              <div className="flex items-center gap-2 pr-2">
-                {term && (
-                  <button
-                    type="button"
-                    aria-label="Clear search"
-                    onClick={() => setTerm("")}
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white"
-                  >
-                    <X className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
+        {/* results overlay (typed searches) */}
+        {resultsOpen && !docOpen && (
+          <div className="absolute inset-0 z-40 flex flex-col bg-[#0A0F1A]/98 backdrop-blur-sm">
+            <div className="flex shrink-0 items-center justify-between gap-4 px-6 pb-3 pt-5">
+              <h2 className="text-2xl font-extrabold tracking-[-0.5px] text-white">
+                {activeQuery ? `Videos for “${activeQuery}”` : "Find an Educational Video"}
+              </h2>
+              <div className="flex items-center gap-3">
+                {videos.length > 0 && (
+                  <span className="rounded-full bg-slate-700 px-3 py-1 text-[11px] text-slate-300">
+                    {videos.length} videos
+                  </span>
                 )}
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex h-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-indigo-500 to-indigo-600 px-5 text-[13px] font-bold text-white transition-all hover:from-indigo-400 hover:to-indigo-500 active:scale-[0.97] disabled:opacity-70"
+                  type="button"
+                  aria-label="Close video results"
+                  onClick={() => setResultsOpen(false)}
+                  className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-xs text-slate-300 hover:bg-white/[0.06] hover:text-white"
                 >
-                  {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : "Search"}
+                  <X className="h-4 w-4" aria-hidden="true" /> Close
                 </button>
               </div>
-            </form>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+              <VideoResultsGrid
+                videos={videos}
+                loading={loading}
+                query={activeQuery}
+                error={error}
+                onPlay={handlePlay}
+                onRetry={() => void runSearch(activeQuery)}
+                onSuggestion={(topic) => void runSearch(topic)}
+              />
+            </div>
           </div>
-
-          <div className="shrink-0">
-            <QuickTopicChips onSelect={(topic) => void runSearch(topic)} />
-          </div>
-
-          <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
-            <VideoResultsGrid
-              videos={videos}
-              loading={loading}
-              query={activeQuery}
-              error={error}
-              onPlay={handlePlay}
-              onRetry={() => void runSearch(activeQuery)}
-              onSuggestion={(topic) => void runSearch(topic)}
-            />
-          </div>
-        </section>
+        )}
       </main>
 
       {playing && (
