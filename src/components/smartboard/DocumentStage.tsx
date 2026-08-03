@@ -176,14 +176,14 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
         }`}
       >
         {extracting ? (
-          <Loader2 className="h-9 w-9 animate-spin text-indigo-500" aria-hidden="true" />
+          <Loader2 className="h-14 w-14 animate-spin text-indigo-500" aria-hidden="true" />
         ) : (
-          <Upload className="h-9 w-9 text-indigo-600 opacity-60" aria-hidden="true" />
+          <Upload className="h-14 w-14 text-indigo-600 opacity-60" aria-hidden="true" />
         )}
-        <p className="mt-3 text-[15px] font-semibold text-white">
+        <p className="mt-5 text-2xl font-bold text-white">
           {extracting ? "Reading your document…" : "Upload Teaching Material"}
         </p>
-        <p className="mt-1 text-xs text-slate-500">PDF · PPT · Word · Image</p>
+        <p className="mt-1.5 text-base text-slate-500">PDF · PPT · Word · Image</p>
 
         <button
           type="button"
@@ -192,34 +192,34 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
             inputRef.current?.click();
           }}
           disabled={extracting}
-          className="mt-5 flex h-10 items-center gap-2 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 px-5 text-xs font-semibold text-white transition-all hover:from-indigo-400 hover:to-indigo-500 disabled:opacity-60"
+          className="mt-7 flex h-12 items-center gap-2 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 px-7 text-base font-semibold text-white transition-all hover:from-indigo-400 hover:to-indigo-500 disabled:opacity-60"
         >
-          <FileUp className="h-4 w-4" aria-hidden="true" />
+          <FileUp className="h-5 w-5" aria-hidden="true" />
           Choose File
         </button>
 
-        <div className="mt-6 w-full max-w-[300px] space-y-2 border-t border-white/[0.06] pt-5 text-left">
+        <div className="mt-8 w-full max-w-[420px] space-y-3 border-t border-white/[0.06] pt-6 text-left">
           <div className="flex items-start gap-2.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
-              <Search className="h-4 w-4 text-indigo-400" aria-hidden="true" />
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
+              <Search className="h-5 w-5 text-indigo-400" aria-hidden="true" />
             </span>
             <span>
-              <span className="block text-xs font-semibold text-white">Topic-Based Video Search</span>
-              <span className="block text-[11px] text-slate-500">Select text to find animation videos</span>
+              <span className="block text-[15px] font-semibold text-white">Topic-Based Video Search</span>
+              <span className="block text-[13px] text-slate-500">Select text to find animation videos</span>
             </span>
           </div>
           <div className="flex items-start gap-2.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
-              <Camera className="h-4 w-4 text-indigo-400" aria-hidden="true" />
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
+              <Camera className="h-5 w-5 text-indigo-400" aria-hidden="true" />
             </span>
             <span>
-              <span className="block text-xs font-semibold text-white">Teach from any material</span>
-              <span className="block text-[11px] text-slate-500">Open slides full screen and write alongside</span>
+              <span className="block text-[15px] font-semibold text-white">Teach from any material</span>
+              <span className="block text-[13px] text-slate-500">Open slides full screen and write alongside</span>
             </span>
           </div>
         </div>
 
-        {error && <p className="mt-3 text-xs font-medium text-red-400">{error}</p>}
+        {error && <p className="mt-4 text-sm font-medium text-red-400">{error}</p>}
 
         <input
           ref={inputRef}
@@ -238,7 +238,7 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
     : Math.max(360, ((stageWidth - 48) * zoom) / 100);
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-[#0A1628]">
+    <div className="absolute inset-0 z-30 flex flex-col bg-[#0A1628]">
       {topSlot}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-2">
@@ -315,7 +315,7 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
         ref={stageRef}
         onMouseUp={handleSelection}
         onTouchEnd={handleSelection}
-        className="flex-1 overflow-auto bg-slate-950/60 p-6"
+        className="smartboard-doc-selectable flex-1 overflow-auto bg-slate-950/60 p-6"
       >
         {fileKind === "pdf" ? (
           <Document

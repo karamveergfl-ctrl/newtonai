@@ -655,3 +655,11 @@ All colors MUST be HSL.
 .smartboard-classroom * {
   scrollbar-width: none;
 }
+
+/* Document text must stay selectable so teachers can select a phrase and
+   search animation videos for it, even in kiosk mode. */
+.smartboard-doc-selectable,
+.smartboard-doc-selectable * {
+  user-select: text;
+  -webkit-user-select: text;
+}
