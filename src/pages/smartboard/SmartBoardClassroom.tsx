@@ -6,6 +6,8 @@ import SEOHead from "@/components/SEOHead";
 import DocumentStage from "@/components/smartboard/DocumentStage";
 import QuickTopicChips from "@/components/smartboard/QuickTopicChips";
 import VideoResultsGrid from "@/components/smartboard/VideoResultsGrid";
+import VideoStrip from "@/components/smartboard/VideoStrip";
+import TeacherNotesPanel from "@/components/smartboard/TeacherNotesPanel";
 import SmartBoardVideoPlayer from "@/components/smartboard/SmartBoardVideoPlayer";
 import IdleScreen from "@/components/smartboard/IdleScreen";
 import {
@@ -32,7 +34,14 @@ export default function SmartBoardClassroom() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState<SmartBoardVideo | null>(null);
+  const [docOpen, setDocOpen] = useState(false);
+  const [docKey, setDocKey] = useState("");
   const idleTimer = useRef<number | null>(null);
+
+  const handleDocOpenChange = useCallback((open: boolean, key: string) => {
+    setDocOpen(open);
+    setDocKey(key);
+  }, []);
 
   /* ---- session validation ---- */
   useEffect(() => {
@@ -100,7 +109,7 @@ export default function SmartBoardClassroom() {
       setError(null);
 
       const { data, message } = await searchBoardVideos(current.deviceToken, query, {
-        limit: action === "select_text" ? 5 : 12,
+        limit: 15,
         action,
       });
 
@@ -170,8 +179,28 @@ export default function SmartBoardClassroom() {
 
       <main className="mx-auto max-w-[1800px] space-y-6 px-5 py-6">
         {/* Teaching document */}
-        <DocumentStage onFindVideos={(topic) => void runSearch(topic, "select_text")} />
+        <DocumentStage
+          onFindVideos={(topic) => void runSearch(topic, "select_text")}
+          onOpenChange={handleDocOpenChange}
+          topSlot={
+            <VideoStrip
+              videos={videos}
+              loading={loading}
+              query={activeQuery}
+              error={error}
+              onPlay={handlePlay}
+              onDismiss={() => {
+                setVideos([]);
+                setActiveQuery("");
+              }}
+              onRetry={() => void runSearch(activeQuery, "select_text")}
+            />
+          }
+          sideSlot={<TeacherNotesPanel docKey={docKey} />}
+        />
 
+        {!docOpen && (
+          <>
         {/* Zone 2 — search */}
         <section className="relative overflow-hidden rounded-2xl border border-slate-800 bg-[#0A1628] p-6">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.18),transparent_60%)]" />
@@ -227,6 +256,8 @@ export default function SmartBoardClassroom() {
             onSuggestion={(topic) => void runSearch(topic)}
           />
         </section>
+          </>
+        )}
       </main>
 
       {playing && (
