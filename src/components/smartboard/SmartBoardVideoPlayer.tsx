@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { Maximize, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Maximize2, Volume2, VolumeX, X } from "lucide-react";
 import type { SmartBoardVideo } from "@/lib/smartboardSession";
 
 interface Props {
@@ -11,6 +11,14 @@ interface Props {
 
 export function SmartBoardVideoPlayer({ video, upNext, onSelect, onClose }: Props) {
   const frameRef = useRef<HTMLIFrameElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [muted, setMuted] = useState(false);
+  const [shown, setShown] = useState(false);
+
+  useEffect(() => {
+    const raf = window.requestAnimationFrame(() => setShown(true));
+    return () => window.cancelAnimationFrame(raf);
+  }, []);
 
   const post = (func: string, args: unknown[] = []) => {
     frameRef.current?.contentWindow?.postMessage(
@@ -20,18 +28,26 @@ export function SmartBoardVideoPlayer({ video, upNext, onSelect, onClose }: Prop
   };
 
   const goFullscreen = () => {
-    const el = frameRef.current;
+    const el = shellRef.current ?? frameRef.current;
     if (el?.requestFullscreen) el.requestFullscreen().catch(() => undefined);
+  };
+
+  const toggleMute = () => {
+    setMuted((m) => {
+      post(m ? "unMute" : "mute");
+      return !m;
+    });
   };
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
       if (e.key === "Escape") {
         onClose();
-      } else if (e.code === "Space") {
+      } else if (e.code === "Space" || key === "k") {
         e.preventDefault();
         post("pauseVideo");
-      } else if (e.key.toLowerCase() === "f") {
+      } else if (key === "f") {
         goFullscreen();
       }
     };
@@ -40,53 +56,94 @@ export function SmartBoardVideoPlayer({ video, upNext, onSelect, onClose }: Prop
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-black/95 p-6">
-      <iframe
-        ref={frameRef}
-        title={video.title}
-        src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-        allowFullScreen
-        className="h-[70vh] max-h-[790px] w-[90vw] max-w-[1400px] rounded-2xl border border-indigo-500/40 shadow-[0_0_60px_-10px_rgba(99,102,241,0.5)]"
-      />
-
-      <div className="flex w-[90vw] max-w-[1400px] flex-wrap items-center justify-between gap-4">
-        <p className="max-w-[45%] truncate text-lg font-semibold text-white">{video.title}</p>
-        <div className="flex items-center gap-2 rounded-full bg-emerald-900/40 px-4 py-2">
-          <span className="h-3 w-3 animate-pulse rounded-full bg-emerald-400" />
-          <span className="text-base font-medium text-emerald-200">Playing for class</span>
+    <div
+      className="fixed inset-0 z-50 flex flex-col transition-opacity duration-200"
+      style={{ opacity: shown ? 1 : 0, background: "rgba(0,0,0,0.97)", backdropFilter: "blur(20px)" }}
+    >
+      {/* header */}
+      <div className="flex h-[60px] shrink-0 items-center justify-between gap-4 px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          {video.thumbnail && (
+            <img src={video.thumbnail} alt="" className="h-7 w-10 shrink-0 rounded-md object-cover" />
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white">{video.title}</p>
+            <p className="truncate text-xs text-slate-400">{video.channel}</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex shrink-0 items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1.5">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+          <span className="text-xs text-slate-300">Playing for class</span>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={goFullscreen}
-            className="flex min-h-[64px] items-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-6 text-lg font-semibold text-white hover:bg-slate-700"
+            aria-label={muted ? "Unmute video" : "Mute video"}
+            onClick={toggleMute}
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"
           >
-            <Maximize className="h-5 w-5" aria-hidden="true" /> Fullscreen
+            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </button>
           <button
             type="button"
-            onClick={onClose}
-            className="flex min-h-[64px] items-center gap-2 rounded-xl bg-indigo-600 px-6 text-lg font-semibold text-white hover:bg-indigo-500"
+            aria-label="Fullscreen"
+            onClick={goFullscreen}
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"
           >
-            <X className="h-5 w-5" aria-hidden="true" /> Close
+            <Maximize2 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Close video"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-900/60 text-red-300 hover:bg-red-900"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
       </div>
 
+      {/* player */}
+      <div className="flex flex-1 items-center justify-center px-6">
+        <div
+          ref={shellRef}
+          className="overflow-hidden rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)]"
+          style={{
+            width: "min(90vw, calc(90vh * 16 / 9))",
+            height: "min(85vh, calc(85vw * 9 / 16))",
+          }}
+        >
+          <iframe
+            ref={frameRef}
+            title={video.title}
+            src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowFullScreen
+            className="h-full w-full border-0"
+          />
+        </div>
+      </div>
+
+      {/* up next */}
       {upNext.length > 0 && (
-        <div className="w-[90vw] max-w-[1400px]">
-          <p className="mb-2 text-base font-semibold uppercase tracking-wider text-slate-400">Up next</p>
-          <div className="flex gap-4">
+        <div className="flex h-[100px] shrink-0 items-start gap-3 border-t border-white/[0.06] bg-white/[0.02] px-6 py-3">
+          <p className="mt-1 shrink-0 text-[10px] uppercase tracking-[1.5px] text-slate-500">Up Next</p>
+          <div className="flex gap-3 overflow-x-auto">
             {upNext.slice(0, 3).map((v) => (
               <button
                 key={v.id}
                 type="button"
                 onClick={() => onSelect(v)}
-                className="flex w-72 items-center gap-3 rounded-xl border border-slate-700 bg-slate-800 p-2 text-left hover:border-indigo-500"
+                className="w-[140px] shrink-0 text-left"
               >
-                <img src={v.thumbnail} alt="" className="h-16 w-28 shrink-0 rounded-lg object-cover" />
-                <span className="line-clamp-2 text-base font-medium text-white">{v.title}</span>
+                <img
+                  src={v.thumbnail}
+                  alt=""
+                  className="h-[79px] w-[140px] rounded-md object-cover transition-[filter] hover:brightness-110"
+                />
+                <p className="mt-1.5 line-clamp-1 text-[11px] text-white">{v.title}</p>
               </button>
             ))}
           </div>
