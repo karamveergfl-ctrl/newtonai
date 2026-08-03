@@ -227,23 +227,31 @@ serve(async (req) => {
             queryTerms,
           );
           const hay = `${base.title} ${base.channel}`.toLowerCase();
+          const desc = (item.snippet?.description ?? "").toLowerCase();
           const strongAnimation =
             STRONG_ANIMATION_TERMS.some((t) => base.title.toLowerCase().includes(t)) ||
             ANIMATION_CHANNELS.some((c) => base.channel.toLowerCase().includes(c));
+          const softAnimation =
+            strongAnimation ||
+            STRONG_ANIMATION_TERMS.some((t) => desc.includes(t)) ||
+            rank.animation >= 2;
           const lectureLike = NON_ANIMATION_TERMS.some((t) => hay.includes(t));
-          const tooLong = seconds > 20 * 60;
-          return { base, ...rank, strongAnimation, lectureLike, tooLong, seconds };
+          const tooLong = seconds > 30 * 60;
+          return { base, ...rank, strongAnimation, softAnimation, lectureLike, tooLong, seconds };
         });
 
-        // Animation-only: strong animation signal + on-topic, never a lecture recording.
+        // Graded tiers so niche topics still return something useful instead of an empty state.
         const notShort = (s: { seconds: number }) => s.seconds === 0 || s.seconds >= 60;
-        const strict = scored.filter(
-          (s) => s.strongAnimation && !s.lectureLike && !s.tooLong && s.relevance >= 0.5 && notShort(s),
-        );
-        const nearMiss = scored.filter(
-          (s) => s.strongAnimation && !s.tooLong && s.relevance >= 0.34 && notShort(s),
-        );
-        const pool = strict.length > 0 ? strict : nearMiss;
+        const tiers = [
+          scored.filter(
+            (s) => s.strongAnimation && !s.lectureLike && !s.tooLong && s.relevance >= 0.5 && notShort(s),
+          ),
+          scored.filter((s) => s.strongAnimation && !s.tooLong && s.relevance >= 0.34 && notShort(s)),
+          scored.filter((s) => s.softAnimation && !s.tooLong && s.relevance >= 0.34 && notShort(s)),
+          scored.filter((s) => s.softAnimation && s.relevance > 0 && notShort(s)),
+          scored.filter((s) => s.relevance >= 0.34 && notShort(s)),
+        ];
+        const pool = tiers.find((t) => t.length > 0) ?? [];
 
         videos = pool
           .sort((a, b) => b.score - a.score)
