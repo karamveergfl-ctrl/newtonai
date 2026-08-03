@@ -3,6 +3,53 @@ import { corsHeaders, json, resolveBoard, serviceClient } from "../_shared/smart
 
 const CACHE_TTL_HOURS = 48;
 
+const ANIMATION_TERMS = [
+  "animation", "animated", "3d", "2d", "visual", "visualized", "visualisation", "visualization",
+  "simulation", "graphics", "motion", "explainer", "how it works", "working of",
+];
+const ANIMATION_CHANNELS = [
+  "learn engineering", "lesics", "the engineers post", "kurzgesagt", "ted-ed", "amoeba sisters",
+  "manocha academy", "sabin civil", "smart learning", "bozeman", "makemegenius", "peekaboo",
+  "extraclass", "byju", "infinity learn", "vedantu", "magnet brains",
+];
+const STOP_WORDS = new Set(["the", "of", "and", "for", "with", "a", "an", "to", "in", "on", "is", "are"]);
+
+const STOP_TERMS = ["#shorts", "full lecture", "one shot", "live class", "unacademy live", "webinar"];
+
+function parseIsoSeconds(iso?: string): number {
+  const m = iso?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!m) return 0;
+  return parseInt(m[1] || "0") * 3600 + parseInt(m[2] || "0") * 60 + parseInt(m[3] || "0");
+}
+
+/** Scores a result on how animated and how on-topic it is. */
+function scoreVideo(
+  v: { title: string; channel: string; description: string; seconds: number },
+  queryTerms: string[],
+) {
+  const title = v.title.toLowerCase();
+  const desc = v.description.toLowerCase();
+  const channel = v.channel.toLowerCase();
+  const haystack = `${title} ${desc} ${channel}`;
+
+  let animation = 0;
+  for (const term of ANIMATION_TERMS) {
+    if (title.includes(term)) animation += 3;
+    else if (haystack.includes(term)) animation += 1;
+  }
+  if (ANIMATION_CHANNELS.some((c) => channel.includes(c))) animation += 4;
+
+  const matched = queryTerms.filter((t) => haystack.includes(t)).length;
+  const relevance = queryTerms.length ? matched / queryTerms.length : 1;
+
+  let penalty = 0;
+  if (STOP_TERMS.some((t) => haystack.includes(t))) penalty += 6;
+  if (v.seconds > 0 && v.seconds < 60) penalty += 6; // shorts
+  if (v.seconds > 45 * 60) penalty += 4; // full lecture recordings
+
+  return { animation, relevance, score: animation * 2 + relevance * 10 - penalty };
+}
+
 async function fetchYouTube(urlWithoutKey: string): Promise<Response> {
   const keys = [
     Deno.env.get("YOUTUBE_API_KEY"),
@@ -52,7 +99,7 @@ serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const rawQuery = typeof body.query === "string" ? body.query.trim().slice(0, 200) : "";
-    const limit = Math.min(Math.max(Number(body.limit) || 12, 1), 12);
+    const limit = Math.min(Math.max(Number(body.limit) || 15, 1), 20);
     const action = body.action === "select_text" ? "select_text" : "search";
 
     if (!rawQuery) {
@@ -65,7 +112,7 @@ serve(async (req) => {
       return json({ success: false, error: auth.error, message: auth.message }, auth.status);
     }
 
-    const cacheKey = `sb:${rawQuery.toLowerCase()}:${limit}`;
+    const cacheKey = `sb-anim:${rawQuery.toLowerCase()}:${limit}`;
     const nowIso = new Date().toISOString();
 
     const { data: cached } = await supabase
@@ -80,11 +127,11 @@ serve(async (req) => {
     if (!videos) {
       const searchUrl = new URL("https://www.googleapis.com/youtube/v3/search");
       searchUrl.searchParams.set("part", "snippet");
-      searchUrl.searchParams.set("q", `${rawQuery} explained animation educational school`);
+      searchUrl.searchParams.set("q", `${rawQuery} animation animated 3d explained educational`);
       searchUrl.searchParams.set("type", "video");
       searchUrl.searchParams.set("videoEmbeddable", "true");
       searchUrl.searchParams.set("safeSearch", "strict");
-      searchUrl.searchParams.set("maxResults", String(limit));
+      searchUrl.searchParams.set("maxResults", String(Math.min(25, limit + 10)));
       searchUrl.searchParams.set("relevanceLanguage", "en");
       searchUrl.searchParams.set("order", "relevance");
 
@@ -124,9 +171,16 @@ serve(async (req) => {
           console.warn("[smartboard-video-search] details fetch failed", e);
         }
 
-        videos = items.map((item) => {
+        const queryTerms = rawQuery
+          .toLowerCase()
+          .replace(/[^a-z0-9\s]/g, " ")
+          .split(/\s+/)
+          .filter((t) => t.length > 2 && !STOP_WORDS.has(t));
+
+        const scored = items.map((item) => {
           const d = detailsMap.get(item.id.videoId);
-          return {
+          const seconds = parseIsoSeconds(d?.contentDetails?.duration);
+          const base = {
             id: item.id.videoId,
             title: item.snippet?.title ?? "",
             channel: item.snippet?.channelTitle ?? "",
@@ -135,7 +189,28 @@ serve(async (req) => {
             viewCount: formatViewCount(d?.statistics?.viewCount),
             definition: d?.contentDetails?.definition ?? "",
           };
+          const rank = scoreVideo(
+            {
+              title: base.title,
+              channel: base.channel,
+              description: item.snippet?.description ?? "",
+              seconds,
+            },
+            queryTerms,
+          );
+          return { base, ...rank };
         });
+
+        // Animation-only + on-topic; fall back to the closest on-topic results
+        // so the strip is never empty.
+        const strict = scored.filter((s) => s.animation >= 3 && s.relevance >= 0.5);
+        const relaxed = scored.filter((s) => s.relevance >= 0.5);
+        const pool = strict.length >= 3 ? strict : relaxed.length > 0 ? relaxed : scored;
+
+        videos = pool
+          .sort((a, b) => b.score - a.score)
+          .slice(0, limit)
+          .map((s) => s.base);
       }
 
       await supabase.from("youtube_search_cache").upsert({
