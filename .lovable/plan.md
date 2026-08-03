@@ -12,12 +12,12 @@ The floating "Notes" tab on the right edge of the document is removed. `TeacherN
 
 ## 3. One results panel for both entry points
 
-Selecting text in a document and pressing "Find animation videos" now opens the same full results panel as the top-bar search — the layout in the second reference image:
+Selecting text in a document and pressing "Find animation videos" now opens the same full results panel as the top-bar search — the layout in the second reference image, but animation-only (no Explanation tab):
 
 ```text
 [X Close]
 [sparkle]  bolted joints including eccentrically loaded joints
-[  Animation (8)   |   Explanation (8)  ]
+           Animation videos · 8 results
 -------------------------------------------
 [thumb 6:49]   Title
                Channel · Animated · 1.2K views
@@ -25,7 +25,7 @@ Selecting text in a document and pressing "Find animation videos" now opens the 
                ...
 ```
 
-- Two tabs: **Animation** (default) and **Explanation**, each with a count.
+- Animation videos only — one list, no tabs, no lecture/explanation results mixed in.
 - Wide horizontal rows: large thumbnail with duration badge on the left; title, channel, "Animated" tag, view count and a Play for Class action on the right.
 - Skeleton rows while loading, error + Retry, and the no-results suggestion chips are kept.
 - The panel scrolls; the document stays mounted behind it and reappears on Close at the same page and zoom.
@@ -33,16 +33,16 @@ Selecting text in a document and pressing "Find animation videos" now opens the 
 
 ## 4. Make the animation search accurate
 
-Search quality work in the `smartboard-video-search` edge function:
+Search quality work in the `smartboard-video-search` edge function — the function returns animation videos on the searched topic and nothing else:
 
-- Return two ranked buckets, `animation` and `explanation`, instead of one flat list, so the tabs are real rather than duplicates.
-- **Animation bucket**: requires animation signals (animated / 3d / 2d / simulation / visualisation title terms, or a known animation channel) plus topic relevance; strongly demotes handwritten-whiteboard uploads, exam-solution walkthroughs and anything over ~20 minutes.
-- **Explanation bucket**: on-topic teaching videos that are not animation-first, ordered by relevance then views.
+- Hard filter: a result is only returned when it shows animation signals (animated / animation / 3d / 2d / simulation / visualisation / motion graphics title terms, or a known animation channel) **and** is on-topic for the query.
+- Strongly rejected: handwritten-whiteboard uploads, talking-head lectures, exam-solution walkthroughs, classroom recordings and anything over ~20 minutes.
+- If nothing passes the filter, show the empty state with suggestion chips rather than falling back to non-animation lecture videos.
 - Broader candidate pool: run two YouTube queries (an animation-biased one and a plain topic one), merge and de-duplicate before scoring, so a niche topic like "design of threaded fasteners" is not left with a single unrelated Short.
 - Selected text is cleaned before searching: trailing punctuation stripped and capped to a sensible phrase length, so the query is the concept rather than a whole sentence.
-- Shorts, `#shorts`, live classes and "one shot" lectures stay filtered out; the 48h cache is kept with the cache key extended for the new two-bucket shape.
+- Shorts, `#shorts`, live classes and "one shot" lectures stay filtered out; the 48h cache is kept with the cache key bumped for the stricter result shape.
 
 ## Technical notes
-- Touched: `src/pages/smartboard/SmartBoardClassroom.tsx`, `src/components/smartboard/DocumentStage.tsx`, a new `SmartBoardResultsPanel` (row-variant cards reusing `VideoCard` styling), `supabase/functions/smartboard-video-search/index.ts`, `src/lib/smartboardSession.ts` (response type gains `animation` / `explanation`).
+- Touched: `src/pages/smartboard/SmartBoardClassroom.tsx`, `src/components/smartboard/DocumentStage.tsx`, a new `SmartBoardResultsPanel` (row-variant cards reusing `VideoCard` styling), `supabase/functions/smartboard-video-search/index.ts`.
 - Deleted: `src/components/smartboard/VideoStrip.tsx`; `TeacherNotesPanel` unmounted from the classroom.
 - Untouched: auth/device tokens, `sb_*` tables and RLS, whiteboard, idle screen, player, usage logging, and all non-SmartBoard routes.
