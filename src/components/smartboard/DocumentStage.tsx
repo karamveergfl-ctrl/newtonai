@@ -150,6 +150,18 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
   if (!fileUrl) {
     return (
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Upload a document"
+        onClick={() => {
+          if (!extracting) inputRef.current?.click();
+        }}
+        onKeyDown={(e) => {
+          if ((e.key === "Enter" || e.key === " ") && !extracting) {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -160,7 +172,7 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
           setDragOver(false);
           void acceptFile(e.dataTransfer.files?.[0]);
         }}
-        className={`relative overflow-hidden rounded-3xl border-2 border-dashed p-8 text-center transition-colors ${
+        className={`relative cursor-pointer overflow-hidden rounded-3xl border-2 border-dashed p-8 text-center outline-none transition-colors focus-visible:border-teal-400 ${
           dragOver ? "border-teal-400 bg-teal-500/5" : "border-teal-700/60 bg-[#0C1B33]/70"
         }`}
       >
@@ -170,7 +182,7 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
 
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
           disabled={extracting}
           className="mx-auto flex min-h-[52px] items-center gap-2 rounded-full bg-teal-600 px-7 text-lg font-semibold text-white hover:bg-teal-500 disabled:opacity-60"
         >
@@ -200,7 +212,7 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
               Drop files here or{" "}
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
                 className="underline decoration-teal-400 underline-offset-4 hover:text-teal-300"
               >
                 click to browse
