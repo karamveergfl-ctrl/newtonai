@@ -17,8 +17,8 @@ const STOP_WORDS = new Set(["the", "of", "and", "for", "with", "a", "an", "to", 
 const STOP_TERMS = ["#shorts", "full lecture", "one shot", "live class", "unacademy live", "webinar"];
 // Strong signals that a result is a talking-head / handwritten lecture, not an animation.
 const NON_ANIMATION_TERMS = [
-  "lecture", "numerical", "solved example", "question paper", "previous year",
-  "handwritten", "notes pdf", "exam", "syllabus", "revision", "crash course", "doubt session",
+  "full lecture", "numerical", "solved example", "question paper", "previous year",
+  "handwritten", "notes pdf", "syllabus", "revision", "crash course", "doubt session",
 ];
 const STRONG_ANIMATION_TERMS = [
   "animation", "animated", "3d", "2d", "simulation", "visualization", "visualisation",
@@ -121,7 +121,7 @@ serve(async (req) => {
       return json({ success: false, error: auth.error, message: auth.message }, auth.status);
     }
 
-    const cacheKey = `sb-anim2:${rawQuery.toLowerCase()}:${limit}`;
+    const cacheKey = `sb-anim3:${rawQuery.toLowerCase()}:${limit}`;
     const nowIso = new Date().toISOString();
 
     const { data: cached } = await supabase
@@ -148,12 +148,13 @@ serve(async (req) => {
       };
 
       // Two passes so niche topics still surface real animations.
-      const [resA, resB] = await Promise.all([
+      const [resA, resB, resC] = await Promise.all([
         fetchYouTube(buildUrl(`${rawQuery} animation animated 3d`)),
         fetchYouTube(buildUrl(`${rawQuery} animated explanation video`)),
+        fetchYouTube(buildUrl(`${rawQuery} working principle visualization`)),
       ]);
 
-      if (!resA.ok && !resB.ok) {
+      if (!resA.ok && !resB.ok && !resC.ok) {
         console.error("[smartboard-video-search] youtube error", resA.status, await resA.text());
         return json({
           success: false,
@@ -165,7 +166,7 @@ serve(async (req) => {
 
       // deno-lint-ignore no-explicit-any
       const merged = new Map<string, any>();
-      for (const res of [resA, resB]) {
+      for (const res of [resA, resB, resC]) {
         if (!res.ok) continue;
         const d = await res.json();
         // deno-lint-ignore no-explicit-any
@@ -226,23 +227,31 @@ serve(async (req) => {
             queryTerms,
           );
           const hay = `${base.title} ${base.channel}`.toLowerCase();
+          const desc = (item.snippet?.description ?? "").toLowerCase();
           const strongAnimation =
             STRONG_ANIMATION_TERMS.some((t) => base.title.toLowerCase().includes(t)) ||
             ANIMATION_CHANNELS.some((c) => base.channel.toLowerCase().includes(c));
+          const softAnimation =
+            strongAnimation ||
+            STRONG_ANIMATION_TERMS.some((t) => desc.includes(t)) ||
+            rank.animation >= 2;
           const lectureLike = NON_ANIMATION_TERMS.some((t) => hay.includes(t));
-          const tooLong = seconds > 20 * 60;
-          return { base, ...rank, strongAnimation, lectureLike, tooLong, seconds };
+          const tooLong = seconds > 30 * 60;
+          return { base, ...rank, strongAnimation, softAnimation, lectureLike, tooLong, seconds };
         });
 
-        // Animation-only: strong animation signal + on-topic, never a lecture recording.
+        // Graded tiers so niche topics still return something useful instead of an empty state.
         const notShort = (s: { seconds: number }) => s.seconds === 0 || s.seconds >= 60;
-        const strict = scored.filter(
-          (s) => s.strongAnimation && !s.lectureLike && !s.tooLong && s.relevance >= 0.5 && notShort(s),
-        );
-        const nearMiss = scored.filter(
-          (s) => s.strongAnimation && !s.tooLong && s.relevance >= 0.34 && notShort(s),
-        );
-        const pool = strict.length > 0 ? strict : nearMiss;
+        const tiers = [
+          scored.filter(
+            (s) => s.strongAnimation && !s.lectureLike && !s.tooLong && s.relevance >= 0.5 && notShort(s),
+          ),
+          scored.filter((s) => s.strongAnimation && !s.tooLong && s.relevance >= 0.34 && notShort(s)),
+          scored.filter((s) => s.softAnimation && !s.tooLong && s.relevance >= 0.34 && notShort(s)),
+          scored.filter((s) => s.softAnimation && s.relevance > 0 && notShort(s)),
+          scored.filter((s) => s.relevance >= 0.34 && notShort(s)),
+        ];
+        const pool = tiers.find((t) => t.length > 0) ?? [];
 
         videos = pool
           .sort((a, b) => b.score - a.score)
