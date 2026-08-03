@@ -10,6 +10,8 @@ export interface SmartBoardSession {
   subjectFocus: string | null;
   institutionId: string;
   institutionName: string;
+  /** Optional — stored when the board was activated with a code. */
+  activationCode?: string;
   activatedAt: string;
 }
 

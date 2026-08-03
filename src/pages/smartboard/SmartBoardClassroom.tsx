@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Search, X } from "lucide-react";
-import Logo from "@/components/Logo";
+import { Eraser, FileText, Highlighter, Loader2, LogOut, Pen, PenLine, Search, Trash2, Undo2, X } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
 import DocumentStage from "@/components/smartboard/DocumentStage";
 import QuickTopicChips from "@/components/smartboard/QuickTopicChips";
@@ -10,6 +9,19 @@ import VideoStrip from "@/components/smartboard/VideoStrip";
 import TeacherNotesPanel from "@/components/smartboard/TeacherNotesPanel";
 import SmartBoardVideoPlayer from "@/components/smartboard/SmartBoardVideoPlayer";
 import IdleScreen from "@/components/smartboard/IdleScreen";
+import { WhiteboardCanvas, type WhiteboardCanvasHandle } from "@/components/smartboard/WhiteboardCanvas";
+import { useWhiteboardState } from "@/hooks/useWhiteboardState";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import newtonLogoN from "@/assets/newtonai-logo-n.png.asset.json";
 import {
   clearSmartBoardSession,
   logBoardPlay,
@@ -21,10 +33,11 @@ import {
   type SmartBoardVideo,
 } from "@/lib/smartboardSession";
 
-const IDLE_MS = 5 * 60 * 1000;
+const IDLE_MS = 10 * 60 * 1000;
 
 export default function SmartBoardClassroom() {
   const navigate = useNavigate();
+  // Read synchronously on first render so the board name paints instantly.
   const [session, setSession] = useState<SmartBoardSession | null>(() => readSmartBoardSession());
   const [clock, setClock] = useState(new Date());
   const [idle, setIdle] = useState(false);
@@ -36,7 +49,12 @@ export default function SmartBoardClassroom() {
   const [playing, setPlaying] = useState<SmartBoardVideo | null>(null);
   const [docOpen, setDocOpen] = useState(false);
   const [docKey, setDocKey] = useState("");
+  const [mode, setMode] = useState<"document" | "whiteboard">("document");
+  const [exitOpen, setExitOpen] = useState(false);
   const idleTimer = useRef<number | null>(null);
+
+  const board = useWhiteboardState();
+  const canvasRef = useRef<WhiteboardCanvasHandle>(null);
 
   const handleDocOpenChange = useCallback((open: boolean, key: string) => {
     setDocOpen(open);
@@ -56,18 +74,10 @@ export default function SmartBoardClassroom() {
       if (data?.board) {
         const next = { ...local, ...data.board };
         setSession(next);
-        // Persist the refreshed board details so the device reopens on the
-        // right board even while offline.
         writeSmartBoardSession(next);
       } else if (errorCode === "invalid_token") {
-        // Only a revoked/replaced device token forces re-activation. Plan or
-        // network problems keep the device signed in.
         clearSmartBoardSession();
         navigate("/smartboard/activate", { replace: true });
-      } else if (errorCode) {
-        setError(
-          "This board could not be verified right now. You can keep teaching — it will retry automatically.",
-        );
       }
     });
     return () => {
@@ -90,8 +100,8 @@ export default function SmartBoardClassroom() {
 
   useEffect(() => {
     resetIdle();
-    const events: (keyof WindowEventMap)[] = ["pointerdown", "keydown", "wheel"];
-    events.forEach((e) => window.addEventListener(e, resetIdle));
+    const events: (keyof WindowEventMap)[] = ["pointerdown", "mousedown", "mousemove", "touchstart", "keydown", "wheel"];
+    events.forEach((e) => window.addEventListener(e, resetIdle, { passive: true }));
     return () => {
       events.forEach((e) => window.removeEventListener(e, resetIdle));
       if (idleTimer.current) window.clearTimeout(idleTimer.current);
@@ -108,10 +118,7 @@ export default function SmartBoardClassroom() {
       setLoading(true);
       setError(null);
 
-      const { data, message } = await searchBoardVideos(current.deviceToken, query, {
-        limit: 15,
-        action,
-      });
+      const { data, message } = await searchBoardVideos(current.deviceToken, query, { limit: 15, action });
 
       setLoading(false);
       if (!data) {
@@ -137,13 +144,61 @@ export default function SmartBoardClassroom() {
     }
   };
 
-  const handleExit = () => {
+  const confirmExit = () => {
     clearSmartBoardSession();
     navigate("/smartboard/activate", { replace: true });
   };
 
+  const toolButton = (
+    label: string,
+    active: boolean,
+    onClick: () => void,
+    icon: React.ReactNode,
+    disabled?: boolean,
+  ) => (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
+        active ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400 hover:text-white"
+      }`}
+    >
+      {icon}
+    </button>
+  );
+
+  const annotationTools = (
+    <div className="flex items-center gap-2">
+      {toolButton("Pen", board.tool === "pen", () => board.setTool("pen"), <Pen className="h-4 w-4" />)}
+      {toolButton("Highlighter", board.tool === "highlighter", () => board.setTool("highlighter"), <Highlighter className="h-4 w-4" />)}
+      {toolButton("Eraser", board.tool === "eraser", () => board.setTool("eraser"), <Eraser className="h-4 w-4" />)}
+      {toolButton("Clear", false, () => {
+        canvasRef.current?.clear();
+        board.clearStacks();
+      }, <Trash2 className="h-4 w-4" />)}
+      {toolButton(
+        "Undo",
+        false,
+        () => {
+          const ctx = canvasRef.current?.getCanvas()?.getContext("2d");
+          if (!ctx) return;
+          const prev = board.undo(ctx);
+          if (prev) canvasRef.current?.restoreImageData(prev);
+        },
+        <Undo2 className="h-4 w-4" />,
+        !board.canUndo,
+      )}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-[#0A1628] text-white">
+    <div
+      className="smartboard-classroom flex h-screen flex-col overflow-hidden bg-[#0A0F1A] text-white"
+      style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif", fontSize: 16 }}
+    >
       <SEOHead
         title="SmartBoard Classroom"
         description="NewtonAI SmartBoard classroom display for instant educational animation videos."
@@ -151,113 +206,172 @@ export default function SmartBoardClassroom() {
         noIndex
       />
 
-      {/* Zone 1 — top bar */}
-      <header className="flex h-[60px] items-center justify-between border-b border-slate-800 bg-[#0A1628] px-5">
-        <div className="flex items-center gap-4">
-          <Logo size="sm" />
-          <span className="h-8 w-px bg-slate-700" />
-          <div>
-            <p className="text-lg font-bold leading-tight text-white">{session?.boardName ?? "SmartBoard"}</p>
-            <p className="text-sm leading-tight text-slate-400">{session?.institutionName ?? ""}</p>
+      {/* ---- top bar ---- */}
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.06] bg-[#0D1117] px-4">
+        <div className="flex items-center gap-3">
+          <img src={newtonLogoN.url} alt="NewtonAI" className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 p-1" />
+          <span className="h-5 w-px bg-white/[0.12]" />
+          <div className="leading-tight">
+            <p className="text-lg font-bold text-white">{session?.boardName ?? "SmartBoard"}</p>
+            <p className="text-[11px] font-normal text-slate-400">{session?.institutionName ?? ""}</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <p className="text-base text-slate-300">
+
+        <div className="flex items-center gap-3">
+          <p className="text-[13px] font-medium tabular-nums text-slate-300">
             {clock.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })} ·{" "}
             {clock.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
           </p>
-          <span className="rounded-full bg-teal-900/50 px-3 py-1 text-sm font-semibold text-teal-300">● ACTIVE</span>
+          <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/[0.12] px-3 py-[7px]">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+            <span className="text-[11px] font-semibold text-emerald-400">ACTIVE</span>
+          </span>
           <button
             type="button"
-            onClick={handleExit}
-            className="flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-600 px-4 text-base font-medium text-slate-300 hover:bg-slate-800"
+            onClick={() => setExitOpen(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3.5 py-1.5 text-xs text-slate-400 transition-colors hover:border-slate-500 hover:bg-white/[0.04] hover:text-white"
           >
-            <LogOut className="h-4 w-4" aria-hidden="true" /> Exit
+            <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> Exit
           </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1800px] space-y-6 px-5 py-6">
-        {/* Teaching document */}
-        <DocumentStage
-          onFindVideos={(topic) => void runSearch(topic, "select_text")}
-          onOpenChange={handleDocOpenChange}
-          topSlot={
-            <VideoStrip
-              videos={videos}
-              loading={loading}
-              query={activeQuery}
-              error={error}
-              onPlay={handlePlay}
-              onDismiss={() => {
-                setVideos([]);
-                setActiveQuery("");
-              }}
-              onRetry={() => void runSearch(activeQuery, "select_text")}
-            />
-          }
-          sideSlot={<TeacherNotesPanel docKey={docKey} />}
-        />
+      {/* ---- main ---- */}
+      <main className="flex min-h-0 flex-1 flex-col-reverse min-[1200px]:flex-row">
+        {/* LEFT PANEL */}
+        <section className="flex w-full shrink-0 flex-col border-white/[0.06] bg-[#0D1117] min-[1200px]:h-full min-[1200px]:w-[380px] min-[1200px]:border-r">
+          <div className="m-4 flex gap-1 rounded-xl bg-white/[0.05] p-1">
+            {(["document", "whiteboard"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-colors ${
+                  mode === m ? "bg-white text-[#0D1117] shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {m === "document" ? <FileText className="h-3.5 w-3.5" aria-hidden="true" /> : <PenLine className="h-3.5 w-3.5" aria-hidden="true" />}
+                {m === "document" ? "Document" : "Whiteboard"}
+              </button>
+            ))}
+          </div>
 
-        {!docOpen && (
-          <>
-        {/* Zone 2 — search */}
-        <section className="relative overflow-hidden rounded-2xl border border-slate-800 bg-[#0A1628] p-6">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.18),transparent_60%)]" />
-          <div className="relative flex flex-col items-center gap-3 text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight text-white">Find an Educational Video</h1>
-            <p className="text-lg text-slate-400">
-              Type any topic to instantly find curriculum-aligned animation videos
-            </p>
+          {mode === "document" ? (
+            <div className="min-h-[260px] flex-1 px-3 pb-3 min-[1200px]:overflow-hidden">
+              <DocumentStage
+                onFindVideos={(topic) => void runSearch(topic, "select_text")}
+                onOpenChange={handleDocOpenChange}
+                topSlot={
+                  <VideoStrip
+                    videos={videos}
+                    loading={loading}
+                    query={activeQuery}
+                    error={error}
+                    onPlay={handlePlay}
+                    onDismiss={() => {
+                      setVideos([]);
+                      setActiveQuery("");
+                    }}
+                    onRetry={() => void runSearch(activeQuery, "select_text")}
+                  />
+                }
+                sideSlot={<TeacherNotesPanel docKey={docKey} />}
+              />
+            </div>
+          ) : (
+            <div className="flex min-h-[320px] flex-1 flex-col gap-3 px-3 pb-3">
+              <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0A0F1A]">
+                <WhiteboardCanvas
+                  ref={canvasRef}
+                  tool={board.tool}
+                  color={board.color}
+                  penSize={board.penSize}
+                  highlighterSize={board.highlighterSize}
+                  eraserSize={board.eraserSize}
+                  onBeforeStroke={(ctx) => board.pushUndo(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height))}
+                  className="h-full w-full"
+                />
+              </div>
+              {annotationTools}
+            </div>
+          )}
+        </section>
+
+        {/* RIGHT PANEL */}
+        <section className="flex min-h-0 flex-1 flex-col p-6">
+          <div className="shrink-0 pb-4">
+            <div className="flex items-center justify-between gap-4">
+              <h1
+                className="font-extrabold tracking-[-0.5px] text-white"
+                style={{ fontSize: "clamp(22px, 2.5vw, 32px)" }}
+              >
+                Find an Educational Video
+              </h1>
+              {videos.length > 0 && (
+                <span className="shrink-0 rounded-full bg-slate-700 px-3 py-1 text-[11px] text-slate-300">
+                  {videos.length} videos
+                </span>
+              )}
+            </div>
+            {!activeQuery && (
+              <p className="mt-1 text-[13px] text-slate-500">
+                Type any topic below to find curriculum-aligned animation videos
+              </p>
+            )}
 
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 void runSearch(term);
               }}
-              className="mt-2 flex h-16 w-[min(700px,90vw)] items-center gap-3 rounded-2xl border-[1.5px] border-slate-600 bg-slate-800 px-4 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/20"
+              className="mt-4 flex h-14 w-full items-center overflow-hidden rounded-[14px] border border-white/[0.08] bg-[#151C2B] focus-within:border-indigo-500/50 focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
             >
-              <Search className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
+              <Search className="ml-[18px] h-[18px] w-[18px] shrink-0 text-slate-500" aria-hidden="true" />
               <input
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
                 aria-label="Search for an educational video topic"
-                placeholder="e.g. Photosynthesis, Newton's Laws, Pythagoras Theorem, Water Cycle..."
-                className="h-full flex-1 bg-transparent text-lg font-medium text-white outline-none placeholder:text-slate-500"
+                placeholder="Search any topic — Photosynthesis, Newton's Laws, Fractions..."
+                className="h-full flex-1 bg-transparent px-3 text-[17px] font-medium text-white outline-none placeholder:text-slate-600"
               />
-              {term && (
-                <button type="button" aria-label="Clear search" onClick={() => setTerm("")} className="p-2 text-slate-400 hover:text-white">
-                  <X className="h-5 w-5" aria-hidden="true" />
+              <div className="flex items-center gap-2 pr-2">
+                {term && (
+                  <button
+                    type="button"
+                    aria-label="Clear search"
+                    onClick={() => setTerm("")}
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white"
+                  >
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex h-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-indigo-500 to-indigo-600 px-5 text-[13px] font-bold text-white transition-all hover:from-indigo-400 hover:to-indigo-500 active:scale-[0.97] disabled:opacity-70"
+                >
+                  {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : "Search"}
                 </button>
-              )}
-              <button
-                type="submit"
-                className="h-11 shrink-0 rounded-xl bg-indigo-600 px-6 text-base font-semibold text-white hover:bg-indigo-500"
-              >
-                Search
-              </button>
+              </div>
             </form>
+          </div>
 
-            <div className="mt-4 w-full">
-              <QuickTopicChips onSelect={(topic) => void runSearch(topic)} />
-            </div>
+          <div className="shrink-0">
+            <QuickTopicChips onSelect={(topic) => void runSearch(topic)} />
+          </div>
+
+          <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+            <VideoResultsGrid
+              videos={videos}
+              loading={loading}
+              query={activeQuery}
+              error={error}
+              onPlay={handlePlay}
+              onRetry={() => void runSearch(activeQuery)}
+              onSuggestion={(topic) => void runSearch(topic)}
+            />
           </div>
         </section>
-
-        {/* Zone 3 — results */}
-        <section>
-          <VideoResultsGrid
-            videos={videos}
-            loading={loading}
-            query={activeQuery}
-            error={error}
-            onPlay={handlePlay}
-            onRetry={() => void runSearch(activeQuery)}
-            onSuggestion={(topic) => void runSearch(topic)}
-          />
-        </section>
-          </>
-        )}
       </main>
 
       {playing && (
@@ -270,6 +384,28 @@ export default function SmartBoardClassroom() {
       )}
 
       {idle && !playing && <IdleScreen onDismiss={resetIdle} />}
+
+      <AlertDialog open={exitOpen} onOpenChange={setExitOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exit SmartBoard?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will need to enter the activation code again to use this board.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmExit}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Exit and Clear
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {docOpen && <span className="sr-only">Document open</span>}
     </div>
   );
 }

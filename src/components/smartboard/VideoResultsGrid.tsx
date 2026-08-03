@@ -1,4 +1,4 @@
-import { SearchX } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import VideoCard from "./VideoCard";
 import type { SmartBoardVideo } from "@/lib/smartboardSession";
 
@@ -13,23 +13,34 @@ interface Props {
   columns?: string;
 }
 
-const SUGGESTIONS = ["Photosynthesis", "Newton's Laws", "Solar System"];
+const SUBJECT_CARDS = [
+  { name: "Science", emoji: "🔬", gradient: "from-[#064E3B] to-[#065F46]" },
+  { name: "Mathematics", emoji: "📐", gradient: "from-[#1E1B4B] to-[#312E81]" },
+  { name: "Physics", emoji: "⚛️", gradient: "from-[#451A03] to-[#78350F]" },
+  { name: "Chemistry", emoji: "🧪", gradient: "from-[#450A0A] to-[#7F1D1D]" },
+  { name: "History", emoji: "🏛️", gradient: "from-[#1C1917] to-[#292524]" },
+  { name: "Geography", emoji: "🌍", gradient: "from-[#042F2E] to-[#134E4A]" },
+];
+
+const FALLBACKS = ["Photosynthesis", "Newton's Laws", "Solar System"];
 
 export function VideoResultsGrid({ videos, loading, query, error, onPlay, onRetry, onSuggestion, columns }: Props) {
-  const gridClass = columns ?? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4";
+  const gridClass = columns ?? "grid-cols-1 sm:grid-cols-2 min-[1400px]:grid-cols-3";
 
   if (loading) {
     return (
       <div className="space-y-4">
-        <p className="text-lg text-slate-400">Searching for videos...</p>
-        <div className={`grid gap-5 ${gridClass}`}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-slate-700 bg-slate-800">
-              <div className="aspect-video w-full bg-slate-700" />
+        <p className="flex items-center gap-2 text-sm text-slate-400">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          Finding the best videos for “{query}”…
+        </p>
+        <div className={`grid gap-4 ${gridClass}`}>
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div key={i} className="h-[220px] overflow-hidden rounded-2xl bg-[#151C2B]">
+              <div className="h-[55%] w-full animate-pulse rounded-t-2xl bg-slate-800" />
               <div className="space-y-2 p-3">
-                <div className="h-4 w-full rounded bg-slate-700" />
-                <div className="h-4 w-2/3 rounded bg-slate-700" />
-                <div className="h-10 w-full rounded-lg bg-slate-700" />
+                <div className="h-3 w-3/5 animate-pulse rounded bg-slate-800" />
+                <div className="h-3 w-2/5 animate-pulse rounded bg-slate-800" />
               </div>
             </div>
           ))}
@@ -40,12 +51,12 @@ export function VideoResultsGrid({ videos, loading, query, error, onPlay, onRetr
 
   if (error) {
     return (
-      <div className="mx-auto max-w-2xl rounded-2xl border border-red-500/40 bg-red-950/30 p-10 text-center">
-        <p className="text-2xl font-semibold text-white">{error}</p>
+      <div className="mx-auto max-w-xl rounded-2xl border border-red-500/30 bg-red-950/20 p-8 text-center">
+        <p className="text-base font-medium text-white">{error}</p>
         <button
           type="button"
           onClick={onRetry}
-          className="mt-6 min-h-[64px] rounded-xl bg-indigo-600 px-10 text-lg font-semibold text-white hover:bg-indigo-500"
+          className="mt-5 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 px-6 text-xs font-bold text-white hover:from-indigo-400 hover:to-indigo-500"
         >
           Retry search
         </button>
@@ -54,18 +65,19 @@ export function VideoResultsGrid({ videos, loading, query, error, onPlay, onRetr
   }
 
   if (query && videos.length === 0) {
+    const suggestions = [`${query} animation`, `${query} for kids`, `${query} explained`];
     return (
-      <div className="flex flex-col items-center gap-4 py-16 text-center">
-        <SearchX className="h-16 w-16 text-slate-600" aria-hidden="true" />
-        <p className="text-2xl font-semibold text-white">No videos found for “{query}”</p>
-        <p className="text-lg text-slate-400">Try a different topic or check the spelling</p>
-        <div className="mt-2 flex flex-wrap justify-center gap-3">
-          {SUGGESTIONS.map((s) => (
+      <div className="flex flex-col items-center gap-3 py-16 text-center">
+        <span className="text-5xl" aria-hidden="true">😕</span>
+        <p className="text-base text-white">No videos found for “{query}”</p>
+        <p className="text-[13px] text-slate-500">Try a different topic or use one of the quick topic chips above</p>
+        <div className="mt-2 flex flex-wrap justify-center gap-2">
+          {(query ? suggestions : FALLBACKS).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => onSuggestion(s)}
-              className="min-h-[52px] rounded-full border border-slate-600 bg-slate-700 px-6 text-base font-medium text-slate-200 hover:border-indigo-500 hover:bg-indigo-900 hover:text-indigo-200"
+              className="h-8 rounded-full border border-white/10 bg-white/[0.04] px-3 text-xs font-medium text-slate-400 hover:bg-white/10 hover:text-white"
             >
               {s}
             </button>
@@ -75,20 +87,30 @@ export function VideoResultsGrid({ videos, loading, query, error, onPlay, onRetr
     );
   }
 
-  if (videos.length === 0) return null;
-
-  return (
-    <div className="space-y-4">
-      {query && (
-        <p className="text-lg text-slate-400">
-          {videos.length} videos found for “<span className="text-white">{query}</span>”
-        </p>
-      )}
-      <div className={`grid gap-5 ${gridClass}`}>
-        {videos.map((video) => (
-          <VideoCard key={video.id} video={video} onPlay={onPlay} />
+  if (videos.length === 0) {
+    return (
+      <div className="grid grid-cols-2 gap-4 min-[1400px]:grid-cols-3">
+        {SUBJECT_CARDS.map((card) => (
+          <button
+            key={card.name}
+            type="button"
+            onClick={() => onSuggestion(card.name)}
+            className={`flex h-[120px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br ${card.gradient} transition-transform duration-150 hover:scale-[1.02] hover:brightness-125`}
+          >
+            <span className="text-[40px] leading-none" aria-hidden="true">{card.emoji}</span>
+            <span className="text-base font-bold text-white">{card.name}</span>
+            <span className="text-xs text-white/70">Tap to explore →</span>
+          </button>
         ))}
       </div>
+    );
+  }
+
+  return (
+    <div className={`grid gap-4 ${gridClass}`}>
+      {videos.map((video) => (
+        <VideoCard key={video.id} video={video} onPlay={onPlay} />
+      ))}
     </div>
   );
 }

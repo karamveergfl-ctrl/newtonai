@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   ChevronRight,
   FileUp,
-  ImageIcon,
   Loader2,
   Maximize2,
   Search,
@@ -172,81 +171,55 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
           setDragOver(false);
           void acceptFile(e.dataTransfer.files?.[0]);
         }}
-        className={`relative cursor-pointer overflow-hidden rounded-3xl border-2 border-dashed p-8 text-center outline-none transition-colors focus-visible:border-teal-400 ${
-          dragOver ? "border-teal-400 bg-teal-500/5" : "border-teal-700/60 bg-[#0C1B33]/70"
+        className={`flex h-full min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center outline-none transition-colors ${
+          dragOver ? "border-indigo-500 bg-indigo-500/5" : "border-indigo-500/20"
         }`}
       >
-        <span className="pointer-events-none absolute left-6 top-6 h-2 w-2 rounded-full bg-teal-500/60" />
-        <span className="pointer-events-none absolute right-6 top-6 h-3 w-3 rounded-full bg-teal-400/70" />
-        <span className="pointer-events-none absolute bottom-6 left-6 h-3 w-3 rounded-full bg-teal-400/70" />
+        {extracting ? (
+          <Loader2 className="h-9 w-9 animate-spin text-indigo-500" aria-hidden="true" />
+        ) : (
+          <Upload className="h-9 w-9 text-indigo-600 opacity-60" aria-hidden="true" />
+        )}
+        <p className="mt-3 text-[15px] font-semibold text-white">
+          {extracting ? "Reading your document…" : "Upload Teaching Material"}
+        </p>
+        <p className="mt-1 text-xs text-slate-500">PDF · PPT · Word · Image</p>
 
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            inputRef.current?.click();
+          }}
           disabled={extracting}
-          className="mx-auto flex min-h-[52px] items-center gap-2 rounded-full bg-teal-600 px-7 text-lg font-semibold text-white hover:bg-teal-500 disabled:opacity-60"
+          className="mt-5 flex h-10 items-center gap-2 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 px-5 text-xs font-semibold text-white transition-all hover:from-indigo-400 hover:to-indigo-500 disabled:opacity-60"
         >
-          <Sparkles className="h-5 w-5" aria-hidden="true" />
-          Click to upload
+          <FileUp className="h-4 w-4" aria-hidden="true" />
+          Choose File
         </button>
 
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <span className="flex h-[74px] w-[74px] items-center justify-center rounded-2xl border border-teal-700/70 bg-teal-500/5">
-            {extracting ? (
-              <Loader2 className="h-8 w-8 animate-spin text-teal-400" aria-hidden="true" />
-            ) : (
-              <Upload className="h-8 w-8 text-teal-400" aria-hidden="true" />
-            )}
-          </span>
-          <span className="flex h-[74px] w-[74px] items-center justify-center rounded-2xl border border-teal-700/70 bg-teal-500/5">
-            <ImageIcon className="h-8 w-8 text-teal-400" aria-hidden="true" />
-          </span>
-        </div>
-
-        <p className="mt-6 text-3xl font-bold text-white">Upload Document</p>
-        <p className="mt-2 text-lg text-slate-300">
-          {extracting ? (
-            "Reading your document…"
-          ) : (
-            <>
-              Drop files here or{" "}
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
-                className="underline decoration-teal-400 underline-offset-4 hover:text-teal-300"
-              >
-                click to browse
-              </button>
-            </>
-          )}
-        </p>
-        <p className="mt-1 text-base text-slate-400">Images, PDF, Doc, Docx, PPT, PPTX • Max 50MB</p>
-        {error && <p className="mt-3 text-lg font-medium text-red-400">{error}</p>}
-
-        <div className="mx-auto mt-6 max-w-2xl space-y-3 border-t border-slate-700/70 pt-6 text-left">
-          <div className="flex items-start gap-3 rounded-2xl bg-slate-800/40 p-4">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-500/10">
-              <Search className="h-5 w-5 text-teal-400" aria-hidden="true" />
+        <div className="mt-6 w-full max-w-[300px] space-y-2 border-t border-white/[0.06] pt-5 text-left">
+          <div className="flex items-start gap-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
+              <Search className="h-4 w-4 text-indigo-400" aria-hidden="true" />
             </span>
             <span>
-              <span className="block text-lg font-semibold text-white">Topic-Based Video Search</span>
-              <span className="block text-base text-slate-400">
-                Select text to find curated animation videos
-              </span>
+              <span className="block text-xs font-semibold text-white">Topic-Based Video Search</span>
+              <span className="block text-[11px] text-slate-500">Select text to find animation videos</span>
             </span>
           </div>
-          <div className="flex items-start gap-3 rounded-2xl bg-slate-800/40 p-4">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-500/10">
-              <Camera className="h-5 w-5 text-teal-400" aria-hidden="true" />
+          <div className="flex items-start gap-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
+              <Camera className="h-4 w-4 text-indigo-400" aria-hidden="true" />
             </span>
             <span>
-              <span className="block text-lg font-semibold text-white">Teach from any material</span>
-              <span className="block text-base text-slate-400">
-                Open slides or notes full screen and write alongside them
-              </span>
+              <span className="block text-xs font-semibold text-white">Teach from any material</span>
+              <span className="block text-[11px] text-slate-500">Open slides full screen and write alongside</span>
             </span>
           </div>
         </div>
+
+        {error && <p className="mt-3 text-xs font-medium text-red-400">{error}</p>}
 
         <input
           ref={inputRef}
