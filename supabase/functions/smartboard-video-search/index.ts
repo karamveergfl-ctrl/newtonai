@@ -17,8 +17,8 @@ const STOP_WORDS = new Set(["the", "of", "and", "for", "with", "a", "an", "to", 
 const STOP_TERMS = ["#shorts", "full lecture", "one shot", "live class", "unacademy live", "webinar"];
 // Strong signals that a result is a talking-head / handwritten lecture, not an animation.
 const NON_ANIMATION_TERMS = [
-  "lecture", "numerical", "solved example", "question paper", "previous year",
-  "handwritten", "notes pdf", "exam", "syllabus", "revision", "crash course", "doubt session",
+  "full lecture", "numerical", "solved example", "question paper", "previous year",
+  "handwritten", "notes pdf", "syllabus", "revision", "crash course", "doubt session",
 ];
 const STRONG_ANIMATION_TERMS = [
   "animation", "animated", "3d", "2d", "simulation", "visualization", "visualisation",
