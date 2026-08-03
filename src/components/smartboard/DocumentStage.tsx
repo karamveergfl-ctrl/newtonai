@@ -182,7 +182,7 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
 
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
           disabled={extracting}
           className="mx-auto flex min-h-[52px] items-center gap-2 rounded-full bg-teal-600 px-7 text-lg font-semibold text-white hover:bg-teal-500 disabled:opacity-60"
         >
@@ -212,7 +212,7 @@ export function DocumentStage({ onFindVideos, onOpenChange, topSlot, sideSlot }:
               Drop files here or{" "}
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
                 className="underline decoration-teal-400 underline-offset-4 hover:text-teal-300"
               >
                 click to browse
