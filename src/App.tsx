@@ -326,7 +326,8 @@ function AnimatedRoutes() {
 function DeferredComponents() {
   const location = useLocation();
   const ready = useDeferredLoad(8000);
-  if (!ready || isPitchRoute(location.pathname)) return null;
+  // SmartBoard kiosk screens stay free of cookie banners, chat bubbles and nav.
+  if (!ready || isPitchRoute(location.pathname) || location.pathname.startsWith("/smartboard")) return null;
   return (
     <>
       <Suspense fallback={null}><VideoPreloader /></Suspense>
