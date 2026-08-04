@@ -41,8 +41,8 @@ export function AnimationResultsPanel({
     : ["Photosynthesis", "Newton's Laws", "Solar System"];
 
   return (
-    <div className="absolute inset-x-0 top-0 z-50 flex h-[58%] flex-col border-b border-white/10 bg-[#0A0F1A]/98 shadow-[0_24px_60px_rgba(0,0,0,0.55)] backdrop-blur-sm">
-      <div className="flex shrink-0 items-center gap-3 px-5 py-3">
+    <div className="absolute inset-0 z-50 flex flex-col bg-[#0A0F1A] shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
+      <div className="flex shrink-0 items-center gap-3 px-6 py-4">
         <Sparkles className="h-5 w-5 shrink-0 text-teal-400" aria-hidden="true" />
         <h2 className="min-w-0 truncate text-lg font-extrabold tracking-[-0.4px] text-white">{query}</h2>
         <span className="shrink-0 text-[12px] text-slate-400">
@@ -62,9 +62,9 @@ export function AnimationResultsPanel({
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-hidden px-5 pb-4">
+      <div className="min-h-0 flex-1 overflow-hidden px-6 pb-6">
         {loading ? (
-          <div className="grid h-full grid-cols-2 grid-rows-3 gap-3 min-[1100px]:grid-cols-3 min-[1100px]:grid-rows-2">
+          <div className="grid h-full grid-cols-2 grid-rows-3 gap-5 min-[1100px]:grid-cols-3 min-[1100px]:grid-rows-2">
             {Array.from({ length: MAX_RESULTS }).map((_, i) => (
               <div key={i} className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-[#151C2B]">
                 <div className="min-h-0 flex-1 animate-pulse bg-slate-800" />
@@ -108,7 +108,7 @@ export function AnimationResultsPanel({
             </div>
           </div>
         ) : (
-          <div className="grid h-full grid-cols-2 grid-rows-3 gap-3 min-[1100px]:grid-cols-3 min-[1100px]:grid-rows-2">
+          <div className="grid h-full grid-cols-2 grid-rows-3 gap-5 min-[1100px]:grid-cols-3 min-[1100px]:grid-rows-2">
             {shown.map((video) => (
               <VideoCard key={video.id} video={video} onPlay={onPlay} compact fill />
             ))}
