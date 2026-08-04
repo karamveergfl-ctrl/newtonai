@@ -47,8 +47,8 @@ export function VideoCard({ video, onPlay, compact, fill }: Props) {
         </div>
       </div>
 
-      <div className={fill ? "shrink-0 p-3" : "p-[14px]"}>
-        <p className={`font-semibold leading-[1.35] text-white ${fill ? "line-clamp-1 text-[12.5px]" : "line-clamp-2 text-[13px]"}`}>
+      <div className={fill ? "shrink-0 p-4" : "p-[14px]"}>
+        <p className={`font-semibold leading-[1.35] text-white ${fill ? "line-clamp-2 text-[14px]" : "line-clamp-2 text-[13px]"}`}>
           {video.title}
         </p>
         <div className="mt-[6px] flex items-center justify-between gap-2">
@@ -64,7 +64,7 @@ export function VideoCard({ video, onPlay, compact, fill }: Props) {
             onPlay(video);
           }}
           className={`flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-xs font-bold text-white transition-all duration-150 hover:from-indigo-400 hover:to-indigo-500 active:scale-[0.98] ${
-            fill ? "mt-2 h-8" : "mt-[10px] h-[38px] hover:scale-[1.01]"
+            fill ? "mt-3 h-9" : "mt-[10px] h-[38px] hover:scale-[1.01]"
           }`}
         >
           <Play className="h-[13px] w-[13px]" fill="white" aria-hidden="true" />
