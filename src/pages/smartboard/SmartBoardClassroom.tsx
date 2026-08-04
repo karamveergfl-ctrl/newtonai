@@ -122,7 +122,7 @@ export default function SmartBoardClassroom() {
       setError(null);
       setResultsOpen(true);
 
-      const { data, message } = await searchBoardVideos(current.deviceToken, cleaned, { limit: 15, action });
+      const { data, message } = await searchBoardVideos(current.deviceToken, cleaned, { limit: 6, action });
 
       setLoading(false);
       if (!data) {
@@ -130,7 +130,7 @@ export default function SmartBoardClassroom() {
         setError(message ?? "Video search is temporarily unavailable. Please try again in a few minutes.");
         return;
       }
-      setVideos(data.videos ?? []);
+      setVideos((data.videos ?? []).slice(0, 6));
     },
     [],
   );
