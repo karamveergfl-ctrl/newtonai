@@ -108,7 +108,7 @@ serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const rawQuery = typeof body.query === "string" ? body.query.trim().slice(0, 200) : "";
-    const limit = Math.min(Math.max(Number(body.limit) || 15, 1), 20);
+    const limit = Math.min(Math.max(Number(body.limit) || 6, 1), 20);
     const action = body.action === "select_text" ? "select_text" : "search";
 
     if (!rawQuery) {
@@ -121,7 +121,8 @@ serve(async (req) => {
       return json({ success: false, error: auth.error, message: auth.message }, auth.status);
     }
 
-    const cacheKey = `sb-anim3:${rawQuery.toLowerCase()}:${limit}`;
+    // Cache a larger ranked pool independent of the requested limit.
+    const cacheKey = `sb-anim4:${rawQuery.toLowerCase()}`;
     const nowIso = new Date().toISOString();
 
     const { data: cached } = await supabase
@@ -255,7 +256,7 @@ serve(async (req) => {
 
         videos = pool
           .sort((a, b) => b.score - a.score)
-          .slice(0, limit)
+          .slice(0, 12)
           .map((s) => s.base);
       }
 
@@ -278,7 +279,7 @@ serve(async (req) => {
       .update({ last_active_at: nowIso })
       .eq("id", auth.board.boardId);
 
-    return json({ success: true, videos: videos ?? [] });
+    return json({ success: true, videos: (videos ?? []).slice(0, limit) });
   } catch (e) {
     console.error("[smartboard-video-search] error", e);
     return json({
