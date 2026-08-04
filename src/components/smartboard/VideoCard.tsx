@@ -5,9 +5,11 @@ interface Props {
   video: SmartBoardVideo;
   onPlay: (video: SmartBoardVideo) => void;
   compact?: boolean;
+  /** Stretch the card to fill its grid cell (thumbnail flexes, no scrolling). */
+  fill?: boolean;
 }
 
-export function VideoCard({ video, onPlay, compact }: Props) {
+export function VideoCard({ video, onPlay, compact, fill }: Props) {
   return (
     <div
       role="button"
@@ -19,9 +21,11 @@ export function VideoCard({ video, onPlay, compact }: Props) {
           onPlay(video);
         }
       }}
-      className="group cursor-pointer overflow-hidden rounded-2xl border border-white/[0.06] bg-[#151C2B] outline-none transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-[3px] hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] focus-visible:border-indigo-500"
+      className={`group cursor-pointer overflow-hidden rounded-2xl border border-white/[0.06] bg-[#151C2B] outline-none transition-[box-shadow,border-color] duration-200 hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] focus-visible:border-indigo-500 ${
+        fill ? "flex h-full min-h-0 flex-col" : "hover:-translate-y-[3px]"
+      }`}
     >
-      <div className="relative aspect-video w-full bg-[#0D1117]">
+      <div className={`relative w-full bg-[#0D1117] ${fill ? "min-h-0 flex-1" : "aspect-video"}`}>
         {video.thumbnail && (
           <img
             src={video.thumbnail}
@@ -43,8 +47,10 @@ export function VideoCard({ video, onPlay, compact }: Props) {
         </div>
       </div>
 
-      <div className="p-[14px]">
-        <p className="line-clamp-2 text-[13px] font-semibold leading-[1.4] text-white">{video.title}</p>
+      <div className={fill ? "shrink-0 p-3" : "p-[14px]"}>
+        <p className={`font-semibold leading-[1.35] text-white ${fill ? "line-clamp-1 text-[12.5px]" : "line-clamp-2 text-[13px]"}`}>
+          {video.title}
+        </p>
         <div className="mt-[6px] flex items-center justify-between gap-2">
           <span className="truncate text-[11px] text-slate-500">{video.channel}</span>
           {video.viewCount && !compact && (
@@ -57,10 +63,12 @@ export function VideoCard({ video, onPlay, compact }: Props) {
             e.stopPropagation();
             onPlay(video);
           }}
-          className="mt-[10px] flex h-[38px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-xs font-bold text-white transition-all duration-150 hover:from-indigo-400 hover:to-indigo-500 hover:scale-[1.01] active:scale-[0.98]"
+          className={`flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-xs font-bold text-white transition-all duration-150 hover:from-indigo-400 hover:to-indigo-500 active:scale-[0.98] ${
+            fill ? "mt-2 h-8" : "mt-[10px] h-[38px] hover:scale-[1.01]"
+          }`}
         >
           <Play className="h-[13px] w-[13px]" fill="white" aria-hidden="true" />
-          Play for Class
+          {fill ? "Play" : "Play for Class"}
         </button>
       </div>
     </div>
