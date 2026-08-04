@@ -68,7 +68,7 @@ export function VideoCard({ video, onPlay, compact, fill }: Props) {
           }`}
         >
           <Play className="h-[13px] w-[13px]" fill="white" aria-hidden="true" />
-          Play
+          {fill ? "Play" : "Play for Class"}
         </button>
       </div>
     </div>
