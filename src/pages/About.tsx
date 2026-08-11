@@ -59,7 +59,7 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       <SEOHead
-        title="About"
+        title="NewtonAI About — Our Mission & Team"
         description="Learn about NewtonAI's mission to revolutionize education through AI-powered study tools. We make learning accessible, efficient, and effective for everyone."
         canonicalPath="/about"
         breadcrumbs={breadcrumbs}

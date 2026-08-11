@@ -200,7 +200,7 @@ const Pricing = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       <SEOHead
-        title="Pricing"
+        title="NewtonAI Pricing — Plans for Students"
         description="Choose the perfect NewtonAI plan for your learning needs. Free, Pro, and Ultra plans with AI flashcards, quizzes, summaries, and more."
         canonicalPath="/pricing"
         breadcrumbs={breadcrumbs}
@@ -245,6 +245,7 @@ const Pricing = () => {
             <Switch
               checked={isYearly}
               onCheckedChange={setIsYearly}
+              aria-label="Toggle yearly billing cycle"
               className="data-[state=checked]:bg-primary"
             />
             <span className={`text-sm font-medium transition-colors ${isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
