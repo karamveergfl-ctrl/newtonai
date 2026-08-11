@@ -9,6 +9,7 @@ export interface AudioSegment {
   text: string;
   emotion?: string;
   audio?: string | null;
+  audioUrl?: string | null;
   fallbackAudio?: boolean;
 }
 
@@ -51,6 +52,15 @@ const SEGMENT_TRANSITION_DELAY = 300; // Increased for smoother transitions
 
 const getSegmentHash = (segment: AudioSegment, index: number): string => {
   return `${index}-${segment.speaker}-${segment.text.substring(0, 50)}`;
+};
+
+// Real audio can come either as a signed storage URL (current) or inline base64 (legacy podcasts)
+const getAudioSrc = (segment: AudioSegment): string | null => {
+  if (segment.audioUrl && typeof segment.audioUrl === "string") return segment.audioUrl;
+  if (segment.audio && typeof segment.audio === "string" && segment.audio.length >= 100) {
+    return `data:audio/mpeg;base64,${segment.audio}`;
+  }
+  return null;
 };
 
 export function usePodcastAudioQueue({
