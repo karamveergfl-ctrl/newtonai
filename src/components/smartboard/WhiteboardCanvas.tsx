@@ -61,8 +61,8 @@ export const WhiteboardCanvas = forwardRef<WhiteboardCanvasHandle, WhiteboardCan
         if (ctx && canvas.width > 0 && canvas.height > 0) {
           imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         }
-        canvas.width = rect.width;
-        canvas.height = rect.height;
+        canvas.width = Math.round(rect.width);
+        canvas.height = Math.round(rect.height);
         // Restore content
         if (ctx && imageData) {
           ctx.putImageData(imageData, 0, 0);
