@@ -29,7 +29,7 @@ interface Props {
   onOpenChange?: (open: boolean, docKey: string) => void;
 }
 
-const ACCEPTED = ".pdf,.doc,.docx,.ppt,.pptx,image/png,image/jpeg,image/webp";
+const ACCEPTED = ".pdf,.docx,.pptx,image/png,image/jpeg,image/webp";
 const OFFICE_MAX_BYTES = 15 * 1024 * 1024;
 const PDF_MAX_BYTES = 50 * 1024 * 1024;
 
@@ -77,7 +77,15 @@ export function DocumentStage({ onFindVideos, onOpenChange }: Props) {
     const lower = file.name.toLowerCase();
     const isPdf = file.type === "application/pdf" || lower.endsWith(".pdf");
     const isImage = file.type.startsWith("image/");
-    const isOffice = /\.(docx?|pptx?)$/.test(lower);
+    const isLegacyOffice = /\.(doc|ppt)$/.test(lower);
+    const isOffice = /\.(docx|pptx)$/.test(lower);
+
+    if (isLegacyOffice) {
+      setError(
+        "Older .doc and .ppt files can't be opened here. Please save it as .docx, .pptx or PDF and upload that instead.",
+      );
+      return;
+    }
 
     if (!isPdf && !isImage && !isOffice) {
       setError("Please upload a PDF, Word (.docx), PowerPoint (.pptx) or an image.");
@@ -179,7 +187,7 @@ export function DocumentStage({ onFindVideos, onOpenChange }: Props) {
         <p className="mt-5 text-2xl font-bold text-white">
           {extracting ? "Reading your document…" : "Upload Teaching Material"}
         </p>
-        <p className="mt-1.5 text-base text-slate-500">PDF · PPT · Word · Image</p>
+        <p className="mt-1.5 text-base text-slate-500">PDF · PPTX · DOCX · Image</p>
 
         <button
           type="button"
