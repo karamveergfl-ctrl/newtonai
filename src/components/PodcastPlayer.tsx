@@ -712,7 +712,7 @@ export function PodcastPlayer({
           <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">Transcript</h3>
           <TooltipProvider delayDuration={150}>
             {segments.map((seg, idx) => {
-              const hasEleven = !!(seg.audio && typeof seg.audio === 'string' && seg.audio.length > 100);
+              const hasEleven = hasRealAudio(seg);
               return (
                 <motion.div
                   key={idx}
