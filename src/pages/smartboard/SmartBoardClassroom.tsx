@@ -296,30 +296,29 @@ export default function SmartBoardClassroom() {
 
       {/* ---- main ---- */}
       <main className="relative min-h-0 flex-1 overflow-hidden bg-[#0D1117]">
-          {mode === "document" ? (
-            <div className="h-full w-full p-4">
-              <DocumentStage
-                onFindVideos={(topic) => void runSearch(topic, "select_text")}
-                onOpenChange={handleDocOpenChange}
+          {/* Both surfaces stay mounted so switching tabs keeps the open
+              document (and page) and the whiteboard strokes intact. */}
+          <div className={`h-full w-full p-4 ${mode === "document" ? "" : "hidden"}`}>
+            <DocumentStage
+              onFindVideos={(topic) => void runSearch(topic, "select_text")}
+              onOpenChange={handleDocOpenChange}
+            />
+          </div>
+          <div className={`h-full flex-col gap-3 p-4 ${mode === "whiteboard" ? "flex" : "hidden"}`}>
+            <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0A0F1A]">
+              <WhiteboardCanvas
+                ref={canvasRef}
+                tool={board.tool}
+                color={board.color}
+                penSize={board.penSize}
+                highlighterSize={board.highlighterSize}
+                eraserSize={board.eraserSize}
+                onBeforeStroke={(ctx) => board.pushUndo(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height))}
+                className="h-full w-full"
               />
             </div>
-          ) : (
-            <div className="flex h-full flex-col gap-3 p-4">
-              <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0A0F1A]">
-                <WhiteboardCanvas
-                  ref={canvasRef}
-                  tool={board.tool}
-                  color={board.color}
-                  penSize={board.penSize}
-                  highlighterSize={board.highlighterSize}
-                  eraserSize={board.eraserSize}
-                  onBeforeStroke={(ctx) => board.pushUndo(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height))}
-                  className="h-full w-full"
-                />
-              </div>
-              {annotationTools}
-            </div>
-          )}
+            {annotationTools}
+          </div>
 
         {/* animation-only results panel */}
         {resultsOpen && (
