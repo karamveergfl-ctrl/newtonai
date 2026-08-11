@@ -78,6 +78,26 @@ interface TTSRequest {
   host2VoiceId?: string; // Custom voice ID for host2
 }
 
+// Hard caps: one request must stay well inside the edge function time budget.
+const MAX_SEGMENTS_PER_REQUEST = 8;
+const CONCURRENCY = 2;
+const BATCH_GAP_MS = 350;
+
+function describeElevenLabsError(status: number, body: string): string {
+  switch (status) {
+    case 401:
+      return "ElevenLabs authentication failed (401) — the API key is invalid, revoked, or the connector was unlinked.";
+    case 402:
+      return "ElevenLabs quota exhausted (402) — the account is out of character credits.";
+    case 422:
+      return `ElevenLabs rejected the request (422) — likely an invalid voice ID or empty text. ${body.slice(0, 200)}`;
+    case 429:
+      return "ElevenLabs rate/concurrency limit hit (429) — too many simultaneous requests for this plan.";
+    default:
+      return `ElevenLabs API error ${status}: ${body.slice(0, 200)}`;
+  }
+}
+
 // Get model based on language - use multilingual for non-English
 // Clean emotion tags from text before sending to TTS
 function cleanTextForSpeech(text: string): string {
@@ -97,7 +117,7 @@ async function generateAudioForSegment(
   voiceId: string,
   apiKey: string,
   modelId: string
-): Promise<string> {
+): Promise<Uint8Array> {
   const response = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
     {
@@ -122,11 +142,11 @@ async function generateAudioForSegment(
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`ElevenLabs API error: ${response.status}`, errorText);
-    throw new Error(`ElevenLabs API error: ${response.status}`);
+    throw new Error(describeElevenLabsError(response.status, errorText));
   }
 
   const audioBuffer = await response.arrayBuffer();
-  return base64Encode(audioBuffer);
+  return new Uint8Array(audioBuffer);
 }
 
 serve(async (req) => {
