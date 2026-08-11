@@ -37,6 +37,7 @@ interface PodcastSegment {
   text: string;
   emotion?: string;
   audio?: string;
+  audioUrl?: string;
   fallbackAudio?: boolean;
   audioError?: string | null;
 }
@@ -276,38 +277,63 @@ export default function AIPodcast() {
         audioError: "TTS not attempted yet",
       }));
 
-      // Try to generate ElevenLabs audio with language and custom voices support
-      try {
-        const { data: ttsData, error: ttsError } = await supabase.functions.invoke(
-          "elevenlabs-podcast-tts",
-          {
-            body: { 
-              segments: scriptData.segments,
-              language: settings.language || "en",
-              host1VoiceId: settings.host1VoiceId,
-              host2VoiceId: settings.host2VoiceId,
-            },
-          }
-        );
+      // Generate ElevenLabs audio in small chunks so one long request can never time out.
+      const TTS_CHUNK_SIZE = 6;
+      const allScriptSegments = scriptData.segments as any[];
 
-        if (!ttsError && ttsData?.segments) {
-          // Update segments with audio data
-          segments = ttsData.segments.map((seg: any, idx: number) => ({
-            ...segments[idx],
-            audio: seg.audio || null,
-            fallbackAudio: !seg.audio, // Only use fallback if no audio
-            audioError: seg.audio ? null : (seg.audioError || "ElevenLabs returned no audio"),
-          }));
+      for (let start = 0; start < allScriptSegments.length; start += TTS_CHUNK_SIZE) {
+        const chunk = allScriptSegments.slice(start, start + TTS_CHUNK_SIZE);
 
-          if (ttsData.stats?.failed > 0) {
+        try {
+          const { data: ttsData, error: ttsError } = await supabase.functions.invoke(
+            "elevenlabs-podcast-tts",
+            {
+              body: {
+                segments: chunk,
+                language: settings.language || "en",
+                host1VoiceId: settings.host1VoiceId,
+                host2VoiceId: settings.host2VoiceId,
+              },
+            }
+          );
+
+          if (!ttsError && ttsData?.segments) {
+            ttsData.segments.forEach((seg: any, i: number) => {
+              const idx = start + i;
+              segments[idx] = {
+                ...segments[idx],
+                audioUrl: seg.audioUrl || undefined,
+                fallbackAudio: !seg.audioUrl,
+                audioError: seg.audioUrl ? null : (seg.audioError || "ElevenLabs returned no audio"),
+              };
+            });
+          } else {
+            const reason = ttsError?.message || "ElevenLabs TTS call failed";
+            for (let i = 0; i < chunk.length; i++) {
+              segments[start + i] = {
+                ...segments[start + i],
+                fallbackAudio: true,
+                audioUrl: undefined,
+                audioError: reason,
+              };
+            }
           }
-        } else {
-          const reason = ttsError?.message || "ElevenLabs TTS call failed";
-          segments = segments.map(s => ({ ...s, fallbackAudio: true, audio: undefined, audioError: reason }));
+        } catch (ttsErr) {
+          const reason = ttsErr instanceof Error ? ttsErr.message : "ElevenLabs TTS threw an error";
+          for (let i = 0; i < chunk.length; i++) {
+            segments[start + i] = {
+              ...segments[start + i],
+              fallbackAudio: true,
+              audioUrl: undefined,
+              audioError: reason,
+            };
+          }
         }
-      } catch (ttsErr) {
-        const reason = ttsErr instanceof Error ? ttsErr.message : "ElevenLabs TTS threw an error";
-        segments = segments.map(s => ({ ...s, fallbackAudio: true, audio: undefined, audioError: reason }));
+
+        const done = Math.min(start + TTS_CHUNK_SIZE, allScriptSegments.length);
+        const pct = 40 + Math.round((done / allScriptSegments.length) * 50);
+        setProgress(pct);
+        updateProgress(pct);
       }
 
       setProgress(90);

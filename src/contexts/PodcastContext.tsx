@@ -7,6 +7,7 @@ export interface PodcastSegment {
   text: string;
   emotion?: string;
   audio?: string;
+  audioUrl?: string;
   fallbackAudio?: boolean;
   audioError?: string | null;
 }
