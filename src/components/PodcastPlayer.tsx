@@ -58,9 +58,14 @@ export interface PodcastSegment {
   text: string;
   emotion?: string;
   audio?: string;
+  audioUrl?: string;
   fallbackAudio?: boolean;
   audioError?: string | null;
 }
+
+// A segment has real (ElevenLabs) audio when it has a signed URL or legacy inline base64
+const hasRealAudio = (s: PodcastSegment): boolean =>
+  !!s.audioUrl || !!(s.audio && typeof s.audio === "string" && s.audio.length > 100);
 
 interface PodcastPlayerProps {
   title: string;
@@ -298,9 +303,9 @@ export function PodcastPlayer({
     }
   }, [title, segments]);
 
-  // Download audio as MP3 (combines base64 segments)
+  // Download audio as MP3 (combines segment audio)
   const downloadAudio = useCallback(async () => {
-    const audioSegments = segments.filter(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100);
+    const audioSegments = segments.filter(hasRealAudio);
     if (audioSegments.length === 0) {
       toast.error("No audio available to download. This podcast uses browser voice which cannot be exported.");
       return;
@@ -309,16 +314,25 @@ export function PodcastPlayer({
     try {
       toast.info("Preparing audio download...");
       
-      // Convert base64 segments to blobs and concatenate
       const audioBlobs: Blob[] = [];
       for (const seg of audioSegments) {
-        const byteCharacters = atob(seg.audio!);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        if (seg.audioUrl) {
+          const res = await fetch(seg.audioUrl);
+          if (!res.ok) continue;
+          audioBlobs.push(await res.blob());
+        } else if (seg.audio) {
+          const byteCharacters = atob(seg.audio);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          audioBlobs.push(new Blob([new Uint8Array(byteNumbers)], { type: "audio/mpeg" }));
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        audioBlobs.push(new Blob([byteArray], { type: "audio/mpeg" }));
+      }
+
+      if (audioBlobs.length === 0) {
+        toast.error("Audio links have expired. Regenerate this podcast to download it.");
+        return;
       }
       
       const combinedBlob = new Blob(audioBlobs, { type: "audio/mpeg" });
@@ -339,15 +353,15 @@ export function PodcastPlayer({
 
   // Check if browser supports speech synthesis
   const speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
-  const hasElevenLabsAudio = segments.some(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100);
+  const hasElevenLabsAudio = segments.some(hasRealAudio);
 
   // TTS status stats — how many segments got ElevenLabs vs fell back to browser voice
   const ttsStats = {
     total: segments.length,
-    elevenlabs: segments.filter(s => s.audio && typeof s.audio === 'string' && s.audio.length > 100).length,
-    fallback: segments.filter(s => !(s.audio && typeof s.audio === 'string' && s.audio.length > 100)).length,
+    elevenlabs: segments.filter(hasRealAudio).length,
+    fallback: segments.filter(s => !hasRealAudio(s)).length,
   };
-  const firstFallbackReason = segments.find(s => !s.audio)?.audioError || null;
+  const firstFallbackReason = segments.find(s => !hasRealAudio(s))?.audioError || null;
 
   // Stop playback entirely and reset to beginning
   const handleStop = useCallback(() => {
