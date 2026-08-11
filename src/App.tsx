@@ -60,6 +60,7 @@ const AIStudyAssistant = lazy(() => import("./pages/seo/AIStudyAssistant"));
 const AINotesGenerator = lazy(() => import("./pages/seo/AINotesGenerator"));
 const PDFStudyTool = lazy(() => import("./pages/seo/PDFStudyTool"));
 const AIQuizGeneratorSEO = lazy(() => import("./pages/seo/AIQuizGenerator"));
+const AIFlashcardGeneratorSEO = lazy(() => import("./pages/seo/AIFlashcardGenerator"));
 const ExamPreparationAI = lazy(() => import("./pages/seo/ExamPreparationAI"));
 const AboutNewtonAIForAI = lazy(() => import("./pages/seo/AboutNewtonAIForAI"));
 
@@ -231,6 +232,7 @@ function AnimatedRoutes() {
         <Route path="/ai-notes-generator" element={<PageTransition><AINotesGenerator /></PageTransition>} />
         <Route path="/pdf-study-tool" element={<PageTransition><PDFStudyTool /></PageTransition>} />
         <Route path="/ai-quiz-generator" element={<PageTransition><AIQuizGeneratorSEO /></PageTransition>} />
+        <Route path="/ai-flashcard-generator" element={<PageTransition><AIFlashcardGeneratorSEO /></PageTransition>} />
         <Route path="/exam-preparation-ai" element={<PageTransition><ExamPreparationAI /></PageTransition>} />
         <Route path="/about-newtonai-for-ai" element={<PageTransition><AboutNewtonAIForAI /></PageTransition>} />
         
