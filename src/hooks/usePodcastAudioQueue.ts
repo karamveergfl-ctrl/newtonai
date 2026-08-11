@@ -183,10 +183,12 @@ export function usePodcastAudioQueue({
     if (cached && cached.speaker === segment.speaker && cached.hash === expectedHash) return cached;
     if (cached) { cached.audio.pause(); cached.audio.src = ""; bufferRef.current.delete(index); }
 
-    if (!segment.audio || typeof segment.audio !== 'string' || segment.audio.length < 100) return null;
+    const src = getAudioSrc(segment);
+    if (!src) return null;
 
     try {
-      const audio = new Audio(`data:audio/mpeg;base64,${segment.audio}`);
+      const audio = new Audio(src);
+      audio.crossOrigin = "anonymous";
       audio.preload = "auto";
       audio.volume = volumeRef.current;
       audio.playbackRate = playbackRateRef.current;
@@ -222,7 +224,7 @@ export function usePodcastAudioQueue({
     for (let i = fromIndex; i < Math.min(fromIndex + BUFFER_SIZE, segments.length); i++) {
       const seg = segments[i];
       const cached = bufferRef.current.get(i);
-      if (seg.audio && (!cached || cached.speaker !== seg.speaker)) {
+      if (getAudioSrc(seg) && (!cached || cached.speaker !== seg.speaker)) {
         promises.push(preloadSegment(i));
       }
     }
@@ -342,7 +344,9 @@ export function usePodcastAudioQueue({
       const buffered = bufferRef.current.get(index);
       const isValid = buffered && buffered.speaker === segment.speaker && buffered.hash === expectedHash;
 
-      if (segment.audio && isValid) {
+      const hasRealAudio = !!getAudioSrc(segment);
+
+      if (hasRealAudio && isValid) {
         setUsingFallback(false);
         setStatus("playing");
 
@@ -381,7 +385,7 @@ export function usePodcastAudioQueue({
           if (segmentId !== currentSegmentIdRef.current) return;
           if (webSpeechSupported) playWithWebSpeech(segment, index, segmentId);
         }
-      } else if (segment.audio) {
+      } else if (hasRealAudio) {
         // Audio exists but not preloaded — load now
         setStatus("buffering");
         if (buffered && !isValid) {
