@@ -268,7 +268,7 @@ serve(async (req) => {
 
           const { data: signed, error: signError } = await storageClient.storage
             .from("podcast-audio")
-            .createSignedUrl(path, 60 * 60 * 24 * 7);
+            .createSignedUrl(path, 60 * 60 * 24 * 365);
 
           if (signError || !signed?.signedUrl) {
             throw new Error(`Could not sign audio URL: ${signError?.message ?? "unknown error"}`);
