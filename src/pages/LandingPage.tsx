@@ -84,7 +84,7 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background overflow-x-hidden">
       <SEOHead
-        title="Home"
+        title="NewtonAI — All-in-One AI Study Assistant for Students"
         description="Study smarter with NewtonAI — AI summaries, quizzes, flashcards and mind maps built from your notes, PDFs and lectures. Free to start."
         canonicalPath="/"
         breadcrumbs={breadcrumbs}

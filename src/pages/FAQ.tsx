@@ -104,7 +104,7 @@ const FAQ = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="FAQ"
+        title="NewtonAI FAQ — Common Questions & Support"
         description="Find answers to common questions about NewtonAI - the AI-powered learning platform for students. Learn about pricing, features, and more."
         canonicalPath="/faq"
         breadcrumbs={breadcrumbs}
