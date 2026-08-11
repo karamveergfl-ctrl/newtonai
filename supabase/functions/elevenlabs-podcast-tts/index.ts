@@ -197,7 +197,7 @@ serve(async (req) => {
       throw new Error("ELEVENLABS_API_KEY is not configured");
     }
 
-    const { segments, batchSize = 3, language = "en", host1VoiceId, host2VoiceId }: TTSRequest = await req.json();
+    const { segments, language = "en", host1VoiceId, host2VoiceId }: TTSRequest = await req.json();
 
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return new Response(
@@ -205,6 +205,21 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    if (segments.length > MAX_SEGMENTS_PER_REQUEST) {
+      return new Response(
+        JSON.stringify({
+          error: `Too many segments in one request (${segments.length}). Send at most ${MAX_SEGMENTS_PER_REQUEST} per call.`,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Service-role client for uploading generated audio to storage
+    const storageClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
     console.log(`Generating audio for ${segments.length} segments in language: ${language}`);
 
@@ -221,29 +236,50 @@ serve(async (req) => {
 
     console.log(`Using model: ${modelId}, voices: host1=${voices.host1}, host2=${voices.host2}`);
 
-    // Process segments in batches to avoid rate limits
-    const results: { index: number; audio: string | null; error?: string }[] = [];
-    
-    for (let i = 0; i < segments.length; i += batchSize) {
-      const batch = segments.slice(i, i + batchSize);
+    // Process segments in small batches to respect ElevenLabs concurrency limits
+    const results: { index: number; audioUrl: string | null; error?: string }[] = [];
+
+    for (let i = 0; i < segments.length; i += CONCURRENCY) {
+      const batch = segments.slice(i, i + CONCURRENCY);
       
       const batchPromises = batch.map(async (segment, batchIndex) => {
         const globalIndex = i + batchIndex;
         try {
           const voiceId = voices[segment.speaker];
           const cleanedText = cleanTextForSpeech(segment.text);
-          const audio = await generateAudioForSegment(
+          if (!cleanedText) {
+            return { index: globalIndex, audioUrl: null, error: "Empty segment text" };
+          }
+          const audioBytes = await generateAudioForSegment(
             cleanedText,
             voiceId,
             ELEVENLABS_API_KEY,
             modelId
           );
-          return { index: globalIndex, audio };
+
+          const path = `${user.id}/${crypto.randomUUID()}.mp3`;
+          const { error: uploadError } = await storageClient.storage
+            .from("podcast-audio")
+            .upload(path, audioBytes, { contentType: "audio/mpeg", upsert: false });
+
+          if (uploadError) {
+            throw new Error(`Audio upload failed: ${uploadError.message}`);
+          }
+
+          const { data: signed, error: signError } = await storageClient.storage
+            .from("podcast-audio")
+            .createSignedUrl(path, 60 * 60 * 24 * 7);
+
+          if (signError || !signed?.signedUrl) {
+            throw new Error(`Could not sign audio URL: ${signError?.message ?? "unknown error"}`);
+          }
+
+          return { index: globalIndex, audioUrl: signed.signedUrl };
         } catch (error) {
           console.error(`Error generating audio for segment ${globalIndex}:`, error);
           return { 
             index: globalIndex, 
-            audio: null, 
+            audioUrl: null, 
             error: error instanceof Error ? error.message : "Unknown error" 
           };
         }
@@ -253,8 +289,8 @@ serve(async (req) => {
       results.push(...batchResults);
 
       // Small delay between batches to respect rate limits
-      if (i + batchSize < segments.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      if (i + CONCURRENCY < segments.length) {
+        await new Promise(resolve => setTimeout(resolve, BATCH_GAP_MS));
       }
     }
 
@@ -266,12 +302,12 @@ serve(async (req) => {
       const result = results.find(r => r.index === index);
       return {
         ...segment,
-        audio: result?.audio || null,
+        audioUrl: result?.audioUrl || null,
         audioError: result?.error || null,
       };
     });
 
-    const successCount = audioSegments.filter(s => s.audio).length;
+    const successCount = audioSegments.filter(s => s.audioUrl).length;
     console.log(`Generated ${successCount}/${segments.length} audio segments successfully`);
 
     return new Response(
