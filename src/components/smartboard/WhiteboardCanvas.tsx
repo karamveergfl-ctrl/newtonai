@@ -51,6 +51,10 @@ export const WhiteboardCanvas = forwardRef<WhiteboardCanvasHandle, WhiteboardCan
         const parent = canvas.parentElement;
         if (!parent) return;
         const rect = parent.getBoundingClientRect();
+        // Skip while hidden (e.g. the Document tab is active) — resizing to 0
+        // would wipe every stroke already drawn on the board.
+        if (rect.width === 0 || rect.height === 0) return;
+        if (canvas.width === Math.round(rect.width) && canvas.height === Math.round(rect.height)) return;
         // Save current content
         const ctx = canvas.getContext("2d");
         let imageData: ImageData | null = null;
