@@ -39,6 +39,7 @@ const routeImportMap: Record<string, () => Promise<unknown>> = {
   '/ai-notes-generator': () => import('../pages/seo/AINotesGenerator'),
   '/pdf-study-tool': () => import('../pages/seo/PDFStudyTool'),
   '/ai-quiz-generator': () => import('../pages/seo/AIQuizGenerator'),
+  '/ai-flashcard-generator': () => import('../pages/seo/AIFlashcardGenerator'),
   '/exam-preparation-ai': () => import('../pages/seo/ExamPreparationAI'),
   '/about-newtonai-for-ai': () => import('../pages/seo/AboutNewtonAIForAI'),
 

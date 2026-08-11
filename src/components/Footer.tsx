@@ -102,6 +102,7 @@ const Footer = () => {
                 { to: "/contact", label: "Contact Us" },
                 { to: "/compare", label: "Compare Tools" },
                 { to: "/ai-study-assistant", label: "AI Study Assistant" },
+                { to: "/ai-flashcard-generator", label: "AI Flashcard Generator" },
                 { to: "/exam-preparation-ai", label: "Exam Preparation" },
                 { to: "/about-newtonai-for-ai", label: "About NewtonAI" },
                 { to: "/teacher", label: "Teacher Dashboard" },
