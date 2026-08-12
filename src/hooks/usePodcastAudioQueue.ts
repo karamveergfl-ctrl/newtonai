@@ -11,6 +11,8 @@ export interface AudioSegment {
   audio?: string | null;
   audioUrl?: string | null;
   fallbackAudio?: boolean;
+  engine?: "kokoro" | "elevenlabs" | null;
+  engineFallbackReason?: string | null;
 }
 
 interface BufferedAudioData {
