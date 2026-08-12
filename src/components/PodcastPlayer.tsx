@@ -59,15 +59,17 @@ export interface PodcastSegment {
   emotion?: string;
   audio?: string;
   audioUrl?: string;
+  storagePath?: string | null;
   fallbackAudio?: boolean;
   audioError?: string | null;
   engine?: "kokoro" | "elevenlabs" | null;
   engineFallbackReason?: string | null;
 }
 
-// A segment has real (studio) audio when it has a signed URL or legacy inline base64
+// A segment has real (studio) audio when it has a durable storage path, a signed URL,
+// or legacy inline base64. Storage path wins — signed URLs are disposable.
 const hasRealAudio = (s: PodcastSegment): boolean =>
-  !!s.audioUrl || !!(s.audio && typeof s.audio === "string" && s.audio.length > 100);
+  !!s.storagePath || !!s.audioUrl || !!(s.audio && typeof s.audio === "string" && s.audio.length > 100);
 
 interface PodcastPlayerProps {
   title: string;
@@ -76,6 +78,9 @@ interface PodcastPlayerProps {
   isRaiseHandActive: boolean;
   onClose?: () => void;
   language?: string;
+  /** Regenerate audio for segments that have none. */
+  onRepairAudio?: () => void;
+  isRepairing?: boolean;
 }
 
 export function PodcastPlayer({ 
@@ -84,11 +89,15 @@ export function PodcastPlayer({
   onRaiseHand, 
   isRaiseHandActive,
   onClose,
-  language = "en"
+  language = "en",
+  onRepairAudio,
+  isRepairing = false,
 }: PodcastPlayerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  // Robotic browser speech is never used silently — the listener opts in.
+  const [allowWebSpeech, setAllowWebSpeech] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
 
@@ -111,6 +120,7 @@ export function PodcastPlayer({
   } = usePodcastAudioQueue({
     segments: segments as AudioSegment[],
     language, // Pass language for Hindi/multilingual voice support
+    allowWebSpeech,
     onSegmentChange: (index) => {
       // Scroll WITHIN transcript container only, not the whole page
       if (transcriptRef.current) {
