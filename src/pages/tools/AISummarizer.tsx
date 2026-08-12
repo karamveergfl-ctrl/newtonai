@@ -30,7 +30,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCredits } from "@/hooks/useCredits";
 import { CreditModal } from "@/components/CreditModal";
 import { FEATURE_COSTS, FEATURE_NAMES } from "@/lib/creditConfig";
-import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
+import { useReadAloudTTS } from "@/hooks/useReadAloudTTS";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
 import { useProcessingState } from "@/hooks/useProcessingState";
@@ -118,7 +118,7 @@ const AISummarizer = () => {
   const { toast } = useToast();
   const { incrementUsage } = useFeatureUsage();
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription, loading: subscriptionLoading } = useFeatureLimitGate("summary");
-  const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
+  const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useReadAloudTTS();
 
   // Handle ?action= query param for quick actions
   const actionParam = searchParams.get("action");

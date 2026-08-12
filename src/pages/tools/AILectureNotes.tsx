@@ -26,7 +26,7 @@ import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLi
 import { useGuestTrial } from "@/contexts/GuestTrialContext";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
 import { useFeatureUsage } from "@/hooks/useFeatureUsage";
-import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
+import { useReadAloudTTS } from "@/hooks/useReadAloudTTS";
 import { cn } from "@/lib/utils";
 import { ToolPagePromoSections } from "@/components/tool-sections";
 import { ProcessingOverlay } from "@/components/ProcessingOverlay";
@@ -190,7 +190,7 @@ const AILectureNotes = () => {
   const { toast } = useToast();
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("lecture_notes");
   const { incrementUsage } = useFeatureUsage();
-  const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
+  const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useReadAloudTTS();
   const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
 
   // Load preferred voice when language changes
