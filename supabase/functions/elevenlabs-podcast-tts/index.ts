@@ -204,6 +204,48 @@ serve(async (req) => {
 
     console.log(`Generating audio for ${segments.length} segments in language: ${language}`);
 
+    // Rate limiting is charged lazily: segments already in the TTS cache cost nothing,
+    // so replaying or repairing an existing episode can never exhaust the quota.
+    let quotaPromise: Promise<boolean> | null = null;
+    let quotaDenied = false;
+    const ensureQuota = () => {
+      quotaPromise ??= supabase
+        .rpc("check_rate_limit", {
+          p_user_id: user.id,
+          p_function_name: "elevenlabs-podcast-tts",
+        })
+        .then(({ data, error }) => {
+          const ok = !error && !!data;
+          if (!ok) quotaDenied = true;
+          return ok;
+        });
+      return quotaPromise;
+    };
+
+    const retryAfterMinutes = async (): Promise<number> => {
+      try {
+        const [{ data: rl }, { data: cfg }] = await Promise.all([
+          storageClient
+            .from("rate_limits")
+            .select("window_start")
+            .eq("user_id", user.id)
+            .eq("function_name", "elevenlabs-podcast-tts")
+            .maybeSingle(),
+          storageClient
+            .from("rate_limit_config")
+            .select("window_minutes")
+            .eq("function_name", "elevenlabs-podcast-tts")
+            .maybeSingle(),
+        ]);
+        const windowMinutes = cfg?.window_minutes ?? 60;
+        if (!rl?.window_start) return windowMinutes;
+        const elapsed = (Date.now() - new Date(rl.window_start).getTime()) / 60000;
+        return Math.max(1, Math.ceil(windowMinutes - elapsed));
+      } catch {
+        return 60;
+      }
+    };
+
     // Get voice mapping for the language (fallback defaults)
     const defaultVoices = VOICES_BY_LANGUAGE[language] || VOICES_BY_LANGUAGE.en;
     
@@ -294,6 +336,17 @@ serve(async (req) => {
               storagePath: cachedAudio.storagePath,
               status: "completed" as const,
               engine: "cache" as const,
+            };
+          }
+
+          if (!(await ensureQuota())) {
+            return {
+              index: globalIndex,
+              audioUrl: null,
+              storagePath: null,
+              status: "failed" as const,
+              errorCode: "rate_limited",
+              error: "Voice generation limit reached.",
             };
           }
 
