@@ -595,7 +595,7 @@ export default function AIPodcast() {
                       </div>
                       <h3 className="font-medium">Professional AI Voices</h3>
                       <p className="text-muted-foreground text-xs mt-1">
-                        Studio-quality voices powered by ElevenLabs
+                        Studio-quality AI voices with natural delivery
                       </p>
                     </div>
                     <div className="p-4 rounded-lg bg-accent/5">
