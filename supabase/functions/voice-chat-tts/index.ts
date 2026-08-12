@@ -20,7 +20,7 @@ const VOICE_SETTINGS = {
 };
 
 // If Kokoro can't start sending audio within this budget, fail over so the tutor never goes silent.
-const KOKORO_TTFB_BUDGET_MS = 4000;
+const KOKORO_TTFB_BUDGET_MS = 12000;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
