@@ -1,5 +1,5 @@
-// Shared TTS router: Kokoro first (self-hosted, free), ElevenLabs as automatic fallback.
-import { kokoroConfigured, kokoroHealthy, kokoroSynthesize } from "./kokoro.ts";
+// Shared TTS router: Kokoro (via OpenRouter) first, ElevenLabs as optional fallback.
+import { KOKORO_MODEL, KokoroError, kokoroConfigured, kokoroSynthesize } from "./kokoro.ts";
 
 export type TTSEngine = "kokoro" | "elevenlabs";
 export type TTSRole = "host1" | "host2" | "tutor";
@@ -8,6 +8,8 @@ export interface TTSResult {
   bytes: Uint8Array;
   contentType: string;
   engine: TTSEngine;
+  model: string;
+  voice: string;
   /** Present when Kokoro was skipped or failed and ElevenLabs handled the request. */
   fallbackReason?: string;
 }
@@ -30,6 +32,11 @@ export function kokoroSupportsLanguage(language: string): boolean {
   return KOKORO_LANGUAGES.has((language || "en").toLowerCase().split("-")[0]);
 }
 
+/** Kokoro is available whenever the OpenRouter key is present — no server to health check. */
+export async function kokoroAvailable(): Promise<boolean> {
+  return kokoroConfigured();
+}
+
 export function describeElevenLabsError(status: number, body: string): string {
   switch (status) {
     case 401:
@@ -43,6 +50,10 @@ export function describeElevenLabsError(status: number, body: string): string {
     default:
       return `ElevenLabs API error ${status}: ${body.slice(0, 200)}`;
   }
+}
+
+export function elevenLabsConfigured(): boolean {
+  return !!Deno.env.get("ELEVENLABS_API_KEY");
 }
 
 export async function elevenLabsSynthesize(opts: {
@@ -80,25 +91,6 @@ export async function elevenLabsSynthesize(opts: {
   return new Uint8Array(await res.arrayBuffer());
 }
 
-// Cached health probe so one dead box doesn't cost every segment a timeout.
-let healthCheckedAt = 0;
-let healthy = false;
-const HEALTH_TTL_MS = 60_000;
-
-export async function kokoroAvailable(): Promise<boolean> {
-  if (!kokoroConfigured()) return false;
-  const now = Date.now();
-  if (now - healthCheckedAt < HEALTH_TTL_MS) return healthy;
-  healthy = await kokoroHealthy();
-  healthCheckedAt = now;
-  return healthy;
-}
-
-export function markKokoroDown() {
-  healthy = false;
-  healthCheckedAt = Date.now();
-}
-
 export interface SynthesizeOptions {
   text: string;
   role: TTSRole;
@@ -110,35 +102,54 @@ export interface SynthesizeOptions {
   speed?: number;
   outputFormat?: string;
   voiceSettings?: Record<string, unknown>;
+  /** Audio format requested from Kokoro. mp3 keeps the existing players happy. */
+  kokoroFormat?: "mp3" | "wav";
 }
 
-/** Kokoro-first synthesis with automatic ElevenLabs fallback. */
+/** Kokoro-first synthesis with automatic ElevenLabs fallback on transient failures. */
 export async function synthesizeSpeech(opts: SynthesizeOptions): Promise<TTSResult> {
   const language = opts.language ?? "en";
+  const kokoroVoice = kokoroVoiceFor(opts.role, opts.kokoroVoice);
   let fallbackReason: string | undefined;
 
   if (!kokoroConfigured()) {
-    fallbackReason = "Kokoro server is not configured";
+    fallbackReason = "Kokoro (OpenRouter) is not configured";
   } else if (!kokoroSupportsLanguage(language)) {
     fallbackReason = `Kokoro has no voice pack for "${language}"`;
-  } else if (!(await kokoroAvailable())) {
-    fallbackReason = "Kokoro server health check failed";
   } else {
     const started = Date.now();
     try {
       const result = await kokoroSynthesize({
         text: opts.text,
-        voice: kokoroVoiceFor(opts.role, opts.kokoroVoice),
-        speed: opts.speed ?? 1.0,
-        format: "mp3",
+        voice: kokoroVoice,
+        speed: opts.speed ?? 1,
+        format: opts.kokoroFormat ?? "mp3",
       });
       console.log(`[tts] kokoro ok role=${opts.role} ${result.bytes.byteLength}B in ${Date.now() - started}ms`);
-      return { bytes: result.bytes, contentType: result.contentType, engine: "kokoro" };
+      return {
+        bytes: result.bytes,
+        contentType: result.contentType,
+        engine: "kokoro",
+        model: result.model,
+        voice: result.voice,
+      };
     } catch (err) {
-      markKokoroDown();
-      fallbackReason = err instanceof Error ? err.message : "Kokoro request failed";
-      console.error(`[tts] kokoro failed, falling back: ${fallbackReason}`);
+      const kErr = err instanceof KokoroError ? err : null;
+      fallbackReason = kErr?.userMessage ?? (err instanceof Error ? err.message : "Kokoro request failed");
+      console.error(`[tts] kokoro failed: ${fallbackReason}`);
+      // Non-transient config/input errors won't be fixed by ElevenLabs either,
+      // but a provider outage should still produce audio.
+      if (kErr && !kErr.transient && !elevenLabsConfigured()) throw kErr;
     }
+  }
+
+  if (!elevenLabsConfigured()) {
+    throw new KokoroError(
+      `No TTS engine available: ${fallbackReason}`,
+      503,
+      fallbackReason ?? "Voice generation is unavailable right now.",
+      true,
+    );
   }
 
   const started = Date.now();
@@ -150,5 +161,14 @@ export async function synthesizeSpeech(opts: SynthesizeOptions): Promise<TTSResu
     voiceSettings: opts.voiceSettings,
   });
   console.log(`[tts] elevenlabs ok role=${opts.role} ${bytes.byteLength}B in ${Date.now() - started}ms (${fallbackReason})`);
-  return { bytes, contentType: "audio/mpeg", engine: "elevenlabs", fallbackReason };
+  return {
+    bytes,
+    contentType: "audio/mpeg",
+    engine: "elevenlabs",
+    model: opts.elevenLabsModelId,
+    voice: opts.elevenLabsVoiceId,
+    fallbackReason,
+  };
 }
+
+export { KOKORO_MODEL };

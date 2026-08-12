@@ -2560,6 +2560,99 @@ export type Database = {
         }
         Relationships: []
       }
+      tts_audio_cache: {
+        Row: {
+          char_count: number
+          content_hash: string
+          created_at: string
+          duration: number | null
+          hit_count: number
+          id: string
+          model: string
+          provider: string
+          speed: number
+          status: string
+          storage_path: string
+          text_hash: string
+          updated_at: string
+          voice: string
+        }
+        Insert: {
+          char_count?: number
+          content_hash: string
+          created_at?: string
+          duration?: number | null
+          hit_count?: number
+          id?: string
+          model: string
+          provider?: string
+          speed?: number
+          status?: string
+          storage_path: string
+          text_hash: string
+          updated_at?: string
+          voice: string
+        }
+        Update: {
+          char_count?: number
+          content_hash?: string
+          created_at?: string
+          duration?: number | null
+          hit_count?: number
+          id?: string
+          model?: string
+          provider?: string
+          speed?: number
+          status?: string
+          storage_path?: string
+          text_hash?: string
+          updated_at?: string
+          voice?: string
+        }
+        Relationships: []
+      }
+      tts_usage_events: {
+        Row: {
+          cache_hit: boolean
+          characters: number
+          created_at: string
+          estimated_cost_usd: number
+          feature: string
+          id: string
+          model: string | null
+          provider: string
+          requests: number
+          user_id: string
+          voice: string | null
+        }
+        Insert: {
+          cache_hit?: boolean
+          characters?: number
+          created_at?: string
+          estimated_cost_usd?: number
+          feature: string
+          id?: string
+          model?: string | null
+          provider: string
+          requests?: number
+          user_id: string
+          voice?: string | null
+        }
+        Update: {
+          cache_hit?: boolean
+          characters?: number
+          created_at?: string
+          estimated_cost_usd?: number
+          feature?: string
+          id?: string
+          model?: string | null
+          provider?: string
+          requests?: number
+          user_id?: string
+          voice?: string | null
+        }
+        Relationships: []
+      }
       user_credits: {
         Row: {
           ads_watched_today: number

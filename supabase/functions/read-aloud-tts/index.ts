@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { synthesizeSpeech } from "../_shared/tts-router.ts";
+import { KokoroError } from "../_shared/kokoro.ts";
+import { cacheHashes, lookupCachedAudio, serviceClient, storeAudio, trackTTSUsage } from "../_shared/tts-cache.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,8 +10,6 @@ const corsHeaders = {
 };
 
 const MAX_CHARS = 5000;
-const CACHE_BUCKET = "tts-cache";
-const SIGNED_URL_TTL = 60 * 60 * 24 * 7; // 7 days
 
 // ElevenLabs fallback voices per role
 const EL_VOICES = {
@@ -18,24 +18,18 @@ const EL_VOICES = {
   tutor: "onwK4e9ZLuTAKqWW03F9", // Daniel
 } as const;
 
-async function sha256(input: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
-  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -43,12 +37,7 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (authError || !user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json().catch(() => ({}));
     const text: string = typeof body.text === "string" ? body.text.trim() : "";
@@ -58,70 +47,79 @@ serve(async (req) => {
       : "tutor";
     const speed: number = typeof body.speed === "number" ? Math.min(1.5, Math.max(0.6, body.speed)) : 1.0;
 
-    if (!text) {
-      return new Response(JSON.stringify({ error: "No text provided" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!text) return json({ error: "No text provided" }, 400);
     if (text.length > MAX_CHARS) {
-      return new Response(
-        JSON.stringify({ error: `Text too long (${text.length}). Max ${MAX_CHARS} characters per request.` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return json({ error: `Text too long (${text.length}). Max ${MAX_CHARS} characters per request.` }, 400);
     }
 
-    const storage = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const db = serviceClient();
 
     // Content-addressed cache: identical text + voice + speed is never regenerated.
-    const hash = await sha256(`${role}|${language}|${speed}|${text}`);
-    const path = `${hash}.mp3`;
+    const { contentHash, textHash, normalized } = await cacheHashes({
+      text,
+      voice: role,
+      speed,
+      model: `read-aloud:${language}`,
+    });
 
-    const { data: cached } = await storage.storage.from(CACHE_BUCKET).createSignedUrl(path, SIGNED_URL_TTL);
-    if (cached?.signedUrl) {
-      return new Response(JSON.stringify({ audioUrl: cached.signedUrl, engine: "cache", cached: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const cached = await lookupCachedAudio(db, contentHash);
+    if (cached) {
+      await trackTTSUsage(db, {
+        userId: user.id,
+        feature: "read-aloud",
+        provider: cached.provider,
+        voice: role,
+        characters: normalized.length,
+        cacheHit: true,
       });
+      return json({ audioUrl: cached.audioUrl, engine: "cache", cached: true });
     }
 
     const tts = await synthesizeSpeech({
-      text,
+      text: normalized,
       role,
       language,
       speed,
+      kokoroFormat: "mp3",
       elevenLabsVoiceId: EL_VOICES[role],
       elevenLabsModelId: language === "en" ? "eleven_turbo_v2_5" : "eleven_multilingual_v2",
     });
 
-    const { error: uploadError } = await storage.storage
-      .from(CACHE_BUCKET)
-      .upload(path, tts.bytes, { contentType: "audio/mpeg", upsert: true });
-    if (uploadError) throw new Error(`Audio cache upload failed: ${uploadError.message}`);
+    const audioUrl = await storeAudio(db, {
+      contentHash,
+      textHash,
+      voice: role,
+      speed,
+      model: `read-aloud:${language}`,
+      provider: tts.engine === "kokoro" ? "openrouter" : "elevenlabs",
+      bytes: tts.bytes,
+      contentType: "audio/mpeg",
+      charCount: normalized.length,
+      extension: "mp3",
+    });
 
-    const { data: signed, error: signError } = await storage.storage
-      .from(CACHE_BUCKET)
-      .createSignedUrl(path, SIGNED_URL_TTL);
-    if (signError || !signed?.signedUrl) {
-      throw new Error(`Could not sign audio URL: ${signError?.message ?? "unknown error"}`);
-    }
+    await trackTTSUsage(db, {
+      userId: user.id,
+      feature: "read-aloud",
+      provider: tts.engine === "kokoro" ? "openrouter" : "elevenlabs",
+      model: tts.model,
+      voice: tts.voice,
+      characters: normalized.length,
+      cacheHit: false,
+    });
 
-    return new Response(
-      JSON.stringify({
-        audioUrl: signed.signedUrl,
-        engine: tts.engine,
-        fallbackReason: tts.fallbackReason ?? null,
-        cached: false,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return json({
+      audioUrl,
+      engine: tts.engine,
+      fallbackReason: tts.fallbackReason ?? null,
+      cached: false,
+    });
   } catch (error) {
+    if (error instanceof KokoroError) {
+      console.error("read-aloud-tts error:", error.message);
+      return json({ error: error.userMessage }, 502);
+    }
     console.error("read-aloud-tts error:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "TTS generation failed" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return json({ error: "Read-aloud audio could not be generated." }, 500);
   }
 });

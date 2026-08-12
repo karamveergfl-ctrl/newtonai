@@ -1,6 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { synthesizeSpeech, kokoroAvailable, kokoroSupportsLanguage } from "../_shared/tts-router.ts";
+import { KOKORO_MODEL } from "../_shared/kokoro.ts";
+import {
+  cacheHashes,
+  chunkText,
+  lookupCachedAudio,
+  serviceClient,
+  storeAudio,
+  trackTTSUsage,
+} from "../_shared/tts-cache.ts";
 
 
 const corsHeaders = {
@@ -145,8 +154,8 @@ serve(async (req) => {
       );
     }
 
-    if (!Deno.env.get("ELEVENLABS_API_KEY") && !Deno.env.get("KOKORO_TTS_URL")) {
-      throw new Error("No TTS engine configured (set KOKORO_TTS_URL or ELEVENLABS_API_KEY)");
+    if (!Deno.env.get("OPENROUTER_API_KEY") && !Deno.env.get("ELEVENLABS_API_KEY")) {
+      throw new Error("No TTS engine configured (set OPENROUTER_API_KEY or ELEVENLABS_API_KEY)");
     }
 
     const {
@@ -199,7 +208,7 @@ serve(async (req) => {
     const results: {
       index: number;
       audioUrl: string | null;
-      engine?: "kokoro" | "elevenlabs";
+      engine?: "kokoro" | "elevenlabs" | "cache";
       fallbackReason?: string;
       error?: string;
     }[] = [];
@@ -219,38 +228,89 @@ serve(async (req) => {
           if (!cleanedText) {
             return { index: globalIndex, audioUrl: null, error: "Empty segment text" };
           }
-          const tts = await synthesizeSpeech({
+
+          const kokoroVoice = segment.speaker === "host1" ? host1KokoroVoice : host2KokoroVoice;
+          const { contentHash, textHash, normalized } = await cacheHashes({
             text: cleanedText,
-            role: segment.speaker,
-            language,
-            elevenLabsVoiceId: voiceId,
-            elevenLabsModelId: modelId,
-            kokoroVoice: segment.speaker === "host1" ? host1KokoroVoice : host2KokoroVoice,
+            voice: `${segment.speaker}:${kokoroVoice ?? "default"}:${voiceId}`,
+            speed: 1,
+            model: `podcast:${language}`,
           });
-          const audioBytes = tts.bytes;
 
-          const path = `${user.id}/${crypto.randomUUID()}.mp3`;
-          const { error: uploadError } = await storageClient.storage
-            .from("podcast-audio")
-            .upload(path, audioBytes, { contentType: "audio/mpeg", upsert: false });
-
-          if (uploadError) {
-            throw new Error(`Audio upload failed: ${uploadError.message}`);
+          // Identical narration is never regenerated.
+          const cachedAudio = await lookupCachedAudio(storageClient, contentHash);
+          if (cachedAudio) {
+            await trackTTSUsage(storageClient, {
+              userId: user.id,
+              feature: "podcast",
+              provider: cachedAudio.provider,
+              characters: normalized.length,
+              cacheHit: true,
+            });
+            return {
+              index: globalIndex,
+              audioUrl: cachedAudio.audioUrl,
+              engine: "cache" as const,
+            };
           }
 
-          const { data: signed, error: signError } = await storageClient.storage
-            .from("podcast-audio")
-            .createSignedUrl(path, 60 * 60 * 24 * 365);
+          // Long turns are split on sentence boundaries so no word is ever cut.
+          const parts = chunkText(normalized, 1800);
+          const buffers: Uint8Array[] = [];
+          let engine: "kokoro" | "elevenlabs" = "kokoro";
+          let fallbackReason: string | undefined;
+          let model = "";
 
-          if (signError || !signed?.signedUrl) {
-            throw new Error(`Could not sign audio URL: ${signError?.message ?? "unknown error"}`);
+          for (const part of parts) {
+            const tts = await synthesizeSpeech({
+              text: part,
+              role: segment.speaker,
+              language,
+              elevenLabsVoiceId: voiceId,
+              elevenLabsModelId: modelId,
+              kokoroVoice,
+              kokoroFormat: "mp3",
+            });
+            buffers.push(tts.bytes);
+            engine = tts.engine;
+            model = tts.model;
+            if (tts.fallbackReason) fallbackReason = tts.fallbackReason;
           }
+
+          const totalBytes = buffers.reduce((n, b) => n + b.byteLength, 0);
+          const audioBytes = new Uint8Array(totalBytes);
+          let offset = 0;
+          for (const b of buffers) { audioBytes.set(b, offset); offset += b.byteLength; }
+
+          const audioUrl = await storeAudio(storageClient, {
+            contentHash,
+            textHash,
+            voice: engine === "kokoro" ? (kokoroVoice ?? segment.speaker) : voiceId,
+            speed: 1,
+            model: `podcast:${language}`,
+            provider: engine === "kokoro" ? "openrouter" : "elevenlabs",
+            bytes: audioBytes,
+            contentType: "audio/mpeg",
+            charCount: normalized.length,
+            extension: "mp3",
+          });
+
+          await trackTTSUsage(storageClient, {
+            userId: user.id,
+            feature: "podcast",
+            provider: engine === "kokoro" ? "openrouter" : "elevenlabs",
+            model: engine === "kokoro" ? KOKORO_MODEL : model,
+            voice: engine === "kokoro" ? (kokoroVoice ?? segment.speaker) : voiceId,
+            characters: normalized.length,
+            cacheHit: false,
+            requests: parts.length,
+          });
 
           return {
             index: globalIndex,
-            audioUrl: signed.signedUrl,
-            engine: tts.engine,
-            fallbackReason: tts.fallbackReason,
+            audioUrl,
+            engine,
+            fallbackReason,
           };
         } catch (error) {
           console.error(`Error generating audio for segment ${globalIndex}:`, error);
@@ -297,6 +357,7 @@ serve(async (req) => {
           success: successCount,
           failed: segments.length - successCount,
           kokoro: audioSegments.filter(s => s.engine === "kokoro").length,
+          cached: audioSegments.filter(s => s.engine === "cache").length,
           elevenlabs: audioSegments.filter(s => s.engine === "elevenlabs").length,
         }
       }),

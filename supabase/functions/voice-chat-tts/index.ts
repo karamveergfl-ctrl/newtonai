@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { kokoroConfigured, kokoroStream } from "../_shared/kokoro.ts";
-import { kokoroAvailable, kokoroSupportsLanguage, kokoroVoiceFor, markKokoroDown } from "../_shared/tts-router.ts";
+import { kokoroConfigured, kokoroSynthesize } from "../_shared/kokoro.ts";
+import { kokoroAvailable, kokoroSupportsLanguage, kokoroVoiceFor } from "../_shared/tts-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,7 +20,7 @@ const VOICE_SETTINGS = {
 };
 
 // If Kokoro can't start sending audio within this budget, fail over so the tutor never goes silent.
-const KOKORO_TTFB_BUDGET_MS = 4000;
+const KOKORO_TTFB_BUDGET_MS = 12000;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -53,11 +53,11 @@ serve(async (req) => {
       fallbackReason = "Kokoro server health check failed";
     } else {
       try {
-        const kokoroRes = await kokoroStream(
+        const kokoroRes = await kokoroSynthesize(
           { text: processedText, voice: kokoroVoiceFor("tutor"), speed: 1.0, format: "mp3" },
-          KOKORO_TTFB_BUDGET_MS,
+          { timeoutMs: KOKORO_TTFB_BUDGET_MS, retries: 0 },
         );
-        return new Response(kokoroRes.body, {
+        return new Response(kokoroRes.bytes, {
           headers: {
             ...corsHeaders,
             "Content-Type": "audio/mpeg",
@@ -66,8 +66,7 @@ serve(async (req) => {
           },
         });
       } catch (err) {
-        markKokoroDown();
-        fallbackReason = err instanceof Error ? err.message : "Kokoro stream failed";
+        fallbackReason = err instanceof Error ? err.message : "Kokoro request failed";
         console.error("Kokoro tutor TTS failed, falling back to ElevenLabs:", fallbackReason);
       }
     }
