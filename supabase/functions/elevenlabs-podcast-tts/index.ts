@@ -475,6 +475,23 @@ serve(async (req) => {
     const successCount = audioSegments.filter(s => s.audioUrl).length;
     console.log(`Generated ${successCount}/${segments.length} audio segments successfully`);
 
+    // Nothing could be produced because the hourly voice budget is spent — tell the
+    // client exactly that, with a cooldown, instead of a bare non-2xx.
+    if (quotaDenied && successCount === 0) {
+      const minutes = await retryAfterMinutes();
+      return new Response(
+        JSON.stringify({
+          error: `Voice generation limit reached. Try again in about ${minutes} minute${minutes === 1 ? "" : "s"}.`,
+          errorCode: "rate_limited",
+          retryAfterMinutes: minutes,
+        }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(minutes * 60) },
+        },
+      );
+    }
+
     return new Response(
       JSON.stringify({ 
         segments: audioSegments,
