@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { kokoroConfigured, kokoroSynthesize } from "../_shared/kokoro.ts";
 import { kokoroAvailable, kokoroSupportsLanguage, kokoroVoiceFor } from "../_shared/tts-router.ts";
+import { geminiSynthesize, geminiTTSConfigured, geminiVoiceFor } from "../_shared/gemini-tts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,9 +45,34 @@ serve(async (req) => {
 
     let fallbackReason: string | undefined;
 
-    // --- 1. Kokoro first ---
-    if (!kokoroConfigured()) {
-      fallbackReason = "Kokoro server is not configured";
+    // --- 1. Google Gemini TTS (Lovable AI Gateway) first ---
+    if (!geminiTTSConfigured()) {
+      fallbackReason = "Gemini TTS is not configured";
+    } else {
+      try {
+        const gemini = await geminiSynthesize(
+          { text: processedText, voice: geminiVoiceFor("tutor"), instructions: "Speak as a calm, clear tutor" },
+          { retries: 0 },
+        );
+        return new Response(gemini.bytes, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "audio/wav",
+            "Cache-Control": "no-cache",
+            "x-tts-engine": "gemini",
+          },
+        });
+      } catch (err) {
+        fallbackReason = err instanceof Error ? err.message : "Gemini TTS failed";
+        console.error("Gemini tutor TTS failed, falling back:", fallbackReason);
+      }
+    }
+
+    // --- 2. Kokoro (only when ElevenLabs isn't available) ---
+    if (Deno.env.get("ELEVENLABS_API_KEY")) {
+      fallbackReason = fallbackReason ?? "Using ElevenLabs";
+    } else if (!kokoroConfigured()) {
+      fallbackReason = fallbackReason ?? "Kokoro server is not configured";
     } else if (!kokoroSupportsLanguage(language)) {
       fallbackReason = `Kokoro has no voice pack for "${language}"`;
     } else if (!(await kokoroAvailable())) {
