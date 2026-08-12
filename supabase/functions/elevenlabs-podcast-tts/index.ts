@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { synthesizeSpeech, kokoroAvailable, kokoroSupportsLanguage } from "../_shared/tts-router.ts";
 
 
 const corsHeaders = {
@@ -76,27 +77,17 @@ interface TTSRequest {
   language?: string;
   host1VoiceId?: string; // Custom voice ID for host1
   host2VoiceId?: string; // Custom voice ID for host2
+  host1KokoroVoice?: string; // Optional Kokoro voice pack override
+  host2KokoroVoice?: string;
 }
 
 // Hard caps: one request must stay well inside the edge function time budget.
 const MAX_SEGMENTS_PER_REQUEST = 8;
-const CONCURRENCY = 2;
-const BATCH_GAP_MS = 350;
-
-function describeElevenLabsError(status: number, body: string): string {
-  switch (status) {
-    case 401:
-      return "ElevenLabs authentication failed (401) — the API key is invalid, revoked, or the connector was unlinked.";
-    case 402:
-      return "ElevenLabs quota exhausted (402) — the account is out of character credits.";
-    case 422:
-      return `ElevenLabs rejected the request (422) — likely an invalid voice ID or empty text. ${body.slice(0, 200)}`;
-    case 429:
-      return "ElevenLabs rate/concurrency limit hit (429) — too many simultaneous requests for this plan.";
-    default:
-      return `ElevenLabs API error ${status}: ${body.slice(0, 200)}`;
-  }
-}
+const ELEVENLABS_CONCURRENCY = 2;
+const ELEVENLABS_BATCH_GAP_MS = 350;
+// Kokoro is our own box — it can take more parallel work than the ElevenLabs plan allows.
+const KOKORO_CONCURRENCY = 4;
+const KOKORO_BATCH_GAP_MS = 50;
 
 // Get model based on language - use multilingual for non-English
 // Clean emotion tags from text before sending to TTS
@@ -110,43 +101,6 @@ function cleanTextForSpeech(text: string): string {
 
 function getModelForLanguage(language: string): string {
   return language === "en" ? "eleven_turbo_v2_5" : "eleven_multilingual_v2";
-}
-
-async function generateAudioForSegment(
-  text: string,
-  voiceId: string,
-  apiKey: string,
-  modelId: string
-): Promise<Uint8Array> {
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
-    {
-      method: "POST",
-      headers: {
-        "xi-api-key": apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text,
-        model_id: modelId,
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.3,
-          use_speaker_boost: true,
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`ElevenLabs API error: ${response.status}`, errorText);
-    throw new Error(describeElevenLabsError(response.status, errorText));
-  }
-
-  const audioBuffer = await response.arrayBuffer();
-  return new Uint8Array(audioBuffer);
 }
 
 serve(async (req) => {
@@ -191,13 +145,18 @@ serve(async (req) => {
       );
     }
 
-    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    
-    if (!ELEVENLABS_API_KEY) {
-      throw new Error("ELEVENLABS_API_KEY is not configured");
+    if (!Deno.env.get("ELEVENLABS_API_KEY") && !Deno.env.get("KOKORO_TTS_URL")) {
+      throw new Error("No TTS engine configured (set KOKORO_TTS_URL or ELEVENLABS_API_KEY)");
     }
 
-    const { segments, language = "en", host1VoiceId, host2VoiceId }: TTSRequest = await req.json();
+    const {
+      segments,
+      language = "en",
+      host1VoiceId,
+      host2VoiceId,
+      host1KokoroVoice,
+      host2KokoroVoice,
+    }: TTSRequest = await req.json();
 
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return new Response(
@@ -237,10 +196,20 @@ serve(async (req) => {
     console.log(`Using model: ${modelId}, voices: host1=${voices.host1}, host2=${voices.host2}`);
 
     // Process segments in small batches to respect ElevenLabs concurrency limits
-    const results: { index: number; audioUrl: string | null; error?: string }[] = [];
+    const results: {
+      index: number;
+      audioUrl: string | null;
+      engine?: "kokoro" | "elevenlabs";
+      fallbackReason?: string;
+      error?: string;
+    }[] = [];
 
-    for (let i = 0; i < segments.length; i += CONCURRENCY) {
-      const batch = segments.slice(i, i + CONCURRENCY);
+    const useKokoro = kokoroSupportsLanguage(language) && (await kokoroAvailable());
+    const concurrency = useKokoro ? KOKORO_CONCURRENCY : ELEVENLABS_CONCURRENCY;
+    const batchGapMs = useKokoro ? KOKORO_BATCH_GAP_MS : ELEVENLABS_BATCH_GAP_MS;
+
+    for (let i = 0; i < segments.length; i += concurrency) {
+      const batch = segments.slice(i, i + concurrency);
       
       const batchPromises = batch.map(async (segment, batchIndex) => {
         const globalIndex = i + batchIndex;
@@ -250,12 +219,15 @@ serve(async (req) => {
           if (!cleanedText) {
             return { index: globalIndex, audioUrl: null, error: "Empty segment text" };
           }
-          const audioBytes = await generateAudioForSegment(
-            cleanedText,
-            voiceId,
-            ELEVENLABS_API_KEY,
-            modelId
-          );
+          const tts = await synthesizeSpeech({
+            text: cleanedText,
+            role: segment.speaker,
+            language,
+            elevenLabsVoiceId: voiceId,
+            elevenLabsModelId: modelId,
+            kokoroVoice: segment.speaker === "host1" ? host1KokoroVoice : host2KokoroVoice,
+          });
+          const audioBytes = tts.bytes;
 
           const path = `${user.id}/${crypto.randomUUID()}.mp3`;
           const { error: uploadError } = await storageClient.storage
@@ -274,7 +246,12 @@ serve(async (req) => {
             throw new Error(`Could not sign audio URL: ${signError?.message ?? "unknown error"}`);
           }
 
-          return { index: globalIndex, audioUrl: signed.signedUrl };
+          return {
+            index: globalIndex,
+            audioUrl: signed.signedUrl,
+            engine: tts.engine,
+            fallbackReason: tts.fallbackReason,
+          };
         } catch (error) {
           console.error(`Error generating audio for segment ${globalIndex}:`, error);
           return { 
@@ -289,8 +266,8 @@ serve(async (req) => {
       results.push(...batchResults);
 
       // Small delay between batches to respect rate limits
-      if (i + CONCURRENCY < segments.length) {
-        await new Promise(resolve => setTimeout(resolve, BATCH_GAP_MS));
+      if (i + concurrency < segments.length) {
+        await new Promise(resolve => setTimeout(resolve, batchGapMs));
       }
     }
 
@@ -304,6 +281,8 @@ serve(async (req) => {
         ...segment,
         audioUrl: result?.audioUrl || null,
         audioError: result?.error || null,
+        engine: result?.engine || null,
+        engineFallbackReason: result?.fallbackReason || null,
       };
     });
 
@@ -317,6 +296,8 @@ serve(async (req) => {
           total: segments.length,
           success: successCount,
           failed: segments.length - successCount,
+          kokoro: audioSegments.filter(s => s.engine === "kokoro").length,
+          elevenlabs: audioSegments.filter(s => s.engine === "elevenlabs").length,
         }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
