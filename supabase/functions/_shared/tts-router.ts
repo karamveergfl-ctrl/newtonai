@@ -1,7 +1,15 @@
-// Shared TTS router: Kokoro (via OpenRouter) first, ElevenLabs as optional fallback.
+// Shared TTS router: Google Gemini TTS (Lovable AI Gateway) first, ElevenLabs as
+// fallback, Kokoro (OpenRouter) only as a last resort.
 import { KOKORO_MODEL, KokoroError, kokoroConfigured, kokoroSynthesize } from "./kokoro.ts";
+import {
+  GEMINI_TTS_MODEL,
+  GeminiTTSError,
+  geminiSynthesize,
+  geminiTTSConfigured,
+  geminiVoiceFor,
+} from "./gemini-tts.ts";
 
-export type TTSEngine = "kokoro" | "elevenlabs";
+export type TTSEngine = "gemini" | "kokoro" | "elevenlabs";
 export type TTSRole = "host1" | "host2" | "tutor";
 
 export interface TTSResult {
@@ -10,6 +18,8 @@ export interface TTSResult {
   engine: TTSEngine;
   model: string;
   voice: string;
+  /** Raw 24kHz PCM, present for Gemini so chunks can be joined under one WAV header. */
+  pcm?: Uint8Array;
   /** Present when Kokoro was skipped or failed and ElevenLabs handled the request. */
   fallbackReason?: string;
 }
