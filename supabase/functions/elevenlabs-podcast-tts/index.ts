@@ -1,6 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { synthesizeSpeech, kokoroAvailable, kokoroSupportsLanguage } from "../_shared/tts-router.ts";
+import {
+  synthesizeSpeech,
+  kokoroAvailable,
+  kokoroSupportsLanguage,
+  elevenLabsHealthy,
+  elevenLabsBreakerReason,
+  TTSUnavailableError,
+} from "../_shared/tts-router.ts";
 import { KOKORO_MODEL } from "../_shared/kokoro.ts";
 import {
   cacheHashes,
@@ -112,6 +119,22 @@ function getModelForLanguage(language: string): string {
   return language === "en" ? "eleven_turbo_v2_5" : "eleven_multilingual_v2";
 }
 
+/**
+ * Scripts have shipped speaker values like "Host 1", "host_2", or a host name.
+ * Anything unrecognised must still resolve to a real voice — an undefined voice id
+ * is what produced the ElevenLabs 404 "voice_not_found" failures.
+ */
+function normalizeSpeaker(raw: unknown): "host1" | "host2" {
+  const value = String(raw ?? "").toLowerCase();
+  return /(^|[^0-9])2([^0-9]|$)|host_?b|guest/.test(value) ? "host2" : "host1";
+}
+
+/** "en-US" and unknown codes both resolve to a supported voice pack. */
+function normalizeLanguage(raw: unknown): string {
+  const base = String(raw ?? "en").toLowerCase().split(/[-_]/)[0];
+  return VOICES_BY_LANGUAGE[base] ? base : "en";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -160,12 +183,14 @@ serve(async (req) => {
 
     const {
       segments,
-      language = "en",
+      language: rawLanguage = "en",
       host1VoiceId,
       host2VoiceId,
       host1KokoroVoice,
       host2KokoroVoice,
     }: TTSRequest = await req.json();
+
+    const language = normalizeLanguage(rawLanguage);
 
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return new Response(
@@ -208,12 +233,38 @@ serve(async (req) => {
     const results: {
       index: number;
       audioUrl: string | null;
+      storagePath?: string | null;
+      status?: "completed" | "failed" | "unsupported";
+      errorCode?: string;
       engine?: "kokoro" | "elevenlabs" | "cache";
       fallbackReason?: string;
       error?: string;
     }[] = [];
 
     const useKokoro = kokoroSupportsLanguage(language) && (await kokoroAvailable());
+    // Neither provider can serve this language/config — fail fast with a clear reason
+    // instead of burning one doomed provider call per segment.
+    if (!useKokoro && !elevenLabsHealthy()) {
+      const reason = elevenLabsBreakerReason();
+      return new Response(
+        JSON.stringify({
+          error: kokoroSupportsLanguage(language)
+            ? "Professional voice generation is temporarily unavailable."
+            : "Professional voice generation is currently unavailable for this language.",
+          errorCode: kokoroSupportsLanguage(language) ? "no_provider_available" : "language_unsupported",
+          providerDetail: reason || "No healthy provider for this language",
+          segments: segments.map((s) => ({
+            ...s,
+            audioUrl: null,
+            storagePath: null,
+            status: "unsupported",
+            audioError: "No configured voice provider supports this language.",
+          })),
+          stats: { total: segments.length, success: 0, failed: segments.length },
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const concurrency = useKokoro ? KOKORO_CONCURRENCY : ELEVENLABS_CONCURRENCY;
     const batchGapMs = useKokoro ? KOKORO_BATCH_GAP_MS : ELEVENLABS_BATCH_GAP_MS;
 
@@ -223,16 +274,17 @@ serve(async (req) => {
       const batchPromises = batch.map(async (segment, batchIndex) => {
         const globalIndex = i + batchIndex;
         try {
-          const voiceId = voices[segment.speaker];
+          const speaker = normalizeSpeaker(segment.speaker);
+          const voiceId = voices[speaker] || VOICES_BY_LANGUAGE.en[speaker];
           const cleanedText = cleanTextForSpeech(segment.text);
           if (!cleanedText) {
             return { index: globalIndex, audioUrl: null, error: "Empty segment text" };
           }
 
-          const kokoroVoice = segment.speaker === "host1" ? host1KokoroVoice : host2KokoroVoice;
+          const kokoroVoice = speaker === "host1" ? host1KokoroVoice : host2KokoroVoice;
           const { contentHash, textHash, normalized } = await cacheHashes({
             text: cleanedText,
-            voice: `${segment.speaker}:${kokoroVoice ?? "default"}:${voiceId}`,
+            voice: `${speaker}:${kokoroVoice ?? "default"}:${voiceId}`,
             speed: 1,
             model: `podcast:${language}`,
           });
@@ -250,6 +302,8 @@ serve(async (req) => {
             return {
               index: globalIndex,
               audioUrl: cachedAudio.audioUrl,
+              storagePath: cachedAudio.storagePath,
+              status: "completed" as const,
               engine: "cache" as const,
             };
           }
@@ -264,12 +318,14 @@ serve(async (req) => {
           for (const part of parts) {
             const tts = await synthesizeSpeech({
               text: part,
-              role: segment.speaker,
+              role: speaker,
               language,
               elevenLabsVoiceId: voiceId,
               elevenLabsModelId: modelId,
               kokoroVoice,
               kokoroFormat: "mp3",
+              // Keep the whole batch inside the edge function's wall clock.
+              kokoroTimeoutMs: 20_000,
             });
             buffers.push(tts.bytes);
             engine = tts.engine;
@@ -282,10 +338,10 @@ serve(async (req) => {
           let offset = 0;
           for (const b of buffers) { audioBytes.set(b, offset); offset += b.byteLength; }
 
-          const audioUrl = await storeAudio(storageClient, {
+          const { audioUrl, storagePath } = await storeAudio(storageClient, {
             contentHash,
             textHash,
-            voice: engine === "kokoro" ? (kokoroVoice ?? segment.speaker) : voiceId,
+            voice: engine === "kokoro" ? (kokoroVoice ?? speaker) : voiceId,
             speed: 1,
             model: `podcast:${language}`,
             provider: engine === "kokoro" ? "openrouter" : "elevenlabs",
@@ -300,7 +356,7 @@ serve(async (req) => {
             feature: "podcast",
             provider: engine === "kokoro" ? "openrouter" : "elevenlabs",
             model: engine === "kokoro" ? KOKORO_MODEL : model,
-            voice: engine === "kokoro" ? (kokoroVoice ?? segment.speaker) : voiceId,
+            voice: engine === "kokoro" ? (kokoroVoice ?? speaker) : voiceId,
             characters: normalized.length,
             cacheHit: false,
             requests: parts.length,
@@ -309,15 +365,23 @@ serve(async (req) => {
           return {
             index: globalIndex,
             audioUrl,
+            storagePath,
+            status: "completed" as const,
             engine,
             fallbackReason,
           };
         } catch (error) {
           console.error(`Error generating audio for segment ${globalIndex}:`, error);
-          return { 
-            index: globalIndex, 
-            audioUrl: null, 
-            error: error instanceof Error ? error.message : "Unknown error" 
+          const structured = error instanceof TTSUnavailableError ? error : null;
+          return {
+            index: globalIndex,
+            audioUrl: null,
+            storagePath: null,
+            status: (structured?.code === "language_unsupported" ? "unsupported" : "failed") as
+              | "failed"
+              | "unsupported",
+            errorCode: structured?.code ?? "tts_failed",
+            error: structured?.userMessage ?? (error instanceof Error ? error.message : "Unknown error"),
           };
         }
       });
@@ -340,6 +404,9 @@ serve(async (req) => {
       return {
         ...segment,
         audioUrl: result?.audioUrl || null,
+        storagePath: result?.storagePath || null,
+        status: result?.status || "failed",
+        errorCode: result?.errorCode || null,
         audioError: result?.error || null,
         engine: result?.engine || null,
         engineFallbackReason: result?.fallbackReason || null,

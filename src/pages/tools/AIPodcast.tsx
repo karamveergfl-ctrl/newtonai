@@ -38,8 +38,11 @@ interface PodcastSegment {
   emotion?: string;
   audio?: string;
   audioUrl?: string;
+  storagePath?: string | null;
   fallbackAudio?: boolean;
   audioError?: string | null;
+  status?: "completed" | "failed" | "unsupported" | null;
+  errorCode?: string | null;
   engine?: "kokoro" | "elevenlabs" | null;
   engineFallbackReason?: string | null;
 }
@@ -130,16 +133,28 @@ async function voiceSegments(
 
         positions.forEach((p, i) => {
           const seg = voiced?.[i];
+          const ok = !!(seg?.audioUrl || seg?.storagePath);
           out[p] = seg
             ? {
                 ...out[p],
                 audioUrl: seg.audioUrl || undefined,
-                fallbackAudio: !seg.audioUrl,
-                audioError: seg.audioUrl ? null : (seg.audioError || "Voice engine returned no audio"),
+                // Durable path — signed URLs are re-issued on demand at playback.
+                storagePath: seg.storagePath ?? null,
+                fallbackAudio: !ok,
+                status: ok ? "completed" : (seg.status ?? "failed"),
+                errorCode: seg.errorCode ?? null,
+                audioError: ok ? null : (seg.audioError || "Voice engine returned no audio"),
                 engine: seg.engine ?? null,
                 engineFallbackReason: seg.engineFallbackReason ?? null,
               }
-            : { ...out[p], audioUrl: undefined, fallbackAudio: true, audioError: reason };
+            : {
+                ...out[p],
+                audioUrl: undefined,
+                storagePath: out[p].storagePath ?? null,
+                fallbackAudio: !out[p].storagePath,
+                status: "failed",
+                audioError: reason,
+              };
         });
 
         done += positions.length;
@@ -183,6 +198,9 @@ export default function AIPodcast() {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [showStylePresets, setShowStylePresets] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
+  const [isRepairingAudio, setIsRepairingAudio] = useState(false);
+  // Row id of the episode currently loaded, so recovered audio is persisted.
+  const currentPodcastIdRef = useRef<string | null>(null);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits } = useCredits();
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("ai_podcast");
   const { hasCompletedSetup } = usePodcastPreferences();
@@ -429,7 +447,7 @@ export default function AIPodcast() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { error: saveError } = await supabase
+          const { data: savedRow, error: saveError } = await supabase
             .from("podcasts")
             .insert([{
               user_id: user.id,
@@ -439,11 +457,14 @@ export default function AIPodcast() {
               audio_segments: JSON.parse(JSON.stringify(segments)),
               duration_seconds: segments.length * 15,
               language: settings.language || "en", // Save language for history playback
-            }]);
+            }])
+            .select("id")
+            .maybeSingle();
 
           if (saveError) {
             console.error("Error saving podcast:", saveError);
           } else {
+            currentPodcastIdRef.current = savedRow?.id ?? null;
             setHistoryRefresh(prev => prev + 1);
           }
         }
@@ -505,6 +526,7 @@ export default function AIPodcast() {
   const handleSelectSavedPodcast = async (saved: SavedPodcast) => {
     const segments = (saved.audio_segments || saved.script?.segments || []) as PodcastSegment[];
     const language = saved.language || "en";
+    currentPodcastIdRef.current = saved.id;
 
     setPodcast({
       title: saved.title,
@@ -518,20 +540,24 @@ export default function AIPodcast() {
     // URLs can expire — re-voice anything without playable audio (cache makes repeats cheap).
     try {
       const aliveChecks = await Promise.all(
-        segments.map(async (s) => (s.audioUrl ? await audioUrlAlive(s.audioUrl) : false)),
+        segments.map(async (s) => {
+          // A durable storage path is enough — playback re-signs the URL on demand.
+          if (s.storagePath) return true;
+          return s.audioUrl ? await audioUrlAlive(s.audioUrl) : false;
+        }),
       );
       const missing = aliveChecks.map((ok, i) => (ok ? -1 : i)).filter((i) => i >= 0);
       if (missing.length === 0) return;
 
       toast.info("Restoring podcast audio...");
       const refreshed = await voiceSegments(segments, { language }, missing);
-      const recovered = missing.filter((i) => refreshed[i].audioUrl).length;
+      const recovered = missing.filter((i) => refreshed[i].audioUrl || refreshed[i].storagePath).length;
 
       if (recovered === 0) {
         toast.error(
           language !== "en"
-            ? "AI voices aren't available for this language — using your device voice."
-            : "Couldn't restore the recorded audio — using your device voice.",
+            ? "AI voices aren't available for this language yet."
+            : "Couldn't restore the recorded audio. Try again from the player.",
         );
         return;
       }
@@ -549,6 +575,38 @@ export default function AIPodcast() {
       toast.success(`Restored audio for ${recovered} segment${recovered === 1 ? "" : "s"}`);
     } catch (err) {
       console.error("Failed to re-voice saved podcast:", err);
+    }
+  };
+
+  /** Player-triggered repair: re-voice only the segments that still have no audio. */
+  const handleRepairAudio = async () => {
+    if (!podcast || isRepairingAudio) return;
+    const segments = podcast.segments as PodcastSegment[];
+    const missing = segments
+      .map((s, i) => (s.audioUrl || s.storagePath ? -1 : i))
+      .filter((i) => i >= 0);
+    if (missing.length === 0) return;
+
+    setIsRepairingAudio(true);
+    try {
+      const language = podcast.language || "en";
+      const refreshed = await voiceSegments(segments, { language }, missing);
+      const recovered = missing.filter((i) => refreshed[i].audioUrl || refreshed[i].storagePath).length;
+      setPodcast({ ...podcast, segments: refreshed });
+
+      if (currentPodcastIdRef.current) {
+        await supabase
+          .from("podcasts")
+          .update({ audio_segments: JSON.parse(JSON.stringify(refreshed)) })
+          .eq("id", currentPodcastIdRef.current);
+      }
+
+      if (recovered > 0) toast.success(`Restored audio for ${recovered} segment${recovered === 1 ? "" : "s"}`);
+      else toast.error(refreshed[missing[0]]?.audioError || "Voice generation is still unavailable.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not restore audio.");
+    } finally {
+      setIsRepairingAudio(false);
     }
   };
   const breadcrumbs = [
@@ -624,6 +682,8 @@ export default function AIPodcast() {
                 onRaiseHand={handleRaiseHand}
                 isRaiseHandActive={isRaiseHandOpen}
                 language={podcast.language}
+                onRepairAudio={handleRepairAudio}
+                isRepairing={isRepairingAudio}
               />
 
               <PodcastRaiseHand

@@ -10,6 +10,16 @@ const USD_PER_1K_CHARS: Record<string, number> = {
   elevenlabs: 0.00018,
 };
 
+/** Fresh signed URL for a storage object that is already in the cache bucket. */
+export async function signStoragePath(
+  db: SupabaseClient,
+  path: string,
+  ttl = SIGNED_URL_TTL,
+): Promise<string | null> {
+  const { data } = await db.storage.from(TTS_CACHE_BUCKET).createSignedUrl(path, ttl);
+  return data?.signedUrl ?? null;
+}
+
 export function serviceClient(): SupabaseClient {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -86,8 +96,11 @@ export interface StoreArgs {
   extension: string;
 }
 
-/** Uploads generated audio and records it in tts_audio_cache. Returns a signed URL. */
-export async function storeAudio(db: SupabaseClient, args: StoreArgs): Promise<string> {
+/** Uploads generated audio, records it in tts_audio_cache, returns the durable path + a signed URL. */
+export async function storeAudio(
+  db: SupabaseClient,
+  args: StoreArgs,
+): Promise<{ audioUrl: string; storagePath: string }> {
   const path = `${args.contentHash}.${args.extension}`;
 
   const { error: uploadError } = await db.storage
@@ -111,13 +124,14 @@ export async function storeAudio(db: SupabaseClient, args: StoreArgs): Promise<s
     { onConflict: "content_hash" },
   );
 
+  // Verify the object really landed before we call this audio "saved".
   const { data: signed, error: signError } = await db.storage
     .from(TTS_CACHE_BUCKET)
     .createSignedUrl(path, SIGNED_URL_TTL);
   if (signError || !signed?.signedUrl) {
     throw new Error(`Could not sign audio URL: ${signError?.message ?? "unknown error"}`);
   }
-  return signed.signedUrl;
+  return { audioUrl: signed.signedUrl, storagePath: path };
 }
 
 export interface UsageArgs {
