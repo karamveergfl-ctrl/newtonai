@@ -377,7 +377,7 @@ export default function AIPodcast() {
       setGenerationStep("voicing");
       updateMessage(stepMessages["voicing"], "Creating professional voice audio...");
       
-      let segments: PodcastSegment[] = scriptData.segments.map((segment: any) => ({
+      const baseSegments: PodcastSegment[] = scriptData.segments.map((segment: any) => ({
         speaker: segment.speaker,
         name: segment.name,
         text: segment.text,
@@ -386,65 +386,28 @@ export default function AIPodcast() {
         audioError: "TTS not attempted yet",
       }));
 
-      // Generate ElevenLabs audio in small chunks so one long request can never time out.
-      const TTS_CHUNK_SIZE = 6;
-      const allScriptSegments = scriptData.segments as any[];
+      const segments = await voiceSegments(
+        baseSegments,
+        {
+          language: settings.language || "en",
+          host1VoiceId: settings.host1VoiceId,
+          host2VoiceId: settings.host2VoiceId,
+        },
+        undefined,
+        (done, total) => {
+          const pct = 40 + Math.round((done / total) * 50);
+          setProgress(pct);
+          updateProgress(pct);
+        },
+      );
 
-      for (let start = 0; start < allScriptSegments.length; start += TTS_CHUNK_SIZE) {
-        const chunk = allScriptSegments.slice(start, start + TTS_CHUNK_SIZE);
-
-        try {
-          const { data: ttsData, error: ttsError } = await supabase.functions.invoke(
-            "elevenlabs-podcast-tts",
-            {
-              body: {
-                segments: chunk,
-                language: settings.language || "en",
-                host1VoiceId: settings.host1VoiceId,
-                host2VoiceId: settings.host2VoiceId,
-              },
-            }
-          );
-
-          if (!ttsError && ttsData?.segments) {
-            ttsData.segments.forEach((seg: any, i: number) => {
-              const idx = start + i;
-              segments[idx] = {
-                ...segments[idx],
-                audioUrl: seg.audioUrl || undefined,
-                fallbackAudio: !seg.audioUrl,
-                audioError: seg.audioUrl ? null : (seg.audioError || "Voice engine returned no audio"),
-                engine: seg.engine ?? null,
-                engineFallbackReason: seg.engineFallbackReason ?? null,
-              };
-            });
-          } else {
-            const reason = ttsError?.message || "Voice engine call failed";
-            for (let i = 0; i < chunk.length; i++) {
-              segments[start + i] = {
-                ...segments[start + i],
-                fallbackAudio: true,
-                audioUrl: undefined,
-                audioError: reason,
-              };
-            }
-          }
-        } catch (ttsErr) {
-          const reason = ttsErr instanceof Error ? ttsErr.message : "Voice engine threw an error";
-          for (let i = 0; i < chunk.length; i++) {
-            segments[start + i] = {
-              ...segments[start + i],
-              fallbackAudio: true,
-              audioUrl: undefined,
-              audioError: reason,
-            };
-          }
-        }
-
-        const done = Math.min(start + TTS_CHUNK_SIZE, allScriptSegments.length);
-        const pct = 40 + Math.round((done / allScriptSegments.length) * 50);
-        setProgress(pct);
-        updateProgress(pct);
+      const mutedCount = segments.filter((s) => !s.audioUrl).length;
+      if (mutedCount === segments.length) {
+        toast.error(
+          (settings.language || "en") !== "en"
+            ? `AI voices aren't available for this language right now — playback will use your device voice.`
+            : "Voice generation failed — playback will use your device voice.",
+        );
       }
 
       setProgress(90);
