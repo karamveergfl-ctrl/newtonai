@@ -85,23 +85,30 @@ serve(async (req) => {
       elevenLabsModelId: language === "en" ? "eleven_turbo_v2_5" : "eleven_multilingual_v2",
     });
 
+    const isWav = tts.contentType.includes("wav");
+    const provider = tts.engine === "gemini"
+      ? "lovable-ai"
+      : tts.engine === "kokoro"
+        ? "openrouter"
+        : "elevenlabs";
+
     const { audioUrl } = await storeAudio(db, {
       contentHash,
       textHash,
       voice: role,
       speed,
       model: `read-aloud:${language}`,
-      provider: tts.engine === "kokoro" ? "openrouter" : "elevenlabs",
+      provider,
       bytes: tts.bytes,
-      contentType: "audio/mpeg",
+      contentType: isWav ? "audio/wav" : "audio/mpeg",
       charCount: normalized.length,
-      extension: "mp3",
+      extension: isWav ? "wav" : "mp3",
     });
 
     await trackTTSUsage(db, {
       userId: user.id,
       feature: "read-aloud",
-      provider: tts.engine === "kokoro" ? "openrouter" : "elevenlabs",
+      provider,
       model: tts.model,
       voice: tts.voice,
       characters: normalized.length,
