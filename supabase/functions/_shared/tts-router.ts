@@ -14,6 +14,46 @@ export interface TTSResult {
   fallbackReason?: string;
 }
 
+/** Structured, non-secret failure info surfaced to callers and the UI. */
+export class TTSUnavailableError extends Error {
+  code: string;
+  permanent: boolean;
+  userMessage: string;
+  constructor(code: string, userMessage: string, permanent: boolean, detail?: string) {
+    super(detail ?? userMessage);
+    this.name = "TTSUnavailableError";
+    this.code = code;
+    this.permanent = permanent;
+    this.userMessage = userMessage;
+  }
+}
+
+// ElevenLabs circuit breaker: a permanent 401/402/404/422 must not be retried
+// on every segment of a 44-segment podcast.
+let elevenLabsBrokenUntil = 0;
+let elevenLabsBrokenReason = "";
+const ELEVENLABS_BREAK_MS = 10 * 60 * 1000;
+
+export function elevenLabsHealthy(): boolean {
+  return elevenLabsConfigured() && Date.now() >= elevenLabsBrokenUntil;
+}
+
+export function elevenLabsBreakerReason(): string {
+  return Date.now() < elevenLabsBrokenUntil ? elevenLabsBrokenReason : "";
+}
+
+function tripElevenLabsBreaker(reason: string) {
+  elevenLabsBrokenUntil = Date.now() + ELEVENLABS_BREAK_MS;
+  elevenLabsBrokenReason = reason;
+  console.error(`[tts] ElevenLabs marked unavailable for 10min: ${reason}`);
+}
+
+/** Permanent config faults — key, voice id, model, quota. */
+function isPermanentElevenLabsStatus(status: number): boolean {
+  return status === 400 || status === 401 || status === 402 || status === 403 ||
+    status === 404 || status === 422;
+}
+
 // Kokoro voice packs. host1 = warm female, host2 = male, tutor = calm male.
 const KOKORO_VOICES: Record<TTSRole, string> = {
   host1: "af_heart",
@@ -64,7 +104,9 @@ export async function elevenLabsSynthesize(opts: {
   voiceSettings?: Record<string, unknown>;
 }): Promise<Uint8Array> {
   const apiKey = Deno.env.get("ELEVENLABS_API_KEY");
-  if (!apiKey) throw new Error("ELEVENLABS_API_KEY is not configured");
+  if (!apiKey) {
+    throw new TTSUnavailableError("elevenlabs_not_configured", "No professional voice provider is configured.", true);
+  }
 
   const res = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${opts.voiceId}?output_format=${opts.outputFormat ?? "mp3_44100_128"}`,
@@ -86,7 +128,17 @@ export async function elevenLabsSynthesize(opts: {
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(describeElevenLabsError(res.status, body));
+    const detail = describeElevenLabsError(res.status, body);
+    const permanent = isPermanentElevenLabsStatus(res.status);
+    if (permanent) tripElevenLabsBreaker(detail);
+    throw new TTSUnavailableError(
+      `elevenlabs_${res.status}`,
+      permanent
+        ? "The backup voice provider is misconfigured (invalid key or voice)."
+        : "The backup voice provider is temporarily unavailable.",
+      permanent,
+      detail,
+    );
   }
   return new Uint8Array(await res.arrayBuffer());
 }
@@ -149,6 +201,17 @@ export async function synthesizeSpeech(opts: SynthesizeOptions): Promise<TTSResu
       503,
       fallbackReason ?? "Voice generation is unavailable right now.",
       true,
+    );
+  }
+
+  if (!elevenLabsHealthy()) {
+    throw new TTSUnavailableError(
+      "no_provider_available",
+      kokoroSupportsLanguage(language)
+        ? "Professional voice generation is temporarily unavailable."
+        : `Professional voice generation is currently unavailable for this language.`,
+      false,
+      `kokoro: ${fallbackReason}; elevenlabs: ${elevenLabsBreakerReason()}`,
     );
   }
 
