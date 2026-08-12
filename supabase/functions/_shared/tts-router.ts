@@ -34,6 +34,20 @@ let elevenLabsBrokenUntil = 0;
 let elevenLabsBrokenReason = "";
 const ELEVENLABS_BREAK_MS = 10 * 60 * 1000;
 
+// Kokoro (OpenRouter) is far cheaper but can be very slow to respond. If it blows the
+// latency budget we route the rest of the batch to ElevenLabs instead of stalling.
+let kokoroSlowUntil = 0;
+let kokoroSlowReason = "";
+const KOKORO_SLOW_BREAK_MS = 10 * 60 * 1000;
+
+export function kokoroFast(): boolean {
+  return Date.now() >= kokoroSlowUntil;
+}
+
+export function kokoroSlowReasonText(): string {
+  return Date.now() < kokoroSlowUntil ? kokoroSlowReason : "";
+}
+
 export function elevenLabsHealthy(): boolean {
   return elevenLabsConfigured() && Date.now() >= elevenLabsBrokenUntil;
 }
@@ -156,6 +170,8 @@ export interface SynthesizeOptions {
   voiceSettings?: Record<string, unknown>;
   /** Audio format requested from Kokoro. mp3 keeps the existing players happy. */
   kokoroFormat?: "mp3" | "wav";
+  /** Latency budget for Kokoro before falling back (ms). */
+  kokoroTimeoutMs?: number;
 }
 
 /** Kokoro-first synthesis with automatic ElevenLabs fallback on transient failures. */
@@ -168,16 +184,24 @@ export async function synthesizeSpeech(opts: SynthesizeOptions): Promise<TTSResu
     fallbackReason = "Kokoro (OpenRouter) is not configured";
   } else if (!kokoroSupportsLanguage(language)) {
     fallbackReason = `Kokoro has no voice pack for "${language}"`;
+  } else if (!kokoroFast() && elevenLabsHealthy()) {
+    fallbackReason = kokoroSlowReasonText();
   } else {
     const started = Date.now();
+    const budget = opts.kokoroTimeoutMs ?? 45_000;
     try {
       const result = await kokoroSynthesize({
         text: opts.text,
         voice: kokoroVoice,
         speed: opts.speed ?? 1,
         format: opts.kokoroFormat ?? "mp3",
-      });
+      }, { timeoutMs: budget, retries: elevenLabsHealthy() ? 0 : 2 });
       console.log(`[tts] kokoro ok role=${opts.role} ${result.bytes.byteLength}B in ${Date.now() - started}ms`);
+      if (Date.now() - started > budget * 0.8 && elevenLabsHealthy()) {
+        kokoroSlowUntil = Date.now() + KOKORO_SLOW_BREAK_MS;
+        kokoroSlowReason = `Kokoro responded in ${Date.now() - started}ms (over budget) — using ElevenLabs`;
+        console.warn(`[tts] ${kokoroSlowReason}`);
+      }
       return {
         bytes: result.bytes,
         contentType: result.contentType,
@@ -189,6 +213,10 @@ export async function synthesizeSpeech(opts: SynthesizeOptions): Promise<TTSResu
       const kErr = err instanceof KokoroError ? err : null;
       fallbackReason = kErr?.userMessage ?? (err instanceof Error ? err.message : "Kokoro request failed");
       console.error(`[tts] kokoro failed: ${fallbackReason}`);
+      if (kErr?.status === 408 && elevenLabsHealthy()) {
+        kokoroSlowUntil = Date.now() + KOKORO_SLOW_BREAK_MS;
+        kokoroSlowReason = "Kokoro timed out — using ElevenLabs for now";
+      }
       // Non-transient config/input errors won't be fixed by ElevenLabs either,
       // but a provider outage should still produce audio.
       if (kErr && !kErr.transient && !elevenLabsConfigured()) throw kErr;
