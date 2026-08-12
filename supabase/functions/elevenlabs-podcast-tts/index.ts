@@ -9,6 +9,7 @@ import {
   TTSUnavailableError,
 } from "../_shared/tts-router.ts";
 import { KOKORO_MODEL } from "../_shared/kokoro.ts";
+import { concatPcmToWav, geminiTTSConfigured } from "../_shared/gemini-tts.ts";
 import {
   cacheHashes,
   chunkText,
@@ -236,15 +237,16 @@ serve(async (req) => {
       storagePath?: string | null;
       status?: "completed" | "failed" | "unsupported";
       errorCode?: string;
-      engine?: "kokoro" | "elevenlabs" | "cache";
+      engine?: "gemini" | "kokoro" | "elevenlabs" | "cache";
       fallbackReason?: string;
       error?: string;
     }[] = [];
 
     const useKokoro = kokoroSupportsLanguage(language) && (await kokoroAvailable());
+    const useGemini = geminiTTSConfigured();
     // Neither provider can serve this language/config — fail fast with a clear reason
     // instead of burning one doomed provider call per segment.
-    if (!useKokoro && !elevenLabsHealthy()) {
+    if (!useGemini && !useKokoro && !elevenLabsHealthy()) {
       const reason = elevenLabsBreakerReason();
       return new Response(
         JSON.stringify({
