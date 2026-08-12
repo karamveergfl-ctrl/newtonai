@@ -152,7 +152,11 @@ async function voiceSegments(
   }
 
   let done = 0;
+  let rateLimited: VoiceRateLimitError | null = null;
   for (let g = 0; g < chunks.length; g += TTS_PARALLEL_CHUNKS) {
+    // Once the backend budget is spent, every further call is a guaranteed 429 —
+    // stop instead of hammering it and failing every remaining segment.
+    if (rateLimited) break;
     const group = chunks.slice(g, g + TTS_PARALLEL_CHUNKS);
     await Promise.all(
       group.map(async (positions) => {
@@ -165,6 +169,11 @@ async function voiceSegments(
           try {
             voiced = await requestVoiceChunk(chunk, opts);
           } catch (err) {
+            if (err instanceof VoiceRateLimitError) {
+              rateLimited = err;
+              reason = err.message;
+              break;
+            }
             reason = err instanceof Error ? err.message : "Voice engine threw an error";
             if (attempt === 0) await sleep(800);
           }
@@ -201,6 +210,8 @@ async function voiceSegments(
       }),
     );
   }
+
+  if (rateLimited && !out.some((s) => s.audioUrl || s.storagePath)) throw rateLimited;
 
   return out;
 }
