@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useWebSpeechTTS, LockedVoices } from "./useWebSpeechTTS";
+import { supabase } from "@/integrations/supabase/client";
 
 export type QueueStatus = "idle" | "loading" | "buffering" | "playing" | "paused" | "error";
 
@@ -10,6 +11,8 @@ export interface AudioSegment {
   emotion?: string;
   audio?: string | null;
   audioUrl?: string | null;
+  /** Durable object path in the tts-cache bucket — the real source of truth. */
+  storagePath?: string | null;
   fallbackAudio?: boolean;
   engine?: "kokoro" | "elevenlabs" | null;
   engineFallbackReason?: string | null;
@@ -24,6 +27,8 @@ interface BufferedAudioData {
 interface UsePodcastAudioQueueOptions {
   segments: AudioSegment[];
   language?: string;
+  /** Robotic browser speech is opt-in only — never a silent substitute for real audio. */
+  allowWebSpeech?: boolean;
   onSegmentChange?: (index: number) => void;
   onComplete?: () => void;
   onError?: (error: Error) => void;
@@ -47,6 +52,7 @@ interface UsePodcastAudioQueueReturn {
   volume: number;
   playbackRate: number;
   usingFallback: boolean;
+  missingAudioCount: number;
 }
 
 const BUFFER_SIZE = 4;
@@ -56,8 +62,28 @@ const getSegmentHash = (segment: AudioSegment, index: number): string => {
   return `${index}-${segment.speaker}-${segment.text.substring(0, 50)}`;
 };
 
-// Real audio can come either as a signed storage URL (current) or inline base64 (legacy podcasts)
+// Signed URLs refreshed this session, keyed by durable storage path.
+const freshUrls = new Map<string, string>();
+
+/** Ask the backend for a new signed URL for a stored object. */
+async function refreshSignedUrl(path: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke("tts-sign-url", { body: { paths: [path] } });
+    if (error) return null;
+    const url = (data as { urls?: Record<string, string | null> })?.urls?.[path] ?? null;
+    if (url) freshUrls.set(path, url);
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+// Real audio can come from a refreshed signed URL, the stored signed URL,
+// or inline base64 (legacy podcasts).
 const getAudioSrc = (segment: AudioSegment): string | null => {
+  if (segment.storagePath && freshUrls.has(segment.storagePath)) {
+    return freshUrls.get(segment.storagePath)!;
+  }
   if (segment.audioUrl && typeof segment.audioUrl === "string") return segment.audioUrl;
   if (segment.audio && typeof segment.audio === "string" && segment.audio.length >= 100) {
     return `data:audio/mpeg;base64,${segment.audio}`;
@@ -65,9 +91,13 @@ const getAudioSrc = (segment: AudioSegment): string | null => {
   return null;
 };
 
+const hasRecoverableAudio = (segment: AudioSegment): boolean =>
+  !!getAudioSrc(segment) || !!segment.storagePath;
+
 export function usePodcastAudioQueue({
   segments,
   language = "en",
+  allowWebSpeech = false,
   onSegmentChange,
   onComplete,
   onError,
@@ -81,6 +111,7 @@ export function usePodcastAudioQueue({
   const [volume, setVolumeState] = useState(1);
   const [playbackRate, setPlaybackRateState] = useState(1);
   const [usingFallback, setUsingFallback] = useState(false);
+  const [missingAudioCount, setMissingAudioCount] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const bufferRef = useRef<Map<number, BufferedAudioData>>(new Map());
@@ -105,6 +136,12 @@ export function usePodcastAudioQueue({
   const webSpeechProgressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { speak, cancel: cancelSpeech, isSupported: webSpeechSupported, lockVoices } = useWebSpeechTTS();
+  const canWebSpeech = allowWebSpeech && webSpeechSupported;
+
+  // Track how many segments have no playable audio at all.
+  useEffect(() => {
+    setMissingAudioCount(segments.filter((s) => !hasRecoverableAudio(s)).length);
+  }, [segments]);
 
   // Keep refs in sync
   useEffect(() => { languageRef.current = language; }, [language]);
@@ -185,7 +222,9 @@ export function usePodcastAudioQueue({
     if (cached && cached.speaker === segment.speaker && cached.hash === expectedHash) return cached;
     if (cached) { cached.audio.pause(); cached.audio.src = ""; bufferRef.current.delete(index); }
 
-    const src = getAudioSrc(segment);
+    let src = getAudioSrc(segment);
+    // Expired or missing link, but the object is still in storage — re-sign it.
+    if (!src && segment.storagePath) src = await refreshSignedUrl(segment.storagePath);
     if (!src) return null;
 
     try {
@@ -217,6 +256,28 @@ export function usePodcastAudioQueue({
       }
       return data;
     } catch {
+      // A dead signed URL is the usual cause — retry once with a fresh one.
+      if (segment.storagePath) {
+        const fresh = await refreshSignedUrl(segment.storagePath);
+        if (fresh) {
+          try {
+            const audio = new Audio(fresh);
+            audio.crossOrigin = "anonymous";
+            audio.preload = "auto";
+            audio.volume = volumeRef.current;
+            audio.playbackRate = playbackRateRef.current;
+            await new Promise<void>((resolve, reject) => {
+              const timeout = setTimeout(() => reject(new Error("Audio load timeout")), 8000);
+              audio.oncanplaythrough = () => { clearTimeout(timeout); resolve(); };
+              audio.onerror = () => { clearTimeout(timeout); reject(new Error("Failed to load audio")); };
+              audio.load();
+            });
+            const data: BufferedAudioData = { audio, speaker: segment.speaker, hash: expectedHash };
+            bufferRef.current.set(index, data);
+            return data;
+          } catch { /* fall through */ }
+        }
+      }
       return null;
     }
   }, [segments]);
@@ -226,7 +287,7 @@ export function usePodcastAudioQueue({
     for (let i = fromIndex; i < Math.min(fromIndex + BUFFER_SIZE, segments.length); i++) {
       const seg = segments[i];
       const cached = bufferRef.current.get(i);
-      if (getAudioSrc(seg) && (!cached || cached.speaker !== seg.speaker)) {
+      if (hasRecoverableAudio(seg) && (!cached || cached.speaker !== seg.speaker)) {
         promises.push(preloadSegment(i));
       }
     }
