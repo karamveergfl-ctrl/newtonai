@@ -313,9 +313,11 @@ serve(async (req) => {
           // Long turns are split on sentence boundaries so no word is ever cut.
           const parts = chunkText(normalized, 1800);
           const buffers: Uint8Array[] = [];
-          let engine: "kokoro" | "elevenlabs" = "kokoro";
+          const pcmBuffers: Uint8Array[] = [];
+          let engine: "gemini" | "kokoro" | "elevenlabs" = "gemini";
           let fallbackReason: string | undefined;
           let model = "";
+          let voiceUsed = voiceId;
 
           for (const part of parts) {
             const tts = await synthesizeSpeech({
@@ -330,35 +332,50 @@ serve(async (req) => {
               kokoroTimeoutMs: 20_000,
             });
             buffers.push(tts.bytes);
+            if (tts.pcm) pcmBuffers.push(tts.pcm);
             engine = tts.engine;
             model = tts.model;
+            voiceUsed = tts.voice;
             if (tts.fallbackReason) fallbackReason = tts.fallbackReason;
           }
 
-          const totalBytes = buffers.reduce((n, b) => n + b.byteLength, 0);
-          const audioBytes = new Uint8Array(totalBytes);
-          let offset = 0;
-          for (const b of buffers) { audioBytes.set(b, offset); offset += b.byteLength; }
+          // Gemini returns PCM: join the chunks under a single WAV header so multi-part
+          // turns play as one continuous clip. Other engines return mp3, which concatenates.
+          const isWav = engine === "gemini" && pcmBuffers.length === buffers.length;
+          let audioBytes: Uint8Array;
+          if (isWav) {
+            audioBytes = concatPcmToWav(pcmBuffers);
+          } else {
+            const totalBytes = buffers.reduce((n, b) => n + b.byteLength, 0);
+            audioBytes = new Uint8Array(totalBytes);
+            let offset = 0;
+            for (const b of buffers) { audioBytes.set(b, offset); offset += b.byteLength; }
+          }
+          const provider = engine === "gemini"
+            ? "lovable-ai"
+            : engine === "kokoro"
+              ? "openrouter"
+              : "elevenlabs";
 
           const { audioUrl, storagePath } = await storeAudio(storageClient, {
             contentHash,
             textHash,
-            voice: engine === "kokoro" ? (kokoroVoice ?? speaker) : voiceId,
+            voice: voiceUsed,
             speed: 1,
             model: `podcast:${language}`,
-            provider: engine === "kokoro" ? "openrouter" : "elevenlabs",
+            provider,
             bytes: audioBytes,
-            contentType: "audio/mpeg",
+            contentType: isWav ? "audio/wav" : "audio/mpeg",
             charCount: normalized.length,
-            extension: "mp3",
+            extension: isWav ? "wav" : "mp3",
           });
 
           await trackTTSUsage(storageClient, {
             userId: user.id,
             feature: "podcast",
-            provider: engine === "kokoro" ? "openrouter" : "elevenlabs",
-            model: engine === "kokoro" ? KOKORO_MODEL : model,
-            voice: engine === "kokoro" ? (kokoroVoice ?? speaker) : voiceId,
+            provider,
+            model: model || (engine === "kokoro" ? KOKORO_MODEL : modelId),
+            voice: voiceUsed,
             characters: normalized.length,
             cacheHit: false,
             requests: parts.length,
