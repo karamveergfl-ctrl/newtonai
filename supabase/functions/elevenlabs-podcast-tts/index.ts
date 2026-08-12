@@ -305,6 +305,8 @@ serve(async (req) => {
               elevenLabsModelId: modelId,
               kokoroVoice,
               kokoroFormat: "mp3",
+              // Keep the whole batch inside the edge function's wall clock.
+              kokoroTimeoutMs: 20_000,
             });
             buffers.push(tts.bytes);
             engine = tts.engine;
