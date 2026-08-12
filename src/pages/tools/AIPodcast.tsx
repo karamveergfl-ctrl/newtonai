@@ -62,7 +62,7 @@ type GenerationStep = "idle" | "analyzing" | "scripting" | "voicing" | "complete
 
 // Voicing is chunked so a single edge-function call can never time out,
 // and two chunks run in parallel to halve wall-clock time on long scripts.
-const TTS_CHUNK_SIZE = 8;
+const TTS_CHUNK_SIZE = 12;
 const TTS_PARALLEL_CHUNKS = 2;
 
 interface VoiceOptions {
@@ -72,6 +72,41 @@ interface VoiceOptions {
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Thrown when the backend voice budget is spent, so the run can stop immediately. */
+class VoiceRateLimitError extends Error {
+  retryAfterMinutes: number;
+  constructor(message: string, retryAfterMinutes: number) {
+    super(message);
+    this.name = "VoiceRateLimitError";
+    this.retryAfterMinutes = retryAfterMinutes;
+  }
+}
+
+/**
+ * supabase.functions.invoke reports every failure as "non-2xx status code".
+ * The real reason lives in the response body — read it.
+ */
+async function readInvokeError(error: unknown): Promise<{ message: string; rateLimit?: number }> {
+  const ctx = (error as { context?: Response })?.context;
+  if (ctx && typeof ctx.text === "function") {
+    try {
+      const raw = await ctx.text();
+      const body = JSON.parse(raw) as { error?: string; errorCode?: string; retryAfterMinutes?: number };
+      if (body?.errorCode === "rate_limited" || ctx.status === 429) {
+        return {
+          message: body?.error || "Voice generation limit reached.",
+          rateLimit: body?.retryAfterMinutes ?? 60,
+        };
+      }
+      if (body?.error) return { message: body.error };
+      if (raw) return { message: raw.slice(0, 300) };
+    } catch {
+      /* fall through to the generic message */
+    }
+  }
+  return { message: (error as Error)?.message || "Voice engine call failed" };
+}
 
 async function requestVoiceChunk(chunk: PodcastSegment[], opts: VoiceOptions) {
   const { data, error } = await supabase.functions.invoke("elevenlabs-podcast-tts", {
@@ -87,7 +122,11 @@ async function requestVoiceChunk(chunk: PodcastSegment[], opts: VoiceOptions) {
       host2VoiceId: opts.host2VoiceId,
     },
   });
-  if (error) throw new Error(error.message || "Voice engine call failed");
+  if (error) {
+    const { message, rateLimit } = await readInvokeError(error);
+    if (rateLimit !== undefined) throw new VoiceRateLimitError(message, rateLimit);
+    throw new Error(message);
+  }
   if (!data?.segments) throw new Error("Voice engine returned no segments");
   return data.segments as PodcastSegment[];
 }
