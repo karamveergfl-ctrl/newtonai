@@ -1,6 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { synthesizeSpeech, kokoroAvailable, kokoroSupportsLanguage } from "../_shared/tts-router.ts";
+import {
+  synthesizeSpeech,
+  kokoroAvailable,
+  kokoroSupportsLanguage,
+  elevenLabsHealthy,
+  elevenLabsBreakerReason,
+  TTSUnavailableError,
+} from "../_shared/tts-router.ts";
 import { KOKORO_MODEL } from "../_shared/kokoro.ts";
 import {
   cacheHashes,
@@ -208,12 +215,38 @@ serve(async (req) => {
     const results: {
       index: number;
       audioUrl: string | null;
+      storagePath?: string | null;
+      status?: "completed" | "failed" | "unsupported";
+      errorCode?: string;
       engine?: "kokoro" | "elevenlabs" | "cache";
       fallbackReason?: string;
       error?: string;
     }[] = [];
 
     const useKokoro = kokoroSupportsLanguage(language) && (await kokoroAvailable());
+    // Neither provider can serve this language/config — fail fast with a clear reason
+    // instead of burning one doomed provider call per segment.
+    if (!useKokoro && !elevenLabsHealthy()) {
+      const reason = elevenLabsBreakerReason();
+      return new Response(
+        JSON.stringify({
+          error: kokoroSupportsLanguage(language)
+            ? "Professional voice generation is temporarily unavailable."
+            : "Professional voice generation is currently unavailable for this language.",
+          errorCode: kokoroSupportsLanguage(language) ? "no_provider_available" : "language_unsupported",
+          providerDetail: reason || "No healthy provider for this language",
+          segments: segments.map((s) => ({
+            ...s,
+            audioUrl: null,
+            storagePath: null,
+            status: "unsupported",
+            audioError: "No configured voice provider supports this language.",
+          })),
+          stats: { total: segments.length, success: 0, failed: segments.length },
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const concurrency = useKokoro ? KOKORO_CONCURRENCY : ELEVENLABS_CONCURRENCY;
     const batchGapMs = useKokoro ? KOKORO_BATCH_GAP_MS : ELEVENLABS_BATCH_GAP_MS;
 
@@ -250,6 +283,8 @@ serve(async (req) => {
             return {
               index: globalIndex,
               audioUrl: cachedAudio.audioUrl,
+              storagePath: cachedAudio.storagePath,
+              status: "completed" as const,
               engine: "cache" as const,
             };
           }
@@ -282,7 +317,7 @@ serve(async (req) => {
           let offset = 0;
           for (const b of buffers) { audioBytes.set(b, offset); offset += b.byteLength; }
 
-          const audioUrl = await storeAudio(storageClient, {
+          const { audioUrl, storagePath } = await storeAudio(storageClient, {
             contentHash,
             textHash,
             voice: engine === "kokoro" ? (kokoroVoice ?? segment.speaker) : voiceId,
@@ -309,15 +344,23 @@ serve(async (req) => {
           return {
             index: globalIndex,
             audioUrl,
+            storagePath,
+            status: "completed" as const,
             engine,
             fallbackReason,
           };
         } catch (error) {
           console.error(`Error generating audio for segment ${globalIndex}:`, error);
-          return { 
-            index: globalIndex, 
-            audioUrl: null, 
-            error: error instanceof Error ? error.message : "Unknown error" 
+          const structured = error instanceof TTSUnavailableError ? error : null;
+          return {
+            index: globalIndex,
+            audioUrl: null,
+            storagePath: null,
+            status: (structured?.code === "language_unsupported" ? "unsupported" : "failed") as
+              | "failed"
+              | "unsupported",
+            errorCode: structured?.code ?? "tts_failed",
+            error: structured?.userMessage ?? (error instanceof Error ? error.message : "Unknown error"),
           };
         }
       });
@@ -340,6 +383,9 @@ serve(async (req) => {
       return {
         ...segment,
         audioUrl: result?.audioUrl || null,
+        storagePath: result?.storagePath || null,
+        status: result?.status || "failed",
+        errorCode: result?.errorCode || null,
         audioError: result?.error || null,
         engine: result?.engine || null,
         engineFallbackReason: result?.fallbackReason || null,
