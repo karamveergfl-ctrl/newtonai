@@ -208,7 +208,7 @@ serve(async (req) => {
     const results: {
       index: number;
       audioUrl: string | null;
-      engine?: "kokoro" | "elevenlabs";
+      engine?: "kokoro" | "elevenlabs" | "cache";
       fallbackReason?: string;
       error?: string;
     }[] = [];
@@ -357,6 +357,7 @@ serve(async (req) => {
           success: successCount,
           failed: segments.length - successCount,
           kokoro: audioSegments.filter(s => s.engine === "kokoro").length,
+          cached: audioSegments.filter(s => s.engine === "cache").length,
           elevenlabs: audioSegments.filter(s => s.engine === "elevenlabs").length,
         }
       }),
