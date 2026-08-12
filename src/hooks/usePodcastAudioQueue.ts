@@ -407,7 +407,7 @@ export function usePodcastAudioQueue({
       const buffered = bufferRef.current.get(index);
       const isValid = buffered && buffered.speaker === segment.speaker && buffered.hash === expectedHash;
 
-      const hasRealAudio = !!getAudioSrc(segment);
+      const hasRealAudio = hasRecoverableAudio(segment);
 
       if (hasRealAudio && isValid) {
         setUsingFallback(false);
@@ -438,7 +438,7 @@ export function usePodcastAudioQueue({
 
         preloaded.onerror = () => {
           if (segmentId !== currentSegmentIdRef.current) return;
-          if (webSpeechSupported) playWithWebSpeech(segment, index, segmentId);
+          if (canWebSpeech) playWithWebSpeech(segment, index, segmentId);
           else if (isPlayingRef.current) playSegment(index + 1);
         };
 
@@ -446,7 +446,7 @@ export function usePodcastAudioQueue({
           await preloaded.play();
         } catch {
           if (segmentId !== currentSegmentIdRef.current) return;
-          if (webSpeechSupported) playWithWebSpeech(segment, index, segmentId);
+          if (canWebSpeech) playWithWebSpeech(segment, index, segmentId);
         }
       } else if (hasRealAudio) {
         // Audio exists but not preloaded — load now
@@ -484,18 +484,18 @@ export function usePodcastAudioQueue({
           setStatus("playing");
           try { await audio.play(); } catch {
             if (segmentId !== currentSegmentIdRef.current) return;
-            if (webSpeechSupported) playWithWebSpeech(segment, index, segmentId);
+            if (canWebSpeech) playWithWebSpeech(segment, index, segmentId);
           }
-        } else if (webSpeechSupported) {
+        } else if (canWebSpeech) {
           playWithWebSpeech(segment, index, segmentId);
         }
-      } else if (webSpeechSupported || segment.fallbackAudio) {
+      } else if (canWebSpeech) {
         playWithWebSpeech(segment, index, segmentId);
       } else {
         if (isPlayingRef.current) playSegment(index + 1);
       }
     });
-  }, [segments, onSegmentChange, onComplete, preloadUpcoming, preloadSegment, stopAllAudio, webSpeechSupported, playWithWebSpeech]);
+  }, [segments, onSegmentChange, onComplete, preloadUpcoming, preloadSegment, stopAllAudio, canWebSpeech, playWithWebSpeech]);
 
   // Controls
   const play = useCallback(() => {
