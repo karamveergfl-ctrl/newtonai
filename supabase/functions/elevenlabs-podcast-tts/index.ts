@@ -442,6 +442,7 @@ serve(async (req) => {
           total: segments.length,
           success: successCount,
           failed: segments.length - successCount,
+          gemini: audioSegments.filter(s => s.engine === "gemini").length,
           kokoro: audioSegments.filter(s => s.engine === "kokoro").length,
           cached: audioSegments.filter(s => s.engine === "cache").length,
           elevenlabs: audioSegments.filter(s => s.engine === "elevenlabs").length,
