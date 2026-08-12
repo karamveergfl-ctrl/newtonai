@@ -38,8 +38,11 @@ interface PodcastSegment {
   emotion?: string;
   audio?: string;
   audioUrl?: string;
+  storagePath?: string | null;
   fallbackAudio?: boolean;
   audioError?: string | null;
+  status?: "completed" | "failed" | "unsupported" | null;
+  errorCode?: string | null;
   engine?: "kokoro" | "elevenlabs" | null;
   engineFallbackReason?: string | null;
 }
@@ -130,16 +133,28 @@ async function voiceSegments(
 
         positions.forEach((p, i) => {
           const seg = voiced?.[i];
+          const ok = !!(seg?.audioUrl || seg?.storagePath);
           out[p] = seg
             ? {
                 ...out[p],
                 audioUrl: seg.audioUrl || undefined,
-                fallbackAudio: !seg.audioUrl,
-                audioError: seg.audioUrl ? null : (seg.audioError || "Voice engine returned no audio"),
+                // Durable path — signed URLs are re-issued on demand at playback.
+                storagePath: seg.storagePath ?? null,
+                fallbackAudio: !ok,
+                status: ok ? "completed" : (seg.status ?? "failed"),
+                errorCode: seg.errorCode ?? null,
+                audioError: ok ? null : (seg.audioError || "Voice engine returned no audio"),
                 engine: seg.engine ?? null,
                 engineFallbackReason: seg.engineFallbackReason ?? null,
               }
-            : { ...out[p], audioUrl: undefined, fallbackAudio: true, audioError: reason };
+            : {
+                ...out[p],
+                audioUrl: undefined,
+                storagePath: out[p].storagePath ?? null,
+                fallbackAudio: !out[p].storagePath,
+                status: "failed",
+                audioError: reason,
+              };
         });
 
         done += positions.length;
