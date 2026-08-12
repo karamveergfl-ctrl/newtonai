@@ -62,7 +62,7 @@ type GenerationStep = "idle" | "analyzing" | "scripting" | "voicing" | "complete
 
 // Voicing is chunked so a single edge-function call can never time out,
 // and two chunks run in parallel to halve wall-clock time on long scripts.
-const TTS_CHUNK_SIZE = 8;
+const TTS_CHUNK_SIZE = 12;
 const TTS_PARALLEL_CHUNKS = 2;
 
 interface VoiceOptions {
@@ -72,6 +72,41 @@ interface VoiceOptions {
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Thrown when the backend voice budget is spent, so the run can stop immediately. */
+class VoiceRateLimitError extends Error {
+  retryAfterMinutes: number;
+  constructor(message: string, retryAfterMinutes: number) {
+    super(message);
+    this.name = "VoiceRateLimitError";
+    this.retryAfterMinutes = retryAfterMinutes;
+  }
+}
+
+/**
+ * supabase.functions.invoke reports every failure as "non-2xx status code".
+ * The real reason lives in the response body — read it.
+ */
+async function readInvokeError(error: unknown): Promise<{ message: string; rateLimit?: number }> {
+  const ctx = (error as { context?: Response })?.context;
+  if (ctx && typeof ctx.text === "function") {
+    try {
+      const raw = await ctx.text();
+      const body = JSON.parse(raw) as { error?: string; errorCode?: string; retryAfterMinutes?: number };
+      if (body?.errorCode === "rate_limited" || ctx.status === 429) {
+        return {
+          message: body?.error || "Voice generation limit reached.",
+          rateLimit: body?.retryAfterMinutes ?? 60,
+        };
+      }
+      if (body?.error) return { message: body.error };
+      if (raw) return { message: raw.slice(0, 300) };
+    } catch {
+      /* fall through to the generic message */
+    }
+  }
+  return { message: (error as Error)?.message || "Voice engine call failed" };
+}
 
 async function requestVoiceChunk(chunk: PodcastSegment[], opts: VoiceOptions) {
   const { data, error } = await supabase.functions.invoke("elevenlabs-podcast-tts", {
@@ -87,7 +122,11 @@ async function requestVoiceChunk(chunk: PodcastSegment[], opts: VoiceOptions) {
       host2VoiceId: opts.host2VoiceId,
     },
   });
-  if (error) throw new Error(error.message || "Voice engine call failed");
+  if (error) {
+    const { message, rateLimit } = await readInvokeError(error);
+    if (rateLimit !== undefined) throw new VoiceRateLimitError(message, rateLimit);
+    throw new Error(message);
+  }
   if (!data?.segments) throw new Error("Voice engine returned no segments");
   return data.segments as PodcastSegment[];
 }
@@ -113,7 +152,11 @@ async function voiceSegments(
   }
 
   let done = 0;
+  let rateLimited: VoiceRateLimitError | null = null;
   for (let g = 0; g < chunks.length; g += TTS_PARALLEL_CHUNKS) {
+    // Once the backend budget is spent, every further call is a guaranteed 429 —
+    // stop instead of hammering it and failing every remaining segment.
+    if (rateLimited) break;
     const group = chunks.slice(g, g + TTS_PARALLEL_CHUNKS);
     await Promise.all(
       group.map(async (positions) => {
@@ -126,6 +169,11 @@ async function voiceSegments(
           try {
             voiced = await requestVoiceChunk(chunk, opts);
           } catch (err) {
+            if (err instanceof VoiceRateLimitError) {
+              rateLimited = err;
+              reason = err.message;
+              break;
+            }
             reason = err instanceof Error ? err.message : "Voice engine threw an error";
             if (attempt === 0) await sleep(800);
           }
@@ -163,6 +211,8 @@ async function voiceSegments(
     );
   }
 
+  if (rateLimited && !out.some((s) => s.audioUrl || s.storagePath)) throw rateLimited;
+
   return out;
 }
 
@@ -199,6 +249,7 @@ export default function AIPodcast() {
   const [showStylePresets, setShowStylePresets] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const [isRepairingAudio, setIsRepairingAudio] = useState(false);
+  const [repairCooldownMin, setRepairCooldownMin] = useState<number | null>(null);
   // Row id of the episode currently loaded, so recovered audio is persisted.
   const currentPodcastIdRef = useRef<string | null>(null);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits } = useCredits();
@@ -604,6 +655,13 @@ export default function AIPodcast() {
       if (recovered > 0) toast.success(`Restored audio for ${recovered} segment${recovered === 1 ? "" : "s"}`);
       else toast.error(refreshed[missing[0]]?.audioError || "Voice generation is still unavailable.");
     } catch (err) {
+      if (err instanceof VoiceRateLimitError) {
+        setRepairCooldownMin(err.retryAfterMinutes);
+        // Re-enable the button once the limiter window rolls over.
+        setTimeout(() => setRepairCooldownMin(null), err.retryAfterMinutes * 60_000);
+        toast.error(err.message);
+        return;
+      }
       toast.error(err instanceof Error ? err.message : "Could not restore audio.");
     } finally {
       setIsRepairingAudio(false);
@@ -683,7 +741,7 @@ export default function AIPodcast() {
                 isRaiseHandActive={isRaiseHandOpen}
                 language={podcast.language}
                 onRepairAudio={handleRepairAudio}
-                isRepairing={isRepairingAudio}
+                isRepairing={isRepairingAudio || repairCooldownMin !== null}
               />
 
               <PodcastRaiseHand
