@@ -79,7 +79,9 @@ async function callOnce(req: KokoroRequest, timeoutMs: number): Promise<KokoroRe
   }
 
   const voice = req.voice || DEFAULT_KOKORO_VOICE;
-  const format: KokoroFormat = req.format ?? "wav";
+  // OpenRouter's Kokoro endpoint only accepts "mp3" or "pcm"; everything else maps to mp3.
+  const requested: KokoroFormat = req.format ?? "wav";
+  const format: "mp3" | "pcm" = requested === "pcm" ? "pcm" : "mp3";
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), timeoutMs);
   if (req.signal) req.signal.addEventListener("abort", () => ctl.abort(), { once: true });
