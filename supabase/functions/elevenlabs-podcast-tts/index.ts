@@ -99,7 +99,7 @@ interface TTSRequest {
 }
 
 // Hard caps: one request must stay well inside the edge function time budget.
-const MAX_SEGMENTS_PER_REQUEST = 8;
+const MAX_SEGMENTS_PER_REQUEST = 12;
 const ELEVENLABS_CONCURRENCY = 2;
 const ELEVENLABS_BATCH_GAP_MS = 350;
 // Kokoro is our own box — it can take more parallel work than the ElevenLabs plan allows.
@@ -162,19 +162,6 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Rate limiting
-    const { data: allowed, error: rateLimitError } = await supabase.rpc("check_rate_limit", {
-      p_user_id: user.id,
-      p_function_name: "elevenlabs-podcast-tts",
-    });
-
-    if (rateLimitError || !allowed) {
-      return new Response(
-        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
