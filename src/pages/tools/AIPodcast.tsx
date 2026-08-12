@@ -682,6 +682,8 @@ export default function AIPodcast() {
                 onRaiseHand={handleRaiseHand}
                 isRaiseHandActive={isRaiseHandOpen}
                 language={podcast.language}
+                onRepairAudio={handleRepairAudio}
+                isRepairing={isRepairingAudio}
               />
 
               <PodcastRaiseHand
