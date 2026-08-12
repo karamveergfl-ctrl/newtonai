@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { KOKORO_MODEL, kokoroConfigured, kokoroSynthesize, KokoroError } from "../_shared/kokoro.ts";
 import { elevenLabsConfigured, elevenLabsSynthesize, elevenLabsHealthy, elevenLabsBreakerReason } from "../_shared/tts-router.ts";
+import { GEMINI_TTS_MODEL, GeminiTTSError, geminiSynthesize, geminiTTSConfigured, geminiVoiceFor } from "../_shared/gemini-tts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,6 +38,26 @@ serve(async (req) => {
   if (!authorized) return json({ error: "Forbidden" }, 403);
 
   const providers: Record<string, unknown> = {};
+
+  // Google Gemini TTS via Lovable AI Gateway (primary)
+  if (!geminiTTSConfigured()) {
+    providers.gemini = { configured: false, available: false, error: "LOVABLE_API_KEY missing" };
+  } else {
+    const t0 = Date.now();
+    try {
+      const res = await geminiSynthesize({ text: PROBE_TEXT, voice: geminiVoiceFor("tutor") }, { retries: 0 });
+      providers.gemini = {
+        configured: true, available: true, model: GEMINI_TTS_MODEL, voice: res.voice,
+        bytes: res.bytes.byteLength, contentType: res.contentType, latencyMs: Date.now() - t0,
+      };
+    } catch (err) {
+      const g = err instanceof GeminiTTSError ? err : null;
+      providers.gemini = {
+        configured: true, available: false, model: GEMINI_TTS_MODEL, latencyMs: Date.now() - t0,
+        errorCode: g?.status ?? 500, error: g?.userMessage ?? String(err),
+      };
+    }
+  }
 
   // Kokoro via OpenRouter
   if (!kokoroConfigured()) {
