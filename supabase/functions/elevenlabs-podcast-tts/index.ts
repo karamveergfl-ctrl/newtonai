@@ -341,7 +341,7 @@ serve(async (req) => {
           const { audioUrl, storagePath } = await storeAudio(storageClient, {
             contentHash,
             textHash,
-            voice: engine === "kokoro" ? (kokoroVoice ?? segment.speaker) : voiceId,
+            voice: engine === "kokoro" ? (kokoroVoice ?? speaker) : voiceId,
             speed: 1,
             model: `podcast:${language}`,
             provider: engine === "kokoro" ? "openrouter" : "elevenlabs",
@@ -356,7 +356,7 @@ serve(async (req) => {
             feature: "podcast",
             provider: engine === "kokoro" ? "openrouter" : "elevenlabs",
             model: engine === "kokoro" ? KOKORO_MODEL : model,
-            voice: engine === "kokoro" ? (kokoroVoice ?? segment.speaker) : voiceId,
+            voice: engine === "kokoro" ? (kokoroVoice ?? speaker) : voiceId,
             characters: normalized.length,
             cacheHit: false,
             requests: parts.length,
