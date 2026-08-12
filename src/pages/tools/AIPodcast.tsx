@@ -198,6 +198,9 @@ export default function AIPodcast() {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [showStylePresets, setShowStylePresets] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
+  const [isRepairingAudio, setIsRepairingAudio] = useState(false);
+  // Row id of the episode currently loaded, so recovered audio is persisted.
+  const currentPodcastIdRef = useRef<string | null>(null);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits } = useCredits();
   const { tryUseFeature, confirmUsage, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("ai_podcast");
   const { hasCompletedSetup } = usePodcastPreferences();
@@ -444,7 +447,7 @@ export default function AIPodcast() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { error: saveError } = await supabase
+          const { data: savedRow, error: saveError } = await supabase
             .from("podcasts")
             .insert([{
               user_id: user.id,
@@ -454,11 +457,14 @@ export default function AIPodcast() {
               audio_segments: JSON.parse(JSON.stringify(segments)),
               duration_seconds: segments.length * 15,
               language: settings.language || "en", // Save language for history playback
-            }]);
+            }])
+            .select("id")
+            .maybeSingle();
 
           if (saveError) {
             console.error("Error saving podcast:", saveError);
           } else {
+            currentPodcastIdRef.current = savedRow?.id ?? null;
             setHistoryRefresh(prev => prev + 1);
           }
         }
