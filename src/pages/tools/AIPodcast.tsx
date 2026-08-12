@@ -57,6 +57,113 @@ interface SavedPodcast {
 
 type GenerationStep = "idle" | "analyzing" | "scripting" | "voicing" | "complete";
 
+// Voicing is chunked so a single edge-function call can never time out,
+// and two chunks run in parallel to halve wall-clock time on long scripts.
+const TTS_CHUNK_SIZE = 8;
+const TTS_PARALLEL_CHUNKS = 2;
+
+interface VoiceOptions {
+  language: string;
+  host1VoiceId?: string;
+  host2VoiceId?: string;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function requestVoiceChunk(chunk: PodcastSegment[], opts: VoiceOptions) {
+  const { data, error } = await supabase.functions.invoke("elevenlabs-podcast-tts", {
+    body: {
+      segments: chunk.map((s) => ({
+        speaker: s.speaker,
+        name: s.name,
+        text: s.text,
+        emotion: s.emotion,
+      })),
+      language: opts.language,
+      host1VoiceId: opts.host1VoiceId,
+      host2VoiceId: opts.host2VoiceId,
+    },
+  });
+  if (error) throw new Error(error.message || "Voice engine call failed");
+  if (!data?.segments) throw new Error("Voice engine returned no segments");
+  return data.segments as PodcastSegment[];
+}
+
+/**
+ * Generates (or regenerates) audio for the given segments.
+ * `indices` limits work to specific positions — used when only some segments
+ * are missing audio, e.g. replaying an old episode from history.
+ */
+async function voiceSegments(
+  segments: PodcastSegment[],
+  opts: VoiceOptions,
+  indices?: number[],
+  onProgress?: (done: number, total: number) => void,
+): Promise<PodcastSegment[]> {
+  const out = segments.map((s) => ({ ...s }));
+  const targets = indices ?? out.map((_, i) => i);
+  if (targets.length === 0) return out;
+
+  const chunks: number[][] = [];
+  for (let i = 0; i < targets.length; i += TTS_CHUNK_SIZE) {
+    chunks.push(targets.slice(i, i + TTS_CHUNK_SIZE));
+  }
+
+  let done = 0;
+  for (let g = 0; g < chunks.length; g += TTS_PARALLEL_CHUNKS) {
+    const group = chunks.slice(g, g + TTS_PARALLEL_CHUNKS);
+    await Promise.all(
+      group.map(async (positions) => {
+        const chunk = positions.map((p) => out[p]);
+        let voiced: PodcastSegment[] | null = null;
+        let reason = "Voice engine call failed";
+
+        // One retry — a single transient failure should not silently mute 8 segments.
+        for (let attempt = 0; attempt < 2 && !voiced; attempt++) {
+          try {
+            voiced = await requestVoiceChunk(chunk, opts);
+          } catch (err) {
+            reason = err instanceof Error ? err.message : "Voice engine threw an error";
+            if (attempt === 0) await sleep(800);
+          }
+        }
+
+        positions.forEach((p, i) => {
+          const seg = voiced?.[i];
+          out[p] = seg
+            ? {
+                ...out[p],
+                audioUrl: seg.audioUrl || undefined,
+                fallbackAudio: !seg.audioUrl,
+                audioError: seg.audioUrl ? null : (seg.audioError || "Voice engine returned no audio"),
+                engine: seg.engine ?? null,
+                engineFallbackReason: seg.engineFallbackReason ?? null,
+              }
+            : { ...out[p], audioUrl: undefined, fallbackAudio: true, audioError: reason };
+        });
+
+        done += positions.length;
+        onProgress?.(done, targets.length);
+      }),
+    );
+  }
+
+  return out;
+}
+
+/** A signed URL can expire; verify before trusting a stored one. */
+async function audioUrlAlive(url: string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(url, { method: "HEAD", signal: controller.signal });
+    clearTimeout(timer);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 const stepMessages: Record<GenerationStep, string> = {
   idle: "",
   analyzing: "Analyzing your content...",
