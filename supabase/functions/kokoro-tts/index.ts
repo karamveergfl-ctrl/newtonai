@@ -101,7 +101,7 @@ serve(async (req) => {
     let offset = 0;
     for (const p of parts) { merged.set(p, offset); offset += p.byteLength; }
 
-    const audioUrl = await storeAudio(db, {
+    const { audioUrl } = await storeAudio(db, {
       contentHash,
       textHash,
       voice,

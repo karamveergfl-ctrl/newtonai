@@ -85,7 +85,7 @@ serve(async (req) => {
       elevenLabsModelId: language === "en" ? "eleven_turbo_v2_5" : "eleven_multilingual_v2",
     });
 
-    const audioUrl = await storeAudio(db, {
+    const { audioUrl } = await storeAudio(db, {
       contentHash,
       textHash,
       voice: role,
