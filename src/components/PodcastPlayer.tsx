@@ -414,6 +414,40 @@ export function PodcastPlayer({
         "p-4 sm:p-6 bg-gradient-to-br from-primary/5 via-background to-secondary/5 border-border rounded-2xl",
         isFullscreen && "max-w-4xl w-full"
       )}>
+        {/* Audio health banner — no silent robotic fallback */}
+        {ttsStats.fallback > 0 && (
+          <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 sm:p-4">
+            <p className="text-xs sm:text-sm font-semibold text-foreground">
+              {ttsStats.fallback} of {ttsStats.total} segments have no studio audio yet
+            </p>
+            {firstFallbackReason && (
+              <p className="mt-1 text-[11px] sm:text-xs text-muted-foreground">{firstFallbackReason}</p>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {onRepairAudio && (
+                <Button size="sm" onClick={onRepairAudio} disabled={isRepairing} className="h-8 text-xs">
+                  {isRepairing ? "Restoring audio…" : "Restore missing audio"}
+                </Button>
+              )}
+              {speechSupported && !allowWebSpeech && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAllowWebSpeech(true)}
+                  className="h-8 text-xs"
+                >
+                  Listen with browser voice
+                </Button>
+              )}
+              {allowWebSpeech && (
+                <span className="self-center text-[11px] text-muted-foreground">
+                  Browser voice enabled for missing segments
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
           <div className="flex items-center gap-2 min-w-0">
