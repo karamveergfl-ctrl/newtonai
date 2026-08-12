@@ -10,7 +10,8 @@ const corsHeaders = {
 };
 
 const MAX_CHARS = 20_000;
-const ALLOWED_FORMATS = ["wav", "mp3", "opus", "flac", "aac"] as const;
+// OpenRouter's Kokoro endpoint delivers mp3 or pcm; "wav" requests are served as mp3.
+const ALLOWED_FORMATS = ["wav", "mp3", "pcm"] as const;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -37,7 +38,8 @@ serve(async (req) => {
     const rawText = typeof body.text === "string" ? body.text : "";
     const voice = typeof body.voice === "string" && body.voice.trim() ? body.voice.trim() : DEFAULT_KOKORO_VOICE;
     const speed = typeof body.speed === "number" ? Math.min(2, Math.max(0.5, body.speed)) : 1;
-    const format = ALLOWED_FORMATS.includes(body.response_format) ? body.response_format : "wav";
+    const requestedFormat = ALLOWED_FORMATS.includes(body.response_format) ? body.response_format : "wav";
+    const format: "mp3" | "pcm" = requestedFormat === "pcm" ? "pcm" : "mp3";
 
     if (!rawText.trim()) return json({ error: "No text provided." }, 400);
     if (rawText.length > MAX_CHARS) {
@@ -86,7 +88,7 @@ serve(async (req) => {
     // Long input is chunked on sentence boundaries; chunks concatenate cleanly for wav/mp3 playback.
     const chunks = chunkText(normalized);
     const parts: Uint8Array[] = [];
-    let contentType = "audio/wav";
+    let contentType = format === "pcm" ? "audio/pcm" : "audio/mpeg";
 
     for (const chunk of chunks) {
       const result = await kokoroSynthesize({ text: chunk, voice, speed, format });
