@@ -183,12 +183,14 @@ serve(async (req) => {
 
     const {
       segments,
-      language = "en",
+      language: rawLanguage = "en",
       host1VoiceId,
       host2VoiceId,
       host1KokoroVoice,
       host2KokoroVoice,
     }: TTSRequest = await req.json();
+
+    const language = normalizeLanguage(rawLanguage);
 
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return new Response(
@@ -272,16 +274,17 @@ serve(async (req) => {
       const batchPromises = batch.map(async (segment, batchIndex) => {
         const globalIndex = i + batchIndex;
         try {
-          const voiceId = voices[segment.speaker];
+          const speaker = normalizeSpeaker(segment.speaker);
+          const voiceId = voices[speaker] || VOICES_BY_LANGUAGE.en[speaker];
           const cleanedText = cleanTextForSpeech(segment.text);
           if (!cleanedText) {
             return { index: globalIndex, audioUrl: null, error: "Empty segment text" };
           }
 
-          const kokoroVoice = segment.speaker === "host1" ? host1KokoroVoice : host2KokoroVoice;
+          const kokoroVoice = speaker === "host1" ? host1KokoroVoice : host2KokoroVoice;
           const { contentHash, textHash, normalized } = await cacheHashes({
             text: cleanedText,
-            voice: `${segment.speaker}:${kokoroVoice ?? "default"}:${voiceId}`,
+            voice: `${speaker}:${kokoroVoice ?? "default"}:${voiceId}`,
             speed: 1,
             model: `podcast:${language}`,
           });
@@ -315,7 +318,7 @@ serve(async (req) => {
           for (const part of parts) {
             const tts = await synthesizeSpeech({
               text: part,
-              role: segment.speaker,
+              role: speaker,
               language,
               elevenLabsVoiceId: voiceId,
               elevenLabsModelId: modelId,
