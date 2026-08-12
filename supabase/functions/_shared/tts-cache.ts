@@ -2,7 +2,7 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export const TTS_CACHE_BUCKET = "tts-cache";
-export const SIGNED_URL_TTL = 60 * 60 * 24 * 7; // 7 days
+export const SIGNED_URL_TTL = 60 * 60 * 24 * 365; // 1 year — podcast episodes are persisted
 
 // Kokoro via OpenRouter is billed per character; keep a conservative estimate.
 const USD_PER_1K_CHARS: Record<string, number> = {
