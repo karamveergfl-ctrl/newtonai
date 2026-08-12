@@ -182,20 +182,71 @@ export interface SynthesizeOptions {
   kokoroFormat?: "mp3" | "wav";
   /** Latency budget for Kokoro before falling back (ms). */
   kokoroTimeoutMs?: number;
+  /** Gemini voice override for this role. */
+  geminiVoice?: string;
+  /** Natural-language tone/pacing steering for Gemini. */
+  geminiInstructions?: string;
 }
 
-/** Kokoro-first synthesis with automatic ElevenLabs fallback on transient failures. */
+/** Gemini-first synthesis with automatic ElevenLabs (then Kokoro) fallback. */
 export async function synthesizeSpeech(opts: SynthesizeOptions): Promise<TTSResult> {
   const language = opts.language ?? "en";
   const kokoroVoice = kokoroVoiceFor(opts.role, opts.kokoroVoice);
   let fallbackReason: string | undefined;
 
+  // --- 1. Google Gemini TTS through the Lovable AI Gateway (primary) ---
+  if (!geminiTTSConfigured()) {
+    fallbackReason = "Gemini TTS is not configured (LOVABLE_API_KEY missing)";
+  } else {
+    const started = Date.now();
+    try {
+      const result = await geminiSynthesize({
+        text: opts.text,
+        voice: geminiVoiceFor(opts.role, opts.geminiVoice),
+        instructions: opts.geminiInstructions,
+      });
+      console.log(`[tts] gemini ok role=${opts.role} ${result.bytes.byteLength}B in ${Date.now() - started}ms`);
+      return {
+        bytes: result.bytes,
+        pcm: result.pcm,
+        contentType: result.contentType,
+        engine: "gemini",
+        model: result.model,
+        voice: result.voice,
+      };
+    } catch (err) {
+      const gErr = err instanceof GeminiTTSError ? err : null;
+      fallbackReason = gErr?.userMessage ?? (err instanceof Error ? err.message : "Gemini TTS failed");
+      console.error(`[tts] gemini failed: ${fallbackReason}`);
+    }
+  }
+
+  // --- 2. ElevenLabs (fallback) ---
+  if (elevenLabsHealthy()) {
+    const started = Date.now();
+    const bytes = await elevenLabsSynthesize({
+      text: opts.text,
+      voiceId: opts.elevenLabsVoiceId,
+      modelId: opts.elevenLabsModelId,
+      outputFormat: opts.outputFormat,
+      voiceSettings: opts.voiceSettings,
+    });
+    console.log(`[tts] elevenlabs ok role=${opts.role} ${bytes.byteLength}B in ${Date.now() - started}ms (${fallbackReason})`);
+    return {
+      bytes,
+      contentType: "audio/mpeg",
+      engine: "elevenlabs",
+      model: opts.elevenLabsModelId,
+      voice: opts.elevenLabsVoiceId,
+      fallbackReason,
+    };
+  }
+
+  // --- 3. Kokoro / OpenRouter (last resort) ---
   if (!kokoroConfigured()) {
     fallbackReason = "Kokoro (OpenRouter) is not configured";
   } else if (!kokoroSupportsLanguage(language)) {
     fallbackReason = `Kokoro has no voice pack for "${language}"`;
-  } else if (!kokoroFast() && elevenLabsHealthy()) {
-    fallbackReason = kokoroSlowReasonText();
   } else {
     const started = Date.now();
     const budget = opts.kokoroTimeoutMs ?? 45_000;
@@ -205,71 +256,29 @@ export async function synthesizeSpeech(opts: SynthesizeOptions): Promise<TTSResu
         voice: kokoroVoice,
         speed: opts.speed ?? 1,
         format: opts.kokoroFormat ?? "mp3",
-      }, { timeoutMs: budget, retries: elevenLabsHealthy() ? 0 : 2 });
+      }, { timeoutMs: budget, retries: 1 });
       console.log(`[tts] kokoro ok role=${opts.role} ${result.bytes.byteLength}B in ${Date.now() - started}ms`);
-      if (Date.now() - started > budget * 0.8 && elevenLabsHealthy()) {
-        kokoroSlowUntil = Date.now() + KOKORO_SLOW_BREAK_MS;
-        kokoroSlowReason = `Kokoro responded in ${Date.now() - started}ms (over budget) — using ElevenLabs`;
-        console.warn(`[tts] ${kokoroSlowReason}`);
-      }
       return {
         bytes: result.bytes,
         contentType: result.contentType,
         engine: "kokoro",
         model: result.model,
         voice: result.voice,
+        fallbackReason,
       };
     } catch (err) {
       const kErr = err instanceof KokoroError ? err : null;
       fallbackReason = kErr?.userMessage ?? (err instanceof Error ? err.message : "Kokoro request failed");
       console.error(`[tts] kokoro failed: ${fallbackReason}`);
-      if (kErr?.status === 408 && elevenLabsHealthy()) {
-        kokoroSlowUntil = Date.now() + KOKORO_SLOW_BREAK_MS;
-        kokoroSlowReason = "Kokoro timed out — using ElevenLabs for now";
-      }
-      // Non-transient config/input errors won't be fixed by ElevenLabs either,
-      // but a provider outage should still produce audio.
-      if (kErr && !kErr.transient && !elevenLabsConfigured()) throw kErr;
     }
   }
 
-  if (!elevenLabsConfigured()) {
-    throw new KokoroError(
-      `No TTS engine available: ${fallbackReason}`,
-      503,
-      fallbackReason ?? "Voice generation is unavailable right now.",
-      true,
-    );
-  }
-
-  if (!elevenLabsHealthy()) {
-    throw new TTSUnavailableError(
-      "no_provider_available",
-      kokoroSupportsLanguage(language)
-        ? "Professional voice generation is temporarily unavailable."
-        : `Professional voice generation is currently unavailable for this language.`,
-      false,
-      `kokoro: ${fallbackReason}; elevenlabs: ${elevenLabsBreakerReason()}`,
-    );
-  }
-
-  const started = Date.now();
-  const bytes = await elevenLabsSynthesize({
-    text: opts.text,
-    voiceId: opts.elevenLabsVoiceId,
-    modelId: opts.elevenLabsModelId,
-    outputFormat: opts.outputFormat,
-    voiceSettings: opts.voiceSettings,
-  });
-  console.log(`[tts] elevenlabs ok role=${opts.role} ${bytes.byteLength}B in ${Date.now() - started}ms (${fallbackReason})`);
-  return {
-    bytes,
-    contentType: "audio/mpeg",
-    engine: "elevenlabs",
-    model: opts.elevenLabsModelId,
-    voice: opts.elevenLabsVoiceId,
-    fallbackReason,
-  };
+  throw new TTSUnavailableError(
+    "no_provider_available",
+    "Voice generation is temporarily unavailable. Please try again shortly.",
+    false,
+    `gemini/elevenlabs/kokoro all unavailable: ${fallbackReason ?? ""} ${elevenLabsBreakerReason()}`.trim(),
+  );
 }
 
-export { KOKORO_MODEL };
+export { KOKORO_MODEL, GEMINI_TTS_MODEL };
