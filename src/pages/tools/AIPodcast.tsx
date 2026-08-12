@@ -654,6 +654,13 @@ export default function AIPodcast() {
       if (recovered > 0) toast.success(`Restored audio for ${recovered} segment${recovered === 1 ? "" : "s"}`);
       else toast.error(refreshed[missing[0]]?.audioError || "Voice generation is still unavailable.");
     } catch (err) {
+      if (err instanceof VoiceRateLimitError) {
+        setRepairCooldownMin(err.retryAfterMinutes);
+        // Re-enable the button once the limiter window rolls over.
+        setTimeout(() => setRepairCooldownMin(null), err.retryAfterMinutes * 60_000);
+        toast.error(err.message);
+        return;
+      }
       toast.error(err instanceof Error ? err.message : "Could not restore audio.");
     } finally {
       setIsRepairingAudio(false);
