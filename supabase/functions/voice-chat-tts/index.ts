@@ -68,8 +68,10 @@ serve(async (req) => {
       }
     }
 
-    // --- 2. Kokoro ---
-    if (!kokoroConfigured()) {
+    // --- 2. Kokoro (only when ElevenLabs isn't available) ---
+    if (Deno.env.get("ELEVENLABS_API_KEY")) {
+      fallbackReason = fallbackReason ?? "Using ElevenLabs";
+    } else if (!kokoroConfigured()) {
       fallbackReason = fallbackReason ?? "Kokoro server is not configured";
     } else if (!kokoroSupportsLanguage(language)) {
       fallbackReason = `Kokoro has no voice pack for "${language}"`;
