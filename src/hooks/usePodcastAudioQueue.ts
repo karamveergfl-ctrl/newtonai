@@ -571,5 +571,6 @@ export function usePodcastAudioQueue({
     status, currentIndex, isPlaying, progress, currentTime, duration,
     play, pause, toggle, seekToSegment, skipForward, skipBack,
     setVolume, setPlaybackRate, volume, playbackRate, usingFallback,
+    missingAudioCount,
   };
 }
