@@ -119,6 +119,22 @@ function getModelForLanguage(language: string): string {
   return language === "en" ? "eleven_turbo_v2_5" : "eleven_multilingual_v2";
 }
 
+/**
+ * Scripts have shipped speaker values like "Host 1", "host_2", or a host name.
+ * Anything unrecognised must still resolve to a real voice — an undefined voice id
+ * is what produced the ElevenLabs 404 "voice_not_found" failures.
+ */
+function normalizeSpeaker(raw: unknown): "host1" | "host2" {
+  const value = String(raw ?? "").toLowerCase();
+  return /(^|[^0-9])2([^0-9]|$)|host_?b|guest/.test(value) ? "host2" : "host1";
+}
+
+/** "en-US" and unknown codes both resolve to a supported voice pack. */
+function normalizeLanguage(raw: unknown): string {
+  const base = String(raw ?? "en").toLowerCase().split(/[-_]/)[0];
+  return VOICES_BY_LANGUAGE[base] ? base : "en";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
