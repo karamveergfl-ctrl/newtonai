@@ -40,6 +40,8 @@ interface PodcastSegment {
   audioUrl?: string;
   fallbackAudio?: boolean;
   audioError?: string | null;
+  engine?: "kokoro" | "elevenlabs" | null;
+  engineFallbackReason?: string | null;
 }
 
 interface SavedPodcast {
@@ -304,11 +306,13 @@ export default function AIPodcast() {
                 ...segments[idx],
                 audioUrl: seg.audioUrl || undefined,
                 fallbackAudio: !seg.audioUrl,
-                audioError: seg.audioUrl ? null : (seg.audioError || "ElevenLabs returned no audio"),
+                audioError: seg.audioUrl ? null : (seg.audioError || "Voice engine returned no audio"),
+                engine: seg.engine ?? null,
+                engineFallbackReason: seg.engineFallbackReason ?? null,
               };
             });
           } else {
-            const reason = ttsError?.message || "ElevenLabs TTS call failed";
+            const reason = ttsError?.message || "Voice engine call failed";
             for (let i = 0; i < chunk.length; i++) {
               segments[start + i] = {
                 ...segments[start + i],
@@ -319,7 +323,7 @@ export default function AIPodcast() {
             }
           }
         } catch (ttsErr) {
-          const reason = ttsErr instanceof Error ? ttsErr.message : "ElevenLabs TTS threw an error";
+          const reason = ttsErr instanceof Error ? ttsErr.message : "Voice engine threw an error";
           for (let i = 0; i < chunk.length; i++) {
             segments[start + i] = {
               ...segments[start + i],
