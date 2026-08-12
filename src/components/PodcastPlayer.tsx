@@ -61,9 +61,11 @@ export interface PodcastSegment {
   audioUrl?: string;
   fallbackAudio?: boolean;
   audioError?: string | null;
+  engine?: "kokoro" | "elevenlabs" | null;
+  engineFallbackReason?: string | null;
 }
 
-// A segment has real (ElevenLabs) audio when it has a signed URL or legacy inline base64
+// A segment has real (studio) audio when it has a signed URL or legacy inline base64
 const hasRealAudio = (s: PodcastSegment): boolean =>
   !!s.audioUrl || !!(s.audio && typeof s.audio === "string" && s.audio.length > 100);
 
@@ -360,8 +362,20 @@ export function PodcastPlayer({
     total: segments.length,
     elevenlabs: segments.filter(hasRealAudio).length,
     fallback: segments.filter(s => !hasRealAudio(s)).length,
+    kokoro: segments.filter(s => hasRealAudio(s) && s.engine === "kokoro").length,
+    premium: segments.filter(s => hasRealAudio(s) && s.engine === "elevenlabs").length,
   };
   const firstFallbackReason = segments.find(s => !hasRealAudio(s))?.audioError || null;
+  const firstEngineFallbackReason =
+    segments.find(s => s.engine === "elevenlabs" && s.engineFallbackReason)?.engineFallbackReason || null;
+  const primaryEngineLabel =
+    ttsStats.kokoro > 0 && ttsStats.premium === 0
+      ? "Kokoro"
+      : ttsStats.premium > 0 && ttsStats.kokoro === 0
+        ? "ElevenLabs"
+        : ttsStats.kokoro > 0 || ttsStats.premium > 0
+          ? "Kokoro + ElevenLabs"
+          : "Studio voice";
 
   // Stop playback entirely and reset to beginning
   const handleStop = useCallback(() => {
@@ -410,8 +424,8 @@ export function PodcastPlayer({
                       {ttsStats.fallback === 0 ? (
                         <>
                           <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                          <span className="hidden sm:inline">ElevenLabs · {ttsStats.elevenlabs}/{ttsStats.total}</span>
-                          <span className="sm:hidden">EL {ttsStats.elevenlabs}/{ttsStats.total}</span>
+                          <span className="hidden sm:inline">{primaryEngineLabel} · {ttsStats.elevenlabs}/{ttsStats.total}</span>
+                          <span className="sm:hidden">{ttsStats.elevenlabs}/{ttsStats.total}</span>
                         </>
                       ) : ttsStats.elevenlabs === 0 ? (
                         <>
@@ -423,9 +437,9 @@ export function PodcastPlayer({
                         <>
                           <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                           <span className="hidden sm:inline">
-                            {ttsStats.elevenlabs}/{ttsStats.total} ElevenLabs · {ttsStats.fallback} fallback
+                            {ttsStats.elevenlabs}/{ttsStats.total} {primaryEngineLabel} · {ttsStats.fallback} fallback
                           </span>
-                          <span className="sm:hidden">EL {ttsStats.elevenlabs}/{ttsStats.total}</span>
+                          <span className="sm:hidden">{ttsStats.elevenlabs}/{ttsStats.total}</span>
                         </>
                       )}
                     </Badge>
@@ -434,11 +448,19 @@ export function PodcastPlayer({
                     <div className="space-y-1">
                       <p className="font-semibold">Voice generation status</p>
                       <p>
-                        <span className="text-emerald-500">●</span> ElevenLabs: {ttsStats.elevenlabs} segment(s)
+                        <span className="text-emerald-500">●</span> Kokoro: {ttsStats.kokoro} segment(s)
+                      </p>
+                      <p>
+                        <span className="text-sky-500">●</span> ElevenLabs: {ttsStats.premium} segment(s)
                       </p>
                       <p>
                         <span className="text-amber-500">●</span> Browser voice fallback: {ttsStats.fallback} segment(s)
                       </p>
+                      {firstEngineFallbackReason && (
+                        <p className="text-muted-foreground pt-1 border-t border-border/50">
+                          Kokoro fallback: {firstEngineFallbackReason}
+                        </p>
+                      )}
                       {firstFallbackReason && (
                         <p className="text-muted-foreground pt-1 border-t border-border/50">
                           Reason: {firstFallbackReason}
