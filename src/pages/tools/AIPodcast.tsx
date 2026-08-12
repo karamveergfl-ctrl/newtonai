@@ -249,6 +249,7 @@ export default function AIPodcast() {
   const [showStylePresets, setShowStylePresets] = useState(false);
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const [isRepairingAudio, setIsRepairingAudio] = useState(false);
+  const [repairCooldownMin, setRepairCooldownMin] = useState<number | null>(null);
   // Row id of the episode currently loaded, so recovered audio is persisted.
   const currentPodcastIdRef = useRef<string | null>(null);
   const { hasEnoughCredits, spendCredits, getFeatureCost, isPremium, credits } = useCredits();
