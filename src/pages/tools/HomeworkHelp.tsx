@@ -18,7 +18,7 @@ import { InlineSolutionPanel } from "@/components/InlineSolutionPanel";
 import { useFeatureLimitGate, getFeatureDisplayName } from "@/hooks/useFeatureLimitGate";
 import { useGuestTrial } from "@/contexts/GuestTrialContext";
 import { UsageLimitModal } from "@/components/UsageLimitModal";
-import { useWebSpeechTTS } from "@/hooks/useWebSpeechTTS";
+import { useReadAloudTTS } from "@/hooks/useReadAloudTTS";
 import { NewtonFeedback } from "@/components/NewtonFeedback";
 import { useProcessingOverlay } from "@/contexts/ProcessingOverlayContext";
 import { 
@@ -70,7 +70,7 @@ const HomeworkHelp = () => {
   
   // Use feature limit gate instead of credit gate
   const { canUse, tryUseFeature, feature, showLimitModal, setShowLimitModal, subscription } = useFeatureLimitGate("homework_help");
-  const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useWebSpeechTTS();
+  const { speak, cancel, isSpeaking, isSupported, voices, getVoicesForLanguage, setPreferredVoice, getPreferredVoice } = useReadAloudTTS();
   const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
 
   // Global processing overlay

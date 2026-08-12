@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { kokoroConfigured, kokoroStream } from "../_shared/kokoro.ts";
+import { kokoroAvailable, kokoroSupportsLanguage, kokoroVoiceFor, markKokoroDown } from "../_shared/tts-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Expose-Headers": "x-tts-engine, x-tts-fallback-reason",
 };
 
 // Tutor voice configuration - calm, clear, teacher-like
@@ -17,17 +19,15 @@ const VOICE_SETTINGS = {
   speed: 1.0,
 };
 
+// If Kokoro can't start sending audio within this budget, fail over so the tutor never goes silent.
+const KOKORO_TTFB_BUDGET_MS = 4000;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    if (!ELEVENLABS_API_KEY) {
-      throw new Error("ELEVENLABS_API_KEY not configured");
-    }
-
     const { text, language = "en" } = await req.json();
 
     if (!text || text.trim().length === 0) {
@@ -38,13 +38,46 @@ serve(async (req) => {
     }
 
     // Keep voice answers short for low latency
-    const processedText = text.length > 800
-      ? text.slice(0, 800) + "..."
-      : text;
+    const processedText = text.length > 800 ? text.slice(0, 800) + "..." : text;
 
     console.log(`Streaming TTS for ${processedText.length} chars (${language})`);
 
-    // Use the streaming endpoint + turbo model for sub-second time-to-first-byte
+    let fallbackReason: string | undefined;
+
+    // --- 1. Kokoro first ---
+    if (!kokoroConfigured()) {
+      fallbackReason = "Kokoro server is not configured";
+    } else if (!kokoroSupportsLanguage(language)) {
+      fallbackReason = `Kokoro has no voice pack for "${language}"`;
+    } else if (!(await kokoroAvailable())) {
+      fallbackReason = "Kokoro server health check failed";
+    } else {
+      try {
+        const kokoroRes = await kokoroStream(
+          { text: processedText, voice: kokoroVoiceFor("tutor"), speed: 1.0, format: "mp3" },
+          KOKORO_TTFB_BUDGET_MS,
+        );
+        return new Response(kokoroRes.body, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "audio/mpeg",
+            "Cache-Control": "no-cache",
+            "x-tts-engine": "kokoro",
+          },
+        });
+      } catch (err) {
+        markKokoroDown();
+        fallbackReason = err instanceof Error ? err.message : "Kokoro stream failed";
+        console.error("Kokoro tutor TTS failed, falling back to ElevenLabs:", fallbackReason);
+      }
+    }
+
+    // --- 2. ElevenLabs fallback ---
+    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
+    if (!ELEVENLABS_API_KEY) {
+      throw new Error(`No TTS engine available. ${fallbackReason ?? ""}`.trim());
+    }
+
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${TUTOR_VOICE_ID}/stream?output_format=mp3_22050_32&optimize_streaming_latency=3`,
       {
@@ -55,7 +88,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           text: processedText,
-          model_id: "eleven_turbo_v2_5", // Low-latency multilingual model
+          model_id: "eleven_turbo_v2_5",
           voice_settings: VOICE_SETTINGS,
         }),
       }
@@ -67,24 +100,21 @@ serve(async (req) => {
       throw new Error(`ElevenLabs API error: ${response.status}`);
     }
 
-    // Stream the audio body straight through to the client
     return new Response(response.body, {
       headers: {
         ...corsHeaders,
         "Content-Type": "audio/mpeg",
         "Cache-Control": "no-cache",
+        "x-tts-engine": "elevenlabs",
+        "x-tts-fallback-reason": (fallbackReason ?? "").slice(0, 200),
       },
     });
 
   } catch (error: any) {
     console.error("Voice chat TTS error:", error);
-    
     return new Response(
       JSON.stringify({ error: error.message || "TTS generation failed" }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
