@@ -78,7 +78,7 @@ serve(async (req) => {
     // SECURITY: Validate redeem code BEFORE provisioning any subscription.
     const { data: codeData, error: codeLookupError } = await supabaseAdmin
       .from('redeem_codes')
-      .select('id, code, discount_percent, current_uses, max_uses, is_active, expires_at')
+      .select('id, code, discount_percent, current_uses, max_uses, is_active, valid_until')
       .eq('id', redeem_code_id)
       .maybeSingle();
 
@@ -96,7 +96,7 @@ serve(async (req) => {
       );
     }
 
-    if (codeData.expires_at && new Date(codeData.expires_at) < new Date()) {
+    if (codeData.valid_until && new Date(codeData.valid_until) < new Date()) {
       return new Response(
         JSON.stringify({ error: 'Redeem code has expired' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
