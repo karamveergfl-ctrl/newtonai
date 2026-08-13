@@ -165,8 +165,14 @@ serve(async (req) => {
       );
     }
 
-    if (!Deno.env.get("OPENROUTER_API_KEY") && !Deno.env.get("ELEVENLABS_API_KEY")) {
-      throw new Error("No TTS engine configured (set OPENROUTER_API_KEY or ELEVENLABS_API_KEY)");
+    if (
+      !Deno.env.get("LOVABLE_API_KEY") &&
+      !Deno.env.get("OPENROUTER_API_KEY") &&
+      !Deno.env.get("ELEVENLABS_API_KEY")
+    ) {
+      throw new Error(
+        "No TTS engine configured (set LOVABLE_API_KEY, OPENROUTER_API_KEY, or ELEVENLABS_API_KEY)",
+      );
     }
 
     const {
