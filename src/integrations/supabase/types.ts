@@ -2870,6 +2870,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      claim_free_redeem_code: {
+        Args: { p_code_id: string; p_user_id: string }
+        Returns: Json
+      }
       cleanup_old_webhook_events: { Args: never; Returns: number }
       close_concept_check: { Args: { p_check_id: string }; Returns: Json }
       earn_credits: {
