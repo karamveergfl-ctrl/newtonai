@@ -2870,6 +2870,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      claim_free_redeem_code: {
+        Args: { p_code_id: string; p_user_id: string }
+        Returns: Json
+      }
       cleanup_old_webhook_events: { Args: never; Returns: number }
       close_concept_check: { Args: { p_check_id: string }; Returns: Json }
       earn_credits: {
@@ -3075,6 +3079,10 @@ export type Database = {
       record_video_watch_time: {
         Args: { p_duration_seconds: number; p_video_id: string }
         Returns: Json
+      }
+      release_free_redeem_code: {
+        Args: { p_code_id: string }
+        Returns: undefined
       }
       save_report_video_results: {
         Args: { p_student_report_id: string; p_videos: Json }

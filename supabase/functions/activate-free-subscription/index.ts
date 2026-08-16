@@ -75,62 +75,52 @@ serve(async (req) => {
 
     console.log(`Activating free subscription for user ${user.id}: ${plan_name} ${billing_cycle}`);
 
-    // SECURITY: Validate redeem code BEFORE provisioning any subscription.
-    const { data: codeData, error: codeLookupError } = await supabaseAdmin
-      .from('redeem_codes')
-      .select('id, code, discount_percent, current_uses, max_uses, is_active, valid_until')
-      .eq('id', redeem_code_id)
-      .maybeSingle();
+    // SECURITY: Atomically validate AND claim the redeem code in a single
+    // row-locked transaction before provisioning anything. This prevents
+    // concurrent requests from exceeding max_uses or double-redeeming.
+    const { data: claimResult, error: claimError } = await supabaseAdmin.rpc(
+      'claim_free_redeem_code',
+      { p_code_id: redeem_code_id, p_user_id: user.id }
+    );
 
-    if (codeLookupError || !codeData) {
+    if (claimError) {
+      console.error('Redeem code claim failed:', claimError);
       return new Response(
-        JSON.stringify({ error: 'Invalid redeem code' }),
+        JSON.stringify({ error: 'Unable to validate redeem code' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const claim = claimResult as {
+      success: boolean;
+      error?: string;
+      redemption_id?: string;
+      code?: string;
+      discount_percent?: number;
+      current_uses?: number;
+      max_uses?: number | null;
+    } | null;
+
+    if (!claim?.success) {
+      return new Response(
+        JSON.stringify({ error: claim?.error || 'Invalid redeem code' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (!codeData.is_active) {
-      return new Response(
-        JSON.stringify({ error: 'Redeem code is no longer active' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Post-claim snapshot of the code (usage counter already incremented).
+    const codeData = {
+      code: claim.code as string,
+      discount_percent: claim.discount_percent as number,
+      current_uses: claim.current_uses as number,
+      max_uses: (claim.max_uses ?? null) as number | null,
+    };
 
-    if (codeData.valid_until && new Date(codeData.valid_until) < new Date()) {
-      return new Response(
-        JSON.stringify({ error: 'Redeem code has expired' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (codeData.max_uses != null && codeData.current_uses >= codeData.max_uses) {
-      return new Response(
-        JSON.stringify({ error: 'Redeem code usage limit reached' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (codeData.discount_percent !== 100) {
-      return new Response(
-        JSON.stringify({ error: 'This endpoint only accepts 100% discount codes' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Prevent the same user from redeeming the same code twice.
-    const { data: priorRedemption } = await supabaseAdmin
-      .from('redeemed_codes')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('code_id', redeem_code_id)
-      .maybeSingle();
-
-    if (priorRedemption) {
-      return new Response(
-        JSON.stringify({ error: 'You have already redeemed this code' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const releaseClaim = async (reason: string) => {
+      console.error(`Releasing redeem code claim (${reason})`);
+      await supabaseAdmin.from('redeemed_codes').delete().eq('id', claim.redemption_id);
+      await supabaseAdmin.rpc('release_free_redeem_code', { p_code_id: redeem_code_id });
+    };
 
     // Calculate subscription period
     const now = new Date();
@@ -158,6 +148,7 @@ serve(async (req) => {
 
     if (subError) {
       console.error('Failed to create subscription:', subError);
+      await releaseClaim('subscription creation failed');
       return new Response(
         JSON.stringify({ error: 'Failed to create subscription' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -184,29 +175,15 @@ serve(async (req) => {
       // Continue anyway, subscription is already created
     }
 
-    // Record code usage with direct table operations (bypasses auth.uid() dependency)
-    const { error: redeemInsertError } = await supabaseAdmin
-      .from('redeemed_codes')
-      .insert({
-        user_id: user.id,
-        code_id: redeem_code_id,
-        discount_percent: 100,
-        applied_to_payment_id: payment?.id || null,
-      });
+    // Link the already-recorded redemption to the payment record.
+    if (payment?.id && claim.redemption_id) {
+      const { error: linkError } = await supabaseAdmin
+        .from('redeemed_codes')
+        .update({ applied_to_payment_id: payment.id })
+        .eq('id', claim.redemption_id);
 
-    if (redeemInsertError) {
-      console.error('Failed to insert redeemed_codes record:', redeemInsertError);
-    }
-
-    // Increment usage counter on the redeem code
-    if (codeData) {
-      const { error: updateError } = await supabaseAdmin
-        .from('redeem_codes')
-        .update({ current_uses: codeData.current_uses + 1, updated_at: new Date().toISOString() })
-        .eq('id', redeem_code_id);
-
-      if (updateError) {
-        console.error('Failed to update redeem code usage:', updateError);
+      if (linkError) {
+        console.error('Failed to link redemption to payment:', linkError);
       }
     }
 
