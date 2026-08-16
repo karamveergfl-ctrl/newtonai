@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.2625657b31574497b1c01d235054c1d0',
+  appId: 'app.lovable.p2625657b31574497b1c01d235054c1d0',
   appName: 'newtonai',
   webDir: 'dist',
   server: {
