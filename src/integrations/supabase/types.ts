@@ -3080,6 +3080,10 @@ export type Database = {
         Args: { p_duration_seconds: number; p_video_id: string }
         Returns: Json
       }
+      release_free_redeem_code: {
+        Args: { p_code_id: string }
+        Returns: undefined
+      }
       save_report_video_results: {
         Args: { p_student_report_id: string; p_videos: Json }
         Returns: undefined
