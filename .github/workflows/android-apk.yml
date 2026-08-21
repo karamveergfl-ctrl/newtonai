@@ -40,6 +40,12 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Generate app icon and splash screens
+        run: npx @capacitor/assets generate --android --iconBackgroundColor '#0B1020' --splashBackgroundColor '#0B1020'
+
+      - name: Apply native permissions
+        run: node scripts/patch-android-manifest.mjs
+
       - name: Sync Capacitor
         run: npx cap sync android
 

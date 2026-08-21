@@ -663,3 +663,27 @@ All colors MUST be HSL.
   user-select: text;
   -webkit-user-select: text;
 }
+
+/* ---- Native (Capacitor) app shell ---- */
+body.native-app {
+  /* Respect notches / gesture bars on phones */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.native-app * {
+  /* Text selection stays available where the app opts in explicitly */
+  -webkit-touch-callout: none;
+}
+
+body.native-app input,
+body.native-app textarea,
+body.native-app [contenteditable="true"],
+body.native-app .smartboard-doc-selectable,
+body.native-app .smartboard-doc-selectable * {
+  -webkit-touch-callout: default;
+  user-select: text;
+  -webkit-user-select: text;
+}

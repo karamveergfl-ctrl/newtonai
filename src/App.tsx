@@ -20,6 +20,7 @@ import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { PageSkeleton } from "./components/PageSkeleton";
 import { OAuthDiagnostics } from "./components/OAuthDiagnostics";
+import { NativeAppShell } from "./components/native/NativeAppShell";
 
 // Non-critical global components lazy-loaded to reduce main thread blocking
 const PodcastMiniPlayer = lazy(() => import("@/components/PodcastMiniPlayer").then(m => ({ default: m.PodcastMiniPlayer })));
@@ -357,6 +358,8 @@ const App = () => (
                   <AnimatedRoutes />
                   <DeferredComponents />
                   <OAuthDiagnostics />
+                  <NativeAppShell />
+
                 </PodcastProvider>
               </GuestTrialProvider>
             </BrowserRouter>
