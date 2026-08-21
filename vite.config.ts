@@ -31,8 +31,11 @@ export default defineConfig(({ mode }) => ({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
-        // We handle navigations with an explicit NetworkFirst route instead.
+        // We handle navigations with an explicit NetworkFirst route instead:
+        // no navigate fallback, and the precache must not answer "/" cache-first.
         navigateFallback: null,
+        directoryIndex: null,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             // HTML navigations: always try the network first so users get
