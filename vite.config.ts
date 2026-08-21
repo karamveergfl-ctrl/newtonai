@@ -35,7 +35,6 @@ export default defineConfig(({ mode }) => ({
         // no navigate fallback, and the precache must not answer "/" cache-first.
         navigateFallback: null,
         directoryIndex: null,
-        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             // HTML navigations: always try the network first so users get
