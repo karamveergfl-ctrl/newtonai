@@ -29,19 +29,13 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund
 
-      - name: Build web app
-        run: npm run build
-
-      - name: Bundle web assets into the APK (no live-reload server)
+      # The Android app intentionally loads the deployed NewtonAI site configured
+      # in capacitor.config.ts. Building the full Vite app here is unnecessary and
+      # can exceed the memory available on GitHub's hosted runner.
+      - name: Prepare Capacitor web directory
         run: |
-          node -e "
-            const fs = require('fs');
-            const p = 'capacitor.config.ts';
-            let s = fs.readFileSync(p, 'utf8');
-            s = s.replace(/\s*server:\s*\{[\s\S]*?\},\n/, '\n');
-            fs.writeFileSync(p, s);
-          "
-          cat capacitor.config.ts
+          mkdir -p dist
+          printf '<!doctype html><html><body></body></html>' > dist/index.html
 
       - name: Add Android platform
         run: npx cap add android
