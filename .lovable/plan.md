@@ -1,40 +1,45 @@
-# Fix the black-screen APK (make it behave like Median)
+# Make NewtonAI PWABuilder-ready (free APK + Play Store AAB)
 
-The installed app opens to a black screen. The build succeeds, so the problem is in how the native shell starts up and loads the site, not in the compile step.
+PWABuilder wraps a properly configured PWA into an Android app (Trusted Web Activity). Right now `newtonai.site` has **no web app manifest and no app icons or theme-color tags** in `index.html`, so PWABuilder would score it as not installable and the packaged app would fail or look unbranded.
 
-## Most likely cause
+This plan adds exactly what PWABuilder needs — nothing more.
 
-The current native config sets the splash screen to **never auto-hide** (`launchAutoHide: false`). It is hidden only by JavaScript that runs inside the loaded website. If the published site at `https://newtonai.site` does not yet contain that new code, or the page load fails/stalls (slow network, redirect to `www`, cold start), nothing ever hides the splash and the user sees a permanent dark/black screen with no way out.
+## What gets added
 
-There is also no fallback page: when the remote URL fails to load, the WebView shows blank instead of an error screen.
+1. **Web app manifest** (`public/manifest.webmanifest`)
+   - Name "NewtonAI", short name "NewtonAI", `start_url: "/"`, `scope: "/"`, `display: "standalone"`, `id: "/"`
+   - Brand dark background and theme color, `orientation: "portrait"`, language and categories
+   - Two app shortcuts (Dashboard, Homework Help) so the Android long-press menu feels native
 
-This diagnosis is based on reading `capacitor.config.ts`, `src/components/native/NativeAppShell.tsx` and the build workflow; the first implementation step is to confirm it by enabling WebView debugging in a test build.
+2. **App icons**
+   - 192px and 512px PNG icons plus a 512px maskable icon (rounded-safe padding) generated from the existing NewtonAI logo
+   - Apple touch icon for iPhone home screens
 
-## What will be changed
+3. **Head tags in `index.html`**
+   - `<link rel="manifest">`, `<meta name="theme-color">`, `apple-touch-icon`, and `apple-mobile-web-app-*` tags
+   - Existing SEO title/description/OG tags stay untouched
 
-1. **Splash can never trap the user**
-   - Auto-hide the splash after a fixed short duration, keep the JS hide as an extra, and add a hard safety timeout so the WebView is always revealed.
+4. **Digital Asset Links placeholder** (`public/.well-known/assetlinks.json`)
+   - Required so the packaged Android app opens full-screen without a browser URL bar
+   - Filled with the SHA-256 fingerprint that PWABuilder gives you after packaging; the plan includes the exact copy-paste step
 
-2. **Real fallback instead of a blank screen**
-   - Ship a small offline/error page inside the APK (instead of the current empty placeholder HTML) with the NewtonAI logo, a message and a Retry button, shown when the live site cannot be reached.
+No service worker is added. Offline support is not required for PWABuilder packaging and would risk stale-cache problems on the live site. It can be added later if you want the app to work without internet.
 
-3. **Reliable remote loading**
-   - Allow navigation to `newtonai.site`, `www.newtonai.site`, the Lovable domains and required third parties (auth, payments, video) so redirects don't dead-end.
-   - Keep the WebView background brand-dark instead of black so any load gap looks intentional.
+## What you do after the changes
 
-4. **Diagnosable builds**
-   - Turn on WebView debugging for the debug APK so the exact failure can be read over USB if anything still goes wrong.
+1. Publish the site so the manifest is live on `https://newtonai.site`
+2. Go to `pwabuilder.com`, enter `https://newtonai.site`, click Package for Stores → Android
+3. Download the zip → it contains the test **APK**, the Play Store **AAB**, and a `assetlinks.json` / signing fingerprint
+4. Send me the fingerprint and I'll drop it into `public/.well-known/assetlinks.json`, then you republish
+5. Install the APK on your phone, or upload the AAB to Google Play
 
-5. **Median-style polish kept intact**
-   - Branded icon and splash, dark status bar, back-button handling, pull-to-refresh, external links in the system browser, camera/mic/file permissions — all stay as they are today.
+## Existing Capacitor build
 
-6. **Rebuild**
-   - Same free GitHub Actions workflow; you re-run "Build Android APK" and download the artifact.
+The current Capacitor GitHub Actions workflow stays in place as a backup path; it is not removed. If you'd rather delete it once PWABuilder works, say so and I'll clean it up.
 
 ## Technical details
 
-- `capacitor.config.ts`: `launchAutoHide: true`, `launchShowDuration: 2000`, add `backgroundColor` for the Android WebView, add `server.allowNavigation` list, set `webContentsDebuggingEnabled: true` for the debug build.
-- `src/lib/nativeShell.ts`: hide splash on `DOMContentLoaded`/first paint and via a `setTimeout` guard, wrapped in try/catch so a plugin error can't block it.
-- New `native/fallback/index.html` (bundled as `webDir` content) with inline CSS, logo and a reload button; workflow step replaces the current empty `dist/index.html` placeholder with it.
-- `.github/workflows/android-apk.yml`: copy the fallback page into `dist` before `npx cap add android`; no other pipeline changes.
-- No changes to the web app's business logic, database or published site behaviour.
+- Manifest served from `public/manifest.webmanifest` (static, no build plugin).
+- Icons written to `public/icons/` at 192/512/512-maskable, generated from `public/newton-logo-clean.png` on a `#0B1020` background.
+- `index.html` head additions only; no changes to routing, React code, database or edge functions.
+- `assetlinks.json` uses package name `site.newtonai.twa` (chosen at PWABuilder packaging time) and a fingerprint placeholder until step 4.
