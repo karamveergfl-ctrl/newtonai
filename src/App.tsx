@@ -358,6 +358,8 @@ const App = () => (
                   <AnimatedRoutes />
                   <DeferredComponents />
                   <OAuthDiagnostics />
+                  <NativeAppShell />
+
                 </PodcastProvider>
               </GuestTrialProvider>
             </BrowserRouter>
