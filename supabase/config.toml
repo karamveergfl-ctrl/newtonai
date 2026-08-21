@@ -161,3 +161,6 @@ verify_jwt = false
 
 [functions.gsc-setup]
 verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
