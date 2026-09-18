@@ -1,6 +1,18 @@
 import { memo, useRef, useEffect, useState, useCallback, KeyboardEvent } from "react";
 import { motion } from "framer-motion";
-import { Send, Trash2, Sparkles, StopCircle, X, Mic, MicOff, PanelLeft } from "lucide-react";
+import { Send, Trash2, Sparkles, StopCircle, X, Mic, MicOff, PanelLeft, Volume2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { NEWTON_VOICES } from "@/lib/newtonVoices";
+import { useNewtonVoice } from "@/hooks/useNewtonVoice";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -51,6 +63,9 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
+  const { voice, setVoice } = useNewtonVoice();
+  const activeVoice = NEWTON_VOICES.find((v) => v.id === voice);
+
 
   const processVoiceQuery = useCallback((query: string) => {
     const trimmed = query.trim();
@@ -169,11 +184,37 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                aria-label="Choose Newton voice"
+                title={`Voice: ${activeVoice?.label ?? "Default"}`}
+              >
+                <Volume2 className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+              <DropdownMenuLabel>Newton's voice</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={voice} onValueChange={setVoice}>
+                {NEWTON_VOICES.map((v) => (
+                  <DropdownMenuRadioItem key={v.id} value={v.id} className="flex-col items-start gap-0.5">
+                    <span className="text-sm">{v.label}</span>
+                    <span className="text-[11px] text-muted-foreground">{v.description}</span>
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {messages.length > 0 && (
             <Button variant="ghost" size="icon" onClick={onClear} aria-label="Clear conversation" className="h-8 w-8 text-muted-foreground hover:text-destructive">
               <Trash2 className="w-4 h-4" />
             </Button>
           )}
+
           {onClose && (
             <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close Newton chat" className="h-8 w-8 text-muted-foreground hover:text-foreground">
               <X className="w-4 h-4" />

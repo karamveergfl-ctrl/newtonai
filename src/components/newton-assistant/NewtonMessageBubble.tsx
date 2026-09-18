@@ -9,6 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import newtonChatAvatar from "@/assets/newton-chat-avatar-sm.webp";
 import type { NewtonMessage } from "@/hooks/useNewtonChat";
 import { toast } from "sonner";
+import { useReadAloudTTS } from "@/hooks/useReadAloudTTS";
+import { useNewtonVoice } from "@/hooks/useNewtonVoice";
+
 
 interface NewtonMessageBubbleProps {
   message: NewtonMessage;
@@ -24,6 +27,9 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const readAloud = useReadAloudTTS();
+  const { voice } = useNewtonVoice();
+
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(message.content).then(() => {
@@ -33,21 +39,27 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
     });
   }, [message.content]);
 
-  const handleSpeak = useCallback(() => {
+  const handleSpeak = useCallback(async () => {
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      readAloud.cancel();
       setIsSpeaking(false);
       return;
     }
-    const utterance = new SpeechSynthesisUtterance(message.content.replace(/[#*`_~\[\]()]/g, ''));
-    utterance.rate = 0.9;
-    utterance.pitch = 1.0;
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+    const clean = message.content.replace(/[#*`_~\[\]()]/g, '');
     setIsSpeaking(true);
-  }, [message.content, isSpeaking]);
+    try {
+      await readAloud.speak(clean, {
+        voiceId: voice,
+        rate: 1.0,
+        onEnd: () => setIsSpeaking(false),
+      });
+    } catch {
+      toast.error("Could not read this message aloud");
+    } finally {
+      setIsSpeaking(false);
+    }
+  }, [message.content, isSpeaking, readAloud, voice]);
+
 
   // Handle explain button click
   const handleExplain = useCallback(async (heading: string, content: string): Promise<string> => {

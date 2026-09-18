@@ -10,6 +10,8 @@ import { useWebSpeechTTS } from "./useWebSpeechTTS";
 export interface ReadAloudOptions {
   language?: string;
   voiceName?: string;
+  /** Selectable Newton voice id (see src/lib/newtonVoices.ts). */
+  voiceId?: string;
   speaker?: "host1" | "host2";
   rate?: number;
   pitch?: number;
@@ -17,6 +19,7 @@ export interface ReadAloudOptions {
   onEnd?: () => void;
   onError?: (error: Error) => void;
 }
+
 
 const MAX_SERVER_CHARS = 5000;
 
@@ -55,8 +58,10 @@ export function useReadAloudTTS() {
               text: clean,
               language: options.language ?? "en",
               role: options.speaker === "host2" ? "host2" : "tutor",
+              voice: options.voiceId,
               speed: options.rate ?? 1.0,
             },
+
           });
 
           if (!error && data?.audioUrl) {
