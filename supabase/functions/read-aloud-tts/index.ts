@@ -18,6 +18,17 @@ const EL_VOICES = {
   tutor: "onwK4e9ZLuTAKqWW03F9", // Daniel
 } as const;
 
+// Selectable multi-voice set for Newton chat read-aloud.
+const VOICE_LIBRARY: Record<string, { gemini: string; eleven: string }> = {
+  charon: { gemini: "Charon", eleven: "onwK4e9ZLuTAKqWW03F9" }, // Daniel
+  kore: { gemini: "Kore", eleven: "EXAVITQu4vr4xnSDxMaL" },     // Sarah
+  leda: { gemini: "Leda", eleven: "pFZP5JQG7iQjIQuC4Bku" },     // Lily
+  aoede: { gemini: "Aoede", eleven: "Xb7hH8MSUJpSbSDYk0k2" },   // Alice
+  puck: { gemini: "Puck", eleven: "CwhRBWXzGAHq8TQ4Fs17" },     // Roger
+  fenrir: { gemini: "Fenrir", eleven: "nPczCjzI2devNBz1zQrb" }, // Brian
+};
+
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
