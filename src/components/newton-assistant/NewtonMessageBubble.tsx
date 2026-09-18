@@ -33,21 +33,27 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
     });
   }, [message.content]);
 
-  const handleSpeak = useCallback(() => {
+  const handleSpeak = useCallback(async () => {
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      readAloud.cancel();
       setIsSpeaking(false);
       return;
     }
-    const utterance = new SpeechSynthesisUtterance(message.content.replace(/[#*`_~\[\]()]/g, ''));
-    utterance.rate = 0.9;
-    utterance.pitch = 1.0;
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+    const clean = message.content.replace(/[#*`_~\[\]()]/g, '');
     setIsSpeaking(true);
-  }, [message.content, isSpeaking]);
+    try {
+      await readAloud.speak(clean, {
+        voiceId: voice,
+        rate: 1.0,
+        onEnd: () => setIsSpeaking(false),
+      });
+    } catch {
+      toast.error("Could not read this message aloud");
+    } finally {
+      setIsSpeaking(false);
+    }
+  }, [message.content, isSpeaking, readAloud, voice]);
+
 
   // Handle explain button click
   const handleExplain = useCallback(async (heading: string, content: string): Promise<string> => {
