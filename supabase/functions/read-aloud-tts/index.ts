@@ -57,6 +57,9 @@ serve(async (req) => {
       ? body.role
       : "tutor";
     const speed: number = typeof body.speed === "number" ? Math.min(1.5, Math.max(0.6, body.speed)) : 1.0;
+    const voiceId: string = typeof body.voice === "string" && VOICE_LIBRARY[body.voice] ? body.voice : "";
+    const selected = voiceId ? VOICE_LIBRARY[voiceId] : null;
+    const voiceKey = voiceId || role;
 
     if (!text) return json({ error: "No text provided" }, 400);
     if (text.length > MAX_CHARS) {
@@ -68,7 +71,7 @@ serve(async (req) => {
     // Content-addressed cache: identical text + voice + speed is never regenerated.
     const { contentHash, textHash, normalized } = await cacheHashes({
       text,
-      voice: role,
+      voice: voiceKey,
       speed,
       model: `read-aloud:${language}`,
     });
@@ -79,7 +82,7 @@ serve(async (req) => {
         userId: user.id,
         feature: "read-aloud",
         provider: cached.provider,
-        voice: role,
+        voice: voiceKey,
         characters: normalized.length,
         cacheHit: true,
       });
@@ -92,9 +95,11 @@ serve(async (req) => {
       language,
       speed,
       kokoroFormat: "mp3",
-      elevenLabsVoiceId: EL_VOICES[role],
+      geminiVoice: selected?.gemini,
+      elevenLabsVoiceId: selected?.eleven ?? EL_VOICES[role],
       elevenLabsModelId: language === "en" ? "eleven_turbo_v2_5" : "eleven_multilingual_v2",
     });
+
 
     const isWav = tts.contentType.includes("wav");
     const provider = tts.engine === "gemini"
