@@ -111,7 +111,7 @@ serve(async (req) => {
     const { audioUrl } = await storeAudio(db, {
       contentHash,
       textHash,
-      voice: role,
+      voice: voiceKey,
       speed,
       model: `read-aloud:${language}`,
       provider,
