@@ -9,6 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import newtonChatAvatar from "@/assets/newton-chat-avatar-sm.webp";
 import type { NewtonMessage } from "@/hooks/useNewtonChat";
 import { toast } from "sonner";
+import { useReadAloudTTS } from "@/hooks/useReadAloudTTS";
+import { useNewtonVoice } from "@/hooks/useNewtonVoice";
+
 
 interface NewtonMessageBubbleProps {
   message: NewtonMessage;
@@ -24,6 +27,9 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const readAloud = useReadAloudTTS();
+  const { voice } = useNewtonVoice();
+
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(message.content).then(() => {
