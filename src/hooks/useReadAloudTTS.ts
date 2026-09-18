@@ -58,8 +58,10 @@ export function useReadAloudTTS() {
               text: clean,
               language: options.language ?? "en",
               role: options.speaker === "host2" ? "host2" : "tutor",
+              voice: options.voiceId,
               speed: options.rate ?? 1.0,
             },
+
           });
 
           if (!error && data?.audioUrl) {
