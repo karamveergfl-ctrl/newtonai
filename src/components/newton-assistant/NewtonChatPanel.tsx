@@ -1,6 +1,18 @@
 import { memo, useRef, useEffect, useState, useCallback, KeyboardEvent } from "react";
 import { motion } from "framer-motion";
-import { Send, Trash2, Sparkles, StopCircle, X, Mic, MicOff, PanelLeft } from "lucide-react";
+import { Send, Trash2, Sparkles, StopCircle, X, Mic, MicOff, PanelLeft, Volume2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { NEWTON_VOICES } from "@/lib/newtonVoices";
+import { useNewtonVoice } from "@/hooks/useNewtonVoice";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -51,6 +63,9 @@ export const NewtonChatPanel = memo(function NewtonChatPanel({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
+  const { voice, setVoice } = useNewtonVoice();
+  const activeVoice = NEWTON_VOICES.find((v) => v.id === voice);
+
 
   const processVoiceQuery = useCallback((query: string) => {
     const trimmed = query.trim();
