@@ -1,4 +1,4 @@
-import { memo, useCallback, useState, lazy, Suspense } from "react";
+import { memo, useCallback, useRef, useState, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { User, Copy, Check, RefreshCw, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,13 +39,17 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
     });
   }, [message.content]);
 
+  const stoppedRef = useRef(false);
+
   const handleSpeak = useCallback(async () => {
     if (isSpeaking) {
+      stoppedRef.current = true;
       readAloud.cancel();
       setIsSpeaking(false);
       return;
     }
     const clean = message.content.replace(/[#*`_~\[\]()]/g, '');
+    stoppedRef.current = false;
     setIsSpeaking(true);
     try {
       await readAloud.speak(clean, {
@@ -54,7 +58,7 @@ export const NewtonMessageBubble = memo(function NewtonMessageBubble({
         onEnd: () => setIsSpeaking(false),
       });
     } catch {
-      toast.error("Could not read this message aloud");
+      if (!stoppedRef.current) toast.error("Could not read this message aloud");
     } finally {
       setIsSpeaking(false);
     }
