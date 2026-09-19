@@ -23,33 +23,75 @@ export interface ReadAloudOptions {
 
 const MAX_SERVER_CHARS = 5000;
 
+/**
+ * Only one read-aloud playback may run at a time across the whole app.
+ * Each hook instance registers its stopper here; starting a new playback
+ * stops whichever one is currently active (even from another component).
+ */
+let activeStop: (() => void) | null = null;
+
+function stopActivePlayback(except?: () => void) {
+  if (activeStop && activeStop !== except) {
+    const stop = activeStop;
+    activeStop = null;
+    stop();
+  }
+}
+
 export function useReadAloudTTS() {
   const web = useWebSpeechTTS();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const cancelledRef = useRef(false);
   const [isServerSpeaking, setIsServerSpeaking] = useState(false);
   const [engine, setEngine] = useState<"kokoro" | "elevenlabs" | "cache" | "browser" | null>(null);
 
   const stopServerAudio = useCallback(() => {
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
+      const audio = audioRef.current;
       audioRef.current = null;
+      // Detach handlers so pausing/clearing never surfaces as a playback error
+      audio.onplay = null;
+      audio.onended = null;
+      audio.onerror = null;
+      audio.pause();
+      audio.src = "";
     }
     setIsServerSpeaking(false);
   }, []);
 
-  useEffect(() => () => stopServerAudio(), [stopServerAudio]);
-
-  const cancel = useCallback(() => {
+  const cancelSelf = useCallback(() => {
+    cancelledRef.current = true;
     stopServerAudio();
     web.cancel();
   }, [stopServerAudio, web]);
 
+  const cancelSelfRef = useRef(cancelSelf);
+  cancelSelfRef.current = cancelSelf;
+
+  useEffect(
+    () => () => {
+      if (activeStop === cancelSelfRef.current) activeStop = null;
+      stopServerAudio();
+    },
+    [stopServerAudio],
+  );
+
+  const cancel = useCallback(() => {
+    if (activeStop === cancelSelfRef.current) activeStop = null;
+    cancelSelf();
+  }, [cancelSelf]);
+
   const speak = useCallback(
     async (text: string, options: ReadAloudOptions = {}) => {
-      cancel();
+      // Stop any playback owned by another bubble/component, then our own.
+      stopActivePlayback(cancelSelfRef.current);
+      cancelSelf();
+
       const clean = (text ?? "").trim();
       if (!clean) return;
+
+      cancelledRef.current = false;
+      activeStop = cancelSelfRef.current;
 
       if (clean.length <= MAX_SERVER_CHARS) {
         try {
@@ -64,6 +106,8 @@ export function useReadAloudTTS() {
 
           });
 
+          if (cancelledRef.current) return;
+
           if (!error && data?.audioUrl) {
             const audio = new Audio(data.audioUrl);
             audioRef.current = audio;
@@ -76,28 +120,38 @@ export function useReadAloudTTS() {
               };
               audio.onended = () => {
                 setIsServerSpeaking(false);
+                if (activeStop === cancelSelfRef.current) activeStop = null;
                 options.onEnd?.();
                 resolve();
               };
               audio.onerror = () => {
                 setIsServerSpeaking(false);
-                reject(new Error("Audio playback failed"));
+                // A deliberate stop detaches handlers first; anything here is real.
+                if (cancelledRef.current) resolve();
+                else reject(new Error("Audio playback failed"));
               };
-              audio.play().catch(reject);
+              audio.play().catch((err) => {
+                if (cancelledRef.current) resolve();
+                else reject(err);
+              });
             });
             return;
           }
           console.warn("read-aloud-tts unavailable, using browser voice:", error?.message);
         } catch (err) {
+          if (cancelledRef.current) return;
           console.warn("read-aloud-tts failed, using browser voice:", err);
         }
       }
 
+      if (cancelledRef.current) return;
+
       // Fallback: browser speech synthesis
       setEngine("browser");
       await web.speak(clean, options as never);
+      if (activeStop === cancelSelfRef.current) activeStop = null;
     },
-    [cancel, web],
+    [cancelSelf, web],
   );
 
   return {
