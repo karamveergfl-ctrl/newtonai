@@ -6,7 +6,7 @@
 - Update the funding offer everywhere to **₹20 lakh for 5% equity**. Remove the old ₹70 lakh / 10% / ₹7 crore figures; do not invent a new valuation or unsupported performance claims.
 
 ## Pages
-1. **Cover:** NewtonAI name, an investor-focused headline and concise tagline, one-sentence proposition, and the ₹20 lakh / 5% offer.
+1. **Cover:** NewtonAI name, an investor-focused headline and concise tagline, and a one-sentence proposition. No investment ask or equity figures on this page.
 2. **Need + answer:** The fragmented learning/classroom problem and NewtonAI’s unified response, with a short visual workflow.
 3. **Product + customers:** One clear, legible product screenshot and brief explanations of the student/teacher and institutional use cases.
 4. **Model + ask:** Global learner subscriptions and India classroom plans, the investment terms, high-level use of funds, and website contact.
