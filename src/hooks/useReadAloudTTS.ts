@@ -45,7 +45,16 @@ export function useReadAloudTTS() {
   const [isServerSpeaking, setIsServerSpeaking] = useState(false);
   const [engine, setEngine] = useState<"kokoro" | "elevenlabs" | "cache" | "browser" | null>(null);
 
+  const pendingResolveRef = useRef<(() => void) | null>(null);
+
   const stopServerAudio = useCallback(() => {
+    // Settle any pending speak() promise so awaiting callers (e.g. message
+    // bubbles) reset their "speaking" state instead of getting stuck.
+    if (pendingResolveRef.current) {
+      const resolve = pendingResolveRef.current;
+      pendingResolveRef.current = null;
+      resolve();
+    }
     if (audioRef.current) {
       const audio = audioRef.current;
       audioRef.current = null;
