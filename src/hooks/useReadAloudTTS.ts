@@ -123,6 +123,7 @@ export function useReadAloudTTS() {
             setEngine(data.engine ?? null);
 
             await new Promise<void>((resolve, reject) => {
+              pendingResolveRef.current = resolve;
               audio.onplay = () => {
                 setIsServerSpeaking(true);
                 options.onStart?.();
