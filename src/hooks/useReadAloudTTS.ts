@@ -131,6 +131,7 @@ export function useReadAloudTTS() {
               audio.onended = () => {
                 setIsServerSpeaking(false);
                 if (activeStop === cancelSelfRef.current) activeStop = null;
+                pendingResolveRef.current = null;
                 options.onEnd?.();
                 resolve();
               };
