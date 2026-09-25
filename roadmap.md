@@ -6,4 +6,4 @@
 - [x] Visually inspect every page and correct print-readability issues.
 - [x] Revise investor brochure with 500 free-tier students, school/teacher pricing, and AMU incubation/company details.
 - [x] Rebalance colours across all four A4 landscape pages and visually verify the versioned PDF.
-- [ ] Add founder Karamveer Singh’s contact details to a new brochure version and inspect all pages.
+- [x] Add founder Karamveer Singh’s contact details to a new brochure version and inspect all pages.
