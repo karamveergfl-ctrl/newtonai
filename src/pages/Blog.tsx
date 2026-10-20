@@ -177,7 +177,10 @@ const Blog = () => {
       </section>
 
       {/* Blog Posts Grid */}
-      <section className="container mx-auto px-4 pb-16">
+      <section className="container mx-auto px-4 pb-16" aria-labelledby="latest-articles-heading">
+        <h2 id="latest-articles-heading" className="font-display text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-6">
+          Latest Articles
+        </h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {blogPosts.map((post) => (
             <Link key={post.slug} to={`/blog/${post.slug}`}>
