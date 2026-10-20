@@ -10,6 +10,7 @@ import { useLiveSession } from "@/contexts/LiveSessionContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueChannelName } from "@/lib/realtime";
 import { toast } from "sonner";
 
 interface StudentLiveViewProps {
@@ -35,7 +36,7 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
 
   // Create reaction channel once on mount, reuse for all sends
   useEffect(() => {
-    const channel = supabase.channel(`reactions:${sessionId}`);
+    const channel = supabase.channel(uniqueChannelName(`reactions:${sessionId}`));
     channel.subscribe();
     reactionChannelRef.current = channel;
 
@@ -47,7 +48,7 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
 
   // Video sync listener
   useEffect(() => {
-    const channel = supabase.channel(`video-sync:${sessionId}`);
+    const channel = supabase.channel(uniqueChannelName(`video-sync:${sessionId}`));
     channel
       .on("broadcast", { event: "video_play" }, ({ payload }) => {
         setSyncedVideo({ videoId: payload.videoId, title: payload.title });

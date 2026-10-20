@@ -3,6 +3,7 @@ import { Search, Play, StopCircle, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueChannelName } from "@/lib/realtime";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -40,7 +41,7 @@ export function ClassroomVideoPlayer({ sessionId, initialQuery }: ClassroomVideo
 
   // Initialize realtime channel
   useEffect(() => {
-    const channel = supabase.channel(`video-sync:${sessionId}`);
+    const channel = supabase.channel(uniqueChannelName(`video-sync:${sessionId}`));
     channel.subscribe();
     channelRef.current = channel;
     return () => {

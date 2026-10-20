@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueChannelName } from "@/lib/realtime";
 import type { SlideTermDefinitions } from "@/types/liveSession";
 
 interface UseTermDefinitionsProps {
@@ -106,7 +107,7 @@ export function useTermDefinitions({ sessionId, slideIndex }: UseTermDefinitions
   // Realtime
   useEffect(() => {
     const channel = supabase
-      .channel(`term-definitions-${sessionId}`)
+      .channel(uniqueChannelName(`term-definitions-${sessionId}`))
       .on(
         "postgres_changes",
         {

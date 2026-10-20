@@ -147,7 +147,7 @@ export function useQuestionWall({ sessionId, role }: UseQuestionWallProps) {
       ),
       () => { void fetchQuestions(); },
     );
-  }, [sessionId, role]);
+  }, [sessionId, role, fetchQuestions]);
 
   const submitQuestion = useCallback(
     async (content: string) => {

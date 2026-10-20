@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueChannelName } from "@/lib/realtime";
 import type {
   SessionIntelligenceReport,
   ClassReportOverview,
@@ -101,7 +102,7 @@ export function useTeacherReport({ sessionId }: UseTeacherReportProps) {
   // Realtime subscription
   useEffect(() => {
     const channel = supabase
-      .channel(`teacher-report-${sessionId}`)
+      .channel(uniqueChannelName(`teacher-report-${sessionId}`))
       .on(
         "postgres_changes",
         {

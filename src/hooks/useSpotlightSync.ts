@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueChannelName } from "@/lib/realtime";
 import type { SpotlightSyncStats } from "@/types/liveSession";
 
 interface UseSpotlightSyncProps {
@@ -188,7 +189,7 @@ export function useSpotlightSync({ sessionId, role }: UseSpotlightSyncProps): Us
     if (role !== "student") return;
 
     const spotlightChannel = supabase
-      .channel(`spotlight-state-${sessionId}`)
+      .channel(uniqueChannelName(`spotlight-state-${sessionId}`))
       .on(
         "postgres_changes",
         {
@@ -214,7 +215,7 @@ export function useSpotlightSync({ sessionId, role }: UseSpotlightSyncProps): Us
       .subscribe();
 
     const sessionChannel = supabase
-      .channel(`spotlight-session-${sessionId}`)
+      .channel(uniqueChannelName(`spotlight-session-${sessionId}`))
       .on(
         "postgres_changes",
         {
@@ -252,7 +253,7 @@ export function useSpotlightSync({ sessionId, role }: UseSpotlightSyncProps): Us
     fetchSyncStats();
 
     const channel = supabase
-      .channel(`spotlight-students-${sessionId}`)
+      .channel(uniqueChannelName(`spotlight-students-${sessionId}`))
       .on(
         "postgres_changes",
         {

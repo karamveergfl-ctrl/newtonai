@@ -132,7 +132,7 @@ export function useLiveNotes({ sessionId, role, onSlideAdvance }: UseLiveNotesPr
       ),
       () => { void getAllNotes(); },
     );
-  }, [sessionId, role]);
+  }, [sessionId, role, getAllNotes]);
 
   // Realtime: live_sessions (slide index, total, notes_enabled)
   useEffect(() => {
