@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
+import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
   const breadcrumbs = [
@@ -38,11 +39,36 @@ const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
+    const val = (id: string) => (form.elements.namedItem(id) as HTMLInputElement | null)?.value ?? "";
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success("Message sent! We'll get back to you soon.");
-    setIsSubmitting(false);
-    (e.target as HTMLFormElement).reset();
+    try {
+      const { data, error } = await supabase.functions.invoke("submit-contact", {
+        body: {
+          firstName: val("firstName"),
+          lastName: val("lastName"),
+          email: val("email"),
+          subject: val("subject"),
+          message: val("message"),
+        },
+      });
+      if (error || !data?.ok) {
+        let msg = "Could not send your message. Please try again.";
+        try {
+          const ctx = (error as { context?: Response })?.context;
+          const body = ctx ? await ctx.json() : null;
+          if (body?.error) msg = body.error;
+        } catch { /* ignore */ }
+        toast.error(msg);
+        return;
+      }
+      toast.success("Message sent! We'll get back to you soon.");
+      form.reset();
+    } catch {
+      toast.error("Could not send your message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
