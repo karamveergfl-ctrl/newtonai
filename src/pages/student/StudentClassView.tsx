@@ -21,6 +21,7 @@ import { LiveSessionProvider } from "@/contexts/LiveSessionContext";
 import { StudentLiveView } from "@/components/live-session";
 import { LiveSessionBadge } from "@/components/live-session";
 import { ClassNewtonChat } from "@/components/student/ClassNewtonChat";
+import { FlashcardDeck } from "@/components/FlashcardDeck";
 
 interface Material {
   id: string;
@@ -68,6 +69,7 @@ const StudentClassView = () => {
 
   // Assignment interaction states
   const [activeAssignmentId, setActiveAssignmentId] = useState<string | null>(null);
+  const [activeFlashcards, setActiveFlashcards] = useState<{ id: string; title: string; cards: { id: string; front: string; back: string }[] } | null>(null);
 
   // Live quiz detection
   const [liveSession, setLiveSession] = useState<any>(null);
@@ -142,6 +144,24 @@ const StudentClassView = () => {
     const interval = setInterval(pollSession, 5000);
     return () => clearInterval(interval);
   }, [id]);
+
+  if (activeFlashcards) {
+    return (
+      <FlashcardDeck
+        flashcards={activeFlashcards.cards}
+        title={activeFlashcards.title}
+        onClose={async () => {
+          const done = mySubmissions.some((s) => s.assignment_id === activeFlashcards.id);
+          const aid = activeFlashcards.id;
+          setActiveFlashcards(null);
+          if (!done) {
+            await submitAssignment(aid, { completed: true });
+            if (id) fetchMySubmissions(id).then(setMySubmissions);
+          }
+        }}
+      />
+    );
+  }
 
   // If taking a regular assignment quiz
   if (activeAssignmentId) {
@@ -328,12 +348,20 @@ const StudentClassView = () => {
                   {assignments.map((a, i) => {
                     const status = getSubmissionStatus(a.id, mySubmissions);
                     const sub = mySubmissions.find(s => s.assignment_id === a.id);
-                    const isQuiz = a.assignment_type === "quiz";
+                    const isQuiz = a.assignment_type === "quiz" || a.assignment_type === "test";
+                    const isFlash = a.assignment_type === "flashcards";
+                    const timeLimit = (a as { time_limit_minutes?: number | null }).time_limit_minutes;
                     return (
                       <motion.div key={a.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                         <Card
                           className={`border-border/50 cursor-pointer hover:border-primary/30 transition-colors ${status === "graded" ? "border-l-4 border-l-green-500" : status === "submitted" ? "border-l-4 border-l-amber-500" : ""}`}
-                          onClick={() => isQuiz && setActiveAssignmentId(a.id)}
+                          onClick={() => {
+                            if (isQuiz) setActiveAssignmentId(a.id);
+                            else if (isFlash) {
+                              const cards = ((a.content as { cards?: { front: string; back: string }[] })?.cards || []).map((c, ci) => ({ id: String(ci), ...c }));
+                              setActiveFlashcards({ id: a.id, title: a.title, cards });
+                            }
+                          }}
                         >
                           <CardContent className="py-3 px-4">
                             <div className="flex items-start justify-between gap-2">
@@ -343,9 +371,12 @@ const StudentClassView = () => {
                                 <div className="flex items-center gap-2 mt-2">
                                   <Badge variant="outline" className="text-[10px] h-5">{a.assignment_type}</Badge>
                                   <AssignmentStatusBadge status={status} />
+                                  {isQuiz && timeLimit && status === "not_started" && (
+                                    <Badge variant="outline" className="text-[10px] h-5">{timeLimit} min</Badge>
+                                  )}
                                   {status === "graded" && sub?.score != null && (
                                     <Badge variant="secondary" className="text-[10px] h-5">
-                                      Score: {sub.score}
+                                      Score: {sub.score}{a.max_score ? `/${a.max_score}` : ""}
                                     </Badge>
                                   )}
                                 </div>
