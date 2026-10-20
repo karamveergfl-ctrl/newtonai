@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UploadZone } from "@/components/UploadZone";
@@ -24,7 +24,7 @@ import { AppLayout } from "@/components/AppLayout";
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Headphones } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
 import { CreditModal } from "@/components/CreditModal";
@@ -38,7 +38,17 @@ import { useVideoSearch } from "@/hooks/useVideoSearch";
 import { useSolutionActions } from "@/hooks/useSolutionActions";
 import { useStudyToolGeneration } from "@/hooks/useStudyToolGeneration";
 
-const Index = () => {
+interface IndexProps {
+  /** "teacher" hides the lecture recorder and shows teacher-only slots. */
+  variant?: "student" | "teacher";
+  /** Rendered above the search bar on the home view (e.g. live banner). */
+  topSlot?: ReactNode;
+  /** Rendered below the upload card on the home view (e.g. classes row). */
+  bottomSlot?: ReactNode;
+}
+
+const Index = ({ variant = "student", topSlot, bottomSlot }: IndexProps = {}) => {
+  const isTeacher = variant === "teacher";
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -318,16 +328,17 @@ const Index = () => {
     return (
       <>
         <SEOHead
-          title="Study Dashboard"
+          title={isTeacher ? "Teacher Dashboard" : "Study Dashboard"}
           description="Your NewtonAI study dashboard — upload notes and PDFs to generate summaries, quizzes, flashcards and mind maps."
-          canonicalPath="/dashboard"
+          canonicalPath={isTeacher ? "/teacher" : "/dashboard"}
           noIndex
         />
         {processingOverlay}
         <AppLayout onToolSelect={handleSidebarToolSelect} onSignOut={handleSignOut}>
-          <WelcomeModal onUploadClick={triggerUploadClick} onRecordClick={triggerRecordClick} />
+          {!isTeacher && <WelcomeModal onUploadClick={triggerUploadClick} onRecordClick={triggerRecordClick} />}
           <div className="flex-1 bg-gradient-to-br from-background via-background to-primary/5 overflow-auto">
             <div className="max-w-4xl mx-auto px-6 py-8">
+              {topSlot}
               <GlobalSearchBox onTopicSearch={videoSearch.handleTopicSearch} isSearching={videoSearch.isTopicSearching} />
               {videoSearch.showVideosPanel && (
                 <div className="mt-8 animate-fade-in">
@@ -350,10 +361,15 @@ const Index = () => {
               )}
               <div className="mt-8 space-y-6 my-[3px]">
                 <StudyTracker />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {isTeacher ? (
                   <UploadZone onUploadComplete={handleUploadComplete} />
-                  <LectureRecorder onNotesGenerated={(notes, title) => { setLectureNotes(notes); setLectureNotesTitle(title); }} />
-                </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <UploadZone onUploadComplete={handleUploadComplete} />
+                    <LectureRecorder onNotesGenerated={(notes, title) => { setLectureNotes(notes); setLectureNotesTitle(title); }} />
+                  </div>
+                )}
+                {bottomSlot}
               </div>
             </div>
             {fullscreenOverlays}
@@ -418,6 +434,17 @@ const Index = () => {
               totalPages={pdfPageCount}
               className="border-0 p-0 bg-transparent"
             />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 h-8"
+              disabled={!pdfText && !fileData?.ocrText}
+              onClick={() => navigate("/tools/ai-podcast", { state: { podcastContent: (pdfText || fileData?.ocrText || "").slice(0, 50000) } })}
+              aria-label="Make a podcast from this document"
+            >
+              <Headphones className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs">Podcast</span>
+            </Button>
           </div>
 
           {/* Main Content */}

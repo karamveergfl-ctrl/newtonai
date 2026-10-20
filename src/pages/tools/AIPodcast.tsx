@@ -12,7 +12,7 @@ import { PodcastStylePresets, PodcastSettings } from "@/components/PodcastStyleP
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Podcast, Sparkles, ArrowLeft, Volume2, Minimize2, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -239,6 +239,8 @@ const stepMessages: Record<GenerationStep, string> = {
 
 export default function AIPodcast() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefillDoneRef = useRef(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [generationStep, setGenerationStep] = useState<GenerationStep>("idle");
@@ -672,6 +674,15 @@ export default function AIPodcast() {
     { name: "Tools", href: "/tools" },
     { name: "AI Podcast", href: "/tools/podcast" },
   ];
+
+  // Prefill from an uploaded document (e.g. teacher/student workspace "Podcast" button)
+  useEffect(() => {
+    const content = (location.state as { podcastContent?: string } | null)?.podcastContent;
+    if (!content || prefillDoneRef.current) return;
+    prefillDoneRef.current = true;
+    void handleContentReady(content, "text");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   return (
     <AppLayout>
