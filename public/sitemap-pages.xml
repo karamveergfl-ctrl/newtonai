@@ -187,11 +187,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://newtonai.site/compare/studyfetch</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://newtonai.site/compare/studyx</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -199,6 +194,31 @@
   <url>
     <loc>https://newtonai.site/compare/studyfetch-vs-newtonai</loc>
     <lastmod>2026-07-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://newtonai.site/neet-flashcards-ai</loc>
+    <lastmod>2026-10-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://newtonai.site/jee-quiz-generator-ai</loc>
+    <lastmod>2026-10-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://newtonai.site/cbse-notes-ai</loc>
+    <lastmod>2026-10-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://newtonai.site/youtube-lecture-to-notes</loc>
+    <lastmod>2026-10-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
