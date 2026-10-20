@@ -33,6 +33,7 @@ export function TopStatsBar() {
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Open profile"
                 onClick={() => navigate("/profile")}
                 className="h-9 w-9 rounded-full ring-2 ring-border hover:ring-primary transition-all duration-150"
               >
