@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueChannelName } from "@/lib/realtime";
 
 interface RealtimeActivity {
   topicCounts: Map<string, number>;
@@ -96,7 +97,7 @@ export function useRealtimeActivity() {
 
     // Set up realtime subscription
     const channel = supabase
-      .channel('realtime-activity')
+      .channel(uniqueChannelName('realtime-activity'))
       .on(
         'postgres_changes',
         {
@@ -128,7 +129,7 @@ export function useRealtimeActivity() {
     const refreshInterval = setInterval(fetchInitialActivity, 30000);
 
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
       clearInterval(refreshInterval);
     };
   }, [fetchInitialActivity]);

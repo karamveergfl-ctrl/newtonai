@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueChannelName } from "@/lib/realtime";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Megaphone, Pin, ChevronDown, ChevronUp } from "lucide-react";
@@ -35,7 +36,7 @@ export function AnnouncementsBanner({ classId }: Props) {
     fetch();
 
     const channel = supabase
-      .channel(`announcements-${classId}`)
+      .channel(uniqueChannelName(`announcements-${classId}`))
       .on("postgres_changes", { event: "*", schema: "public", table: "class_announcements", filter: `class_id=eq.${classId}` }, () => fetch())
       .subscribe();
 
