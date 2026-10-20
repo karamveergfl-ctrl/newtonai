@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
+import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { useLiveSession } from "@/contexts/LiveSessionContext";
 import { PulseMeter } from "./PulseMeter";
 import { QuestionWall } from "./QuestionWall";
@@ -426,10 +427,10 @@ function SmartBoardPanelInner({
         >
           {/* Concept Check */}
           <div className="p-3 shrink-0">
-            <SmartBoardConceptCheckPanel
+            <WidgetErrorBoundary name="Concept checks"><SmartBoardConceptCheckPanel
               sessionId={sessionId}
               slideContext={currentSlideContent || ""}
-            />
+            /></WidgetErrorBoundary>
           </div>
 
           <div className="border-t border-border" />
@@ -452,21 +453,21 @@ function SmartBoardPanelInner({
 
           {/* Live Notes Overview */}
           <div className={cn("shrink-0 transition-all duration-300", notesGenerating && "ring-1 ring-primary/40 animate-pulse rounded-lg")}>
-            <TeacherNotesOverview sessionId={sessionId} />
+            <WidgetErrorBoundary name="Live notes"><TeacherNotesOverview sessionId={sessionId} /></WidgetErrorBoundary>
           </div>
 
           <div className="border-t border-border" />
 
           {/* Pulse Meter */}
           <div className={cn("p-3 shrink-0 transition-opacity duration-300", hasActiveCheck && "opacity-50")}>
-            <PulseMeter sessionId={sessionId} confusionThreshold={confusionThreshold} />
+            <WidgetErrorBoundary name="Pulse"><PulseMeter sessionId={sessionId} confusionThreshold={confusionThreshold} /></WidgetErrorBoundary>
           </div>
 
           <div className="border-t border-border" />
 
           {/* Question Wall */}
           <div className="flex-1 min-h-0 flex flex-col">
-            <QuestionWall sessionId={sessionId} role="teacher" />
+            <WidgetErrorBoundary name="Questions"><QuestionWall sessionId={sessionId} role="teacher" /></WidgetErrorBoundary>
           </div>
 
           <div className="border-t border-border" />
@@ -562,7 +563,7 @@ function SmartBoardPanelInner({
                 </Button>
               </div>
               <div className="p-3">
-                <SmartBoardConceptCheckPanel sessionId={sessionId} slideContext={currentSlideContent || ""} />
+                <WidgetErrorBoundary name="Concept checks"><SmartBoardConceptCheckPanel sessionId={sessionId} slideContext={currentSlideContent || ""} /></WidgetErrorBoundary>
               </div>
               <div className="border-t border-border" />
               <div className="p-3">
@@ -576,15 +577,15 @@ function SmartBoardPanelInner({
               </div>
               <div className="border-t border-border" />
               <div className={cn("transition-all duration-300", notesGenerating && "ring-1 ring-primary/40 animate-pulse rounded-lg")}>
-                <TeacherNotesOverview sessionId={sessionId} />
+                <WidgetErrorBoundary name="Live notes"><TeacherNotesOverview sessionId={sessionId} /></WidgetErrorBoundary>
               </div>
               <div className="border-t border-border" />
               <div className={cn("p-3", hasActiveCheck && "opacity-50")}>
-                <PulseMeter sessionId={sessionId} confusionThreshold={confusionThreshold} />
+                <WidgetErrorBoundary name="Pulse"><PulseMeter sessionId={sessionId} confusionThreshold={confusionThreshold} /></WidgetErrorBoundary>
               </div>
               <div className="border-t border-border" />
               <div className="flex-1 min-h-[200px] flex flex-col">
-                <QuestionWall sessionId={sessionId} role="teacher" />
+                <WidgetErrorBoundary name="Questions"><QuestionWall sessionId={sessionId} role="teacher" /></WidgetErrorBoundary>
               </div>
               <div className="border-t border-border" />
               <div className="p-3">

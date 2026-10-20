@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type ReactNode, useCallback } from "react";
+import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { createPortal } from "react-dom";
 import { MessageSquare, X, Activity, Hand, ThumbsUp, HelpCircle } from "lucide-react";
 import { PulseWidget } from "./PulseWidget";
@@ -140,10 +141,10 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
       )}
 
       {/* Pulse widget */}
-      <PulseWidget sessionId={sessionId} />
+      <WidgetErrorBoundary name="Pulse"><PulseWidget sessionId={sessionId} /></WidgetErrorBoundary>
 
       {/* Live Notes drawer (Phase 3) */}
-      <StudentNotesDrawer sessionId={sessionId} />
+      <WidgetErrorBoundary name="Live notes"><StudentNotesDrawer sessionId={sessionId} /></WidgetErrorBoundary>
       <div className="fixed bottom-20 right-4 z-40 sm:bottom-6 flex flex-col gap-2 items-end">
         {/* Reaction buttons */}
         {showReactions && (
@@ -222,12 +223,12 @@ export function StudentLiveView({ sessionId, children }: StudentLiveViewProps) {
         </Button>
 
         {/* Question wall content */}
-        <QuestionWall sessionId={sessionId} role="student" />
+        <WidgetErrorBoundary name="Questions"><QuestionWall sessionId={sessionId} role="student" /></WidgetErrorBoundary>
       </div>
 
       {/* Concept check overlay via portal */}
       {createPortal(
-        <ConceptCheckOverlay sessionId={sessionId} />,
+        <WidgetErrorBoundary name="Concept check"><ConceptCheckOverlay sessionId={sessionId} /></WidgetErrorBoundary>,
         document.body
       )}
     </div>
