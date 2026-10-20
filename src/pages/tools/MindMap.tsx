@@ -240,6 +240,7 @@ const MindMap = () => {
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Close and return to dashboard"
               onClick={() => navigate("/dashboard")}
               className="absolute right-0 top-0 h-9 w-9 rounded-full hover:bg-muted"
             >
@@ -265,10 +266,10 @@ const MindMap = () => {
                     className="space-y-6"
                   >
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={handleBackFromStyleSelection}>
+                      <Button variant="ghost" size="icon" aria-label="Back to content input" onClick={handleBackFromStyleSelection}>
                         <ArrowLeft className="h-4 w-4" />
                       </Button>
-                      <h3 className="text-lg font-semibold">Choose Mind Map Style</h3>
+                      <h2 className="text-lg font-semibold">Choose Mind Map Style</h2>
                     </div>
                     
                     {/* 2x2 Grid of Style Cards */}
@@ -294,7 +295,7 @@ const MindMap = () => {
                                 <StyleIcon className="h-4 w-4 text-primary" />
                               </div>
                               <div className="flex-1">
-                                <h4 className="font-semibold text-sm">{style.name}</h4>
+                                <h3 className="font-semibold text-sm">{style.name}</h3>
                                 <p className="text-xs text-muted-foreground mt-0.5">{style.description}</p>
                               </div>
                             </div>
@@ -349,6 +350,7 @@ const MindMap = () => {
                   <Button 
                     variant="ghost" 
                     size="icon" 
+                    aria-label="Zoom out mind map"
                     onClick={handleZoomOut} 
                     className="h-10 w-10 rounded-full hover:bg-muted"
                   >
@@ -360,6 +362,7 @@ const MindMap = () => {
                   <Button 
                     variant="ghost" 
                     size="icon" 
+                    aria-label="Zoom in mind map"
                     onClick={handleZoomIn} 
                     className="h-10 w-10 rounded-full hover:bg-muted"
                   >

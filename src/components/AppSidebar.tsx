@@ -185,6 +185,7 @@ export function AppSidebar({ onToolSelect, onSignOut }: AppSidebarProps) {
           <Button
             variant="ghost"
             size="icon"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             onClick={toggleSidebar}
             className="h-8 w-8 shrink-0"
           >
