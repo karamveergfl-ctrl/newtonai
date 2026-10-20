@@ -20,6 +20,28 @@
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      /* Mobile-view guard: if a phone's browser is in "Desktop site" mode
+         (small physical screen but a wide layout), force the mobile layout. */
+      (function () {
+        var m = document.querySelector('meta[name="viewport"]');
+        if (!m) return;
+        function fix() {
+          try {
+            var sw = Math.min(screen.width, screen.height); // phone's real width in CSS px
+            var iw = window.innerWidth;
+            if (sw && sw < 500 && iw >= 500) {
+              m.setAttribute('content', 'width=' + sw); // no initial-scale: browser fits it to the screen
+            } else {
+              m.setAttribute('content', 'width=device-width, initial-scale=1.0');
+            }
+          } catch (e) {}
+        }
+        fix();
+        window.addEventListener('resize', fix);
+        window.addEventListener('orientationchange', function () { setTimeout(fix, 150); });
+      })();
+    </script>
     
     <title>NewtonAI – AI Study Assistant for Students</title>
     <meta name="description" content="NewtonAI turns notes, PDFs and lectures into AI summaries, quizzes, flashcards and mind maps — one study app for faster, smarter exam prep.">
