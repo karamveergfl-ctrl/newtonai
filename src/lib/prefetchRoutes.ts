@@ -51,7 +51,6 @@ const routeImportMap: Record<string, () => Promise<unknown>> = {
   '/compare/course-hero': () => import('../pages/compare/CourseHeroComparison'),
   '/compare/chatgpt': () => import('../pages/compare/ChatGPTComparison'),
   '/compare/studyx': () => import('../pages/compare/StudyxComparison'),
-  '/compare/studyfetch': () => import('../pages/compare/StudyFetchComparison'),
 
   // Payment pages
   '/payment/success': () => import('../pages/payment/Success'),

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
 import { useDeferredLoad } from "@/hooks/useDeferredLoad";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
@@ -64,6 +64,7 @@ const AIQuizGeneratorSEO = lazy(() => import("./pages/seo/AIQuizGenerator"));
 const AIFlashcardGeneratorSEO = lazy(() => import("./pages/seo/AIFlashcardGenerator"));
 const ExamPreparationAI = lazy(() => import("./pages/seo/ExamPreparationAI"));
 const AboutNewtonAIForAI = lazy(() => import("./pages/seo/AboutNewtonAIForAI"));
+const ExamLandingPage = lazy(() => import("./pages/seo/ExamLandingPage"));
 
 // Tool pages
 const HomeworkHelp = lazy(() => import("./pages/tools/HomeworkHelp"));
@@ -236,6 +237,9 @@ function AnimatedRoutes() {
         <Route path="/ai-flashcard-generator" element={<PageTransition><AIFlashcardGeneratorSEO /></PageTransition>} />
         <Route path="/exam-preparation-ai" element={<PageTransition><ExamPreparationAI /></PageTransition>} />
         <Route path="/about-newtonai-for-ai" element={<PageTransition><AboutNewtonAIForAI /></PageTransition>} />
+        {["/neet-flashcards-ai", "/jee-quiz-generator-ai", "/cbse-notes-ai", "/youtube-lecture-to-notes"].map((p) => (
+          <Route key={p} path={p} element={<PageTransition><ExamLandingPage /></PageTransition>} />
+        ))}
         
         {/* Payment Routes */}
         <Route path="/payment/success" element={<PageTransition><ProtectedRoute><OnboardingGate><PaymentSuccess /></OnboardingGate></ProtectedRoute></PageTransition>} />
@@ -261,7 +265,7 @@ function AnimatedRoutes() {
         <Route path="/compare/course-hero" element={<PageTransition><CourseHeroComparison /></PageTransition>} />
         <Route path="/compare/chatgpt" element={<PageTransition><ChatGPTComparison /></PageTransition>} />
         <Route path="/compare/studyx" element={<PageTransition><StudyxComparison /></PageTransition>} />
-        <Route path="/compare/studyfetch" element={<PageTransition><StudyFetchComparison /></PageTransition>} />
+        <Route path="/compare/studyfetch" element={<Navigate to="/compare/studyfetch-vs-newtonai" replace />} />
         <Route path="/compare/studyfetch-vs-newtonai" element={<PageTransition><StudyFetchVsNewtonAI /></PageTransition>} />
         
         {/* Teacher Routes */}

@@ -104,6 +104,10 @@ const Footer = () => {
                 { to: "/ai-study-assistant", label: "AI Study Assistant" },
                 { to: "/ai-flashcard-generator", label: "AI Flashcard Generator" },
                 { to: "/exam-preparation-ai", label: "Exam Preparation" },
+                { to: "/neet-flashcards-ai", label: "NEET Flashcards" },
+                { to: "/jee-quiz-generator-ai", label: "JEE Quiz Generator" },
+                { to: "/cbse-notes-ai", label: "CBSE Notes" },
+                { to: "/youtube-lecture-to-notes", label: "YouTube to Notes" },
                 { to: "/about-newtonai-for-ai", label: "About NewtonAI" },
                 { to: "/teacher", label: "Teacher Dashboard" },
               ].map((link) => (
