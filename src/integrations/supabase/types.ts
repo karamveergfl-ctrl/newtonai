@@ -142,7 +142,9 @@ export type Database = {
           id: string
           is_published: boolean
           max_score: number | null
+          publish_at: string | null
           teacher_id: string
+          time_limit_minutes: number | null
           title: string
           updated_at: string
         }
@@ -156,7 +158,9 @@ export type Database = {
           id?: string
           is_published?: boolean
           max_score?: number | null
+          publish_at?: string | null
           teacher_id: string
+          time_limit_minutes?: number | null
           title: string
           updated_at?: string
         }
@@ -170,7 +174,9 @@ export type Database = {
           id?: string
           is_published?: boolean
           max_score?: number | null
+          publish_at?: string | null
           teacher_id?: string
+          time_limit_minutes?: number | null
           title?: string
           updated_at?: string
         }
