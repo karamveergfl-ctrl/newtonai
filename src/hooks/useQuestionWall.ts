@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { safeSubscribe } from "@/lib/realtime";
 import type { LiveQuestion } from "@/types/liveSession";
 
 interface UseQuestionWallProps {
@@ -72,8 +73,10 @@ export function useQuestionWall({ sessionId, role }: UseQuestionWallProps) {
 
   // Realtime subscription
   useEffect(() => {
-    const channel = supabase
-      .channel(`questions-${sessionId}`)
+    if (!sessionId) return;
+    return safeSubscribe(
+      `questions-${sessionId}`,
+      (ch) => ch
       .on(
         "postgres_changes",
         {
@@ -141,12 +144,9 @@ export function useQuestionWall({ sessionId, role }: UseQuestionWallProps) {
           const deleted = payload.old as Record<string, unknown>;
           setQuestions((prev) => prev.filter((q) => q.id !== (deleted.id as string)));
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      ),
+      () => { void fetchQuestions(); },
+    );
   }, [sessionId, role]);
 
   const submitQuestion = useCallback(

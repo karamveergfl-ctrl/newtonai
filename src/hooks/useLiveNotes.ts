@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { safeSubscribe } from "@/lib/realtime";
 import type { SessionSlideNotes } from "@/types/liveSession";
 
 interface UseLiveNotesProps {
@@ -94,8 +95,10 @@ export function useLiveNotes({ sessionId, role, onSlideAdvance }: UseLiveNotesPr
 
   // Realtime: session_slide_notes
   useEffect(() => {
-    const channel = supabase
-      .channel(`live-notes-${sessionId}`)
+    if (!sessionId) return;
+    return safeSubscribe(
+      `live-notes-${sessionId}`,
+      (ch) => ch
       .on(
         "postgres_changes",
         {
@@ -126,18 +129,17 @@ export function useLiveNotes({ sessionId, role, onSlideAdvance }: UseLiveNotesPr
             setLatestNoteSlideIndex(note.slide_index);
           }
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      ),
+      () => { void getAllNotes(); },
+    );
   }, [sessionId, role]);
 
   // Realtime: live_sessions (slide index, total, notes_enabled)
   useEffect(() => {
-    const channel = supabase
-      .channel(`live-session-index-${sessionId}`)
+    if (!sessionId) return;
+    return safeSubscribe(
+      `live-session-index-${sessionId}`,
+      (ch) => ch
       .on(
         "postgres_changes",
         {
@@ -159,12 +161,9 @@ export function useLiveNotes({ sessionId, role, onSlideAdvance }: UseLiveNotesPr
             setNotesEnabled(updated.notes_enabled);
           }
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      ),
+      undefined,
+    );
   }, [sessionId]);
 
   // Cleanup

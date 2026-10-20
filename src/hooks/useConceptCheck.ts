@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { safeSubscribe } from "@/lib/realtime";
 import type { ConceptCheck, ConceptCheckResults } from "@/types/liveSession";
 
 interface UseConceptCheckProps {
@@ -284,8 +285,9 @@ export function useConceptCheck({ sessionId, role, slideContext }: UseConceptChe
   useEffect(() => {
     if (!sessionId) return;
 
-    const channel = supabase
-      .channel(`concept-check-${sessionId}`)
+    return safeSubscribe(
+      `concept-check-${sessionId}`,
+      (ch) => ch
       .on(
         "postgres_changes",
         {
@@ -352,12 +354,9 @@ export function useConceptCheck({ sessionId, role, slideContext }: UseConceptChe
             }
           }
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      ),
+      undefined,
+    );
   }, [sessionId, role, startTimer, clearTimer]);
 
   // ── Teacher live distribution: poll aggregated results ──
