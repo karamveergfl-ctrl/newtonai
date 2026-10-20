@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { SendToClassButton } from "@/components/teacher/SendToClassDialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -463,6 +464,7 @@ export const QuizMode = ({
             </div>
           </div>
           <div className="flex items-center gap-1 md:gap-2 shrink-0">
+            <SendToClassButton kind="quiz" defaultTitle={title} questions={questions} />
             <Button 
               onClick={downloadAsPDF} 
               variant="outline" 

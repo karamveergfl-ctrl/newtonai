@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SendToClassButton } from "@/components/teacher/SendToClassDialog";
 import { Flashcard } from "./Flashcard";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -314,6 +315,7 @@ export const FlashcardDeck = ({
             </p>
           </div>
           <div className="flex items-center gap-1 md:gap-2 shrink-0">
+            <SendToClassButton kind="flashcards" defaultTitle={title} cards={flashcards} />
             <Button 
               onClick={downloadAsPDF} 
               variant="outline" 
