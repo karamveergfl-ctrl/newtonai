@@ -1,17 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssignments } from "@/hooks/useAssignments";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle2, XCircle, Trophy } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Trophy, Timer } from "lucide-react";
 
 interface StudentQuizTakerProps {
   assignmentId: string;
   onComplete: (score: number, total: number) => void;
   onCancel: () => void;
   existingSubmission?: { score: number | null; answers: any; status: string } | null;
+}
+
+function formatClock(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 export function StudentQuizTaker({ assignmentId, onComplete, onCancel, existingSubmission }: StudentQuizTakerProps) {
@@ -21,12 +27,16 @@ export function StudentQuizTaker({ assignmentId, onComplete, onCancel, existingS
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const submittedRef = useRef(false);
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
 
   useEffect(() => {
     const fetchQuiz = async () => {
       const { data } = await supabase
         .from("assignments")
-        .select("content")
+        .select("content, time_limit_minutes")
         .eq("id", assignmentId)
         .single();
       const content = data?.content as any;
@@ -37,6 +47,8 @@ export function StudentQuizTaker({ assignmentId, onComplete, onCancel, existingS
       if (existingSubmission) {
         setAnswers(existingSubmission.answers || {});
         setReviewMode(true);
+      } else if (data?.time_limit_minutes) {
+        setTimeLeft(data.time_limit_minutes * 60);
       }
       setLoading(false);
     };
@@ -44,9 +56,11 @@ export function StudentQuizTaker({ assignmentId, onComplete, onCancel, existingS
   }, [assignmentId, existingSubmission]);
 
   const handleSubmit = async () => {
-    if (submitting) return;
+    if (submitting || submittedRef.current) return;
+    submittedRef.current = true;
     setSubmitting(true);
-    const result = await submitAssignment(assignmentId, answers);
+    const result = await submitAssignment(assignmentId, answersRef.current);
+    if (!result) submittedRef.current = false;
     setSubmitting(false);
     if (result?.score !== undefined) {
       onComplete(result.score, questions.length);
@@ -55,10 +69,27 @@ export function StudentQuizTaker({ assignmentId, onComplete, onCancel, existingS
     }
   };
 
+  // Countdown; auto-submit at zero
+  const hasTimer = timeLeft !== null;
+  useEffect(() => {
+    if (!hasTimer || reviewMode) return;
+    const t = setInterval(() => setTimeLeft((v) => (v === null ? v : Math.max(0, v - 1))), 1000);
+    return () => clearInterval(t);
+  }, [hasTimer, reviewMode]);
+  useEffect(() => {
+    if (timeLeft === 0 && !reviewMode) void handleSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, reviewMode]);
+
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-4">
+      {timeLeft !== null && !reviewMode && (
+        <div className={`sticky top-2 z-10 ml-auto w-fit flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold bg-card shadow ${timeLeft <= 60 ? "border-destructive text-destructive" : "border-border"}`} role="timer" aria-live="polite">
+          <Timer className="h-4 w-4" /> {formatClock(timeLeft)}
+        </div>
+      )}
       {reviewMode && existingSubmission?.status === "graded" && (
         <Card className="border-border/50 bg-gradient-to-r from-green-500/5 to-emerald-500/5">
           <CardContent className="py-4 text-center">
@@ -96,7 +127,7 @@ export function StudentQuizTaker({ assignmentId, onComplete, onCancel, existingS
                       <button
                         key={j}
                         onClick={() => !reviewMode && setAnswers(prev => ({ ...prev, [String(i)]: opt }))}
-                        disabled={reviewMode}
+                        disabled={reviewMode || submitting}
                         className={`text-left px-3 py-2.5 rounded-lg border text-sm transition-all ${
                           reviewMode && isCorrectOpt
                             ? "border-green-500 bg-green-500/10 font-medium"
